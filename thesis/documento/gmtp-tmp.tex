@@ -1,0 +1,215 @@
+% O {\emph{Multi(Uni)cast Datagram Congestion Control Protocol}} (\mudccp) é um
+% protocolo de transporte inspirado no DCCP com foco em transmissão de fluxos de
+% dados multimídia com um nó transmissor e muitos nós receptores (\mys),
+% desenvolvido para operar principalmente na Internet. O \mudccp\space permite a
+% transmissão de pacotes de dados com suporte a controle de congestionamento de
+% fluxos não confiáveis, operando em modo de transmissão multicast ou múltiplos
+% fluxos unicast compartilhados entre os nós participantes da transmissão,
+% através
+% de uma rede de favores constituída automaticamente a fim de evitar a relação
+% de uma conexão por cliente ao servidor, como na versão original do DCCP.
+%
+% ===============
+
+% , considerando os
+% seguintes requisitos de sucesso ao fim deste trabalho.
+
+% \begin{itemize}
+%
+%  \item \textit{Transparência para o desenvolvedor --} deve-se prover um
+% protocolo de rede que permita ao desenvolvedor, apenas através da utilização
+% deste protocolo, desenvolver aplicações para o envio e recebimento de
+% conteúdos
+% multimídia em cenários \mys\space sem precisar se preocupar com aspectos
+% intrínsecos da processo de disseminar conteúdos multimídia ao vivo na rede.
+%
+%  \item \textit{Comprometimento com práticas já utilizadas em aplicações
+% multimídia --} é imprescindível que o protocolo proposto seja capaz de
+% transmitir dados em modo \textit{multicast} e que suporte algoritmos para
+% controle de congestionamento, considerando a abstração que tal serviço seja
+% disponibilizado pelas camadas inferiores à aplicação e não na camada de
+% aplicação. Esta restrição se estende às funcionalidades de estabelecimento de
+% conexão, seleção de nós, compartilhamento de conteúdos, tolerância à falhas e
+% segurança.
+%
+%  \item \textit{Independência de linguagem e plataforma --} o protocolo
+% proposto
+% deve ser independente de linguagem de programação ou plataforma específica
+% para
+% a sua execução. Sendo assim, espera-se que seja possível utilizar tal
+% protocolo
+% em diferentes contextos de aplicações, considerando diferentes linguagens de
+% programação, incluindo linguagens populares como C, C++, Java e Python, bem
+% como sua implementação em diferentes sistemas operacionais.
+%
+%  \item \textit{Avaliação de desempenho --}
+
+% \end{itemize}
+
+===============
+
+Com isto, pode-se permitir que os
+nós possam cooperar entre si tendo como base a identificação dos conteúdos e não
+onde estes estão localizados, com transmissão de fluxos de dados controlados
+pela rede e disseminados por meio de uma rede P2P/CDN.
+
+===============
+
+FREERIDERS
+
+P2P/CDN - http://www.isi.edu/isi-xcp/
+XCP/RCP - http://yuba.stanford.edu/rcp/
+ALTO - http://datatracker.ietf.org/wg/alto/charter/
+
+fazer diagrama de estados do protocolo
+
+==================== FALAR SOBRE ISSO
+
+In my thesis I propose a multi-layer network protocol named GMTP (Global Media
+Transmission Protocol) for supporting live streaming systems based on a hybrid
+P2P/CDN architecture. The GMTP is divided into two parts named GMTP-intra and
+GMTP-inter. The GMTP-intra is executed in the end-hosts operated by end-users
+that wish to watch an event through a GMTP based client application. The
+GMTP-intra may be any desktop-like computer or handheld devices that basically
+playback the media content and manages all the connection setup and congestion
+control whenever needed. When an end-user wants to watch an event from a
+datasource specified by an IP address and port number, the GMTP-intra informs to
+the GMTP-inter about the end-user intention. The GMTP-inter is executed in the
+routers and effectively constitutes the P2P overlay network by authenticating in
+the super seeders (CDN servers), by selecting partner peers and by requesting or
+forwarding media content from neighbor routers or to connected end-hosts,
+respectively. The GMTP-inter will be normally deployed in routers used by the
+ISPs in the users' houses, usually based on the xDSL standard. The GMTP-inter
+may authenticate in one or more super seeders from different vendors from a user
+friendly setup process available in the router admin panel. GMTP-inter is able
+to use unicast or multicast messages to relay the data according to the users
+demand. For example, if multiple hosts wish to receive an event transmission,
+the router may deliver the data using multicast, but it can use unicast
+otherwise. The GMTP-inter is also responsible for exchanging buffer map between
+adjacent routers for requesting missing chunks according to its buffer maps.
+Each buffer maps is created or destroyed according to the internal peers demand
+or depending whether the router is forwarding the media content to another
+router or not.
+
+With the goal of generalizing the communication and promote the exchange of data
+between different systems, GMTP has been designed to allow the concept of P2P
+sockets. When a GMTP based client application wants to receive streaming data,
+the connection request may be intercepted by other peers, usually routers,
+already receiving the media content. When this occur, the peer reply to the GMTP
+client like the original datasource host, that is, the GMTP-intra or GMTP-inter
+can accept replies from other peers and not only from the original server, since
+the GMTP-inter intercepts requesting packets of the P2P overlay network. The
+GMTP uses an algorithm for peer selection based on traceroute and on the delays
+between neighbour routers and the datasource host (or the CDN servers). The
+traceroute reports are used to find the network distance between two or more
+routers and if they may or may not contribute to each other. An incentive
+algorithm called Tickets of Bits (ToB) has been defined, so that the more a peer
+contributes to the network the more ToB it gets, depending on the level of the
+peer contribution. The level of contribution is calculated using a modified
+version of the exponentially weighted moving average (EWMA) to avoid outliers
+when measuring ToB and also forcing the user to always connect from the same
+Internet connection, otherwise it will loose part of its ToB obtained
+previously. The end-users can use ToBs to convert it in money credit, discounts
+for online purchases and online movie rentals, for example.
+
+The GMTP was inspired in the Dynamic DNS clients, and in the fact that GMTP will
+not consume more computational resources than the current routers consume to
+make their work. The GMTP relies on the fact that routers always are a mandatory
+hop that the packets have to follow and forwarding packets is a common activity
+performed by them, a very important task in P2P systems. With this in mind, the
+GMTP may execute important functions and transparently serves multiples clients
+inside its network, based on the interests in watching one or more events. In
+this way, with the deployment of GMTP in the operating systems and in the
+routers, it is expected to reduce the churn caused by lack of end-user
+interested in watching an event or when they give up to watch an event and close
+their client applications. The GMTP-intra is very simple to implement and it can
+improve the quality of the media content and reduce the network traffic by
+transparently detecting common interests from the users, even those connected to
+the Internet on different network and ISPs. Additionally, it may standardize the
+deployment of live streaming system because a unique client application can be
+able to work with two different systems since GTMP-inter is allowed to
+authenticate in one or more CDN infrastructure. It is fully in line with the
+recent proposals about Content-Centric Networks promoted by Van Jacobson, at
+PARC and highly applied in scenarios where users share their own events from
+residential connections to other clients interested on the event, mainly from
+web browsers, such as ustream.tv, livestreaming.tv, streamtheworld.com,
+coolstreaming.com, pplive.com and many others.
+
+
+
+=====================================
+
+Nestes sistemas, utilizam-se mecanismos sofisticados para utilizar os recursos
+de rede, incluindo os compartilhados pelos nós da rede P2P. Na prática, tais
+mecanismos são implementados em forma de protocolos de aplicações de rede com o
+intuito de: (i) reduzir altos níveis de congestionamento na rede; (ii) manter a
+equidade entre diferentes fluxos transmitidos pelos sistemas finais; e (iii)
+selecionar os melhores nós parceiros para cada nó participante. Estes mecanismos
+diferem dos sistemas de compartilhamento de arquivos P2P e de mídias sob
+demanda. Entender estas peculiaridades é fundamental para proporcionar mudanças
+significativas no tocante às métricas de estudo mencionadas anteriormente.
+
+\begin{enumerate}
+  \item Nos sistemas distribuição de mídias ao vivo, o usuário de um nó
+repassador tem que expressar interesse em um determinado evento no instante da
+sua ocorrência e não em um momento futuro. Nos sistemas de compartilhamento de
+arquivo, o usuário demonstra interesse em um determinado arquivo e concorda em
+mantê-lo localmente para que o sistema compartilhe-o com outros nós em qualquer
+momento futuro. Isto possibilita a fácil indexação deste conteúdo e rapidamente
+determinar quais nós detem quais conteúdos.
+
+  \item Nos sistemas de transmissão ao vivo é mais importante a qualidade das
+parceria que um determinado nó faz do que a quantidade de parceiros que este
+tem. O estado do mapa de \textit{buffer} de reprodução de cada nó da rede é
+semelhante, pois não existe a possibilidade de um nó ter um mapa de
+\textit{buffer} com muito mais dados para reproduzir do que outros nós. Da mesma
+forma que não é possível antecipar datagramas, também não faz sentido mantê-los
+no \textit{buffer} de produção por muito tempo. Os datagramas
+expiram\footnote{Em  aplicações de transmissão multimídia ao vivo,
+estima-se que o \textit{jitter} entre o nó repassador e o nó receptor deve ser
+de, no máximo, \ut{180}{ms}} rapidamente e, nestes casos, devem ser descartados
+pelas aplicações dos nós que os recebem. Isto indica dois importantes aspectos:
+
+\begin{itemize}
+
+ \item é preferível formar parcerias com poucos nós de boa qualidade do que com
+muitos nós de baixa qualidade. A qualidade dos nós parceiros está relacionada
+com o quão apto um nó estar em servir outro, o que pode ser mensurado pela taxa
+de transmissão, número de saltos ou atraso entre ambos; e
+
+ \item o tamanho necessário para o \textit{buffer} de reprodução deve ser o
+suficiente para armazenar alguns segundos da mídia e repassá-la aos
+seus nós parceiros, sendo desnecessárias grandes capacidades de armazenamento.
+
+\end{itemize}
+
+ \item Quando o usuário de um potencial nó repassador não tem interesse em
+reproduzir um determinado conteúdo, a aplicação cliente na maioria das vezes não
+é executada e portanto a dependência pelo oportunismo por parte desses sistemas
+é mais crítica do que nos sistemas de compartilhamento de arquivos. Isto torna a
+rede mais dinâmica e consequentemente os serviços mais instáveis -- há um
+impacto direto nos parâmetros que determinam o nível de experência do usuário
+devido ao aumento do \textit{churn}~\cite{5680894}.
+
+  \item Nos sistemas P2P de transmissão ao vivo, as parcerias são realizadas
+entre os nós com interesses comuns por um único conteúdo em um determinado
+instante. Por ser um conteúdo ao vivo, os nós geralmente não tem interesse em
+receber mais de um conteúdo simultaneamente. Nos sistemas de compartilhamento de
+arquivos, os nós formam diferentes parcerias devido aos diferentes arquivos que
+estes compartilham.
+
+% Por exemplo, um nó $N_{1}$ pode formar uma parceria com um
+% nó $N_{2}$ por interesse em um arquivo $A_{1}$. Porém, $N_{1}$ pode formar uma
+% parceria com outro nó $N_{3}$ por interesse em um outro arquivo $A_{2}$, no
+% mesmo instante que recebe o arquivo $A_{1}$.
+
+  \item Nos sistemas P2P/CDN de transmissão ao vivo, o caminho dos fluxos de
+dados transmitidos por um mesmo servidor da CDN $S_{1}$ para um conjunto de nós
+$N_{1} .. N_{n}$, localizados em redes distintas, são mais previsíveis. Isto
+possibilita parcerias de melhor qualidade ao levar em consideração que é
+possível determinar pontos de intersecção das rotas desses fluxos de dados, uma
+vez que estes convergem para um mesmo servidor $S_{1}$. Nestes casos, é possível
+enviar apenas um fluxo de dados e replica-lo no ponto de intersecção. Isto
+permite o agrupamento e o fomento à cooperação entre eles.
+
+\end{enumerate}

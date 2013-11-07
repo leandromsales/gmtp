@@ -1,0 +1,2380 @@
+@ARTICLE{5604156, 
+author={Leavitt, N.}, 
+journal={Computer}, title={{N}etwork-{U}sage {C}hanges {P}ush {I}nternet {T}raffic to the {E}dge}, 
+year={2010}, 
+month={10}, 
+volume={43}, 
+number={10}, 
+pages={13 -15}, 
+keywords={Internet infrastructure;Internet traffic pattern;network service provider;network-usage change;traffic flow;IP networks;Internet;}, 
+doi={10.1109/MC.2010.293}, 
+ISSN={0018-9162}}
+
+@Misc{paramond2011,
+author = {Torrent Freak},
+title = {{P}aramount {P}ictures to {R}elease {F}ilm on {B}ittorrent},
+howpublished = {Online publication in the Torrent Freak Website},
+month = {3},
+year = {2011},
+note =
+{\murl{
+http://torrentfreak.com/paramount-pictures-partner-with-bittorrent-release-movie
+-110317/}}
+}
+
+@Misc{amazonclouddrive,
+author = {Amazon},
+title = {{I}ntroducing {A}mazon {C}loud {P}layer for {W}eb \& {A}ndroid},
+howpublished = {Online publication in Amazon.com},
+month = {4},
+year = {2011},
+note = {\murl{http://www.amazon.com/b?ie=UTF8&node=2658409011}}
+}
+
+@MISC{RFC4340,
+  AUTHOR = {Eddie Kohler and Mark Handley and Sally Floyd},
+  TITLE = {{D}atagram {C}ongestion {C}ontrol {P}rotocol ({DCCP})},
+  JOURNAL = {IETF Online RFC},
+  YEAR = {2006},
+  MONTH = {3},
+  NOTE = {\murl{http://www.ietf.org/rfc/rfc4340.txt}. Último acesso: \today.}
+}
+
+@article{Silva:2011:LSU:2048614.2048874,
+ author = {Silva, Thiago and Almeida, Jussara M. and Guedes, Dorgival},
+ title = {Live streaming of user generated videos: Workload characterization and
+content delivery architectures},
+ journal = {Comput. Netw.},
+ issue_date = {December, 2011},
+ volume = {55},
+ number = {18},
+ month = dec,
+ year = {2011},
+ issn = {1389-1286},
+ pages = {4055--4068},
+ numpages = {14},
+ url = {http://dx.doi.org/10.1016/j.comnet.2011.07.016},
+ doi = {10.1016/j.comnet.2011.07.016},
+ acmid = {2048874},
+ publisher = {Elsevier North-Holland, Inc.},
+ address = {New York, NY, USA},
+ keywords = {Content delivery architectures, Live streaming video, Peer-to-Peer,
+Web 2.0, Workload characterization},
+}
+
+@INPROCEEDINGS{5764567,
+author={Seyyedi, S. M Y and Akbari, B.},
+booktitle={Computer Networks and Distributed Systems (CNDS), 2011 International
+Symposium on}, title={Hybrid CDN-P2P architectures for live video streaming:
+Comparative study of connected and unconnected meshes},
+year={Feb.},
+pages={175-180},
+keywords={Internet;peer-to-peer computing;quality of service;video
+streaming;Internet;QoS;content delivery networks;large-scale video
+distribution;mesh-based P2P video streaming;peer-to-peer networks;quality of
+service;Bit rate;Computer architecture;Delay;Internet;Peer to peer
+computing;Servers;Streaming media;Hybrid CDN-P2P;Peer-to-Peer systems;Video
+streaming},
+doi={10.1109/CNDS.2011.5764567},}
+
+@INPROCEEDINGS{6121327,
+author={ZhiHui Lu and XiaoHong Gao and SiJia Huang and Yi Huang},
+booktitle={Parallel and Distributed Systems (ICPADS), 2011 IEEE 17th International Conference on}, title={Scalable and Reliable Live Streaming Service through Coordinating CDN and P2P},
+year={Dec.},
+pages={581-588},
+keywords={media streaming;peer-to-peer computing;CDN network;CDN-P2P-hybrid architecture;P2P content delivery;P2P scalable end-to-end transmission capability;live streaming service;overlay hybrid method;peer node buffer structure;Bandwidth;Media;Peer to peer computing;Reliability;Servers;Streaming media;Tin;CDN;CDN-P2P-hybrid Architecture;Live Streaming;P2P;P2P Streaming;VoD Streaming},
+doi={10.1109/ICPADS.2011.113},
+ISSN={1521-9097},}
+
+@ARTICLE{5343509,
+author={Chen, Z. and Yin, H. and Lin, C. and Chen, Y. and Feng, M.},
+journal={Communications, IET}, title={Towards a universal friendly peer-to-peer media streaming: metrics, analysis and explorations},
+year={December},
+volume={3},
+number={12},
+pages={1919-1933},
+keywords={Internet;media streaming;peer-to-peer computing;quality of service;telecommunication traffic;Internet content provider;Internet service provider;QoS;content distribution networks;disruptive market opportunity;multimedia streaming services;peer-to-peer media streaming;peer`server`peer structure},
+doi={10.1049/iet-com.2008.0630},
+ISSN={1751-8628},}
+
+@ARTICLE{6035830,
+author={Kideok Cho and Hakyung Jung and Munyoung Lee and Diko Ko and Kwon, T.T. and Yanghee Choi},
+journal={Communications Magazine, IEEE}, title={How can an ISP merge with a CDN?},
+year={Oct.},
+volume={49},
+number={10},
+pages={156-162},
+keywords={Internet;cache storage;content management;peer-to-peer computing;software architecture;storage area networks;telecommunication network routing;telecommunication traffic;CDN;ISP merge;ISP-centric content delivery;Internet;P2P systems;cache contents;content delivery architecture;content delivery networks;content distribution;iCODE architecture;in-network storage;inter-ISP traffic;network community;routers;traffic engineering;Content distribution networks;Content management;IP networks;Internet;Peer to peer computing},
+doi={10.1109/MCOM.2011.6035830},
+ISSN={0163-6804},}
+
+@INPROCEEDINGS{4797271,
+author={Xuening Liu and Hao Yin and Chuang Lin},
+booktitle={Communications and Mobile Computing, 2009. CMC '09. WRI International Conference on},
+title={A Novel and High-Quality Measurement Study of Commercial CDN-P2P Live Streaming},
+year={Jan.},
+volume={3},
+pages={325-329},
+keywords={peer-to-peer computing;resource allocation;video streaming;UDP transmissions;commercial CDN-P2P live streaming;content delivery network;large-scale live streaming system;peer-to-peer;resource allocation;video streams;Bandwidth;Costs;Internet;Measurement;Network servers;Peer to peer computing;Resource management;Scalability;Streaming media;Web server},
+doi={10.1109/CMC.2009.152},}
+
+@INPROCEEDINGS{6410737,
+author={Bronzino, F. and Gaeta, R. and Grangetto, M. and Pau, G.},
+booktitle={Visual Communications and Image Processing (VCIP), 2012 IEEE},
+title={An adaptive hybrid CDN/P2P solution for Content Delivery Networks},
+year={Nov.},
+pages={1-6},
+keywords={cloud computing;content-based retrieval;multimedia
+computing;peer-to-peer computing;social networking (online);video on
+demand;Akamai;Amazon AWS cloud services;Netflix;PlanetLab
+network;YouTube;adaptive hybrid CDN/P2P solution;content awareness;content
+delivery networks;geographically distributed layer;optimal quality of
+service;streaming services;video on demand;Content distribution
+networks;Delay;Peer to peer computing;Quality of
+service;Reliability;Servers;Streaming media;Content delivery
+networks;Peer-to-peer;Video delivery},
+doi={10.1109/VCIP.2012.6410737},}
+
+@INPROCEEDINGS{5962881,
+author={Chen, Yishuai and Baoxian Zhang and Changjia Chen},
+booktitle={Communications (ICC), 2011 IEEE International Conference on},
+title={Modeling and Performance Analysis of P2P Live Streaming Systems under
+Flash Crowds},
+year={June},
+pages={1-5},
+keywords={peer-to-peer computing;quality of service;telecommunication congestion
+control;telecommunication traffic;P2P live streaming system;admission
+control;flash crowd;peer-to-peer system;quality of service;Admission
+control;Analytical models;Bandwidth;Electric shock;Media;Peer to peer
+computing;Simulation},
+doi={10.1109/icc.2011.5962881},
+ISSN={1550-3607},}
+
+@ARTICLE{4395123,
+author={Bo Li and Susu Xie and Keung, G.Y. and Jiangchuan Liu and Stoica, I. and
+Hui Zhang and Xinyan Zhang},
+journal={Selected Areas in Communications, IEEE Journal on}, title={An Empirical
+Study of the Coolstreaming+ System},
+year={December},
+volume={25},
+number={9},
+pages={1627-1639},
+keywords={Internet;multimedia communication;peer-to-peer
+computing;protocols;resource allocation;telecommunication network
+planning;Coolstreaming+ system;Internet live video streaming;content
+delivery;design limitations;design trade-offs;flash crowd;gossiping
+protocol;infrastructure support property;overlay construction;peer-to-peer
+technology;resource allocation;self-scaling property;skew resource
+distribution;streaming performance;swarm-based protocol;system properties},
+doi={10.1109/JSAC.2007.071203},
+ISSN={0733-8716},}
+
+@INPROCEEDINGS{6089062,
+author={Mansy, A. and Ammar, M.},
+booktitle={Network Protocols (ICNP), 2011 19th IEEE International Conference
+on}, title={Analysis of adaptive streaming for hybrid CDN/P2P live video
+systems},
+year={Oct.},
+pages={276-285},
+keywords={adaptive signal processing;optimisation;peer-to-peer
+computing;stochastic processes;video streaming;adaptive streaming;commercial
+video streaming;content distribution network;hybrid CDN/P2P live video
+systems;hybrid streaming system;linear optimization problem;peer-to-peer live
+streaming system;stochastic fluid model;video content distribution;Adaptation
+models;Adaptive systems;Bit rate;Internet;Peer to peer
+computing;Servers;Streaming media},
+doi={10.1109/ICNP.2011.6089062},}
+
+@article{Chiu:1989:AID:70207.70208,
+ author = {Chiu, Dah-Ming and Jain, Raj},
+ title = {Analysis of the increase and decrease algorithms for congestion
+avoidance in computer networks},
+ journal = {Comput. Netw. ISDN Syst.},
+ issue_date = {June 10, 1989},
+ volume = {17},
+ number = {1},
+ month = jun,
+ year = {1989},
+ issn = {0169-7552},
+ pages = {1--14},
+ numpages = {14},
+ url = {http://dx.doi.org/10.1016/0169-7552(89)90019-6},
+ doi = {10.1016/0169-7552(89)90019-6},
+ acmid = {70208},
+ publisher = {Elsevier Science Publishers B. V.},
+ address = {Amsterdam, The Netherlands, The Netherlands},
+} 
+
+@inproceedings{citeulike:943036,
+	address = {New York, NY, USA},
+	author = {Kohler, Eddie   and Handley, Mark   and Floyd, Sally  },
+	booktitle = {SIGCOMM '06: Proceedings of the 2006 conference on
+Applications, technologies, architectures, and protocols for computer
+communications},
+	citeulike-article-id = {943036},
+	doi = {10.1145/1159913.1159918},
+	issn = {0146-4833},
+	keywords = {congestion, reliability},
+	pages = {27--38},
+	posted-at = {2006-11-14 14:45:01},
+	p2008rity = {2},
+	publisher = {ACM Press},
+	title = {{D}esigning {DCCP}: {C}ongestion {C}ontrol {W}ithout
+{R}eliability},
+	url = {http://portal.acm.org/citation.cfm?id=1159918},
+	year = {2006}
+}
+
+ "The Algebra of Sets." Supplement to Ch. 2 in What 
+Is Mathematics?: An Elementary Approach to Ideas and Methods, 2nd ed. Oxford, 
+England: Oxford University Press, pp. 108-116, 1996.
+
+@Book{Courant1996,
+ title = {The Algebra of Sets. What Is Mathematics?: An Elementary Approach to 
+Ideas and Methods},
+ publisher = {Oxford University Press},
+ year = {1996},
+ month = {7},
+ author = {Courant, R. and Robbins, H.},
+ note = {ISBN: 978-0195105193},
+ isbn = {978-0195105193} 
+}
+
+@Book{Devlin1979,
+ title = {Fundamentals of Contemporary Set Theory},
+ publisher = {Springer},
+ year = {1979},
+ author = {K. J. Devlin},
+ month = {9},
+ note = {ISBN: 978-0387904412},
+ isbn = {978-0387904412}
+}
+
+@Book{Jonathan2003,
+ title = {Handbook of Graph Theory (Discrete Mathematics and Its Applications)},
+ publisher = {CRC Press},
+ year = {2003},
+ author = {Jonathan L. Gross and Jay Yellen},
+ month = {2},
+ note = {ISBN: 978-1584880905},
+ isbn = {978-1584880905}
+}
+
+@Book{Seroul2000,
+ title = {{P}rogramming for {M}athematicians},
+ publisher = {{S}pringer-{V}erlag},
+ year = {2000},
+ author = {Séroul, R},
+ month = {2},
+ note = {ISBN: 978-3540664222},
+ isbn = {978-3540664222}
+}
+
+@inproceedings{leandro2008,
+author = {Leandro Melo de Sales and Hyggo O. Almeida and Angelo Perkusich and
+Marcello Sales Jr.},
+title = {{O}n the {P}erformance of {TCP, UDP} and {DCCP} over 802.11g
+{N}etworks},
+booktitle = {In Proceedings of the SAC 2008 23rd ACM Symposium on Applied
+Computing Fortaleza, CE},
+year = {2008},
+pages = {2074-2080},
+month = {1}
+}
+
+@inproceedings{ccnc-leandro2008,
+author = {Leandro Melo de Sales and Hyggo O. Almeida and Angelo Perkusich and
+Marcello Sales Jr.},
+title = {{A}n {E}xperimental {E}valuation of {DCCP} {T}ransport {P}rotocol: {A}
+{F}ocus on the {F}airness and {H}and-off over 802.11g {N}etworks},
+booktitle = {In Proceedings of the 5th IEEE Consumer Communications and
+Networking Conference},
+year = {2008},
+pages = {1149--1153},
+doi = {10.1109/ccnc08.2008.258},
+month = {1}
+}
+
+@Article{leandro-linuxmag2008,
+author = {Leandro Sales and Hyggo Almeida and Angelo Perkusich},
+title = {{T}he {DCCP P}rotocol in {T}hree {S}teps},
+journal = {Linux Magazine},
+year = {2008},
+number = {93},
+volume = {1},
+pages = {58--64},
+month = {8},
+url =
+{\murl{http://www.linux-magazine.com/content/view/full/36244/\%28offset\%29/3}},
+note =
+{\murl{http://www.linux-magazine.com/content/view/full/36244/\%28offset\%29/3}}
+}
+
+@misc{RFC4336,
+  AUTHOR = {Sally Floyd and Mark Handley and Eddie Kohler},
+  TITLE = {{P}roblem {S}tatement for the Datagram Congestion Control
+Protocol ({DCCP})},
+  JOURNAL = {IETF Online RFC},
+  YEAR = {2006},
+  NOTE = {\murl{http://www.ietf.org/rfc/rfc4336.txt}. \'Último acesso: \today.}
+}
+
+@Article{tragcomHardin,
+author = {Garrett Hardin},
+title = {{T}he {T}ragedy of the {C}ommons},
+journal = {Science},
+year = {1968},
+volume = {162},
+number = {3859},
+pages = {1243 -- 1248},
+month = {3},
+doi = {10.1126/science.162.3859.1243}
+}
+
+@inproceedings{RFC4341,
+  AUTHOR = {Eddie Kohler and Mark Handley and Floyd},
+  TITLE = {{P}rofile for {D}atagram {C}ongestion {C}ontrol {P}rotocol
+({DCCP}) {C}ongestion {C}ontrol {ID} 2: {TCP}-like {C}ongestion
+{C}ontrol},
+  booktitle = {IETF Online RFC},
+  YEAR = {2006},
+  MONTH = {3},
+  NOTE = {\murl{http://www.ietf.org/rfc/rfc4341.txt}. Último acesso: \today.}
+}
+
+@misc{RFC4342,
+  AUTHOR = {Eddie Kohler and Mark Handley},
+  TITLE = {{P}rofile for {D}atagram {C}ongestion {C}ontrol {P}rotocol
+({DCCP}) {C}ongestion {C}ontrol {ID} 3: {TCP}-{F}riendly {R}ate
+{C}ontrol ({TFRC})},
+  JOURNAL = {IETF Online RFC},
+  YEAR = {2006},
+  MONTH = {3},
+  NOTE = {\murl{http://www.ietf.org/rfc/rfc4342.txt}. Último acesso:
+12/04/2011.}
+}
+
+@Misc{netflix-king,
+  TITLE  =       {{N}etflix {P}roclaimed ``{K}ing'' of {N}orth {A}merican
+{I}nternet {U}se},
+  author =       {Jameson Berkow},
+  YEAR   =       {2011},
+  MONTH  =       {5},
+  URL    = {\murl{
+http://business.financialpost.com/2011/05/17/netflix-named-king-of-north-america
+n-internet/?__lsa=60e0-e253}
+},
+  NOTE =         {\murl{
+http://business.financialpost.com/2011/05/17/netflix-named-king-of-north-america
+n-internet/?__lsa=60e0-e253}. Último acesso: \today.}
+}
+
+@ARTICLE{5506093,
+author={Yonghong Tian and Srivastava, J. and Tiejun Huang and Contractor, N.},
+journal={Computer}, title={Social Multimedia Computing},
+year={Aug.},
+volume={43},
+number={8},
+pages={27-36},
+keywords={Internet;multimedia computing;social networking
+(online);Internet;content distribution;social interaction;social multimedia
+computing;social multimedia content;Application software;Blogs;Computer
+applications;Educational institutions;Explosives;Internet;Multimedia
+computing;Social network services;Video sharing;YouTube;content
+distribution;multimedia;networks;social media},
+doi={10.1109/MC.2010.188},
+ISSN={0018-9162},}
+
+@ARTICLE{6295665,
+author={Mu Mu and Ishmael, J. and Knowles, W. and Rouncefield, Mark and Race, N.
+and Stuart, M. and Wright, G.},
+journal={Multimedia, IEEE Transactions on}, title={P2P-Based IPTV Services:
+Design, Deployment, and QoE Measurement},
+year={Dec.},
+volume={14},
+number={6},
+pages={1515-1527},
+keywords={IPTV;peer-to-peer computing;quality of service;statistics;High quality
+audio-visual content;IPTV services;Lancaster University;P2P distribution;P2P
+tracking;P2P-based IPTV services;Web-based platforms;collaborating
+measurements;content ingest;converged IPTV service;end systems;heterogeneous
+IP-based content networks;live test-bed;multimodal QoE measurement
+framework;peer-to-peer technologies;quality measurement service;service
+components;service diagnosis;service evaluation;set-top box platforms;social
+networking;statistics;transcoding;use case;user experience;user-generated
+content;Bandwidth;Educational institutions;IPTV;Multimedia communication;Peer to
+peer computing;Streaming media;IPTV;Image processing;multimedia
+systems;peer-to-peer computing;quality of service},
+doi={10.1109/TMM.2012.2217119},
+ISSN={1520-9210},}
+
+@ARTICLE{5559372,
+author={Staelens, N. and Moens, S. and Van den Broeck, W. and Marien, I. and
+Vermeulen, B. and Lambert, P. and Van De Walle, R. and Demeester, P.},
+journal={Broadcasting, IEEE Transactions on}, title={Assessing Quality of
+Experience of IPTV and Video on Demand Services in Real-Life Environments},
+year={Dec.},
+volume={56},
+number={4},
+pages={458-466},
+keywords={IPTV;video on demand;IPTV;Internet protocol television;quality of
+experience;subjective video quality assessment;video on demand services;video
+sequences;Degradation;IPTV;Motion pictures;Quality assessment;Video on
+demand;Video sequences;IPTV;quality of experience (QoE);subjective video quality
+assessment;video on demand},
+doi={10.1109/TBC.2010.2067710},
+ISSN={0018-9316},}
+
+@ARTICLE{5430138,
+author={Brooks, P. and Hestnes, B.},
+journal={Network, IEEE}, title={User measures of quality of experience: why
+being objective and quantitative is important},
+year={March-April},
+volume={24},
+number={2},
+pages={8-13},
+keywords={multimedia communication;quality of service;telecommunication
+industry;QoE measurement;QoS;global QoE ratings;media quality;quality of user
+experience;user subjective assessment;Area measurement;Communication
+industry;Current measurement;Data analysis;Frequency;Humans;Psychology;Standards
+organizations;Technological innovation;Telecommunication standards},
+doi={10.1109/MNET.2010.5430138},
+ISSN={0890-8044},}
+
+@MastersThesis{leandro-master-2008,
+ author = {Leandro Melo de Sales},
+ title = {{A}valiação {E}xperimental do {P}rotocolo {DCCP} para {T}ransmissão de
+{C}onteúdos {M}ultimídia em {R}edes {S}em {F}io 802.11g e na {I}nternet},
+ school = {Universidade Federal de Campina Grande},
+ year = {2008},
+ month = {4},
+ url = {\murl{http://docs.computacao.ufcg.edu.br/posgraduacao/dissertacoes/2008/Dissertacao_LeandroMelodeSales.pdf}}
+}
+
+@TechReport{cisco2012-report,
+ author = {Cisco Systems},
+ title = {The Zettabyte Era},
+ institution = {Cisco Systems},
+ year = {2012},
+ month = {5},
+ note = {\url{http://www.cisco.com/en/US/solutions/collateral/ns341/ns525/ns537/ns705/ns827/VNI_Hyperconnectivity_WP.pdf}}}
+
+@TechReport{sandvine-netflix-report,
+ author = {Dave Caputo and Tom Donnelly},
+ title = {{G}lobal {I}nternet {P}henomena {S}potlight - {N}etflix {R}ising},
+ institution = {Sandvine Incorporated ULC},
+ year = {2011},
+ month = {5},
+ note =
+{
+\url{http://www.sandvine.com/downloads/documents/05-17-2011_phenomena/Sandvine%20Global%20Internet%20Phenomena%20Spotlight%20-%20Netflix%20Rising.pdf}}}
+
+
+@PhdThesis{vieira_borges_2010,
+ author = {Alex Borges Vieira and Sergio Vale Aguiar Campos},
+ title = {Transmissão de mídia contínua ao vivo em P2P: modelagem, caracterização e implementação de mecanismo de resiliência a ataques},
+ school = {Universidade Federal de Minas Gerais - UFMG},
+ year = {2010},
+ key = {Computação Teses, Redes de computação Teses, Internet (Redes de computação) Teses, Cliente/servidor (Computação) Teses},
+ month = {3},
+ note = {\murl{http://dspace.lcc.ufmg.br/dspace/handle/1843/SLSS-85BNKG}}
+}
+
+@article{Liu_Guo_Liang_2008,
+title={A survey on peer-to-peer video streaming systems},
+volume={1},
+url={http://www.springerlink.com/index/10.1007/s12083-007-0006-y},
+number={1},
+journal={PeertoPeer Networking and Applications},
+publisher={IEEE: Proceedings of the First Workshop on Secure Network Protocols},
+author={Liu, Yong and Guo, Yang and Liang, Chao},
+year={2008},
+pages={18--28}
+}
+
+@article{Rod_Dru_2010,
+title={Peer-to-Peer Streaming Systems},
+volume={53},
+number={10},
+journal={Communications of the ACM},
+publisher={CRC Press},
+author={Rodrigues, R and Druschel, P},
+year={2010},
+pages={3--39}
+}
+
+@InProceedings{leandro-OLS-2008,
+ title = {Measuring DCCP for Linux against TCP and UDP With Wireless Mobile Devices},
+ year = {2008},
+ author = {Leandro Melo de Sales and Hyggo Oliveira and Angelo Perkusich and Arnaldo Carvalho de Melo},
+ booktitle = {Proceedings of the Linux Symposium},
+ pages = {163--178},
+ editor = {Andrew J. Hutton and C. Craig Ross},
+ volume = {2},
+ month = {7},
+ url = {\murl{http://www.linuxsymposium.org/2008/ols-2008-Proceedings-V1.pdf}},
+ note = {\murl{http://www.linuxsymposium.org/2008/ols-2008-Proceedings-V1.pdf}}
+}
+
+@INPROCEEDINGS{5202273,
+author={Lei Ye and Zhijun Wang},
+booktitle={Computers and Communications, 2009. ISCC 2009. IEEE Symposium on},
+title={A QoS-aware congestion control mechanism for DCCP},
+year={2009},
+month={7},
+pages={624--629},
+keywords={DCCP;QoS aware congestion control;TCP;datagram congestion control
+protocol;end-to-end traffic control;quality of service;real-time delay adaptive
+application;real-time rate adaptive application;computer networks;quality of
+service;telecommunication congestion control;transport protocols;},
+doi={10.1109/ISCC.2009.5202273},
+ISSN={1530-1346}}
+
+@INPROCEEDINGS{4667595,
+author={Bhatti, S. and Bateman, M. and Miras, D.},
+booktitle={Performance Evaluation of Computer and Telecommunication Systems,
+2008. SPECTS 2008. International Symposium on},
+title={A comparative performance evaluation of DCCP},
+year={2008},
+month={6},
+pages={433--440},
+keywords={DCCP;datagram congestion control protocol;transmission control
+protocol;transport protocols;telecommunication congestion control;transport
+protocols;},
+doi={},
+ISSN={}}
+
+@InProceedings{leandro-OLS-2009,
+ title = {Step two in DCCP adoption: The Libraries},
+ year = {2009},
+ author = {Leandro Melo de Sales and Hyggo Oliveira and Angelo Perkusich and Arnaldo Carvalho de Melo},
+ booktitle = {Proceedings of the Linux Symposium},
+ pages = {239--250},
+ editor = {Andrew J. Hutton},
+ volume = {1},
+ month = {7},
+ url = {\murl{http://www.linuxsymposium.org/2009/ls-2009-proceedings.pdf}},
+ note = {\murl{http://www.linuxsymposium.org/2009/ls-2009-proceedings.pdf}}
+}
+
+@InProceedings{leandro-WP2P-2011,
+ title = {Distribuição de Conteúdo Multimídia em Tempo Real com Transporte de Fluxos Controlados e Não Confiáveis entre Pares},
+ year = {2011},
+ author = {Leandro Melo de Sales and Hyggo Oliveira and Angelo Perkusich and Rafael A. Silva},
+ booktitle = {Proceedings of Simpósio Brasileiro de Redes de Computadores 2011. VII Workshop de Redes Dinâmicas e Sistemas P2P},
+ pages = {131--146},
+ volume = {1},
+ month = {5},
+ url = {\murl{http://sbrc2011.facom.ufms.br/files/workshops/wp2p/ST04_1.pdf}},
+ note = {\murl{http://sbrc2011.facom.ufms.br/files/workshops/wp2p/ST04_1.pdf}}
+}
+
+@InProceedings{leandro-Globecom-2011,
+ title = {Multimedia Content Distribution of Real Time Controlled and
+Non-reliable Datagrams Between Peers},
+ year = {2011},
+ author = {Leandro Melo de Sales and Hyggo Oliveira and Angelo Perkusich},
+ booktitle = {Proceedings of IEEE Globecom 2011. 2nd IEEE Workshop on Multimedia
+Communications \& Services},
+ pages = {131--146},
+ volume = {1},
+ month = {5}
+}
+
+@MISC{RFC4960,
+  AUTHOR = {R. Stewart and J. Stone and D. Otis and K. Morneault and H. Schwarzbauer and T. Taylor and I. Rytina and M. Kalla and L. Zhang and V. Paxson},
+  TITLE = {{S}tream {C}ontrol {T}ransmission {P}rotocol ({SCTP})},
+  JOURNAL = {IETF Online RFC},
+  YEAR = {2007},
+  MONTH = {9},
+  NOTE = {\murl{http://www.ietf.org/rfc/rfc4960.txt}. Último acesso: \today.}
+}
+
+@MISC{RFC1,
+  AUTHOR = {Steve Crocker},
+  TITLE = {Host Software},
+  JOURNAL = {IETF Online RFC},
+  YEAR = {1969},
+  MONTH = {4},
+  NOTE = {\murl{http://www.ietf.org/rfc/rfc1.txt}. Último acesso: \today.}
+}
+
+@MISC{RFC2365,
+  AUTHOR = {D. Meyer},
+  TITLE = {Administratively Scoped IP Multicast},
+  JOURNAL = {IETF Online RFC},
+  YEAR = {1998},
+  MONTH = {7},
+  NOTE = {\murl{http://www.ietf.org/rfc/rfc2365.txt}. Último acesso: \today.}
+}
+
+@MISC{RFC2119,
+  AUTHOR = {S. Bradner},
+  TITLE = {Key words for use in RFCs to Indicate Requirement Levels},
+  JOURNAL = {IETF Online RFC},
+  YEAR = {1997},
+  MONTH = {3},
+  NOTE = {\murl{http://www.ietf.org/rfc/rfc2119.txt}. Último acesso: \today.}
+}
+
+@MISC{RFC4086,
+  AUTHOR = {D. Eastlake and J. Schiller and S. Crocker},
+  TITLE = {Randomness Requirements for Security},
+  JOURNAL = {IETF Online RFC},
+  YEAR = {2005},
+  MONTH = {3},
+  NOTE = {\murl{http://www.ietf.org/rfc/rfc4086.txt}. Último acesso: \today.}
+}
+
+@MISC{RFC3448,
+  AUTHOR = {M. Handley and S. Floyd and J. Padhye and J. Widmer},
+  TITLE = {TCP Friendly Rate Control (TFRC): Protocol Specification},
+  JOURNAL = {IETF Online RFC},
+  YEAR = {2003},
+  MONTH = {1},
+  NOTE = {\murl{http://www.ietf.org/rfc/rfc3448.txt}. Último acesso: \today.}
+}
+
+@article{CONG:Floyd00:TFRC:art,
+    abstract = {{This paper proposes a mechanism for equation-based congestion
+control for unicast traffic. Most best-effort traffic in the current Internet is
+well-served by the dominant transport protocol, TCP. However, traffic such as
+best-effort unicast streaming multimedia could find use for a TCP-friendly
+congestion control mechanism that refrains from reducing the sending rate in
+half in response to a single packet drop. With our mechanism, the sender
+explicitly adjusts its sending rate as a function of the measured rate of loss
+events, where a loss event consists of one or more packets dropped within a
+single round-trip time. We use both simulations and experiments over the
+Internet to explore performance. We consider equation-based congestion control a
+promising avenue of development for congestion control of multicast traffic, and
+so an additional motivation for this work is to lay a sound basis for the
+further development of multicast congestion control.}},
+    author = {Floyd, Sally and Handley, Mark and Padhye, Jitendra and Widmer,
+J\"org},
+    citeulike-article-id = {1413406},
+    citeulike-linkout-0 = {http://www.icir.org/tfrc/tcp-friendly.ps},
+    doi = {10.1145/347057.347397},
+    journal = {ACM SIGCOMM Computer Communication Review},
+    keywords = {aimd, bibtex-import, congestion, control, discounting, dumbbell,
+dummynet, end-to-end, equation-based, ewma, history, multicast, ns-2, reno,
+slow, start, tcp, tfrc},
+    month = oct,
+    number = {4},
+    pages = {43--56},
+    posted-at = {2007-06-26 14:07:22},
+    priority = {0},
+    title = {Equation-{B}ased {C}ongestion {C}ontrol for {U}nicast
+{A}pplications},
+    url = {http://www.icir.org/tfrc/tcp-friendly.ps},
+    volume = {30},
+    year = {2000}
+}
+
+@inproceedings{Padhye98model,
+    abstract = {{In this paper we develop a simple analytic characterization of
+the steady state throughput, as a function of loss rate and round trip time for
+a bulk transfer TCP flow, i.e., a flow with an unlimited amount of data to send.
+Unlike the models in [6, 7, 10], our model captures not only the behavior of
+TCP's fast retransmit mechanism (which is also considered in [6, 7, 10]) but
+also the effect of TCP's timeout mechanism on throughput. Our measurements
+suggest that this latter behavior is important from a modeling perspective, as
+almost all of our TCP traces contained more time-out events than fast retransmit
+events. Our measurements demonstrate that our model is able to more accurately
+predict TCP throughput and is accurate over a wider range of loss rates}},
+    address = {New York, NY, USA},
+    author = {Padhye, Jitendra and Firoiu, Victor and Towsley, Don and Kurose,
+Jim},
+    booktitle = {SIGCOMM '98: Proceedings of the ACM SIGCOMM '98 conference on
+Applications, technologies, architectures, and protocols for computer
+communication},
+    citeulike-article-id = {232662},
+    doi = {10.1145/285237.285291},
+    keywords = {congestion, tcp},
+    pages = {303--314},
+    pdf = {d:\rewaskar\_backup\acad\rtt\tcp\_modeling\padhye\_model.pdf},
+    posted-at = {2005-07-05 06:12:55},
+    priority = {0},
+    publisher = {ACM Press},
+    title = {{Modeling TCP throughput: a simple model and its empirical
+validation}},
+    year = {1998}
+}
+
+@article{Sangtae2008,
+ author = {Ha, Sangtae and Rhee, Injong and Xu, Lisong},
+ title = {CUBIC: a new TCP-friendly high-speed TCP variant},
+ journal = {SIGOPS Oper. Syst. Rev.},
+ volume = {42},
+ issue = {5},
+ month = {July},
+ year = {2008},
+ issn = {0163-5980},
+ pages = {64--74},
+ numpages = {11},
+ url = {http://doi.acm.org/10.1145/1400097.1400105},
+ doi = {http://doi.acm.org/10.1145/1400097.1400105},
+ acmid = {1400105},
+ publisher = {ACM},
+ address = {New York, NY, USA}
+}
+
+@article{Low:2002:UTV:506147.506152,
+ author = {Low, Steven H. and Peterson, Larry L. and Wang, Limin},
+ title = {Understanding TCP Vegas: a duality model},
+ journal = {J. ACM},
+ volume = {49},
+ issue = {2},
+ month = {March},
+ year = {2002},
+ issn = {0004-5411},
+ pages = {207--235},
+ numpages = {29},
+ url = {http://doi.acm.org/10.1145/506147.506152},
+ doi = {http://doi.acm.org/10.1145/506147.506152},
+ acmid = {506152},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {Persistent congestion, REM, TCP Vegas, TCP congestion control}
+}
+
+@MISC{RFC3649,
+  AUTHOR = {Sally Floyd},
+  TITLE = {HighSpeed TCP for Large Congestion Windows},
+  JOURNAL = {IETF Online RFC},
+  YEAR = {2003},
+  MONTH = {12},
+  NOTE = {\murl{http://www.ietf.org/rfc/rfc3649.txt}. Último acesso: \today.}
+}
+
+@INPROCEEDINGS{4146841,
+author={Tan, K. and Song, J. and Zhang, Q. and Sridharan, M.},
+booktitle={INFOCOM 2006. 25th IEEE International Conference on Computer
+Communications. Proceedings},
+title={A Compound TCP Approach for High-Speed and Long Distance Networks},
+year={2006},
+month={april },
+volume={},
+number={},
+pages={1 -12},
+keywords={},
+doi={10.1109/INFOCOM.2006.188},
+ISSN={0743-166X}
+}
+
+@INPROCEEDINGS{5472999,
+author={Abdeljaouad, I. and Rachidi, H. and Fernandes, S. and Karmouch, A.},
+booktitle={Communications (QBSC), 2010 25th Biennial Symposium on},
+title={Performance analysis of modern TCP variants: A comparison of Cubic,
+Compound and New Reno},
+year={2010},
+month={may},
+volume={},
+number={},
+pages={80 -83},
+keywords={TCP implementations;TCP traffic;TCP variants;cubic over wired
+links;inter-protocol fairness;intra-protocol fairness;reliable
+communication;reverse traffic;transport protocol;telecommunication network
+reliability;telecommunication traffic;transport protocols;},
+doi={10.1109/BSC.2010.5472999},
+ISSN={}
+}
+
+@INPROCEEDINGS{Webster93anobjective,
+    author = {Arthur A. Webster and Coleen T. Jones and Margaret H. Pinson and
+Stephen D. Voran and Stephen Wolf},
+    title = {An Objective Video Quality Assessment System Based on Human
+Perception},
+    booktitle = {in SPIE Human Vision, Visual Processing, and Digital Display
+IV},
+    year = {1993},
+    pages = {15--26}
+}
+
+@MISC{RFC5166,
+  AUTHOR = {Sally Floyd},
+  TITLE = {Metrics for the Evaluation of Congestion Control Mechanisms},
+  JOURNAL = {IETF Online RFC},
+  YEAR = {2008},
+  MONTH = {3},
+  NOTE = {\murl{http://www.ietf.org/rfc/rfc5166.txt}. Último acesso: \today.}
+}
+
+@MISC{RFC2326,
+  AUTHOR = {H. Schulzrinne and A. Rao and R. Lanphier},
+  TITLE = {Real Time Streaming Protocol (RTSP)},
+  JOURNAL = {IETF Online RFC},
+  YEAR = {1998},
+  MONTH = {4},
+  NOTE = {\murl{http://www.ietf.org/rfc/rfc2326.txt}. Último acesso: \today.}
+}
+
+@ARTICLE{819167,
+author={Almeroth, K.C.},
+journal={Network, IEEE},
+title={The evolution of multicast: from the MBone to interdomain multicast to
+Internet2 deployment},
+year={2000},
+month={jan/feb},
+volume={14},
+number={1},
+pages={10 -20},
+keywords={Internet service;Internet2 deployment;Internet2
+networks;MBone;Multicast Backbone;commodity Internet;experimental
+service;interdomain multicast;interdomain multicast routing
+protocols;intradomain multicast routing protocols;multicast
+communication;network service providers;protocols;research community;standards
+groups;Internet;multicast communication;telecommunication network
+routing;transport protocols;},
+doi={10.1109/65.819167},
+ISSN={0890-8044}}
+
+@INPROCEEDINGS{4579599,
+author={Jeng-Yuh Chang and Xiao Su},
+booktitle={Networking, Architecture, and Storage, 2008. NAS '08. International
+Conference on},
+title={An Evaluation of Transport Protocols in Peer-to-Peer Media Streaming},
+year={2008},
+month={june},
+volume={},
+number={},
+pages={241 -247},
+keywords={P2P architecture;PlanetLab;TCP;UDP;peer-to-peer
+architecture;peer-to-peer media streaming;transport protocols;media
+streaming;peer-to-peer computing;transport protocols;},
+doi={10.1109/NAS.2008.46},
+ISSN={}}
+
+@MISC{RFC2327,
+  AUTHOR = {M. Handley and V. Jacobson},
+  TITLE = {SDP: Session Description Protocol},
+  JOURNAL = {IETF Online RFC},
+  YEAR = {1998},
+  MONTH = {4},
+  NOTE = {\murl{http://www.ietf.org/rfc/rfc2327.txt}. Último acesso: \today.}
+}
+
+@MISC{bernardini2011,
+  AUTHOR = {Bernardini, Riccardo and Rinaldo, Roberto and Fabbro,
+Roberto},
+  TITLE = {{Peer-to-Peer} {Epi-Transport} Protocol},
+  JOURNAL = {IETF Online Draft},
+  YEAR = {2011},
+  MONTH = {7},
+  NOTE = {\murl{http://tools.ietf.org/html/draft-bernardini-ppetp-02}. Último
+acesso: \today.}
+}
+
+@MISC{grishchenko2011,
+  AUTHOR = {V. Grishchenko and A. Bakker},
+  TITLE = {The Generic Multiparty Transport Protocol (swift)},
+  JOURNAL = {IETF Online Draft},
+  YEAR = {2011},
+  MONTH = {7},
+  NOTE = {\murl{http://tools.ietf.org/id/draft-grishchenko-ppsp-swift-02.txt}.
+Último acesso: \today.}
+}
+
+@MISC{grishchenko2011,
+  AUTHOR = {V. Grishchenko and A. Bakker},
+  TITLE = {The Generic Multiparty Transport Protocol (swift)},
+  JOURNAL = {IETF Online Draft},
+  YEAR = {2011},
+  MONTH = {7},
+  NOTE = {\murl{http://tools.ietf.org/id/draft-grishchenko-ppsp-swift-02.txt}.
+Último acesso: \today.}
+}
+
+@MISC{shalunov2011,
+  AUTHOR = {S. Shalunov and G. Hazel and J. Iyengar and M. Kuehlewind},
+  TITLE = {Low Extra Delay Background Transport ({LEDBAT})},
+  JOURNAL = {IETF Online Draft},
+  YEAR = {2011},
+  MONTH = {10},
+  NOTE = {\murl{http://tools.ietf.org/id/draft-ietf-ledbat-congestion-09.txt}.
+Último acesso: \today.}
+}
+
+@MISC{arcieri2004,
+  AUTHOR = {A. Arcieri},
+  TITLE = {Peer Distributed Transfer Protocol},
+  JOURNAL = {IETF Online Draft},
+  YEAR = {2004},
+  MONTH = {7},
+  NOTE = {\murl{ftp://ftp.good.net/dl/bd/convention.cdroms/defcon12/Arcieri/draft-arcieri-peer-distributed-transfer-protocol.txt}.
+Último acesso: \today.}
+}
+
+@INPROCEEDINGS{5061910,
+author={Gopalakrishnan, V. and Bhattacharjee, B. and Ramakrishnan, K.K. and Jana, R. and Srivastava, D.},
+booktitle={INFOCOM 2009, IEEE},
+title={CPM: Adaptive Video-on-Demand with Cooperative Peer Assists and Multicast},
+year={2009},
+month={april},
+volume={},
+number={},
+pages={91 -99},
+keywords={CPM;cooperative peer assists;multicast;peer-to-peer schemes;synthetic parameters;video-on-demand;multicast communication;peer-to-peer computing;video on demand;},
+doi={10.1109/INFCOM.2009.5061910},
+ISSN={0743-166X}
+}
+
+@INPROCEEDINGS{5962598,
+author={Kulatunga, C. and Kandavanam, G. and Rana, A.I. and Balasubramaniam, S. and Botvich, D.},
+booktitle={Communications (ICC), 2011 IEEE International Conference on},
+title={HySAC: A Hybrid Delivery System with Adaptive Content Management for IPTV Networks},
+year={2011},
+month={june},
+volume={},
+number={},
+pages={1 -5},
+keywords={HySAC;IPTV networks;Internet protocol television services;P2P mechanisms;adaptive content management;apple TV;google TV;hybrid delivery system;multimedia services;peer-to-peer;resource availability;IPTV;content management;multimedia systems;peer-to-peer computing;},
+doi={10.1109/icc.2011.5962598},
+ISSN={1550-3607}
+}
+
+@MISC{RFC5245,
+  AUTHOR = {J. Rosenberg},
+  TITLE = {Interactive Connectivity Establishment (ICE): A Protocol for Network
+Address Translator (NAT) Traversal for Offer/Answer Protocols},
+  JOURNAL = {IETF Online RFC},
+  YEAR = {2010},
+  MONTH = {4},
+  NOTE = {\murl{http://www.ietf.org/rfc/rfc5245.txt}. Último acesso: \today.}
+}
+
+@ARTICLE{4604753,
+author={Honggang Zhang and Neglia, G. and Towsley, D. and Presti, G.},
+journal={Selected Areas in Communications, IEEE Journal on},
+title={Stability and Efficiency of Unstructured File Sharing Networks},
+year={2008},
+month={9},
+volume={26},
+number={7},
+pages={1284--1294},
+keywords={dynamic stability;star network;tit-for-tat strategy;transport
+protocol;unstructured P2P file sharing application;unstructured file sharing
+game;unstructured file sharing network;game theory;peer-to-peer
+computing;transport protocols;},
+doi={10.1109/JSAC.2008.080925},
+ISSN={0733-8716}
+}
+
+@INPROCEEDINGS{5693827,
+author={D'Acunto, L. and Andrade, N. and Pouwelse, J. and Sips, H.},
+booktitle={Multimedia (ISM), 2010 IEEE International Symposium on},
+title={Peer Selection Strategies for Improved QoS in Heterogeneous
+BitTorrent-Like VoD Systems},
+year={2010},
+month={12},
+volume={},
+number={},
+pages={89--96},
+keywords={P2P protocols;QoS;bandwidth resources;beterogeneous BitTorrent-like
+VoD systems;downloading rates;give-to-get video protocol;on-demand video
+streaming;peer selection;random nodes;video playback rate;peer-to-peer
+computing;protocols;quality of service;video on demand;video streaming;},
+doi={10.1109/ISM.2010.22}
+}
+
+@INPROCEEDINGS{1197551,
+author={Zeadally, S. and Jia Lu},
+booktitle={Information Technology: Coding and Computing [Computers and
+Communications], 2003. Proceedings. ITCC 2003. International Conference on},
+title={A performance comparison of communication APIs on Solaris and Windows
+operating systems},
+year={2003},
+month={4},
+volume={},
+number={},
+pages={336--340},
+keywords={JVM architecture; Java sockets; Java virtual machine; PC platform;
+RMI; Solaris 8; Windows NT 4.0; Winsock/BSD; application programming interfaces;
+communication API; latency overheads; operating systems; performance comparison;
+remote method invocation; throughput; Java; application program interfaces;
+delays; network operating systems; software performance evaluation;},
+doi={10.1109/ITCC.2003.1197551}
+}
+
+@ARTICLE{1250586,
+author={Vakali, A. and Pallis, G.},
+journal={Internet Computing, IEEE},
+title={Content delivery networks: status and trends},
+year={2003},
+month={nov.-dec.},
+volume={7},
+number={6},
+pages={68--74},
+keywords={CDN architecture; Web objects; Web performance; content delivery
+network; disperse flash crowd events; network performance; proxy servers; static
+data; Internet; cache storage; content management; network servers;},
+doi={10.1109/MIC.2003.1250586},
+ISSN={1089-7801}
+}
+
+@ARTICLE{4251077,
+author={Bo Li and Hao Yin},
+journal={Communications Magazine, IEEE},
+title={Peer-to-peer live video streaming on the internet: issues, existing
+approaches, and challenges [Peer-to-Peer Multimedia Streaming]},
+year={June},
+volume={45},
+number={6},
+pages={94-99},
+keywords={Internet;peer-to-peer computing;video streaming;Coolstreaming;Internet
+video streaming;P2P-based streaming technology;inherent instability;peer-to-peer
+live video streaming systems;Bandwidth;Computer
+architecture;Degradation;Internet;Large-scale systems;Multicast protocols;Peer
+to peer computing;Streaming media;Technological innovation;Web server},
+doi={10.1109/MCOM.2007.374425},
+ISSN={0163-6804},}
+
+@ARTICLE{1597229,
+author={Veloso, E. and Almeida, V. and Meira, W. and Bestavros, A. and Shudong
+Jin},
+journal={Networking, IEEE/ACM Transactions on}, title={A hierarchical
+characterization of a live streaming media workload},
+year={Feb.},
+volume={14},
+number={1},
+pages={133-146},
+keywords={Internet;multimedia communication;Internet streaming;Zipf-like
+profile;hierarchical characterization;live streaming media workload;Character
+generation;Computer science;Digital cameras;Feeds;Helium;Internet;Streaming
+media;TV broadcasting;Internet;live streaming;measurement;multimedia;workload
+characterization},
+doi={10.1109/TNET.2005.863709},
+ISSN={1063-6692},}
+
+@INPROCEEDINGS{5954942,
+author={Aurelius, A. and Lagerstedt, C. and Kihl, M.},
+booktitle={Broadband Multimedia Systems and Broadcasting (BMSB), 2011 IEEE
+International Symposium on}, title={Streaming media over the Internet: Flow
+based analysis in live access networks},
+year={June},
+pages={1-6},
+keywords={Internet;media streaming;telecommunication traffic;Internet;Swedish
+P2P music service Spotify;Swedish P2P video service Voddler;flow based
+analysis;live access fiber-to-the-home network;live access network;multimedia
+service delivery;multimedia streaming service;streaming media;traffic
+measurement;traffic volume;Databases;IP networks;Internet;Music;Optical fiber
+networks;Protocols;Streaming media;Internet TV;TCP connections;Traffic
+monitoring;VoD;multimedia streaming},
+doi={10.1109/BMSB.2011.5954942},
+ISSN={2155-5044},}
+
+@INPROCEEDINGS{4357727,
+author={Morris, B. and Trivedi, M.},
+booktitle={Intelligent Transportation Systems Conference, 2007. ITSC 2007.
+IEEE}, title={Real-Time Video Based Highway Traffic Measurement and Performance
+Monitoring},
+year={30 2007-Oct. 3},
+pages={59-64},
+keywords={computerised monitoring;road traffic;traffic engineering
+computing;video streaming;information tracking;performance monitoring;real-time
+video based highway traffic measurement;traffic flow parameters;vehicles
+classification;vehicles tracking;video streams;Computer vision;Condition
+monitoring;Detectors;Event detection;Object detection;Real time systems;Road
+transportation;Road vehicles;Traffic control;Vehicle detection},
+doi={10.1109/ITSC.2007.4357727},}
+
+@ARTICLE{4644134,
+author={Won, Y.J. and Hong, J.W.-K. and Mi-Jung Choi and Chan-kyu Hwang and
+Jae-Hyoung Yoo},
+journal={Communications Magazine, IEEE},
+title={Measurement of download and play and streaming IPTV traffic},
+year={October},
+volume={46},
+number={10},
+pages={154-161},
+keywords={IP networks;digital television;multicast communication;multimedia
+communication;quality of service;telecommunication traffic;P2P-style data
+bartering;QoS-controlled streaming IPTV;bandwidth demand estimation
+method;broadband subscribers;high-bandwidth broadband access;multicast data
+bartering;multimedia delivery methods;network traffic;network-centric
+quality;quality of experience;telecommunication service
+providers;video-on-demand service;Bandwidth;Costs;Delay;IPTV;Large-scale
+systems;Multicast protocols;Quality of service;Streaming media;Telecommunication
+traffic;Traffic control},
+doi={10.1109/MCOM.2008.4644134},
+ISSN={0163-6804},}
+
+@ARTICLE{5712185,
+author={Chuan Wu and Baochun Li and Shuqiao Zhao},
+journal={Networking, IEEE/ACM Transactions on}, title={On Dynamic Server
+Provisioning in Multichannel P2P Live Streaming},
+year={Oct.},
+volume={19},
+number={5},
+pages={1317-1330},
+keywords={Internet;peer-to-peer computing;quality of service;Internet service
+provider awareness;channel priority;dynamic server provisioning;multichannel P2P
+live streaming;peer instability;server capacity;streaming quality;time-varying
+peer upload bandwidth availability;Ash;Bandwidth;Correlation;Peer to peer
+computing;Protocols;Servers;Time series analysis;Distributed
+applications;multiple channels;peer-to-peer (P2P) streaming;server bandwidth
+provisioning},
+doi={10.1109/TNET.2011.2107563},
+ISSN={1063-6692},}
+
+@ARTICLE{4265615,
+author={Yanping Zhao and Eager, D.L. and Vernon, M.K.},
+journal={Networking, IEEE/ACM Transactions on},
+title={Network Bandwidth Requirements for Scalable On-Demand Streaming},
+year={Aug.},
+volume={15},
+number={4},
+pages={878-891},
+keywords={bandwidth allocation;broadcasting;media streaming;multicast
+protocols;real-time systems;telecommunication network topology;trees
+(mathematics);client site location;client start-up delay;multicast delivery
+trees;network bandwidth;network topology;on-demand streaming;server
+bandwidth;streaming protocols;true broadcast channel;Bandwidth;Delay;Digital
+multimedia broadcasting;File servers;Multicast algorithms;Multicast
+protocols;Multimedia communication;Network servers;Network topology;Streaming
+media;Multicast;multimedia;on-demand streaming;performance evaluation;periodic
+broadcast;scalable delivery},
+doi={10.1109/TNET.2007.893886},
+ISSN={1063-6692},}
+
+@inproceedings{Huang:2008:UHC:1496046.1496064,
+ author = {Huang, Cheng and Wang, Angela and Li, Jin and Ross, Keith W.},
+ title = {Understanding hybrid CDN-P2P: why limelight needs its own Red Swoosh},
+ booktitle = {Proceedings of the 18th International Workshop on Network and Operating Systems Support for Digital Audio and Video},
+ series = {NOSSDAV '08},
+ year = {2008},
+ isbn = {978-1-60558-157-6},
+ location = {Braunschweig, Germany},
+ pages = {75--80},
+ numpages = {6},
+ url = {http://doi.acm.org/10.1145/1496046.1496064},
+ doi = {10.1145/1496046.1496064},
+ acmid = {1496064},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+}
+
+
+@ARTICLE{4012578,
+author={Buyya, R. and Pathan, A.-M.K. and Broberg, J. and Tari, Z.},
+journal={Distributed Systems Online, IEEE}, title={A Case for Peering of Content Delivery Networks},
+year={Oct.},
+volume={7},
+number={10},
+pages={3-3},
+keywords={Internet;file servers;peer-to-peer computing;resource allocation;scheduling;CDN providers;CSDN;SLA negotiation;SOA-based system;VO scheduler;Web server facilities;content-service delivery networks;quality of service;resource allocation;service-oriented architecture;virtual organization model;Art;Bandwidth;Costs;Internetworking;Maintenance;Network servers;Quality of service;Scalability;Service oriented architecture;Web server;CSDN;Content and Service Delivery Networks},
+doi={10.1109/MDSO.2006.57},
+ISSN={1541-4922},}
+
+@ARTICLE{1323289,
+author={Kontothanassis, L. and Sitaraman, Ramesh and Wein, J. and Hong, D. and
+Kleinberg, R. and Mancuso, B. and Shaw, D. and Stodolsky, D.},
+journal={Proceedings of the IEEE},
+title={A transport layer for live streaming in a content delivery network},
+year={Sept.},
+volume={92},
+number={9},
+pages={1408-1419},
+keywords={Internet;broadband networks;computer network reliability;transport
+protocols;Akamai;Internet streaming;broadband technologies;communications
+media;content delivery network;delivered content quality;media streaming;network
+reliability;network scalability;transport layer;Costs;Delay;IP
+networks;Intelligent networks;Internet;Paper technology;Scalability;Space
+technology;Streaming media;Web server;Content delivery;fault
+tolerance;performance;streaming},
+doi={10.1109/JPROC.2004.832956},
+ISSN={0018-9219},}
+
+@inproceedings{Stutzbach:2006:UCP:1177080.1177105,
+ author = {Stutzbach, Daniel and Rejaie, Reza},
+ title = {Understanding churn in peer-to-peer networks},
+ booktitle = {Proceedings of the 6th ACM SIGCOMM conference on Internet
+measurement},
+ series = {IMC '06},
+ year = {2006},
+ isbn = {1-59593-561-4},
+ location = {Rio de Janeiro, Brazil},
+ pages = {189--202},
+ numpages = {14},
+ url = {http://doi.acm.org/10.1145/1177080.1177105},
+ doi = {10.1145/1177080.1177105},
+ acmid = {1177105},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {Gnutella, bitTorrent, churn, kad, peer-to-peer, session length,
+uptime},
+}
+
+@ARTICLE{5680894,
+author={Zhenyu Li and Gaogang Xie and Kai Hwang and Zhongcheng Li},
+journal={Parallel and Distributed Systems, IEEE Transactions on},
+title={Churn-Resilient Protocol for Massive Data Dissemination in P2P Networks},
+year={2011},
+month={aug. },
+volume={22},
+number={8},
+pages={1342 -1349},
+keywords={Clocks;Delay;Distributed databases;IP networks;Peer to peer
+computing;Protocols;Resilience;cloud computing;information
+dissemination;peer-to-peer computing;resource allocation;CAM chord network;CRP
+enabled network;Web scale applications;churn resilient protocol;cloud computing
+services;consumer relationship management;digital content delivery;dynamic load
+balancing;epidemic tree schemes;massive data dissemination;network worm
+containment;peer-to-peer network;proximity aware P2P content delivery
+systems;proximity aware overlay design;proximity aware overlay network;P2P
+networks;cloud computing.;data dissemination;distributed systems;multicast
+algorithms;},
+doi={10.1109/TPDS.2011.15},
+ISSN={1045-9219},}
+
+@INPROCEEDINGS{5735831,
+author={Carofiglio, G. and Muscariello, L. and Rossi, D. and Testa, C.},
+booktitle={Local Computer Networks (LCN), 2010 IEEE 35th Conference on},
+title={A hands-on assessment of transport protocols with lower than best effort
+priority},
+year={Oct.},
+pages={8-15},
+keywords={telecommunication congestion control;telecommunication
+services;transport protocols;BitTorrent client;LEDBAT performance;LEDBAT
+transport;TCP-LP;TCP-NICE;congestion control algorithm;hands-on
+assessment;interprotocol scenario;intraprotocol scenario;lower than best effort
+transport protocol;packet level simulation;Bandwidth;Delay;Electric
+breakdown;Protocols;Sensitivity analysis;Throughput},
+doi={10.1109/LCN.2010.5735831},
+ISSN={0742-1303},}
+
+@INPROCEEDINGS{5560080,
+author={Rossi, D. and Testa, C. and Valenti, S. and Muscariello, L.},
+booktitle={Computer Communications and Networks (ICCCN), 2010 Proceedings of
+19th International Conference on},
+title={LEDBAT: The New BitTorrent Congestion Control Protocol},
+year={Aug.},
+pages={1-6},
+keywords={Internet;telecommunication congestion control;transport
+protocols;BitTorrent congestion control protocol;Internet
+applications;LEDBAT;TCP;low extra delay background transport;packet level
+simulations;transport layer;Delay;Internet;Loss
+measurement;Protocols;Receivers;Switches},
+doi={10.1109/ICCCN.2010.5560080},
+ISSN={1095-2055},}
+
+@article{Dukkipati:2006:WFT:1111322.1111336,
+ author = {Dukkipati, Nandita and McKeown, Nick},
+ title = {Why flow-completion time is the right metric for congestion control},
+ journal = {SIGCOMM Comput. Commun. Rev.},
+ issue_date = {January 2006},
+ volume = {36},
+ number = {1},
+ month = jan,
+ year = {2006},
+ issn = {0146-4833},
+ pages = {59--62},
+ numpages = {4},
+ url = {http://doi.acm.org/10.1145/1111322.1111336},
+ doi = {10.1145/1111322.1111336},
+ acmid = {1111336},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+}
+
+@inproceedings{Dukkipati:2005:PSF:2103175.2103204,
+ author = {Dukkipati, Nandita and Kobayashi, Masayoshi and Zhang-Shen, Rui and
+McKeown, Nick},
+ title = {Processor sharing flows in the internet},
+ booktitle = {Proceedings of the 13th international conference on Quality of
+Service},
+ series = {IWQoS'05},
+ year = {2005},
+ isbn = {3-540-26294-6, 978-3-540-26294-7},
+ location = {Passau, Germany},
+ pages = {271--285},
+ numpages = {15},
+ url = {http://dx.doi.org/10.1007/11499169_22},
+ doi = {10.1007/11499169_22},
+ acmid = {2103204},
+ publisher = {Springer-Verlag},
+ address = {Berlin, Heidelberg},
+}
+
+@ARTICLE{4389799,
+author={Balakrishnan, H. and Dukkipati, N. and McKeown, N. and Tomlin, C.J.},
+journal={Communications Letters, IEEE},
+title={Stability Analysis of Explicit Congestion Control Protocols},
+year={October},
+volume={11},
+number={10},
+pages={823-825},
+keywords={Lyapunov methods;delays;linear systems;protocols;queueing
+theory;stability;telecommunication congestion control;time-varying
+systems;Lyapunov tools;equilibrium queue lengths;explicit congestion control
+protocol;global stability;stability analysis;switched linear system model;time
+delay;Aerodynamics;Aggregates;Analytical models;Delay;Linear systems;Predictive
+models;Protocols;Queueing analysis;Stability analysis;Switched systems},
+doi={10.1109/LCOMM.2007.070076},
+ISSN={1089-7798},}
+
+@ARTICLE{464716,
+author={Brakmo, L.S. and Peterson, L.L.},
+journal={Selected Areas in Communications, IEEE Journal on}, title={TCP Vegas:
+end to end congestion avoidance on a global Internet},
+year={Oct},
+volume={13},
+number={8},
+pages={1465-1480},
+keywords={Internet;Unix;performance evaluation;telecommunication congestion
+control;transport protocols;BSD Unix;Reno distribution;TCP Vegas;end to end
+congestion avoidance;experimental performance stud;global
+Internet;measurements;simulations;throughput;Adaptive control;Bandwidth;Computer
+science;Internet;Jacobian matrices;Programmable
+control;Protocols;TCPIP;Testing;Throughput},
+doi={10.1109/49.464716},
+ISSN={0733-8716},}
+
+@article{Vinodhini2012,
+	author = {M. Vinodhini and P. Arockia Jansi Rani},
+	title = {Article: Usage of Variable Structure Congestion Control Protocol (VCP) in Buffer Overflow Attack Blocker},
+	journal = {International Journal of Computer Applications},
+	year = {2012},
+	volume = {39},
+	number = {8},
+	pages = {46-52},
+	month = {February},
+	note = {Published by Foundation of Computer Science, New York, USA}
+}
+
+@inproceedings{Zhang:2008:FCV:1424657.1424685,
+ author = {Zhang, Huixiang and Dai, Guanzhong and Yao, Lei and Zhou, Hairui},
+ title = {Fast Convergence of Variable-Structure Congestion Control Protocol with Explicit Precise Feedback},
+ booktitle = {Proceedings of the 2nd annual international workshop on Frontiers in Algorithmics},
+ series = {FAW '08},
+ year = {2008},
+ isbn = {978-3-540-69310-9},
+ location = {Changsha, China},
+ pages = {264--275},
+ numpages = {12},
+ url = {http://dx.doi.org/10.1007/978-3-540-69311-6_28},
+ doi = {10.1007/978-3-540-69311-6_28},
+ acmid = {1424685},
+ publisher = {Springer-Verlag},
+ address = {Berlin, Heidelberg},
+} 
+
+@incollection{Huixiang2008,
+year={2008},
+isbn={978-3-540-69310-9},
+booktitle={Frontiers in Algorithmics},
+volume={5059},
+series={Lecture Notes in Computer Science},
+editor={Preparata, FrancoP. and Wu, Xiaodong and Yin, Jianping},
+doi={10.1007/978-3-540-69311-6_28},
+title={Fast Convergence of Variable-Structure Congestion Control Protocol with Explicit Precise Feedback},
+url={http://dx.doi.org/10.1007/978-3-540-69311-6_28},
+publisher={Springer Berlin Heidelberg},
+author={Zhang, Huixiang and Dai, Guanzhong and Yao, Lei and Zhou, Hairui},
+pages={264--275}
+}
+
+
+@INPROCEEDINGS{5260888,
+author={Xing Guowen and Xue Shengjun},
+booktitle={New Trends in Information and Service Science, 2009. NISS '09. International Conference on},
+title={Study on Variable-Structure Congestion Control Protocol},
+year={30 2009-July 2},
+pages={766-769},
+keywords={telecommunication congestion control;transport protocols;VCP protocol;XCP;explicit control protocol;variable-structure congestion control protocol;Bandwidth;Computational modeling;Computer simulation;IP networks;Information science;Internet;Negative feedback;Protocols;Software;Throughput;XCP;congestion control;variable-structure congestion control protocol(VCP)},
+doi={10.1109/NISS.2009.19},}
+
+@ARTICLE{4460574,
+author={Yong Xia and Subramanian, L. and Stoica, I. and Kalyanaraman, S.},
+journal={Networking, IEEE/ACM Transactions on}, title={One More Bit is Enough},
+year={Dec.},
+volume={16},
+number={6},
+pages={1281-1294},
+keywords={bandwidth allocation;computer network management;encoding;queueing theory;telecommunication congestion control;telecommunication network routing;transport protocols;variable structure systems;AQM;ECN;TCP;XCP protocol;bandwidth allocation;encoding;network router;packet loss minimization;queueing network;variable-structure congestion control protocol;AQM;ECN;TCP;congestion control;stability},
+doi={10.1109/TNET.2007.912037},
+ISSN={1063-6692},}
+
+@INPROCEEDINGS{6386696,
+author={Xu, Hongfeng and Chen, Zhen and Chen, Rui and Cao, Junwei},
+booktitle={Networking and Distributed Computing (ICNDC), 2012 Third
+International Conference on}, title={Live Streaming with Content Centric
+Networking},
+year={Oct.},
+pages={1-5},
+keywords={Bandwidth;Computer architecture;IP
+networks;Internet;Protocols;Routing;Streaming media;Content Centric
+Networking;Future Internet Architecture;HTTP Live Streaming;Media Streaming},
+doi={10.1109/ICNDC.2012.9},
+ISSN={2165-5006},}
+
+@ARTICLE{6384450,
+author={Bari, M.F. and Chowdhury, S. and Ahmed, R. and Boutaba, R. and Mathieu,
+B.},
+journal={Communications Magazine, IEEE}, title={A survey of naming and routing
+in information-centric networks},
+year={December},
+volume={50},
+number={12},
+pages={44-53},
+keywords={Internet;telecommunication network routing;content
+distribution;content naming;content-based routing;content-centric
+model;host-oriented communication model;information exchange;information-centric
+network naming;information-centric network routing;IP networks;Information
+technology;Internet;Public key cryptography;Routing protocols;Telecommunication
+network management},
+doi={10.1109/MCOM.2012.6384450},
+ISSN={0163-6804},}
+
+@ARTICLE{6419703,
+author={Severance, C.},
+journal={Computer}, title={Van Jacobson: Content-Centric Networking},
+year={Jan.},
+volume={46},
+number={1},
+pages={11-13},
+keywords={content management;data communication;media streaming;content centric
+networking;data streaming;Content management;IP
+networks;TCPIP;ARPANET;CCN;Internet;TCP/IP architecture;Van
+Jacobson;content-centric networking;protocols;telephony},
+doi={10.1109/MC.2013.34},
+url={\murl{http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=6419703}},
+ISSN={0018-9162},}
+
+@inproceedings{Yin:2009:DDH:1631272.1631279,
+ author = {Yin, Hao and Liu, Xuening and Zhan, Tongyu and Sekar, Vyas and Qiu,
+Feng and Lin, Chuang and Zhang, Hui and Li, Bo},
+ title = {Design and deployment of a hybrid CDN-P2P system for live video
+streaming: experiences with LiveSky},
+ booktitle = {Proceedings of the 17th ACM international conference on
+Multimedia},
+ series = {MM '09},
+ year = {2009},
+ isbn = {978-1-60558-608-3},
+ location = {Beijing, China},
+ pages = {25--34},
+ numpages = {10},
+ url = {http://doi.acm.org/10.1145/1631272.1631279},
+ doi = {10.1145/1631272.1631279},
+ acmid = {1631279},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {content delivery networks, live streaming, peer-to-peer},
+}
+
+@INPROCEEDINGS{6214362,
+author={de Sales, L.M. and de Amorim Silva, R. and Almeida, H.O. and Perkusich,
+A.},
+booktitle={Wireless Communications and Networking Conference (WCNC), 2012 IEEE},
+title={Multi(Uni)cast DCCP for live content distribution with P2P support},
+year={April},
+pages={3253--3258},
+keywords={IP networks;Internet;content management;data communication;multimedia
+communication;peer-to-peer computing;radio receivers;telecommunication
+congestion control;transport protocols;IETF;Internet transport
+protocol;P2P;TCP;UDP;data sharing;live content distribution;multi(uni)cast
+DCCP;multimedia content transmission;network support;non reliable traffic
+congestion control;receiver node;Internet;Multimedia
+communication;Protocols;Receivers;Relays;Streaming media;Transmitters},
+doi={10.1109/WCNC.2012.6214362},
+ISSN={1525-3511},}
+
+@INPROCEEDINGS{leandro-icce2013,
+author={de Sales, L.M. and Almeida, H.O. and Perkusich, A. and Gorgonio, K.},
+booktitle={International Conference on Consumers Electronics (ICCE), 2013 IEEE},
+title={About Encouraging Residential Users to Share Upload
+Bandwidth with
+CDN/P2P Live Streaming Systems.},
+year={Jan},
+pages={673--674},
+keywords={IP networks;Internet;content management;data communication;multimedia
+communication;peer-to-peer computing;radio receivers;telecommunication
+congestion control;transport protocols;IETF;Internet transport
+protocol;P2P;TCP;UDP;data sharing;live content distribution;multi(uni)cast
+DCCP;multimedia content transmission;network support;non reliable traffic
+congestion control;receiver node;Internet;Multimedia
+communication;Protocols;Receivers;Relays;Streaming media;Transmitters},
+doi={10.1109/WCNC.2012.6214362},
+ISSN={1525-3511},}
+
+@INPROCEEDINGS{1203676,
+author={Chi-Chung Cheung and Man-Ching Yuen and Yip, A.C.H.},
+booktitle={Distributed Computing Systems Workshops, 2003. Proceedings. 23rd
+International Conference on}, title={Dynamic DNS for load balancing},
+year={May},
+pages={962-965},
+keywords={resource allocation;domain name service server;dynamic DNS;load
+balancing;round-robin DNS setting;Computational modeling;Embedded
+computing;Heuristic algorithms;Information technology;Load
+management;Maintenance;Round robin;Scanning probe microscopy;Web and internet
+services;Web server},
+doi={10.1109/ICDCSW.2003.1203676},}
+
+@ARTICLE{968819,
+author={Miller, B.A. and Nixon, T. and Tai, C. and Wood, M.D.},
+journal={Communications Magazine, IEEE}, title={Home networking with Universal
+Plug and Play},
+year={Dec},
+volume={39},
+number={12},
+pages={104-109},
+keywords={computer networks;home computing;microcomputer applications;open
+systems;transport protocols;TCP/IP;UPnP Forum;UPnPT technology;Universal Plug
+and Play;Web technology;device protocols;distributed open networking
+architecture;home networking;multicompany organization;personal
+computers;Automatic control;Home appliances;Home automation;Internet;Personal
+communication networks;Plugs;Simple object access protocol;TCPIP;Wireless
+LAN;XML},
+doi={10.1109/35.968819},
+ISSN={0163-6804},}
+
+@ARTICLE{939452,
+author={Cranor, C.D. and Green, M. and Kalmanek, C. and Shur, D. and Sibal, S.
+and Van der Merwe, J.E. and Sreenan, C.J.},
+journal={Internet Computing, IEEE}, title={Enhanced streaming services in a
+content distribution network},
+year={Jul/Aug},
+volume={5},
+number={4},
+pages={66-75},
+keywords={Internet;file servers;multimedia communication;naming
+services;protocols;CDN architecture;European TV content;IP content distribution
+networks;IP-based content distribution network;Internet;Portal infrastructure
+for Streaming Media;Prism architecture;Prism infrastructure;Prism-based
+stored-TV;content distribution network;content naming;high quality streaming
+media;high-quality streaming media services;network-VCR;redirection
+mechanisms;scalability;special-purpose networks;streaming services;Content
+management;Intelligent networks;Multimedia communication;Network
+servers;Portals;Satellite broadcasting;Streaming media;TV;Video on demand;Web
+server},
+doi={10.1109/4236.939452},
+ISSN={1089-7801},}
+
+@ARTICLE{4378429,
+author={Purandare, Darshan and Guha, R.},
+journal={Multimedia, IEEE Transactions on}, title={An Alliance Based Peering
+Scheme for P2P Live Media Streaming},
+year={Dec.},
+volume={9},
+number={8},
+pages={1633-1644},
+keywords={Internet;multimedia systems;peer-to-peer computing;performance
+evaluation;quality of service;telecommunication network
+reliability;telecommunication network topology;video on
+demand;CoolStreaming-DONet;Internet dynamics;P2P live media streaming;P2P
+network;alliance based peering scheme;network perturbation;node
+heterogeneity;overlay structure;peer clustering;peer organization;quality of
+service;quantitative performance evaluation;small-world network;streaming
+service reliability;suboptimal uplink utilization;swarm
+randomness;video-on-demand;Media streaming;peer-to-peer;quality of service;small
+world network;video on demand},
+doi={10.1109/TMM.2007.907453},
+ISSN={1520-9210},}
+
+@article{Lou:2012:QDD:2089085.2089089,
+ author = {Lou, Xiaosong and Hwang, Kai},
+ title = {Quality of data delivery in peer-to-peer video streaming},
+ journal = {ACM Trans. Multimedia Comput. Commun. Appl.},
+ issue_date = {February 2012},
+ volume = {8s},
+ number = {1},
+ month = {2},
+ year = {2012},
+ issn = {1551-6857},
+ pages = {12:1--12:23},
+ articleno = {12},
+ numpages = {23},
+ url = {http://doi.acm.org/10.1145/2089085.2089089},
+ doi = {10.1145/2089085.2089089},
+ acmid = {2089089},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {Peer-to-peer, Quality of service, and Queuing Model, video streaming},
+}
+
+@article{Agarwal:2007:AIG:1287576.1340418,
+ author = {Agarwal, Sachin and Singh, Jatinder Pal and Dube, Shruti},
+ title = {Analysis and implementation of Gossip-based P2P streaming with distributed incentive mechanisms for peer cooperation},
+ journal = {Adv. MultiMedia},
+ issue_date = {January 2007},
+ volume = {2007},
+ number = {1},
+ month = {4},
+ year = {2007},
+ issn = {1687-5680},
+ pages = {8:1--8:12},
+ articleno = {8},
+ numpages = {12},
+ url = {http://dx.doi.org/10.1155/2007/84150},
+ doi = {10.1155/2007/84150},
+ acmid = {1340418},
+ publisher = {Hindawi Publishing Corp.},
+ address = {New York, NY, United States},
+}
+
+@INPROCEEDINGS{Seibert2008,
+    author = {Jeff Seibert and David Zage and Sonia Fahmy and Cristina Nita-Rotaru},
+    title = {Experimental Comparison of Peer-to-Peer Streaming Overlays: An Application Perspective},
+    booktitle = {33rd IEEE Conference on Local Computer Networks (LCN)},
+    address = {Washington, DC, USA},
+    publisher = {IEEE Computer Society},
+    year = {2008},
+    month = {October},
+    pages={20-27},
+    keywords={Internet, peer-to-peer computing, telecommunication network routingInternet settings, PlanetLab wide-area experimentation platform, bandwidth capabilities, mesh-based overlay routing, multiple tree-based overlay routing, peer-to-peer streaming overlays, round trip times, stringent real time deadlines},
+    doi={10.1109/LCN.2008.4664147},
+}
+
+@ARTICLE{Xu04acdn-p2p,
+    author = {Dongyan Xu and Sunil Suresh Kulkarni and Catherine Rosenberg and Heung-keung Chai},
+    title = {A CDN-P2P hybrid architecture for cost-effective streaming media distribution},
+    journal = {Computer Networks},
+    year = {2004},
+    volume = {44},
+    pages = {353--382}
+}
+
+@INPROCEEDINGS{5062221,
+author={Chuan Wu and Baochun Li and Shuqiao Zhao},
+booktitle={INFOCOM 2009, IEEE}, title={Diagnosing Network-Wide P2P Live Streaming Inefficiencies},
+year={April},
+pages={2731-2735},
+keywords={Internet;media streaming;peer-to-peer computing;Internet;channel streaming quality;interpeer bandwidth;large-scale live peer-to-peer streaming;mesh-based P2P streaming systems;network-wide P2P live streaming diagnosis;Application software;Bandwidth;Communications Society;Computer science;IP networks;Internet;Large-scale systems;Peer to peer computing;Streaming media;Web server},
+doi={10.1109/INFCOM.2009.5062221},
+ISSN={0743-166X},}
+
+@INPROCEEDINGS{Meskovic2012,
+author={Melika Meskovic and Himzo Bajric and Mladen Kos},
+title={Content Delivery Architectures for Live Video Streaming: Hybrid CDN-P2P as the best option},
+booktitle={The Fifth International Conference on Communication Theory, Reliability, and Quality of Service},
+year={2012},
+pages={26--32},
+isbn={978-1-61208-192-2},}
+
+
+@inproceedings{Tang:2008:EPS:1792514.1792556,
+ author = {Tang, S. and Wang, H. and Van Mieghem, P.},
+ title = {The effect of peer selection with hopcount or delay constraint on peer-to-peer networking},
+ booktitle = {Proceedings of the 7th international IFIP-TC6 networking conference on AdHoc and sensor networks, wireless networks, next generation internet},
+ series = {NETWORKING'08},
+ year = {2008},
+ isbn = {3-540-79548-0, 978-3-540-79548-3},
+ location = {Singapore},
+ pages = {358--365},
+ numpages = {8},
+ url = {http://dl.acm.org/citation.cfm?id=1792514.1792556},
+ acmid = {1792556},
+ publisher = {Springer-Verlag},
+ address = {Berlin, Heidelberg},
+}
+
+
+@inproceedings{Madhyastha:2009:INP:1558977.1558987,
+ author = {Madhyastha, Harsha V. and Katz-Bassett, Ethan and Anderson, Thomas and Krishnamurthy, Arvind and Venkataramani, Arun},
+ title = {iPlane Nano: path prediction for peer-to-peer applications},
+ booktitle = {Proceedings of the 6th USENIX symposium on Networked systems design and implementation},
+ series = {NSDI'09},
+ year = {2009},
+ location = {Boston, Massachusetts},
+ pages = {137--152},
+ numpages = {16},
+ url = {http://dl.acm.org/citation.cfm?id=1558977.1558987},
+ acmid = {1558987},
+ publisher = {USENIX Association},
+ address = {Berkeley, CA, USA},
+}
+
+@inproceedings{Agarwal:2006:GBS:1193215.1194219,
+ author = {Agarwal, Sachin and Dube, Shruti},
+ title = {Gossip Based Streaming with Incentives for Peer Collaboration},
+ booktitle = {Proceedings of the Eighth IEEE International Symposium on Multimedia},
+ series = {ISM '06},
+ year = {2006},
+ isbn = {0-7695-2746-9},
+ pages = {629--636},
+ numpages = {8},
+ url = {http://dx.doi.org/10.1109/ISM.2006.81},
+ doi = {10.1109/ISM.2006.81},
+ acmid = {1194219},
+ publisher = {IEEE Computer Society},
+ address = {Washington, DC, USA},
+} 
+
+@ARTICLE{4539702,
+author={Hao Yin and Chuang Lin and Qian Zhang and Zhijia Chen and Dapeng Wu},
+journal={Circuits and Systems for Video Technology, IEEE Transactions on}, title={TrustStream: A Secure and Scalable Architecture for Large-Scale Internet Media Streaming},
+year={2008},
+month={12},
+volume={18},
+number={12},
+pages={1692-1702},
+keywords={Internet;bandwidth allocation;media streaming;peer-to-peer computing;quality of service;telecommunication network topology;telecommunication security;CDN-featured single-source multi-receiver P2P network;P2P topology;TrustStream;bandwidth utilization;content distribution network;large-scale Internet media streaming;multisource multireceiver P2P framework;quality of service;scalable architecture;telecommunication security;Heterogeneity;QoS;Scalability;Security;Streaming Media;scalability;security;streaming Media},
+doi={10.1109/TCSVT.2008.927000},
+ISSN={1051-8215},}
+
+@INPROCEEDINGS{6077007,
+author={Shibuya, M. and Hei, Y. and Ogishi, T.},
+booktitle={Network Operations and Management Symposium (APNOMS), 2011 13th Asia-Pacific}, title={ISP-friendly peer selection mechanism with ALTO-like server},
+year={Sept.},
+pages={1-8},
+keywords={Internet;optimisation;peer-to-peer computing;transport protocols;ALTO like server;BGP;BGP attribute;IETF ALTO WG;ISP;ISP friendly peer selection mechanism;Internet;P2P architecture;P2P peer selection policy;P2P traffic;application layer traffic optimization;content delivery services;n-Tracker;network congestion;Databases;IP networks;Peer to peer computing;Protocols;Routing;Servers;Time factors;ALTO;BGP;P2P;Policy;Traffic control},
+doi={10.1109/APNOMS.2011.6077007},}
+
+@INPROCEEDINGS{5284511,
+author={Seedorf, J. and Kiesel, S. and Stiemerling, M.},
+booktitle={Peer-to-Peer Computing, 2009. P2P '09. IEEE Ninth International Conference on}, title={Traffic localization for P2P-applications: The ALTO approach},
+year={Sept.},
+pages={171-177},
+keywords={optimisation;peer-to-peer computing;routing protocols;telecommunication network topology;telecommunication traffic;transport protocols;ALTO approach;IETF ALTO Working Group;P2P routing layer;application layer traffic optimization;caching solution;interISP traffic localization;network topology;Delay;Europe;IP networks;Laboratories;National electric code;Network topology;Privacy;Protocols;Routing;Telecommunication traffic;P2P traffic localization;layer cooperation},
+doi={10.1109/P2P.2009.5284511},}
+
+@article{Vassilakis:2010:MNC:1838764.1838902,
+ author = {Vassilakis, Constantinos and Stavrakakis, Ioannis},
+ title = {Minimizing node churn in peer-to-peer streaming},
+ journal = {Comput. Commun.},
+ issue_date = {September, 2010},
+ volume = {33},
+ number = {14},
+ month = sep,
+ year = {2010},
+ issn = {0140-3664},
+ pages = {1598--1614},
+ numpages = {17},
+ url = {http://dx.doi.org/10.1016/j.comcom.2010.04.014},
+ doi = {10.1016/j.comcom.2010.04.014},
+ acmid = {1838902},
+ publisher = {Elsevier Science Publishers B. V.},
+ address = {Amsterdam, The Netherlands, The Netherlands},
+ keywords = {Node churn, Node churn model, Peer selection strategies, Peer-to-peer streaming},
+}
+
+
+
+
+@article{Wu:2008:ELP:1386109.1386112,
+ author = {Wu, Chuan and Li, Baochun and Zhao, Shuqiao},
+ title = {Exploring large-scale peer-to-peer live streaming topologies},
+ journal = {ACM Trans. Multimedia Comput. Commun. Appl.},
+ issue_date = {August 2008},
+ volume = {4},
+ number = {3},
+ month = {9},
+ year = {2008},
+ issn = {1551-6857},
+ pages = {19:1--19:23},
+ articleno = {19},
+ numpages = {23},
+ url = {http://doi.acm.org/10.1145/1386109.1386112},
+ doi = {10.1145/1386109.1386112},
+ acmid = {1386112},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {Peer-to-peer streaming, topology characterization},
+}
+
+@article{Dai:2009:SPP:1478659.1478730,
+ author = {Dai, Liang and Cao, Yanchuan and Cui, Yi and Xue, Yuan},
+ title = {On scalability of proximity-aware peer-to-peer streaming},
+ journal = {Comput. Commun.},
+ issue_date = {January, 2009},
+ volume = {32},
+ number = {1},
+ month = jan,
+ year = {2009},
+ issn = {0140-3664},
+ pages = {144--153},
+ numpages = {10},
+ url = {http://dx.doi.org/10.1016/j.comcom.2008.09.029},
+ doi = {10.1016/j.comcom.2008.09.029},
+ acmid = {1478730},
+ publisher = {Elsevier Science Publishers B. V.},
+ address = {Amsterdam, The Netherlands, The Netherlands},
+ keywords = {Internet, Multimedia, P2P, Power-law, Streaming, Topology},
+}
+
+
+@article{Garroppo:2012:TCS:2160187.2160451,
+ author = {Garroppo, Rosario G. and Giordano, Stefano and Spagna, Stella and
+Niccolini, Saverio and Seedorf, Jan},
+ title = {Topology control strategies on P2P live video streaming service with
+peer churning},
+ journal = {Comput. Commun.},
+ issue_date = {March, 2012},
+ volume = {35},
+ number = {6},
+ month = {3},
+ year = {2012},
+ issn = {0140-3664},
+ pages = {759--770},
+ numpages = {12},
+ url = {http://dx.doi.org/10.1016/j.comcom.2012.01.002},
+ doi = {10.1016/j.comcom.2012.01.002},
+ acmid = {2160451},
+ publisher = {Elsevier Science Publishers B. V.},
+ address = {Amsterdam, The Netherlands, The Netherlands},
+ keywords = {Live video streaming, Overlay topology optimization, Peer churning,
+Peer-to-peer, Traffic locality},
+}
+
+
+@INPROCEEDINGS{5502009,
+author={Kunwoo Park and Dukhyun Chang and Junghoon Kim and Wonjun Yoon and Kwon,
+T.},
+booktitle={Communications (ICC), 2010 IEEE International Conference on},
+title={An Analysis of User Dynamics in P2P Live Streaming Services},
+year={May},
+pages={1-6},
+keywords={Internet;peer-to-peer computing;video streaming;Afreeca;Internet;P2P
+live streaming services;average link capacity;user dynamics;video
+streaming;Communications Society;Computer science;Fluctuations;Peer to peer
+computing;Streaming media;System analysis and design;Web and internet services},
+doi={10.1109/ICC.2010.5502009},
+ISSN={1550-3607},}
+
+@ARTICLE{4287373,
+author={Murugesan, San},
+journal={IT Professional}, title={Understanding Web 2.0},
+year={2009},
+volume={9},
+number={4},
+pages={34-41},
+keywords={Internet;interactive systems;social aspects of automation;Web 2.0
+application;collective intelligence;participative Web;peers social
+interaction;people-centric Web;wisdom Web;Web 2.0;Web 2.0 applications;Web 2.0
+development tools;Web mashup;blog;social bookmarking;social computing;social
+networking;tagging;wiki},
+doi={10.1109/MITP.2007.78},
+ISSN={1520-9202},}
+
+@ARTICLE{XU2011,
+author={He Xu and Suo-ping Wang and Ru-chuan Wang and Ping Tan},
+journal={Journal of Convergence Information Technology},
+title={A Survey of Peer-to-Peer Simulators and Simulation Technology},
+year={2011},
+month={5},
+volume={6},
+number={5},
+pages={260--272},
+keywords={P2P;Simulator;Network Simulation},
+doi={doi:10.4156/jcit.vol6.issue5.30},
+ISSN={1975-9320},}
+
+
+@ARTICLE{4346548,
+author={Yee-Ting Li and Leith, D. and Shorten, R.N.},
+journal={Networking, IEEE/ACM Transactions on},
+title={Experimental Evaluation of TCP Protocols for High-Speed Networks},
+year={2007},
+month={10},
+volume={15},
+number={5},
+pages={1109--1122},
+keywords={performance evaluation;transport
+protocols;BIC-TCP;FAST-TCP;H-TCP;HS-TCP;TCP protocols;experimental
+evaluation;high-speed networks;performance
+evaluation;scalable-TCP;Bandwidth;Benchmark testing;Convergence;Delay;High-speed
+networks;History;Proposals;Protocols;Throughput;Time measurement;Evaluation of
+TCP protocols;TCP congestion control;high-speed networks},
+doi={10.1109/TNET.2007.896240},
+ISSN={1063-6692},}
+
+@ARTICLE{4198260,
+author={Kwei-Jay Lin},
+journal={Computer}, title={Building Web 2.0},
+year={2007},
+month={5},
+volume={40},
+number={5},
+pages={101-102},
+keywords={Internet;Internet connectivity;Web 2.0;World Wide Web;virtual
+collaboration;Blogs;Digital audio broadcasting;Feedback;Information
+filtering;Information filters;Mashups;Recommender systems;Search engines;Web
+page design;YouTube;Web 2.0;Web technologies},
+doi={10.1109/MC.2007.159},
+ISSN={0018-9162},}
+
+@INPROCEEDINGS{4215750,
+author={Magharei, N. and Rejaie, R. and Yang Guo},
+booktitle={INFOCOM 2007. 26th IEEE International Conference on Computer
+Communications. IEEE}, title={Mesh or Multiple-Tree: A Comparative Study of Live
+P2P Streaming Approaches},
+year={2007},
+month={5},
+pages={1424-1432},
+keywords={Internet;media streaming;peer-to-peer computing;telecommunication
+network topology;trees (mathematics);Internet;live P2P streaming
+approaches;mesh-based approaches;multiple tree-shaped
+overlays;protocols;push-based content delivery;randomly connected mesh;swarming
+content delivery;tree-based approaches;Aggregates;Bandwidth;Communications
+Society;Internet;Peer to peer
+computing;Protocols;Scalability;Stability;Streaming media;Vegetation mapping},
+doi={10.1109/INFCOM.2007.168},
+ISSN={0743-166X},}
+
+@INPROCEEDINGS{5158452,
+author={Yao Liu and Guo, L. and Fei Li and Songqing Chen},
+booktitle={Distributed Computing Systems, 2009. ICDCS '09. 29th IEEE
+International Conference on}, title={A Case Study of Traffic Locality in
+Internet P2P Live Streaming Systems},
+year={June},
+pages={423-432},
+keywords={Internet;media streaming;peer-to-peer computing;telecommunication
+network topology;telecommunication traffic;BitTorrent-like file sharing
+systems;ISP level traffic locality;Internet P2P live streaming systems;P2P
+Internet traffic;PPLive traffic;application-ISP interfaces;cross-ISP
+traffic;neighbor referral peer selection strategy;topology mismatch;Application
+software;Communication system traffic control;Delay;Distributed computing;IP
+networks;Internet;Network topology;Peer to peer computing;Resource
+management;Telecommunication traffic;Internet;P2P streaming;traffic locality},
+doi={10.1109/ICDCS.2009.50},
+ISSN={1063-6927},}
+
+@INPROCEEDINGS{6354810,
+author={Sakata, Y. and Takayama, K. and Endo, R. and Shigeno, H.},
+booktitle={Network-Based Information Systems (NBiS), 2012 15th International
+Conference on}, title={A Chunk Scheduling Based on Chunk Diffusion Ratio on P2P
+Live Streaming},
+year={Sept.},
+pages={74-81},
+keywords={Internet;peer-to-peer computing;video streaming;Internet users;P2P
+live streaming services;chunk diffusion ratio;chunk schedule method;live video
+contents;offer select method;Bandwidth;Delay;Internet;Peer to peer
+computing;Servers;Streaming media;Watches},
+doi={10.1109/NBiS.2012.71},}
+
+@ARTICLE{4404148,
+author={Setton, E. and Baccichet, P. and Girod, B.},
+journal={Proceedings of the IEEE}, title={Peer-to-Peer Live Multicast: A Video
+Perspective},
+year={Jan.},
+volume={96},
+number={1},
+pages={25-38},
+keywords={Internet;automatic repeat request;forward error
+correction;peer-to-peer computing;video communication;video signal
+processing;video streaming;Internet;error-resilient transport;forward error
+correction;large-scale streaming video distribution;multiple
+descriptions;peer-to-peer live multicast:;peer-to-peer overlay
+network;peer-to-peer video streaming;prioritized automatic repeat request;video
+perspective;Automatic repeat request;Delay;Forward error
+correction;Internet;Large-scale systems;Multicast algorithms;Peer to peer
+computing;Relays;Robustness;Streaming media;Error
+resilience;multicast;peer-to-peer;video streaming},
+doi={10.1109/JPROC.2007.909925},
+ISSN={0018-9219},}
+
+@article{Pianese2011,
+ author = {Pianese, Fabio},
+ title = {A Survey of P2P Data-Driven Live Streaming Systems.},
+ journal = {Streaming Media Architectures, Techniques, and Applications: Recent
+Advances},
+ volume = {1},
+ month = {10},
+ isbn = {9781616928315},
+ year = {2011},
+ pages = {295--310},
+ doi = {10.4018/978-1-61692-831-5.ch012},
+ publisher = {Hershey: IGI Global},
+ keywords = {Live video streaming, Peer-to-Peer network},
+}
+
+@article{Zhang:2012:SSP:2365364.2365643,
+ author = {Zhang, Xiangyang and Hassanein, Hossam},
+ title = {Survey A survey of peer-to-peer live video streaming schemes - An
+algorithmic perspective},
+ journal = {Comput. Netw.},
+ issue_date = {October, 2012},
+ volume = {56},
+ number = {15},
+ month = oct,
+ year = {2012},
+ issn = {1389-1286},
+ pages = {3548--3579},
+ numpages = {32},
+ url = {http://dx.doi.org/10.1016/j.comnet.2012.06.013},
+ doi = {10.1016/j.comnet.2012.06.013},
+ acmid = {2365643},
+ publisher = {Elsevier North-Holland, Inc.},
+ address = {New York, NY, USA},
+ keywords = {Algorithm, Live video streaming, Peer-to-Peer network},
+}
+
+@MISC{Franchi2009,
+  AUTHOR = {Eric Franchi},
+  TITLE = {Live Streaming Continues Momentum With March Madness},
+  booktitle = {Online Video Insider},
+  YEAR = {2009},
+  url = {\url{http://www.mediapost.com/publications/article/101750/#axzz2O0qSKoNN}},
+  note = {\url{http://www.mediapost.com/publications/article/101750/#axzz2O0qSKoNN}. Último acesso: \today.},
+  MONTH = {3}
+}
+
+
+@MISC{Scott2008,
+  AUTHOR = {Jeremy Scott},
+  TITLE = {Live Streaming Video Is Growing By Leaps and Bounds},
+  YEAR = {2012},
+  url = {\url{http://www.reelseo.com/live-streaming-video-growing-leaps-bounds/}},
+  note ={\url{http://www.reelseo.com/live-streaming-video-growing-leaps-bounds/}. Último acesso: \today.},
+  MONTH = {3}
+}
+
+@MISC{tiinsideonline2008,
+  AUTHOR = {Redação da TI Inside Online},
+  TITLE = {Tráfego de Internet deve crescer \ut{29}{\%} até 2016},
+  YEAR = {2012},
+  url =
+{\url{
+http://www.tiinside.com.br/30/05/2012/trafego-de-internet-deve-crescer-29-ate-20
+16/ti/280945/news.aspx}},
+  note =
+{\url{
+http://www.tiinside.com.br/30/05/2012/trafego-de-internet-deve-crescer-29-ate-20
+16/ti/280945/news.aspx}. Último acesso: \today.},
+  MONTH = {5}
+}
+
+@MISC{Kirkpatrick2008,
+  AUTHOR = {Marshall Kirkpatrick},
+  TITLE = {The Numbers Are In, Live Video Online Is Blowing Up},
+  booktitle = {Readwrite},
+  YEAR = {2008},
+  url = {\url{http://readwrite.com/2008/06/05/live_video_big}},
+  note = {\url{http://readwrite.com/2008/06/05/live_video_big}. Último acesso: \today.},
+  MONTH = {3}
+}
+
+@MISC{Gannes2009,
+  AUTHOR = {Liz Gannes},
+  TITLE = {The Obama Inauguration Live Stream Stats},
+  booktitle = {GIGAOM},
+  YEAR = {2009},
+  url = {\url{http://gigaom.com/2009/01/20/the-obama-inauguration-live-stream-stats/}},
+  note = {\url{http://gigaom.com/2009/01/20/the-obama-inauguration-live-stream-stats/}. Último acesso: \today},
+  MONTH = {1}
+}
+
+@phdthesis{Dukkipati:2008:RCP:1368746,
+ author = {Dukkipati, Nandita},
+ advisor = {Mckeown, Nick},
+ title = {Rate control protocol (rcp): congestion control to make flows complete
+quickly},
+ year = {2008},
+ isbn = {978-0-549-35413-0},
+ note = {AAI3292347},
+ publisher = {Stanford University},
+ address = {Stanford, CA, USA},
+} 
+
+@inproceedings{Katabi:2002:CCH:633025.633035,
+ author = {Katabi, Dina and Handley, Mark and Rohrs, Charlie},
+ title = {Congestion control for high bandwidth-delay product networks},
+ booktitle = {Proceedings of the 2002 conference on Applications, technologies, architectures, and protocols for computer communications},
+ series = {SIGCOMM '02},
+ year = {2002},
+ isbn = {1-58113-570-X},
+ location = {Pittsburgh, Pennsylvania, USA},
+ pages = {89--102},
+ numpages = {14},
+ url = {http://doi.acm.org/10.1145/633025.633035},
+ doi = {10.1145/633025.633035},
+ acmid = {633035},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {congestion control, high-speed networks, large bandwidth-delay product}
+}
+
+@incollection{Eardley:2011:DAF:1983741.1983751,
+ author = {Eardley, Philip and Kanakakis, Michalis and Kostopoulos, Alexandros and Lev\"{a}, Tapio and Richardson, Ken and Warma, Henna},
+ chapter = {Deployment and adoption of future internet protocols},
+ title = {The future internet},
+ editor = {Domingue, John and Galis, Alex and Gavras, Anastasius and Zahariadis, Theodore and Lambert, Dave},
+ year = {2011},
+ isbn = {978-3-642-20897-3},
+ pages = {133--144},
+ numpages = {12},
+ url = {http://dl.acm.org/citation.cfm?id=1983741.1983751},
+ acmid = {1983751},
+ publisher = {Springer-Verlag},
+ address = {Berlin, Heidelberg},
+ keywords = {adoption framework, congestion exposure, multipath TCP, protocol deployment},
+} 
+
+@article{Katabi:2002:CCH:964725.633035,
+ author = {Katabi, Dina and Handley, Mark and Rohrs, Charlie},
+ title = {Congestion control for high bandwidth-delay product networks},
+ journal = {SIGCOMM Comput. Commun. Rev.},
+ issue_date = {October 2002},
+ volume = {32},
+ number = {4},
+ month = {8},
+ year = {2002},
+ issn = {0146-4833},
+ pages = {89--102},
+ numpages = {14},
+ url = {http://doi.acm.org/10.1145/964725.633035},
+ doi = {10.1145/964725.633035},
+ acmid = {633035},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {congestion control, high-speed networks, large bandwidth-delay product}
+}
+
+
+@phdthesis{Katabi2003,
+ author = {Dina Katabi},
+ advisor = {David Clark},
+ title = {Decoupling congestion control and bandwidth allocation policy with
+application to high bandwidth-delay product networks},
+ year = {2003},
+ publisher = {Massachusetts Institute of Technology},
+ address = {Cambridge, MA, USA},
+} 
+
+@article{DBLP:journals/ccr/LakshmikanthaSDMB09,
+  author    = {Ashvin Lakshmikantha and
+               R. Srikant and
+               Nandita Dukkipati and
+               Nick McKeown and
+               Carolyn L. Beck},
+  title     = {Buffer sizing results for RCP congestion control under connection
+               arrivals and departures},
+  journal   = {Computer Communication Review},
+  volume    = {39},
+  number    = {1},
+  year      = {2009},
+  pages     = {5-15},
+  ee        = {http://doi.acm.org/10.1145/1496091.1496093},
+  bibsource = {DBLP, http://dblp.uni-trier.de}
+}
+
+@INPROCEEDINGS{4296812,
+author={Dukkipati, N. and Gibb, G. and McKeown, N. and Jiang Zhu},
+booktitle={High-Performance Interconnects, 2007. HOTI 2007. 15th Annual IEEE
+Symposium on},
+title={Building a RCP (Rate Control Protocol) Test Network},
+year={Aug.},
+pages={91-98},
+keywords={Linux;field programmable gate arrays;hardware description
+languages;routing protocols;telecommunication computing;telecommunication
+congestion control;transport protocols;Linux;NetFPGA platform;RCP
+algorithm;Verilog;congestion control mechanism;end- host software;flow-size
+distribution;rate control protocol test network;router hardware
+implementation;Computational modeling;Computer networks;Control
+systems;Feedback;Laboratories;Protocols;Size measurement;Stability;System
+testing;Traffic control},
+doi={10.1109/HOTI.2007.15},
+ISSN={1550-4794},}
+
+@INPROCEEDINGS{983548,
+author={Cheng Wanxiang and Shi Peixin and Lei Zhenming},
+booktitle={Info-tech and Info-net, 2001. Proceedings. ICII 2001 - Beijing. 2001
+International Conferences on},
+title={Network-assisted congestion control},
+volume={2},
+pages={28--32},
+keywords={multimedia communication;queueing theory;telecommunication congestion
+control;telecommunication network routing;transport protocols;NACC
+algorithm;TCP-friendliness;fairness problem;max-min fairness;multimedia
+services;network-assisted congestion control;probing problem;router;simulation
+results;Bandwidth;Delay estimation;Feedback;Gain
+measurement;Probes;Protocols;Telecommunication congestion
+control;Telecommunication control;Web and internet services},
+doi={10.1109/ICII.2001.983548},}
+
+@ARTICLE{4608940,
+author={Sanghavi, S. and Hajek, B.},
+journal={Automatic Control, IEEE Transactions on}, title={A New Mechanism for the Free-Rider Problem},
+year={June},
+volume={53},
+number={5},
+pages={1176-1183},
+keywords={game theory;goods distribution;public relations;Nash equilibrium outcome;communication constraints;free-rider problem;heterogeneous users;public resources provisioning;Computer science;Cost accounting;Distributed databases;Game theory;Libraries;Nash equilibrium;Production;Radio broadcasting;TV broadcasting;Upper bound;Convex optimization;free-riders;game theory;public goods},
+doi={10.1109/TAC.2008.923662},
+ISSN={0018-9286},}
+
+@INPROCEEDINGS{5421459,
+author={Yuling Li and Yuhua Liu and Kaihua Xu and Wei Chen},
+booktitle={Computer Modeling and Simulation, 2010. ICCMS '10. Second International Conference on}, title={Analysis and Balanced Mechanism on Free-Rider in P2P Network},
+year={Jan.},
+volume={4},
+pages={462-466},
+keywords={peer-to-peer computing;P2P network;free-rider phenomenon;network resource sharing;peer-to-peer network;service providers;Analytical models;Bandwidth;Computational modeling;Computer networks;Computer simulation;Network topology;Peer to peer computing;Physics computing;Robustness;Scalability;P2P network;balance mechanism;free-rider;utility value},
+doi={10.1109/ICCMS.2010.494},}
+
+@ARTICLE{5580021,
+author={Yan Chen and Beibei Wang and Lin, W.S. and Yongle Wu and Liu, K.J.R.},
+journal={Circuits and Systems for Video Technology, IEEE Transactions on},
+title={Cooperative peer-to-peer streaming: An evolutionary game-theoretic approach},
+year={Oct.},
+volume={20},
+number={10},
+pages={1346-1357},
+keywords={distributed algorithms;evolutionary computation;game theory;peer-to-peer computing;video streaming;Nash equilibrium;P2P video streaming;distributed learning algorithm;evolutionarily stable strategy;evolutionary game theory;peer-to-peer video streaming;traverse links;video quality;Bandwidth;Games;History;Peer to peer computing;Real time systems;Servers;Streaming media;Cooperative streaming;distributed learning;evolutionary;game theory;peer-to-peer (P2P);replicator dynamics},
+doi={10.1109/TCSVT.2010.2077490},
+ISSN={1051-8215},}
+
+@INPROCEEDINGS{1388342,
+author={YangBin Tang and Huaimin Wang and Wen Dou},
+booktitle={E-Commerce Technology for Dynamic E-Business, 2004. IEEE International Conference on},
+title={Trust based incentive in P2P network},
+year={Sept.},
+pages={302-305},
+keywords={Internet;electronic commerce;peer-to-peer computing;security of data;Free-rider problem;Internet;P2P networks;peer-to-peer computing;trust-based incentive;Bandwidth;Computer applications;Computer networks;Distributed computing;Game theory;Internet;Peer to peer computing;Power system modeling;Robustness;Search engines},
+doi={10.1109/CEC-EAST.2004.71},}
+
+@INPROCEEDINGS{5161007,
+author={Kyuyong Shin and Reeves, D.S. and Injong Rhee},
+booktitle={Parallel Distributed Processing, 2009. IPDPS 2009. IEEE International Symposium on}, title={Treat-before-trick : Free-riding prevention for BitTorrent-like peer-to-peer networks},
+year={May},
+pages={1-12},
+keywords={cryptography;peer-to-peer computing;BitTorrent-like peer-to-peer networks;P2P file sharing systems;compliant peers;encrypted file pieces;free-rider prevention scheme;free-riding strategies;system-wide performance degradation;threshold secret sharing;treat-before- trick scheme;Bandwidth;Centralized control;Collaboration;Computer science;Counting circuits;Cryptography;Degradation;File servers;Monitoring;Peer to peer computing},
+doi={10.1109/IPDPS.2009.5161007},
+ISSN={1530-2075},}
+
+@ARTICLE{5451106,
+author={Jaeok Park and Van der Schaar, M.},
+journal={Selected Topics in Signal Processing, IEEE Journal of},
+title={A Game Theoretic Analysis of Incentives in Content Production and Sharing Over Peer-to-Peer Networks},
+year={Aug.},
+volume={4},
+number={4},
+pages={704-717},
+keywords={content management;game theory;incentive schemes;peer-to-peer computing;brute force scheme;content production;free rider problem;game theoretic analysis;incentive scheme;peer-to-peer networks;user generated content;Game theory;incentives;network economics;peer-to-peer (P2P) networks;pricing},
+doi={10.1109/JSTSP.2010.2048609},
+ISSN={1932-4553},}
+
+@ARTICLE{865073,
+author={Abdalla, M. and Shavitt, Y. and Wool, A.},
+journal={Networking, IEEE/ACM Transactions on}, title={Key management for restricted multicast using broadcast encryption},
+year={Aug},
+volume={8},
+number={4},
+pages={443-454},
+keywords={Internet;cryptography;digital television;multicast communication;set theory;telecommunication security;television broadcasting;Internet MBone;broadband digital TV network;broadcast encryption;encryption;free-riders;insecure broadcast channel;key management;key transmissions;key tree;lower bound;multicast program;performance measurement;probability;receiver;redundant establishment key allocations;restricted multicast;satellite/cable pay TV;secure communications;setup cost;simulation;single key structure;target set size;Buildings;Cable TV;Costs;Cryptography;Digital TV;Helium;Internet;Satellite broadcasting;TV broadcasting;Wool},
+doi={10.1109/90.865073},
+ISSN={1063-6692},}
+
+@INPROCEEDINGS{1309377,
+author={Habib, A. and Chuang, J.},
+booktitle={Quality of Service, 2004. IWQOS 2004. Twelfth IEEE International Workshop on}, title={Incentive mechanism for peer-to-peer media streaming},
+year={June},
+pages={171-180},
+keywords={Internet;quality of service;cooperative user;free-rider;incentive mechanism;optimal streaming quality;peer-to-peer media streaming;rank-based peer-selection mechanism;service differentiation;wide-area measurement;Availability;Bandwidth;Information management;Law;Legal factors;Peer to peer computing;Quality of service;Streaming media;System performance;Wide area measurements},
+doi={10.1109/IWQOS.2004.1309377},}
+
+@INPROCEEDINGS{6185363,
+author={Tzu-Ming Wang and Wei-Tsong Lee and Tin-Yu Wu and Hsin-Wen Wei and Yu-San Lin},
+booktitle={Advanced Information Networking and Applications Workshops (WAINA), 2012 26th International Conference on}, title={New P2P Sharing Incentive Mechanism Based on Social Network and Game Theory},
+year={March},
+pages={915-919},
+keywords={game theory;peer-to-peer computing;social networking (online);NIM;P2P architecture;P2P sharing incentive mechanism;P2P technology;game theory;social network;Bandwidth;Game theory;Peer to peer computing;Radiation detectors;Servers;Social network services;Streaming media;Game theory;Incentive mechanism;P2P;Social network},
+doi={10.1109/WAINA.2012.53},}
+
+@ARTICLE{4738451,
+author={Brinkmeier, M. and Schafer, G. and Strufe, T.},
+journal={Parallel and Distributed Systems, IEEE Transactions on}, title={Optimally DoS Resistant P2P Topologies for Live Multimedia Streaming},
+year={June},
+volume={20},
+number={6},
+pages={831-844},
+keywords={media streaming;multimedia computing;peer-to-peer computing;quality of service;telecommunication network topology;telecommunication security;delay;denial of service attack;distribution service;jitter;live multimedia streaming;optimally DoS resistant P2P topology;overlay streaming topology;packet loss;Reliability;attack resilience;fault resilience;media streaming;overlay.;peer-to-peer},
+doi={10.1109/TPDS.2008.265},
+ISSN={1045-9219},}
+
+@article{Dongyan2006,
+year={2006},
+issn={0942-4962},
+journal={Multimedia Systems},
+volume={11},
+issue={4},
+doi={10.1007/s00530-006-0015-3},
+title={Analysis of a CDN-P2P hybrid architecture for cost-effective streaming media distribution},
+url={http://dx.doi.org/10.1007/s00530-006-0015-3},
+publisher={Springer-Verlag},
+keywords={Peer-to-peer systems; Multimedia streaming; Content distribution networks},
+author={Xu, Dongyan and Kulkarni, SunilSuresh and Rosenberg, Catherine and Chai, Heung-Keung},
+pages={383-399},
+language={English}
+}
+
+@INPROCEEDINGS{6214363,
+author={Nianwang Liu and Zheng Wen and Yeung, K.L. and Zhibin Lei},
+booktitle={Wireless Communications and Networking Conference (WCNC), 2012 IEEE}, title={Request-peer selection for load-balancing in P2P live streaming systems},
+year={April},
+pages={3227-3232},
+keywords={media streaming;peer-to-peer computing;quality of service;resource allocation;telecommunication traffic;P2P live streaming systems;load balancing;network traffic;peer uplink bandwidth utilization;peer-to-peer file sharing;playback continuity;quality of service;real-time playback constraints;request-peer selection;service response time;startup delay;streaming server;tailor-made piece selection;Algorithm design and analysis;Bandwidth;Load modeling;Peer to peer computing;Servers;Telecommunication traffic;Time factors},
+doi={10.1109/WCNC.2012.6214363},
+ISSN={1525-3511},}
+
+@ARTICLE{5936152,
+author={Pan, J. and Paul, S. and Jain, R.},
+journal={Communications Magazine, IEEE},
+title={A survey of the research on future internet architectures},
+year={July},
+volume={49},
+number={7},
+pages={26-36},
+keywords={Internet;Internet architectures;ad-hoc patches;clean-slate architecture designs;content distribution demands;mobility demands;security demands;Cloud computing;Collaboration;Computer architecture;Design methodology;IP networks;Internet},
+doi={10.1109/MCOM.2011.5936152},
+ISSN={0163-6804},}
+
+@MISC{ConExGRP,
+  AUTHOR = {Marcelo Bagnulo and Nandita Dukkipati},
+  TITLE = {Congestion Exposure Group},
+  JOURNAL = {IETF Charter},
+  YEAR = {2010},
+  MONTH = {6},
+  NOTE = {\murl{https://datatracker.ietf.org/doc/charter-ietf-conex/}. Último acesso: \today.}
+}
+
+@MISC{RFC6789,
+  AUTHOR = {B. Briscoe and R. Woundy and A. Cooper},
+  TITLE = {Congestion Exposure (ConEx) Concepts and Use Cases},
+  JOURNAL = {IETF Online RFC},
+  YEAR = {2012},
+  MONTH = {12},
+  NOTE = {\murl{http://www.ietf.org/rfc/rfc6789.txt}. Último acesso: \today.}
+}
+
+@MISC{RFC4122,
+  AUTHOR = {P. Leach and M. Mealling and R. Salz},
+  TITLE = {Congestion Exposure (ConEx) Concepts and Use Cases},
+  JOURNAL = {IETF Online RFC},
+  YEAR = {2005},
+  MONTH = {7},
+  NOTE = {\murl{http://www.ietf.org/rfc/rfc4122.txt}. Último acesso: \today.}
+}
+
+@MISC{REF,
+  AUTHOR = {TBE},
+  TITLE = {TBE},
+  JOURNAL = {TBE},
+  YEAR = {2008},
+  MONTH = {3}
+}
+
+
+
+
+
+
+
+
+
+
+
+@ARTICLE{5332297,
+author={Ciullo, D. and Garcia, M.A. and Horvath, A. and Leonardi, E. and Mellia,
+M. and Rossi, D. and Telek, M. and Veglia, P.},
+journal={Multimedia, IEEE Transactions on}, title={Network Awareness of P2P Live
+Streaming Applications: A Measurement Study},
+year={Jan.},
+volume={12},
+number={1},
+pages={54-63},
+keywords={media streaming;peer-to-peer computing;P2P live streaming;P2P-TV
+systems;PPLive;SopCast;TVAnts;multimedia streaming;network awareness;Locality
+awareness;multimedia streaming;neighbor selection;overlay;peer-to-peer
+networks},
+doi={10.1109/TMM.2009.2036231},
+ISSN={1520-9210},}

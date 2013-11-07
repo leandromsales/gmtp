@@ -1,0 +1,196 @@
+\documentclass[a4paper,titlepage]{copin}
+\usepackage[portuges,english]{babel}
+\usepackage{copin,doutor,epsfig}
+\usepackage{times}
+\usepackage{ucs}
+\usepackage[T1]{fontenc}
+\usepackage{fancyheadings}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{units}
+\usepackage{url}
+\usepackage{fancyvrb}
+\usepackage{multicol}
+\usepackage{colortbl}
+\usepackage{color}
+\usepackage{listings}
+\usepackage[latin1]{inputenc}
+\usepackage{float}
+\usepackage{amssymb}
+\usepackage{amsmath}
+%\usepackage[chapter]{algorithm}
+%\usepackage{algorithmic}
+\usepackage{subfigure}
+\usepackage{tabularx}
+\usepackage{moreverb}
+\usepackage{enumerate}
+\usepackage[lined,ruled,linesnumbered,titlenumbered]{
+algorithm2e }
+%\usepackage{dsfont}
+%\usepackage{bbding}
+\usepackage{multirow}
+\usepackage{rotating}
+\usepackage{dcolumn,longtable,hhline}
+\usepackage[table]{xcolor}
+\usepackage{cite}
+
+% \usepackage[algoruled,lined, boxed, portugues]{algorithm2e}
+% \begin{figure}[htpb]
+% \begin{procedure}[H]
+% \linesnumbered
+%
+% \Entrada{Solução $s$, Inteiro $ILSmax$, Inteiro $kp_{0}$, Função $f$(.)}
+% \Saida{Solução $s^{*}$ de qualidade superior ou igual à $s$ de acordo com a
+% função $f$}
+% $s^{*} \leftarrow$ BuscaLocal($s$)\;
+% $kp \leftarrow kp_{0}$\;
+% \Enqto{ critério de parada não satisfeito }
+% {
+% $iter \leftarrow 0$\;
+% \Enqto{ $iter < ILSmax$ \textbf{and} critério de parada não satisfeito }
+% {
+% $s' \leftarrow$ perturbação($s^{*}, kp$)\;
+% $s'' \leftarrow$ BuscaLocal($s', f$)\;
+%
+% \eSe{ $s''$ for melhor que $s^{*}$ de acordo com a função $f$ }{
+% $s^{*} \leftarrow s''$\;
+% $kp$ $\leftarrow$ $kp_{0}$\;
+% $iter$ $\leftarrow$ $0$\;
+% }{
+% $iter \leftarrow iter + 1$\;
+% }
+%
+% }$kp \leftarrow kp + delta$\;
+% }Retorne $s^{*}$\;
+% \caption{ILS()}
+% \end{procedure}
+% \centering
+% \caption{Algoritmo ILS proposto \label{alg:ils} }
+% \end{figure}
+
+\lstset{numbers=left,
+stepnumber=1,
+firstnumber=1,
+%numberstyle=\tiny,
+extendedchars=true,
+breaklines=true,
+frame=tb,
+basicstyle=\footnotesize,
+stringstyle=\ttfamily,
+showstringspaces=false
+}
+\renewcommand{\lstlistingname}{C\'odigo Fonte}
+\renewcommand{\lstlistlistingname}{Lista de C\'odigos Fonte}
+
+\newcommand{\fmtvar}[1]{\textrm{\textit{#1}}}
+\newcommand{\ut}[2]{\unit[#1]{\emph{#2}}}
+\newcommand{\mys}{1 $\rightarrow$ \textit{n}}
+\newcommand{\murl}[1]{\texttt{\small \url{#1}}}
+\newcommand{\aspas}[1]{``#1''}
+\newcommand{\pac}[1]{\textit{#1}}
+% \newcommand{\mudccp}{MU-DCCP}
+% \newcommand{\mudccps}{MU-DCCP\space}
+% \newcommand{\mdrel}{MU-DCCP Relay}
+% \newcommand{\mdrep}{MU-DCCP Reporter}
+% \newcommand{\mdrels}{MU-DCCP Relays}
+% \newcommand{\mdreps}{MU-DCCP Reporters}
+
+\newcommand{\mudccp}{GMTP}
+\newcommand{\lmudccp}{gmtp}
+\newcommand{\mudccps}{\mudccp\space}
+\newcommand{\mdrel}{\mudccps Relay}
+\newcommand{\mdrep}{\mudccps Reporter}
+\newcommand{\mdrels}{\mudccps Relays}
+\newcommand{\mdreps}{\mudccps Reporters}
+\newcommand{\tab}{\space\space\space\space\space\space}
+
+%\hyphenation{a-va-li-a-das}
+
+\selectlanguage{portuges}
+\sloppy
+
+
+\begin{document}
+
+%\Titulo{Transporte de Datagramas Controlados e\\Não Confiáveis para
+%Distribuição de Conteúdos Multimídia entre Pares na Internet}
+
+\Titulo{\mudccp: Um Protocolo Multi-Camada para Distribuição de Conteúdos
+Multimídia Ao\\Vivo com Suporte à Redes Centradas no Conteúdo}
+
+\Autor{Leandro Melo de Sales}
+\Data{10/04/2013}
+\Area{Ciência da Computação}
+\Pesquisa{Redes de Computadores e Sistemas Distribuídos}
+\Orientadores{Angelo Perkusich e Hyggo Almeida\\
+	 (Orientadores)}
+
+\newpage
+\cleardoublepage
+
+\PaginadeRosto
+
+\newpage
+\cleardoublepage
+
+\begin{resumo}
+\input{resumo.tex}
+\end{resumo}
+
+\newpage
+\cleardoublepage
+
+\begin{summary}
+\input{abstract.tex}
+\end{summary}
+
+\newpage
+\cleardoublepage
+
+% \begin{agradecimentos}
+% \input{agradecimentos.tex}
+% \end{agradecimentos}
+
+\clearpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Definicao do cabecalho: secao do lado esquerdo e numero da pagina do lado direito
+\pagestyle{fancy}
+\addtolength{\headwidth}{\marginparsep}\addtolength{\headwidth}{\marginparwidth}\headwidth = \textwidth
+\renewcommand{\chaptermark}[1]{\markboth{#1}{}}
+\renewcommand{\sectionmark}[1]{\markright{\thesection\ #1}}\lhead[\fancyplain{}{\bfseries\thepage}]%
+	     {\fancyplain{}{\emph{\rightmark}}}\rhead[\fancyplain{}{\bfseries\leftmark}]%
+             {\fancyplain{}{\bfseries\thepage}}\cfoot{}
+
+\selectlanguage{portuges}
+
+\Sumario
+\ListadeSimbolos
+\listoffigures
+\listoftables
+% \lstlistoflistings
+\newpage
+\cleardoublepage
+
+\Introducao
+\hyphenation{ Hardware Software etc con-ges-tio-na-men-to a-di-cio-na-dos
+ge-ren-cia-men-to fun-cio-na-li-da-des }
+
+%\input{introducao}
+%\input{fundamentacao}
+%\input{trabrelacionados}
+\input{mudccp}
+%%%\input{impl-mudccp}
+%%%\input{analise-desempenho-dccp}
+%\input{analise-desempenho-mudccp}
+%\input{conclusao}
+
+\bibliographystyle{unsrt} % estilo de bibliografia   plain,unsrt,alpha,abbrv.
+%\bibliographystyle{plain}
+% \bibliographystyle{abnt}
+\bibliography{biblio-phd,biblio-master,biblio-zotero}
+
+% \appendix
+% \input{apendices}
+
+\end{document}

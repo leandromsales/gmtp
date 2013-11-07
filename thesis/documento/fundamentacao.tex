@@ -1,0 +1,3464 @@
+\chapter{Fundamentação}
+\label{cap:fundamentacao}
+
+% \begin{center}
+%     \begin{minipage}{300pt}
+%     \small
+%     \centering
+%      ``As vezes me pergunto como pode ter acontecido de eu ser o único a
+% desenvolver a Teoria da Relatividade. Acredito que a razão é que um adulto
+% normal nunca pára para pensar sobre problemas de espaço e tempo.'' (Albert
+% Einstein)
+%     \end{minipage}
+% \end{center}
+
+% A concepção de protocolos de rede para sistemas de distribuição de conteúdos
+% multimídia em tempo real, tema principal deste trabalho, trás à tona
+% diversos conceitos necessários para o entendimento da solução proposta e
+% discutida neste trabalho. Sendo assim, nas Seções \ref{sec:arq_p2p},
+% \ref{sec:arq_p2p_media_aovivo} e \ref{sec:sis_trans_aovivo} apresenta-se
+% discussões teóricas acerca das arquiteturas de redes P2P e distribuição de
+% mídia ao vivo, escritas com base na referência~\cite{vieira_borges_2010}; na
+% Seção~\ref{sec:conceitos_multicast} sobre transmissão de dados multimídia
+% em modo multicast; na Seção~\ref{sec:conceitos_camadatransporte} sobre camada
+% de transporte TCP/IP; e na Seção~\ref{sec:conceitos_dccp} sobre o
+% funcionamento do protocolo DCCP.
+
+A concepção de protocolos de rede para sistemas de distribuição de conteúdos
+multimídia em tempo real trás à tona conceitos necessários para o entendimento
+da solução proposta neste trabalho.
+
+Neste capítulo apresenta-se apenas o funcionamento dos sistemas para
+distribuição de mídia ao vivo em arquiteturas P2P, ao passo que conceitos sobre
+o funcionamento de protocolos de transporte e de rede e outros temas como
+controle de congestionamento e modos de transmissão são assuntos consolidados e
+vastamente disponíveis na literatura. Apesar da omissão de discussões acerca
+desses e outros tópicos relacionados a esta pesquisa, recomenda-se a leitura de
+referências clássicas, como as encontradas em
+\cite{peterson2011,kurose2006,soares1995}. Com relação aos conceitos e
+funcionamento do protocolo DCCP, recomenda-se a leitura do Capítulo 2 da
+dissertação de mestrado do autor deste trabalho, disponível através
+da referência~\cite{leandro-master-2008}.
+
+Os conceitos e discussões apresentados neste capítulo foram obtidos e adaptados
+das referências~\cite{vieira_borges_2010,guo_survey_2008}.
+
+\section{Redes de Distribuição de Conteúdo -- Content Delivery Network (CDN)}
+\label{sec:cdn}
+
+\section{Redes Centradas no Conteúdo -- Content Centric Networks (CCN)}
+\label{sec:ccn}
+
+
+
+===================================
+
+Atualmente, existem vários casos de sucesso nas áreas de Voz sobre IP (ex.
+Skype), Videoconferência (ex. PPLive) e WebTV (ex. Coolstreaming) que utilizam
+uma arquitetura híbrida P2P/CDN. Nestes casos, um servidor gerador de datagramas
+multimídia transmite-os para um conjunto de servidores espalhados
+geograficamente em diferentes \textit{backbones} que formam a CDN. Com o suporte
+dos nós constituindo uma rede de sobreposição P2P, os servidores da CDN enviam
+os datagramas para os nós da rede P2P, que os disseminam para outros nós
+interessados pelo mesmo conteúdo à medida que novas partes (\textit{chunks}) do
+conteúdo são geradas e obtidas. No ponto de vista da rede P2P, os serviços da
+aplicação são oportunistas, onde os nós dependem uns dos outros para receberem o
+conteúdo desejado. Para se tornar um repassador de conteúdo, o usuário de um nó
+participante expressa interesse em um determinado conteúdo, que é reproduzido
+localmente e repassado para outros nós. Isto implica que quando o usuário não
+tem interesse em um determinado conteúdo, geralmente não se pode utilizá-lo como
+repassador e consequentemente seus recursos, por vezes ociosos, não podem ser
+alocados.
+
+
+Com o modelo de serviço híbrido P2P/CDN, permite-se o envio de dados multimídia
+para uma maior quantidade de nós sem inundar os servidores com demasiadas
+conexões; reduz-se o tráfego de dados nos servidores e o
+congestionamento nos canais de transmissão; reduz-se a complexidade do
+gerenciamento do serviço e de seus participantes, pois o gerenciamento fica por
+conta da CDN e apenas a distribuição do conteúdo por conta da rede
+P2P; e proporciona-se um serviço mais estável, melhorando a experiência do
+usuário, uma vez que os nós não dependem exclusivamente da rede P2P para
+reproduzir o conteúdo de interesse.
+
+
+Existem diversos exemplos de
+aplicações que podem ser citados: sites \textit{online} como o
+\murl{livestream.tv},\space\murl{ustream.tv},\space \murl{twitcam.com}\space,
+\murl{streamtheworld.com} e as soluções de empresas como a Netflix e YouTube;
+rádios \textit{online}, como o \murl{live365.com} e a \murl{shoutcast.com}; e
+videoconferência 1-para-muitos, por exemplo \murl{webex.com},
+\murl{anymeeting.com} e \murl{google.com/hangout}.
+
+
+====================================
+
+ALTO
+XCP
+RCP
+
+==================================== ABRIR UMA SEÇÃO SOBRE PROTOCOLOS DE
+TRANSPORTE
+
+A fim de completar as discussões iniciais nesse contexto, a
+seguir, discutem-se as opções existentes de protocolos de transporte
+disponíveis, uma escolha considerada fundamental neste trabalho.
+
+\section{Panorama atual: protocolos de transporte da Internet}
+\label{sec:panoramaatual}
+
+Atualmente, as principais propostas de protocolos de transporte de dados para
+Internet são o TCP, o UDP e o recém padronizado DCCP (\textit{Datagram
+Congestion Control Protocol})~\cite{RFC4340,citeulike:943036}. Quando se projeta
+um protocolo de rede para transporte de dados nos cenários discutidos
+anteriormente, deve-se levar em consideração as características da aplicação
+para que se possa obter resultados significativos na qualidade do fluxo de dados
+multimídia sendo transmitido e na eficiente utilização dos recursos da rede.
+Porém, nota-se que os protocolos da camada de transporte existentes são
+limitados com vista aos cenários de distribuição de conteúdo \mys\space e
+envolvendo suporte a controle de congestionamento.
+
+O protocolo UDP tem sido largamente utilizado em aplicações
+multimídia em tempo real por ser um protocolo simplificado, fazendo uso
+apenas do serviço de melhor esforço do IP para transmitir dados na
+Internet. Com o passar dos anos e antes do DCCP, o UDP se tornou a
+primeira e única opção para transmissão de dados multimídia em tempo
+real, porém gerando diversos efeitos colaterais nas grandes redes,
+os quais são brevemente discutidos a seguir e com vastas referências na
+literatura~\cite{RFC4336,leandro2008,ccnc-leandro2008,leandro-master-2008,hong_evaluating_2001,citeulike:943036}.
+
+Ao observar o gráfico \textit{vazão} $\times$ \textit{tempo}, ilustrado na
+Figura~\ref{fig:tcpudp}, pode-se ter uma idéia dos efeitos colaterais gerados na
+rede com o uso do UDP. Este gráfico corresponde a um ensaio realizado com a
+transmissão de $1$ fluxo TCP competindo com $3$ fluxos de áudio UDP em uma rede
+\textit{Ethernet} de \ut{100}{Mbps}. Observa-se que o UDP sempre ocupa o máximo
+da largura de banda disponível na rede ao passo que não oferece chances para
+outros fluxos utilizarem o canal, como é o caso do TCP. Por este motivo, o UDP
+sempre se apresenta com altas taxas de perda de pacotes, sobretudo quando há
+congestionamento na rede. No caso deste ensaio, nos primeiros \ut{50}{s}, quando
+não disputava com nenhum outro fluxo, o fluxo TCP utilizou a rede de forma
+satisfatória, alcançando uma vazão em torno de \ut{20}{Mbps}. Entretanto, após
+esta fase, quando os três fluxos UDP foram transmitidos na rede, a vazão do
+fluxo TCP reduziu praticamente para 0 (zero), permanecendo assim até o final do
+ensaio.
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics[scale=0.65]{imgs/tcp-udp3-throughput_normal.pdf}
+\end{center}
+\vspace{-0.5cm}
+\caption[Vazão do TCP $\times$ UDP]{TCP $\times$ UDP. Após \ut{50}{s} do início
+do experimento, o fluxo UDP ocupa toda a largura de banda disponível na rede.
+Fonte: \protect\cite{leandro-master-2008}.}
+\label{fig:tcpudp}
+\end{figure}
+
+O protocolo TCP, por sua vez, atende de forma satisfatória às aplicações que
+toleram atrasos na entrega de dados e que exigem que estes sejam todos entregues
+corretamente e em ordem (aplicações elásticas). Porém, em se tratando de
+transmissões ao vivo, o TCP se torna o protocolo menos apropriado para este fim,
+pelo menos comparando-o com o UDP e o DCCP. Nas aplicações de fluxo multimídia
+em tempo real, é preferível manter o fluxo de dados e reproduzir o conteúdo que
+chega a esperar que a informação perdida seja retransmitida, mesmo diante do
+fato de que parte dos dados da aplicação tenha sido perdida. Ao utilizar o TCP,
+isto não é possível. O principal motivo é que o TCP implementa entrega confiável
+de dados através da retransmissão de qualquer dado perdido. Esta estratégia
+resulta em atrasos indesejáveis quando se trata de transmissões ao vivo, fazendo
+com que o usuário perceba interrupções na reprodução do conteúdo.
+
+Em condições severas de congestionamento, o atraso fim-a-fim aumenta e degrada a
+qualidade do conteúdo multimídia sendo transmitido. Esta situação se agrava com
+a retransmissão de pacotes perdidos e não fazer mais sentido para a aplicação
+receptora devido ao comportamento transiente dos fluxos multimídia. Neste caso,
+se os pacotes de dados retransmitidos não alcançarem o receptor até um
+determinado instante, estes serão descartados ao preço do desperdício no uso dos
+recursos da rede, pois \textit{buffers} dos roteadores são alocados para
+processar e repassar pacotes que terminam sendo inúteis às aplicações. O
+comportamento do TCP para situações como a mencionada anteriormente pode ser
+observado no gráfico ilustrado na Figura~\ref{fig:tcp-multimidia-udp}. No ensaio
+realizado, transmitiu-se um áudio com duração de \ut{100}{s} utilizando TCP,
+sendo armazenado no destino e em seguida comparado com o original. Neste caso,
+constatou-se que apenas \ut{32}{\%} do áudio alcançou o destino, fato ocorrido
+devido ao excesso de retransmissões de pacotes perdidos.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=0.45]{imgs/tcp-reno_udp.pdf}
+\end{center}
+\vspace{-0.5cm}
+\caption[TCP Reno $\times$ UDP com TCP transmitindo áudio]{TCP Reno $\times$
+UDP, sendo o TCP enviando um arquivo de áudio. Fonte:
+\protect\cite{leandro-master-2008}.}
+\label{fig:tcp-multimidia-udp}
+\end{figure}
+
+Com apenas essas duas opções para transporte de dados na Internet e
+objetivando promover melhorias nos serviços oferecidos pelas
+aplicações multimídia, a IETF (\textit{Internet Engineering Task Force}) aprovou
+a especificação do protocolo DCCP para transporte de dados multimídia para
+Internet. É um protocolo orientado à conexão, não garante entrega e nem
+ordenação dos dados transmitidos, todavia, o DCCP implementa controle de
+congestionamento para transmissão não-confiável de fluxo de dados
+\cite{leandro2008,RFC4340}.
+
+O DCCP herda do TCP as características de ser orientado
+à conexão e fornecer controle de congestionamento. Do UDP, o DCCP
+herda as características de não garantir entrega e nem ordenação dos
+dados transmitidos. Além destas características, no DCCP foram adicionados dois
+conceitos novos: a escolha tardia de dados~\cite{kohler05dccp} e um
+arcabouço para gerenciamento dos algoritmos de controle de
+congestionamento de forma modular. A escolha tardia de dados permite
+a mudança de dados de um pacote mesmo depois que estes dados já tenham
+sido enviados para a camada de transporte, mas ainda não tenham sido
+enviados através da rede -- isto é um alternativa ao mecanismo de retransmissão
+do TCP. Já o arcabouço de gerenciamento de algoritmos de controle de
+congestionamento permite adicionar novos algoritmos de controle de
+congestionamento à aplicação e substituí-los mesmo que uma conexão DCCP já tenha
+sido estabelecida.
+
+Para entender as melhorias providas pelo protocolo DCCP, considere o
+gráfico \emph{vazão $\times$ tempo} apresentado na
+Figura~\ref{fig:tcpdccp}~\cite{leandro-master-2008}. Neste gráfico, ilustram-se
+os comportamentos dos protocolos TCP e DCCP quando utilizados para
+transmissão de um arquivo e de um conteúdo multimídia,
+respectivamente. A partir do gráfico, é possível constatar que os
+protocolos TCP e DCCP compartilham entre si a largura de banda
+disponível, onde cada fluxo consegue transmitir dados na rede. Note
+que o comportamento do protocolo TCP para os \ut{50}{s} iniciais foi
+similar ao confronto TCP $\times$ UDP (Figura~\ref{fig:tcpudp}).
+Porém, diferentemente do que ocorreu naquele caso, após os primeiros
+\ut{50}{s} dos confrontos TCP $\times$ DCCP, a vazão do protocolo
+TCP continuou sendo satisfatória, assim como a do DCCP.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=0.65]{imgs/tcp-dccp_ccid2-throughput_normal.pdf}
+\end{center}
+\vspace{-0.5cm}
+\caption[Vazão do TCP $\times$ DCCP]{TCP $\times$ DCCP. Ambos os protocolos
+conseguem transmitir dados na rede. Fonte: \protect\cite{leandro-master-2008}.}
+\label{fig:tcpdccp}
+\end{figure}
+
+%A \textit{Escolha Tardia de Dados} é uma funcionalidade prevista no protocolo
+% DCCP e que não está presente no TCP e
+%no UDP. Este mecanismo do DCCP permite que uma aplicação troque o conteúdo de
+% um pacote mesmo depois que ele já tenha %sido enviado pela aplicação através
+% de uma chamada de sistemas, \textit{send()} ou \textit{write()}, por exemplo.
+% Este %mecanismo é muito importante para protocolos que implementam controle de
+% congestionamento porque, em caso de %congestionamento, os dados enviados pela
+% aplicação serão retidos no \textit{buffer} de saída até que o algoritmo de
+% controle de %congestionamento autorize sua transmissão, o que atrasará a
+% entrega desses dados. Os dados da aplicação já enviados por ela, %mas que
+% ainda estão no \textit{buffer} de saída, poderão não fazer mais sentido para a
+% aplicação remota, trocá-los ou cancelar %seu envio pode reduzir o uso de
+% recursos de rede, o que contribui para reduzir o congestionamento na rede.
+%Para entender melhor este conceito, considere
+%a seguinte analogia: suponha o trânsito da
+%Avenida Fernandes Lima (uma movimentada avenida da cidade de Maceió). Esta
+%avenida é o eixo principal que dá acesso a outras vias que ligam diversos
+%bairros da cidade. O fluxo de veículos próximo às \ut{8}{h} ou próximo às
+%\ut{18}{h} é muito intenso. Vários semáforos controlam o tráfego, de modo que o
+%congestionamento de veículos seja o mínimo possível. Nenhum agente externo
+%controla esses semáforos. Se uma ambulância precisar ter prioridade de
+%ultrapassagem no trânsito ou precisar ultrapassar no sinal vermelho não há uma
+%maneira para especificar qual veículo deve passar e quais devem dar passagem, a
+%família do paciente precisará contar com a boa educação dos demais.
+%Para este exemplo, o trânsito controlado pelos semáforos equivale ao controle
+% de
+%congestionamento do protocolo TCP, onde os veículos trafegam baseando-se em
+%regras pré-definidas: temporizadores dos semáforos e a interligação dos mesmos.
+%A falta de um agente que permita especificar qual veículo tem maior prioridade,
+%pode-se comparar a impossibilidade que o TCP impõe de não permitir, caso seja
+%necessário, especificar qual pacote deve ser enviado (a urgência que a
+%ambulância tem) e quais os que não precisam ser enviados, por exemplo, a mesma
+%ambulância se o paciente for a óbito -- não faz sentido retransmitir pacotes
+%caso estes sejam descartados no seu destino.
+%Para uma segunda situação, não seria difícil de imaginar o que aconteceria se
+%nesses horários todos os semáforos não estivessem funcionando. Uma vez que o
+%trânsito estaria em um total descontrole, todos os veículos iriam trafegar sem
+%nenhum controle adequado, causando acidentes (a perda de pacotes). Este simples
+%exemplo poderia comparar-se ao protocolo UDP, que não fornece o controle de
+%congestionamento e como conseqüência pode gerar um aumento do congestionamento
+%do trânsito, ou melhor, da rede.
+%
+%Utilizando como base a analogia descrita anteriormente, o DCCP funciona de modo
+%a permitir que a ambulância ganhe passagem no trânsito considerando que ainda
+% há
+%esperança de salvar o paciente. Neste caso, a ambulância seria um pacote
+%multimídia que está prestes a ser reproduzido pela aplicação de destino e se
+%não chegar a tempo o paciente vai a óbito, ou seja, não fará mais sentido
+%reproduzir aquele pacote atrasado. Na prática, o pacote será descartado na
+% aplicação de
+%destino, utilizando-se a rede para transportar pacotes inúteis à aplicação.
+% Mas,
+%se existir uma outra ambulância que transporte um paciente ainda vivo -- uma
+%nova informação do conteúdo multimídia sendo transmitido -- é preferível
+%transmitir este pacote a enviar o paciente em óbito, ou seja, aquele pacote que
+%não será mais útil àquela aplicação.
+
+% \subsubsection{Arcabouço Modularizado de Algoritmos de Controle de
+% Congestionamento}
+%
+% O DCCP oferece três algoritmos de controle de congestionamento,
+% chamados CCIDs (\textit{Congestion Control IDentifiers}). Os CCIDs
+% são os componentes responsáveis por oferecer o controle de
+% congestionamento em conexões DCCP. No Linux, os CCIDs são módulos do
+% \emph{kernel} que funcionam sobre o núcleo da implementação do DCCP.
+% Como tal, podem ser carregados e descarregados a qualquer momento, e
+% as aplicações podem selecionar um CCID adequado para um determinado
+% padrão de fluxo multimídia. Por exemplo, aplicações VoIP são
+% caracterizadas pela transmissão de rajadas de pequenos pacotes
+% seguidas de períodos de silêncio, enquanto aplicações de vídeo sob
+% demanda geralmente transmitem conteúdo multimídia a taxas
+% constantes. Nesse caso, para uma aplicação VoIP é melhor usar uma
+% técnica de controle de congestionamento criada para VoIP. Esta idéia
+% não se aplica em protocolos como o TCP e o UDP.
+%
+% Os CCIDs padronizados são: CCID-2~\cite{RFC4341},
+% CCID-3~\cite{RFC4342} e o CCID-4~\cite{RFC5622}. O CCID-2 (RFC 4341)
+% é melhor para aplicações que usam toda a banda de rede disponível e
+% se adaptam a alterações súbitas de banda. Assemelha-se ao controle
+% de congestionamento do TCP, que se baseia no conceito de janela de
+% congestionamento. O tamanho dessa janela determina quantos pacotes o
+% remetente tem permissão para enviar pela rede. Isso significa que
+% quanto maior for a janela de congestionamento, mais pacotes o DCCP
+% está autorizado a enviar dados pela rede.
+%
+% Quando o CCID-2 detecta que um pacote foi perdido, ele diminui pela
+% metade a janela de congestionamento. Tal ação caracteriza uma
+% mudança abrupta na taxa de transmissão, principalmente para
+% aplicações multimídia. No estado inicial de transmissão, a janela de
+% congestionamento aumenta de forma exponencial conforme os pacotes
+% enviados são confirmados, até alcançar a fase de contenção do
+% congestionamento. Na fase de contenção, a taxa de transmissão
+% aumenta linearmente até que aconteça o primeiro evento de perda de
+% pacote.
+%
+% O CCID-3 (RFC 4342) implementa um algoritmo de controle de
+% congestionamento baseado no receptor, que controla a taxa do
+% remetente. Periodicamente, o receptor envia ao remetente pacotes de
+% informação relatando eventos de perda e outras estatísticas de
+% conexão que são inseridas na equação do TFRC (TCP-\textit{Friendly
+% Rate Control}) (RFC 3448). O resultado desta equação corresponde à
+% taxa de transmissão que o DCCP deverá utilizar para os próximos
+% envios de pacotes.
+%
+% %O TFRC é razoavelmente justo quando compete por banda com fluxos
+% %TCP, mas tem uma menor variação da taxa de transmissão ao longo do
+% %tempo quando comparado a outros mecanismos de controle de
+% %congestionamento do TCP. Isso o torna mais adequado a aplicações
+% %como telefonia, para as quais é importante uma taxa de envio
+% %relativamente suave.
+%
+% Por último, a IETF recentemente publicou a RFC
+% do CCID-4 (RFC 5622), própria para aplicações que enviam rajadas de
+% pacotes pequenos intercalados por intervalos de silêncio. A escrita
+% da especificação do CCID-4 também foi uma contribuição no contexto
+% deste projeto, sendo as principais: melhoria do texto e
+% implementação da especificação no kernel do Linux.
+
+Para transmissões de dados multimídia em redes de computadores, onde
+satisfazer os requisitos de tempo pode definir o nível de qualidade
+da transmissão multimídia, o DCCP pode melhorar a qualidade do fluxo
+multimídia e ainda resolver diversos problemas causados pelo congestionamento
+da rede, como o das retransmissões desnecessárias. Estudos anteriores realizados
+no contexto deste
+trabalho~\cite{leandro-WP2P-2011,leandro-master-2008,leandro2008,leandro-linuxmag2008,ccnc-leandro2008,leandro-OLS-2008} e outros publicados por
+terceiros~\cite{5202273,4667595,balan2007,tafazolli2006,linck2006,Shigeki2005,CONG:Nivor05:Video-Exper:inp} constatam que a utilização do protocolo
+DCCP tem trazido diversas vantagens na transmissão de fluxos multimídia.
+
+Sendo assim, a motivação para a definição do DCCP está relacionada com as
+características intrínsecas das aplicações com restrição de tempo de resposta e
+no fato de que grande parte desse tipo de aplicação utiliza o UDP. Considerando
+os problemas e limitações dos protocolos TCP e UDP discutidos até aqui e os
+cenários de aplicações considerados neste trabalho, o DCCP foi projetado para
+atender as necessidades das aplicações multimídia com suporte a controle de
+congestionamento, evitando assim um colapso de congestionamento na Internet.
+
+Desta forma, o protocolo DCCP aparece como o protocolo de transporte mais
+adequado a ser utilizado em uma solução para transmissão padronizada de
+conteúdos multimídia na Internet, pelo menos oficializado pela IETF. Com isto,
+elimina-se o uso do protocolo UDP em aplicações multimídia e consequentemente
+diminui-se o tráfego de dados na rede sem controle de congestionamento, ao passo
+que compartilha-se efetivamente os canais de transmissão com fluxos de dados
+TCP, cujas aplicações (\textit{Web}, E-mail etc.) correm o risco de tornarem-se
+inutilizáveis devido ao iminente e inevitável crescimento do uso de aplicações
+multimídia baseadas em UDP.
+
+Porém, foram executadas simulações de rede no NS-2\footnote{Network Simulator 2:
+\murl{http://nsnam.isi.edu/nsnam/index.php/Main_Page}}~\cite{netsimulator2} cuja
+topologia da rede foi definida como uma árvore binária completa
+(Figura~\ref{fig:topologia_rede}). Cada nó da árvore representou um roteador e
+cada roteador tinha 10 nós DCCP receptores conectados a ele. Cada tratamento foi
+definido como sendo um nível da árvore binária. Por exemplo, o primeiro
+tratamento tinha 10 nós receptores e 1 roteador, pois o nível da árvore
+\textit{L} foi igual a 0 (zero); no tratamento seguinte utilizou-se 30 nós
+receptores e 3 roteadores, pois L=1; no tratamento seguinte utilizou-se 70 nós
+receptores e 7 roteadores, pois L=2; e assim por diante até L=9, quando
+utilizou-se 10.230 nós receptores e 1.023 roteadores (utiliza-se $n=2^{L+1}-1$
+para se obter a quantidade \textit{n} de roteadores dado um nível \textit{L} da
+topologia de rede utilizada). A transmissão ocorreu da seguinte
+forma: um nó localizado na raiz da árvore transmitiu o mesmo conteúdo multimídia
+para todos os outros nós conectados à rede, simulando uma típica transmissão
+multimídia \mys\space e um tráfego de comportamento equivalente a um vídeo
+MPEG-2. Em cada tratamento foram estudadas duas variáveis: a perda de dados e a
+taxa de transmissão de cada conexão DCCP partindo do nó raiz até cada nó
+receptor. As simulações de cada tratamento foram repetidas a quantidade de vezes
+necessária até se alcançar uma média com nível de confiança de 95\% para a
+métrica vazão, de acordo com o método estatístico descrito no
+Capítulo~\ref{cap:metodosexperimentos} deste documento.
+
+Os resultados obtidos com as simulações dos tratamentos descritos anteriormente
+são apresentados no gráfico da
+Figura~\ref{fig:resultado_simulacao_dccp_many_flows}. Nas abscissas do gráfico
+representa-se o número de nós receptores para cada tratamento, ao passo que nas
+ordenadas representa-se a taxa de transmissão média conseguida por cada conexão
+DCCP, com a porcentagem de perda de dados em cada conexão DCCP em cada ponto
+marcado no gráfico.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=.7]{imgs/topologia.pdf}
+\end{center}
+\vspace{-0.5cm}
+\caption[Topologia da rede definida para as simulações com DCCP]{Topologia da
+rede definida para as simulações realizadas. Cada rede é representada por um
+roteador e com 10 nós em cada rede.}
+\label{fig:topologia_rede}
+\end{figure}
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=.85]{graphs/1.pdf}
+\end{center}
+\vspace{-0.5cm}
+\caption[Vazão do DCCP na transmissão de áudio para vários clientes]{Gráfico
+para uma transmissão DCCP com um transmissor enviando dados
+de áudio VoIP utilizando o protocolo DCCP. Nota-se que a vazão média de cada
+fluxo tende a 0 (zero) à medida que o número de nós receptores aumenta.}
+\label{fig:resultado_simulacao_dccp_many_flows}
+\end{figure}
+
+É possível observar no gráfico apresentado na
+Figura~\ref{fig:resultado_simulacao_dccp_many_flows} que a vazão
+média de cada fluxo DCCP transmitido aos receptores tende a 0 (zero) à
+medida que o número de receptores aumenta, sendo possível concluir
+que o protocolo DCCP não escala quando utilizado para transmissão de
+dados multimídia em cenários de aplicações com um transmissor
+transmitindo para vários receptores (\mys).
+
+Uma questão intrigante neste aspecto é que o protocolo DCCP funciona
+perfeitamente em cenários simplórios, mas sofre claramente de um problema de
+escalabilidade, o que é crítico para aplicações consideradas neste trabalho, as
+quais não podem continuar utilizando protocolos como o UDP pelos efeitos
+colaterais causados por este. Isto torna o protocolo DCCP pouco eficaz para
+cenários de distribuição de conteúdo multimídia, fazendo com que os
+desenvolvedores continuem sem motivações para efetivamente utilizar o protocolo
+DCCP em suas aplicações.
+
+Apesar da existência de soluções padronizadas para transporte de dados, existem
+outras soluções na literatura que não são padronizadas pela IETF mas que
+apresentam avanços significativos nas discussões até aqui. Na literatura, estas
+soluções não são apresentadas como completos protocolos de transporte e sim como
+algoritmos para controle de congestionamento, sendo os mais importantes o
+\textit{eXplicit Control Protocol} (XCP)~\cite{REF}, o \textit{Rate Control
+Protocol} (RCP)~\cite{REF} e o \textit{Congestion Exposure} (ConEx)~\cite{REF}.
+Estes algoritmos são considerados propulsores das redes centradas no conteúdo,
+por isto estes são apresentados em mais detalhes no
+Capítulo~\ref{cap:fundamentacao}.
+
+% \subsection{Algoritmos de Controle de Congestionamento Assistidos pela Rede}
+% \label{subsec:panoramaatual_ccar}
+%
+% %VCP -
+% %http://ilab.cs.byu.edu/wiki/Variable-structure_congestion_Control_Protocol_(VC
+% P )
+% The paper One More Bit is Enough introduces Variable-structure congestion
+% Control Protocol, or VCP. This transport protocol is designed to address a
+% specific problem with TCP, that of poor bandwidth utilization in networks with a
+% high bandwidth delay product. VCP is compared to XCP, which is known to do an
+% excellent job of addressing this same problem. VCP is shown to perform at the
+% same level as XCP with regard to bandwidth utilization. The only area in which
+% VCP is known to be inferior to XCP is with regard to the speed at which it
+% converges to fairness when a new flow is added. XCP converges much more quickly.
+% Otherwise, VCP is shown to be on par with XCP.
+% XCP works so well because information at the router is used to dictate an
+% optimal speed for each competing flow. This involves encoding the fair flow rate
+% and sending those bits back to the sender. The ideal way to do this is to put
+% those bits into the IP header. The problem is that the IP header only has two
+% bits set aside for congestion information. These two bits are not sufficient for
+% XCP.
+% Traditional congestion notification approaches, like Active Queue Management
+% (AQM) and Explicit Congestion Notification (ECN) only make use of one bit in the
+% IP header to indicate that a flow is congested. In this paper, it is shown that
+% just one more bit, two bits in total, of congestion information is sufficient to
+% imitate the bandwidth utilization performance of XCP.
+% These two bits are used to encode three distinct congestion states, low load,
+% high load, and overload. These bits are put into the IP header at the routers
+% and return to senders via ACK packets. Senders use different policies, depending
+% on the congestion state of the network. During periods of low load, a policy of
+% Multiplicative Increase (MI) is followed. During periods of high load, Additive
+% Increase (AI) is used. If overload is detected, Multiplicative Decrease (MD) is
+% employed. Parameters for each of these policies are scaled according to RTT and
+% other factor
+%
+%
+% XCP delivers the highest possible application performance over a broad range of
+% network infrastructure, including extremely high speed and very high delay links
+% that are not well served by TCP. In so doing, it achieves maximum link
+% utilizations and wastes no bandwidth due to packet loss, since it does not use
+% packet loss information to define the next transmission rates. XCP is novel in
+% separating the efficiency and fairness policies of congestion control, enabling
+% routers to quickly make use of available bandwidth while conservatively managing
+% the allocation of bandwidth to flows. XCP is built upon a new principle:
+% carrying per-flow congestion state in packets. XCP packets carry a congestion
+% header through which the sender requests a desired throughput. Routers make a
+% fair per-flow bandwidth allocation without maintaining any per-flow state. Thus,
+% the sender learns of the bottleneck router's allocation in a single round
+% trip~\cite{REF,XCP-THESIS}.
+%
+% The router explicitly tell the receiver the state of congestion and how to react
+% to it. This allows senders to adjust their windows based on the precise feedback
+% information. XCP carries the per-flow congestion state in packets, requiring no
+% per-flow state in routers. XCP senders specify a desired throughput increase in
+% packet congestion headers, which the routers modify to give a bandwidth
+% increment or decrement based on the link congestion conditions. The novelty in
+% XCP is the concept of decoupling the link efficiency control from the flow
+% fairness control. XCP controls link utilization by adjusting its aggressiveness
+% to the spare bandwidth and the feedback control delay, thus achieving stability
+% and efficiency even for large bandwidth delay product networks. It controls
+% fairness by (conservatively) managing the bandwidth distribution among flows.
+% More specifically, it reclaims bandwidth from flows with rates above their fair
+% share and distributes it to flows with lower rates. New XCP flows start with a
+% small window size and thereafter receive a window increment/decrement. At any
+% time, XCP flows can have different window sizes, different round-trip times, and
+% different rates. XCP continuously tries to converge to the point where the link
+% is efficiency utilized and all flows have their fair-share
+% rate~\cite{REF,NANDITA-THESIS}.
+%
+% In regarding to RCP, it applies the same strategy of XCP. The routers explicitly
+% help RCP in defining the transmission rate of each flow. The difference it that
+% a router maintains a single rate, R(t), for every link. The router ``stamps''
+% R(t) on every passing packet (unless it already carries a slower value). The
+% receiver sends the value back to the sender, thus informing it about the slowest
+% (or bottleneck) rate along the path. In this way, the sender quickly finds out
+% the rate it should be using (without the need for Slow-Start). The router
+% updates R(t) approximately once per roundtrip time, and strives to emulate
+% Processor Sharing among flows~\cite{REF,NANDITA-THESIS}.
+%
+% The foremost goal in RCP is short flow completion times, or in other words to
+% make a flow complete as quickly -- after all this is what most users experience
+% and care about when they interact with the network in any way~\cite{REF}. The
+% biggest plus of RCP is the short flow completion times under a wide range of
+% network and traffic characteristics -- which are in fact quite close to what
+% flows would achieve if they were processor-shared. It turns out that as a
+% consequence of this, RCP also achieves the other goals that high-speed TCPs and
+% XCP achieve, which is efficient and fair network usage in the presence of a few
+% high-bandwidth transfers. In summary, there are four main features of RCP that
+% make it an appealing and practical congestion control algorithm: (i) RCP is
+% inherently fair -- all flows at a bottleneck receive the same rate; (ii) RCP's
+% flow completion times are often one to two orders of magnitude shorter than
+% those of TCP-Sack and XCP, and close to what flows would have achieved if they
+% were
+% ideally processor-shared; (iii) there is no per-flow state or per-flow queuing;
+% and (iv) the per-packet computations at a RCP router are simple.
+%
+% The purpose of the CONEX working group is to develop a mechanism
+% by which senders inform the network about the congestion encountered
+% by previous packets on the same flow. Today, the network may signal
+% congestion by ECN markings or by dropping packets, and the receiver
+% passes this information back to the sender in transport-layer
+% acknowledgements. The mechanism to be developed by the CONEX WG
+% will enable the sender to also relay the congestion information
+% back into the network in-band at the IP layer, such that the total
+% level of congestion is visible to all IP devices along the path,
+% from where it could, for example, be provided as input to traffic
+% management.
+%
+% It is believed that the CONEX mechanism will be useful as a generative
+% technology that can be applied as a key element of congestion
+% management solutions in a wide variety of use cases. However, the
+% CONEX WG will initially focus on one use case, where the end hosts
+% and the network that contains the destination end host are CONEX-enabled
+% but other networks need not be. CONEX information can assist the
+% network operator's traffic management and, for example, incentivize
+% LEDBAT-like applications. Congestion-based billing is not within the
+% scope of the WG.
+%
+% % (more examples of this, are in Chap. 4)
+% Although both congestion control protocols provides substantial improvements of
+% the network resource usage and end-user quality of experience, both also
+% presents some downsides. XCP solves the problems with TCP in a static scenario
+% in which there are a fixed number of flows having an infinite amount of data to
+% send. In this scenario it emulates Processor Sharing by giving each flow
+% eventually an equal share of the bottleneck link. But in practice, flows arrive
+% randomly and transfer a finite arbitrary amount of data. In this dynamic
+% environment with a mix of flow sizes, XCP not only deviates far from Processor
+% sharing, but in fact does far worse than TCP, being inefficient and
+% unfair~\cite{REF} in realistic application scenarios. When there is a mix of
+% flow sizes, XCP typically makes the flows last two orders of magnitude longer
+% than necessary. XCP requires detailed per-packet calculations in the routers: 4
+% floating-point multiplications and 10 additions for every packet~\cite{REF}
+% [13], which will be too slow to be implemented in software for high-speed
+% routers and a burden to
+% implement in hardware, particularly since the algorithm is experimental. As per
+% XCP, RCP involves the routers in congestion control, so it needs help from the
+% infrastructure. Although this cannot be a real disadvantage considering the
+% gains RCP can bring, the deploy process is complex. It does have per-packet
+% computations, although they are simple compared to XCP. Although the RCP
+% algorithm strives to keep the buffer occupancy low most times, there are no
+% guarantees of buffer not overflowing or of a zero packet loss. This becomes
+% especially acute in situations such as sudden flash-crowds, where although RCP
+% recovers quickly, there will be transient spikes in the queue and possibly
+% packet losses~\cite{REF,NANDITA-THESIS}.
+%
+% Em geral, o XCP, o RCP e o ConEx  delivers the highest possible application
+% performance over a broad range of network infrastructure, including extremely
+% high speed and very high delay links that are not well served by TCP. In so
+% doing, it achieves maximum link utilizations and wastes no bandwidth due to
+% packet loss, since it does not use packet loss information to define the next
+% transmission rates. XCP is novel in separating the efficiency and fairness
+% policies of congestion control, enabling routers to quickly make use of
+% available bandwidth while conservatively managing the allocation of bandwidth to
+% flows. XCP is built upon a new principle: carrying per-flow congestion state in
+% packets. XCP packets carry a congestion header through which the sender requests
+% a desired throughput. Routers make a fair per-flow bandwidth allocation without
+% maintaining any per-flow state. Thus, the sender learns of the bottleneck
+% router's allocation in a single round trip~\cite{REF,XCP-THESIS}.
+%
+% The router explicitly tell the receiver the state of congestion and how to react
+% to it. This allows senders to adjust their windows based on the precise feedback
+% information. XCP carries the per-flow congestion state in packets, requiring no
+% per-flow state in routers. XCP senders specify a desired throughput increase in
+% packet congestion headers, which the routers modify to give a bandwidth
+% increment or decrement based on the link congestion conditions. The novelty in
+% XCP is the concept of decoupling the link efficiency control from the flow
+% fairness control. XCP controls link utilization by adjusting its aggressiveness
+% to the spare bandwidth and the feedback control delay, thus achieving stability
+% and efficiency even for large bandwidth delay product networks. It controls
+% fairness by (conservatively) managing the bandwidth distribution among flows.
+% More specifically, it reclaims bandwidth from flows with rates above their fair
+% share and distributes it to flows with lower rates. New XCP flows start with a
+% small window size and thereafter receive a window increment/decrement. At any
+% time, XCP flows can have different window sizes, different round-trip times, and
+% different rates. XCP continuously tries to converge to the point where the link
+% is efficiency utilized and all flows have their fair-share
+% rate~\cite{REF,NANDITA-THESIS}.
+%
+% In regarding to RCP, it applies the same strategy of XCP. The routers explicitly
+% help RCP in defining the transmission rate of each flow. The difference it that
+% a router maintains a single rate, R(t), for every link. The router ``stamps''
+% R(t) on every passing packet (unless it already carries a slower value). The
+% receiver sends the value back to the sender, thus informing it about the slowest
+% (or bottleneck) rate along the path. In this way, the sender quickly finds out
+% the rate it should be using (without the need for Slow-Start). The router
+% updates R(t) approximately once per roundtrip time, and strives to emulate
+% Processor Sharing among flows~\cite{REF,NANDITA-THESIS}.
+%
+% The foremost goal in RCP is short flow completion times, or in other words to
+% make a flow complete as quickly -- after all this is what most users experience
+% and care about when they interact with the network in any way~\cite{REF}. The
+% biggest plus of RCP is the short flow completion times under a wide range of
+% network and traffic characteristics -- which are in fact quite close to what
+% flows would achieve if they were processor-shared. It turns out that as a
+% consequence of this, RCP also achieves the other goals that high-speed TCPs and
+% XCP achieve, which is efficient and fair network usage in the presence of a few
+% high-bandwidth transfers. In summary, there are four main features of RCP that
+% make it an appealing and practical congestion control algorithm: (i) RCP is
+% inherently fair -- all flows at a bottleneck receive the same rate; (ii) RCP's
+% flow completion times are often one to two orders of magnitude shorter than
+% those of TCP-Sack and XCP, and close to what flows would have achieved if they
+% were
+% ideally processor-shared; (iii) there is no per-flow state or per-flow queuing;
+% and (iv) the per-packet computations at a RCP router are simple.
+%
+% The purpose of the CONEX working group is to develop a mechanism
+% by which senders inform the network about the congestion encountered
+% by previous packets on the same flow. Today, the network may signal
+% congestion by ECN markings or by dropping packets, and the receiver
+% passes this information back to the sender in transport-layer
+% acknowledgements. The mechanism to be developed by the CONEX WG
+% will enable the sender to also relay the congestion information
+% back into the network in-band at the IP layer, such that the total
+% level of congestion is visible to all IP devices along the path,
+% from where it could, for example, be provided as input to traffic
+% management.
+%
+% It is believed that the CONEX mechanism will be useful as a generative
+% technology that can be applied as a key element of congestion
+% management solutions in a wide variety of use cases. However, the
+% CONEX WG will initially focus on one use case, where the end hosts
+% and the network that contains the destination end host are CONEX-enabled
+% but other networks need not be. CONEX information can assist the
+% network operator's traffic management and, for example, incentivize
+% LEDBAT-like applications. Congestion-based billing is not within the
+% scope of the WG.
+%
+% % (more examples of this, are in Chap. 4)
+% Although both congestion control protocols provides substantial improvements of
+% the network resource usage and end-user quality of experience, both also
+% presents some downsides. XCP solves the problems with TCP in a static scenario
+% in which there are a fixed number of flows having an infinite amount of data to
+% send. In this scenario it emulates Processor Sharing by giving each flow
+% eventually an equal share of the bottleneck link. But in practice, flows arrive
+% randomly and transfer a finite arbitrary amount of data. In this dynamic
+% environment with a mix of flow sizes, XCP not only deviates far from Processor
+% sharing, but in fact does far worse than TCP, being inefficient and
+% unfair~\cite{REF} in realistic application scenarios. When there is a mix of
+% flow sizes, XCP typically makes the flows last two orders of magnitude longer
+% than necessary. XCP requires detailed per-packet calculations in the routers: 4
+% floating-point multiplications and 10 additions for every packet~\cite{REF}
+% [13], which will be too
+% slow to be implemented in software for high-speed routers and a burden to
+% implement in hardware, particularly since the algorithm is experimental. As per
+% XCP, RCP involves the routers in congestion control, so it needs help from the
+% infrastructure. Although this cannot be a real disadvantage considering the
+% gains RCP can bring, the deploy process is complex. It does have per-packet
+% computations, although they are simple compared to XCP. Although the RCP
+% algorithm strives to keep the buffer occupancy low most times, there are no
+% guarantees of buffer not overflowing or of a zero packet loss. This becomes
+% especially acute in situations such as sudden flash-crowds, where although RCP
+% recovers quickly, there will be transient spikes in the queue and possibly
+% packet losses~\cite{REF,NANDITA-THESIS}.
+
+
+
+====================================
+
+% http://en.wikipedia.org/wiki/P2PTV
+
+% http://en.wikipedia.org/wiki/Peercasting
+
+% http://en.wikipedia.org/wiki/Content_delivery_network#Commercial_CDNs_using_P2P_
+% for_delivery
+
+% Sendo assim, na Seção \ref{sec:sis_trans_aovivo}
+% apresenta-se discussões sobre distribuição de mídia ao vivo, escrita com base
+% na referência~\cite{vieira_borges_2010}; na Seção~\ref{sec:conceitos_multicast}
+% sobre transmissão de dados multimídia em modo multicast; na
+% Seção~\ref{sec:conceitos_camadatransporte} sobre camada de transporte TCP/IP; e
+% na Seção~\ref{sec:conceitos_dccp} sobre o
+% funcionamento do protocolo DCCP.
+
+% \section{Arquiteturas de Redes P2P}
+% \label{sec:arq_p2p}
+%
+% Os serviços disponíveis em redes de computadores são tradicionalmente baseados
+% no modelo cliente-servidor. Nesse modelo, um ou mais servidores centralizados
+% provêem todo o serviço desejado, e realizam todo o processamento da aplicação
+% localmente.
+%
+% Apesar da grande quantidade de aplicações baseadas no modelo cliente-servidor,
+% as limitações tornam-se evidentes em sistemas distribuídos de larga escala.
+% Nesses sistemas, é necessário o uso de sofisticados mecanismos de
+% balanceamento
+% de carga e algoritmos de tolerância a falhas, para prover o serviço com tempos
+% de respostas em níveis aceitáveis. Mais ainda, essas aplicações
+% estão sujeitas aos limites da banda de rede e, caso um número grande de
+% usuários
+% tenham interesse em obter serviço simultaneamente, a rede pode torna-se um
+% ponto
+% de contenção.
+%
+% Tais problemas motivaram o desenvolvimento de abordagens que distribuem o
+% processamento e a carga, além de dividir a banda de rede por todos os
+% participantes. Essas abordagens apresentam arquiteturas de computadores
+% distribuídas, chamadas de Entre Pares ou Peer-to-Peer (P2P). Esses sistemas
+% são
+% projetados para compartilhamento de recursos computacionais por uma troca
+% direta
+% entre os participantes, sem a necessidade de requisição do intermédio ou
+% suporte
+% de um servidor centralizado.
+%
+% Mais precisamente, uma rede P2P é uma rede de computadores que exibe
+% auto-organização, comunicação simétrica e controle distribuído. Os
+% conceitos da arquitetura P2P foram inicialmente descritos no documento
+% RFC 1 \aspas{\textit{Host Software}} de 7 de Abril de
+% 1969~\cite{RFC1}. Entretanto, a primeira rede P2P de grande uso foi o sistema
+% \aspas{\textit{Usenet News Server}} de 1979. Na \textit{Usenet}, enquanto os
+% usuários finais acessavam as notícias através de servidores, os servidores
+% comunicavam entre si para propagar os artigos de notícias. A comunicação entre
+% os servidores era feita de forma similar às aplicações P2P atuais, sem a
+% necessidade de um servidor central.
+%
+% Atualmente, existe uma grande quantidade de aplicações baseadas no modelo
+% P2P. Grande parte dessas aplicações ganhou notoriedade por compartilhar
+% arquivos, geralmente músicas e vídeos. Porém, há outros importantes sistemas
+% P2P
+% que, além de compartilhamento de arquivos, se preocupam também com outros
+% recursos, como processamento, banda de rede e armazenamento de informações,
+% como os grids
+% computacionais.
+%
+% \subsection{Arquiteturas P2P}
+%
+% Uma rede P2P é uma rede composta por computadores participantes
+% (\textit{peers}
+% ou nós), e as conexões existentes entre eles. Essa rede é formada sobre e
+% independentemente da rede física de computadores existentes (tipicamente uma
+% rede IP). Há várias maneiras de se classificar as redes P2P, como descrito a
+% seguir.
+%
+% \subsubsection{Definição Quanto à Centralização}
+%
+% Apesar da suposição que as redes P2P são totalmente descentralizadas, na
+% prática, encontram-se variações desse modelo e os sistemas apresentam graus de
+% centralização. Em relação a um maior ou menor grau de centralização, as
+% arquiteturas P2P apresentam três categorias bem identificadas:\\
+%
+% \textbf{(A) Arquitetura Puramente Descentralizada:}\\
+% Nesta arquitetura, todos os nós apresentam exatamente o mesmo comportamento e
+% realizam as mesmas operações. Eles não se distinguem entre servidores ou
+% clientes, e têm capacidade de agir como ambos. Além disso, não há uma unidade
+% centralizadora para coordenar as atividades da rede.
+%
+% Os sistemas puramente descentralizados são inerentemente escaláveis e
+% tolerantes
+% a falhas. A escalabilidade é alcançada porque tais arquiteturas não apresentam
+% elementos centralizadores ou servidores. Esses elementos centralizadores podem
+% ser pontos de contenção e geralmente restringem a escalabilidade de um sistema
+% qualquer.
+%
+% Como não há um ponto de falha localizado e a perda de participantes do sistema
+% pode ser facilmente compensada, essas arquiteturas tornam-se tolerantes a
+% falhas. Há também uma grande autonomia local em relação ao controle dos
+% recursos
+% existentes no sistema, o que faz que os participantes sejam pouco afetados por
+% ausência de outros.
+%
+% Apesar dessas vantagens, os sistemas totalmente distribuídos apresentam uma
+% descoberta de informações lenta, e sem garantia quanto à qualidade do serviço.
+% Principalmente pela impossibilidade de se ter uma visão global do sistema, o
+% que
+% dificulta a previsão do comportamento do mesmo.
+%
+% \textbf{(B) Arquitetura Híbrida Descentralizada:}\\
+% Em um sistema P2P híbrido, há um servidor centralizado que facilita as
+% interações entre os participantes. Esse servidor mantém metadados que
+% descrevem
+% os recursos compartilhados e os participantes do sistema. Apesar da
+% centralização para obter informações da rede, as interações são realizadas
+% diretamente entre os participantes. Por exemplo, uma troca de dados ou de
+% arquivos é realizada entre os dois participantes do sistema que estabeleceram
+% uma parceria para realizar tal tarefa. Apesar disso, servidor centralizado
+% tipicamente acarreta baixa escalabilidade, vulnerabilidade a ataques, e atos
+% de
+% censura.
+%
+% Um dos exemplos mais importantes dessa arquitetura é o sistema
+% Napster\footnote{Napster: http://www.napster.com}. O Napster foi um dos
+% primeiros sistemas populares para
+% compartilhamento de arquivos na Internet, sobretudo arquivos de música. O
+% Napster teve seu serviço interrompido devido a restrições judiciais,
+% principalmente por causa de conteúdo pirateado compartilhado por meio desse
+% sistema.\\
+%
+% \textbf{(C) Arquitetura Parcialmente Centralizada:}\\
+% Este tipo de arquitetura é semelhante à arquitetura puramente descentralizada,
+% porém, alguns de seus participantes apresentam papéis mais importantes no
+% sistema. Eles atuam como elementos centralizadores, facilitando a localização
+% e
+% a troca de recursos entre os demais participantes. Os nós mais importantes são
+% conhecidos como super-nós~\cite{beverly_yang_designing_2003} e, em geral, são
+% dinamicamente
+% escolhidos entre os participantes da rede para desempenhar sua função.
+%
+% A maneira como esses super-nós desempenham suas funções varia de sistema
+% para sistema, porém, deve-se ressaltar que eles não são pontos de falha para a
+% rede P2P. Como são dinamicamente escolhidos, caso algum deles falhe, a rede
+% irá automaticamente substituí-lo por outro participante.
+%
+% \subsubsection{Definição Quanto à Estrutura}
+%
+% A definição de uma arquitetura quanto à estrutura refere-se à maneira como o
+% sistema é criado e mantido. Há três maneiras de se criar a estrutura. A
+% primeira, não é determinista na adição de novos participantes e/ou conteúdo. A
+% outra segue regras específicas para a criação da estrutura P2P. A terceira
+% situa-se entre as duas inicialmente citadas.\\
+%
+% \textbf{(A) Redes Sobrepostas P2P Não Estruturadas:}\\
+% No primeiro caso, as redes não são estruturadas. A localização de um recurso
+% não
+% tem relacionamento com a topologia da rede sobreposta e os participantes são
+% conectados diretamente uns aos outros. Nesses sistemas, as buscas por recursos
+% ocorrem por uma série de pesquisas aleatórias, onde vários participantes são
+% questionados se possuem o recurso em questão.
+%
+% Nessa arquitetura, a localização do conteúdo precisa de mecanismos de busca
+% que
+% vão desde métodos baseados na força bruta (e.g. inundação de mensagens) e
+% maneiras mais sofisticadas, que incluem roteamento aleatório e índices dos
+% elementos da rede. Os mecanismos de busca empregados em uma rede não
+% estruturada
+% têm uma implicação forte no desempenho do sistema, principalmente, na
+% escalabilidade, disponibilidade e persistência.
+%
+% Os sistemas não estruturados são, geralmente, apropriados para acomodar
+% população de nós altamente transientes. Ou seja, populações em que os
+% participantes entram e abandonam o sistema constantemente.\\
+%
+% \textbf{(B) Redes Sobrepostas P2P Estruturadas:}\\
+% Rede sobreposta P2P estruturada é uma rede onde a sua formação e manutenção
+% seguem regras bem definidas. A topologia é controlada e os recursos são
+% disponibilizados em locais específicos do sistema. Esses sistemas provêem um
+% mapeamento entre o identificador do recurso e a localização, na forma de uma
+% tabela de roteamento. Assim, as pesquisas podem ser eficientemente roteadas
+% para
+% o nó que contém o recurso desejado.
+%
+% Essas arquiteturas estruturadas surgiram principalmente para tratar questões
+% de
+% escalabilidade em sistemas, que originalmente tinham esse problema. Elas
+% oferecem uma solução para casamento exato das consultas, ou seja, as consultas
+% são direcionadas diretamente para o recurso procurado. Uma desvantagem de
+% sistemas estruturados é o alto custo para manter a estrutura necessária para
+% um
+% roteamento eficiente das mensagens. Os participantes do sistema podem ter
+% um comportamento dinâmico e transiente, entrando e abandonando o sistema com
+% uma
+% alta taxa.\\
+%
+% \textbf{(C) Redes Sobrepostas P2P Fracamente Estruturadas:}\\
+% Uma rede fracamente estruturada é uma categoria de rede que se situa entre a
+% condição de uma rede estruturada e uma não estruturada. Embora a localização
+% de
+% um recurso não seja completamente especificada, ela é afetada por indicações
+% de
+% uma provável rota.
+%
+% \subsection{Mecanismos para Descoberta de Recursos}
+%
+% Os sistemas distribuídos P2P geralmente necessitam de um mecanismo de
+% descoberta
+% de recursos. Por exemplo, em um sistema distribuído P2P para compartilhamento
+% de
+% arquivos é necessário um mecanismo para a busca dos arquivos desejados.
+%
+% Historicamente, há três grandes vertentes em mecanismos de descoberta de
+% recursos em P2P. A primeira delas é baseada em estruturas centralizadas,
+% como o esquema utilizado no Napster. Essa pode ser pouco escalável e
+% suscetível a ataques, uma vez que existe um único ponto de falhas. A segunda
+% vertente adota soluções distribuídas, como o esquema utilizado no
+% Gnutella\footnote{Gnutella: http://rfc-gnutella.sourceforge.net/}.
+% Essas aplicações distribuem consultas para todos os participantes conectados à
+% aplicação. A terceira trata as pesquisas baseando-se no modelo de roteamento
+% da
+% rede P2P. Assim, as pesquisas são encaminhadas de maneira serializada pela
+% rede,
+% baseada na similaridade das chaves de pesquisa armazenadas nas tabelas de
+% roteamento dos participantes. Essas três grandes vertentes são detalhadas a
+% seguir.\\
+%
+% \textbf{(A) Índices Centralizados e Repositórios:}\\
+% Esse mecanismo de descobrimento de recurso é utilizado em arquiteturas
+% híbridas,
+% onde parte do sistema é centralizado e a troca de recursos é realizada de
+% forma
+% distribuída. Nesse modelo, os participantes se conectam a um serviço
+% centralizado que armazena todas as informações a respeito da localização e do
+% uso dos recursos do sistema. Quando um participante realiza uma busca no
+% servidor centralizado, um casamento pelo padrão é realizado e o participante
+% escolhe algum (ou alguns) outro(s) participante(s) para realizar a parceria. A
+% escolha pelo parceiro pode se dar por qualquer forma de distinção entre os
+% parceiros candidatos, como por exemplo, o mais barato, o mais rápido, o mais
+% perto, o mais disponível, e assim por diante. A troca de recursos é realizada
+% diretamente entre os participantes, sem a necessidade de intermédio de algum
+% outro nó.
+%
+% O Napster utiliza esse método. Os seus servidores armazenam um índice com
+% metadados de todos os arquivos compartilhados na rede, além dos dados dos
+% usuários participantes. Quando um novo usuário torna-se um participante do
+% sistema, ele contata o servidor central e se registra, informando seu endereço
+% e
+% os metadados de seus arquivos. Em uma busca, o participante envia sua
+% requisição
+% ao servidor. Os servidores do Napster devolvem uma lista de usuários que podem
+% atender à requisição. Assim, o participante abre uma conexão direta com o
+% parceiro escolhido.\\
+%
+% \textbf{(B) Inundação de Consultas:}\\
+% Esse é um modelo P2P puro, onde os participantes não mantêm contato com nenhum
+% servidor centralizado para obter informações para buscas. Cada participante
+% publica informações sobre o seu conteúdo compartilhado na rede. Assim, como
+% nenhum participante conhece todos os recursos da rede, eles necessitam enviar
+% consultas aos demais participantes para descobrir a localização do recurso
+% desejado. Cada consulta é enviada aos parceiros do participante; esses
+% parceiros
+% reenviam aos seus parceiros, e assim por diante; até que alguma condição
+% interrompa o processo de inundação de pesquisas. Essa condição de parada pode
+% ser a localização do recurso ou um número máximo de reenvio de mensagens.
+%
+% A inundação de mensagens é utilizada pela arquitetura original do Gnutella,
+% para realizar as pesquisas por arquivos em sua rede. No Gnutella, quando um
+% novo
+% participante se junta à rede, este envia mensagens para quaisquer
+% participantes
+% que ele consiga se conectar. Esses participantes, candidatos à parceria
+% inicial,
+% são descobertos através de um mecanismo central. Os participantes que recebem
+% o
+% pedido de parceria devolvem uma mensagem com sua apresentação e também
+% propagam
+% a apresentação do novo participante. Para evitar sobrecarga da rede, o
+% Gnutella
+% emprega um mecanismo de máximo número de saltos que uma mensagem pode dar.
+% Assim, as mensagens apresentam um raio de circulação, a partir do participante
+% que iniciou a inundação.
+%
+% O mecanismo de inundação pode gerar resultados eficientes em uma rede com
+% um número pequeno ou médio de usuários. Em redes maiores, esse mecanismo
+% não escala bem e, não há garantias de descoberta acurada dos recursos. Além
+% disso, o mecanismo de número máximo de saltos pode criar partições na rede, o
+% que faz com que um participante tenha acesso a um horizonte delimitado de
+% parceiros ou recursos.\\
+%
+% \textbf{(C) Modelos Baseados em Roteamento:}\\
+% O modelo baseado em roteamento adiciona uma estrutura para organizar a maneira
+% com que os recursos são armazenados. Geralmente, utilizam tabelas \aspas{hash}
+% para identificar os recursos e criar o mecanismo de rota. Assim, esse modelo
+% cria um mapeamento entre o recurso armazenado na rede e a sua localização, sob
+% a
+% forma de uma tabela de roteamento. Dessa forma, as consultas por recursos
+% podem
+% ser roteadas de maneira eficiente ao participante que dispõe do recurso
+% desejado. Essa abordagem pode reduzir o número de saltos que uma mensagem
+% precisa realizar na rede, até atingir o seu destino (a localização do
+% recurso).
+%
+% O mecanismo de busca é implementado através da organização dos participantes
+% em uma rede sobreposta estruturada, e pelo roteamento da mensagem na rede
+% sobreposta até o participante responsável pelo conteúdo.
+
+\section{Distribuição de Mídia ao Vivo em P2P}
+\label{sec:arq_p2p_media_aovivo}
+
+Nesta seção, apresenta-se uma revisão dos esforços prévios no sentido de
+estruturar e organizar os sistemas de transmissão ao vivo em arquiteturas P2P.
+São discutidas as duas principais vertentes utilizadas para enviar um fluxo de
+mídia contínua ao vivo em P2P. Uma abordagem é baseada em estruturas de árvores
+e com uma forte estruturação. A outra abordagem é baseada em malha e não
+apresenta uma estrutura rígida entre seus participantes.
+
+As aplicações de vídeo na Internet têm atraído um grande número de usuários
+recentemente. Somente o Youtube, um dos hospedeiros mais populares
+de conteúdo de vídeo, hospedava em agosto de 2010, mais de 400 terabytes de
+vídeos. Além disso, o Youtube atraiu mais de 3.73 bilhões de visualizações
+até esta época. Alguns relatórios recentes apontam que esse hospedeiro de vídeos
+é responsável por mais de \ut{40}{\%} de todo o tráfego de Internet da América
+do Norte e o site de disponibilização de conteúdo multimídia mais acessado no
+mundo.
+
+A transmissão de vídeos na Internet pode se classificar em duas grandes
+categorias: vídeos pré-armazenados,
+enviados sob demanda (\textit{on-demand}) e vídeos ao vivo (\textit{live}). Os usuários de
+vídeos assistidos sob demanda têm a flexibilidade de assistir um conteúdo
+previamente armazenado, da maneira que eles querem e no momento desejado. De
+forma contrária, um conteúdo ao vivo é transmitido no mesmo momento em que o
+fluxo é gerado. Logo, todos os usuários devem estar sincronizados e devem
+assistir o fluxo de vídeo ao mesmo tempo. Essa é a classe de transmissão de
+conteúdo tratado neste trabalho.
+
+A solução básica para o envio do fluxo de vídeo na Internet é a utilização
+do modelo cliente-servidor. Nesse modelo, um cliente cria uma conexão com um
+servidor de vídeo e o conteúdo é enviado para o cliente diretamente do servidor.
+Existem algumas variantes deste modelo, mas as soluções baseadas em
+cliente-servidor demandam uma larga banda no servidor, o que gera um alto custo
+operacional~\cite{guo_survey_2008}.
+
+Recentemente, vários sistemas P2P foram desenvolvidos para prover conteúdo de
+vídeo ao vivo e sob-demanda na Internet, com baixo custo
+operacional~\cite{vu_understanding_2010,purandare_alliance_2007,castro_splitstream:_2003,xiaojun_hei_measurement_2007,bonald_epidemic_2008,susu_xie_coolstreaming:_2007,fallica_quality_2008,zhang_peer--peer_2005,zhang_large-scale_2005}.
+As redes entre pares (P2P) emergiram como um novo
+paradigma para construir aplicações distribuídas~\cite{guo_survey_2008}. Neste tipo de aplicação,
+os usuários são encorajados para atuarem como clientes e servidores. Em uma rede
+P2P, os participantes, além de obterem serviços da rede, também os provêem.
+Assim, a banda de rede dos usuários finais é utilizada para reduzir a grande
+demanda por banda de rede, outrora necessária aos servidores.
+
+Os sistemas de envio de vídeo que utilizam arquitetura P2P podem ser
+classificados em duas categorias quanto a sua estrutura: podem ser baseados em
+uma estrutura de árvore ou em malha. As seções a seguir descrevem e discutem o
+funcionamento de cada uma destas estruturas.
+
+\subsection{Estrutura Baseada em Árvore}
+
+Sistemas baseados em árvore têm uma estrutura sobreposta bem organizada e,
+tipicamente, distribuem o fluxo de vídeo enviando dos nós para seus filhos.
+Um dos maiores problemas desta abordagem é que são vulneráveis à entrada e
+abandono dos participantes da rede
+(\textit{churns})~\cite{cui_optimizing_2008,magharei_mesh_2007}. Assim, quando
+um participante deixa a rede, a estrutura de árvore se rompe, e parte do sistema
+sofre, temporariamente, uma ruptura no fluxo do vídeo.
+
+Uma maneira eficiente de se estruturar e enviar um fluxo de vídeo a um grupo de
+usuários na Internet seria a utilização de multicast no nível de
+IP~\cite{guo_survey_2008}. Em uma sessão de multicast IP uma estrutura de árvore
+é formada. A fonte de vídeo se torna a raiz desta árvore multicast, e os
+clientes recebem o fluxo de vídeo através dos vários nós desta árvore, formado
+pelos roteadores que suportam o multicast em nível de IP.
+
+Para contornar a falta de suporte de multicast em nível de IP, a função
+equivalente tem sido implementada no nível da camada de aplicação. Os servidores
+de vídeo e os usuários formam uma rede sobreposta à rede real e, assim,
+organizam-se para distribuir o fluxo de vídeo. De maneira similar ao multicast
+IP, formado por uma árvore de roteadores no nível de rede, os participantes da
+sessão de vídeo formam uma árvore na camada de aplicação, cuja origem é o
+servidor de vídeo.
+
+Cada usuário do sistema se conecta à árvore em um certo nível. Ele recebe o
+vídeo de seus pais, no nível superior, e reenvia o conteúdo aos seus filhos, no
+nível mais baixo. Algumas aplicações, como
+Overcast~\cite{jannotti_overcast:_2000}, utilizam esta
+abordagem. Na Figura~\ref{fig:mod_sis_p2p_aovivo_arvore} ilustra-se um sistema
+com quinze nós participantes.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[natwidth=1034,natheight=721,scale=0.55]{imgs/arvore-multicast-app.png}
+\end{center}
+\vspace{-0.5cm}
+\caption{Árvore de multicast em nível da camada de aplicação.}
+\label{fig:mod_sis_p2p_aovivo_arvore}
+\end{figure}
+
+Existem várias maneiras possíveis de se construir a árvore para o envio de fluxo
+de vídeo. Deve-se considerar a altura da árvore e a quantidade de filhos de cada
+nó da árvore. Nós em níveis inferiores da árvore recebem o fluxo de vídeo
+após ele percorrer vários outros nós, e isto pode induzir a grandes latências.
+Para reduzir esse problema, deve-se preferir uma árvore com o mínimo de níveis
+possível, o que pode requerer usuários com grande largura de banda,
+retransmitindo para vários filhos.
+
+Tão importante quanto a construção da árvore é a manutenção da sua estrutura.
+Os usuários de uma aplicação de vídeo em sistemas P2P podem ser muito dinâmicos,
+entrando e deixando a rede de forma muito imprevisível. Quando um nó abandona
+a aplicação de transmissão de fluxo contínuo em P2P, ele interrompe a
+transmissão e todos os seus descendentes ficam sem uma fonte do fluxo de vídeo.
+Para reduzir essas interrupções, a árvore de envio de fluxo de vídeo deve ser
+reconstruída o mais rapidamente possível. Na
+Figura~\ref{fig:mod_sis_p2p_aovivo_arvore_saida}, ilustra-se um cenário em que
+um
+nó deixa o sistema de vídeo e a árvore de multicast ao nível de aplicação que
+deve ser reconstruída.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[natwidth=848,natheight=726,scale=0.65]{imgs/manut-arvore-multicast-app.png}
+\end{center}
+\vspace{-0.5cm}
+\caption{Manutenção da árvore de multicast em nível da camada de
+aplicação.}
+\label{fig:mod_sis_p2p_aovivo_arvore_saida}
+\end{figure}
+
+A construção e manutenção da árvore de envio de fluxo P2P pode ser realizada
+de maneira centralizada ou descentralizada. Em uma abordagem centralizada, um
+servidor controla a construção da árvore e sua recuperação. Para grandes
+sistemas de envio de vídeo, uma abordagem centralizada pode se tornar um gargalo
+e um ponto de falha~\cite{guo_survey_2008}. Vários algoritmos distribuídos
+abordam e tratam o problema de manutenção e construção da árvore de maneira
+distribuída~\cite{tran_zigzag:_2003}. Mesmo assim, uma abordagem baseada em
+árvore não consegue se recuperar de maneira rápida o suficiente para lidar com a
+dinâmica dos participantes, pois a constante interrupção do fluxo e a
+reconstrução da árvore de envio de fluxo contínuo podem causar uma sensação de
+baixa qualidade no serviço
+oferecido~\cite{cui_optimizing_2008,guo_survey_2008,magharei_mesh_2007}.
+
+Outro problema encontrado ao se usar uma árvore simples é que os nós, que
+estão na folha da árvore, acabam por não contribuir com o sistema. Assim a
+utilização de banda não é totalmente aproveitada. Uma vez que existe um grande
+número de nós folhas, a capacidade da árvore se torna subestimada. Para lidar
+com esse problema, foram propostas abordagens baseadas em múltiplas árvores como
+em~\cite{castro_splitstream:_2003}. Nesta abordagem, um servidor divide o fluxo
+de vídeo em vários subfluxos e para cada um destes, uma árvore multicast ao
+nível de aplicação é construída. Cada participante deve se conectar a todas as
+árvores criadas, para obter um fluxo de vídeo completo. Preferivelmente, os
+participantes se conectam em lugares diferentes nos vários níveis existentes.
+Assim, os nós folhas de uma árvore podem se tornar nós internos em outra,
+fazendo melhor uso da capacidade disponível. A
+Figura~\ref{fig:mod_sis_p2p_aovivo_arvore_2_subfluxos}
+ilustra uma aplicação de envio de fluxo de vídeo com duas árvores.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[natwidth=871,natheight=525,scale=0.65]{imgs/sistema-multiplas-arvore.png}
+\end{center}
+\vspace{-0.5cm}
+\caption{Sistema baseado em múltiplas árvores com dois subfluxos.}
+\label{fig:mod_sis_p2p_aovivo_arvore_2_subfluxos}
+\end{figure}
+
+\subsection{Estrutura Baseada em Malha}
+
+Em uma estrutura baseada em malha (\textit{mesh-based}), os participantes não se
+organizam em uma topologia estática. As relações são estabelecidas baseando-se
+nos recursos disponíveis momentaneamente. Um participante se conecta a um
+subconjunto de outros participantes do sistema e, periodicamente, eles trocam
+informações. Os dados são buscados nos participantes que já os têm. Como um
+participante tem múltiplos vizinhos ao mesmo tempo, a organização em malha é
+robusta à dinâmica dos nós. Entretanto, essa relação dinâmica faz com que a
+distribuição de vídeo se torne imprevisível.
+
+Diversos trabalhos recentes na área de fluxo contínuo P2P adotam uma estrutura
+baseada em malha~\cite{hei_iptv_2008,susu_xie_coolstreaming:_2007,zhang_peer--peer_2005,xinyan_zhang_coolstreaming/donet:_2005}.
+Em um sistema desse tipo não existe uma topologia fixa da rede P2P. Os nós
+estabelecem suas conexões dinamicamente, de acordo com seus interesses. Os
+participantes sempre mantêm parcerias com vários
+outros vizinhos. Eles podem fazer envio ou recepção de dados de múltiplos
+parceiros e, se um participante deixa o sistema, seus vizinhos continuam
+recebendo o conteúdo desejado dos demais nós, com os quais eles mantêm
+contato. Caso seja do interesse de um participante, ele poderá encontrar novos
+parceiros para manter um nível de conectividade alto. Um alto grau de
+conectividade faz com que a estrutura em malha torne-se robusta à dinâmica dos
+participantes do sistema. Trabalhos recentes, como o
+disponível através da referência~\cite{magharei_mesh_2007}, mostram que uma
+estrutura baseada em malha tem um desempenho superior que uma estrutura baseada
+em árvores.
+
+De maneira similar ao que acontece a um dos sistemas de compartilhamento de
+arquivos mais populares, o Bittorrent, uma estrutura em malha, tem um
+servidor centralizado. Esse servidor mantém uma lista dos participantes ativos
+na sessão de vídeo. Quando um usuário junta-se à aplicação de distribuição de
+mídia contínua ao vivo, ele contata este servidor e se cadastra. O servidor de
+\textit{bootstrap}, \textit{rendevouz} ou \textit{tracker}, como costuma ser
+chamado, retorna ao novo participante uma lista com informação de um subconjunto
+aleatório de participantes da sessão de vídeo.
+
+Após receber a lista com os possíveis parceiros, o novo participante tenta
+realizar as parcerias. Se a parceria é aceita pelo nó contatado, o novo
+participante irá adicioná-lo a sua lista de vizinhos. Depois de obter alguns
+vizinhos, o novo participante começa a trocar pedaços de vídeo com seus
+parceiros. A Figura~\ref{fig:mod_sis_p2p_aovivo_malha_novato} mostra o processo
+inicial de cadastro no sistema e realização das parcerias iniciais.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[natwidth=905,natheight=684,scale=0.65]{imgs/ativ-iniciais-novato-p2p-malha.png}
+\end{center}
+\vspace{-0.5cm}
+\caption{Atividade inicial de um novato - rede P2P baseada em malha.}
+\label{fig:mod_sis_p2p_aovivo_malha_novato}
+\end{figure}
+
+Os participantes do sistema trocam regularmente mensagens de informação de vida
+(\textit{keep-live messages} ou \textit{ping}). Caso um vizinho não responda às
+mensagens de vida, um participante o remove da lista e, possivelmente, tenta
+obter novos parceiros para manter sua
+conectividade~\cite{zhang_peer--peer_2005}. Uma parceria é estabelecida por um
+acordo mútuo entre os participantes. Os diferentes sistemas existentes possuem
+estratégias variadas para estabelecimento destes acordos. Por exemplo, o número
+de vizinhos que os participantes possuem, a banda de rede disponível, a dinâmica
+dos seus vizinhos e a qualidade percebida do fluxo de
+vídeo~\cite{guo_survey_2008}. Com base nesses critérios, um participante se
+conecta a um novo vizinho e também procura por novas parcerias.
+
+Em uma estrutura baseada em árvore, o fluxo de vídeo é transmitido a partir de
+uma fonte geradora para todos os participantes do sistema, seguindo a estrutura
+lógica da árvore formada. Em uma estrutura baseada em malha, não existe um fluxo
+contínuo transmitido nestes mesmos moldes. Nesses sistemas, a fonte do vídeo
+(servidor) faz a codificação e a divisão do vídeo, criando os pequenos pedaços
+chamados \textit{chunks}. Cada \textit{chunk} contém dado para um pequeno
+intervalo de tempo de visualização. Por exemplo, as aplicações atuais transmitem
+dados a uma taxa aproximada de 6 \textit{chunks} por segundo de
+vídeo~\cite{guo_survey_2008}. Esses \textit{chunks} são numerados em
+uma sequência temporal, para que os participantes possam identificar e executar
+o vídeo correspondente de forma apropriada. Os pedaços do fluxo são disseminados
+a partir do servidor para diversos participantes da rede, que os disseminam para
+seus companheiros, e assim por diante. Como os \textit{chunks} tomam diferentes
+caminhos para atingir os diversos pontos da rede, eles chegam a um usuário fora
+de ordem e, para uma execução contínua do vídeo, os participantes guardam os
+chunks em um armazenamento temporário de memória, onde são ordenados antes de
+sua apresentação. Dependendo do tipo de aplicação, o armazenamento pode variar
+de segundos a minutos. Em uma sessão de vídeo ao vivo, que é o período em que um
+fluxo de mídia é transmitido, a sequência de identificação dos \textit{chunks}
+cresce enquanto o vídeo é disseminado.
+
+Os dados são trocados principalmente através de duas estratégias: requisitando
+ou enviando (\textit{pull} e \textit{push}). Em um sistema do tipo
+\textit{mesh-push} (malha e requisição), um usuário envia os dados que recebe
+aos seus vizinhos que provavelmente ainda não os obtiveram. Não há uma relação
+clara de pai-filho neste esquema e o envio dos dados é estabelecido por
+interações passadas entre os participantes, onde indicam quais são os dados
+desejados. Um participante pode estabelecer parcerias com diversos outros e
+anunciar a necessidade por dados a todos estes. Por consequência, pode existir
+envio de dados redundantes na rede, pois mais de um dos parceiros pode responder
+por um pedido. Para tratar esse problema deve existir um planejamento entre os
+participantes do sistema, com escalonamento das transferências dos
+dados~\cite{zhang_peer--peer_2005}.
+
+Caso seja usado um sistema \textit{mesh-pull}, os participantes, periodicamente,
+trocam entre si um mapa de \textit{chunks}. Este mapa tem informações dos
+\textit{chunks} disponíveis localmente por um participante. Contém também
+informações sobre os dados faltantes. Ao obter os mapas de seus vizinhos, um
+participante decide como escalonar o pedido de \textit{chunks} (e a qual vizinho
+enviar o pedido). As transmissões redundantes são evitadas, uma vez que os
+participantes solicitam \textit{chunks} a um único parceiro. Porém, as
+frequentes trocas de mapas de \textit{chunks} e mensagens por pedidos aumentam a
+sobrecarga do protocolo e podem introduzir novos atrasos ao sistema.
+
+Na Figura~\ref{fig:mod_sis_p2p_aovivo_malha_trocadados} ilustra-se a troca de
+\textit{chunks} em uma aplicação com estrutura baseada em malha. Por esta
+figura, o nó 2 gera seu mapa, indicando quais \textit{chunks} ele tem disponível
+em seu armazenamento temporário. Ele troca este mapa com os participantes 1 e,
+como resposta, o nó 1 envia o seu mapa. Observe que o nó 1 possui uma lista com
+os diversos mapas de seus parceiros. Os pedaços de vídeo faltantes no nó 2 serão
+requisitados ao nó 1. Finalmente, o nó 1 responde às requisições pelo
+nó 2.
+
+\begin{figure}[htb!]
+\begin{center}
+\includegraphics[natwidth=589,natheight=1146,scale=0.65]{imgs/troca-dados-p2p-malha.png}
+\end{center}
+\vspace{-0.5cm}
+\caption{Troca de dados na aplicação baseada em malha.}
+\label{fig:mod_sis_p2p_aovivo_malha_trocadados}
+\end{figure}
+
+\subsection{Estrutura Híbrida}
+
+Uma estrutura híbrida para transmissões ao vivo em P2P pode ser caracterizada de
+duas formas. Na primeira, a arquitetura da rede é um misto entre uma arquitetura
+baseada em árvores e uma arquitetura baseada em malhas. Na segunda, o método
+de transmissão de dados entre os participantes é um misto entre um sistema P2P,
+orientado por pedidos explícitos por dados, e um encaminhamento automático dos
+dados da mídia. Em ambos os casos, há uma tentativa de se obter os benefícios de
+cada uma das propostas e isolar os pontos fracos das mesmas.
+
+\subsubsection{Híbrido de Árvore-Malha}
+
+Em uma rede sobreposta P2P baseada em árvore, os participantes da rede são
+organizados de forma hierárquica. Assim, a transmissão ao vivo flui dos níveis
+mais altos na hierarquia (do participante que está codificando o vídeo) para os
+níveis mais baixos. Os participantes mais próximos à fonte apresentam menores
+latências no vídeo assistido e menos problemas com relação a rupturas na
+hierarquia da árvore. Além disso, com o uso de uma única árvore, os
+participantes no nível mais baixo (folhas) não contribuem com o sistema. Isso
+pode diminuir a escalabilidade do sistema de transmissão ao vivo.
+
+As estruturas baseadas em malha contornam o problema de rupturas na árvore.
+Nesse modelo, os participantes do sistema realizam parcerias e trocam dados
+entre si. Não há hierarquias e, assim, todos os participantes colaboram com o
+sistema o que torna a utilização dos recursos do sistema mais eficiente.
+Entretanto, como não há uma estrutura bem definida, a recepção dos dados da
+transmissão ao vivo está sujeita a atrasos e
+imprevisibilidade~\cite{qi_huang_p2p_2007}.
+
+Uma abordagem de construção híbrida da rede sobreposta adota partes da rede
+como uma árvore, e outras partes como uma rede em malha. Os participantes
+do sistema podem participar de ambas as estruturas. Sistemas
+como~\cite{huang_anysee2:_2007} adotam estratégias de alocação dos participantes
+na árvore e, na rede em malha formada, adotam estratégias para otimizar o
+agendamento de entrega de dados. Alguns dos critérios utilizados para alocar os
+participantes na árvore são estabilidade do participante na rede e proximidade
+entre os participantes na rede física.
+
+Mais precisamente, o Anysee2~\cite{huang_anysee2:_2007} estrutura seus
+participantes em uma rede de controle e em uma rede de troca de dados. A rede de
+controles é baseada em uma árvore, enquanto a rede de troca de dados é baseado
+em uma malha.
+
+\subsubsection{Híbrido por Encaminhamento Automático / Pedidos Explícitos
+(\textit{Push-Pull})}
+
+O método híbrido para obtenção de dados utiliza duas formas em conjunto para
+encaminhar/receber a mídia transmitida: o encaminhamento automático da mídia
+(utilizado em uma estrutura de árvores) e pedidos explícitos pelos dados
+(utilizado em uma estrutura em malha). Nesse caso, abordagens \textit{Push}
+(encaminhamento automático) e \textit{Pull} (pedido explícita), são utilizadas
+em uma rede P2P não estruturada. Dessa forma, esses sistemas quase sempre
+apresentam um protocolo/estrutura simples, sem a necessidade de coordenação e
+hierarquia entre participantes. Isso torna o sistema naturalmente resistente à
+dinâmica dos participantes e a outros imprevistos.
+
+Existem alguns mecanismos propostos com a combinação do
+\aspas{\textit{push-pull}}~\cite{pelc_push--pull_2007,meng_zhang_understanding_2007}.
+Esses mecanismos usam o \aspas{\textit{push}} para espalhar os dados rapidamente
+e o \aspas{\textit{pull}} para preencher as lacunas dos dados recebidos. Nesses
+dois trabalhos supracitados, ambos os mecanismos coexistem, não havendo uma alternância entre eles.
+
+O protocolo proposto em~\cite{lo_cigno_fundamental_2008} alterna as operações de
+\aspas{\textit{push}} e \aspas{\textit{pull}}. Cada participante é autônomo e independente, sem a
+necessidade de sincronia com outros participantes. Durante a operação de
+\aspas{\textit{push}}, o participante envia dados para algum ou alguns de seus
+parceiros. Durante a operação de \aspas{\textit{pull}}, o participante busca por
+dados que ele necessita localmente.
+
+A utilização do mecanismo de \aspas{\textit{push-pull}}, como discutido no trabalho
+disponível através da referência~\cite{li_towards_2008}, pode levar a uma redução
+da sobrecarga do tráfico da rede. Os resultados nesse trabalho mostram que, em
+comparação com um sistema do tipo \aspas{\textit{mesh-pull}} e com o GridMedia~\cite{li_zhao_gridmedia:_2005},
+houve uma redução da sobrecarga de rede de \ut{33}{\%} e \ut{37}{\%} respectivamente.
+Além disso, o sistema com a abordagem híbrida alcançou resultados com latência e taxa de
+execução do vídeo melhores que os sistemas comparados.
+
+\section{Sistemas de Transmissão ao Vivo em P2P}
+\label{sec:sis_trans_aovivo}
+
+Nesta seção apresentam-se a descrição e o funcionamento de uma aplicação de
+envio de mídia ao vivo em P2P. A descrição apresentada utiliza como base as
+principais aplicações existentes atualmente, como a
+Sopcast~\cite{fallica_quality_2008}, o PPLive~\cite{hei_insights_2006} e o
+GridMedia~\cite{li_zhao_gridmedia:_2005,zhang_peer--peer_2005}. Na
+Figura~\ref{fig:mod_sis_p2p_aovivo} ilustra-se um exemplo do sistema de
+transmissão ao vivo em P2P que será detalhado nessa seção.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[natwidth=546,natheight=388,scale=.48]{imgs/mod_sis_p2p_aovivo.png}
+\end{center}
+\vspace{-0.5cm}
+\caption{Modelo de sistema utilizado.}
+\label{fig:mod_sis_p2p_aovivo}
+\end{figure}
+
+As principais entidades envolvidas nesses sistemas são as seguintes:
+
+\begin{itemize}
+ \item \textbf{servidor da transmissão ao vivo:} o servidor de transmissão é um
+nó especial do sistema P2P. Ele captura e codifica o vídeo que será transmitido
+pela rede. O servidor é a fonte inicial dos dados de vídeo da rede;
+
+ \item \textbf{servidor de \textit{boot}:} o servidor de \textit{boot} (ou
+\textit{bootstrap}) é uma entidade centralizadora por meio do qual os demais
+nós do sistema encontram seus parceiros iniciais para entrar na rede P2P. Todo
+nó se registra nesse servidor para fazer parte da lista dos nós do sistema.
+Quando um novo nó se registra, o servidor de \textit{boot} envia a ele uma lista
+com alguns nós parceiros candidatos. Quando um nó antigo deseja realizar mais
+parcerias, este pede ao servidor de \textit{boot} uma lista com alguns
+nós para tentar novos contatos.
+
+ \item \textbf{participantes (clientes/nós/\textit{peers})}: são os usuários do
+sistema P2P de transmissão ao vivo. Cada participante está em contato com um
+subconjunto de todos os participantes do sistema. Não há hierarquia entre esses
+participantes, e qualquer um pode servir dados de vídeo e também responder a
+pedidos por dados oriundos de seus parceiros.
+
+\end{itemize}
+
+Os sistemas de envio de mídia contínua ao vivo em P2P são sistemas compostos
+por nós que colaboram entre si para a disseminação do conteúdo gerado por um
+servidor. Esses nós se organizam em uma rede virtual, sobreposta à rede de
+computadores real. A organização dessa rede baseia-se, geralmente, em duas
+estruturas, a de árvore e a de malha, como discutido na
+Seção~\ref{sec:arq_p2p_media_aovivo}.
+
+Nesses sistemas de transmissão ao vivo um servidor $S$ gera todo o
+conteúdo a ser disseminado pela rede e os demais nós do sistema recebem a mídia
+gerada em $S$, dividida em pedaços conhecidos por \textit{chunks},
+reproduzindo-as e repassando-as para seus nós parceiros.
+
+Mais detalhadamente, os sistemas P2P para envio de mídia contínua ao vivo usam
+recursos do conjunto $P = p_1, p_2, ..., p_n$ de seus participantes para
+repassar o conteúdo que é transmitido pelo servidor $B$. Cada
+participante $p_i$ é livre para entrar e sair do sistema a qualquer momento.
+Tal comportamento diferencia a aplicação de transmissão ao vivo em P2P de
+aplicações baseadas em IP multicast, pois, em IP multicast a estrutura formada é
+pouco dinâmica.
+
+Os sistemas mais populares de envio de mídia ao vivo em P2P utilizam uma rede
+sobreposta baseada em malha. Uma rede sobreposta é uma organização virtual dos
+participantes, que pode ser completamente diferente da organização física
+existente. Mais ainda, no modelo de malha, a rede não é estruturada de forma
+rígida e as parcerias no sistema são formadas aleatoriamente. As interações e
+trocas de dados entre os participantes $p_i$ e $p_j$, com $i \neq j$, são
+normalmente orientadas pelos pedidos de dados e informações entre $p_i$ e
+$p_j$. Assim, esse tipo de rede sobreposta do tipo malha é utilizada para
+aliviar os efeitos de entrada e saída dos participantes na
+rede~\cite{li_zhao_gridmedia:_2005,zhao_gridmedia+:_2009}.
+
+O funcionamento desse tipo de sistema acontece da seguinte forma:
+inicialmente, um nó $p_i$ conecta-se a um servidor centralizado de
+inicialização, denominado de \textit{bootstrap} $B$ ou rastreador. Na
+inicialização de $p_i$, o servidor $B$ envia um subconjunto dos nós do sistema
+para o nó $p_i$. O subconjunto é a lista inicial de parceiros candidatos do nó
+$p_i$ é definido por $LPC_i$ ($LPC_i \subseteq P$ e $LPC_i \neq \emptyset$).
+Além de se registrar e pegar uma lista de candidatos a parceiros, o novo nó
+sincroniza a posição atual da mídia ao vivo com a posição informada
+pelo servidor $B$~\cite{zhao_gridmedia+:_2009}. Assim, $p_i$ tem uma referência
+do ponto da mídia ao vivo que está sendo gerada pelo servidor $S$ e saberá a
+partir de qual ponto deverá solicitar os dados para reproduzir a mídia ao vivo.
+
+O novo nó $p_i$ seleciona, aleatoriamente, uma quantidade $n$ de nós de $LPC_i$
+como parceiros candidatos. Eles formarão o conjunto de parceiros de $p_i$,
+denominado $LP_i$ ($LP_i \subseteq LPC_i$). Os conjuntos $LPC_i$ e $LP_i$ são
+dinâmicos, pois cada nó $p_j$ está livre para abandonar o sistema. Quando $p_j
+\in LP_i$ e o nó $p_i$ detecta a inatividade deste parceiro, $p_i$ remove $p_j$
+de $LPC_i$ e $LP_i$ e seleciona um novo elemento de $LPC_i$ para criar uma nova
+parceria.
+
+O nó $p_i$ sempre tenta manter sua $LPC_i$ com um número de candidatos
+acima de um limiar $L_i$. O valor de $L_i$ pode ser dado pela capacidade de
+recurso de cada nó, como banda de rede ou número de conexões disponível. Assim,
+quando $|LPC_i| < L_i$, então $p_i$ recorre ao servidor $B$ para obter novos
+elementos para $LPC_i$.
+
+Cada nó $p_i$ também contém um mapa de partes da mídia \textit{chunks} de
+tamanho \textit{m}, denominado $cm_i$. Esse mapa sinaliza os \textit{chunks}
+da mídia que ele contém ou necessita. Ou seja, o mapa $cm_i$ representa um
+trecho contínuo da mídia transmitida ao vivo pelo sistema P2P que será
+reproduzida pelo nó $p_i$.
+
+Inicialmente, cada posição do mapa é marcada como \aspas{desejada}, ou seja,
+$cm_i[x] = desejada$, onde $x = [0..m]$. Periodicamente, $p_i$ requisita
+$cm_j$ a cada um de seus parceiros $p_j$, com ($p_j \in LPi$). Dessa forma,
+$p_i$ verifica quais parceiros podem satisfazer a sua necessidade por
+determinado \textit{chunk} $c_t$. Quando $p_i$ recebe um \textit{chunk}
+\textit{x} qualquer, $p_i$ marca $cm_i[x] = disponivel$.
+
+Periodicamente, $p_i$ verifica quais \textit{chunks} $c_t$ ele necessita
+($cm_i[c_t] = desejada$) e verifica entre seus parceiros $p_j$, com $p_j \in
+LP_i$, quais possuem o \textit{chunk} $c_t$ com $cm_j [c_t] = disponivel$. O
+parceiro $p_j$ que contém o \textit{chunk} $c_t$ e que possui maior
+disponibilidade de recursos é escolhido por $p_i$ para a realização do
+pedido de \textit{chunk}. Quando $p_i$ recebe o \textit{chunk} $c_t$ de $p_j$,
+$p_i$ marca $cm_i[c_t] = disponivel$. Os processos de escolha do \textit{chunk}
+a ser requisitado e a escolha do parceiro serão detalhados nas seções seguintes.
+Na Tabela~\ref{tab:param_sis_p2p} apresenta-se um resumo dos parâmetros
+utilizados para descrever um sistema P2P de transmissão ao vivo.
+
+\begin{table}[ht]
+        \caption{Resumo dos parâmetros de um sistema P2P de transmissão ao
+vivo.}
+        \label{tab:param_sis_p2p}
+    \begin{center}
+        \begin{tabular}{|p{1.0cm}|p{1.5cm}|}
+            \hline
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}{
+\textbf{Parâmetro}}} &
+
+
+
+\multicolumn{1}{>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}
+{\textbf
+{Descrição}}}
+	    \\
+	    \hline
+	    \hline
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{\textit{S}} &
+\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Servidor de mídia
+contínua.}
+	    \\
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{$P = p_1, p_2,
+..., p_n$} &
+\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Conjunto dos
+participantes do sistema.}
+	    \\
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{\textit{B}} &
+\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{\textit{Bootstrap} ou
+rastreador do sistema.}
+	    \\
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{$p_i$} &
+\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Participante $i$ do
+sistema}
+	    \\
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{$LP_i$} &
+\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Conjunto de parceiros
+de
+$i$.}
+	    \\
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{$LPC_i$} &
+\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Conjunto de
+parceiros candidatos de $i$.}
+	    \\
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{$L_i$} &
+\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Número de candidatos
+mínimo de $p_i$.}
+	    \\
+            \hline
+
+        \end{tabular}
+    \end{center}
+\end{table}
+
+\subsection{Geração do Conteúdo da Transmissão}
+
+Na aplicação de envio de mídia contínua ao vivo em P2P, o servidor $S$
+é responsável pela aquisição e codificação da mídia em um formato apropriado
+para a transmissão. O servidor $S$ gera o conteúdo da transmissão e o
+divide em \textit{chunks}. Cada novo \textit{chunk} $c_i$ é armazenado na área
+de memória apropriada de $S$ (\textit{buffer}). Assim, \textit{S} marca
+$cm_s[c_i]$ como disponível no seu mapa de \textit{chunks}, ou seja,
+$cm_s[c_t] = disponivel$.
+
+Os parceiros do servidor $S$ atualizarão as informações sobre ele a partir da
+troca dos mapas de \textit{chunks} e perceberão a existência de novos
+dados. Os nós fazem requisições ao servidor $S$ por \textit{chunks} produzidos
+por ele e então $S$ começará a disseminar os dados da mídia. Outros
+nós do sistema irão encontrar os novos dados produzidos por $S$ quando algum de
+seus parceiros os receberem, seja por um pedido direto a $S$ ou por outro
+nó do sistema.
+
+Nas aplicações mais populares, o servidor $S$ gera os dados da mídia contínua ao
+vivo a uma taxa aproximada de 6 \textit{chunks} por segundo. Normalmente, um
+vídeo é codificado a aproximadamente \ut{300}{kbps} e assim, cada \textit{chunk}
+tem cerca de \ut{6}{KB} de dados.
+
+Na Tabela~\ref{tab:param_sis_p2p_geracao} apresenta-se um resumo dos parâmetros
+utilizados para descrever a geração de conteúdo da transmissão ao vivo em P2P.
+
+\begin{table}[ht]
+        \caption{Resumo dos parâmetros utilizados na geração de conteúdo de
+mídia ao vivo em sistemas P2P.}
+        \label{tab:param_sis_p2p_geracao}
+    \begin{center}
+        \begin{tabular}{|p{1.0cm}|p{1.5cm}|}
+            \hline
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}{
+\textbf{Parâmetro}}} &
+
+\multicolumn{1}{>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}
+{\textbf
+{Descrição}}}
+	    \\
+	    \hline
+	    \hline
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{\textit{S}} &
+\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Servidor que gera o
+conteúdo da transmissão.}
+	    \\
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{$cm_i$} &
+\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Mapa de
+\textit{chunks} de $p_i$.}
+	    \\
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{$cm_i[x] = desejada$,
+onde $x = [0..m]$} &
+\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Conteúdo inicial do
+mapa
+de \textit{chunks} de $p_i$.}
+	    \\
+            \hline
+
+        \end{tabular}
+    \end{center}
+\end{table}
+
+\subsection{Realização de Parcerias}
+
+Um nó $p_i$ realiza parcerias logo após seu primeiro contato com o servidor de
+\textit{boostrap} $B$. A partir do estabelecimento das parcerias iniciais, o nó
+efetivamente começa a participar do sistema de envio de mídia contínua ao vivo
+em P2P. Além deste momento inicial de estabelecimento de parcerias, um nó pode
+ser contatado por um outro participante $p_j$, requisitando sua parceria, ou
+$p_i$ pode tentar novas parcerias para aumentar sua conectividade.
+
+Tanto no estabelecimento inicial de parcerias, quanto na descoberta de novos
+parceiros para aumento da conectividade, o nó $p_i$ recorre à lista de parceiros
+candidatos $LPC_i$ para selecionar um nó, ao qual envia uma requisição de
+parcerias. Vários critérios podem ser utilizados para a escolha do candidato
+$p_k$, como uma escolha aleatória entre os nós pertencentes a $LPC_i$ ou
+pelos recursos disponíveis em $p_k$, informados por $B$.
+
+Uma vez selecionado o candidato, $p_i$ envia uma mensagem de pedido de
+parceria ao candidato $p_k$ selecionado de $LPC_i$. Caso $p_k$ tenha recursos
+disponíveis (por exemplo, banda de rede, conexões disponíveis na aplicação
+etc.), adiciona $p_i$ à $LP_k$ e responde a solicitação de $p_i$. Quando $p_i$
+recebe a resposta de $p_k$, ele adiciona $p_k$ à $LPC_i$ e a nova parceria é
+formalmente estabelecida. Caso não seja de interesse de $p_k$ o estabelecimento
+da nova parceria (por exemplo, por falta de recursos), $p_k$ ignora o pedido de
+nova parceria. O nó $p_i$ espera por um período de tempo pela resposta de $p_k$
+e, caso não a receba, $p_i$ retira o candidato $p_k$ de sua $LPC$ e repete o
+processo com um novo candidato selecionado.
+
+No momento que um nó $p_i$ adiciona um novo parceiro $p_k$ à $LPC$, $p_i$ cria
+um temporizador $T_{ik}$, o qual é acionado em intervalos de tempo $tp_i$. A
+cada acionamento do temporizador $T_{ik}$, o nó $p_i$ envia uma mensagem ao
+parceiro $p_k$ para verificar seu estado na aplicação. O objetivo desta
+mensagem é verificar se a parceria está ativa, além de haver troca
+de informações, como os mapas de \textit{chunks} de ambos os nós.
+
+O nó $p_i$ espera a resposta de $p_k$ acerca do pedido de parceria por um
+intervalo de tempo $tr_i$. Caso $p_k$ não responda, $p_i$ remove $p_k$ de sua
+$LP$. Caso $p_i$ receba a resposta de $p_k$, $p_i$ atualiza os dados relativos
+a $p_k$, como por exemplo, o mapa de \textit{chunks} $cm_k$.
+
+Na Tabela~\ref{tab:param_sis_p2p_parceria} apresenta-se um resumo dos parâmetros
+utilizados para descrever a realização de parcerias no sistema de transmissão
+ao vivo em P2P.
+
+\begin{table}[ht]
+        \caption{Resumo dos parâmetros utilizados na realização de parcerias.}
+        \label{tab:param_sis_p2p_parceria}
+    \begin{center}
+        \begin{tabular}{|p{1.0cm}|p{1.5cm}|}
+            \hline
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}{
+\textbf{Parâmetro}}} &
+
+\multicolumn{1}{>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}
+{\textbf
+{Descrição}}}
+	    \\
+	    \hline
+	    \hline
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{$T_{ik}$} &
+\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Temporizador de
+\textit{Ping} entre $p_i$ e $p_k$.}
+	    \\
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{$tp_i$} &
+\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Intervalo de tempo
+para acionar $T_{ik}$.}
+	    \\
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{$tp_k$} &
+\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Tempo máximo de espera
+de resposta de \textit{Ping}.}
+	    \\
+            \hline
+
+        \end{tabular}
+    \end{center}
+\end{table}
+
+\subsection{Armazenamento e Consumo de Dados}
+
+Os nós do sistema P2P de transmissão ao vivo devem conseguir obter a mídia da
+rede a uma taxa apropriada. Caso não o consigam, a execução da mídia terá falhas
+e a experiência do usuário com relação a qualidade do conteúdo multimídia
+recebido poderá ser ruim. Assim, os nós devem obter os dados da mídia o mais
+rápido possível, uma vez que a aplicação de transmissão ao vivo exige uma baixa
+diferença de tempo entre a criação do trecho de mídia e a sua exibição nos
+nós do sistema P2P.
+
+Caso a latência seja alta, os nós irão experimentar um atraso indesejável e, no
+pior dos casos, a informação será exibida muito tempo depois do fato ocorrido.
+Por exemplo, um gol em uma partida de futebol poderá ser comemorado pelo vizinho
+e muito tempo depois o usuário do nó com recepção em atraso o verá em sua
+aplicação responsável por reproduzir o conteúdo. Por esse motivo,
+os nós devem obter a mídia a uma taxa de \textit{c} \textit{chunks} por segundo.
+Essa é a mesma taxa de produção \textit{chunks} pelo servidor $S$.
+
+Cada nó do sistema apresenta uma área de armazenamento temporário $B_i$
+(\textit{Buffer}), onde são armazenados os dados da mídia recebidos da rede P2P.
+Esse \textit{buffer} pode guardar uma quantidade pré-determinada de
+\textit{chunks}. Inicialmente, cada posição \textit{j} de $B_i$ ($B_i[j]$) é
+inicializada com conteúdo vazio e, à medida que $p_i$ recebe os \textit{chunks}
+de seus parceiros, cada posição vai sendo preenchida. Nesse esquema de
+armazenamento temporário, o nó $p_i$ tem por objetivo manter o \textit{buffer}
+$B_i$ preenchido de forma que se garanta uma contínua exibição da mídia ao vivo,
+mesmo se ele perder conexão temporariamente com seus parceiros.
+
+Inicialmente, o \textit{buffer} $B_i$ pode ser representado por uma estrutura do
+tipo \aspas{\textit{buffer} circular}. Dois processos trabalham em conjunto para
+manter o \textit{buffer} $B_i$ preenchido e a execução da mídia constante
+(produtor/consumidor). Assim, a posição de $B_i$ a ser consumida é $B_i[0]$ e
+a posição mais recentemente a ser preenchida será $B_i[b]$ (\textit{b} é a
+última posição de um \textit{buffer} com pelo menos \textit{b} + 1 posições).
+
+Para manter uma visualização constante e sem interrupções, a aplicação deve
+obter alguns dados à frente do momento de exibição. Então, caso ocorra um
+problema temporário na rede P2P, há alguns dados armazenados no \textit{buffer}.
+A cada intervalo de tempo, o nó $p_i$ verifica quais \textit{chunks} devem ser
+consumidos em uma janela de tempo futura. Os \textit{chunks} pertencentes a
+essa janela de interesse deverão ser recolhidos da rede enquanto $p_i$ executa
+os dados relativos aos \textit{chunks} anteriores a essa janela.
+
+O tamanho da janela de interesse deve ser pequeno para não possibilitar a
+exibição da mídia com atraso demasiado (espera longa para recolher os dados da
+rede). Porém, janelas de interesse muito curtas podem gerar uma série de
+perdas na exibição, pois pode ocorrer que um determinado \textit{chunks} não
+tenha sido obtido e o momento de sua exibição tenha chegado.
+
+Na Figura~\ref{fig:cons_media_aovivo} exemplifica-se o mecanismo de consumo da
+mídia por um nó do sistema. Nessa figura, considera-se que a taxa de criação
+de \textit{chunks} é de uma unidade por intervalo de tempo. Desta forma, a cada
+unidade de tempo, o nó deve tentar obter o próximo \textit{chunk} criado. Assim,
+a cada intervalo de tempo, o nó desloca a sua janela de interesse para o próximo
+\textit{chunk} indicado em seu mapa.
+
+No primeiro momento da Figura~\ref{fig:cons_media_aovivo}, esse participante
+irá
+consumir o \textit{chunk} à esquerda da janela de interesse. No segundo
+momento,
+a janela de interesse é deslocada para a direita e esse participante não tem o
+respectivo \textit{chunk} para consumo (poderá haver uma falha na exibição).
+Neste mesmo instante, o participante consegue obter o \textit{chunk} mais
+recente de seu interesse. Finalmente, o processo continua e o participante
+consome o próximo \textit{chunk}.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[natwidth=546,natheight=388,scale=0.7]{imgs/cons_media_aovivo.png}
+\end{center}
+\vspace{-0.5cm}
+\caption{Mecanismo de consumo da mídia ao vivo.}
+\label{fig:cons_media_aovivo}
+\end{figure}
+
+\subsection{Estratégia de Seleção de Chunks}
+
+A estratégia de seleção do \textit{chunk} pode influenciar no desempenho da
+aplicação que reproduz o conteúdo multimídia. As estratégia
+existentes determinam qual dos \textit{chunks}, entre os vários necessários,
+deve ser requisitado em um determinado momento. Essas estratégias de seleção
+tentam manter a continuidade da exibição da mídia ao vivo para um determinado
+nó do sistema, difundindo os \textit{chunks} que acabaram de ser gerados o mais
+rápido possível para os demais nós do sistema.
+
+Existem duas estratégias de seleção de chunks comumente utilizadas em aplicações
+P2P. A primeira é chamada de \aspas{Mais Raro Primeiro}, que é adotada em
+protocolos de aplicações de compartilhamento de arquivos em P2P, como o
+BitTorrent, e em envio de mídia ao vivo P2P, como o
+CoolStreaming~\cite{susu_xie_coolstreaming:_2007}. A segunda estratégia
+é denominada \aspas{Gulosa}, onde os participantes privilegiam a escolha de
+\textit{chunks} que estão próximos ao fim de suas janelas de visualização.
+
+\subsubsection{Estratégia \aspas{Mais Raro Primeiro}}
+
+Na estratégia \aspas{Mais Raro Primeiro}, um nó $p_i$ irá requisitar o
+\textit{chunk} que está menos replicado pelo sistema de transmissão.
+
+Para exemplificar essa estratégia, considere o \textit{buffer} $B_i$ do
+participante $p_i$. A posição $B_i[0]$ será a mais rara e está vazia, pois
+acabara de ser criada pelo servidor $S$. A probabilidade de encontrar um
+parceiro que tenha esse dado disponível cresce com o tempo. Assim, no próximo
+intervalo de tempo, o \textit{chunk} da posição $B_i[0]$ irá para a posição
+$B_i[1]$ que, no intervalo consecutivo, será movido para a posição $B_i[2]$ e
+assim por diante. Dessa forma, percebe-se claramente que o \textit{chunk}
+mais raro a ser buscado é o que acabara de ser criado, ou seja, $B_i[0]$.
+Portanto, a estratégia \aspas{Mais Raro Primeiro} seleciona os \textit{chunks}
+em ordem crescente.
+
+\subsubsection{Estratégia \aspas{Gulosa}}
+
+Por outro lado, a estratégia \aspas{Gulosa} tem como objetivo preencher os
+espaços do \textit{buffer} que estão próximos de seu prazo final de
+visualização. Assim, um nó $p_i$ selecionará o \textit{chunk} mais próximo à
+posição de visualização no seu \textit{buffer} $B_i$. Por motivos de
+simplificação, pode-se considerar o \textit{chunk} final do \textit{buffer}
+($B_i[b]$) como sendo o elemento de próximo prazo final para visualização.
+Sendo assim, o nó $p_i$ selecionará o \textit{chunk} $B_i[b]$ caso este não
+esteja preenchido em seu \textit{buffer}, depois o \textit{chunk} $B_i[n-1]$ e
+assim por diante. Desse modo, os nós do sistema tendem a ter armazenado em seus
+\textit{buffers} os dados mais antigos produzidos pelo servidor $S$.
+
+\subsection{Seleção de Parceiros para Troca de Dados}
+
+Um participante $p_i$ do sistema de transmissão ao vivo em P2P, além de
+selecionar quais \textit{chunks} ele deve buscar em um determinado momento,
+deve escolher de qual parceiro realizar o pedido. Vários critérios podem ser
+utilizados para definir essa escolha, entre eles, critérios baseados em
+disponibilidade de recursos, proximidade temporal e até mesmo proximidade
+geográfica.
+
+O modelo apresentado realiza uma seleção de parceiros em duas etapas. Por
+simplificação, adota-se a disponibilidade de recursos como critério de escolha
+de um parceiro para realização do pedido por um \textit{chunk} específico.
+Essa mesma maneira de seleção pode ser realizada com quaisquer outros
+critérios de seleção.
+
+Na primeira etapa, um nó $p_i$ seleciona o parceiro $p_k$ entre todos os seus
+parceiros, que apresenta maior disponibilidade de recursos em um
+determinado instante. Os recursos de um participante podem ser conhecidos
+por duas maneiras: por informação direta entre os parceiros, ou por requisição e
+envio de informações no servidor $B$. No caso apresentado a seguir, os nós
+parceiros trocam essas informações entre si e o recurso monitorado é a banda de
+rede disponível para o compartilhamento.
+
+A partir da seleção de $p_k$, o nó $p_i$ envia uma requisição pelo
+\textit{chunk} de interesse $c_j$. O participante $p_i$ cria um temporizador
+para esse pedido. Quando $p_k$ recebe um pedido por dados vindo de um parceiro
+ativo $p_i$ ($p_i \in LP_k$), $p_k$ cria uma mensagem de resposta contendo o
+\textit{chunk} $c_j$ requisitado e o envia ao nó $p_i$. Caso o pedido seja
+enviado por um parceiro não parceiro, ou seja, $pi \notin LPk$, $p_k$ ignora o
+pedido por $c_j$, mas adiciona $p_i$ à lista de parceiros candidatos $LPC_k$.
+
+Se o pedido pelo chunk $c_j$ for respondido durante o intervalo de tempo
+esperado, $p_i$ coloca o novo dado em seu \textit{buffer} de reprodução e o
+assinala como disponível em seu mapa de \textit{chunks}, ou seja, $cm_i[c_j] =
+disponivel$. Fazendo-se dessa forma, $p_i$ passa a ter a capacidade de
+compartilhar o \textit{chunck} que acabara de ser recebido com seus
+nós parceiros.
+
+A segunda etapa ocorre caso o pedido por uma parceria não seja respondido até a
+expiração de um temporizador marcado em $p_i$. Nesse caso, $p_i$ refaz
+o processo de seleção de parceiros e escolhe um novo parceiro $p_l$, onde $l
+\neq k$. Esse processo pode ser repetido até que o \textit{chunk} $c_i$ seja
+recebido corretamente, ou que não faça mais sentido a obtenção daquele
+determinado \textit{chunk}, por exemplo, por já ter passado o seu tempo de
+visualização.
+
+%\subsubsection{Sistemas de Distribução de Conteúdo Multimídia no Escopo do
+%Trabalho}
+
+%\section{Redes de Distribuição de Conteúdo}
+%\subsubsection{Redes de Distribuição de Conteúdo no Escopo do Trabalho}
+
+% \section{Transmissão Multicast}
+% \label{sec:conceitos_multicast}
+
+%\subsubsection{Transmissão Multicast no Escopo do Trabalho}
+%\section{Transmissão de Canais de TV na Internet}
+%\subsubsection{Transmissão de Canais de TV na Internet no Escopo do Trabalho}
+
+% \section{Camada de Transporte TCP/IP}
+% \label{sec:conceitos_camadatransporte}
+%
+% De forma geral, um protocolo define o formato e a ordem das
+% mensagens trocadas entre duas ou mais entidades comunicantes, bem como as ações
+% realizadas na transmissão e/ou no recebimento de mensagens ou
+% eventos~\cite{kurose2006}. Os protocolos TCP, UDP e DCCP são exemplos de
+% protocolos de rede localizados na camada de transporte da pilha TCP/IP,
+% responsáveis especificamente por definir regras de como os dados são
+% transportados entre dois computadores inter-conectados em rede. Eles oferecem
+% serviços que especificam como os dados da aplicação serão encapsulados e
+% entregues às aplicações remotas (multiplexação e demultiplexação); como realizar
+% controle de congestionamento e de fluxo (se aplicável) e, se haverá ou não,
+% garantia de entrega dos dados transmitidos na rede e se esses dados serão
+% ordenados ao chegar no destino.
+%
+% Um protocolo de camada de transporte oferece comunicação lógica entre as
+% aplicações (processos, no nível de sistema operacional) que estão em execução
+% nos computadores. O conceito de comunicação lógica significa que, do ponto de
+% vista da aplicação, tudo se passa como se os computadores comunicantes e que
+% executam as aplicações estivessem conectados diretamente. Na prática, sabe-se
+% que esses sistemas poderão estar em lados opostos do planeta, conectados por
+% diversos roteadores e uma ampla variedade de tipos de meios físicos.
+%
+% Devido a essa diversidade surgiu o conceito de
+% \textit{Socket}~\cite{Stevens2005}. \textit{Sockets} são \textit{interfaces}
+% para a comunicação via rede e é definido pelo endereço IP e porta do
+% transmissor e pelo endereço IP e porta do receptor. Quando se cria um socket,
+% se está criando um canal lógico de comunicação entre um processo em execução em
+% sistema final transmissor e um outro em execução em um sistema final receptor.
+% Na Figura~\ref{fig:ligacaocamadatransporte}, ilustra-se a idéia em que os
+% processos, representados pela aplicação na visão do usuário, comunicam-se
+% logicamente através da camada de transporte para enviar mensagens entre si,
+% considerando-se livres da preocupação dos detalhes da infra-estrutura física
+% utilizada para transportar as mensagens.
+%
+% % 3.1
+% \begin{figure}[ht]
+%     \begin{center}
+%        \includegraphics[scale=0.7]{imagens/ligacaocamadatransporte.pdf}
+%     \end{center}
+%     \vspace{-0.8cm}
+%     \caption[Comunicação lógica entre as camadas de transporte dos sistemas
+% finais]{Comunicação lógica entre as camadas de transporte dos
+% sistemas finais. Adaptado de \protect\cite{kurose2006}.}
+%     \label{fig:ligacaocamadatransporte}
+% \end{figure}
+%
+% Através da Figura~\ref{fig:ligacaocamadatransporte}, é possível entender que os
+% protocolos da camada de transporte são implementados nos sistemas finais, mas
+% não nos comutadores da rede. No sistema final de origem, a camada de transporte
+% ao receber uma mensagem da camada de aplicação, adiciona algumas informações de
+% controle (cabeçalho da camada de transporte) e então repassa o segmento para a
+% camada de rede local. Este processo marca a conversão lógica (conceitual) das
+% mensagens em segmentos, os quais serão convertidos em datagramas quando chegarem
+% na camada de rede, como ilustrado na
+% Figura~\ref{fig:processodeadicaodecabecalhos}. Esta conversão consiste na adição
+% de cabeçalhos, os quais possuem informações que são necessárias para prover os
+% serviços de cada camada.
+%
+% % 1.18
+% \begin{figure}[ht]
+%     \begin{center}
+%         \includegraphics[scale=0.8]{imagens/processodeadicaodecabecalhos.pdf}
+%     \end{center}
+%     \vspace{-0.8cm}
+%     \caption[Processo de adição de cabeçalhos aos pacotes à medida que estes
+% passam pelas diversas camadas da rede]
+%     {Processo de adição de cabeçalhos aos pacotes à medida que estes passam
+% pelas diversas camadas da rede. Adaptado de \protect\cite{kurose2006}.}
+%     \label{fig:processodeadicaodecabecalhos}
+% \end{figure}
+%
+% Os comutadores de rede acessam somente informações dos campos adicionados pela
+% camada de rede, isto é, os campos de cabeçalho do segmento IP adicionados pela
+% camada de transporte não são examinados pelos comutadores. Apenas quando o
+% pacote chega no sistema receptor, a camada de rede extrai do datagrama o
+% segmento e repassa-o para a camada de transporte. Finalmente a camada de
+% transporte processa o segmento recebido, disponibilizando os dados para o
+% processo da aplicação via a biblioteca de \emph{socket} disponibilizada pelo
+% sistema operacional.
+%
+% Com o objetivo de fornecer uma estrutura para projetos de protocolos de rede,
+% dividiu-se a arquitetura de rede em camadas funcionais, onde cada protocolo de
+% rede pertence a uma dessas camadas. Essa separação tem uma importância
+% considerável, pois provê modularização dos serviços através de
+% várias camadas, o que torna a estrutura mais flexível para receber modificações
+% funcionais. Por exemplo, é possível modificar a implementação de um serviço de
+% uma camada sem afetar os serviços oferecidos pelas camadas adjacentes. A
+% estratégia é que uma camada forneça seus serviços para a camada acima dela e
+% utilize os serviços da camada que está abaixo dela, mantendo o restante do
+% sistema inalterado. Este conceito é denominado de modelo de serviço de uma
+% camada. Na Figura~\ref{fig:protocolosInternet}, ilustra-se alguns dos protocolos
+% para cada uma das camadas do modelo TCP/IP.
+%
+% \begin{figure}[ht]
+%     \begin{center}
+%         \includegraphics[scale=0.8]{imagens/camadasderede.pdf}
+%     \end{center}
+%     \vspace{-0.8cm}
+%     \caption{Modelo de Referência TCP/IP e Protocolos de Internet}
+%     \label{fig:protocolosInternet}
+% \end{figure}
+%
+% O sistema de camadas de protocolos tem vantagens conceituais e estruturais. A
+% divisão de camadas proporciona um modo estruturado de discutir componentes de
+% sistemas, uma vez que a modularidade facilita a atualização destes componentes.
+% Porém uma desvantagem potencial desse modelo é que uma camada pode duplicar a
+% funcionalidade de uma camada inferior e, ainda, a funcionalidade de uma camada
+% pode necessitar de informações que estão presentes somente em uma outra camada.
+% Por exemplo, isso pode ocorrer se um desenvolvedor utilizar o protocolo UDP e
+% necessite de controle de congestionamento durante as transmissões da sua
+% aplicação: ele terá que implementar este serviço na sua própria aplicação, o que
+% infringe o objetivo de separação das camadas e também aumenta a complexidade da
+% aplicação.
+%
+% No caso do protocolo DCCP, isto é resolvido implementando controle de
+% congestionamento para transmissão não-confiável de datagrama direto na camada de
+% transporte. Isto evita que o desenvolvedor se preocupe com a complexa tarefa de
+% implementar controle de congestionamento na camada de aplicação.
+%
+% \subsection{Princípios de Controle de Congestionamento}
+% \label{sec:principiosCC}
+%
+% O tema \emph{Controle de Congestionamento} é um assunto vasto e tem sido
+% bastante discutido entre os pesquisadores ao redor do mundo. Atualmente esse
+% tema faz parte do dia-a-dia das pessoas, principalmente para aqueles usuários
+% assíduos da Internet.
+%
+% A maioria das pessoas conhece os efeitos de um congestionamento: baixar uma
+% música na Internet pode levar $5$ minutos, e no outro dia, $10$ minutos. Quando
+% leva $10$ minutos considera-se que a rede está congestionada. Tenta-se até
+% deduzir o porquê dessa lentidão: \aspas{\textit{deve haver vários usuários
+% baixando músicas e vídeos ou transmitindo algum conteúdo multimídia na rede}}.
+%
+% Porém, muitas vezes as justificativas para um congestionamento da rede pode ser
+% complicada de se descobrir. Um congestionamento pode ser causado por um ataque
+% de negação de serviço~\cite{Baptista2002} (consideravelmente complicado de se
+% descobrir) ou porque a largura de banda disponível da rede já não é mais
+% suficiente para a demanda crescente.
+%
+% O serviço de controle de congestionamento de um protocolo da camada de
+% transporte evita que a rede entre em calapso quando um comutador de pacotes fica
+% congestionado~\cite{RFC2914}. Na prática isso ocorre quando os intervalos de
+% tempo de transmissão e resposta aumentam e os comutadores começam a enfileirar
+% os datagramas nos \emph{buffers} de recepção até que possam distribuí-los. Cada
+% roteador possui uma capacidade limitada de armazenamento, ou seja, \emph{a
+% priori} não há pré-alocação de recursos para conexões TCP, UDP ou DCCP. No pior
+% caso, o número total de datagramas que chega ao roteador congestionado cresce
+% até que o roteador alcance sua capacidade e comece a descartar pacotes.
+%
+% Em uma conexão TCP, por exemplo, as aplicações em execução nos sistemas finais
+% geralmente não tem conhecimento sobre o ponto que ocorreu o congestionamento ou
+% o porquê dele ter acontecido. Para esses sistemas, o congestionamento significa
+% um aumento no tempo de resposta ou a não confirmação de recepção de um segmento,
+% o que presume-se descarte de pacotes em um dos comutadores presente na rota que
+% um determinado pacote foi transmitido.
+%
+% O TCP reage ao congestionamento implementando a estratégia de retransmissão.
+% Quando um pacote é perdido ele é retransmitido. Porém, as retransmissões podem
+% agravar o congestionamento, pois como mais segmentos são transmitidos, ocorre um
+% aumento no tráfego da rede, o que aumenta o tempo de resposta ou resulta na não
+% confirmação de recepção do segmento transmitido. Isto pode levar a um efeito
+% \aspas{bola de neve}, pois com mais retransmissões, aumenta-se o tempo de
+% resposta, o que gera mais perdas de pacotes, então mais retransmissões e assim por diante; até
+% que a rede atinge seu limite e não comporta a quantidade de dados sendo transmitido.
+% Para este fenômeno, dá-se o nome de \textit{colapso de congestionamento}.
+%
+% Existem basicamente dois métodos para controlar a taxa de transmissão de dados
+% na rede: o controle baseado em janela e o controle baseado em relatórios
+% enviados pelo sistema receptor~\cite{welzl2005}. Cada um desses métodos possuem
+% vantagens e desvantagens e funcionam como descrito a seguir.
+%
+% \begin{itemize}
+%  \item \emph{Baseado em Janela}: o transmissor mantém uma janela imaginária e
+% seu tamanho representa uma certa quantidade de pacotes (ou bytes) que o sistema
+% transmissor pode enviar antes que pacotes de confirmação de recepção enviados
+% pelo sistema receptor cheguem no transmissor. Para cada pacote transmitido, o
+% tamanho da janela diminui até ser igual a $0$. Por exemplo, suponha que o
+% tamanho da janela de um transmissor é $10$, onde a unidade de medida é pacotes e
+% nenhuma confirmação de recepção é recebida pelo transmissor enquanto ele
+% transmite. Neste caso, o transmissor pode transmitir exatamente $10$ pacotes, em
+% seguida ele deve parar de transmitir. Se o transmissor receber pacotes de
+% confirmação, ele aumenta o tamanho de sua janela para um determinado valor.
+%
+%  \item \emph{Baseado em Relatórios do Receptor}: o valor da taxa de transmissão
+% para um determinado instante é baseado em relatórios transmitidos pelo receptor,
+% que determina qual a taxa máxima que o sistema transmissor deve enviar seus
+% dados (geralmente em bits por segundo). É uma abordagem mais simples e bastante
+% utilizada para transmissão de dados multimídia porque o transmissor não pára de
+% transmitir mesmo que não chegue nenhuma confirmação de recepção.
+% \end{itemize}
+%
+% Além disso, existem diversos mecanismos utilizados para que um sistema final
+% tenha conhecimento do estado da rede em termos de congestionamento. Alguns
+% mecanismos estão implícitos através da própria transmissão, como o aumento no
+% tempo de resposta e a não confirmação de recepção de pacotes, inferindo-se que o
+% sistema receptor não está recebendo os dados transmitidos.
+%
+% Um mecanismo explícito utilizado para notificar que a rede está congestionada é
+% conhecido por ECN (\emph{Explicit Congestion
+% Notification})~\cite{RFC3168,RFC3540}. O ECN considera o descarte de pacotes
+% pelos roteadores, o que pode acontecer de forma aleatória e depende da
+% capacidade de processamento do roteador. Em vez de fazer descarte de pacotes, o
+% roteador utiliza determinados pacotes para marcá-los com uma sinalização de que
+% a rede está congestionada, ou também conhecido por sinalização CE
+% (\emph{Congestion Experencied}). O objetivo dessa sinalização é notificar o
+% transmissor que a rede está congestionada (ou na iminência de congestionar) e
+% que ele reduza sua taxa de transmissão.
+%
+% Com o uso de ECN é possível diminuir as perdas de pacotes quando o
+% congestionamento é incipiente, reduzindo as retransmissões e o tráfego na rede.
+% Como o ECN evita perdas desnecessárias de pacotes, as aplicações com pouca troca
+% de dados ou que sejam sensíveis ao atraso podem se beneficiar com
+% isso~\cite{quaresma2004}. O mecanismo de ECN para IP está especificado no RFC
+% 3168~\cite{RFC3168} e tanto o TCP quanto o DCCP suportam esse mecanismo.
+%
+% O ECN é um dos pontos discutidos em~\cite{RFC4336}, o RFC que apresenta diversas
+% justificativas para criação do protocolo DCCP. Se uma aplicação UDP precisar de
+% controle de congestionamento, este mecanismo deverá ser implementado na camada
+% de aplicação. Neste caso, existem duas opções:
+%
+% \begin{enumerate}
+%  \item ignorar os pacotes marcados com sinal de ECN; ou
+%  \item permitir que a aplicação tenha acesso direto ao campo ECN do cabeçalho
+% IP, sendo possível atribuir ou ler valores deste campo.
+% \end{enumerate}
+%
+% Simplesmente ignorar a sinalização ECN não faz muito sentido quando se
+% implementa controle de congestionamento, além de ser útil às aplicações que não
+% garantem entrega de dados. Permitir acesso das aplicações às informações
+% contidas no cabeçalho IP exigiria alteração das APIs de \emph{sockets}
+% existentes, e mesmo que isto fosse simples de se conseguir, teria que garantir
+% que a camada de rede repassaria a sinalização ECN para a camada de aplicação, o
+% que requer alterações também na camada de transporte.
+
+% \section{Atrasos em redes comutadas por pacotes}
+% \label{sec:atraso}
+%
+% Como já foi visto em seções anteriores, um pacote quando é transmitido na
+% rede, ele passa por uma série de roteadores e até chegar no sistema de
+% destino. Nesse processo, um pacote sofre uma série de atrasos, são eles:
+%
+% \begin{enumerate}
+%     \item \textbf{Atraso de processamento nodal:} a soma dos atrasos que
+% acontecem para cada nó da rede, entre o sistema de origem e o de destino. Esse
+% atraso é gerado devido ao tempo necessário para examinar o cabeçalho do pacote
+% e determinar para onde roteá-lo, assim como o tempo necessário para
+% verificação de possíveis erros no pacote;
+%     \item \textbf{Atraso de fila:} é o atraso que o pacote sofre enquanto
+% espera para ser transmitido no meio físico da rede. Esse tempo dependerá da
+% quantidade de outros pacotes que chegarem antes dele nos roteadores e que já
+% estiverem na fila esperando para serem roteados;
+%     \item \textbf{Atraso de transmissão:} também chamado de atraso de
+% armazenamento e reenvio, é o tempo gasto para transmitir um pacote de tamanho
+% L bits a uma velocidade R bits/s do meio físico. Ou seja, é a razão L/R;
+%     \item \textbf{Atraso de propagação:} é o tempo que um bit gasta quando
+% lançado no meio físico para alcançar um outro nó na rede.
+% \end{enumerate}
+%
+% O atraso fim-a-fim é o somatório desses atrasos em cada nó da rede, desde o
+% sistema de origem ao sistema de destino.
+
+% \section{Protocolo DCCP}
+% \label{sec:conceitos_dccp}
+%
+% Após uma revisão sobre os principais conceitos relacionados à camada de
+% transporte TCP/IP e discussões acerca dos princípios de controle de
+% congestionamento, nesta seção é apresentada uma introdução ao protocolo DCCP.
+%
+% O DCCP é um protocolo da camada de transporte e realiza transporte não-confiável
+% de datagrama IP. Ele oferece diversas características, sendo as principais o
+% estabelecimento de conexão, não garante entrega e nem ordenação dos dados
+% transmitidos e implementa controle de congestionamento para transmissão
+% não-confiável de fluxo de dados. Assim, o DCCP herda do TCP as características
+% de ser orientado a conexão e fornecer controle de congestionamento. Já do UDP, o
+% protocolo DCCP herda as características de não garantir entrega e nem ordenação
+% dos dados transmitidos.
+%
+% As principais justificativas para especificar um protocolo orientado à conexão é
+% facilitar a implementação do controle de congestionamento e permitir que as
+% aplicações funcionem mesmo quando estejam conectadas via NAT (Network Address
+% Translation)~\cite{RFC1631}. O protocolo UDP não apresenta suporte a essas
+% características e por isso a IETF publicou a RFC 3489~\cite{RFC3489}, conhecida
+% por STUN (\emph{Simple Traversal of UDP over NAT}). O STUN é uma solução
+% paleativa para suprir a ausência dessa característica do UDP, pois permite que
+% uma aplicação descubra qual seu endereço público de rede, o tipo de NAT
+% utilizado e qual porta NAT está associada a porta do endereço local, para os
+% casos em que a aplicação conecta-se a um sistema fora da rede local via NAT. As
+% informações providas pelo STUN são usadas para permitir a comunicação UDP entre
+% o cliente e um servidor externo à rede local, e então, poder transmitir dados
+% entre um sistema com endereço local e acessando a rede externa via NAT e um
+% sistema com endereço válido na Internet. Antes do surgimento do STUN, alguns
+% serviços que faziam uso do UDP para transmitir conteúdo multimídia simplesmente
+% não funcionavam quando executados através de NAT. Esse foi o caso do \emph{MSN
+% Messenger}, que até a versão 6.0 o serviço de transmissão de vídeos não
+% funcionava quando conectado através de uma rede com NAT.
+%
+% Além de procurar resolver problemas já conhecidos, como o mencionado
+% anteriormente, o protocolo DCCP oferece dois mecanismos peculiares e bastante
+% importantes. O primeiro é denominado \textit{Escolha Tardia de
+% Dados}~\cite{kohler05dccp}. Ele consiste em permitir que a aplicação altere as
+% informações de um pacote imediatamente antes da sua transmissão na rede. O outro
+% é um arcabouço modularizado que permite desenvolver, adicionar e remover
+% \textit{algoritmos de controle de congestionamento}, os quais podem ser
+% selecionados por um determinado tipo de aplicação de acordo com o tipo de
+% conteúdo multimídia sendo transmitido. Mais detalhes sobre a escolha tardia de
+% dados e o arcabouço de módulos para controle de congestionamento são
+% apresentados nas Seções~\ref{sec:escolhatardia}
+% e~\ref{sec:visaocontrolecongestionamentoDCCP}, respectivamente.
+%
+% O protocolo DCCP é especificado pela IETF e sua especificação é divida
+% basicamente em 5 principais RFCs, além de diversos \emph{Internet
+% Drafts}\footnote{Internet Draft: são documentos de trabalho da IETF antes de se
+% tornarem um padrão da IETF, as chamadas RFCs. Geralmente são válidos por seis
+% meses e podem ser atualizados, substituídos ou descartados por outros documentos
+% em qualquer tempo.} não mencionados neste trabalho. A primeira especificação é a
+% RFC $4336$~\cite{RFC4336}, que apresenta diversos problemas e motivações para a
+% criação de um novo protocolo, em vez de estender o protocolo UDP, por exemplo. A
+% RFC $4340$~\cite{RFC4340} trata da especificação do protocolo DCCP propriamente
+% dita, contendo explicações detalhadas do funcionamento interno do DCCP e como
+% funciona o gerenciamento de algoritmos de controle de congestionamento. Já nas
+% RFCs $4341$~\cite{RFC4341}, $4342$~\cite{RFC4341} e $5622$~\cite{RFC5622}, os
+% autores do protocolo DCCP definem três mecanismos padrões para controle de
+% congestionamento no DCCP. O  primeiro baseado em janelas, similar ao TCP e o
+% segundo e o terceiro baseados em relatórios enviados pelo receptor. Na
+% Seção~\ref{sec:visaocontrolecongestionamentoDCCP} são apresentados mais
+% detalhes sobre esses três algoritmos, onde também são apresentadas
+% justificativas para modularização dos algoritmos de controle de
+% congestionamento.
+%
+% Devido a essas características, a proposta da IETF para o DCCP é que ele seja
+% utilizado em larga escala na Internet em transmissões de dados multimídia, em
+% muitos casos substituindo o protocolo UDP.
+%
+% \subsection{Principais Características do DCCP}
+%
+% A lista a seguir apresenta um resumo das principais características do protocolo
+% DCCP:
+%
+% \begin{itemize}
+%     \item processo de conexão em três-vias similar ao TCP, onde ocorre o
+% estabelecimento e finalização da conexão;
+%     \item fluxo de dados não-confiáveis, com confirmação seletiva de recebimento
+% de pacotes;
+%     \item opções de negociação com confirmação (por isso o termo confirmação
+% seletiva no item anterior), incluindo negociação do mecanismo de controle de
+% congestionamento a ser utilizado (decisão da aplicação) em tempo de conexão;
+%     \item controle de congestionamento com suporte a ECN (\emph{Explicit
+% Congestion
+%     Notification});
+%     \item estatísticas da conexão contendo informações sobre quais pacotes de
+% dados chegaram no receptor ou se aqueles pacotes foram marcados com uma
+% sinalização
+%     ECN, corrompido, ou deletado por falta de espaço no \emph{buffer} de
+% recepção;
+%     \item descoberta de PMTU (\emph{Path Maximum Transmission
+% Unit})~\cite{RFC1191}, o que ajuda a evitar fragmentação na camada IP.
+% \end{itemize}
+%
+% \subsection{Estrutura do Protocolo DCCP}
+%
+% Nesta seção são discutidos detalhes de funcionamento de algumas das
+% características do protocolo DCCP mencionadas na seção anterior.
+%
+% \subsubsection{Ciclo de vida de uma conexão DCCP}
+%
+% Uma conexão DCCP é estabelecida entre dois sistemas finais, \emph{DCCP A} e
+% \emph{DCCP B}. O \emph{DCCP A} inicia a conexão (cliente) e o outro recebe o
+% pedido de conexão (servidor). Existe também o \emph{DCCP processor}, que se
+% refere a qualquer sistema que processa e repassa um cabeçalho DCCP. Um
+% \emph{DCCP processor} pode ser os próprios sistemas finais ou qualquer outro
+% sistema presente no caminho da conexão, como \emph{firewalls}, roteadores e
+% tradutores de endereços de rede (\emph{NAT})~\cite{RFC1631}.
+%
+% O estabelecimento de uma conexão DCCP é ilustrado na
+% Figura~\ref{fig:processoconexaodccp}. O processo inicia quando o cliente envia
+% para o servidor um pacote do tipo \emph{DCCP-Request} e o servidor responde com
+% um pacote \emph{DCCP-Response}. Ao receber o \emph{DCCP-Response}, o cliente
+% envia para o servidor um pacote que confirma o recebimento do
+% \emph{DCCP-Response} e a partir desse momento a conexão é efetivamente
+% estabelecida. Após o estabelecimento da conexão, os dois sistemas trocam dados
+% entre si através dos pacotes \emph{DCCP-Data} ou \emph{DCCP-DataAck} enquanto
+% ocorrer a conexão. A conexão é finalizada quando o servidor envia um pacote do
+% tipo \emph{DCCP-Closereq} ou o cliente envia um pacote \emph{DCCP-Close}. Ao
+% receber do cliente a confirmação de recebimento do \emph{DCCP-Closereq}
+% transmitido, o servidor envia para o cliente um \emph{DCCP-Reset} para informar
+% que a conexão está finalizada. Nesse ponto, o cliente permanece no estado de
+% \emph{TIMEWAIT}, que serve para receber eventuais pacotes da conexão que ainda
+% estão em trânsito na rede.
+%
+% \begin{figure}[ht]
+%     \begin{center}
+%         \includegraphics[scale=0.8]{imagens/progressoconexaodccp.pdf}
+%     \end{center}
+%     \vspace{-0.8cm}
+%     \caption{Ciclo de vida de uma conexão DCCP.}
+%     \label{fig:processoconexaodccp}
+% \end{figure}
+%
+% \subsubsection{Conexão bi-direcional}
+%
+% A conexão bi-direcional entre o \emph{DCCP A} e o \emph{DCCP B} indica que pode
+% ocorrer transmissão de informações de A para B ou de B para A, simultaneamente,
+% como ilustrado na Figura \ref{fig:conexaodccp}. Na realidade esta conexão
+% consiste em duas conexões unidirecionais chamadas de sub-conexões ou
+% \emph{half-connection}.
+%
+% \begin{figure}[ht]
+%     \begin{center}
+%         \includegraphics[scale=0.8]{imagens/conexaobidirecionaldccp.pdf}
+%     \end{center}
+%     \vspace{-0.8cm}
+%     \caption{Conexão bi-direcional do protocolo DCCP.}
+%     \label{fig:conexaodccp}
+% \end{figure}
+%
+% Embora estas duas sub-conexões sejam logicamente distintas, elas se sobrepõem.
+% Por exemplo, em uma transmissão de A para B um pacote \emph{DCCP-DataAck} contém
+% dados da aplicação gerados por A e informações que confirmam a recepção de dados
+% transmitidos previamente de B para A.
+%
+% Os itens enumerados na Figura~\ref{fig:conexaodccp} representam os dados de uma
+% conexão DCCP. Estes dados são transmitidos entre os sistemas finais A e B. Em
+% cada conjunto de dados ($1$, $2$, $3$, $4$) existem tipos de pacotes específicos
+% que trafegam na rede. Na Seção~\ref{subsec:tipodepacotesdccp} são discutidos
+% mais detalhes a respeito desses pacotes. Os itens a seguir definem os conceitos
+% relacionados a estes conjuntos de dados:
+%
+% %\Checkmark
+% \begin{description}
+%   \item[Sub-fluxo:] consiste de pacotes de dados ou de confirmação transmitidos
+% em uma direção. Cada um dos subconjuntos de pacotes na
+% Figura~\ref{fig:conexaodccp} são subfluxos, os quais podem se sobrepor, uma vez
+% que um pacote de confirmação pode \aspas{pegar carona} (\emph{piggyback}) em um
+% pacote de dados;
+%   \item[Seqüências:] é determinada por todos os pacotes transmitidos em uma
+% direção, podendo ser pacotes de dados ou de confirmação. Nesse caso, os
+% conjuntos ${1,4}$ e ${2,3}$ são seqüências, onde cada pacote em uma seqüência
+% tem um número de seqüência diferente;
+%   \item[Sub-conexões:] consiste de pacotes de dados enviados em uma direção mais
+% as confirmações correspondentes. Os conjuntos ${1,2}$ e ${3,4}$ são
+% sub-conexões. Na sub-conexão ${1,2}$, de A para B, são transmitidos pacotes de
+% dados e de B para A, pacotes de confirmação;
+%   \item[HC-transmissor e HC-receptor:] no contexto de uma sub-conexão, o
+% HC-transmissor é o sistema que transmite os dados enquanto que o HC-receptor é o
+% sistema que envia informações de confirmação. Por exemplo, na sub-conexão de A
+% para B, o sistema DCCP A é o HC-transmissor e o DCCP B é o HC-receptor.
+% \end{description}
+%
+% Ainda no contexto das sub-conexões, o protocolo DCCP não permite apenas uma
+% delas. Ou seja, o protocolo ao finalizar uma conexão as duas sub-conexões são
+% finalizadas, portanto sendo tratadas como uma única entidade.
+%
+% \subsubsection{Negociação de características da conexão}
+% \label{sec:featureneg}
+%
+% As características de uma conexão DCCP são atributos da conexão cujos valores
+% são negociados pelos sistemas envolvidos. Com este mecanismo genérico é possível
+% negociar algumas propriedades, tais como o algoritmo de controle de
+% congestionamento que deve ser utilizado em cada uma das sub-conexões. Esta
+% negociação acontece através do uso de opções sinalizadas no cabeçalho de um
+% pacote DCCP.
+%
+% Uma característica é identificada por um número e um sistema final. Esta
+% característica é denotada por \aspas{F/X}, onde F representa o número da
+% característica localizada no sistema final X. Cada característica é negociada
+% para uma sub-conexão, sendo possível ocorrer valores diferentes para uma
+% determinada característica em cada direção. Portanto é desta forma que o DCCP
+% possibilita ter um algoritmo de controle de congestionamento sendo executado de
+% A para B e um outro de B para A.
+%
+% \subsubsection{Escolha Tardia de Dados}
+% \label{sec:escolhatardia}
+%
+% As aplicações multimídia que utilizam protocolos que implementam controle de
+% congestionamento podem apresentar problemas de desempenho na entrega dos dados.
+% Um dos problemas é que uma informação ao ser transmitida na rede pode chegar a
+% um sistema remoto depois que esta já não é mais relevante. Isto pode ocorrer
+% devido ao atraso provocado pelos algoritmos de controle de congestionamento
+% implementados na camada de transporte dos sistemas ou por qualquer outro tipo de
+% atraso.
+%
+% Um mecanismo do protocolo DCCP para tentar solucionar esse problema é chamado de
+% Escolha Tardia de Dados~\cite{kohler05dccp}. Este mecanismo permite que as
+% aplicações mudem os dados a serem transmitidos imediatamente antes da
+% transmissão, mesmo que a aplicação já tenha liberado os dados para a camada de
+% transporte. Uma aplicação libera os dados para a camada de transporte através
+% das funções de transmissão das APIs de \emph{socket}, como \emph{write} e
+% \emph{send}. Em aplicações de redes multimídia esse serviço pode ser utilizado
+% quando uma aplicação libera os dados para serem transmitidos via DCCP, porém,
+% antes que eles sejam efetivamente transmitidos na rede, a aplicação pode
+% detectar que as informações a serem transmitidas serão descartadas pela
+% aplicação de destino e, então, altera o conteúdo do pacote que será supostamente
+% descartado adicionando informações mais recentes.
+%
+% Uma aplicação direta desse recurso é na adaptação da qualidade do fluxo
+% multimídia transmitido na rede. À medida que forem ocorrendo mudanças no nível
+% de congestionamento da rede, o sistema altera o conteúdo dos pacotes multimídia
+% com uma qualidade menor do que tinha sido criado previamente (quando a rede não
+% estava congestionada). Como visto na Seção~\ref{sec:principiosCC}, quando uma
+% rede está congestionada significa dizer que a quantidade de pacotes em trânsito
+% na rede é maior que a quantidade de pacotes que os roteadores conseguem
+% armazenar em suas filas de roteamento, o que faz eles descartarem pacotes, e
+% quando o protocolo TCP detecta esta perda realiza retransmissões dos pacotes
+% perdidos, o que contribui para o aumento no nível de congestionamento da rede.
+%
+% Neste sentido, utilizando Escolha Tardia de Dados, diminui-se a quantidade de
+% pacotes na rede que serão apenas descartados no destino. Isto significa que
+% existirão menos pacotes sendo transmitidos na rede, liberando mais espaços nas
+% filas dos comutadores de pacotes. Considerando que toda aplicação DCCP pode
+% fazer uso desse recurso, cada uma delas estará contribuindo para que a rede se
+% recupere do congestionamento, e ainda utiliza melhor os recursos disponíveis da
+% rede. Ou seja, aumentam as chances de transmitir apenas pacotes úteis às
+% aplicações remotas, ao passo que diminuem os que serão descartados no destino.
+%
+% A escolha tardia de dados pode ser utilizada nas aplicações de voz sobre IP. Por
+% exemplo, dependendo do atraso de um pacote durante a transmissão, o mesmo pode
+% se tornar inútil à aplicação que o receberá. Com base em experimentos relatados
+% pelos autores dos trabalhos referenciados em~\cite{conceicao2006-pt,gu2006}, uma
+% aplicação de voz sobre IP suporta atrasos que variam entre \ut{150}{ms} e
+% \ut{400}{ms}. Acima desse valor ou a qualidade do áudio diminuirá ou a aplicação
+% terá que descartar o pacote recebido. Para este cenário, se um pacote não for
+% transmitido em menos de \ut{400}{ms}, o DCCP pode sinalizar a aplicação que o
+% pacote está atrasado e a aplicação por sua vez, fazendo uso do mecanismo de
+% Escolha Tardia de Dados, interfere na transmissão daquele pacote atrasado e
+% alterado seu conteúdo, adicionando informações do trecho de áudio mais recentes.
+% Se assim não o fizer, este pacote provavelmente será descartado na aplicação de
+% destino.
+%
+% Já no contexto de videoconferência, onde em geral o áudio é mais importante que
+% o vídeo, pode-se desenvolver um mecanismo reativo ao congestionamento da rede:
+% quando perceber que a rede está congestionada ou na iminência de
+% congestionamento, este mecanismo pode dar preferência a transmissão de pacotes
+% de áudio a pacotes de vídeo, como apresentado em~\cite{sisalem99towards}.
+%
+% \subsubsection{Cabeçalho DCCP}
+% \label{subsec:cabecalhodccp}
+%
+% Na Figura~\ref{fig:cabecalhodccp48} é ilustrado o cabeçalho genérico do
+% protocolo DCCP. O nome genérico é justificado porque o cabeçalho assume um
+% formato diferente dependendo do valor de X, conhecido como bit de número de
+% seqüência extendido (\textit{Extended Sequence Numbers bit}). Se o valor de X
+% for $1$, o campo Número de Seqüência tem o tamanho de $48$ bits e o cabeçalho
+% genérico fica com o tamanho de $16$ bytes.
+%
+% \begin{figure}[ht]
+%     \begin{center}
+%         \includegraphics[scale=0.8]{imagens/cabecalhodccp48.pdf}
+%     \end{center}
+%     \vspace{-0.8cm}
+%     \caption{Cabeçalho do protocolo DCCP (extendido).}
+%     \label{fig:cabecalhodccp48}
+% \end{figure}
+%
+% Se o valor de X for $0$, apenas os $24$ bits do Número de Seqüência são
+% transmitidos e o cabeçalho do DCCP fica com o tamanho de $12$ bytes, como
+% ilustrado na Figura~\ref{fig:cabecalhodccp24}.
+%
+% \begin{figure}[ht]
+%     \begin{center}
+%         \includegraphics[scale=0.8]{imagens/cabecalhodccp24.pdf}
+%     \end{center}
+%     \vspace{-0.8cm}
+%     \caption{Cabeçalho do protocolo DCCP (simplificado).}
+%     \label{fig:cabecalhodccp24}
+% \end{figure}
+%
+% Os campos do cabeçalho são definidos como segue:
+%
+% %\Checkmark
+% \begin{description}
+%   \item[Porta de origem e destino:] cada porta possui um tamanho de $16$ bits.
+% Estes campos identificam a conexão, como acontece com os protocolos TCP e UDP;
+%   \item[\emph{Data offset}:] ou simplesmente \emph{offset}, determina o tamanho
+% do cabeçalho DCCP, contando do início do cabeçalho até o início de onde estão os
+% dados da aplicação. Este campo tem o tamanho de $8$ bits;
+%   \item[CCVal:] é utilizado pelo controle de congestionamento do sistema
+% transmissor. O tamanho desse campo é de $4$ bits. Em uma \emph{half-connection}
+% de A para B o CCID de A pode enviar $4$ bits de informação para B e estes $4$
+% bits são armazenados em CCVal;
+%   \item[\emph{Checksum Coverage} (CsCov):] tamanho de $4$ bits. Este campo
+% determina quais partes são protegidos pelo campo de \emph{Checksum};
+%   \item[\emph{Checksum}:] tamanho de $16$ bits. Este campo é utilizado para
+%   checagem de erro. Dependendo do valor do campo \emph{Checksum Coverage}, todo,
+% parte ou nenhum dado da aplicação presente no pacote será verificado;
+%   \item[Reservado:] tamanho de $3$ bits. Campo reservado para utilizações
+% futuras;
+%   \item[Tipo do pacote:] tamanho de $4$ bits. Este campo determina o tipo de
+%   pacote que está sendo transmitido/recebido. Os possíveis valores desse campo
+% são apresentados na Seção~\ref{subsec:tipodepacotesdccp};
+%   \item[Número de seqüência extendido (X):] se valor de X for $1$, o pacote terá
+% o tamanho do campo de número de seqüência com $48$ bits, se $0$, com $24$ bits;
+%   \item[Número de seqüência (bits altos, bits baixos):] pode ter o tamanho de
+% $48$ ou $24$ bits. Identifica unicamente um pacote transmitido na rede por um
+% sistema final. Este número aumenta em $1$ a cada pacote transmitido.
+% \end{description}
+%
+% Todos os tipos de pacotes, com excessão do \emph{DCCP-Packet} e \emph{DCCP-Data}
+% transportam um sub-cabeçalho para o campo do número de confirmação. Este
+% sub-cabeçalho aparece logo após o cabeçalho genérico, e varia de acordo com o
+% valor de X. Para mais informações a respeito desses campos e dos sub-cabeçalhos,
+% consulte a referência~\cite{RFC4340}.
+%
+% \subsubsection{Tipo de pacotes}
+% \label{subsec:tipodepacotesdccp}
+%
+% O cabeçalho do protocolo DCCP apresenta um campo denominado \emph{tipo do
+% pacote}. Este campo determina que informação está contida em um determinado
+% pacote DCCP. Na Tabela~\ref{tab:tipospacotesdccp} são apresentados os possíveis
+% valores desse campo, nome do pacote e descrição.
+%
+% \begin{table}[ht]
+%         \caption{Tipos de Pacotes do protocolo DCCP.}
+%         \label{tab:tipospacotesdccp}
+%     \begin{center}
+%         \begin{tabular}{|p{1.0cm}|p{1.5cm}|p{1.5cm}|}
+%             \hline
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.05,0.2,0.43}}c}{\textcolor{white}{\textbf
+% {\#}}} &
+% \multicolumn{1}{|>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}{
+% \textbf{Tipo}}} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}{\textbf
+% {Descrição}}}
+% 	    \\
+% 	    \hline
+% 	    \hline
+%             \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{0}}
+% & \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Request} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Pedido de
+% estabelecimento de conexão}
+% 	    \\
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{1}} &
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Response} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Resposta ao pedido de
+% estabelecimento de conexão}
+% 	    \\
+%             \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{2}}
+% & \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Data} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Contém dados da
+% aplicação}
+% 	    \\
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{3}} &
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{ACK} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Confirmação de
+% recebimento de pacote}
+% 	    \\
+%             \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{4}}
+% & \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{DataACK} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Dados da aplicação e
+% confirmação de recepção}
+% 	    \\
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{5}} &
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{CloseReq} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Servidor solicita
+% término de conexão sem TIMEWAIT.}
+% 	    \\
+%             \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{6}}
+% & \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Close} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Servidor/Cliente
+% solicita término da conexão.}
+% 	    \\
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{7}} &
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Reset\footnote{o
+% tipo de pacote \textbf{DCCP-Reset} é utilizado com este propósito, porém
+% utiliza-se também para outros motivos: para sinalizar número de porta incorreto;
+% comportamento inapropriado de opções etc.}} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Determina,
+% incondicionalmente o final da conexão}
+% 	    \\
+%             \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{8}}
+% & \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Sync} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Sincronia após perda de
+% pacote ou de uma das sub-conexões}
+% 	    \\
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{9}} &
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{SyncACK} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Sincronia mais
+% confirmação de recepção}
+% 	    \\
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{\textbf{10-15}} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Reservado} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Uso futuro e ignorado
+% pelo receptor}
+% 	    \\
+%             \hline
+%         \end{tabular}
+%     \end{center}
+% 	\scriptsize
+% 	$^2$ O tipo de pacote \textbf{DCCP-Reset} é utilizado com este
+% propósito, porém utiliza-se também para outros motivos: para sinalizar número de
+% porta incorreto; comportamento inapropriado de opções etc.
+% \end{table}
+%
+% \normalsize
+%
+% \subsection{Algoritmos de Controle de Congestionamento (CCIDs)}
+% \label{sec:visaocontrolecongestionamentoDCCP}
+%
+% Os CCIDs (\emph{Congestion Control IDentifier}) são módulos independentes do
+% restante do protocolo e responsáveis por realizar o controle de congestionamento
+% durante o ciclo de vida de uma conexão DCCP. Eles descrevem como um sistema que
+% utiliza DCCP limita a taxa de transmissão de pacotes na rede e os valores
+% iniciais de parâmetros da conexão, por exemplo, o tamanho inicial da janela de
+% transmissão (controle de congestionamento baseado em janela) ou como e com qual
+% freqüência o receptor envia informações de congestionamento para o transmissor
+% (controle de congestionamento limitado pelo receptor).
+%
+% Um determinado CCID pode ser utilizado em qualquer momento da conexão, sendo
+% permitido uma aplicação selecionar um outro algoritmo de controle de
+% congestionamento a qualquer momento da conexão através do mecanismo de
+% negociação de características discutido na Seção~\ref{sec:featureneg}. Além de
+% ser negociado no estabelecimento da conexão DCCP, os CCIDs podem ser negociados
+% durante o ciclo de vida da conexão, sendo possível a execução de um CCID em uma
+% direção e um outro CCID na direção contrária. Esta flexibilidade na utilização
+% dos algoritmos de controle de congestionamento em uma conexão DCCP é importante,
+% uma vez a característica de tráfego em uma direção de uma conexão pode ser
+% totalmente diferente se comparada ao tráfego na direção contrária.
+%
+% A principal justificativa para prover um arcabouço modular para gerenciar os
+% CCIDs é que um determinado algoritmo pode ser mais apropriado para um tipo de
+% aplicação, sendo possível adicionar novos CCIDs ou removê-los de forma
+% independente do núcleo do protocolo. Por exemplo, as aplicações de jogos na
+% Internet podem fazer uso de qualquer largura de banda disponível na rede, pois
+% muitas delas utilizam técnicas de diferença de quadros, onde são enviadas apenas
+% as diferenças entre uma cena do jogo e a outra. Por outro lado, as aplicações de
+% voz sobre IP transmitem rajadas de pequenos pacotes em um curto espaço de tempo
+% (quando um dos interlocutores fala), sendo as rajadas separadas por períodos de
+% silêncio (quando a pessoa para de falar para dar a vez a outra).
+%
+% Esta flexibilidade no uso dos algoritmos de controle de congestionamento permite
+% deixar a cargo dos desenvolvedores qual mecanismo de congestionamento é mais
+% adequado à sua aplicação. Desta forma, para um sistema final que envia e recebe
+% dados multimídia é possível ter um algoritmo de controle de congestionamento
+% sendo executado em uma direção (transmissão, por exemplo) e outro algoritmo na
+% direção contrária. Além disso, permite que novos algoritmos de controle de
+% congestionamento sejam desenvolvidos independente da implementação do núcleo do
+% protocolo.
+%
+% Oficialmente a IETF provê dois CCIDs para o protocolo DCCP: O \textit{TCP-Like
+% Congestion Control} (ou CCID-2)~\cite{RFC4341} e o \textit{TCP Friendly Rate
+% Control} (ou CCID-3)~\cite{RFC4342}. Além desses dois algoritmos padrões da
+% IETF, existe o \textit{TCP Friendly Rate Control For Small Packets} (ou CCID-4),
+% que encontra-se em estado experimental. Com relação ao restante dos
+% identificadores, entre $0$-$1$ e entre $5$-$255$, eles são reservados para usos
+% posteriores.
+%
+% \subsubsection{\emph{TCP-like Congestion Control} - CCID-2}
+% \label{subsub:dccp-TCPLike}
+%
+% O CCID-2~\cite{RFC4341} é apropriado para as aplicações que utilizam o máximo da
+% largura de banda disponível da rede, mas que se adaptam a mudanças repentinas na
+% largura de banda disponível para transmissão na rede.
+%
+% O CCID-2 é baseado em controle de congestionamento por janela, similar ao
+% controle de congestionamento do TCP. Quando um pacote é recebido pelo DCCP, ele
+% envia um ACK para o transmissor. O transmissor ao receber o ACK ajusta o tamanho
+% da janela de transmissão e o tempo de expiração para os pacotes ainda não
+% confirmados. Essa estratégia é baseada no conceito de Aumento Aditivo com
+% Redução Multiplicativa (\emph{AIMD - Additive Increase, Multiplicative
+% Decrease})~\cite{welzl2005} para controle de congestionamento baseado em janela.
+% Similar ao TCP, o CCID-2 utiliza uma janela de transmissão com tamanho
+% \textit{wsize} números de pacotes, sendo cada pacote de tamanho \textit{psize}
+% bytes. O sistema transmissor ajusta o tamanho da janela à medida que recebe
+% pacotes de confirmação. Desta forma, o valor de \textit{wsize} aumenta em uma
+% unidade nos seguintes casos: (1) a cada confirmação de pacote recebida e (2)
+% quando toda uma janela de pacotes for confirmada na fase de prevenção de
+% congestionamento (\emph{Congestion Avoidance}). Por outro lado, o valor de
+% \textit{wsize} diminui pela metade quando o transmissor detecta perda de
+% pacotes, de maneira equivalente ao TCP. Caso o transmissor não receba um pacote
+% de confirmação de recepção antes do tempo de expiração, o valor de
+% \textit{wsize} é atribuído para $1$.
+%
+% Como pode-se perceber, o funcionamento do CCID-2 é bastante similar ao TCP
+% Reno e apresenta basicamente duas diferenças com relação ao algoritmo de
+% controle de congestionamento do protocolo TCP:
+%
+% \begin{itemize}
+%   \item a unidade de medida para o tamanho da janela de congestionamento do
+% protocolo TCP é em \emph{bytes} (\emph{byte-stream}). Como o protocolo DCCP
+% transmite mensagens datagrama em vez de fluxos de bytes, a unidade considerada
+% para o tamanho da janela de congestionamento é a quantidade de pacotes
+% transmitidos ou recebidos na rede. Assim, a escolha do tamanho de pacote a ser
+% transmitido pode influenciar na qualidade do fluxo transmitido e no desempenho
+% da aplicação. Por exemplo, uma má escolha pode resultar em fragmentação de
+% pacotes na camada de rede;
+%   \item o controle de congestionamento padrão do TCP precisa distinguir entre um
+% pacote novo e pacotes retransmitidos. O protocolo DCCP não necessita realizar
+% tal distinção, pois não retransmite pacotes perdidos.
+%   \item controle de congestionamento sobre pacotes de confirmação
+% (\emph{ack}). O TCP controla apenas pacotes de dados.
+% \end{itemize}
+%
+% \subsubsection{TCP-Friendly Rate Control (TFRC) - CCID-3}
+% \label{subsub:dccp-TFRC}
+%
+% O CCID-3~\cite{RFC4342} especifica um algoritmo de controle de congestionamento
+% baseado no sistema receptor e é apropriado para aplicações que se adaptam melhor
+% a mudanças mais suaves na largura de banda disponivel para transmissão. A
+% estratégia é que o receptor limite a taxa de envio de pacotes do transmissor
+% através de relatórios contendo informações do estado da conexão, como a taxa de
+% recepção, intervalos de perda e o tempo em que um pacote permanece na fila de
+% recepção (\emph{buffers de recepção}) até que seja confirmado como recebido ao
+% transmissor. Em posse dessas informações fornecidas pelo receptor, o transmissor
+% determina a sua taxa de transmissão para um determinado instante através da
+% equação de vazão \ref{eq:tfrcequation}. A equação é denominada \emph{TFRC
+% Throughput Equation}.
+%
+% %além de analisar os intervalos de perda de pacotes
+%
+% % \begin{equation}
+% % X = \frac{s}{R\sqrt{\frac{2p}{3}} + 4R (3\sqrt{\frac{3p}{8}} p  (1+32p^2))}
+% % \label{eq:tfrcequation}
+% % \end{equation}
+%
+% \begin{equation}
+% X = \frac{s}{R \times \sqrt{2 \times b \times \frac{p}{3}} + (RTO \times 3
+% \sqrt{3 \times b \times \frac{p}{8}} \times p \times (1 + 32 \times p^{2})}
+% \label{eq:tfrcequation}
+% \end{equation}
+% onde,
+%
+% \begin{itemize}
+%  \item $X$ é a taxa de transmissão em bytes por segundo;
+%  \item $s$ é o tamanho do pacote em bytes;
+%  \item $R$ é o RTT (\emph{Round Trip Time}), especificado em segundos;
+%  \item \textit{b} é igual a 1 e representa o número máximo de pacotes
+% confirmados por um único ACK;
+%  \item $p\in[0,1]$ é a taxa do evento de perda, que representa a fração de
+% pacotes perdidos;
+%  \item RTO (\textit{Retransmission TimeOut}) é o valor do temporizador de
+% retransmissão do TCP em segundos;
+% \end{itemize}
+%
+% \subsubsection{\emph{TCP-Friendly Rate Control For Small Packets} - CCID-4}
+% \label{subsubsec:ccid4}
+%
+% Um terceiro algoritmo para controle de congestionamento do DCCP é o
+% CCID-4~\cite{RFC5622}, um algoritmo de controle de congestionamento
+% baseado no CCID-3. O CCID-4 está sendo desenvolvido baseando-se em requisitos
+% das aplicações multimídia que transmitem rajadas de pacotes pequenos (entre
+% $512$ bytes e $1024$ bytes) em um curto espaço de tempo, como as de voz sobre
+% IP. O CCID-4 permite que as aplicações adaptem o fluxo multimídia de acordo
+% com nível de congestionamento da rede (baseado na taxa atual de
+% transmissão)~\cite{marie2005}. A idéia é que a qualidade do fluxo sendo
+% transmitido seja adaptado variando o tamanho do pacote através do uso de
+% codificadores que implementam o recurso de VBR (\emph{Variable Bit Rate}). Caso
+% a rede esteja congestionada, diminui-se o tamanho dos pacotes sendo
+% transmitidos, o que diminui a qualidade do conteúdo multimídia sendo
+% transmitido. Porém, se a rede não apresentar congestionamento a qualidade do
+% fluxo multimídia pode ser melhorada, o que pode alterar o tamanho do pacote.
+%
+% \subsection{DCCP e o Protocolo IP}
+%
+% No cabeçalho IP existe um campo chamado \emph{Protocolo}. Este campo tem um
+% papel análogo ao do campo \emph{número de porta} no segmento da camada de
+% transporte. Ou seja, o valor deste campo identifica o protocolo de camada de
+% transporte que será responsável por receber e manipular o datagrama recebido, ao
+% passo que o valor do campo \emph{número de porta} identifica a aplicação que a
+% camada de transporte deve repassar o respectivo segmento.
+%
+% O IANA (\emph{Internet Assigned Numbers Authority}) é o órgão que define o valor
+% deste campo, que para o protocolo DCCP o valor correspondente é
+% $33$~\cite{protonum2008}. Este valor\footnote{Outros valores para o campo
+% \emph{Protocolo} do cabeçalho IP: TCP igual a 6, UDP igual a 17, entre outros.}
+% deve ser informado na criação de uma conexão DCCP em qualquer API de
+% \emph{socket} disponível atualmente, bastante similar ao estabelecimento de uma
+% conexão TCP. O Código~\ref{lst:sockdccp} ilustra um exemplo utilizando a
+% linguagem C para estabelecer uma conexão DCCP em um servidor remoto utilizando a
+% API de \emph{socket} BSD e considerando as versões mais recentes da
+% \emph{glibc}~\footnote{\small{\url{http://www.gnu.org/software/libc}}}.
+%
+% \begin{lstlisting}[language=c, caption=Conexão DCCP Através da API de Socket
+% Berkeley, label=lst:sockdccp]
+% #include <arpa/inet.h>
+% #include <errno.h>
+% #define IPPROTO_DCCP 33
+%
+% (...)
+% int result = 0;
+% if ((sock_fd = socket (AF_INET, SOCK_DCCP, IPPROTO_DCCP)) > 0) {
+%     int result = connect(sock_fd, (struct sockaddr *)&serverSockIn,
+% 			sizeof(serverSockIn));
+%     return result;
+% } else {
+% 	printf("Conexão Recusada.");
+% }
+% (...)
+% \end{lstlisting}
+%
+% Um ponto importante nesse contexto é com relação ao funcionamento do protocolo
+% DCCP na Internet. Para todos os experimentos realizados com DCCP no contexto
+% deste trabalho, a configuração de bloqueio de datagrama IP teve que ser
+% alterada para permitir datagramas IP com código de protocolo $33$. Para mais
+% informações de como habilitar e utilizar o protocolo DCCP no núcleo do
+% Linux, consulte o Apêndice~\ref{apd:linuxkerneldccp}.
+
+% \section{Protocolo TCP}
+% \label{sec:protocolotcp}
+%
+% O protocolo TCP (\emph{Transmission Control Protocol}) é um dos protocolos
+% mais
+% importantes da família TCP/IP. A principal característica deste protocolo é
+% que
+% ele fornece um serviço de entrega de pacotes confiável e é orientado à
+% conexão.
+% O protocolo TCP está definido nas RFCs 793~\cite{RFC0793},
+% 1122~\cite{RFC1122},
+% 1323~\cite{RFC1323}, 2018~\cite{RFC2018}, 2581~\cite{RFC2581} e
+% 3390~\cite{RFC3390}.
+%
+% Como já foi dito, o foco deste trabalho está no protocolo DCCP, e portanto,
+% diferentemente da nossa discussão a respeito do DCCP na
+% Seção~\ref{sec:protocoloDCCP}, não serão apresentados detalhes a respeito das
+% funcionalidades do protocolo TCP e seus mecanismos internos, uma vez que
+% existem
+% diversas referências consolidadas disponíveis sobre o tema. Para mais
+% informações a respeito deste protocolo, as referências \cite{kurose2006} e
+% \cite{comer2004} apresentam excelentes leituras como pontos de partida. Ainda
+% assim, existem alguns pontos sobre o protocolo TCP que estão ligados mais
+% diretamente a este trabalho e que é importante mencioná-los. Nas próximas
+% seções
+% estes pontos serão discutidos.
+%
+% \subsection{Transporte Confiável, sem Duplicação, com Ordenação e Verificação
+% de
+% Erro}
+%
+% O TCP implementa algumas técnicas para prover transmissão confiável de dados
+% na
+% rede. Dentre elas estão o mecanismo de detecção de erro, a confirmação de
+% recepção e a retransmissão de pacotes.
+%
+% O protocolo TCP garante a entrega de dados através de retransmissão de pacotes
+% perdidos, sejam detectados através da recepção de pacotes duplicados de
+% confirmação ou por tempo de expiração de confirmação, que é quando o
+% transmissor, após um determinado tempo, não recebe confirmação de recebimento
+% de
+% um pacote transmitido ao sistema remoto. O TCP também evita duplicação e
+% desordenação de pacotes, entregando apenas uma vez à aplicação um determinado
+% pacote, mantendo a ordenação original mesmo que o transmissor envie mais de
+% uma
+% vez o mesmo pacote.
+%
+% Para prover todas essas funcionalidades, o protocolo TCP utiliza o campo
+% \emph{número de seqüência} presente no cabeçalho de qualquer pacote TCP. O
+% valor
+% desse campo é negociado no momento do estabelecimento da conexão e nas
+% primeiras
+% versões do TCP sempre iniciava com valor $0$, porém devido a alguns problemas
+% de
+% segurança, esse número é gerado em tempo de estabelecimento de conexão e
+% apenas
+% os sistemas comunicantes conhecem esse número. Além disso, o TCP realiza
+% verificação de erro no pacote utilizando o campo de cabeçalho \emph{checksum},
+% também presente no cabeçalho de um pacote TCP.
+%
+% Para esse conjunto de características do TCP apresentadas nesta seção, apenas
+% a
+% verificação de erro é feito pelo DCCP.
+%
+% \subsection{Controle de Fluxo do TCP}
+% \label{subsec:controlefluxo}
+%
+% Uma característica do protocolo TCP é o controle de fluxo, também presente no
+% protocolo DCCP. Esta funcionalidade impede que os sistemas comunicantes
+% sobrecarreguem um ao outro com uma quantidade excessiva de informação. O
+% protocolo TCP reserva um \emph{buffer} de recepção para a conexão. Quando o
+% TCP
+% recebe os dados através da rede, o protocolo armazena-os neste \emph{buffer}
+% de
+% recepção. O processo associado a conexão fica responsável por carregar esses
+% dados que estão no \emph{buffer} e disponibilizá-los à aplicação.
+%
+% Desta forma, como tudo que chega pela rede é armazenado nesse \emph{buffer} de
+% recepção, a aplicação pode não ser capaz de entregar os dados recebidos à
+% aplicação no momento em que eles chegam pela rede (ela pode estar ocupada com
+% alguma outra tarefa). Assim, para esse caso, o sistema transmissor pode
+% saturar
+% o \emph{buffer} de recepção da conexão transmitindo uma quantidade excessiva
+% para o sistema remoto antes que ele entregue efetivamente os dados já
+% recebidos
+% à aplicação de destino. Para evitar este problema, o TCP fornece um serviço de
+% controle de fluxo, responsável por evitar que o transmissor sature o
+% \emph{buffer} de recepção do sistema remoto. No processo de estabelecimento da
+% conexão, os dois sistemas informam o tamanho do \emph{buffer} de recepção e
+% desta forma ambos podem transmitir dados até no máximo o valor do tamanho do
+% \emph{buffer} de recepção. Mas, este não é o único critério que determina
+% quanto
+% o TCP pode transmitir na rede em uma conexão. Na próxima Seção é apresentado
+% um
+% conceito chamado de Janela de Congestionamento, que é utilizado pelo
+% transmissor
+% para determinar a quantidade de dados que ele pode transmitir para o sistema
+% receptor.
+%
+% Com relação ao protocolo DCCP, ele também implementa controle de fluxo,
+% considerando os mesmos princípios utilizados pelo TCP e apresentados nesta
+% seção.
+%
+% \subsection{Controle de Congestionamento do TCP}
+% \label{subsec:reacaocongestionamento}
+%
+% Como discutido na Seção~\ref{sec:principiosCC}, o controle de congestionamento
+% é
+% uma condição do aumento no tempo de resposta e/ou perda de pacotes causados
+% por
+% uma sobrecarga de datagramas em um ou mais pontos de comutação.
+%
+% Na prática, o protocolo TCP reage aos congestionamentos de interligação das
+% redes controlando a taxa de transmissão de pacotes para uma determinada
+% conexão
+% em um certo instante.
+%
+% Com base no que foi apresentado na Seção~\ref{subsec:congestionamento}, o
+% colapso de congestionamento ocorre quando há um congestionamento na rede e os
+% protocolos -- ou até mesmo as aplicações, dependendo de sua implementação --
+% reagem ao congestionamento retransmitido os segmentos perdidos.
+%
+% Para evitar este colapso de congestionamento o protocolo TCP reduz a taxa de
+% transmissão quando o congestionamento é detectado, mas continua retransmitido
+% os
+% pacotes perdidos. Para realizar controle de congestionamento através da
+% redução
+% da taxa de transmissão de uma conexão, o TCP utiliza o valor máximo entre o
+% \emph{tamanho da janela do receptor} e o \emph{tamanho da janela de
+% congestionamento} e utiliza as seguintes abordagens:
+%
+% \begin{itemize}
+% 	\item Partida lenta (\emph{slow start});
+% 	\item Aumento Aditivo com Redução Multiplicativa (\emph{AIMD - Additive
+% Increase, Multiplicative Decrease}); e
+% 	\item Reação a eventos de perda baseado no tempo limite de espera de
+% confirmação.
+% \end{itemize}
+%
+% As condições são as seguintes: no estado normal, em uma transmissão
+% não-congestionada, a janela de congestionamento é do mesmo tamanho da janela
+% do
+% receptor. Isso significa que reduzir a janela de congestionamento reduz a
+% quantidade de dados que o TCP pode transmitir na conexão. No início de uma
+% conexão TCP o tamanho da janela de congestionamento é igual a $1$ segmento.
+% Como
+% a transmissão do protocolo TCP é baseada em fluxos de bytes e não em
+% transmissões de pacotes individuais, como o UDP e o DCCP, o tamanho da janela
+% na
+% verdade é igual ao tamanho de um segmento (tipicamente \emph{536} ou
+% \emph{512}
+% bytes).
+%
+% À medida que o sistema transmissor recebe confirmação do receptor que os
+% pacotes
+% transmitidos foram recebidos, o valor da janela de congestionamento é
+% incrementado dependendo do estágio em que se encontra a conexão TCP. Ela pode
+% estar no estágio de \emph{partida lenta} (inicio da conexão), no estágio de
+% \emph{prevenção de congestionamento} ou no estágio de \emph{recuperação
+% rápida}.
+%
+% Quando os pacotes de confirmação são recebidos pelo sistema transmissor, a
+% janela de congestionamento é incrementada de um para dois, e dois segmentos
+% podem ser transmitidos. Quando cada um destes dois segmentos é confirmado, a
+% janela de congestionamento é incrementada para quatro, de quatro para oito e
+% assim por diante. Isto caracteriza um aumento exponencial. Este processo
+% acontece apenas no estágio de partida lenta, quando em geral o tamanho da
+% janela
+% de congestionamento é igual ao tamanho de um segmento~\cite{kurose2006}. Isto
+% significa que a taxa de transmissão inicial do TCP é de $1$ segmento a cada
+% RTT
+% (\emph{Round Trip Time})~\cite{Ying2005}. Como a largura de banda disponível
+% para a conexão pode ser muito maior que $1$ segmento por RTT, seria
+% impraticável
+% esperar por um tempo suficientemente longo até que a taxa de transmissão
+% aumentasse a um valor aceitável. Por isso justifica-se o aumento exponencial
+% na
+% fase de partida lenta.
+%
+% Ainda na fase de partida lenta, o valor da janela de congestionamento continua
+% aumentando até que ocorra um evento de perda. Neste ponto o valor da janela de
+% congestionamento passa a ser igual a metade do valor atual. Um evento de perda
+% é
+% determinado quando o transmissor recebe três confirmações duplicadas. Neste
+% ponto o valor do tamanho da janela de congestionamento passa a aumentar
+% linearmente. Essa fase de aumento linear é conhecida como prevenção de
+% congestionamento.
+%
+% Uma situação onde pode ocorrer duplicação de pacote é a seguinte: se um
+% sistema
+% receber um pacote fora de ordem, ele reenvia o último ACK para o último pacote
+% válido recebido. Por exemplo, se o transmissor enviou $5$ pacotes e o receptor
+% recebeu os $3$ primeiros e o quinto, mas não recebeu o quarto pacote, o
+% receptor
+% enviará um ACK igual a $4$. Para o transmissor isso é um pacote duplicado de
+% confirmação, pois quando o terceiro pacote foi recebido, o receptor já havia
+% confirmado com o ACK igual a $4$. Se o sexto pacote chegar no receptor e o
+% quarto ainda não estiver chegado, o receptor continuará enviado ACK igual a
+% $4$.
+%
+% O controle de congestionamento do TCP reage de maneira diferente quando um
+% evento de perda é detectado por esgotar o tempo limite de espera por
+% confirmação
+% de um segmento transmitido. Nesse caso, após esgotar o tempo limite de espera,
+% o
+% transmissor entra na fase de partida lenta, isto é, ajusta a janela de
+% congestionamento para o tamanho igual ao tamanho de $1$ segmento e então
+% aumenta
+% a janela exponencialmente. O valor da janela de congestionamento continua a
+% aumentar nessa proporção até que este valor alcance a metade do valor que
+% tinha
+% antes de ter esgotado o limite de espera de confirmação de um pacote
+% transmitido
+% e que não foi confirmado. Nesse ponto, o valor da janela de congestionamento
+% volta a aumenta linearmente, da mesma forma como explicado anteriormente.
+%
+% Um dos primeiros algoritmos de controle de congestionamento do TCP (conhecido
+% também por Tahoe), diminui incondicionamente o tamanho da janela de
+% congestionamento para o tamanho de $1$ segmento e entra no estágio de partida
+% lenta após qualquer um dos tipos de evento de perda citados (ou por três
+% duplicações de confirmação de recepção ou por esgotar o tempo de espera por
+% confirmação).
+%
+% A versão seguinte ao TCP Tahoe é o TCP Reno, que cancela o processo de partida
+% lenta após detectar um evento de perda por receber três pacotes de confirmação
+% duplicados. O motivo de não entrar na fase de partida lenta é baseado na
+% constatação de que mesmo se um pacote tenha sido perdido, a chegada de três
+% confirmações iguais indica que alguns segmentos foram recebidos no remetente
+% e,
+% portanto, a rede ainda é capaz de entregar alguns pacotes, mesmo perdendo
+% outros
+% pacotes devido ao congestionamento. Essa nova fase adicionada ao TCP Reno é
+% chamada de recuperação rápida.
+%
+% No entanto, quando ocorre eventos de perda de pacote por esgotamento do tempo
+% de
+% espera por confirmação, o TCP Reno não entra na fase de recuperação rápida, e
+% sim na de fase de partida lenta. Essa decisão está relacionada com a idéia de
+% que a rede não tem capacidade de entregar nenhum pacote e que provavelmente
+% todos estão sendo descartados em algum ponto da rede. Para que o transmissor
+% receba um pacote de confirmação, o pacote transmitido deve primeiro ser
+% recebido
+% pelo receptor. Como os eventos de perda de pacotes ocorrem por esgotamento do
+% tempo de espera por confirmação, isto significa que nenhum pacote transmitido
+% chegou no destino e portanto a rede está descartando todos os pacotes.
+%
+% Outros detalhes de como funciona o esquema de controle de congestionamento do
+% protocolo TCP são apresentados na referência~\cite{jacobson1988}.
+%
+% \subsection{Outros Algoritmos de Controle de Congestionamento do TCP}
+% \label{subsec:outrosalgTCP}
+%
+% Além do TCP Reno, existem outros algoritmos para controle de congestionamento
+% utilizados no protocolo TCP. Nos experimentos realizados nesta dissertação,
+% foram utilizados outros dois algoritmos de controle de congestionamento, o
+% Cubic
+% e o Veno.
+%
+% \subsubsection{TCP Cubic}
+%
+% %http://netsrv.csc.ncsu.edu/twiki/bin/view/Main/BIC#BIC_Overview
+% %http://www4.ncsu.edu/~rhee/
+% %http://www4.ncsu.edu/~rhee/export/bitcp/cubic-paper.pdf
+%
+% O algoritmo de controle de congestionamento TCP Cubic~\cite{cubic2005,Ha2007}
+% é
+% baseado no algoritmo TCP BIC~\cite{bic2007}. O Cubic simplifica o controle da
+% janela de congestionamento do TCP BIC e melhora a relação de equidade entre os
+% fluxos TCP. Há também melhorias relacionadas à estabilidade do algoritmo
+% quando
+% novos fluxos TCP são transmitidos na rede. O algoritmo definido pelo TCP Cubic
+% controla o tamanho da janela de congestionamento através da
+% Equação~\ref{eq:cubicequation}, em termos do tempo decorrido desde do último
+% evento de perda de pacotes. Esta equação foi extraída extraída da
+% referência~\cite{cubic2005}.
+%
+% \begin{equation}
+% W_{cubic} = C(T - \sqrt[3]{\frac{W_{max}\beta}{C}})^{3} + W_{max}
+% \label{eq:cubicequation}
+% \end{equation}
+%
+% Onde,
+%
+% \begin{itemize}
+%  \item $C$ é uma constante escalar;
+%  \item $W_{max}$ é o tamanho da janela de congestionamento antes da sua última
+% redução;
+%  \item $T$ é o tempo decorrido desde a última redução da janela;
+%  \item $\beta$ é o fator de decréscimo multiplicativo depois do evento de
+% perda.
+% \end{itemize}
+%
+% Considerando os conceitos do TCP Reno, o TCP Cubic, em geral, funciona da
+% seguinte forma:
+%
+% \begin{enumerate}
+%    \item o valor da constante escalar $C$ determinar quanto tempo a janela de
+% congestionamento permanece com um valor constante, sem alteraração. Atualmente
+% este valor para a implementação no núcleo do Linux é igual a $0.4$;
+%    \item quando ocorre perdas de pacotes detectadas por três ACKs duplicados,
+% o
+% TCP Cubic realiza o decréscimo multiplicativo de acordo com a
+% função~\ref{eq:cubicequation}, alterando o valor de $\beta$ multiplicando-o
+% por
+% um determinado fator;
+%    \item quando acontece perda de pacote por limite do tempo de confirmação de
+% recepção, o algoritmo reinicia todos as variáveis e todo o processo recomeça
+% (partida lenta e mecanismo de prevenção de congestionamento);
+% \end{enumerate}
+%
+% % COLOCAR FIGURA AKI DO COMPORTAMENTO GERAL DO CUBIC
+% %
+% % \begin{figure}[ht]
+% %     \begin{center}
+% %         \includegraphics[scale=0.5]{imagens/cubic_behavior.pdf}
+% %     \end{center}
+% %     \vspace{-0.8cm}
+% %     \caption{Comportamento básico da função do Cubic}
+% %     \label{fig:comportamentocubic}
+% % \end{figure}
+%
+% O TCP Cubic é o algoritmo de controle de congestionamento padrão do sistema
+% operacional Linux. Na referência~\cite{cubic2005}, discute-se em mais detalhes
+% o
+% funcionamento do controle de congestionamento TCP Cubic.
+% %
+% % 4) Already some people used the cubic equation for their congestion
+% % control algorithm. The paper presented this year at PFLDnet uses the
+% % CUBIC throughput equation for the protocols specialized for multicast.
+% % See the following paper,
+% % http://www.hep.man.ac.uk/PFLDnet2008/paper/kulatunga_chamil%20Final.pdf
+% %
+% % 5) Implementing CUBIC over DCCP makes sense as Linux uses CUBIC as a
+% % default congestion control algorithm. Suppose that most of Internet
+% % traffic is CUBIC traffic, UDP now needs to be friendly with CUBIC
+% % rather than TCP Reno. However, in order to do this, it will be safe
+% % with some evidence (or internet draft). Also, it would be great if you
+% % let us know some of interesting results between CUBIC and DCCP.
+%
+% \subsubsection{TCP Veno}
+% \label{subsubsec:veno}
+% %http://www.ntu.edu.sg/home5/ZHOU0022/papers/CPFu03a.pdf
+% %VER O ARTIGO MODELING WIRELESS LINKS FOR TP
+%
+% O TCP Veno~\cite{veno2003} é um algoritmo para controle de congestionamento
+% baseado no TCP Vegas~\cite{Brakmo1994} e no TCP Reno, apresentado
+% anteriormente.
+% A proposta do TCP Veno é obter melhor vazão quando utilizado em redes sem fio
+% considerando a seguinte motivação: diferentemente das redes cabeadas, onde as
+% perdas de pacotes devido a erros de verificação de bit são insignificantes e
+% raramente acontecem~\cite{Wilde1994,Xiao2005}, nas redes sem fio as perdas de
+% pacotes por este tipo de erro ocorrem com mais freqüência. Para esse tipo de
+% perda o motivo não é o congestionamento da rede. Esses erros são de fato
+% causados por ruídos no canal, problemas no meio físico (causados por
+% obstáculos)
+% ou qualquer outro motivo diferente do congestionamento da rede. Essas perdas
+% de
+% pacotes degradam significativamente o desempenho do algoritmo de controle de
+% congestionamento TCP Reno, por exemplo.
+%
+% A questão nesse ponto é que o TCP Reno não distingue as perdas de pacotes por
+% erros no conteúdo dos pacotes ou devido ao congestionamento da
+% rede~\cite{Balakrishnan1,Balakrishnan2}. A estratégia do TCP Veno é monitorar
+% o
+% nível de congestionamento da rede e usar essa informação para decidir se as
+% perdas de pacotes são devido ao congestionamento ou trata-se de uma perda
+% aleatória causada por qualquer motivo diferente do congestionamento na rede. A
+% relação Veno e Reno é a seguinte:
+%
+% \begin{enumerate}
+%  \item o algoritmo de partida lenta continua sendo o mesmo que o Reno, aumento
+% exponencial até que ocorra uma perda de pacote;
+%  \item o Veno altera o algoritmo de aumento aditivo do TCP Reno: além do
+% tamanho
+% da janela de controle de congestionamento (\emph{wsize}), no Reno existe um
+% limiar para a partida lenta \emph{sshresh}. Quando \emph{wsize} é menor que
+% \emph{sshresh} o algoritmo de partida lenta é utilizado para ajustar o valor
+% de
+% \emph{wsize}. Porém quando \emph{wsize} é maior que \emph{sshresh}, a taxa de
+% aumento da janela diminue para evitar congestionamento. No Reno, o valor de
+% \emph{sshresh} é igual a \ut{85.3}{KB}\footnote{Valor referente a
+% implementação
+% do TCP Reno no Linux}. No Veno esse valor é ajustado dinamicamente, dependendo
+% do mecanismo que determina se as perdas de pacotes estão sendo causadas pelo
+% congestionamento na rede ou por algum outro motivo. Portanto, para os casos em
+% que for determinada perdas de pacotes por erros de verificação de bit, na fase
+% de partida lenta o Veno continua aumentando a taxa de transmissão por um
+% período
+% mais longo que o TCP Reno;
+%   \item o Veno altera o algoritmo de decréscimo multiplicativo do tamanho da
+% janela de congestionamento. No TCP Reno existem duas maneiras de detectar
+% perda
+% de pacotes. A primeira é quando um pacote não é confirmado pelo receptor até
+% esgotar o tempo limite de espera por confirmação. Nesse caso, o algoritmo é
+% reiniciado com o valor de \emph{wsize} e \emph{sshresh} igual a $1$. Ou seja,
+% para perda de pacote causada por esgotamento do tempo limite de espera por
+% confirmação, pode-se considerar um congestionamento severo na rede. O TCP Veno
+% não altera essa parte do algoritmo. A outra maneira de detectar perda de
+% pacotes
+% é através do recebimento de três confirmações repetidas, como discutido
+% anteriormente. No Reno, quando a duplicação ocorrer por três vezes,
+% considera-se
+% que o pacote foi perdido, mesmo não ocorrendo o esgotamento do tempo limite de
+% espera por confirmação. Nesse ponto o algoritmo entra na fase de recuperação
+% rápida. Esse algoritmo funciona da seguinte forma:
+% 	\begin{enumerate}
+% 		\item Retransmite o pacote perdido, o valor de \emph{wsize}
+% passa a ser igual a \emph{sshresh} e o valor de \emph{sshresh} passa a ser
+% igual
+% a metade do valor antigo de \emph{wsize};
+% 		\item Cada vez que um ACK repetido chegar, incrementa o valor de
+% \emph{wsize} em uma unidade;
+% 		\item Quando um ACK chegar confirmando um pacote, o valor de
+% \emph{wsize} passa a ser igual ao valor de \emph{sshresh}.
+% 	\end{enumerate}
+%  O que o TCP Veno faz é modificar o passo ``a'' descrito acima. Ele reduz o
+% valor de \emph{sshresh} e consequentemente diminui o limite para \emph{wsize},
+% porém quando é determinado que a perda de pacote foi causada por erro de
+% verificação de bit, o valor de \emph{sshresh} passa a ser igual a \emph{wsize}
+% *
+% 4/5. Se a perda for causada pelo congestionamento da rede, o TCP Veno funciona
+% como o TCP Reno, o valor de \emph{sshresh} é igual a metade de \emph{wsize}.
+% \end{enumerate}
+%
+% Para determinar se a rede está congestionada, o TCP Veno utiliza a estratégia
+% definida pelo TCP Vegas. O processo consiste em continuamente medir o RTT e
+% guardar um histórico dessas medições. Se o valor de RTT aumentar à medida que
+% novas medições de RTT são feitas, a rede está congestionada, caso contrário,
+% os
+% eventos de perda são considerados eventos aleatórios devido à interferências
+% no
+% meio físico. Na referência~\cite{Brakmo1994}, esse mecanismo é explicado em
+% mais
+% detalhes.
+%
+% \section{Protocolo UDP}
+% \label{subsec:protocoloudp}
+%
+% O UDP é um protocolo de transporte simplificado, em termos de serviços
+% oferecidos, se comparado ao TCP e ao DCCP. É um protocolo não orientado à
+% conexão, portanto não há estabelecimento de conexão antes que os dois
+% processos
+% transmitam dados de um para o outro. Tal como o TCP e o DCCP, o principal
+% objetivo do UDP é fornecer um mecanismo para enviar datagrama a um outro
+% processo executando remotamente. Tal como acontece com o TCP, o protocolo UDP
+% fornece número de portas para estabelecer a distinção entre os diversos
+% programas executados em um sistema final, sendo possível realizar assim a
+% multiplexação e demultiplexação discutidas na Seção~\ref{subsec:multidemulti}.
+% O
+% protocolo UDP está definido no RFC 768~\cite{RFC0768}.
+%
+% O protocolo UDP utiliza o serviço de entrega de datagramas do protocolo IP
+% para
+% transmitir uma mensagem da aplicação para uma aplicação remota na rede. Como
+% já
+% foi mencionado, o protocolo provê um serviço não-confiável de transferência de
+% dados, isto é, quando um processo envia uma mensagem através de um
+% \emph{socket}
+% UDP, o protocolo não oferece nenhuma garantia de que a mensagem chegará ao
+% processo receptor.
+%
+% Portanto, o protocolo UDP não oferece confiabilidade na entrega de dados, não
+% realiza ordenação, não implementa controle de congestionamento e nem evita
+% duplicação de recebimento de informação. A ausência dessas características faz
+% com que muitos desenvolvedores o utilizem em suas aplicações multimídia. Isto
+% ocorre pelo fato que as aplicações de tempo real podem tolerar perda de
+% informação, embora exijam um taxa mínima de dados entregues no destino.
+%
+% Além da aplicabilidade do protocolo UDP na área de aplicações multimídia, o
+% UDP
+% é utilizado pelos servidores de nomes da Internet~\cite{RFC1035}, pois este
+% serviço troca pouca informação e deve funcionar de forma rápida. Neste caso
+% estabelecer uma conexão TCP todas as vezes que um sistema precisar resolver um
+% nome para um endereço IP demandaria tempo. Nessa linha, o UDP também tem sido
+% utilizado por usuários Internet mal intencionados, que o utiliza para realizar
+% ataques de negação de serviço distribuído, também chamado de DDoS
+% (\emph{Distributed Denial of Service}). Um ataque bastante conhecido dessa
+% natureza ocorreu em outubro de 2002~\cite{Baptista2002}, onde $9$ dos $13$
+% servidores DNS (\emph{Domain Name Server}) raíz da Internet entraram em
+% colapso
+% por uma hora, devido ao excessivo número de requisições realizadas a estes
+% servidores, requisições estas feitas de
+% forma intencional e com fins de fazer a Internet literalmente parar de
+% funcionar.
+%
+% Para mais informações acerca do protocolo UDP, consulte as referências
+% \cite{kurose2006} e \cite{comer2004}.
+
+% \subsection{Comparação do DCCP com o TCP e UDP}
+%
+% Na Tabela~\ref{tab:comparacaotcpudpdccp} é apresentada uma comparação das
+% principais características discutidas ao longo deste capítulo com relação aos
+% protocolos TCP, UDP e DCCP. Através desta tabela é possível observar que o
+% protocolo DCCP é diferente do protocolo TCP em apenas $4$ pontos, destacados em
+% negrito na tabela.
+%
+% \begin{table}[ht]
+%         \caption{Tabela comparativa das características do TCP, UDP e DCCP.}
+%         \label{tab:comparacaotcpudpdccp}
+%     \begin{center}
+%         \begin{tabular}{|p{1.0cm}|p{1.5cm}|p{1.5cm}|p{1.5cm}|}
+%             \hline
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}{
+% \textbf{Característica}}} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}{\textbf
+% {UDP}}} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}{\textbf
+% {TCP}}} &
+%
+% \multicolumn{1}{>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}{\textbf
+% {DCCP}}} \\
+% 	    \hline
+% 	    \hline
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{\textbf{Tamanho do
+% Cabeçalho}} & \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{8 bytes} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{20 bytes} &
+% 	    \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{\textbf{12
+% ou 16 bytes}}
+% 	    \\
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{\textbf{Entidade da
+% camada de transporte}} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Datagrama} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Segmento} &
+%
+% \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{\textbf{Datagrama}}
+% 	    \\
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{\textbf{Numeração de
+% porta}} & \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Sim} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Sim} &
+% 	    \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Sim}
+% 	    \\
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{\textbf{Detecção de
+% Erro}} & \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Opcional} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Sim} &
+% 	    \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Sim}
+% 	    \\
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{\textbf{Garantia de
+% entrega de dados}} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Não} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Sim} &
+%
+% \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{\textbf{Não}}
+% 	    \\
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{\textbf{Número de
+% seqüência e ordenação}} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Não} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Sim} &
+%
+% \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Sim/\textbf{Não}}
+% 	    \\
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{\textbf{Controle de
+% fluxo}} & \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Não} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Sim} &
+% 	    \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Sim}
+% 	    \\
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{\textbf{Controle de
+% congestionamento}} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Não} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Sim} &
+% 	    \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Sim}
+% 	    \\
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{\textbf{Suporte a ECN}}
+% & \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Não} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Sim} &
+% 	    \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Sim}
+% 	    \\
+%             \hline
+%         \end{tabular}
+%     \end{center}
+% \end{table}
+%
+% O primeiro deles o tamanho do cabeçalho de cada pacote, onde como foi explicado
+% na Seção~\ref{subsec:cabecalhodccp} o tamanho do cabeçalho varia de acordo com o
+% valor do campo $X$ do cabeçalho, podendo assumir tamanho de \ut{12}{bytes} ou
+% \ut{16}{bytes}.
+%
+% O segundo ponto que muda é mais conceitual, enquanto que o TCP transmite um
+% segmento, o DCCP transmite um datagrama. O terceiro ponto é que o protocolo DCCP
+% não garante entrega dos dados transmitidos, exceto quando existe negociação das
+% características da conexão, como apresentado na Seção~\ref{sec:featureneg}. E o
+% quarto ponto é que embora o DCCP utilize número de seqüência, ele não garante
+% entrega ordenada dos pacotes transmitidos, utilizando este campo para realizar
+% implementar os mecanismos de confirmação de pacotes.
+%
+% Neste capítulo foram discutivos diversos assuntos relacionados à camada de
+% transporte TCP/IP. Foi apresentada uma visão geral desta camada e seus
+% principais serviços. Em seguida foram abordadas as principais características e
+% mecanismos de funcionamento interno do protocolo DCCP. Por último foi
+% apresentada uma visão geral dos protocolos TCP e UDP e uma tabela comparativa
+% entre esses dois protocolos e o DCCP.
+
+\section{Sumário do Capítulo}
+
+Neste capítulo, apresentou-se os principais conceitos de funcionamento dos
+sistemas de transmissão ao vivo P2P. Inicialmente, descreveu-se as estruturas de
+uma rede P2P constituídas por esses sistemas. Em seguida, apresentou-se o
+funcionamento básico de um sistema de transmissão e suas principais estratégias
+para geração e disseminação de \textit{chunks}, bem como a seleção de nós
+parceiros.
+
+Os cenários de transmissão de mídia ao vivo considerados são baseados em uma
+arquitetura em malha e sem organização rígida dos nós do sistema. Os nós podem
+entrar e sair a qualquer instante e realizam parcerias com um subconjunto de
+outros nós. Os parceiros trocam informações entre si para colaborar uns com os
+outros na obtenção de uma  mídia transmitida ao vivo.
+
+Para participar de um sistema P2P de transmissão ao vivo, a aplicação do
+usuário se registra em um servidor chamado de \textit{boostrap}. Esse
+servidor armazena as informações de todos os nós ativos do sistema. O novo nó
+recebe uma lista com outros nós do sistema e essa lista é utilizada para a
+tentativa inicial de estabelecimento de parcerias.
+
+Entre os nós do sistema há um especial: o servidor de mídia ao vivo. Este
+servidor captura o vídeo a ser transmitido, codifica-o em um formato apropriado
+e disponibiliza-o para toda a rede P2P. Esse servidor atua da mesma
+forma que todos os nós do sistema, mas não requisita dados de seus
+parceiros.
+
+Os nós têm um armazenamento local, onde guardam os dados do vídeo
+para uma execução contínua. Eles devem verificar, periodicamente, quais os
+pedaços de dados de que eles necessitam. Há maneiras apropriadas de selecionar e
+de se fazer uma requisição por dados específicos. Neste capítulo, foram
+apresentadas duas abordagens denominadas \aspas{Gulosa} e \aspas{Mais Raro
+Primeiro}. Essas estratégias têm como objetivo, respectivamente, manter o fluxo
+da execução sem interrupções, e disseminar o conteúdo rapidamente pela rede P2P.
+
+Caso mais de um parceiro possa contribuir com o dado necessário, um nó deve
+escolher a qual fará a solicitação. O mecanismo adotado baseia-se na
+disponibilidade de recursos de cada parceiro, que será escolhido de acordo com a
+maior quantidade de recursos disponíveis, como por exemplo, banda de rede,
+processamento, memória etc.
+
+% Em seguida, apresentou-se uma visão geral da camada de transporte da pilha de
+% protocolos TCP/IP. Discutiu-se a importância da organização dos protocolos em
+% camadas, o que permite uma modularização dos serviços de cada camada e a
+% flexibilidade em alterar uma camada e manter o restante da estrutura
+% inalterada. Discutiu-se sobre as causas e efeitos de congestionamento em redes
+% de computadores e por último apresentou-se uma visão geral do protocolo DCCP. O
+% DCCP é um protocolo de rede localizado na camada de transporte que permite
+% transmissão não confiável de datagramas IP com suporte a mecanismos para
+% controle de congestionamento, diferentemente do protocolo UDP.

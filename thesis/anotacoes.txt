@@ -1,0 +1,5 @@
+Anotações após defesa:
+ - Uso do P2PSim: 
+ - Ler o survey: http://www.aicit.org/jcit/ppl/%20JCIT_MAY_30.pdf
+ - Simuladores mais robustos: SimGrid [23], OPSS [26, 27], ChunkSim [29], 3LS [30], OPNET [30] (não sei se vai ser bom!)
+ - 

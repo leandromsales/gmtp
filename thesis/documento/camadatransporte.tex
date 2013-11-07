@@ -1,0 +1,697 @@
+\chapter{Camada de Transporte TCP/IP}
+\label{chp:camadatransporte}
+
+\begin{center}
+    \begin{minipage}{300pt}
+    \small
+    \centering
+%     ``As vezes me pergunto como pode ter acontecido de eu ser o único a desenvolver a Teoria da Relatividade. Acredito que a razão é que um adulto normal nunca pára para pensar sobre problemas de espaço e tempo.'' (Albert Einstein)
+      ``Controle de congestionamento está relacionado a como usar a rede da forma mais efetiva quanto possível. Atualmente as redes estão super equipadas e a pergunta mudou de \emph{como eliminar o congestionamento da rede?} para \emph{como utilizar de forma eficiente toda a capacidade disponível da rede?}'' (Michael Welzl)
+    \end{minipage}
+\end{center}
+
+\vspace{1cm}
+
+Como já discutido no Capítulo~\ref{chp:introducao}, os recentes avanços nas tecnologias de hadware para dispositivos móveis e redes sem fio têm alavancado a criação de novas aplicações multimídia com foco nessas redes. Essas aplicações podem gerar congestionamentos na rede uma vez que a grande maioria delas utilizam o protocolo UDP para transportar dados. A conseqüência disso é perceptível: o mau funcionamento de importantes aplicações executadas sobre essas redes.
+
+Os recursos de redes utilizados para prover os serviços das aplicações multimídia nas redes de computadores, trás à tona diversos pontos conceituais, dentre eles os relacionados aos protocolos de rede de computadores, às técnicas para controle de congestionamento e de fluxo e os conceitos das redes de computadores sem fio, as quais possuem características que agravam ainda mais o desempenho das aplicações multimídia.
+
+Como a maioria desses conceitos fazem parte da camada de transporte do modelo de referência TCP/IP, neste capítulo são apresentados os fundamentos relacionados a estes temas, principalmente no tocante aos protocolos disponíveis na camada de transporte estudados nesta dissertação: o TCP, o UDP e o DCCP. Antes, porém, é definido o que são os protocolos de rede, os quais realizam um papel fundamental para o funcionamento das aplicações que transmitem e recebem dados através das redes de computadores.
+
+\section{Protocolos de Redes de Computadores}
+\label{sec:protocolorede}
+
+De forma geral, um protocolo define o formato e a ordem das mensagens trocadas entre duas ou mais entidades comunicantes, bem como as ações realizadas na transmissão e/ou no recebimento de mensagens ou eventos~\cite{kurose2006}.
+
+Um protocolo pode ser explicado através de uma analogia do mundo real. Uma pessoa ao perguntar as horas para outra poderia abordá-la falando a palavra ``Oi'' e a outra pessoa também poderia responder, ``Oi!''. Para o protocolo humano o segundo ``Oi''
+é uma indicação cordial de que o diálogo pode continuar. Então, neste momento, a pessoa interessada em saber as horas poderia fazer a pergunta ``que horas são?''. Após receber a resposta esta pessoa agradece com um ``Obrigado.'', obtendo do interlocutor uma resposta como ``De nada.''. As semelhanças são claras, a única diferença com relação aos protocolos de redes é que as entidades que trocam mensagens e realizam ações são componentes de \emph{hardware} e \emph{software}, em vez de pessoas. Este exemplo foi extraído da referência~\cite{kurose2006}.
+
+Todas as transmissões de dados na Internet que envolvem duas ou mais entidades remotas, portanto, são governadas por um protocolo. O exemplo citado, pode ser dividido em três partes:
+
+\begin{enumerate}
+ \item o primeiro ``Oi'' pode ser comparado a um pedido de conexão, o segundo à aceitação ou rejeição de conexão, caso a pessoa que falou o primeiro ``Oi'' recebesse como resposta ``Estou ocupado.'';
+ \item após o estabelecimento da conexão, ocorre a troca de dados, uma vez que o interessado em saber as horas perguntou ``Que horas são?'', recebendo uma resposta compatível;
+ \item Após a troca de dados, acontece o encerramento da conexão através de um sinal de agradecimento (``Obrigado'') e uma confirmação de aceitação de encerramento da conexão através da palavra ``De nada.''.
+\end{enumerate}
+
+As requisições e respostas devem ser compatíveis com a especificação do protocolo. Por exemplo, quando uma pessoa perguntar ``Que horas são?'' ela não pode receber como resposta ``Segunda-Feira.''.
+
+Diferentes tipos de protocolos são usados para realizar diferentes tarefas de comunicação. Estes protocolos são simples e diretos (conversa entre duas pessoas pra saber a hora), enquanto outros podem ser mais complexos (por exemplo, as regras e ações de um jogo de futebol).
+
+Portanto um protocolo é dividido em cinco partes:
+\begin{enumerate}
+ \item o serviço que é oferecido;
+ \item as hipóteses sobre o ambiente onde ele é executado, incluindo os serviços utilizados por ele;
+ \item o vocabulário de mensagens utilizado para implementá-lo;
+ \item o formato de cada mensagem no vocabulário; e
+ \item as regras definidas em algoritmos, as quais governam a consistência das mensagens trocadas e a integridade do serviço provido.
+\end{enumerate}
+
+Os protocolos TCP, UDP e DCCP são exemplos de protocolos de rede, responsáveis especificamente por definir regras de como os dados são transportados entre dois computadores inter-conectados em rede. Eles oferecem serviços que especificam como os dados da aplicação serão encapsulados e entregues às aplicações remotas; como realizar controle de congestionamento e de fluxo (se aplicável) e se haverá ou não garantia de entrega dos dados transmitidos na rede e se esses dados serão ordenados ao chegar no destino.
+
+\section{Visão geral do modelo de referência TCP/IP}
+
+As grandes redes de computadores, e a Internet principalmente, são sistemas complexos e que possuem muitos componentes: inúmeras aplicações e protocolos, vários tipos de sistemas e conexões entre eles, comutadores de pacotes (por exemplo, os roteadores), além de vários tipos de meios físicos que conectam esses sistemas. Para diminuir o nível de complexidade resultante da união de diferentes tipos de arquitetura tanto de protocolos quanto de equipamentos de rede, os pesquisadores propuseram uma arquitetura de rede chamada de modelo de referência TCP/IP.
+
+Com o objetivo de fornecer uma estrutura para projetos de protocolos de rede, estes pesquisadores dividiram a arquitetura em camadas funcionais, onde cada protocolo de rede pertence a uma dessas camadas. Essa separação tem uma importância considerável, pois provê modularização dos serviços através de várias camadas, o que torna a estrutura mais flexível para receber modificações funcionais. Por exemplo, é possível modificar a implementação de um serviço de uma camada sem afetar os serviços oferecidos pelas camadas adjacentes. A estratégia é que uma camada forneça seus serviços para a camada acima dela e utilize os serviços da camada que está abaixo dela, mantendo o restante do sistema inalterado. Este conceito é denominado de modelo de serviço de uma camada. Na Figura~\ref{fig:protocolosInternet}, ilustra-se alguns dos protocolos para cada uma das camadas do modelo TCP/IP.
+
+\begin{figure}[h]
+    \begin{center}
+        \includegraphics[scale=0.8]{imagens/camadasderede.pdf}
+    \end{center}
+    \vspace{-0.8cm}
+    \caption{Modelo de Referência TCP/IP e Protocolos de Internet}
+    \label{fig:protocolosInternet}
+\end{figure}
+
+O sistema de camadas de protocolos tem vantagens conceituais e estruturais. A divisão de camadas proporciona um modo estruturado de discutir componentes de sistemas, uma vez que a modularidade facilita a atualização destes componentes. Porém uma desvantagem potencial desse modelo é que uma camada pode duplicar a funcionalidade de uma camada inferior e, ainda, a funcionalidade de uma camada pode necessitar de informações que estão presentes somente em uma outra camada. Por exemplo, isso pode ocorrer se um desenvolvedor utilizar o protocolo UDP e necessite de controle de congestionamento durante as transmissões da sua aplicação: ele terá que implementar este serviço na sua própria aplicação, o que infringe o objetivo de separação das camadas e também aumenta a complexidade da aplicação. Os problemas gerados nesses casos foram discutidos na Seção~\ref{sec:problematica}.
+
+No caso do protocolo DCCP, isto é resolvido implementando controle de congestionamento para transmissão não-confiável de datagrama direto na camada de transporte. Isto evita que o desenvolvedor se preocupe com a complexa tarefa de implementar controle de congestionamento na camada de aplicação.
+
+Retornando para a ilustração da Figura~\ref{fig:protocolosInternet}, o interesse neste trabalho está nos serviços providos pela camada de transporte, mas é importante mencionar os conceitos a respeito das camadas de aplicação e de rede, uma vez que a camada de transporte fornece serviços à camada de aplicação e utiliza os serviços da camada de rede.
+
+\begin{enumerate}
+    \item \textbf{Camada de aplicações:} na camada mais alta, os usuários executam aplicações que acessam serviços de rede em um sistema remoto. Uma aplicação através de um protocolo específico (por exemplo, HTTP e FTP) interage com um dos protocolos do nível de transporte para transmitir e receber mensagens. Cada aplicação escolhe o protocolo de transporte necessário, que tanto pode ser uma seqüência de pacotes individuais (UDP, DCCP) ou um fluxo contínuo de bytes (TCP). Ao escolher o tipo de transporte, a camada de aplicação está utilizando o serviço da camada abaixo, como especifica o modelo de protocolos em camadas discutido no parágrafo anterior.
+    \item \textbf{Camada de rede:} responsável pela movimentação de datagramas de um sistema para outro. No sistema de origem, os protocolos da camada de transporte da Internet (TCP, UDP, DCCP etc.) passam um segmento e um endereço de destino à camada de rede. A camada de rede fragmenta cada segmento e o envia até o sistema remoto através do meio físico da rede, que pode passar por diversos comutadores existentes entre os dois sistemas. Nesta camada está definido o protocolo IP, que, dentre outros propósitos, determina os campos do cabeçalho dos datagramas transmitidos, bem como o modo com que os sistemas finais e os roteadores interpretam esses campos. Além do protocolo IP, um outro componente importante é o protocolo de roteamento, o qual determina as rotas que os datagramas devem seguir entre a origem e o destino.
+\end{enumerate}
+
+\section{A Camada de Transporte}
+\label{sec:camadatransporte}
+
+A camada de transporte está posicionada entre as camadas de aplicação e de rede. Esta camada desempenha um papel fundamental na arquitetura de redes em camadas. Nesta seção serão abordadas as funcionalidades providas por esta camada e uma visão geral sobre entrega confiável, controle de controle de congestionamento e controle de fluxo.
+
+O modelo de referência TCP/IP disponibiliza pelo menos três protocolos de transporte. Um deles é o UDP, que provê à aplicação um serviço não confiável e não orientado à conexão. O segundo e o terceiro são os protocolos TCP e DCCP, onde apenas o primeiro provê à aplicação um serviço confiável, e ambos são orientados à conexão e oferecem controles de congestionamento e de fluxo.
+
+\subsubsection{Serviços da camada de transporte}
+\label{subsec:servicoscamadatransporte}
+
+Um protocolo de camada de transporte oferece comunicação lógica entre as aplicações (processos, no nível de sistema operacional) que estão em execução nos computadores. O conceito de comunicação lógica significa que, do ponto de vista da aplicação, tudo se passa como se os computadores comunicantes e que executam as aplicações estivessem conectados diretamente. Na prática, sabe-se que esses sistemas poderão estar em lados opostos do planeta, conectados por diversos roteadores e uma ampla variedade de tipos de meios físicos.
+
+Devido a essa diversidade, aparece o primeiro conceito importante, o conceito de \emph{socket}~\cite{Stevens2005}. Considere a seguinte analogia: uma aplicação está para uma casa e o \emph{socket} dessa aplicação, está para a combinação do endereço da casa e a porta de entrada dessa casa. Quando um processo deseja enviar uma mensagem a um outro processo ele envia a mensagem para o endereço da casa e informa a porta de entrada. Este processo assume que existe uma infra-estrutura de transporte do outro lado da porta que transportará a mensagem pela rede (ou pelas ruas da cidade) até a porta do processo destinatário. Finalmente, ao chegar no destino, a mensagem passa através da porta do processo receptor através do \emph{socket} de recepção.
+
+Na Figura~\ref{fig:ligacaocamadatransporte}, ilustra-se a idéia em que os processos, representados pela aplicação na visão do usuário, comunicam-se logicamente através da camada de transporte para enviar mensagens entre si, considerando-se livres da preocupação dos detalhes da infra-estrutura física utilizada para transportar as mensagens.
+
+% 3.1
+\begin{figure}[h]
+    \begin{center}
+       \includegraphics[scale=0.7]{imagens/ligacaocamadatransporte.pdf}
+    \end{center}
+    \vspace{-0.8cm}
+    \caption[Comunicação lógica entre as camadas de transporte dos sistemas
+finais]{Comunicação lógica entre as camadas de transporte dos
+sistemas finais. Adaptado de \protect\cite{kurose2006}.}
+    \label{fig:ligacaocamadatransporte}
+\end{figure}
+
+Através da Figura~\ref{fig:ligacaocamadatransporte}, é possível entender que os protocolos da camada de transporte são implementados nos sistemas finais, mas não nos comutadores da rede. No sistema final de origem, a camada de transporte ao receber uma mensagem da camada de aplicação, adiciona algumas informações de controle (cabeçalho da camada de transporte) e então repassa o segmento para a camada de rede local. Este processo marca a conversão lógica (conceitual) das mensagens em segmentos, os quais serão convertidos em datagramas quando chegarem na camada de rede, como ilustrado na Figura~\ref{fig:processodeadicaodecabecalhos}. Esta conversão consiste na adição de cabeçalhos, os quais possuem informações que são necessárias para prover os serviços de cada camada.
+
+% 1.18
+\begin{figure}[h]
+    \begin{center}
+        \includegraphics[scale=0.8]{imagens/processodeadicaodecabecalhos.pdf}
+    \end{center}
+    \vspace{-0.8cm}
+    \caption[Processo de adição de cabeçalhos aos pacotes à medida que estes passam pelas diversas camadas da rede]
+    {Processo de adição de cabeçalhos aos pacotes à medida que estes passam pelas diversas camadas da rede. Adaptado de \protect\cite{kurose2006}}
+    \label{fig:processodeadicaodecabecalhos}
+\end{figure}
+
+Os comutadores de rede acessam somente informações dos campos adicionados pela camada de rede, isto é, os campos de cabeçalho do segmento IP adicionados pela camada de transporte não são examinados pelos comutadores. Apenas quando o pacote chega no sistema receptor, a camada de rede extrai do datagrama o segmento e repassa-o para a camada de transporte. Finalmente a camada de transporte processa o segmento recebido, disponibilizando os dados para o processo da aplicação via a biblioteca de \emph{socket} disponibilizada pelo sistema operacional.
+
+\subsubsection{Multiplexação/Demultiplexação}
+\label{subsec:multidemulti}
+
+No sistema final de destino, a camada de transporte recebe segmentos da camada de rede e tem a responsabilidade de entregar os dados desses segmentos ao processo de aplicação apropriado. Por exemplo, se o usuário estiver executando um programa navegador que acessa páginas \emph{web} e baixando um arquivo via FTP existem dois processos de aplicação sendo executados.
+
+Quando a camada de transporte desse sistema receber esses dados da camada de rede, precisará direcionar os dados recebidos a um desses dois processos. Considerando a analogia citada anteriormente da \textbf{casa e o socket}, então se $5$ pessoas residem naquela casa e o carteiro entrega uma carta endereçada a uma das $5$, o endereço descrito no envelope seria o endereço IP da aplicação em execução e que detém aquele \emph{socket}; o nome da pessoa seria a porta de entrada daquele \emph{socket}, a qual identifica unicamente o processo correspondente a aplicação -- tal como a pessoa destinatária da carta (supondo que na casa não residem duas pessoas com o mesmo nome, o que de fato ocorre para os endereços IP em uma rede de computadores); e a pessoa é a aplicação, que interpretará o conteúdo da carta e realizará uma ação.
+
+Como ilustrado na Figura~\ref{fig:portaprocesso}, a camada de transporte utiliza o conceito de \emph{socket} para se comunicar com a aplicação remota. O \emph{socket} é identificado por um número único (a porta do \emph{socket}) naquele sistema final.
+
+\begin{figure}[h]
+    \begin{center}
+        \includegraphics[scale=0.8]{imagens/portaprocesso.pdf}
+    \end{center}
+    \vspace{-0.8cm}
+    \caption[Comunicação entre a camada de transporte e a camada de aplicação através de um \emph{socket}.]{omunicação entre a camada de transporte e a camada de aplicação através de um \emph{socket}. Adaptado de \protect\cite{kurose2006}}
+    \label{fig:portaprocesso}
+\end{figure}
+
+O protocolo da camada de transporte de destino ao receber um pacote examina o número da porta de destino que está presente no cabeçalho de cada segmento recebido e identifica para qual processo os dados do segmento deverão ser entregues. Para esse processo dá-se o nome de \textbf{demultiplexação}.
+
+A \textbf{multiplexação} ocorre de forma similar a demultiplexação. Este conceito consiste em reunir no sistema de origem os dados proveninentes de diferentes aplicações (portas), adicionar informações de cabeçalho a cada conjunto de dados e repassá-los para a camada de rede, que se responsabiliza de redirecionar cada pacote para o sistema remoto correspondente. Quando o segmento chega no destino, ele passa pelo processo de demultiplexação explicado no parágrafo anterior.
+
+\subsection{Transporte de dados não orientado à conexão}
+
+A principal característica desse serviço da camada de transporte é que não há apresentação mútua entre os sistemas que desejam se comunicar, ou seja, quando uma aplicação envia pacotes a um outro sistema final ela simplesmente o envia, em vez de solicitar um estabelecimento de conexão. O UDP é um exemplo de protocolo que funciona desta forma.
+
+Como não há procedimento de apresentação mútua antes da transmissão de pacotes de dados, os dados podem ser entregues mais rapidamente, o que torna o serviço não orientado à conexão ideal para aplicações multimídia. Uma desvantagem dessa abordagem é que um sistema que transmite não sabe quais pacotes chegaram ao destino e não tem informação alguma, por exemplo, tamanho de \emph{buffer} de recepção etc., sobre o sistema final de destino. Se este for o caso, mais uma vez a camada de aplicação estará infringindo o conceito de protocolos em camadas explicado previamente.
+
+\subsection{Transporte de dados orientado à conexão}
+\label{subsec:transporteorientadoconexao}
+
+Quando uma aplicação utiliza um serviço orientado à conexão, ela e a aplicação remota enviam informações de controle entre si antes de enviar os dados da aplicação. Esse procedimento que antecede o envio de dados da aplicação é chamado de \textbf{estabelecimento de conexão} (\emph{tree-way handshake}). É análogo ao que acontece no diálogo entre duas pessoas para saber informações da hora, citado na Seção~\ref{sec:protocolorede}. Na prática, uma conexão consiste em variáveis de estado alocadas nos sistemas finais que informam quais os processos locais estão se comunicando com determinados processos executados nos sistemas remotos. 
+
+\section{Princípios de Controle de Congestionamento}
+\label{sec:principiosCC}
+
+O tema \emph{Controle de Congestionamento} é um assunto vasto e tem sido bastante discutido entre os pesquisadores ao redor do mundo. Atualmente esse tema faz parte do dia-a-dia das pessoas, principalmente para aqueles usuários assíduos da Internet.
+
+A maioria das pessoas conhece os efeitos de um congestionamento: baixar uma música na Internet pode levar $5$ minutos, e no outro dia, $10$ minutos. Quando leva $10$ minutos considera-se que a rede está congestionada. Tenta-se até deduzir o porquê dessa lentidão: ``\emph{deve haver vários usuários baixando músicas e vídeos ou transmitindo algum conteúdo multimídia na rede}''.
+
+Porém, muitas vezes as justificativas para um congestionamento da rede pode ser complicada de se descobrir. Um congestionamento pode ser causado por um ataque de negação de serviço~\cite{Baptista2002} (consideravelmente complicado de se descobrir) ou porque a largura de banda disponível da rede já não é mais suficiente para a demanda crescente. Independente de qual seja a justificativa para o congestionamento da rede, nesta seção discute-se o que vem a ser um congestionamento de rede e alguns mecanismos para prover controle de congestionamento adotados pelos atuais protocolos de transporte de rede.
+
+\subsection{O que é congestionamento de rede?}
+\label{subsec:congestionamento}
+
+O serviço de controle de congestionamento de um protocolo da camada de transporte evita que a rede entre em calapso quando um comutador de pacotes fica congestionado~\cite{RFC2914}. Na prática isso ocorre quando os intervalos de tempo de transmissão e resposta aumentam e os comutadores começam a enfileirar os datagramas nos \emph{buffers} de recepção até que possam distribuí-los. Cada roteador possui uma capacidade limitada de armazenamento, ou seja, \emph{a priori} não há pré-alocação de recursos para conexões TCP, UDP ou DCCP. No pior caso, o número total de datagramas que chega ao roteador congestionado cresce até que o roteador alcance sua capacidade e comece a descartar pacotes.
+
+Em uma conexão TCP por exemplo, as aplicações em execução nos sistemas finais geralmente não tem conhecimento sobre o ponto que ocorreu o congestionamento ou o porquê dele ter acontecido. Para esses sistemas, o congestionamento significa um aumento no tempo de resposta ou a não confirmação de recepção de um segmento, o que presume-se descarte de pacotes em um dos comutadores presente na rota que um determinado pacote foi transmitido.
+
+O TCP reage ao congestionamento implementando a estratégia de retransmissão. Quando um pacote é perdido ele é retransmitido. Porém as retransmissões podem agravar o congestionamento, pois como mais segmentos são transmitidos, ocorre um aumento no tráfego da rede, o que aumenta o tempo de resposta ou resulta na não confirmação de recepção do segmento transmitido. Isto pode levar a um efeito ``bola de neve'', pois com mais retransmissões, aumenta o tempo de resposta, mais perdas de pacotes, mais retransmissões e assim por diante, até que a rede atinge seu limite e não comporta a quantidade de dados sendo transmitido. Para este fenômeno dá-se o nome de \textbf{colapso de congestionamento}.
+
+\subsection{Duas Abordagens para Controle de Congestionamento}
+\label{subsec:abordagensCC}
+
+Existem basicamente dois métodos para controlar a taxa de transmissão de dados na rede: o controle baseado em janela e o controle baseado em relatórios enviados pelo sistema receptor~\cite{welzl2005}. Cada um desses métodos possuem vantagens e desvantagens e funcionam como descrito a seguir:
+
+\begin{itemize}
+ \item \emph{Baseado em Janela}: o transmissor mantém uma janela imaginária e seu tamanho representa uma certa quantidade de pacotes (ou bytes) que o sistema transmissor pode enviar antes que pacotes de confirmação de recepção enviados pelo sistema receptor cheguem no transmissor. Para cada pacote transmitido, o tamanho da janela diminui até ser igual a $0$. Por exemplo, suponha que o tamanho da janela de um transmissor é $10$, onde a unidade de medida é pacotes e nenhuma confirmação de recepção é recebida pelo transmissor enquanto ele transmite. Neste caso, o transmissor pode transmitir exatamente $10$ pacotes, em seguida ele deve parar de transmitir. Se o transmissor receber pacotes de confirmação, ele aumenta o tamanho de sua janela para um determinado valor.
+
+ \item \emph{Baseado em Relatórios do Receptor}: o valor da taxa de transmissão para um determinado instante é baseado em relatórios transmitidos pelo receptor, que determina qual a taxa máxima que o sistema transmissor deve enviar seus dados (geralmente em bits por segundo). É uma abordagem mais simples e bastante utilizada para transmissão de dados multimídia porque o transmissor não pára de transmitir mesmo que não chegue nenhuma confirmação de recepção.
+\end{itemize}
+
+\subsection{ECN - \emph{Explicit Congestion Notification}}
+\label{subsec:ECN}
+
+Existem diversos mecanismos utilizados para que um sistema final tenha conhecimento do estado da rede em termos de congestionamento. Alguns mecanismos estão implícitos através da própria transmissão, como o aumento no tempo de resposta e a não confirmação de recepção de pacotes, o que pode-se inferir que o sistema receptor não está recebendo os dados transmitidos.
+
+Porém, existe um mecanismo explícito utilizado para notificar que a rede está congestionada, também conhecido por ECN (\emph{Explicit Congestion Notification})~\cite{RFC3168,RFC3540}. O ECN considera o descarte de pacotes pelos roteadores, o que pode acontecer de forma aleatória e depende da capacidade de processamento do roteador. Em vez de fazer descarte de pacotes, o roteador utiliza determinados pacotes para marcá-los com uma sinalização de que a rede está congestionada, ou também conhecido por sinalização CE (\emph{Congestion Experencied}). O objetivo dessa sinalização é notificar o transmissor que a rede está congestionada (ou na iminência de congestionar) e que ele reduza sua taxa de transmissão.
+
+Com o uso de ECN é possível diminuir as perdas de pacotes quando o congestionamento é incipiente, reduzindo as retransmissões e o tráfego na rede. Como o ECN evita perdas desnecessárias de pacotes, as aplicações com pouca troca de dados ou que sejam sensíveis ao atraso podem se beneficiar com isso~\cite{quaresma2004}. O mecanismo de ECN para IP está especificado no RFC 3168~\cite{RFC3168} e tanto o TCP quanto o DCCP suportam esse mecanismo.
+
+O ECN é um dos pontos discutidos em~\cite{RFC4336}, o RFC que apresenta diversas justificativas para criação do protocolo DCCP. Se uma aplicação UDP precisar de controle de congestionamento, este mecanismo deverá ser implementado na camada de aplicação, o que aumentará sua complexidade. Neste caso, existem duas opções:
+
+\begin{enumerate}
+ \item ignorar os pacotes marcados com sinal de ECN; ou
+ \item permitir que a aplicação tenha acesso direto ao campo ECN do cabeçalho IP, sendo possível atribuir ou ler valores deste campo.
+\end{enumerate}
+
+Simplesmente ignorar a sinalização ECN não faz muito sentido quando se implementa controle de congestionamento, além de ser útil às aplicações que não garantem entrega de dados. Permitir acesso das aplicações às informações contidas no cabeçalho IP, exigiria alteração das APIs de \emph{sockets} existentes, e mesmo que isto fosse simples de se conseguir, teria que garantir que a camada de rede repassaria a sinalização ECN para a camada de aplicação, o que requer alterações também na camada de rede.
+
+% \section{Atrasos em redes comutadas por pacotes}
+% \label{sec:atraso}
+% 
+% Como já foi visto em seções anteriores, um pacote quando é transmitido na rede, ele passa por uma série de roteadores e até chegar no sistema de destino. Nesse processo, um pacote sofre uma série de atrasos, são eles:
+% 
+% \begin{enumerate}
+%     \item \textbf{Atraso de processamento nodal:} a soma dos atrasos que acontecem para cada nó da rede, entre o sistema de origem e o de destino. Esse atraso é gerado devido ao tempo necessário para examinar o cabeçalho do pacote e determinar para onde roteá-lo, assim como o tempo necessário para verificação de possíveis erros no pacote;
+%     \item \textbf{Atraso de fila:} é o atraso que o pacote sofre enquanto espera para ser transmitido no meio físico da rede. Esse tempo dependerá da quantidade de outros pacotes que chegarem antes dele nos roteadores e que já estiverem na fila esperando para serem roteados;
+%     \item \textbf{Atraso de transmissão:} também chamado de atraso de armazenamento e reenvio, é o tempo gasto para transmitir um pacote de tamanho L bits a uma velocidade R bits/s do meio físico. Ou seja, é a razão L/R;
+%     \item \textbf{Atraso de propagação:} é o tempo que um bit gasta quando lançado no meio físico para alcançar um outro nó na rede.
+% \end{enumerate}
+% 
+% O atraso fim-a-fim é o somatório desses atrasos em cada nó da rede, desde o sistema de origem ao sistema de destino.
+
+\section{Protocolo DCCP}
+\label{sec:protocoloDCCP}
+
+Após uma revisão sobre os principais conceitos relacionados à camada de transporte TCP/IP e discussões acerca dos princípios de controle de congestionamento, nesta seção é apresentada uma introdução ao protocolo DCCP.
+
+O DCCP é um protocolo da camada de transporte e realiza transporte não-confiável de datagrama IP. Ele oferece diversas características, sendo as principais o estabelecimento de conexão, não garante entrega e nem ordenação dos dados transmitidos e implementa controle de congestionamento para transmissão não-confiável de fluxo de dados. Assim, o DCCP herda do TCP as características de ser orientado a conexão e fornecer controle de congestionamento. Já do UDP, o protocolo DCCP herda as características de não garantir entrega e nem ordenação dos dados transmitidos.
+
+As principais justificativas para especificar um protocolo orientado à conexão é facilitar a implementação do controle de congestionamento e permitir que as aplicações funcionem mesmo quando estejam conectadas via NAT (Network Address Translation)~\cite{RFC1631}. O protocolo UDP não apresenta suporte a essas características e por isso a IETF publicou a RFC 3489~\cite{RFC3489}, conhecida por STUN (\emph{Simple Traversal of UDP over NAT}). O STUN é uma solução paleativa para suprir a ausência dessa característica do UDP, pois permite que uma aplicação descubra qual seu endereço público de rede, o tipo de NAT utilizado e qual porta NAT está associada a porta do endereço local, para os casos em que a aplicação conecta-se a um sistema fora da rede local via NAT. As informações providas pelo STUN são usadas para permitir a comunicação UDP entre o cliente e um servidor externo à rede local, e então, poder transmitir dados entre um sistema com endereço local e acessando a rede externa via NAT e um sistema com endereço válido na Internet. Antes do surgimento do STUN, alguns serviços que faziam uso do UDP para transmitir conteúdo multimídia simplesmente não funcionavam quando executados através de NAT. Esse foi o caso do \emph{MSN Messenger}, que até a versão 6.0 o serviço de transmissão de vídeos não funcionava quando conectado através de uma rede com NAT.
+
+Além de procurar resolver problemas já conhecidos, como o mencionado anteriormente, o protocolo DCCP oferece dois mecanismos peculiares e bastante importantes. O primeiro é denominado \textbf{Escolha Tardia de Dados}~\cite{kohler05dccp}. Ele consiste em permitir que a aplicação altere as informações de um pacote imediatamente antes da sua transmissão na rede. O outro é um arcabouço modularizado que permite desenvolver, adicionar e remover \textbf{algoritmos de controle de congestionamento}, os quais podem ser selecionados por um determinado tipo de aplicação de acordo com o tipo de conteúdo multimídia sendo transmitido. Mais detalhes sobre esses dois mecanismos são apresentados nas Seções~\ref{sec:escolhatardia} e ~\ref{sec:visaocontrolecongestionamentoDCCP}, respectivamente.
+
+O protocolo DCCP é especificado pela IETF e sua especificação é divida basicamente em 4 principais RFCs, além de diversos \emph{Internet Drafts}\footnote{Internet Draft: são documentos de trabalho da IETF antes de se tornarem um padrão da IETF, as chamadas RFCs. Geralmente são válidos por seis meses e podem ser atualizados, substituídos ou descartados por outros documentos em qualquer tempo.} não mencionados neste trabalho. A primeira especificação é a RFC $4336$~\cite{RFC4336}, que apresenta diversos problemas e motivações para a criação de um novo protocolo, em vez de estender o protocolo UDP, por exemplo. A RFC $4340$~\cite{RFC4340} trata da especificação do protocolo DCCP propriamente dita, contendo explicações detalhadas do funcionamento interno do DCCP e como funciona o gerenciamento de algoritmos de controle de congestionamento. Já nas RFCs $4341$~\cite{RFC4341} e $4342$~\cite{RFC4341}, os autores do protocolo DCCP definem dois mecanismos padrões para controle de congestionamento no DCCP. O primeiro baseado em janelas, similar ao TCP e o segundo baseado em relatórios enviados pelo receptor. Na Seção~\ref{sec:visaocontrolecongestionamentoDCCP}, são apresentados mais detalhes sobre esses dois algoritmos, onde também são apresentadas justificativas para modularização dos algoritmos de controle de congestionamento.
+
+Devido a essas características que serão detalhadas nas próximas seções, a proposta da IETF para o DCCP é que ele seja utilizado em larga escala na Internet em transmissões de dados multimídia, em muitos casos substituindo o protocolo UDP.
+
+\subsection{Principais Características do DCCP}
+
+A lista a seguir apresenta um resumo das principais características do protocolo DCCP:
+
+\begin{itemize}
+    \item processo de conexão em três-vias similar ao TCP, onde ocorre o estabelecimento e finalização da conexão;
+    \item fluxo de dados não-confiáveis, com confirmação seletiva de recebimento de pacotes;
+    \item opções de negociação com confirmação (por isso o termo confirmação seletiva no item anterior), incluindo negociação do mecanismo de controle de congestionamento a ser utilizado (decisão da aplicação) em tempo de conexão;
+    \item controle de congestionamento com suporte a ECN (\emph{Explicit Congestion
+    Notification});
+    \item estatísticas da conexão contendo informações sobre quais pacotes de dados chegaram no receptor ou se aqueles pacotes foram marcados com uma sinalização
+    ECN, corrompido, ou deletado por falta de espaço no \emph{buffer} de recepção;
+    \item descoberta de PMTU (\emph{Path Maximum Transmission Unit})~\cite{RFC1191}, o que ajuda a evitar fragmentação na camada IP.
+\end{itemize}
+
+\subsection{Estrutura do protocolo DCCP}
+
+Nesta seção são discutidos detalhes de funcionamento de algumas das características do protocolo DCCP mencionadas na seção anterior.
+
+\subsubsection{Ciclo de vida de uma conexão DCCP}
+
+Uma conexão DCCP é estabelecida entre dois sistemas finais, \emph{DCCP A} e \emph{DCCP B}. O \emph{DCCP A} inicia a conexão (cliente) e o outro recebe o pedido de conexão (servidor). Existe também o \emph{DCCP processor}, que se refere a qualquer sistema que processa e repassa um cabeçalho DCCP. Um \emph{DCCP processor} pode ser os próprios sistemas finais ou qualquer outro sistema presente no caminho da conexão, como \emph{firewalls}, roteadores e tradutores de endereços de rede (\emph{NAT})~\cite{RFC1631}.
+
+O estabelecimento de uma conexão DCCP é ilustrado na Figura~\ref{fig:processoconexaodccp}. O processo inicia quando o cliente envia para o servidor um pacote do tipo \emph{DCCP-Request} e o servidor responde com um pacote \emph{DCCP-Response}. Ao receber o \emph{DCCP-Response}, o cliente envia para o servidor um pacote que confirma o recebimento do \emph{DCCP-Response} e a partir desse momento a conexão é efetivamente estabelecida. Após o estabelecimento da conexão, os dois sistemas trocam dados entre si através dos pacotes \emph{DCCP-Data} ou \emph{DCCP-DataAck} enquanto ocorrer a conexão. A conexão é finalizada quando o servidor envia um pacote do tipo \emph{DCCP-Closereq} ou o cliente envia um pacote \emph{DCCP-Close}. Ao receber do cliente a confirmação de recebimento do \emph{DCCP-Closereq} transmitido, o servidor envia para o cliente um \emph{DCCP-Reset} para informar que a conexão está finalizada. Nesse ponto, o cliente permanece no estado de \emph{TIMEWAIT}, que serve para receber eventuais pacotes da conexão que ainda estão em trânsito na rede.
+
+\begin{figure}[h]
+    \begin{center}
+        \includegraphics[scale=0.8]{imagens/progressoconexaodccp.pdf}
+    \end{center}
+    \vspace{-0.8cm}
+    \caption{Ciclo de vida de uma conexão DCCP.}
+    \label{fig:processoconexaodccp}
+\end{figure}
+
+\subsubsection{Conexão bi-direcional}
+
+A conexão bi-direcional entre o \emph{DCCP A} e o \emph{DCCP B} indica que pode ocorrer transmissão de informações de A para B ou de B para A, simultaneamente, como ilustrado na Figura \ref{fig:conexaodccp}. Na realidade esta conexão consiste em duas conexões unidirecionais chamadas de sub-conexões ou \emph{half-connection}.
+
+\begin{figure}[h]
+    \begin{center}
+        \includegraphics[scale=0.8]{imagens/conexaobidirecionaldccp.pdf}
+    \end{center}
+    \vspace{-0.8cm}
+    \caption{Conexão bi-direcional do protocolo DCCP.}
+    \label{fig:conexaodccp}
+\end{figure}
+
+Embora estas duas sub-conexões sejam logicamente distintas, elas se sobrepõem. Por exemplo, em uma transmissão de A para B um pacote \emph{DCCP-DataAck} contém dados da aplicação gerados por A e informações que confirmam a recepção de dados transmitidos previamente de B para A.
+
+Os itens enumerados na Figura~\ref{fig:conexaodccp} representam os dados de uma conexão DCCP. Estes dados são transmitidos entre os sistemas finais A e B. Em cada conjunto de dados ($1$, $2$, $3$, $4$) existem tipos de pacotes específicos que trafegam na rede. Na Seção~\ref{subsec:tipodepacotesdccp} são discutidos mais detalhes a respeito desses pacotes. Os itens a seguir definem os conceitos relacionados a estes conjuntos de dados:
+
+%\Checkmark
+\begin{description}
+  \item[Sub-fluxo:] consiste de pacotes de dados ou de confirmação transmitidos em uma direção. Cada um dos subconjuntos de pacotes na Figura~\ref{fig:conexaodccp} são subfluxos, os quais podem se sobrepor, uma vez que um pacote de confirmação pode ``pegar carona'' (\emph{piggyback}) em um pacote de dados;
+  \item[Seqüências:] é determinada por todos os pacotes transmitidos em uma direção, podendo ser pacotes de dados ou de confirmação. Nesse caso, os conjuntos ${1,4}$ e ${2,3}$ são seqüências, onde cada pacote em uma seqüência tem um número de seqüência diferente;
+  \item[Sub-conexões:] consiste de pacotes de dados enviados em uma direção mais as confirmações correspondentes. Os conjuntos ${1,2}$ e ${3,4}$ são sub-conexões. Na sub-conexão ${1,2}$, de A para B, são transmitidos pacotes de dados e de B para A, pacotes de confirmação;
+  \item[HC-transmissor e HC-receptor:] no contexto de uma sub-conexão, o HC-transmissor é o sistema que transmite os dados enquanto que o HC-receptor é o sistema que envia informações de confirmação. Por exemplo, na sub-conexão de A para B, o sistema DCCP A é o HC-transmissor e o DCCP B é o HC-receptor.
+\end{description}
+
+Ainda no contexto das sub-conexões, o protocolo DCCP não permite apenas uma delas. Ou seja, o protocolo ao finalizar uma conexão as duas sub-conexões são finalizadas, portanto sendo tratadas como uma única entidade.
+
+\subsubsection{Negociação de características da conexão}
+\label{sec:featureneg}
+
+As características de uma conexão DCCP são atributos da conexão cujos valores são negociados pelos sistemas envolvidos. Com este mecanismo genérico é possível negociar algumas propriedades, tais como o algoritmo de controle de congestionamento que deve ser utilizado em cada uma das sub-conexões. Esta negociação acontece através do uso de opções sinalizadas no cabeçalho de um pacote DCCP.
+
+Uma característica é identificada por um número e um sistema final. Esta característica é denotada por ``F/X'', onde F representa o número da característica localizada no sistema final X. Cada característica é negociada para uma sub-conexão, sendo possível ocorrer valores diferentes para uma determinada característica em cada direção. Portanto é desta forma que o DCCP possibilita ter um algoritmo de controle de congestionamento sendo executado de A para B e um outro de B para A.
+
+\subsubsection{Escolha Tardia de Dados}
+\label{sec:escolhatardia}
+
+As aplicações multimídia que utilizam protocolos que implementam controle de congestionamento podem apresentar problemas de desempenho na entrega dos dados. Um dos problemas é que uma informação ao ser transmitida na rede pode chegar a um sistema remoto depois que esta já não é mais relevante. Isto pode ocorrer devido ao atraso provocado pelos algoritmos de controle de congestionamento implementados na camada de transporte dos sistemas ou por qualquer outro tipo de atraso.
+
+Um mecanismo do protocolo DCCP para tentar solucionar esse problema é chamado de Escolha Tardia de Dados~\cite{kohler05dccp}. Este mecanismo permite que as aplicações mudem os dados a serem transmitidos imediatamente antes da transmissão, mesmo que a aplicação já tenha liberado os dados para a camada de transporte. Uma aplicação libera os dados para a camada de transporte através das funções de transmissão das APIs de \emph{socket}, como \emph{write} e \emph{send}. Em aplicações de redes multimídia esse serviço pode ser utilizado quando uma aplicação libera os dados para serem transmitidos via DCCP, porém, antes que eles sejam efetivamente transmitidos na rede, a aplicação pode detectar que as informações a serem transmitidas serão descartadas pela aplicação de destino e, então, altera o conteúdo do pacote que será supostamente descartado adicionando informações mais recentes.
+
+Uma aplicação direta desse recurso é na adaptação da qualidade do fluxo multimídia transmitido na rede. À medida que forem ocorrendo mudanças no nível de congestionamento da rede, o sistema altera o conteúdo dos pacotes multimídia com uma qualidade menor do que tinha sido criado previamente (quando a rede não estava congestionada). Como visto na Seção~\ref{sec:principiosCC}, quando uma rede está congestionada significa dizer que a quantidade de pacotes em trânsito na rede é maior que a quantidade de pacotes que os roteadores conseguem armazenar em suas filas de roteamento, o que faz eles descartarem pacotes, e quando o protocolo TCP detecta esta perda realiza retransmissões dos pacotes perdidos, o que contribui para o aumento no nível de congestionamento da rede.
+
+Neste sentido, utilizando Escolha Tardia de Dados, diminui-se a quantidade de pacotes na rede que serão apenas descartados no destino. Isto significa que existirão menos pacotes sendo transmitidos na rede, liberando mais espaços nas filas dos comutadores de pacotes. Considerando que toda aplicação DCCP pode fazer uso desse recurso, cada uma delas estará contribuindo para que a rede se recupere do congestionamento, e ainda utiliza melhor os recursos disponíveis da rede. Ou seja, aumentam as chances de transmitir apenas pacotes úteis às aplicações remotas, ao passo que diminuem os que serão descartados no destino.
+
+A escolha tardia de dados pode ser utilizada nas aplicações de voz sobre IP. Por exemplo, dependendo do atraso de um pacote durante a transmissão, o mesmo pode se tornar inútil à aplicação que o receberá. Com base em experimentos relatados pelos autores dos trabalhos referenciados em~\cite{conceicao2006-pt,gu2006}, uma aplicação de voz sobre IP suporta atrasos que variam entre \ut{150}{ms} e \ut{400}{ms}. Acima desse valor ou a qualidade do áudio diminuirá ou a aplicação terá que descartar o pacote recebido. Para este cenário, se um pacote não for transmitido em menos de \ut{400}{ms}, o DCCP pode sinalizar a aplicação que o pacote está atrasado e a aplicação por sua vez, fazendo uso do mecanismo de Escolha Tardia de Dados, interfere na transmissão daquele pacote atrasado e alterado seu conteúdo, adicionando informações do trecho de áudio mais recentes. Se assim não o fizer, este pacote provavelmente será descartado na aplicação de destino.
+
+Já no contexto de videoconferência, onde em geral o áudio é mais importante que o vídeo, pode-se desenvolver um mecanismo reativo ao congestionamento da rede: quando perceber que a rede está congestionada ou na iminência de congestionamento, este mecanismo pode dar preferência a transmissão de pacotes de áudio a pacotes de vídeo, como apresentado em~\cite{sisalem99towards}.
+
+\subsubsection{Cabeçalho DCCP}
+\label{subsec:cabecalhodccp}
+
+Na Figura~\ref{fig:cabecalhodccp48} é ilustrado o cabeçalho genérico do protocolo DCCP. O nome genérico é justificado porque o cabeçalho assume um formato diferente dependendo do valor de X, conhecido como bit de número de seqüência extendido (\textit{Extended Sequence Numbers bit}). Se o valor de X for $1$, o campo Número de Seqüência tem o tamanho de $48$ bits e o cabeçalho genérico fica com o tamanho de $16$ bytes.
+
+\begin{figure}[h]
+    \begin{center}
+        \includegraphics[scale=0.8]{imagens/cabecalhodccp48.pdf}
+    \end{center}
+    \vspace{-0.8cm}
+    \caption{Cabeçalho do protocolo DCCP (extendido).}
+    \label{fig:cabecalhodccp48}
+\end{figure}
+
+Se o valor de X for $0$, apenas os $24$ bits do Número de Seqüência são transmitidos e o cabeçalho do DCCP fica com o tamanho de $12$ bytes, como ilustrado na Figura~\ref{fig:cabecalhodccp24}.
+
+\begin{figure}[h]
+    \begin{center}
+        \includegraphics[scale=0.8]{imagens/cabecalhodccp24.pdf}
+    \end{center}
+    \vspace{-0.8cm}
+    \caption{Cabeçalho do protocolo DCCP (simplificado).}
+    \label{fig:cabecalhodccp24}
+\end{figure}
+
+Os campos do cabeçalho são definidos como segue:
+
+%\Checkmark 
+\begin{description}
+  \item[Porta de origem e destino:] cada porta possui um tamanho de $16$ bits. Estes campos identificam a conexão, como acontece com os protocolos TCP e UDP;
+  \item[\emph{Data offset}:] ou simplesmente \emph{offset}, determina o tamanho do cabeçalho DCCP, contando do início do cabeçalho até o início de onde estão os dados da aplicação. Este campo tem o tamanho de $8$ bits;
+  \item[CCVal:] é utilizado pelo controle de congestionamento do sistema transmissor. O tamanho desse campo é de $4$ bits. Em uma \emph{half-connection} de A para B o CCID de A pode enviar $4$ bits de informação para B e estes $4$ bits são armazenados em CCVal;
+  \item[\emph{Checksum Coverage} (CsCov):] tamanho de $4$ bits. Este campo determina quais partes são protegidos pelo campo de \emph{Checksum};
+  \item[\emph{Checksum}:] tamanho de $16$ bits. Este campo é utilizado para
+  checagem de erro. Dependendo do valor do campo \emph{Checksum Coverage}, todo, parte ou nenhum dado da aplicação presente no pacote será verificado;
+  \item[Reservado:] tamanho de $3$ bits. Campo reservado para utilizações futuras;
+  \item[Tipo do pacote:] tamanho de $4$ bits. Este campo determina o tipo de
+  pacote que está sendo transmitido/recebido. Os possíveis valores desse campo são apresentados na Seção~\ref{subsec:tipodepacotesdccp};
+  \item[Número de seqüência extendido (X):] se valor de X for $1$, o pacote terá o tamanho do campo de número de seqüência com $48$ bits, se $0$, com $24$ bits;
+  \item[Número de seqüência (bits altos, bits baixos):] pode ter o tamanho de $48$ ou $24$ bits. Identifica unicamente um pacote transmitido na rede por um sistema final. Este número aumenta em $1$ a cada pacote transmitido.
+\end{description}
+
+Todos os tipos de pacotes, com excessão do \emph{DCCP-Packet} e \emph{DCCP-Data} transportam um sub-cabeçalho para o campo do número de confirmação. Este sub-cabeçalho aparece logo após o cabeçalho genérico, e varia de acordo com o valor de X. Para mais informações a respeito desses campos e dos sub-cabeçalhos, consulte a referência~\cite{RFC4340}.
+
+\subsubsection{Tipo de pacotes}
+\label{subsec:tipodepacotesdccp}
+
+O cabeçalho do protocolo DCCP apresenta um campo denominado \emph{tipo do pacote}. Este campo determina que informação está contida em um determinado pacote DCCP. Na Tabela~\ref{tab:tipospacotesdccp} são apresentados os possíveis valores desse campo, nome do pacote e descrição.
+
+\begin{table}[h]
+        \caption{Tipos de Pacotes do protocolo DCCP.}
+        \label{tab:tipospacotesdccp}
+    \begin{center}
+        \begin{tabular}{|p{1.0cm}|p{1.5cm}|p{1.5cm}|}
+            \hline
+            \multicolumn{1}{|>{\columncolor[rgb]{0.05,0.2,0.43}}c}{\textcolor{white}{\textbf{\#}}} & \multicolumn{1}{|>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}{\textbf{Tipo}}} & \multicolumn{1}{>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}{\textbf{Descrição}}}
+	    \\
+	    \hline
+	    \hline
+            \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{0}} & \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Request} & \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Pedido de estabelecimento de conexão}
+	    \\
+            \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{1}} & \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Response} & \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Resposta ao pedido de estabelecimento de conexão} 
+	    \\
+            \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{2}} & \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Data} & \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Contém dados da aplicação}
+	    \\
+            \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{3}} & \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{ACK} & \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Confirmação de recebimento de pacote}
+	    \\
+            \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{4}} & \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{DataACK} & \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Dados da aplicação e confirmação de recepção}
+	    \\
+            \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{5}} & \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{CloseReq} & \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Servidor solicita término de conexão sem TIMEWAIT.}
+	    \\
+            \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{6}} & \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Close} & \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Servidor/Cliente solicita término da conexão.}
+	    \\
+            \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{7}} & \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Reset\footnote{o tipo de pacote \textbf{DCCP-Reset} é utilizado com este propósito, porém utiliza-se também para outros motivos: para sinalizar número de porta incorreto; comportamento inapropriado de opções etc.}} & \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Determina, incondicionalmente o final da conexão}
+	    \\
+            \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{8}} & \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Sync} & \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Sincronia após perda de pacote ou de uma das sub-conexões}
+	    \\
+            \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{9}} & \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{SyncACK} & \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Sincronia mais confirmação de recepção}
+	    \\
+            \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{\textbf{10-15}} & \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Reservado} & \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Uso futuro e ignorado pelo receptor}
+	    \\
+            \hline
+        \end{tabular}
+    \end{center}
+	\scriptsize
+	$^2$ O tipo de pacote \textbf{DCCP-Reset} é utilizado com este propósito, porém utiliza-se também para outros motivos: para sinalizar número de porta incorreto; comportamento inapropriado de opções etc.
+\end{table}
+
+\normalsize
+
+\subsection{Algoritmos de Controle de Congestionamento (CCIDs)}
+\label{sec:visaocontrolecongestionamentoDCCP}
+
+Os CCIDs (\emph{Congestion Control IDentifier}) são módulos independentes do restante do protocolo e responsáveis por realizar o controle de congestionamento durante o ciclo de vida de uma conexão DCCP. Eles descrevem como um sistema que utiliza DCCP limita a taxa de transmissão de pacotes na rede e os valores iniciais de parâmetros da conexão, por exemplo, o tamanho inicial da janela de transmissão (controle de congestionamento baseado em janela) ou como e com qual freqüência o receptor envia informações de congestionamento para o transmissor (controle de congestionamento limitado pelo receptor).
+
+Um determinado CCID pode ser utilizado em qualquer momento da conexão, sendo permitido uma aplicação selecionar um outro algoritmo de controle de congestionamento a qualquer momento da conexão através do mecanismo de negociação de características discutido na Seção~\ref{sec:featureneg}. Além de ser negociado no estabelecimento da conexão DCCP, os CCIDs podem ser negociados durante o ciclo de vida da conexão, sendo possível a execução de um CCID em uma direção e um outro CCID na direção contrária. Esta flexibilidade na utilização dos algoritmos de controle de congestionamento em uma conexão DCCP é importante, uma vez a característica de tráfego em uma direção de uma conexão pode ser totalmente diferente se comparada ao tráfego na direção contrária.
+
+A principal justificativa para prover um arcabouço modular para gerenciar os CCIDs é que um determinado algoritmo pode ser mais apropriado para um tipo de aplicação, sendo possível adicionar novos CCIDs ou removê-los de forma independente do núcleo do protocolo. Por exemplo, as aplicações de jogos na Internet podem fazer uso de qualquer largura de banda disponível na rede, pois muitas delas utilizam técnicas de diferença de quadros, onde são enviadas apenas as diferenças entre uma cena do jogo e a outra. Por outro lado, as aplicações de voz sobre IP transmitem rajadas de pequenos pacotes em um curto espaço de tempo (quando um dos interlocutores fala), sendo as rajadas separadas por períodos de silêncio (quando a pessoa para de falar para dar a vez a outra).
+
+Esta flexibilidade no uso dos algoritmos de controle de congestionamento permite deixar a cargo dos desenvolvedores qual mecanismo de congestionamento é mais adequado à sua aplicação. Desta forma, para um sistema final que envia e recebe dados multimídia é possível ter um algoritmo de controle de congestionamento sendo executado em uma direção (transmissão, por exemplo) e outro algoritmo na direção contrária. Além disso, permite que novos algoritmos de controle de congestionamento sejam desenvolvidos independente da implementação do núcleo do protocolo.
+
+Oficialmente a IETF provê dois CCIDs para o protocolo DCCP: O \textit{TCP-Like Congestion Control} (ou CCID-2)~\cite{RFC4341} e o \textit{TCP Friendly Rate Control} (ou CCID-3)~\cite{RFC4342}. Além desses dois algoritmos padrões da IETF, existe o \textit{TCP Friendly Rate Control For Small Packets} (ou CCID-4), que encontra-se em estado experimental. Com relação ao restante dos identificadores, entre $0$-$1$ e entre $5$-$255$, eles são reservados para usos posteriores.
+
+\subsubsection{\emph{TCP-like Congestion Control} - CCID-2}
+\label{subsub:dccp-TCPLike}
+
+O CCID-2~\cite{RFC4341} é apropriado para as aplicações que utilizam o máximo da largura de banda disponível da rede, mas que se adaptam a mudanças repentinas na largura de banda disponível para transmissão na rede.
+
+O CCID-2 é baseado em controle de congestionamento por janela, similar ao controle de congestionamento do TCP. Quando um pacote é recebido pelo DCCP, ele envia um ACK para o transmissor. O transmissor ao receber o ACK ajusta o tamanho da janela de transmissão e o tempo de expiração para os pacotes ainda não confirmados. Essa estratégia é baseada no conceito de Aumento Aditivo com Redução Multiplicativa (\emph{AIMD - Additive Increase, Multiplicative Decrease})~\cite{welzl2005} para controle de congestionamento baseado em janela. Similar ao TCP, o CCID-2 utiliza uma janela de transmissão com tamanho \textit{wsize} números de pacotes, sendo cada pacote de tamanho \textit{psize} bytes. O sistema transmissor ajusta o tamanho da janela à medida que recebe pacotes de confirmação. Desta forma, o valor de \textit{wsize} aumenta em uma unidade nos seguintes casos: (1) a cada confirmação de pacote recebida e (2) quando toda uma janela de pacotes for confirmada na fase de prevenção de congestionamento (\emph{Congestion Avoidance}). Por outro lado, o valor de \textit{wsize} diminui pela metade quando o transmissor detecta perda de pacotes, de maneira equivalente ao TCP. Caso o transmissor não receba um pacote de confirmação de recepção antes do tempo de expiração, o valor de \textit{wsize} é atribuído para $1$. O funcionamento é bastante similar ao TCP Reno, discutido em mais detalhes na Seção~\ref{subsec:reacaocongestionamento}.
+
+Este algoritmo apresenta basicamente duas diferenças com relação ao algoritmo de controle de congestionamento do protocolo TCP:
+
+\begin{itemize}
+  \item a unidade de medida para o tamanho da janela de congestionamento do protocolo TCP é em \emph{bytes} (\emph{byte-stream}). Como o protocolo DCCP transmite mensagens datagrama em vez de fluxos de bytes, a unidade considerada para o tamanho da janela de congestionamento é a quantidade de pacotes transmitidos ou recebidos na rede. Assim, a escolha do tamanho de pacote a ser transmitido pode influenciar na qualidade do fluxo transmitido e no desempenho da aplicação. Por exemplo, uma má escolha pode resultar em fragmentação de pacotes na camada de rede;
+  \item o controle de congestionamento padrão do TCP precisa distinguir entre um pacote novo e pacotes retransmitidos. O protocolo DCCP não necessita realizar tal distinção, pois não retransmite pacotes perdidos.
+%   \item controle de congestionamento sobre pacotes de confirmação (\emph{ack}). O TCP controla apenas pacotes de dados\marginpar{<<REVER}.
+\end{itemize}
+
+\subsubsection{TCP-Friendly Rate Control (TFRC) - CCID-3}
+\label{subsub:dccp-TFRC}
+
+O CCID-3~\cite{RFC4342} especifica um algoritmo de controle de congestionamento baseado no sistema receptor. A estratégia é que o receptor limite a taxa de envio de pacotes do transmissor através de relatórios contendo informações do estado da conexão, como a taxa de recepção, intervalos de perda e o tempo em que um pacote permanece na fila de recepção (\emph{buffers de recepção}) até que seja confirmado como recebido ao transmissor. Em posse dessas informações fornecidas pelo receptor, o transmissor determina a sua taxa de transmissão para um determinado instante através da equação de vazão \ref{eq:tfrcequation}. A equação é denominada \emph{TFRC Throughput Equation}.
+
+%além de analisar os intervalos de perda de pacotes
+
+\begin{equation}
+X = \frac{s}{R\sqrt{\frac{2p}{3}} + 4R (3\sqrt{\frac{3p}{8}} p  (1+32p^2))}
+\label{eq:tfrcequation}
+\end{equation}
+onde,
+
+\begin{itemize}
+ \item $X$ é a taxa de transmissão em bytes por segundo;
+ \item $s$ é o tamanho do pacote em bytes;
+ \item $R$ é o RTT (\emph{Round Trip Time}), especificado em segundos;
+ \item $p\in[0,1]$ é a taxa do evento de perda, que representa a fração de pacotes perdidos;
+\end{itemize}
+
+O CCID-3 é apropriado para aplicações que se adaptam melhor a mudanças mais suaves na largura de banda disponivel para transmissão.
+
+\subsubsection{\emph{TCP-Friendly Rate Control For Small Packets} - CCID-4}
+\label{subsubsec:ccid4}
+
+Além dos dois CCIDs já padronizados, a IETF está trabalhando na especificação do CCID-4~\cite{draft-ccid4}, um novo algoritmo de controle de congestionamento baseado no CCID-3. O CCID-4 está sendo desenvolvido baseando-se em requisitos das aplicações multimídia que transmitem rajadas de pacotes pequenos (entre $512$ bytes e $1024$ bytes) em um curto espaço de tempo, como as de voz sobre IP. O CCID-4 permitirá que as aplicações adaptem o fluxo multimídia de acordo com nível de congestionamento da rede (baseado na taxa atual de transmissão)~\cite{marie2005}. A idéia é que a qualidade do fluxo sendo transmitido seja adaptado variando o tamanho do pacote através do uso de codificadores que implementam o recurso de VBR (\emph{Variable Bit Rate}). Caso a rede esteja congestionada, diminui-se o tamanho dos pacotes sendo transmitidos, o que diminui a qualidade do conteúdo multimídia sendo transmitido. Porém, se a rede não apresentar congestionamento a qualidade do fluxo multimídia pode ser melhorada, o que altera o tamanho do pacote.
+
+\section{DCCP e o Protocolo IP}
+
+No cabeçalho IP existe um campo chamado \emph{Protocolo}. Este campo tem um papel análogo ao do campo \emph{número de porta} no segmento da camada de transporte. Ou seja, o valor deste campo identifica o protocolo de camada de transporte que será responsável por receber e manipular o datagrama recebido, ao passo que o valor do campo \emph{número de porta} identifica a aplicação que a camada de transporte deve repassar o respectivo segmento.
+
+O IANA (\emph{Internet Assigned Numbers Authority}) é o órgão que define o valor deste campo, que para o protocolo DCCP o valor correspondente é $33$~\cite{protonum2008}. Este valor\footnote{Outros valores para o campo \emph{Protocolo} do cabeçalho IP: TCP igual a 6, UDP igual a 17, entre outros.} deve ser informado na criação de uma conexão DCCP em qualquer API de \emph{socket} disponível atualmente, bastante similar ao estabelecimento de uma conexão TCP. O Código~\ref{lst:sockdccp} ilustra um exemplo utilizando a linguagem C para estabelecer uma conexão DCCP em um servidor remoto utilizando a API de \emph{socket} BSD e considerando as versões mais recentes da \emph{glibc}~\footnote{\small{\url{http://www.gnu.org/software/libc}}}.
+
+\begin{lstlisting}[language=c, caption=Conexão DCCP Através da API de Socket Berkeley, label=lst:sockdccp]
+#include <arpa/inet.h>
+#include <errno.h>
+#define IPPROTO_DCCP 33
+
+(...)
+int result = 0;
+if ((sock_fd = socket (AF_INET, SOCK_DCCP, IPPROTO_DCCP)) > 0) {
+    int result = connect(sock_fd, (struct sockaddr *)&serverSockIn,
+			sizeof(serverSockIn));
+    return result;
+} else {
+	printf("Conexão Recusada.");
+}
+(...)
+\end{lstlisting}
+
+Um ponto importante nesse contexto é com relação ao funcionamento do protocolo DCCP na Internet. No caso dos experimentos realizados com DCCP, a configuração de bloqueio de datagrama IP teve que ser alterada. A rede utilizada foi a rede da Universidade Federal de Campina Grande, Brasil e a Rede da Universidade Aberdeen, Escócia. Em ambas as redes existiam bloqueios de pacotes IP desconhecidos (diferente de $protocolo=6$ (TCP) e $protocolo=17$ (UDP)). Neste caso, foi solicitado ao administrador da rede para que fosse desbloqueado datagrama IP com campo do cabeçalho IP contendo $protocolo=33$.
+
+Para mais informações de como habilitar e utilizar o protocolo DCCP no núcleo do Linux, consulte o Apêndice~\ref{apd:linuxkerneldccp}.
+
+\section{Protocolo TCP}
+\label{sec:protocolotcp}
+
+O protocolo TCP (\emph{Transmission Control Protocol}) é um dos protocolos mais importantes da família TCP/IP. A principal característica deste protocolo é que ele fornece um serviço de entrega de pacotes confiável e é orientado à conexão. O protocolo TCP está definido nas RFCs 793~\cite{RFC0793}, 1122~\cite{RFC1122}, 1323~\cite{RFC1323}, 2018~\cite{RFC2018}, 2581~\cite{RFC2581} e 3390~\cite{RFC3390}.
+
+Como já foi dito, o foco deste trabalho está no protocolo DCCP, e portanto, diferentemente da nossa discussão a respeito do DCCP na Seção~\ref{sec:protocoloDCCP}, não serão apresentados detalhes a respeito das funcionalidades do protocolo TCP e seus mecanismos internos, uma vez que existem diversas referências consolidadas disponíveis sobre o tema. Para mais informações a respeito deste protocolo, as referências \cite{kurose2006} e \cite{comer2004} apresentam excelentes leituras como pontos de partida. Ainda assim, existem alguns pontos sobre o protocolo TCP que estão ligados mais diretamente a este trabalho e que é importante mencioná-los. Nas próximas seções estes pontos serão discutidos.
+
+\subsection{Transporte Confiável, sem Duplicação, com Ordenação e Verificação de Erro}
+
+O TCP implementa algumas técnicas para prover transmissão confiável de dados na rede. Dentre elas estão o mecanismo de detecção de erro, a confirmação de recepção e a retransmissão de pacotes.
+
+O protocolo TCP garante a entrega de dados através de retransmissão de pacotes perdidos, sejam detectados através da recepção de pacotes duplicados de confirmação ou por tempo de expiração de confirmação, que é quando o transmissor, após um determinado tempo, não recebe confirmação de recebimento de um pacote transmitido ao sistema remoto. O TCP também evita duplicação e desordenação de pacotes, entregando apenas uma vez à aplicação um determinado pacote, mantendo a ordenação original mesmo que o transmissor envie mais de uma vez o mesmo pacote.
+
+Para prover todas essas funcionalidades, o protocolo TCP utiliza o campo \emph{número de seqüência} presente no cabeçalho de qualquer pacote TCP. O valor desse campo é negociado no momento do estabelecimento da conexão e nas primeiras versões do TCP sempre iniciava com valor $0$, porém devido a alguns problemas de segurança, esse número é gerado em tempo de estabelecimento de conexão e apenas os sistemas comunicantes conhecem esse número. Além disso, o TCP realiza verificação de erro no pacote utilizando o campo de cabeçalho \emph{checksum}, também presente no cabeçalho de um pacote TCP.
+
+Para esse conjunto de características do TCP apresentadas nesta seção, apenas a verificação de erro é feito pelo DCCP.
+
+\subsection{Controle de Fluxo do TCP}
+\label{subsec:controlefluxo}
+
+Uma característica do protocolo TCP é o controle de fluxo, também presente no protocolo DCCP. Esta funcionalidade impede que os sistemas comunicantes sobrecarreguem um ao outro com uma quantidade excessiva de informação. O protocolo TCP reserva um \emph{buffer} de recepção para a conexão. Quando o TCP recebe os dados através da rede, o protocolo armazena-os neste \emph{buffer} de recepção. O processo associado a conexão fica responsável por carregar esses dados que estão no \emph{buffer} e disponibilizá-los à aplicação.
+
+Desta forma, como tudo que chega pela rede é armazenado nesse \emph{buffer} de recepção, a aplicação pode não ser capaz de entregar os dados recebidos à aplicação no momento em que eles chegam pela rede (ela pode estar ocupada com alguma outra tarefa). Assim, para esse caso, o sistema transmissor pode saturar o \emph{buffer} de recepção da conexão transmitindo uma quantidade excessiva para o sistema remoto antes que ele entregue efetivamente os dados já recebidos à aplicação de destino. Para evitar este problema, o TCP fornece um serviço de controle de fluxo, responsável por evitar que o transmissor sature o \emph{buffer} de recepção do sistema remoto. No processo de estabelecimento da conexão, os dois sistemas informam o tamanho do \emph{buffer} de recepção e desta forma ambos podem transmitir dados até no máximo o valor do tamanho do \emph{buffer} de recepção. Mas, este não é o único critério que determina quanto o TCP pode transmitir na rede em uma conexão. Na próxima Seção é apresentado um conceito chamado de Janela de Congestionamento, que é utilizado pelo transmissor para determinar a quantidade de dados que ele pode transmitir para o sistema receptor.
+
+Com relação ao protocolo DCCP, ele também implementa controle de fluxo, considerando os mesmos princípios utilizados pelo TCP e apresentados nesta seção.
+
+\subsection{Controle de Congestionamento do TCP}
+\label{subsec:reacaocongestionamento}
+
+Como discutido na Seção~\ref{sec:principiosCC}, o controle de congestionamento é uma condição do aumento no tempo de resposta e/ou perda de pacotes causados por uma sobrecarga de datagramas em um ou mais pontos de comutação.
+
+Na prática, o protocolo TCP reage aos congestionamentos de interligação das redes controlando a taxa de transmissão de pacotes para uma determinada conexão em um certo instante.
+
+Com base no que foi apresentado na Seção~\ref{subsec:congestionamento}, o colapso de congestionamento ocorre quando há um congestionamento na rede e os protocolos -- ou até mesmo as aplicações, dependendo de sua implementação -- reagem ao congestionamento retransmitido os segmentos perdidos.
+
+Para evitar este colapso de congestionamento o protocolo TCP reduz a taxa de transmissão quando o congestionamento é detectado, mas continua retransmitido os pacotes perdidos. Para realizar controle de congestionamento através da redução da taxa de transmissão de uma conexão, o TCP utiliza o valor máximo entre o \emph{tamanho da janela do receptor} e o \emph{tamanho da janela de congestionamento} e utiliza as seguintes abordagens:
+
+\begin{itemize}
+	\item Partida lenta (\emph{slow start});
+	\item Aumento Aditivo com Redução Multiplicativa (\emph{AIMD - Additive Increase, Multiplicative Decrease}); e
+	\item Reação a eventos de perda baseado no tempo limite de espera de confirmação.
+\end{itemize}
+
+As condições são as seguintes: no estado normal, em uma transmissão não-congestionada, a janela de congestionamento é do mesmo tamanho da janela do receptor. Isso significa que reduzir a janela de congestionamento reduz a quantidade de dados que o TCP pode transmitir na conexão. No início de uma conexão TCP o tamanho da janela de congestionamento é igual a $1$ segmento. Como a transmissão do protocolo TCP é baseada em fluxos de bytes e não em transmissões de pacotes individuais, como o UDP e o DCCP, o tamanho da janela na verdade é igual ao tamanho de um segmento (tipicamente \emph{536} ou \emph{512} bytes).
+
+À medida que o sistema transmissor recebe confirmação do receptor que os pacotes transmitidos foram recebidos, o valor da janela de congestionamento é incrementado dependendo do estágio em que se encontra a conexão TCP. Ela pode estar no estágio de \emph{partida lenta} (inicio da conexão), no estágio de \emph{prevenção de congestionamento} ou no estágio de \emph{recuperação rápida}.
+
+Quando os pacotes de confirmação são recebidos pelo sistema transmissor, a janela de congestionamento é incrementada de um para dois, e dois segmentos podem ser transmitidos. Quando cada um destes dois segmentos é confirmado, a janela de congestionamento é incrementada para quatro, de quatro para oito e assim por diante. Isto caracteriza um aumento exponencial. Este processo acontece apenas no estágio de partida lenta, quando em geral o tamanho da janela de congestionamento é igual ao tamanho de um segmento~\cite{kurose2006}. Isto significa que a taxa de transmissão inicial do TCP é de $1$ segmento a cada RTT (\emph{Round Trip Time})~\cite{Ying2005}. Como a largura de banda disponível para a conexão pode ser muito maior que $1$ segmento por RTT, seria impraticável esperar por um tempo suficientemente longo até que a taxa de transmissão aumentasse a um valor aceitável. Por isso justifica-se o aumento exponencial na fase de partida lenta.
+
+Ainda na fase de partida lenta, o valor da janela de congestionamento continua aumentando até que ocorra um evento de perda. Neste ponto o valor da janela de congestionamento passa a ser igual a metade do valor atual. Um evento de perda é determinado quando o transmissor recebe três confirmações duplicadas. Neste ponto o valor do tamanho da janela de congestionamento passa a aumentar linearmente. Essa fase de aumento linear é conhecida como prevenção de congestionamento.
+
+Uma situação onde pode ocorrer duplicação de pacote é a seguinte: se um sistema receber um pacote fora de ordem, ele reenvia o último ACK para o último pacote válido recebido. Por exemplo, se o transmissor enviou $5$ pacotes e o receptor recebeu os $3$ primeiros e o quinto, mas não recebeu o quarto pacote, o receptor enviará um ACK igual a $4$. Para o transmissor isso é um pacote duplicado de confirmação, pois quando o terceiro pacote foi recebido, o receptor já havia confirmado com o ACK igual a $4$. Se o sexto pacote chegar no receptor e o quarto ainda não estiver chegado, o receptor continuará enviado ACK igual a $4$.
+
+O controle de congestionamento do TCP reage de maneira diferente quando um evento de perda é detectado por esgotar o tempo limite de espera por confirmação de um segmento transmitido. Nesse caso, após esgotar o tempo limite de espera, o transmissor entra na fase de partida lenta, isto é, ajusta a janela de congestionamento para o tamanho igual ao tamanho de $1$ segmento e então aumenta a janela exponencialmente. O valor da janela de congestionamento continua a aumentar nessa proporção até que este valor alcance a metade do valor que tinha antes de ter esgotado o limite de espera de confirmação de um pacote transmitido e que não foi confirmado. Nesse ponto, o valor da janela de congestionamento volta a aumenta linearmente, da mesma forma como explicado anteriormente.
+
+Um dos primeiros algoritmos de controle de congestionamento do TCP (conhecido também por Tahoe), diminui incondicionamente o tamanho da janela de congestionamento para o tamanho de $1$ segmento e entra no estágio de partida lenta após qualquer um dos tipos de evento de perda citados (ou por três duplicações de confirmação de recepção ou por esgotar o tempo de espera por confirmação).
+
+A versão seguinte ao TCP Tahoe é o TCP Reno, que cancela o processo de partida lenta após detectar um evento de perda por receber três pacotes de confirmação duplicados. O motivo de não entrar na fase de partida lenta é baseado na constatação de que mesmo se um pacote tenha sido perdido, a chegada de três confirmações iguais indica que alguns segmentos foram recebidos no remetente e, portanto, a rede ainda é capaz de entregar alguns pacotes, mesmo perdendo outros pacotes devido ao congestionamento. Essa nova fase adicionada ao TCP Reno é chamada de recuperação rápida.
+
+No entanto, quando ocorre eventos de perda de pacote por esgotamento do tempo de espera por confirmação, o TCP Reno não entra na fase de recuperação rápida, e sim na de fase de partida lenta. Essa decisão está relacionada com a idéia de que a rede não tem capacidade de entregar nenhum pacote e que provavelmente todos estão sendo descartados em algum ponto da rede. Para que o transmissor receba um pacote de confirmação, o pacote transmitido deve primeiro ser recebido pelo receptor. Como os eventos de perda de pacotes ocorrem por esgotamento do tempo de espera por confirmação, isto significa que nenhum pacote transmitido chegou no destino e portanto a rede está descartando todos os pacotes.
+
+Outros detalhes de como funciona o esquema de controle de congestionamento do protocolo TCP são apresentados na referência~\cite{jacobson1988}.
+
+\subsection{Outros Algoritmos de Controle de Congestionamento do TCP}
+\label{subsec:outrosalgTCP}
+
+Além do TCP Reno, existem outros algoritmos para controle de congestionamento utilizados no protocolo TCP. Nos experimentos realizados nesta dissertação, foram utilizados outros dois algoritmos de controle de congestionamento, o Cubic e o Veno.
+
+\subsubsection{TCP Cubic}
+
+%http://netsrv.csc.ncsu.edu/twiki/bin/view/Main/BIC#BIC_Overview
+%http://www4.ncsu.edu/~rhee/
+%http://www4.ncsu.edu/~rhee/export/bitcp/cubic-paper.pdf
+
+O algoritmo de controle de congestionamento TCP Cubic~\cite{cubic2005,Ha2007} é baseado no algoritmo TCP BIC~\cite{bic2007}. O Cubic simplifica o controle da janela de congestionamento do TCP BIC e melhora a relação de equidade entre os fluxos TCP. Há também melhorias relacionadas à estabilidade do algoritmo quando novos fluxos TCP são transmitidos na rede. O algoritmo definido pelo TCP Cubic controla o tamanho da janela de congestionamento através da Equação~\ref{eq:cubicequation}, em termos do tempo decorrido desde do último evento de perda de pacotes. Esta equação foi extraída extraída da referência~\cite{cubic2005}.
+
+\begin{equation}
+W_{cubic} = C(T - \sqrt[3]{\frac{W_{max}\beta}{C}})^{3} + W_{max}
+\label{eq:cubicequation}
+\end{equation}
+
+Onde,
+
+\begin{itemize}
+ \item $C$ é uma constante escalar;
+ \item $W_{max}$ é o tamanho da janela de congestionamento antes da sua última redução;
+ \item $T$ é o tempo decorrido desde a última redução da janela;
+ \item $\beta$ é o fator de decréscimo multiplicativo depois do evento de perda.
+\end{itemize}
+
+Considerando os conceitos do TCP Reno, o TCP Cubic, em geral, funciona da seguinte forma:
+
+\begin{enumerate}
+%  \item 'C' determines how much we stayed the plateau of cubic curve (inflection point of CUBIC growth function) and affects the TCP friendliness region;
+   \item o valor da constante escalar $C$ determinar quanto tempo a janela de congestionamento permanece com um valor constante, sem alteraração. Atualmente este valor para a implementação no núcleo do Linux é igual a $0.4$;
+   \item quando ocorre perdas de pacotes detectadas por três ACKs duplicados, o TCP Cubic realiza o decréscimo multiplicativo de acordo com a função~\ref{eq:cubicequation}, alterando o valor de $\beta$ multiplicando-o por um determinado fator;
+   \item quando acontece perda de pacote por limite do tempo de confirmação de recepção, o algoritmo reinicia todos as variáveis e todo o processo recomeça (partida lenta e mecanismo de prevenção de congestionamento);
+\end{enumerate}
+
+% COLOCAR FIGURA AKI DO COMPORTAMENTO GERAL DO CUBIC
+% 
+% \begin{figure}[h]
+%     \begin{center}
+%         \includegraphics[scale=0.5]{imagens/cubic_behavior.pdf}
+%     \end{center}
+%     \vspace{-0.8cm}
+%     \caption{Comportamento básico da função do Cubic}
+%     \label{fig:comportamentocubic}
+% \end{figure}
+
+O TCP Cubic é o algoritmo de controle de congestionamento padrão do sistema operacional Linux. Na referência~\cite{cubic2005}, discute-se em mais detalhes o funcionamento do controle de congestionamento TCP Cubic.
+% 
+% 4) Already some people used the cubic equation for their congestion
+% control algorithm. The paper presented this year at PFLDnet uses the
+% CUBIC throughput equation for the protocols specialized for multicast.
+% See the following paper,
+% http://www.hep.man.ac.uk/PFLDnet2008/paper/kulatunga_chamil%20Final.pdf
+% 
+% 5) Implementing CUBIC over DCCP makes sense as Linux uses CUBIC as a
+% default congestion control algorithm. Suppose that most of Internet
+% traffic is CUBIC traffic, UDP now needs to be friendly with CUBIC
+% rather than TCP Reno. However, in order to do this, it will be safe
+% with some evidence (or internet draft). Also, it would be great if you
+% let us know some of interesting results between CUBIC and DCCP.
+
+\subsubsection{TCP Veno}
+\label{subsubsec:veno}
+%http://www.ntu.edu.sg/home5/ZHOU0022/papers/CPFu03a.pdf
+%VER O ARTIGO MODELING WIRELESS LINKS FOR TP
+
+O TCP Veno~\cite{veno2003} é um algoritmo para controle de congestionamento baseado no TCP Vegas~\cite{Brakmo1994} e no TCP Reno, apresentado anteriormente. A proposta do TCP Veno é obter melhor vazão quando utilizado em redes sem fio considerando a seguinte motivação: diferentemente das redes cabeadas, onde as perdas de pacotes devido a erros de verificação de bit são insignificantes e raramente acontecem~\cite{Wilde1994,Xiao2005}, nas redes sem fio as perdas de pacotes por este tipo de erro ocorrem com mais freqüência. Para esse tipo de perda o motivo não é o congestionamento da rede. Esses erros são de fato causados por ruídos no canal, problemas no meio físico (causados por obstáculos) ou qualquer outro motivo diferente do congestionamento da rede. Essas perdas de pacotes degradam significativamente o desempenho do algoritmo de controle de congestionamento TCP Reno, por exemplo.
+
+A questão nesse ponto é que o TCP Reno não distingue as perdas de pacotes por erros no conteúdo dos pacotes ou devido ao congestionamento da rede~\cite{Balakrishnan1,Balakrishnan2}. A estratégia do TCP Veno é monitorar o nível de congestionamento da rede e usar essa informação para decidir se as perdas de pacotes são devido ao congestionamento ou trata-se de uma perda aleatória causada por qualquer motivo diferente do congestionamento na rede. A relação Veno e Reno é a seguinte:
+
+\begin{enumerate}
+ \item o algoritmo de partida lenta continua sendo o mesmo que o Reno, aumento exponencial até que ocorra uma perda de pacote;
+ \item o Veno altera o algoritmo de aumento aditivo do TCP Reno: além do tamanho da janela de controle de congestionamento (\emph{wsize}), no Reno existe um limiar para a partida lenta \emph{sshresh}. Quando \emph{wsize} é menor que \emph{sshresh} o algoritmo de partida lenta é utilizado para ajustar o valor de \emph{wsize}. Porém quando \emph{wsize} é maior que \emph{sshresh}, a taxa de aumento da janela diminue para evitar congestionamento. No Reno, o valor de \emph{sshresh} é igual a \ut{85.3}{KB}\footnote{Valor referente a implementação do TCP Reno no Linux}. No Veno esse valor é ajustado dinamicamente, dependendo do mecanismo que determina se as perdas de pacotes estão sendo causadas pelo congestionamento na rede ou por algum outro motivo. Portanto, para os casos em que for determinada perdas de pacotes por erros de verificação de bit, na fase de partida lenta o Veno continua aumentando a taxa de transmissão por um período mais longo que o TCP Reno;
+  \item o Veno altera o algoritmo de decréscimo multiplicativo do tamanho da janela de congestionamento. No TCP Reno existem duas maneiras de detectar perda de pacotes. A primeira é quando um pacote não é confirmado pelo receptor até esgotar o tempo limite de espera por confirmação. Nesse caso, o algoritmo é reiniciado com o valor de \emph{wsize} e \emph{sshresh} igual a $1$. Ou seja, para perda de pacote causada por esgotamento do tempo limite de espera por confirmação, pode-se considerar um congestionamento severo na rede. O TCP Veno não altera essa parte do algoritmo. A outra maneira de detectar perda de pacotes é através do recebimento de três confirmações repetidas, como discutido anteriormente. No Reno, quando a duplicação ocorrer por três vezes, considera-se que o pacote foi perdido, mesmo não ocorrendo o esgotamento do tempo limite de espera por confirmação. Nesse ponto o algoritmo entra na fase de recuperação rápida. Esse algoritmo funciona da seguinte forma:
+	\begin{enumerate}
+		\item Retransmite o pacote perdido, o valor de \emph{wsize} passa a ser igual a \emph{sshresh} e o valor de \emph{sshresh} passa a ser igual a metade do valor antigo de \emph{wsize};
+		\item Cada vez que um ACK repetido chegar, incrementa o valor de \emph{wsize} em uma unidade;
+		\item Quando um ACK chegar confirmando um pacote, o valor de \emph{wsize} passa a ser igual ao valor de \emph{sshresh}.
+	\end{enumerate}
+ O que o TCP Veno faz é modificar o passo ``a'' descrito acima. Ele reduz o valor de \emph{sshresh} e consequentemente diminui o limite para \emph{wsize}, porém quando é determinado que a perda de pacote foi causada por erro de verificação de bit, o valor de \emph{sshresh} passa a ser igual a \emph{wsize} * 4/5. Se a perda for causada pelo congestionamento da rede, o TCP Veno funciona como o TCP Reno, o valor de \emph{sshresh} é igual a metade de \emph{wsize}.
+\end{enumerate}
+
+Para determinar se a rede está congestionada, o TCP Veno utiliza a estratégia definida pelo TCP Vegas. O processo consiste em continuamente medir o RTT e guardar um histórico dessas medições. Se o valor de RTT aumentar à medida que novas medições de RTT são feitas, a rede está congestionada, caso contrário, os eventos de perda são considerados eventos aleatórios devido à interferências no meio físico. Na referência~\cite{Brakmo1994}, esse mecanismo é explicado em mais detalhes.
+
+\section{Protocolo UDP}
+\label{subsec:protocoloudp}
+
+O UDP é um protocolo de transporte simplificado, em termos de serviços oferecidos, se comparado ao TCP e ao DCCP. É um protocolo não orientado à conexão, portanto não há estabelecimento de conexão antes que os dois processos transmitam dados de um para o outro. Tal como o TCP e o DCCP, o principal objetivo do UDP é fornecer um mecanismo para enviar datagrama a um outro processo executando remotamente. Tal como acontece com o TCP, o protocolo UDP fornece número de portas para estabelecer a distinção entre os diversos programas executados em um sistema final, sendo possível realizar assim a multiplexação e demultiplexação discutidas na Seção~\ref{subsec:multidemulti}. O protocolo UDP está definido no RFC 768~\cite{RFC0768}.
+
+O protocolo UDP utiliza o serviço de entrega de datagramas do protocolo IP para transmitir uma mensagem da aplicação para uma aplicação remota na rede. Como já foi mencionado, o protocolo provê um serviço não-confiável de transferência de dados, isto é, quando um processo envia uma mensagem através de um \emph{socket} UDP, o protocolo não oferece nenhuma garantia de que a mensagem chegará ao processo receptor.
+
+Portanto, o protocolo UDP não oferece confiabilidade na entrega de dados, não realiza ordenação, não implementa controle de congestionamento e nem evita duplicação de recebimento de informação. A ausência dessas características faz com que muitos desenvolvedores o utilizem em suas aplicações multimídia. Isto ocorre pelo fato que as aplicações de tempo real podem tolerar perda de informação, embora exijam um taxa mínima de dados entregues no destino.
+
+Além da aplicabilidade do protocolo UDP na área de aplicações multimídia, o UDP é utilizado pelos servidores de nomes da Internet~\cite{RFC1035}, pois este serviço troca pouca informação e deve funcionar de forma rápida. Neste caso estabelecer uma conexão TCP todas as vezes que um sistema precisar resolver um nome para um endereço IP demandaria tempo. Nessa linha, o UDP também tem sido utilizado por usuários Internet mal intencionados, que o utiliza para realizar ataques de negação de serviço distribuído, também chamado de DDoS (\emph{Distributed Denial of Service}). Um ataque bastante conhecido dessa natureza ocorreu em outubro de 2002~\cite{Baptista2002}, onde $9$ dos $13$ servidores DNS (\emph{Domain Name Server}) raíz da Internet entraram em colapso por uma hora, devido ao excessivo número de requisições realizadas a estes servidores, requisições estas feitas de
+forma intencional e com fins de fazer a Internet literalmente parar de funcionar.
+
+Para mais informações acerca do protocolo UDP, consulte as referências \cite{kurose2006} e \cite{comer2004}.
+
+\section{Comparação do DCCP com o TCP e UDP}
+
+Na Tabela~\ref{tab:comparacaotcpudpdccp} é apresentada uma comparação das principais características discutidas ao longo deste capítulo com relação aos protocolos TCP, UDP e DCCP. Através desta tabela é possível observar que o protocolo DCCP é diferente do protocolo TCP em apenas $4$ pontos, destacados em negrito na tabela.
+
+\begin{table}[h]
+        \caption{Tabela comparativa das características do TCP, UDP e DCCP.}
+        \label{tab:comparacaotcpudpdccp}
+    \begin{center}
+        \begin{tabular}{|p{1.0cm}|p{1.5cm}|p{1.5cm}|p{1.5cm}|}
+            \hline
+            \multicolumn{1}{|>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}{\textbf{Característica}}} & \multicolumn{1}{>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}{\textbf{UDP}}} & \multicolumn{1}{>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}{\textbf{TCP}}} &
+	    \multicolumn{1}{>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}{\textbf{DCCP}}} \\
+	    \hline
+	    \hline
+            \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{\textbf{Tamanho do Cabeçalho}} & \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{8 bytes} & \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{20 bytes} &
+	    \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{\textbf{12 ou 16 bytes}}
+	    \\
+            \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{\textbf{Entidade da camada de transporte}} & \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Datagrama} & \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Segmento} &
+	    \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{\textbf{Datagrama}}
+	    \\
+            \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{\textbf{Numeração de porta}} & \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Sim} & \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Sim} &
+	    \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Sim}
+	    \\
+            \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{\textbf{Detecção de Erro}} & \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Opcional} & \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Sim} &
+	    \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Sim}
+	    \\
+            \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{\textbf{Garantia de entrega de dados}} & \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Não} & \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Sim} &
+	    \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{\textbf{Não}}
+	    \\
+            \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{\textbf{Número de seqüência e ordenação}} & \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Não} & \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Sim} &
+	    \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Sim/\textbf{Não}}
+	    \\
+            \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{\textbf{Controle de fluxo}} & \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Não} & \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Sim} &
+	    \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Sim}
+	    \\
+            \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{\textbf{Controle de congestionamento}} & \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Não} & \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Sim} &
+	    \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Sim}
+	    \\
+            \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{\textbf{Suporte a ECN}} & \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Não} & \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Sim} &
+	    \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Sim}
+	    \\
+            \hline
+        \end{tabular}
+    \end{center}
+\end{table}
+
+O primeiro deles o tamanho do cabeçalho de cada pacote, onde como foi explicado na Seção~\ref{subsec:cabecalhodccp} o tamanho do cabeçalho varia de acordo com o valor do campo $X$ do cabeçalho, podendo assumir tamanho de \ut{12}{bytes} ou \ut{16}{bytes}.
+
+O segundo ponto que muda é mais conceitual, enquanto que o TCP transmite um segmento, o DCCP transmite um datagrama. O terceiro ponto é que o protocolo DCCP não garante entrega dos dados transmitidos, exceto quando existe negociação das características da conexão, como apresentado na Seção~\ref{sec:featureneg}. E o quarto ponto é que embora o DCCP utilize número de seqüência, ele não garante entrega ordenada dos pacotes transmitidos, utilizando este campo para realizar implementar os mecanismos de confirmação de pacotes.
+
+Neste capítulo foram discutivos diversos assuntos relacionados à camada de transporte TCP/IP. Foi apresentada uma visão geral desta camada e seus principais serviços. Em seguida foram abordadas as principais características e mecanismos de funcionamento interno do protocolo DCCP. Por último foi apresentada uma visão geral dos protocolos TCP e UDP e uma tabela comparativa entre esses dois protocolos e o DCCP.

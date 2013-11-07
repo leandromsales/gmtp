@@ -1,0 +1,3217 @@
+\chapter{Global Media Transmission Protocol (\mudccp)}
+\label{cap:mudccp}
+
+O \textit{Global Media Transmission Protocol} (\mudccp) é um protocolo de rede
+multi-camada projetado para operar na Internet em sistemas de distribuição de
+fluxos dados ao vivo. O GMTP é baseados em uma arquitetura híbrida P2P/CDN e
+opera nas camadas de rede e transporte da pilha de protocolos TCP/IP. Isto
+ocorre através da constituição de uma rede de favores P2P, onde os nós cooperam
+entre si a fim de obterem um conteúdo multimídia de interesse, a ser reproduzido
+por um processo em execução na camada de aplicação, conectando-se a outros
+processos através da camada de transporte. O GMTP permite a interação dos nós
+receptores com servidores de uma ou mais redes CDNs, que atuam como super nós
+da rede P2P, auxiliando-os no envio e recebimento dos fluxos de dados de eventos
+ao vivo.
+
+As trocas de dados entre nós GMTP ocorrem por meio do envio e recebimento de
+pequenas partes do conteúdo de uma mídia, que são transmitidas por diferentes
+nós da rede, constituindo um fluxos de datagramas IP. Estes fluxos são
+transmitidos em modo \textit{multicast} ou em múltiplos fluxos \textit{unicast}
+compartilhados (multi-unicast), realizando-se controle de congestionamento
+desses fluxos sem garantia de entrega dos datagramas. A escolha do modo de
+transmissão utilizado para disseminar um determinado conteúdo ocorre
+automaticamente, de acordo com o suporte oferecido pela rede, priorizando-se o
+uso do modo \textit{multicast}. Este processo ocorre sem a influência da
+aplicação, de modo que os sistemas utilizam o GMTP através de uma API compatível
+com as especificações de socket BSD e POSIX.
+
+O GMTP permite o estabelecimento de conexões entre diversas aplicações,
+executadas de forma distribuída em cada sistema final, tornando-as
+compatíveis entre si, uma vez que o protocolo desacopla a forma como os dados
+são transportados da forma como estes são exibidos ao usuário final. Isto
+promove a integração do GMTP em aplicações já existentes, quando se considera
+futuras adoções, ao tempo que se permite a utilização dos novos recursos
+introduzidos no protocolo, abstraindo-se a complexidade de construção
+dos sistemas de transmissão de fluxos de dados de eventos ao vivo.
+
+Nas próximas seções deste capítulo, detalham-se o funcionamento do GMTP,
+conforme a seguinte organização:
+
+\begin{itemize}
+
+\item Na Seção~\ref{sec:visaogeral}, apresenta-se uma visão geral do protocolo,
+como cenário de atuação, arquitetura, canais de comunicação e tipos de nós e
+pacotes.
+
+\item Na Seção~\ref{sec:defsrests}, formaliza-se as definições e restrições do
+protocolo, que serão utilizadas nas seções subsequentes.
+
+\item Na Seção~\ref{sec:connformnet}, descreve-se o processo de
+constituição da rede de favores, bem como aspectos de conexão multi-ponto
+através da introdução de um novo conceito de sockets P2P. Aspectos
+inerantes à constituição de uma rede P2P, como o registro de participação de um
+nó na rede e o processo de seleção de nós parceiros.
+
+\item Na Seção~\ref{sec:asptransrecep}, discute-se sobre aspectos de
+transmissão e recepção de fluxos de dados, com os algoritmos utilizados para
+compartilhar um fluxos de dados e as estratégias de disponibilização e
+obtenção das partes de uma mídia. Além disso, apresenta-se um arcabouço para
+dar suporte aos algoritmos de controle de congestionamento, bem como os
+algoritmos atualmente adotados de acordo com os modos de transmissão
+suportados.
+
+\item Na Seção~\ref{sec:outros}, apresentam-se outros aspectos relacionados ao
+GMTP, tais como finalização de conexão, tolerância à desconexão, segurança e
+integração com outros protocolos de rede.
+
+\item Na Seção~\ref{sec:impl}, discute-se brevemente sobre aspectos de
+implementação e implantação do GMTP.
+
+\item E, por fim, na Seção~\ref{sec:benef}, apresenta-se um resumo sobre os
+benefícios e as justificativas de decisões de projeto do protocolo GMTP.
+
+\end{itemize}
+
+\section{Visão Geral do GMTP}
+\label{sec:visaogeral}
+
+O GMTP é composto por dois módulos chamados de \textit{GMTP Intra} e
+\textit{GMTP Inter}, que operam na camada de transporte e de rede,
+respectivamente. O \textit{GMTP Intra} fornece serviços às aplicações de rede a
+fim de abstrair a complexidade na execução de tarefas comuns a qualquer
+sistema, tais como conexão multi-ponto, multiplexação/demultiplexação de
+segmentos IP e controle de congestionamento. O \textit{GMTP Inter} é
+responsável por constituir uma rede de sobreposição P2P composta por roteadores,
+os quais funcionam como pontes de acesso aos servidores de uma rede CDN.
+
+Para viabilizar a disseminação de conteúdos multimídia, emprega-se o Princípio
+da Cooperação de Brigadas (\textit{Bucket Brigade Principle}), onde
+cada nó repassa o conteúdo recebido para outro nó e assim sucessivamente,
+análogo a ilustração da Figura~\ref{fig:bucket-brigade-principle-1}.
+
+\vspace{0.2cm}
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[natwidth=706,natheight=152,scale=.71]{imgs/bucket-brigade-principle-1.png}
+\end{center}
+\vspace{-0.8cm}
+\caption{Princípio da Cooperação de Brigadas utilizado no \mudccp.}
+\label{fig:bucket-brigade-principle-1}
+\end{figure}
+
+Na Figura~\ref{fig:cenario-global}, observa-se o cenário global de atuação do
+protocolo \mudccp, onde ilustram-se nós \textit{Clientes GMTP} interessados em
+obter o conteúdo de um determinado evento ao vivo. Neste caso,
+observa-se também um \textit{Servidor GMTP}, que está conectado a uma rede CDN e
+atua como fonte geradora de dados. Na prática, os nós \textit{Clientes GMTP} são
+aplicações de rede capazes de iniciar uma sessão GMTP, que transmitem, recebem
+e reproduzem dados multimídia de um determinado evento. Os nós \textit{Clientes
+GMTP} estão conectados a um nó \textit{Repassador GMTP}, que é executado em um
+roteador de rede e, junto com outros nós \textit{Repassadores GMTP},
+efetivamente constituem a rede de sobreposição P2P. Os \textit{Repassadores
+GMTP} também podem se conecta a um ou mais \textit{Servidores GMTP}.
+Os \textit{Servidores GMTP} são as fontes de conteúdos multimídia, obtidos
+através de três formas: i) diretamente a partir de uma unidade geradora
+de conteúdo (filmadora e/ou microfone); ii) a partir de um \textit{Cliente
+GMTP}; e/ou iii) a partir de outro \textit{Servidor GMTP} (troca de dados entre
+os servidores da CDN). Os \textit{Servidores GMTP} recebem sinalizações de
+controle contendo requisições dos nós \textit{Repassadores GMTP}, que ao
+receberem uma resposta correspondente a sua requisição, atendem a demanda de um
+nó \textit{Cliente GMTP}.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=.65]{imgs/cenario-global.pdf}
+\end{center}
+\vspace{-1cm}
+\caption{Cenário global de atuação do \mudccp.}
+\label{fig:cenario-global}
+\end{figure}
+
+Quando um nó \textit{Cliente GMTP} deseja reproduzir um determinado evento,
+este envia uma requisição destinada ao nó \textit{Servidor GMTP} que está
+transmitido o conteúdo de interesse, como atualmente acontece em qualquer
+conexão na Internet. A diferença é que um pedido de conexão é interceptado por
+algum nó \textit{Repassador GMTP} durante o trajeto do pedido de conexão até o
+nó \textit{Servidor GMTP}, que então determina os melhores parceiros para
+atendê-la. Em geral, isto ocorre já no roteador de borda do \textit{Cliente
+GMTP}, que funciona como nó \textit{Repassador GMTP} de origem. Caso o nó
+\textit{Repassador GMTP} não encontre nenhum nó parceiro capaz repassar a mídia
+de interesse, este encaminha tal requisição ao nó \textit{Servidor GMTP} que
+transmite a mídia correspondente. Em todo caso, sempre o nó \textit{Repassador
+GMTP} de origem assumirá o controle da requisição do \textit{Cliente GMTP},
+habilitando-se como candidato a parceiro para outros nós \textit{Repassadores
+GMTP}, quando motivados por requisições originadas pelos seus \textit{Clientes
+GMTP}.
+
+O posicionamento dos nós \textit{Repassadores GMTP} e suas habilidades permitem
+a redução do número de fluxos de dados correspondente a um mesmo evento e
+ainda uma maior escalabilidade do número de nós \textit{Clientes GMTP}
+interessado em receber um mesmo fluxo de dados. Por este mesmo motivo, o
+protocolo GMTP é flexível para permitir que um nó \textit{Repassador GMTP} atue
+somente encaminhando conteúdos multimídias entre duas ou mais redes
+distintas, mesmo que este não esteja conectado a nenhum nó \textit{Cliente
+GMTP} interessado por tal conteúdo. Desta forma, maximiza-se o uso de canais de
+transmissão ociosos, em particular das redes residenciais, as quais seus
+usuários muitas vezes estão ausentes e portanto sem fazer uso dos recursos
+disponíveis, não necessitando, inclusive, manter um determinado computador da
+sua rede interna ativo (ligado), como é obrigatório em todas as outras soluções
+para este fim.
+
+Pelo princípio da cooperação de brigadas empregado no GMTP, as requisições
+de conexão podem ser originados não apenas por nós \textit{Clientes GMTP} para
+seu respectivo nó \textit{Repassador GMTP}, mas também as requisições podem
+ocorrer entre nós \textit{Repassadores GMTP} que, motivados pelos interesses
+dos seus nós \textit{Clientes GMTP}, podem formar parcerias entre si. Isto
+significa que um nó \textit{Repassador GMTP} pode agir como se fosse um nó
+\textit{Servidor GMTP}, respondendo às requisições originadas por seus nós
+\textit{Clientes GMTP} ou de outros nós \textit{Repassadores GMTP}, como se a
+requisição estivesse alcançado o \textit{Servidor GMTP} que oficialmente
+transmite o conteúdo, o que ocorre de forma transparente para a aplicação.
+
+As estratégias discutidas até aqui e adotadas no GMTP são diferenciais que
+permitem o protocolo disseminar mais rapidamente um determinado fluxo de dados
+originado no \textit{Servidor GMTP}. Como a rede de favores e os dados são
+trocados de forma distribuída, ou seja, nem sempre com a participação de um
+\textit{Servidor GMTP}, empregou-se também um mecanismo para validação dos dados
+transmitidos pelo servidor, evitando-se ataques de poluição, por exemplo. Além
+disso, incorporou-se um mecanismo no GMTP chamado de \textit{registro de
+participação} que, após um nó \textit{Repassador GMTP} se registrar em um nó
+\textit{Servidor GMTP}, permite-se que os \textit{Servidores GMTP} determinem
+quais são os candidatos a perceiros de um nó \textit{Repassador GMTP}, o que
+ocorre periodicamente. A vantagem disso é que se permite, \textit{a
+priori}, que os nós \textit{Repassadores GMTP} avaliem seus parceiros sem
+necessariamente um nó estar recebendo um fluxo de dados de um determinado
+evento. Com isto, um nó \textit{Repassador GMTP} pode repassar um fluxo de
+dados para um outro nó \textit{Repassador GMTP} sem que o primeiro tenha
+interesse no referido fluxo, mas devido ao seu posicionamento na rede e sua
+capacidade computacional e de rede, pode melhorar sobremaneira no
+processo de disseminação de um determinado fluxo de dados.
+
+Na Figura~\ref{fig:cenario-global-detailed}, observam-se detalhes do cenário
+supracitado, introduzindo-se o conceito de um grupo especial de nós chamados de
+nós \textit{Relatores GMTP}. Estes nós são responsáveis por enviar relatórios
+periódicos sobre o estado da transmissão ao seu nó \textit{Repassador GMTP}, que
+os utiliza para regular a taxa de transmissão de um ou mais fluxos de dados,
+impedindo-se que a rede entre em colapso de congestionamento. Na prática, os
+nós \textit{Repassadores GMTP} são nós \textit{Clientes GMTP}, eleitos
+automaticamente pelo seu nó \textit{Repassador GMTP}, dentre os nós
+\textit{Clientes GMTP} interessados em obter um determinado fluxo de dados.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=.85]{imgs/cenario-global-detailed.pdf}
+\end{center}
+\vspace{-1cm}
+\caption[Rede de sobreposição construída pelo \mudccp]{Rede de sobreposição
+construída dinamicamente pelo \mudccps com
+a presença de nós repassadores e relatores.}
+\label{fig:cenario-global-detailed}
+\end{figure}
+
+\subsection{Terminologias e Convenções}
+
+Nesta seção, apresentam-se algumas definições, terminologias e convenções
+utilizadas no restante deste documento, de acordo com a
+Figura~\ref{fig:protocolo-tipos-nos}.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=.6]{imgs/protocolo-tipos-nos.pdf}
+\end{center}
+\vspace{-1cm}
+\caption{Tipos de Nós e modos de conexões do GMTP.}
+\label{fig:protocolo-tipos-nos}
+\end{figure}
+
+\subsubsection{Tipos de Nós:}
+\label{subsec:tiposnos}
+
+\begin{itemize}
+
+  \item \textbf{Nó GMTP ou Processador GMTP:} qualquer processador de rede que
+implementa o protocolo GMTP. É um sistema computacional que implementa parte ou
+todo do protocolo GMTP, sendo capaz de interpretar os cabeçalhos dos pacotes
+definidos pelo GMTP e realizar ações pré-definidas. Não há restrições de qual
+tipo de processador de rede pode implementar qual(is) parte(s) do GMTP.
+
+  \item \textbf{Cliente GMTP:} é um \textit{nó GMTP} capaz de reproduzir e
+gerar conteúdos multimídia ao vivo. Em geral, um \textit{Cliente GMTP} é um
+sistema final que executa um processo a nível de sistema operacional,
+representando uma aplicação manipulada pelo usuário final. A maioria dos
+\textit{Clientes GMTP} funciona apenas de forma passiva, recebendo o fluxo de
+dados de um conteúdo multimídia e entregando para um processo em execução.
+
+  \item \textbf{Servidor GMTP:} é um \textit{nó GMTP} capaz de gerar ou
+receber, de um \textit{Cliente GMTP}, conteúdos multimídia ao vivo. Em geral,
+um \textit{Servidor GMTP} é um sistema final que compõe uma rede CDN.
+
+  \item \textbf{Repassador GMTP:} é um \textit{Nó GMTP} com habilidades de
+repassar os fluxos de dados originados de um ou mais \textit{Servidores GMTP}
+ou de um outro nó \textit{Repassador GMTP}.
+
+  \item \textbf{Relator GMTP:} é um \textit{Cliente GMTP} com habilidades de
+enviar relatórios periódicos sobre o estado da transmissão ao repassador.
+
+\end{itemize}
+
+\subsubsection{Modos de Transmissão:}
+\label{subsec:tiposconexao}
+
+\begin{itemize}
+
+  \item \textbf{\textit{Unicast}:} toda comunicação que ocorre entre dois nós
+\textit{Repassadores GMTP}, com a interpretação do conceito definido por
+\textit{unicast}, no contexto de redes de computadores, em sua forma
+tradicional.
+
+  \item \textbf{\textit{Multi-unicast}:} é um conjunto formado por dois ou mais
+canais de {Canal Transmissão \textit{unicast}}.
+
+\item \textbf{\textit{Multicast}:} toda comunicação que ocorre entre um nó
+\textit{Repassador GMTP} e seus respectivos \textit{Clientes GMTP}, com a
+interpretação do conceito definido por \textit{multicast}, no contexto de redes
+de computadores, em sua forma tradicional.
+
+\end{itemize}
+
+O modo multicast sempre é utilizado, porém quando este modo não é
+suportado pela rede, o modo multi-unicast do protocolo é executado. É
+requerido que o modo multicast seja utilizado para transmissões de um salto, ou
+seja, em redes locais. O modo unicast é utilizado para que \textit{Clientes
+GMTP} estabeleçam uma conexão com um \textit{Servidor GMTP} ou um
+\textit{Repassador GMTP} e passe a distribuir o conteúdo de dados multimídia em
+sua rede local.
+
+\vspace{0.5cm}
+
+Deste ponto em diante, os termos \textit{Nó GMTP}, \textit{Cliente GMTP},
+\textit{Servidor GMTP}, \textit{Repassador GMTP} e \textit{Relator GMTP}
+serão utilizados em sua forma simplificada, ou seja, \textit{nó},
+\textit{cliente}, \textit{servidor}, \textit{repassador} e \textit{relator},
+respectivamente. Além disso, estes termos não serão mais formatados em itálico,
+bem como os termos \textit{socket}, \textit{unicast}, \textit{multi-unicast} e
+\textit{multicast}. Ademais, quando o termo \textit{transmissão} ou
+\textit{transmissão de um evento} for mencionado, denotar-se-á a transmissão de
+um fluxo de datagramas IP correspondente a um evento ao vivo, utilizando-se o
+protocolo GMTP.
+
+As palavras \aspas{deve}, \aspas{não deve}, \aspas{requerido}, \aspas{pode},
+\aspas{não pode}, \aspas{recomendado} e \aspas{opcional}, incluindo suas
+variações morfológicas, devem ser interpretadas como descrito na RFC
+2119~\cite{RFC2119}, em inglês.
+
+\subsection{Arquitetura e Principais Características}
+
+Na Figura~\ref{fig:arq_geral_gmtp}, ilustra-se a arquitetura geral do
+GMTP, seguida de uma breve descrição das suas principais funcionalidades.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=.8]{imgs/protocolo-arquitetura.pdf}
+\end{center}
+\vspace{-1cm}
+\caption{Arquitetura do Protocolo \mudccp.}
+\label{fig:arq_geral_gmtp}
+\end{figure}
+
+\begin{itemize}
+
+  \item Registro de participação de um nó repassador em um nó servidor. Isto
+permite o suporte a pré-seleção de nós parceiros filtrados por métricas que
+influenciam na qualidade de experiência do usuário ao assistir um
+evento ao vivo, como atraso fim-afim.
+
+  \item Acesso a uma transmissão através de um processo de conexão em três-vias
+(\textit{3WHS}), com a requisição de conexão transmitida ao servidor e podendo
+ser interceptada por um nó repassador em seu trajeto ao servidor, com suporte
+automático de detecção e uso dos modos de transmissão suportados pelo nó
+repassador.
+
+  \item Descoberta de nós parceiros entre redes distintas e negociação de
+parcerias, com suporte a formação de parcerias baseadas em métricas que
+influenciam na qualidade de experiência do usuário.
+
+  \item Envio e recebimento de fluxos de dados compartilhados entre nós
+da mesma rede através de multicast e uso de fluxos unicast entre redes
+distintas, porém sem a relação de uma conexão por cliente e assim evitando o
+fenômeno da tragédia dos bens comuns, discutido na Seção~\ref{sec:problematica}.
+
+  \item Suporte a algoritmos de controle de congestionamento assistidos pela
+rede e de fluxos multicast. Troca de relatórios periódicos entre os nós
+repassadores sobre a transmissão para dar suporte aos algoritmos de controle de
+congestionamento, além de ajudar na otimização do processo de seleção de
+nós parceiros.
+
+  \item Eleição de nós relatores com suporte a tolerância a desconexões de nós,
+com notificação e reeleição de novos nós.
+
+  \item Garantia de autenticidade das partes de uma mídia por meio do uso de
+certificados digitais para impedir ataques de poluição.
+
+\end{itemize}
+
+\subsection{GMTP Intra e GMTP Inter}
+\label{subsec:gmtp-intra-inter}
+
+\begin{itemize}
+
+ \item \textbf{GMTP Intra:} é executado na camada de transporte da pilha
+de protocolos TCP/IP e corresponde à parte interna de uma rede, composta
+por vários nós clientes que possuem um nó repassador. É executado em um sistema
+final, operado por um usuário que deseja assitir a um evento ao vivo, através
+de uma aplicação que cria um socket GMTP. Um socket GMTP é a representação de
+uma instância do protocolo GMTP em execução, sendo responsável por gerenciar
+todas as atividades de comunicação da aplicação correspondente com o meio
+externo (outros processos GMTP). No contexto de uma conexão, o GMTP Intra
+mantém diversas variáveis de estado que representam uma instância do GMTP em
+execução, que executa algoritmos para: eleição de nós relatores, controle de
+congestionamento, validação de partes de uma mídia e multiplexação e
+demultiplexação de datagramas IP.
+
+ \item \textbf{GMTP Inter:} é executado na camada de rede da pilha de
+protocolos TCP/IP e corresponde à parte externa de uma rede, composta por
+vários nós repassadores que cooperam entre si. É executado por um roteador de
+rede e aceita conexões oriundas de um nó cliente ou de um nó repassador. No
+contexto de uma conexão, o GMTP Inter mantém diversas variáveis de estado
+relacionadas às funções de sua responsabilidade: estabelecimento de conexão com
+nós servidores ou repassadores, seleção de nós repassadores parceiros, eleição
+de nós relatores, controle de congestionamento assistido pela rede, controle
+de compartilhamento de fluxos multimídia e validação da autenticidade das
+partes de uma mídia.
+
+Além disso, no GMTP Inter, permite-se a configuração de parâmetros
+iniciais de configuração da rede de cooperação e da integração com servidores
+de uma ou mais CDN, como ilustrado na Figura~\ref{fig:tela-gmtp-inter}. Nesse
+caso, o usuário pode configurar seu roteador como nó repassador para se
+autenticar em uma ou mais redes CDN, definir a largura de banda
+(\textit{download} e \textit{upload}) que deseja compartilhar, o período (dias
+da semana e horas) que permitirá seu roteador funcionar como repassador,
+dentre outras opções. É possível também que um repassador GMTP detecte
+automaticamente o suporte do GMTP em um servidor remoto, portanto sem a
+necessidade de uma configuração prévia.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[natwidth=664,natheight=340,scale=.5]{imgs/tela-gmtp-inter.png}
+\end{center}
+\vspace{-1cm}
+\caption{Ferramenta de administração do OpenWRT~\cite{REF} com suporte ao GMTP.
+Tela de configuração para permitir registro em um GMTP Inter a uma rede CDN.}
+\label{fig:tela-gmtp-inter}
+\end{figure}
+
+\end{itemize}
+
+\subsection{Canais de Comunicação}
+\label{subsec:canaiscommudccp}
+
+No protocolo GMTP, utilizam-se três canais de comunicação para implementar suas
+funcionalidades (Figura~\ref{fig:canais-comunicacao}). Embora alguns autores
+considerem os termos \aspas{repasse} e \aspas{roteamento} como conceitos
+distintos, neste trabalho ambos os termos são considerados sinônimos e devem
+ser interpretados como a capacidade que um nó \mudccps tem de receber dados em
+uma interface de rede de entrada e encaminhar estes dados através de uma
+interface de rede de saída, permitindo-se que uma mesma interface de rede seja
+utilizada como entrada e saída ao mesmo tempo.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=.86]{imgs/canais-comunicacao.pdf}
+\end{center}
+\vspace{-1cm}
+\caption{Canais de Comunicação do \mudccp.}
+\label{fig:canais-comunicacao}
+\end{figure}
+
+\subsubsection{Canal de Controle:}
+
+Todo nó ao iniciar uma instância do protocolo \mudccps deve criar um
+socket multicast no endereço IP 238.255.255.250 e na porta $1900$.
+Através desse socket, um nó GMTP é capaz de enviar e receber
+pacotes de controle utilizados para implementar as funcionalidades do
+protocolo. Este socket, denominado \textit{canal de controle} é suma
+importância no processo de conexão do GMTP porque é utilizado para enviar e
+receber sinais de controle, principalmente entre um nó repassador e um nó
+cliente.
+
+O canal de controle é utilizado para permitir que o nó repassador realize o
+processo de eleição e reeleição de nós relatores, procedimentos de
+estabelecimento de conexão, descoberta de nós e notificações de desconexões,
+envio e recebimento de relatórios para controle de congestionamento, entre
+outros. Tais recursos são fundamentais para o funcionamento do \mudccp, sendo
+umas das justificativas de sua originalidade, diferentemente de qualquer outro
+protocolo encontrados na literatura.
+
+A decisão do uso do endereço IP multicast 238.255.255.250 foi baseada na RFCs
+2365~\cite{RFC2365}, que define o escopo administrativo do uso dos endereços
+multicast entre 239.0.0.0 e 239.255.255.255. O endereço 238.255.255.250 é
+definido no escopo de uso global e por este motivo esse endereço foi o
+escolhido. Com a padronização do protocolo \mudccps e a publicação da sua RFC,
+será necessário registrar o uso desse endereço IP multicast ao \textit{Internet
+Assigned Numbers Authority} - IANA\footnote{IANA: http://www.iana.org/}.
+
+\subsubsection{Canal de Repasse:}
+
+Além do canal de controle, define-se no protocolo \mudccps um canal de repasse
+utilizado por um nó repassador para encaminhar datagramas vindos de um servidor
+ou de outro repassador para a rede local. Esse canal de repasse, na prática, é
+um socket multicast criado pelo repassador para transmitir os
+datagramas para todos os seus clientes com interesse em reproduzir o mesmo
+fluxo de dados de um evento ao vivo.
+
+O \textit{socket de repasse dos dados} deve ser criado quando um repassador
+passa a obter um determinado fluxo de dados correspondente a um determinado
+evento de interesse de pelo menos um dos seus clientes. Na prática, quando
+isto acontece, o repassador deve criar um socket multicast em um
+endereço IP e número de porta escolhida aleatoriamente para repassar os dados
+vindos do servidor ou de outro repassador para dentro de sua rede. Isto
+permitirá alcançar um número maior de clientes em uma rede local, melhorando a
+escalabilidade do protocolo do ponto de vista da quantidade de clientes. A
+faixa de endereços IP multicast que um cliente deve utilizar para criar seu
+socket de repasse é a de escopo local 239.192.0.0/14, definida na RFC
+2365~\cite{RFC2365}. Como é uma faixa de endereços IP multicast de domínio
+local, não se faz necessário registrar o uso dessa faixa de endereços.
+
+Um outro canal de repasse pode ser criado por um repassador A caso um outro
+repassador B esteja interessado por um fluxo de dados disponível no repassador
+A. Nesse caso, o repassador A negocia um canal de repasse unicast e informar ao
+repassador B o endereço IP e porta que este deve se conectar para obter
+os dados.
+
+\subsubsection{Canal de Recepção de Dados:}
+
+O canal de recepção de dados é um socket multicast criado por um
+cliente para receber um fluxo de dados transmitindo por um nó repassador em
+algum endereço IP da faixa 239.192.0.0/14. Alternativamente, um canal de
+recepção de dados será um socket unicast quando existir apenas um
+cliente em uma rede interessado por um fluxo de dados, utilizando-se o
+endereço da sua própria interface de rede local. O endereço IP e o
+número de porta que o cliente deve se conectar é determinado pelo nó repassador
+no momento da conexão.
+
+% \subsection{Diagrama de Estados do GMTP}
+%
+% TBD
+
+% \section{Fluxograma de Estados do \mudccp}
+%
+% Após o processo de estabelecimento de conexão do \mudccp, o protocolo entra no
+% estado de transmissão de dados, se o nó for um servidor ou um relay, ao passo
+% que o protocolo entra no estado de recepção de dados, se o nó for um cliente.
+%
+% Um servidor ou um relay começa a transmitir os dados após o processo de
+% estabelecimento de conexão e até quando o fluxo de dados no servidor se
+% encerrar ou quando o relay não desejar mais receber o fluxo de dados.
+
+\subsection{Tipos de Pacotes}
+\label{subsec:tipodepacotesmudccp}
+
+Toda comunicação entre dois ou mais nós GMTP ocorre através da troca de
+datagramas IP, que carregam sinalizações de controle e/ou dados da aplicação.
+
+No cabeçalho dos pacotes \mudccps existe um campo denominado \emph{tipo do
+pacote}. Este campo determina que informação está contida em um determinado
+pacote \mudccps e, ao processá-los, um nó \mudccps executa uma determinada ação.
+Na Tabela~\ref{tab:tipospacotemudccp} são apresentados os possíveis valores
+desse campo, nome do pacote e sua função. Nas próximas seções serão descritas
+todas as funções do GMTP e os diferentes tipos de pacotes serão utilizados para
+descrever os algoritmos no tocante às ações realizadas pelo GMTP de acordo com
+um determinado evento.
+
+\begin{table}[ht]
+        \caption{Tipos de Pacotes do protocolo \mudccp.}
+        \label{tab:tipospacotemudccp}
+    \begin{center}
+	\vspace{-0.8cm}
+        \begin{tabular}{|p{1.0cm}|p{1.5cm}|p{1.5cm}|}
+            \hline
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.05,0.2,0.43}}c}{\textcolor{white}{\textbf
+{\#}}} &
+\multicolumn{1}{|>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}{
+\textbf{Tipo}}} &
+\multicolumn{1}{>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}{\textbf
+{Descrição}}}
+	    \\
+	    \hline
+	    \hline
+            \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{0}}
+& \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Request} &
+\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Pedido de
+estabelecimento de conexão multicast}
+	    \\
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{1}} &
+\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Response} &
+\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Resposta ao pedido de
+estabelecimento de conexão multicast}
+	    \\
+            \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{2}}
+& \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Data} &
+\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Contém dados da
+aplicação}
+	    \\
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{3}} &
+\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Ack} &
+\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Confirmação de
+recebimento de pacote}
+	    \\
+
+            \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{4}}
+& \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{DataAck} &
+\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Dados da aplicação e
+confirmação de recepção}
+	    \\
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{5}} &
+\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Elect} &
+\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Inicia o processo de
+eleição de um nó em relay ou reporter}
+	    \\
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{6}}
+& \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{ElectReply} &
+\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Sinaliza o interesse de
+um nó em se transformar em relay ou reporter}
+	    \\
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{7}} &
+\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{ElectAck} &
+\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Confirmação do nó
+eleito para relay ou reporter}
+	    \\
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{8}}
+& \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{RelayQuery} &
+\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Transmitido por um nó
+para consultar a lista de relays}
+	    \\
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{9}} &
+\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{RelayReply} &
+\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Resposta ao pedido
+de consulta da lista de relays}
+	    \\
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{10}}
+& \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{AdvConn} &
+\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Utilizado por um nó
+relay ou reporter para anunciar que está ativo na rede}
+	    \\
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{11}} &
+\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Reservado} &
+\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Uso futuro e ignorado
+pelo receptor}
+	    \\
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{12}} &
+\multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Reservado} &
+\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Uso futuro e ignorado
+pelo receptor}
+	    \\
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{13}} &
+\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{CloseReq} &
+\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Servidor ou
+Relay solicita término de conexão sem TIMEWAIT}
+	    \\
+
+            \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{14}}
+& \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Close} &
+\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Servidor/Cliente/Relay
+solicita término da conexão}
+	    \\
+\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{15}} &
+\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Reset} &
+\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Determina,
+incondicionalmente, o final da conexão}
+	    \\
+            \hline
+        \end{tabular}
+    \end{center}
+% 	\scriptsize
+% 	$^1$ O tipo de pacote \textbf{\mudccp-Reset} é utilizado com este
+% propósito, porém utiliza-se também para outros motivos: para sinalizar número
+% de
+% porta incorreto; comportamento inapropriado de opções; desconexão prevista de
+% um
+% \mdrel\space etc.
+\end{table}
+
+\normalsize
+
+No Apêndice~\ref{app:mudccp-tecnica} são apresentados detalhes acerca do uso
+dos tipos de pacotes do GMTP, sendo seu teor completamente técnico. Desta
+forma, tal apêndice é dedicado aos leitores interessados em sua implementação.
+
+
+FALAR:
+ - O conteúdo do relatório e como esses dados são obtidos, qual a frequencia
+que são enviados
+ - dizer que o no repassador pode repassar pacotes mesmo se não houver nó
+interessado pelo fluxo correspondente
+ - Falar que os protocolos não são apropriados para os cenários considerados
+- Estudar e escrever sobre o RCP (base de CC para a rede intra); XCP; LEDBAT e
+ConEx. Arrumar justificativa para não usar o ConEx. Dizer que o GMTP pode
+englobar o uso de todos estes, caracterizando uma justificativa de que o GMTP é
+preparado para atendê-los após uma vasta revisão bibliográfica!
+- Declaração da tese: não esquecer de falar sobre uso do roteador e a
+unificação
+dos sistemas, além de que as rotas não mudam sempre porque as origens
+(servidores da cdn) são poucas
+
+- GMTP
+   * Escrever o algoritmo de CC para a rede P2P/roteador
+   * Algoritmo de seleção de peer e parcerias
+   * Escrever algoritmo para o mapa de buffer
+   * Escrever sobre o Inter o Intra
+   * Reorganizar como nazareno mencionou
+
+ver: http://peerstreamer.org
+
+Anotações após defesa:
+ - Ler o survey: http://www.aicit.org/jcit/ppl/%20JCIT_MAY_30.pdf
+ - Simuladores mais robustos: SimGrid [23], OPSS [26, 27], ChunkSim [29], 3LS
+[30], OPNET [30] (não sei se vai ser bom!)
+ -
+- Resultados
+   * Comentar gráficos
+   * Lembrar de falar sobre redes móveis
+   * Sobre churn (roteador pode reduzir churn)
+- Implementação
+- Trabalho futuro:
+   * Avaliar com o ConEx???
+   * Terminar a implementação no kernel do Linux
+   * RFC
+- Corrigir capítulo de fundamentação (rever comentários do Nazareno)
+- Fazer Apendice explicando onde obter os códigos de simulação e implementação
+- Trabalho futuro tb é discutir aspectos de padrão de tráfego por dia/hora, por
+exemplo, e formar parcerias nesse sentido.
+
+\section{Definições, Relações e Restrições do GMTP}
+\label{sec:defsrests}
+
+Nesta seção, descrevem-se formalmente definições, relações e restrições do
+protocolo GMTP.  Para isto, faz-se uso de fundamentos da algebra booleana,
+lógica proposicional, teoria de conjuntos e teoria dos
+grafos~\cite{Jonathan2003,Seroul2000,Courant1996,Devlin1979}.
+
+\newcommand{\transmission}{\Large$\tau$\normalsize\normalfont}
+\newcommand{\transmissions}{\transmission\space}
+\newcommand{\event}{\Large$\varepsilon$\normalsize\normalfont}
+\newcommand{\events}{\event\space}
+
+\newcommand{\setservrepass}{$Z$}
+\newcommand{\setservrepasss}{\setservrepass\space}
+
+\newcommand{\settranc}{T}
+\newcommand{\transconst}{t}
+\newcommand{\settrans}{$\settranc$}
+\newcommand{\settranss}{\settrans\space}
+\newcommand{\transi}{u}
+\newcommand{\transu}[1]{$\transconst_{#1}$}
+\newcommand{\transssu}[1]{\transu{#1}\space}
+\newcommand{\trans}{\transu{\transi}}
+\newcommand{\transs}{\trans\space}
+
+\newcommand{\setrepassc}{R}
+\newcommand{\repassconst}{r}
+\newcommand{\setrepass}{$\setrepassc$}
+\newcommand{\setrepasss}{\setrepass\space}
+\newcommand{\repassi}{d}
+\newcommand{\repassu}[1]{$\repassconst_{#1}$}
+\newcommand{\repasssu}[1]{\repassu{#1}\space}
+\newcommand{\repass}{\repassu{\repassi}}
+\newcommand{\repasss}{\repass\space}
+
+\newcommand{\setclic}{C}
+\newcommand{\cliconst}{c}
+\newcommand{\setcli}{$\setclic$}
+\newcommand{\setclis}{\setcli\space}
+\newcommand{\subsetclii}{i}
+\newcommand{\subsetcli}{\setcli$_{\subsetclii}$}
+\newcommand{\subsetclis}{\subsetcli\space}
+\newcommand{\cliu}[1]{$\cliconst_{#1}$}
+\newcommand{\clisu}[1]{\cliu{#1}\space}
+\newcommand{\clii}{f}
+\newcommand{\cli}{\cliu{\clii}}
+\newcommand{\clis}{\cli\space}
+
+\newcommand{\setservc}{S}
+\newcommand{\servconst}{s}
+\newcommand{\setserv}{$\setservc$}
+\newcommand{\setservs}{\setserv\space}
+\newcommand{\servi}{a}
+\newcommand{\servu}[1]{$\servconst_{#1}$}
+\newcommand{\servsu}[1]{\servu{#1}\space}
+\newcommand{\serv}{\servu{\servi}}
+\newcommand{\servs}{\serv\space}
+
+\newcommand{\setrelc}{L}
+\newcommand{\relconst}{l}
+\newcommand{\setrel}{$\setrelc$}
+\newcommand{\setrels}{\setrel\space}
+\newcommand{\subsetrel}{\setrel$_{\theta}$}
+\newcommand{\subsetrels}{\setrel$_{\theta}$\space}
+\newcommand{\reli}{w}
+\newcommand{\rel}{$\relconst_{\reli}$}
+\newcommand{\rels}{$\relconst_{\reli}$\space}
+\newcommand{\relu}[1]{$\relconst_{#1}$}
+\newcommand{\relsu}[1]{$\relconst_{#1}$\space}
+
+\newcommand{\semifullsymb}{\circ}
+\newcommand{\fullsymb}{\bullet}
+\newcommand{\setwayc}{W}
+\newcommand{\setway}{$\setwayc$}
+\newcommand{\setways}{\setway\space}
+\newcommand{\setwayii}{j}
+\newcommand{\setwayiu}[1]{$\setwayc_{#1}$}
+\newcommand{\setwayius}[1]{\setwayiu{#1}\space}
+\newcommand{\setwayi}{\setwayiu{\setwayii}}
+\newcommand{\setwayis}{\setwayius{\setwayii}}
+
+\newcommand{\setwayifu}[1]{$\setwayc^{\fullsymb}_{#1}$}
+\newcommand{\setwayifus}[1]{\setwayifu{#1}\space}
+\newcommand{\setwayif}{\setwayifu{\setwayii}}
+\newcommand{\setwayifs}{\setwayifus{\setwayii}}
+
+\newcommand{\setwayisfu}[1]{$\setwayc^{\semifullsymb}_{#1}$}
+\newcommand{\setwayisfus}[1]{\setwayisfu{#1}\space}
+\newcommand{\setwayisf}{\setwayisfu{\setwayii}}
+\newcommand{\setwayisfs}{\setwayisfus{\setwayii}}
+
+\newcommand{\setwayidu}[1]{$\setwayc^{\lhd}_{#1}$}
+\newcommand{\setwayidus}[1]{\setwayidu{#1}\space}
+\newcommand{\setwayid}{\setwayidu{\setwayii}}
+\newcommand{\setwayids}{\setwayidus{\setwayii}}
+
+\newcommand{\setwayidfu}[1]{$\setwayc^{\lhd\fullsymb}_{#1}$}
+\newcommand{\setwayidfus}[1]{\setwayidfu{#1}\space}
+\newcommand{\setwayidf}[1]{\setwayidfu{\setwayii}}
+\newcommand{\setwayidfs}[1]{\setwayidfus{\setwayii}}
+
+\newcommand{\setwayidsfu}[1]{$\setwayc^{\lhd\semifullsymb}_{#1}$}
+\newcommand{\setwayidsfus}[1]{\setwayidsfu{#1}\space}
+\newcommand{\setwayidsf}[1]{\setwayidsfu{\setwayii}}
+\newcommand{\setwayidsfs}[1]{\setwayidsfus{\setwayii}}
+
+\newcommand{\wayconst}{w}
+\newcommand{\wayi}{m}
+\newcommand{\wayu}[1]{$\wayconst_{#1}$}
+\newcommand{\waysu}[1]{\wayu{#1}\space}
+\newcommand{\way}{\wayu{\wayi}}
+\newcommand{\ways}{\way\space}
+
+\newcommand{\setpkc}{P}
+\newcommand{\pkconst}{p}
+\newcommand{\pkalli}{h}
+\newcommand{\setpk}{$\setpkc$}
+\newcommand{\setpks}{\setpk\space}
+\newcommand{\setpkf}{$\setpkc^{\fullsymb}$}
+\newcommand{\setpkfs}{\setpkf\space}
+\newcommand{\setpkallc}{\mathbb{\setpkc}}
+\newcommand{\setpkall}{$\setpkallc$}
+\newcommand{\setpkalls}{\setpkall\space}
+\newcommand{\subsetpkall}{\setpkall$_{\theta}$}
+\newcommand{\subsetpkalls}{\subsetpkall\space}
+\newcommand{\subpkf}{\Large$\rho$\normalsize}
+\newcommand{\subpkfs}{\subpkf\space}
+\newcommand{\subsetpk}{$\setpkc^\lhd$}
+\newcommand{\subsetpks}{\subsetpk\space}
+\newcommand{\subsetpkf}{$\setpkc^{\lhd\fullsymb}$}
+\newcommand{\subsetpkfs}{\subsetpkf\space}
+\newcommand{\pki}{x}
+\newcommand{\pku}[1]{$\pkconst_{#1}$}
+\newcommand{\pksu}[1]{\pku{#1}\space}
+\newcommand{\pk}{\pku{\pki}}
+\newcommand{\pks}{\pk\space}
+
+\newcommand{\setnetrc}{B}
+\newcommand{\setnetr}{$\setnetrc$}
+\newcommand{\setnetrs}{\setnetr\space}
+\newcommand{\netrconst}{b}
+\newcommand{\netri}{e}
+\newcommand{\netru}[1]{$\netrconst_{#1}$}
+\newcommand{\netrsu}[1]{\netru{#1}\space}
+\newcommand{\netr}{\netru{\netri}}
+\newcommand{\netrs}{\netr\space}
+
+\newcommand{\net}{$\eta$}
+\newcommand{\nets}{\net\space}
+
+\newcommand{\powerset}[1]{$2^{#1}$}
+\newcommand{\powersets}[1]{\powerset\space}
+\newcommand{\transmit}{$\varphi($\serv$,$ \setpk$)$}
+\newcommand{\transmits}{\transmit\space}
+\newcommand{\transmitr}{$\varphi($\repass$,$ \setpk$)$}
+\newcommand{\transmitrs}{\transmitr\space}
+\newcommand{\transmitru}[1]{$\varphi($\repassu{#1}$,$ \setpk$)$}
+\newcommand{\transmitrus}[1]{\transmitru{#1}\space}
+\newcommand{\transmitqu}[1]{$\varphi($#1$,$ \setpk$)$}
+\newcommand{\transmitqus}[1]{\transmitqu{#1}\space}
+\newcommand{\invert}[1]{$\sim$$($#1$)$}
+
+\begin{enumerate}
+
+  \item Seja \setnetrs $ = \{\netrconst_1, \netrconst_2, \netrconst_3, \ldots,
+$ \netr$\}$, onde $\netri \in \mathbb{N}$, o conjunto dos roteadores de uma
+rede de computadores, por exemplo, a Internet, tal que existe uma relação
+\setrepasss $\rightarrow$ \setnetrs que determina que os nós repassadores
+\repasss $\in$ \setrepasss podem sobrepor os roteadores em \setnetrs
+(\textit{overlay network}).
+
+  \item Seja \setservs $ = \{\servconst_1, \servconst_2, \servconst_3, \ldots,
+$ \serv$\}$, onde $\servi \in \mathbb{N}$, o conjunto finito de todos os nós
+servidores.
+
+  \item Seja \setrepasss $ = \{\repassconst_1, \repassconst_2, \repassconst_3,
+\ldots, $ \repass$\}$, onde $\repassi \in \mathbb{N}$, o conjunto finito de
+todos
+os nós repassadores.
+
+  \item Seja \setclis $ = \{\cliconst_1, \cliconst_2, \cliconst_3, \ldots,
+$ \cli$\}$, onde $\clii \in \mathbb{N}$, o conjunto finito de todos os nós
+clientes.
+
+  \item Seja $($\setpkall$,\prec) = \{\pkconst_1, \pkconst_2,
+\pkconst_3, \ldots, $\pku{\pkalli}$\}$, onde $\pkalli \in \mathbb{N}$,
+o conjunto \textit{totalmente ordenado (toset)}, sem repetição, dos pacotes de
+dados gerados pelos nós \servs $\in$ \setservs durante a transmissão de um
+evento ao vivo \event. Note que o símbolo $\prec$ é utilizado para representar
+precedência entre dois elementos diferentes.
+
+  \item Seja \transmission $= \{$\setserv, \setrepass, \subsetcli, \setpk$\}$,
+as relações e restrições estabelecidas entre os diferentes tipos de nós
+participantes de uma transmissão de um evento ao vivo \event, tal que:
+
+\begin{itemize}
+
+  \item Seja \subsetclis $:$ \repasss $\rightarrow$ \powerset{\setclic},
+$\forall$\repassu{\repassi_{1}},\repassu{\repassi_{2}} $\in$
+\setrepass, \subsetcli$($\repassu{\repassi_{1}}$)$ $\cap$
+\subsetcli$($\repassu{\repassi_{2}}$)$ = $\{\emptyset\}$, uma função tal que
+\subsetcli$($\repass$)$ denota todos os clientes relacionados a
+um nó repassador \repass, de modo que nenhum nó \clis $\in$ \setclis pode estar
+relacionado com dois ou mais nós \repass;
+
+  \item $($\setpk$,\prec) = \{\pkconst_{1},\pkconst_{2}, \pkconst_{3}, \ldots,
+$\pku{x}$\}$, onde $x \in \mathbb{N}$. Isto é, o conjunto \textit{parcialmente
+ordenado (poset)} dos pacotes de dados \pks transmitidos por um nó \servs ou
+por um nó \repass, também chamado de fluxo de pacotes de dados ou apenas fluxo
+de dados, de modo que:
+
+  \begin{itemize}
+    % se disser que P \subset P_{total} já é suficiente pra ser um P*?
+    \item Um fluxo de dados \setpks é dito \textit{fluxo completo},
+representado por \setpkf, se e somente se \setpks $\leftrightarrow$
+$\exists$\subsetpkalls (relação bijetora), tal que \subsetpkalls $\in$
+\powerset{\setpkallc} e \subsetpkalls $\neq \{\emptyset\}$. Ou seja, um
+\textit{fluxo completo} \setpkfs é um conjunto \textit{toset} e portanto
+não apresenta lacunas;
+
+    \item \subpkfs $: ($\pk$, $\setpk$) \rightarrow ($\subsetpk$, \prec) =
+\{$\pk, \pku{\pki+1}, \pku{\pki+2}, \pku{\pki+3}, $\ldots\}$, tal que
+\subsetpks $\subset$ \setpk, uma função \subpkf$($\pk$, $\setpk$)$ que define
+um sub-fluxo de pacotes de dados \setpks a partir de um determinado pacote \pks
+$\in$ \setpk. Neste caso, como \subsetpks $\subset$ \setpk, se \subsetpkfs
+$\rightarrow$ \setpkf.
+  \end{itemize}
+
+\end{itemize}
+
+  \item Seja \setrels $= \{\relconst_1, \relconst_2, \ldots,
+$\rel$\}$, o conjunto finito de todos os nós relatores de uma transmissão
+\transmission, onde:
+  \label{i:cons-mcc-ri}
+
+  \begin{itemize}
+    \item \subsetrels $\subset$ \setrel, tal que \subsetrels $\in$
+\powerset{\setclic_\subsetclii(\repassconst_\repassi)} e \subsetrels $\neq
+\{\emptyset\}$, o conjunto de nós relatores de um nó repassador \repass. Ou
+seja, qualquer nó cliente \clis $\in$ \subsetcli$($\repass$)$ pode atuar como
+um nó relator \rels de um nó repassador \repass, pois
+\subsetcli$($\repass$)$ $\cup$ \subsetrels $ = $ \subsetcli$($\repass$)$.
+
+  \end{itemize}
+
+  \item Seja \settranss $= \{$\transs$\mid$ \transs $\in$ \setservrepasss e
+\transmits $ = 1\}$, tal que \setservrepasss $=$ \setservs $\cup$ \setrepasss e
+$\transi \in \mathbb{N}$, o conjunto dos nós \servs e \repasss que transmitem ou
+repassam os pacotes de dados \pks $\in$ \setpk, onde:
+
+    \begin{itemize}
+
+      \item $\varphi:$ (\trans, \setpk) $\rightarrow \{0, 1\},
+\forall ($\trans, \setpk$) \in \{$\settrans$ \times \{$\setpk$\}\}$, uma função
+booleana que determina se um nó \transs $\in$ \settranss transmite o fluxo de
+dados \pks $\in$ \setpks de um evento \event, onde 0 e 1 denotam,
+respectivamente, \textit{falso} e \textit{verdadeiro}.
+
+    \end{itemize}
+
+  \item Seja $\eta = G($\setservrepass$,$ \setway$)$, um grafo formado com
+vértices de nós servidores e repassadores, que podem estar interligados
+entre si por um conjunto de diferentes caminhos \setway, onde:
+
+\begin{itemize}
+
+    \item \setway $= \bigcup^{\setwayii}_{\wayi=1}$ \setwayi, onde $\setwayii
+\in \mathbb{N}$ é a quantidade de todos os possíveis caminhos \setwayi. Isto é,
+\setways é o conjunto de todos os caminhos por onde o fluxo de dados \setpk,
+pode ser transmitido, sendo um caminho definido por um conjunto
+$($\setwayi,$\prec)$ totalmente ordenado (\textit{toset}):
+
+\begin{itemize}
+    \item $($\setwayi$,\prec) = \{$\ways $\mid$
+\serv$,\repassconst_{1},\repassconst_{2},\repassconst_3,
+\ldots, $\repass$\}$, tal que \serv$,$\repasss $\in$
+\setservrepasss, tal que $\forall$\way$,$\waysu{\wayi+1}$\in$ \setwayis $:$
+\way$ \prec$ \wayu{\wayi+1} e \setwayis $\neq \{\emptyset\}$. Isto é, \setwayis
+é um conjunto de nós que denota um dos possíveis caminhos por onde um fluxo de
+dados \pks $\in$ \setpks pode ser transmitido, obrigatoriamente a partir de um
+nó servidor \serv, chamado de pivô ou raiz, até um nó \repassu{1};
+
+    \item Um caminho \setwayis é dito \textit{caminho semi-completo},
+representado por \setwayisf, se e somente se \setwayis $\leftrightarrow$
+$\exists$\setnetr$_{\theta}$ (bijetora), tal que \setnetr$_{\theta}$
+$\in$ \powerset{\setnetrc} e \setnetr$_{\theta} \neq \{\emptyset\}$. Isto é,
+todos os roteadores \netrs $\in$ \setnetrs são sobrepostos por um nó \repasss
+$\in$ \setwayisf;
+
+    \item Um caminho \setwayis é dito \textit{caminho completo}, representado
+por \setwayif, se e somente se tal caminho for \setwayisfs e se $($\setwayisfs
+$-$ $\{$\serv$\})$ $\subset$ \settrans. Isto é, um caminho
+é completo se para todo nó $\forall$\ways $\in$ \setwayi, desconsiderando o nó
+\serv, todos os nós \repasss são transmitem o fluxo de dados \setpk.
+
+\end{itemize}
+
+    \item Seja $\sim$ $: ($\setwayi$,\prec)$ $\rightarrow ($\setwayi$,\succ)$,
+uma função reversa \invert{\setwayi} de um conjunto \textit{toset}.
+Isto é, se $($\setwayi$, \prec) = \{$\ways $\mid$
+\serv$,\repassconst_{1},\repassconst_{2},\ldots, $\repass$\}$, então
+\invert{\setwayi} $ = \{$\ways $\mid$
+\repass
+$,\repassconst_{\repassi-1},\repassconst_{\repassi-2},\ldots,\repassconst_{1},
+$\serv$\}$;
+
+    \item Seja $\delta : ($\trans$,$\setwayi$) \rightarrow
+($\setwayid$, \prec) = \{$\trans$,$\transu{\transi-1}$,$\transu{\transi-2}$,
+\ldots,$\transu{2}$,$\transu{1}$\}$, tal que \setwayids $\subset$ \setwayi,
+uma função $\delta($\trans$,$\setwayi$)$ que define um sub-caminho de \setwayis
+a partir de um nó \transs $\in$ \setwayis até um nó \transssu{1} $\in$
+\setwayi. Neste caso, como \setwayids $\subset$ \setwayi, tem-se que
+\setwayisfs $\rightarrow$ \setwayidsfs\space ou \setwayifs $\rightarrow$
+\setwayidfs\space;
+
+    \item O custo total para transmitir um pacote \pks $\in$ \setpk, através de
+um caminho \setwayi, é denotado pela função $\zeta :$ \setwayis $=
+\sum_{\setwayii=1}^{|\setwayc_\setwayii|} \gamma($\way$,$ \wayu{\wayi+1}$)$,
+tal que $\gamma$ é uma função que determina o custo para transmitir o pacote
+\pks entre dois nós distintos $\forall$\way$,$\wayu{\wayi+1} $\in$ \setwayi
+$:$ \way $\prec$ \wayu{\wayi+1}. No GMTP, utiliza-se a métrica atraso entre
+dois nós distintos para realizar o cálculo de custo, podendo-se utilizar
+outras métricas, como número total de saltos no caminho \setwayi;
+
+    \item Conjectura 1: $\forall$\repasss $\in$ \setrepasss e $\forall$\clis
+$\in$ \setcli, \repasss é mais estável que qualquer \clis com relação a sua
+disponibilidade e participação em uma rede de favores $\eta$. No ponto de vista
+das redes de computadores, um roteador torna-se indisponível com menos
+frequência (desconecta-se) se comparado com seus nós clientes. Como se sabe,
+nas transmissões de dados na Internet, a participação de um roteador no
+processo de transmissão de um fluxo de dados qualquer é fundamental, mesmo que
+seja apenas para rotear os pacotes de tal fluxo. Assim, dado que para um cliente
+receber um determinado pacote primeiramente este pacote deve passar pelo seu
+roteador padrão (de aborda), quando um roteador se desconecta, nenhum de seus
+clientes será capaz de receber os pacotes de dados, porém a recíproca não é
+verdadeira. Ou seja, caso um cliente se desconecte, outros clientes em sua
+mesma rede continuarão sendo capazes de receber um fluxo de dados encaminhados
+pelo seu roteador;
+
+    \item Conjectura 2: as tabelas de roteamento dos nós \ways $\in$ \setwayis
+não mudam frequentemente e são independentes umas das outras. No mundo real
+(Internet), as rotas entre quaisquer nós \cliu{\clii_1} e \cliu{\clii_2}
+$\in$ \setclis não se alteram com um nível de frequência que desestabilize a
+comunicação entre estes, apesar de se tratar de uma rede comutada por datagramas
+IP. Mesmo se estas mudanças ocorrerem em uma rota de um caminho \setwayi, o
+impacto causado é temporário e insignificante no ponto de vista da qualidade de
+experiência do usuário ao assistir a um evento \event.
+
+%   \item $\zeta:$ $\hat{r}_x$, $\hat{r}_y$, $\hat{t}_i$)} =
+% \textit{min$\{$cost($\hat{r}_y$, $\hat{r}_z$, $\hat{t}_i$)}$\}$, uma função
+% recursiva que determina o custo para um nó repassador $\hat{r}_x$ obter, a
+% partir de um nó repassador parceiro $\hat{r}_y$, um evento $\gamma$,
+% transmitido em $\hat{t}_i$. Sendo assim, \textit{cost($\hat{r}_x$,
+% $\forall\hat{r}_y$, $\hat{t}_i$)} $ = 0$ para $\hat{r}_x = \hat{t}_i$;
+
+
+%   \item f: \textit{link($\hat{r}_i$, $\hat{r}_j$)} $ =
+% \hat{r}_i \leftrightarrow \hat{r}_j$ ou f: \textit{link($\hat{r}_i$,
+% $\hat{s}$)} $ = \hat{r}_i \leftrightarrow \hat{s}$, uma função que relaciona um
+% nó $\hat{r}_i$
+% a um nó $\hat{r}_j$ $\mid$ $\hat{r}_i$ e $\hat{r}_j \in R_{\tau}$ ou a um nó
+% $\hat{s}$ $\mid$ $\hat{s} \in S_{\tau}$, respectivamente. A propriedade de
+% comutatividade de \textit{link()} é válida, ou seja, \textit{link($\hat{r}_i$,
+% $\hat{r}_j$)} $=$ \textit{link($\hat{r}_j$, $\hat{r}_i$)};;
+%   \label{i:linkrepass}
+
+\end{itemize}
+
+\end{enumerate}
+
+Desta forma, $\eta$ representa formalmente a rede de sobreposição constituída
+pelo GTMP (informalmente ilustratada na
+Figura~\ref{fig:cenario-global-detailed}), definindo-se as relações e restrições
+estabelecidas em \transmissions e as conjecturas consideradas para a execução de
+tal protocolo.
+
+Nas próximas seções, descrevem-se as funcionalidades do GMTP com base em
+$\eta$, explicando-se os mecanismos computacionais empregados no protocolo
+para a transmissão de um evento ao vivo \event. Para isto, utiliza-se uma
+abordagem \textit{top-down}, a partir do processo de constituição de $\eta$, em
+seguida discutindo-se aspectos inerantes ao processo de distribuição de
+conteúdos multimídia, que envolvem os nós em \transmission, \setclis e
+\setserv, e suas funções específicas.
+
+\section{Constituição da Rede de Favores \net}
+\label{sec:connformnet}
+
+A constituição da rede de favores \nets ocorre por meio do registro
+de participação de um ou mais \repasss $\in$ \setrepasss a um ou mais
+\servs$\in$ \setserv, direta ou indiretamente por meio de outros repassadores
+\repassu{q} $\in$ \setrepass. Todo esforço realizado nesse processo é visando
+otimizar a transmissão de um fluxo de pacotes \pks $\in P$ a um cliente \clis
+$\in$ \setcli, podendo ser distribuído pelos nós \repasss por meio de diferentes
+caminhos \setwayis $\in$ \setway. Por este motivo, o GMTP busca
+determinar um caminho sub-ótimo \setwayiu{\theta} para que a experiência de um
+usuário ao assistir um evento \events seja a melhor possíveis, segundo as
+métricas estabelecidas anteriormente. Em outras palavras, busca-se sempre o
+melhor caminho \setwayiu{\theta} tal que
+$\zeta($\setwayiu{\theta}$) < \zeta((\forall$\setwayis $\in$ \setways e
+\setwayiu{\theta} $\neq$ \setwayi$))$ e, sempre que possível, com
+\setwayifu{\theta}.
+
+\subsection{Registro de participação de \repasss em \net}
+\label{subsec:registro-participacao}
+
+O procedimento de registro de participação de um nó \repasss em uma rede $\eta$
+ é o primeiro passo, e um dos mais importantes. Um nó \repasss envia uma
+mensagem de registro de participação a um nó \servs utilizando o pacote
+GMTP\_REGISTER, que constituirá um caminho \setwayi. Para isto, todos os nós
+\repasss no caminho entre \repasss e \servs alteram o pacote GMTP\_REGISTER,
+adicionando seu identificador único que, na prática, é o endereço IP. Quando o
+pacote GMTP\_REGISTER alcança seu destino (\serv), nele conterá a lista ordenada
+de todos os nós repassadores até \serv, que de fato é um caminho \setwayis
+entre \repasss até \serv. Tal informação é enviada de volta ao nó \repasss por
+meio do pacote GMTP\_REGISTER\_REPLY. Posteriormente, \setwayis é utilizado no
+processo de formação de parcerias, a ser discutido mais adiante na
+Seção~\ref{sec:descparc}.
+
+O interessante no GMTP é que o registro de participação ocorre quando um nó
+deseja participar da rede de sobreposição, não necessariamente quando
+se deseja obter um fluxo de dados multimídia para assistir a um evento \event.
+Em ambos os casos, o algoritmo de registro de participação é o mesmo. A
+diferença primordial é que se um \repasss solicitar previamente um registro de
+participação a um \serv, inicialmente sem interesse por um evento \events
+qualquer, será possível mapeá-lo mais rapidamente para seleção de um subconjunto
+de possíveis nós parcerios \repassu{q}. Neste caso, pode-se utilizar \repasss
+para repassar pacotes de dados \pks mesmo quando \subsetcli$($\repass$) =
+\{\emptyset\}$. De forma similar, caso $\exists$\clis $\in$
+\subsetcli$($\repass$)$ interessado em \events e \transmitr \space$ =1$,
+pode-se reduzir o tempo de início de reprodução do fluxo de dados \setpk,
+bastando para isto \repasss começar a encaminhar o fluxo de dados \setpks para
+o nó \cli, o que ocorre em modo multicast. Este assunto será retomado na
+Seção~\ref{subsec:modostrans}.
+
+No Trecho de Código \ref{algo:registerRelay}, apresenta-se o pseudo-algoritmo
+utilizado por um nó repassador \repasss para se registrar a um nó servidor
+\serv. Note que o processo de registro não requer que um nó repassador
+\repasss registre qualquer interesse sobre um evento \event. Além disso, no
+final do procedimento do registro de participação, o nó \repasss passa a
+conhecer sobre \setwayis através do pacote GMTP\_REGISTER\_REPLY (linha
+\ref{ln:parsepath}). Note também que no GMTP toda transferência de pacotes de
+controle é feita com garantia de entrega, com os nomes das funções representadas
+com o sufixo \textit{Rdt} (\textit{reliable data transfer}).
+
+Uma outra decisão importante tomada no GMTP é que um nó repassador \repasss
+deve periodicamente sinalizar sua participação na rede de favores
+(\textit{keep-alive}), ou seja, após o registro de participação, o repassador
+\repasss precisa enviar periodicamente sinalizações de controle
+(\textit{polling}) sobre sua participação na rede de favores. Um repassador
+\repasss também sinaliza sua desconexão a \servs quando não desejar mais
+participar da rede de favores $\eta$.\\
+
+\newcommand{\attrib}{$\leftarrow$ }
+
+\begin{algorithm}[H]
+\label{algo:registerRelay}
+\SetAlgoLined
+
+\SetKwFunction{Union}{Union}\SetKwFunction{makePkt}{makePkt}
+\SetKwFunction{Union}{Union}\SetKwFunction{recvPktRdt}{recvPktRdt}
+\SetKwFunction{Union}{Union}\SetKwFunction{sendPktRdt}{sendPktRdt}
+\SetKwFunction{Union}{Union}\SetKwFunction{getCurrRegedServers}{
+getCurrRegedServers}
+\SetKwFunction{Union}{Union}\SetKwFunction{parsePath}{parsePath}
+\SetKwFunction{Union}{Union}\SetKwFunction{length}{length}
+
+servs \attrib \getCurrRegedServers()\tcc*[r]{servs $\subset
+S$}
+
+pkt \attrib \makePkt{GMTP\_REGISTER, \serv}\tcc*[r]{register request}
+
+\If(){pkt = OK}{
+  \sendPktRdt{pkt}\tcc*[r]{send request pkt of \repasss to \serv}
+  pkt \attrib \recvPktRdt{GMTP\_REGISTER\_REPLY}\;
+  \uIf{pkt = OK}{
+    servs[\length{servs}] \attrib \serv\;
+    \setwayis $\leftarrow$ \parsePath(pkt)\tcc*[r]{get the \setwayis until
+\serv} \nllabel{ln:parsepath}
+    \If(){\clis $\neq$ NULL}{
+      \tcc{notify \clis that \repasss is registered in \serv}
+      pkt $ \leftarrow$ \makePkt{GMTP\_CONN\_REPLY(1), \cli}\;
+      \sendPktRdt{pkt}\;
+    }
+  }
+  \Else{\tcc{Notify admin or try again or...}
+    \If(){\clis $\neq$ NULL}{
+      \tcc{impossible to register \repasss in \serv. Notify \cli.}
+    }
+  }
+}
+
+\Return servs;
+\caption{registerRelay(\serv, \clis = nulo)}
+\end{algorithm}
+\vspace{0.8cm}
+
+Assim, o registro de participação de um nó \repasss gera um conjunto de
+caminhos \setways por onde um fluxo de dados \setpks pode ser transmitido.
+Sendo assim, quanto mais nós \repasss se registrarem em nós \serv, mais
+caminhos \setwayis serão conhecidos e portanto quanto mais caminhos forem
+conhecidos, mais parcerias poderão ser formadas entre os nós \repass.
+Consequentemente, quanto mais parcerias formadas, maior será o número
+de nós \clis capazes de receber um fluxo de dados \setpks originado em \serv,
+mas disponíveis através dos seus respectivos nós \repasss ou de seus parceiros.
+
+\subsection{Seleção de Nós}
+\label{sec:descparc}
+
+Nesta seção, discute-se sobre o processo de seleção de nós parceiros
+\repassu{q}, os quais auxiliam \repasss a obter um fluxo de dados \setpks
+(Figura~\ref{fig:bucket-brigade-principle-5}).
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[natwidth=421,natheight=240,scale=.72]{imgs/bucket-brigade-principle-5.png}
+\end{center}
+\vspace{-0.8cm}
+\caption{Um usuário precisa descobrir e selecionar seus parceiros.}
+\label{fig:bucket-brigade-principle-5}
+\end{figure}
+
+No GMTP, implementam-se os seguintes métodos para formação de parcerias,
+que são executados em paralelo, durante a transmissão de um fluxo de dados
+\setpks de um evento \event.
+
+\begin{enumerate}
+ \item Formação de parcerias intra \setwayi;
+ \item Formação de parcerias por intersecção de \setwayi; e
+ \item Formação de parcerias por combinação de \setwayi.
+\end{enumerate}
+
+\subsubsection{Formação de parceria intra \setwayi:}
+\label{subsec:parcintra}
+
+No protocolo GMTP, os nós \ways $\in$ \setwayis são automaticamente
+considerados parceiros entre si e por isto qualquer \ways pode repassar um
+fluxo de dados \setpks para o nó \repasss em questão. Dessa forma, qualquer nó
+pode agir como se fosse um nó \serv, sendo este o método mais simples e direto
+que um nó \repasss pode fazer para obter um fluxo de dados \setpk. Na
+Figura~\ref{fig:esquema-abstrato-formacao-parceria-intra}, Passos 1 e 2,
+ilustra-se essa
+abordagem.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=.5]{imgs/esquema-abstrato-formacao-parceria-intra.pdf}
+\end{center}
+\vspace{-0.8cm}
+\caption{Cenário e passos para seleção de nós intra caminhos \setwayi.}
+\label{fig:esquema-abstrato-formacao-parceria-intra}
+\end{figure}
+
+No Passo 1, ilustra-se um cenário de rede com 19 nós \repasss e dois nós \serv.
+No Passo 2, ilustra-se o pedido de registro de participação do nó \repassu{9}
+ao nó \servu{2}, o que constitui o caminho \setwayiu{1}. Este processo pode se
+repetir ao longo da rede, sendo necessário apenas armazenar o caminho \setwayis
+sem precisar manter conexão entre os nós de um dado caminho \setwayis -- vide
+Conjecturas 1 e 2, apresentadas na Seção~\ref{sec:defsrests}. Tal abordagem é
+interessante porque quando um nó \repasss solicita o fluxo de dados \setpks de
+um evento \event, motivado por algum nó \clis $\in$ \subsetcli$($\repass$)$, um
+nó \ways pode enviar uma resposta a \repasss como se fosse o servidor \serv, se
+\transmitqu{\way} $=1$.
+
+Dessa forma, permite-se que \repasss descubra mais rapidamente outros
+candidatos a parceiros \repassu{q}, tal que \transmitru{q} $ = 1$,
+efetivando-se parcerias quando ocorrer \subsetcli$($\repass$)\neq
+\{\emptyset\}$, incluindo possíveis parcerias com os próprios nós em
+\setwayid\space $=$ \invert{$\delta($\repassu{q+1}, \setwayi$)$}, em
+caso de desconexão prematura de \repassu{q}, por exemplo. Neste exemplo, o nó
+\repasss é adicionado ao caminho \setwayid, tal que \repasss $\prec$
+\repassu{q+1}. Isto permite reduzir o tempo de (re)início de reprodução do
+evento \events por um nó \cli, contribuindo na melhoria na qualidade de
+experiência do usuário. Aspectos sobre desconexões e as ações realizadas pelo
+GMTP nesse contexto são discutidos na Seção~\ref{subsec:desconexao}.
+
+\subsubsection{Formação de parceria por intersecção de \setwayi:}
+\label{subsec:parcintersec}
+
+O processo de formação de parcerias por intersecção ocorre pela
+identificação de um ou mais nós comuns a dois caminhos \setwayi. Esse caso é
+ilustrado nos Passos 1 e 2 na
+Figura~\ref{fig:esquema-abstrato-formacao-parceria-interseccao}.
+
+Após o registro de participação de \repassu{9} e a consequente constituição de
+\setwayiu{1} (Figura~\ref{fig:esquema-abstrato-formacao-parceria-intra}), se o
+nó \repassu{11} também solicitar o registro de participação (Passo 1 da
+Figura~\ref{fig:esquema-abstrato-formacao-parceria-interseccao}), \repassu{7}
+se torna candidato a parceiro de \repassu{11}, \setwayiu{1} $\cap$
+\setwayiu{2} = \{\servu{2}, \repassu{5}, \repassu{6}, \repassu{7}\} (Passo 4).
+Assim, para este exemplo, o método de formação de parcerias por interseção de
+\setwayis cobrirá o seguinte caso: após o primeiro nó \clis $\in$
+$\sum^{12}_{\repassi=8}$\subsetcli$($\repass$)$ solicitar o fluxo de dados
+\setpk, o nó \repassu{7} será o nó comum entre os caminhos
+\setwayiu{1} e \setwayiu{2} e o mais próximo de qualquer nó abaixo dele, tal
+que \transmitqu{\repassu{7}} $=1$. Dessa forma, para as próximas
+requisições para obter o fluxo de dados \setpk, originadas por $\forall$\clis
+$\in$ $\sum^{12}_{\repassi=8}$\subsetcli$($\repass$)$, motivará algum nó
+\repassu{\repassi=8..12} a enviar tal requisição para \servu{2}, que passará
+obrigatoriamente por \repassu{7}, que a interceptará e responderá para o nó
+\repasss correspondente, como se fosse o nó \servu{2}. Aspectos relacionados ao
+envio de dados nesse contexto serão discutidos na Seção~\ref{sec:asptransrecep}.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=.5]{imgs/esquema-abstrato-formacao-parceria-interseccao.pdf}
+\end{center}
+\vspace{-0.8cm}
+\caption{Cenário e passos para seleção de nós por interseção de caminhos
+\setwayi.}
+\label{fig:esquema-abstrato-formacao-parceria-interseccao}
+\end{figure}
+
+\subsubsection{Formação de parceria por combinação de \setwayi:}
+\label{subsec:parccombina}
+
+O método de seleção de nós por meio da combinação de caminhos \setwayis
+considera um nó \textit{pivot} \servs e o conjunto \setways de caminhos
+conhecidos, mas que não se interceptam (Passo 1 na
+Figura~\ref{fig:esquema-abstrato-formacao-parceria-combinacao}). Tais caminhos
+também são constituídos pelo processo de registros de participação de um nó
+\repass, porém o nó \servs é responsável por determinar candidados a parcerios
+de um determinado nó \repass. Note que este é o único caso que o nó \servs
+participa do processo de formação de parcerias. Isto é possível porque um nó
+\servs conhece um conjunto de caminhos \setwayis $\subset$ \setways gerados no
+processo de registro de participação de cada nó \repasss em \servs (Passo 2).
+No exemplo da Figura~\ref{fig:esquema-abstrato-formacao-parceria-combinacao},
+\servu{2} conhece os caminhos \setwayiu{1} e \setwayiu{3} e pode compartilhar
+essa informação com o nó \servu{1}.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=.5]{imgs/esquema-abstrato-formacao-parceria-combinacao.pdf}
+\end{center}
+\vspace{-0.8cm}
+\caption{Cenário e passos para seleção de nós por combinação de caminhos
+\setwayi.}
+\label{fig:esquema-abstrato-formacao-parceria-combinacao}
+\end{figure}
+
+Em geral, o algoritmo funciona da seguinte forma: \servs processa os caminhos
+\setwayis conhecidos e determina quais são os melhores parceiros para um
+determinado nó \repass, sendo tal informação enviada para \repass. No caso do
+cenário ilustrado na
+Figura~\ref{fig:esquema-abstrato-formacao-parceria-combinacao}, Passo 2, é
+possível combinar os caminhos \setwayiu{1} e \setwayiu{2} pelos nós \repassu{6}
+e o \repassu{15}. Nesse caso, existem duas opções, ilustradas nos Passos 3 e 4.
+A primeira opção é o nó \repassu{6} repassar o fluxo de dados \setpks para o nó
+\repassu{15}, através do nó \repassu{14} (Passo 3). A segunda opção é o nó
+\repassu{15} repassar o fluxo de dados \setpks para o nó \repassu{6}.
+
+No Trecho de Código~\ref{algo:findPartnerCombinePath},
+apresenta-se um pseudo-algoritmo sobre como esse mecanismo funciona, executado
+em \serv.\\
+
+\begin{algorithm}[H]
+\label{algo:findPartnerCombinePath}
+\SetAlgoLined
+\KwData{\textit{relayPartners} \attrib [ ]}
+
+\SetKwFunction{Union}{Union}\SetKwFunction{make_pkt}{make\_pkt}
+\SetKwFunction{Union}{Union}\SetKwFunction{recv_pkt_rdt}{recv\_pkt\_rdt}
+\SetKwFunction{Union}{Union}\SetKwFunction{send_pkt_rdt}{send\_pkt\_rdt}
+\SetKwFunction{Union}{Union}\SetKwFunction{getKnownPaths}{getKnownPaths}
+\SetKwFunction{Union}{Union}\SetKwFunction{matchSimilarPath}{matchSimilarPath}
+\SetKwFunction{Union}{Union}\SetKwFunction{parse_path}{parse\_path}
+\SetKwFunction{Union}{Union}\SetKwFunction{length}{length}
+
+mspf \attrib 0.4\tcc*[r]{paths are considered similar if similarity level is
+equal or above mspf value}
+pathSet \attrib \getKnownPaths{}\tcc*[r]{get \setways known in this \serv}
+
+\ForEach{\setwayiu{x} $\in$ \setway}{
+  \If(){\matchSimilarPath{\setwayiu{x}, \setwayis} >= mspf}{
+    \tcc{Get the closest partner in the path (intersection between \setwayiu{x}
+and \setwayi) and add to the list of prospective partners for \repass.}
+
+    prosRelay = NULL\;
+    \ForEach{\ways $\in$ \setwayiu{x}} {
+      \If(){\ways $\in$ \setwayi} {
+	\textit{relayPartners}[\length{relayPartners}] \attrib prosRelay\;
+      }
+    }
+  }
+}
+
+pkt $ \leftarrow$ make\_pkt(GMTP\_ADV\_RELAY(\textit{relayPartners}), \repass)\;
+
+send\_pkt\_rdt(pkt)\;
+
+\caption{matchPartnersByPathIntersection(\setwayi, \repass)}
+\end{algorithm}
+\vspace{0.8cm}
+
+Note que, os nós \servs podem trocar informações sobre os caminhos \setways
+através da rede CDN, tornando-as disponíveis através da chamada da função
+\textit{getKnownPaths()}. Este compartilhamento pode otimizar, ainda mais, o
+processo de formação de parcerias entre os nós em \setrepass. Apesar disso ser
+possível, em geral, isso não é necessário, principalmente considerando
+transmissão de eventos em tempo real com suporte a um rede CDN. Isto porque o
+tráfego de fluxos de dados \setpks termina se concentrando em uma região devido
+ao mecanismo de balanceamento de carga empregado na CDN e portanto o servidor
+alocado pela infra-estrutura da CDN é sempre o ideal para o nó \clis
+interessado em \setpk. Na prática, o GMTP não considera a troca de caminhos
+\setways entre servidores \serv. Em vez disso, no GMTP, caso nenhum nó
+\repassu{q} $\in$ \setwayis seja capaz de interceptar uma requisição de
+\repasss $\in$ \setwayi, naturalmente tal requisição alcançará o nó \servs
+$\in$ \setwayis, pois o endereço de destino da requisição sempre é o de \serv.
+A partir desse ponto, cria-se a possibilidade de algum nó \ways $\in$ \setwayis
+interceptar requisições de outros nós \repass.
+
+Note que isto não significa que \repasss fará parcerias com todos os nós
+\repasss indicados por \serv. As parcerias serão efetivadas apenas de acordo
+com os interesses individuais de cada nó \repasss por um fluxo de dados \setpk.
+Este aspecto é discutido em mais detalhes quando a função de requisição de um
+fluxo for apresentada na Seção~\ref{sec:asptransrecep}.
+
+Com base na Conjectura 1, se um nó \repasss realizar seu registro de
+participação antes de uma solicitação de um nó \cli, interessado por
+um evento \event, pode-se formar parcerias de melhor qualidade para transmitir
+que o fluxo de dados \setpk. Por exemplo, considere \repassu{q} $\in$
+\settrans $-$\setserv$_{s}$, definido para uma transmissão \transmission.
+Pode-se determinar previamente um sub-caminho $\delta($\repassu{q},
+\setwayi$)$, tal que \repasss possa realizar uma parceria com \repassu{q},
+quando um nó \clis $\in$ \subsetcli$($\repass$)$ estiver interessado em
+assistir a \event. Este procedimento pode ser realizado através da interseção
+de dois ou mais caminhos \setwayi, baseando-se em um nó pivô \servs $\in$
+\setwayi, que origina o fluxo de dados \setpk. Além disso, periodicamente os
+nós \repasss avaliam a disponibilidade de cada \setwayis conhecido e atualiza
+uma tabela que armazena informações relacionadas as métricas de qualidade de
+serviço, como o atraso fim-a-fim.
+
+\subsection{Sobre o melhor caminho \setwayi}
+\label{subsec:melhorcaminho}
+
+De acordo com os métodos empregados de seleção de nós, é possível obter
+diferentes caminhos \setwayi, partindo-se de um nó \repasss para um nó \serv.
+Por este motivo, é importante definir, a partir de um conjunto de caminhos
+possíveis, qual é o melhor caminho a utilizar e ordená-los de acordo com a
+prioridade de uso. Com isto, é possível obter \setpks a partir de múltiplos
+\repasss e usar caminhos alternativos em caso de falha de algum caminho, por
+exemplo, por desconexão. No GMTP, a ordem de prioridade para uso de cada
+caminho \setwayis é determinada de acordo com dois critérios:
+
+\begin{enumerate}
+  \item Menor atraso fim-a-fim entre \repasss e \serv; \label{i:c-atraso}
+  \item Maior tempo de disponibilidade dos nós \ways $\in$ \setwayi;
+\label{i:c-uptime}
+  \item Menor número de nós \ways $\in$ \setwayi; \label{i:c-nnos}
+  \item Se o caminho for \setwayif; \label{i:c-waycomp}
+  \item Escolha aleatória de \setwayis entre os \setways conhecidos.
+\label{i:c-aleat}
+\end{enumerate}
+
+O critério~\ref{i:c-atraso} é determinado através da medição do RTT. O
+critério~\ref{i:c-uptime} é obtido através de tal informação compartilhada por
+cada nó \ways $\in$ \setwayi. O critério~\ref{i:c-nnos} é determinado pela
+contagem simples do número de \ways $\in$ \setwayi. O
+critério~\ref{i:c-waycomp} é determinado através da verificação da condição
+$\mid$\setwayi$\mid$ $=$ $ttl($\repass$,$\setwayi$)$, onde \textit{ttl} é uma
+função que determina o número de saltos entre o nó \repasss até o último nó
+\ways $\in$ \setwayi, que é um nó \serv. Na prática, este valor pode ser obtido
+através do valor do campo TTL (\textit{Time-to-Live}), disponível no cabeçalho
+IP de qualquer pacote. O critério~\ref{i:c-aleat} é utilizado em caso de não
+determinação do melhor \setwayis até o critério anterior.
+
+Note que no GMTP é possível que um nó \repasss tenha simultaneamente mais de um
+nó \repasss parceiro, porém não mais do que uma certa qualidade configurável
+devido ao fato de que os pacotes \pks dos fluxos \setpk serem transientes,
+portanto não faz sentido realizar muitas parcerias. No caso do GMTP, a
+quantidade máxima padrão de parcerias que um nós \repasss realiza é $5$, valor
+praticado em outros soluções similares para transmissão de fluxos de dados ao
+vivo baseados em arquitetura P2P.
+
+\section{Distribuição de \setpks em \net}
+\label{sec:asptransrecep}
+
+No GMTP, a transmissão de dados é feita utilizando uma estratégia híbrida
+\textit{pull/push} para obtenção do fluxo de dados \setpk. O método
+\textit{push} é adotado como padrão, onde os nós \servs iniciam a
+transmissão de \pks $\in$ \setpks para os demais nós \ways
+$\in$ \setwayi, onde \wayu{1} $=$ \serv. Já o método \textit{pull} é utilizado
+quando um nó \clis precisa obter parte de uma mídia que está prestes a ser
+reproduzida e ainda não foi repassada por um nó \repasss via \textit{push}, de
+acordo com o seu mapa de \textit{buffer}. Os nós \repasss e \clis mantêm seus
+próprios mapas de \textit{buffer}, sendo que um no \repasss sempre terá um mapa
+de \textit{buffer} mais atualizado do que os mapas de \textit{buffer} dos
+seus clientes.
+
+Nessa seção, apresentam-se detalhes sobre como o GMTP realiza a disseminação de
+\setpks e como os nós \clis recebem tal conteúdo para reprodução, discutindo-se
+aspectos sobre indexação de conteúdos, requisição e recepção de uma mídia,
+compartilhamento e controle de congestionamento.
+
+\subsection{Indexação de Conteúdo}
+\label{subsec:content-index}
+
+No GMTP, um fluxo de dados \setpks tem um nome único que o identifica em
+qualquer nó, seguindo o princípio das redes centradas no conteúdo. Sendo assim,
+todo evento \events é identificado por um nome que é utilizado por qualquer nó
+para solicitar o fluxo de dados \setpks corresponte a \event.
+
+No caso do GMTP, um nome para o evento é definido por um UUID
+(\textit{Universally Unique IDentifier}) de 128 bits~\cite{RFC4122}. Na sua
+forma canônica, um evento \events é representado por uma sequência de 32
+dígitos hexadecimal, exibidos em cinco grupos separados por hífen, na forma de
+\{8\}-\{4\}-\{4\}-\{4\}-\{12\}. Por exemplo, \events $=$
+641f931f-d3ac-50e3-b625-537574541f1f.
+
+O identificador de um evento \events é criado pelo nó \servs que gera a mídia,
+e o divulga através de um serviço similar ao DNS ou por meio de uma busca
+de diretório. Além disso, um nó GMTP poderá requisitar uma lista dos fluxos
+transmitidos por \serv. De posse de um identificador para um evento \event, um
+nó GMTP poderá solicitar \setpks de \events aos seus nós parceiros ou
+diretamente a um nó \serv. A divulgação dos identificadores de todos os eventos
+transmitidos por um nó \serv é feito no seguinte formato textual e consultado
+pelo registro do tipo SID (\textit{Streaming IDentifier}) do DNS. Por exemplo,
+suponha um serviço de distribuição de conteúdos multimídia da Rede Globo de
+Televisão, uma requisição poderá ocorrer como ilustrado no Trecho de
+Código~\ref{algo:requestDNS}, utilizando qualquer ferramenta de resolução de
+nomes por tipo de registro a um servidor DNS. Note que três eventos estão
+registrados, identificados pelos seus respectivos nomes.\\
+
+\newcommand{\bigspace}{~~~~~}
+
+\begin{algorithm}[H]
+\label{algo:requestDNS}
+\SetAlgoLined
+
+\textbf{dig} -t SID globo.com\\
+\textbf{QUESTION SECTION:}\\
+\bigspace globo.com.\bigspace IN\bigspace SID\\
+
+\textbf{ANSWER SECTION:}\\
+\bigspace globo.com.\bigspace IN\bigspace SID\bigspace
+"111f931f-d3ac-10e3-b62f-f17f74541f1f"\\
+\bigspace globo.com.\bigspace IN\bigspace SID\bigspace
+"72c44591-7d82-427c-825f-722f015787c1"\\
+\bigspace globo.com.\bigspace IN\bigspace SID\bigspace
+"0bb0b9f5-f57d-4da5-8a6c-13acf1965188"\\
+
+\textbf{SUMMARY:}\\
+\bigspace Query time: 4 msec\\
+\bigspace SERVER: 192.168.1.252:53(192.168.1.252)\\
+\bigspace WHEN: Tue Jul 16 15:44:25 2013\\
+
+\caption{Requisição da lista de eventos de um distribuidor de conteúdo.}
+\end{algorithm}
+\vspace{0.8cm}
+
+\subsection{Estabelecimento de conexão e compartilhamento para obter \setpk}
+\label{subsec:conexao-requisicao}
+
+O processo de conexão do protocolo \mudccps é separado em três fases. A
+primeira acontece quando um nó qualquer \cliu{1} deseja obter \setpks
+transmitido por um nó \servs e não existe nenhum outro nó \clis em sua rede
+local recebendo \setpks (passos 1 e 2 da Figura~\ref{fig:processo-conexao})
+através de um nó \repass, tal que \cliu{1} $\in$ \subsetcli$($\repass$)$. A
+segunda fase acontece quando um novo nó \cliu{2} $\in$
+\subsetcli$($\repass$)$ deseja obter o mesmo fluxo \setpks do nó \cliu{1}
+(passos 3 e 4 da Figura~\ref{fig:processo-conexao}). E, por fim, a terceira
+fase acontece quando o nó \repasss começa a buscar novos parceiros a fim de
+obter \setpks de mais outros nós parceiros.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=.8]{imgs/processo-conexao.pdf}
+\end{center}
+\vspace{-1cm}
+\caption{Processo Básico de Estabelecimento de Conexão do \mudccp.}
+\label{fig:processo-conexao}
+\end{figure}
+
+\subsection{Fase 1: primeira requisição a um fluxo \setpk}
+\label{subsec:conn-fase1}
+
+Na primeira fase, o nó \cliu{1} envia um pedido de conexão para o nó \serv, que
+é interceptado por \repass, cuja principal responsabilidade é repassar \setpks
+para quaisquer outros nós \clis $\in$ \subsetcli$($\repass$)$.
+
+O estabelecimento de uma conexão \mudccps ocorre quando um nó \clis cria um
+socket e envia um pacote do tipo \pac{GMTP-Request} contendo o nome do fluxo
+\setpk (camada de transporte), destinado ao nó \serv (camada de rede). Como na
+fase $1$ assume-se que não existe nenhum nó \clis recebendo o fluxo \setpks, o
+pacote \pac{GMTP-Request} alcança obrigatoriamente seu nó repassador
+\repassu{1}, que verifica a inexistência do registro de recepção do fluxo
+\setpks e por isso roteia o pacote \pac{GMTP-Request} com destino ao nó \servs
+correspondente. À medida que o pacote \pac{\mudccp-Request} é repassado através
+dos nós \repasss $\in$ \setway, selecionado conforme discutido na
+Seção~\ref{sec:descparc}, cada nó \repasss que o processa verifica se existe
+registro de recepção do fluxo \setpk. Se a verificação for válida, o respectivo
+nó \repasss envia um pacote do tipo \pac{GMTP-Response} para \repassu{1} que,
+ao recebê-lo, registra a recepção de \setpk, usa \pac{GMTP-RequestNotify}
+para notificar \cliu{1} que o fluxo \setpk será iniciado e envia um pacote do
+tipo \pac{GMTP-ResponseAck} para o nó \repass. Neste ponto, conclui-se a fase
+$1$ do processo de estabelecimento de conexão e o fluxo \setpk começa a ser
+transmitido entre os nós \repassu{1} e \repass.
+
+\subsection{Fase 2: próximas requisições para obter \setpk}
+
+A fase $2$ de conexão ocorre quando futuras requisições a \setpk ocontecerem
+após a fase $1$, originadas por qualquer nó \clis $\in$
+\subsetcli$($\repassu{1}$)$. Tais solicitações são também interceptadas por
+\repassu{1}, que confirma a existência de recepção
+de fluxo \setpks e o repassa também para o nó \clis solicitante, notificando
+\clis, por exemplo, \cliu{2}, usando o pacote do tipo \pac{GMTP-RequestNotify},
+tal como ocorreu na fase $1$, porém com uma diferença: a configuração de um
+canal de transmissão multicast na rede local.
+
+O canal de transmissão multicast é configurado para atender ao mesmo tempo os
+nós \cliu{1} e \cliu{2}, ao permitir o envio do fluxo de dados \setpks para um
+grupo multicast configurado dinamicamente pelo nó \repass. A configuração
+automática consiste em gerar aleatoriamente um número de porta e enviar um
+pacote do tipo \pac{GMTP-RequestNotify} contendo tal informação e com a flag
+binária chamada multicast ativada. Após a crição de tal pacote, \repassu{1} o
+envia para o nó \cliu{2} e também notifica \cliu{1}, que então realiza as
+configurações devidas para receber o fluxo em modo \textit{multicast}. Além do
+bit de sinalização multicast, o pacote do tipo \pac{GMTP-RequestNotify} também
+contém um campo de endereço IP (\ut{32}{bits}), que especificará qual endereço
+IP o nó \repass passará a transmitir os dados (canal de repasse), e mais um
+campo para especificar o número de porta (\ut{16}{bits}), que especifica a porta
+correspondente ao canal de repasse.
+
+\subsection{Fase 3: busca por mais parceiros \repasss para obter \setpk}
+
+Na fase $3$, o nó \repasss inicia um processo de aumentar suas parcerias a fim
+de obter mais rapidamente os pacotes \pks $\in$ \setpks e caminhos \setways alternativos
+em caso de falha e/ou desconexões de algum nó parceiro \repass. Ao considerar
+os aspectos discutido na Seção~\ref{sec:descparc}, nota-se que na Fase $1$ e
+$2$ utiliza-se os modos de formação de parcerias intra \setways e por
+intersecção, porém ainda resta fazer uso do modo de formação de parceria por
+combinação de \setway
+(Figura~\ref{fig:esquema-abstrato-formacao-parceria-combinacao}). Na fase $3$ de
+conexão, o GMTP explora tal recurso.
+
+Nesse contexto, seja um nó \repassu{3} que esteja recebendo \setpks originado
+em um nó \serv. Para conseguir mais nós parceiros, o nó \repassu{3} envia uma
+requisição do tipo \pac{GMTP-RelayQuery} para \servs e obtém um subconjunto de
+nós \repasss candidatos a parceiro de \repassu{3}, como ilustrado na
+Figura~\ref{fig:conn-phase3-1}. Note que a lista de nós parceiros enviada pelo
+nó \servs é construída usando o algoritmo~\ref{algo:findPartnerCombinePath} e
+portanto os nós \servs funcionam como um indexador (\textit{tracker}) de nós
+parceiros, executando uma pré-seleção de nós parcerios para \repassu{3}. Esta
+pré-seleção ajuda o nó \repassu{3} a selecionar os melhores parcerios
+disponíveis, de acordo com os critérios definidos
+em~\ref{subsec:melhorcaminho}.
+
+Diante do exposto, faz-se necessário registrar três procedimentos importantes
+realizados pelo GMTP na Fase $3$:
+
+\begin{enumerate}
+
+  \item um nó \repasss pode enviar periodicamente requisições do tipo
+\pac{GMTP-RelayQuery} para o servidor a fim de descobrir melhores parceiros e
+aumentar seu leque de opções. Apesar disso, a quantidade de possíveis parcerios
+de um nó \repasss não significa, necessariamente, que tal nó mantém a mesma
+quantidade de parcerias efetivas para obter um fluxo de dados \setpk. Os
+parâmetros de periodicidade de requisições do tipo \pac{GMTP-RelayQuery} e a
+quantidade máxima de parcerias efetivas pode ser alteradas pelo administrador
+de \repasss e tem valores padrões de 10 minutos e 5 nós, respectivamente;
+
+  \item como ilustra-se na Figur~\ref{fig:conn-phase3-2}, apenas na Fase $3$,
+permite-se requisições do tipo \pac{GMTP-Request} partindo de um nó
+\repassu{\repassi_{3}} em direção a outro nó \repassu{\repassi_{2}}, que irá
+enviar um resposta do tipo \pac{GMTP-Response} se \repassu{\repassi_{1}} enviar
+uma chave secreta aceita por \repassu{\repassi_{2}} e encaminhada para
+\repassu{\repassi_{1}} pelo nó \serv, que a obteve de \repassu{\repassi_{2}} no
+processo de registro de participação discutido na
+Seção~\ref{subsec:registro-participacao}. Note que nesse caso, mesmo se nó
+\repassu{\repassi_{2}} não estiver recebendo o fluxo de dados \setpks de
+interesse de \repassu{\repassi_{1}}, o nó \repassu{\repassi_{2}} deve
+estabelecer uma conexão (Fase 1) para obtê-lo e então repassar \setpks para
+\repassu{\repassi_{1}};
+
+  \item como se considera uma arquitetura híbrida P2P/CDN, o nó \servs pode
+facilmente realizar um mecanismo de balanceamento de carga, incluindo na lista,
+como se fosse um nó \repass, um outro nó \serv, levando-se em consideração,
+inclusive, todos os critérios estabelecidos na
+Seção~\ref{subsec:melhorcaminho}.
+
+\end{enumerate}
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=0.9]{imgs/gmtp-conn-phase3-1.pdf}
+\end{center}
+\vspace{-1cm}
+\caption{Fase 3 de conexão do GMTP (Passo 1).}
+\label{fig:conn-phase3-1}
+\end{figure}
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=0.9]{imgs/gmtp-conn-phase3-2.pdf}
+\end{center}
+\vspace{-1cm}
+\caption{Fase 3 de conexão do GMTP (Passo 2).}
+\label{fig:conn-phase3-2}
+\end{figure}
+
+\subsection{Compartilhamento de \setpks entre \servs}
+
+Além do processo transparente para se obter um fluxo de dados \setpk empregado
+no GMTP, como os nós \servs constituem uma rede CDN, estes podem negociar entre
+si o envio e a recepção de um fluxo de dados \setpks de acordo com as
+requisições submetidas aos nós \repass. Desta forma, se um nó \repasss enviar
+uma requisição para obter \setpks de um evento \events a um nó \servs e este não
+esteja recebendo tal fluxo, \servs poderá solicitá-lo a outros nós \servs da
+CDN que participa. A partir desse ponto, o nó \servs passará a servir o nó
+\repasss normalmente. Como no GMTP se faz uso indireto dessa função das redes
+CDNs, a qual já está consolidada, resolveu-se suprimir maiores detalhes a
+respeito deste assunto. Para maiores informações sobre a função de distribuição
+de conteúdos ao vivo entre os servidores de uma rede CDN, o leitor pode
+consultar as
+referências~\cite{Nygren:2010:ANP:1842733.1842736,1250586,Pathan2008}.
+
+\vspace{0.5cm}
+
+Desta forma, o processo de conexão do GMTP é fundamental para a efetiva
+distribuição de mídias ao vivo, pois permite-se que as aplicações compartilhem
+fluxos de dados entre si, mesmo que tais aplicações não tenham sido
+desenvolvidas pela mesma equipe. Esta unificação ajuda no processo de
+distribuição do fluxo de dados \setpk, pois, na prática, até mesmo uma aplicação
+\textit{standalone} e um objeto de vídeo imbutido em uma página Web podem obter
+o mesmo fluxo de dados sem que estas conheçam um a outra. Como resultado,
+reduz-se para 1 o número de transmissões para um mesmo fluxo de dados \setpks
+destinados a uma mesma rede ou para um sub-conjuntos de redes adjacentes. Além
+dessa diferença substancial, a forma de conexão do GMTP supre uma antiga
+deficiência das soluções tradicionais de transmissão multicast, as quais os
+nós clientes, camada de aplicação, tinham que se adaptar às configurações
+estáticas dos canais multicast definidos pelo administrador de rede, e até os
+próprios administradores de rede tinham que fazer tal configuração de forma
+manual, que obrigatoriamente tem que ser realizada em todos os nós roteadores
+de um determinado caminho. Até o presente momento, não se conhece nenhuma
+solução que permita configuração dinâmica de canais multicast da forma que foi
+explicada nesta seção, com benefícios diretos para a aplicação e para a rede,
+fazendo-se uso dos recursos computacionais e de rede de forma mais apropriada,
+como será discutido no Capítulo~\ref{cap:analisedesemp}.
+
+\subsection{Envio e recebimento de \pks $\in$ \setpks em \net}
+\label{subsec:trocdados}
+
+Após o estabelecimento de conexão, os nós \repasss trocam dados entre si em modo
+unicast a fim de obter \setpk, constituído de pacotes \pks do tipo
+\pac{GMTP-Data} e \pac{GMTP-DataAckVec}. De forma similar, os nós \repasss
+utilizam os mesmos tipos de pacotes para enviar \pks $\in$ \setpks para os nós
+\cli, porém em modo multicast. Em ambos os casos, o GMTP realiza controle de
+congestionamento, sendo tais aspectos introduzidos nas
+Seções~\ref{subsec:gmtp-intra-inter} e~\ref{subsec:canaiscommudccp}. Nesta
+seção, detalha-se como o GMTP executa tais funções.
+
+Após o processo de estabelecimento de conexão, o \mudccps entra no
+estado de transmissão de dados. Se o \mudccps estiver em funcionamento em
+um nó \servs ou em um \repass, o estado é o de \textit{transmitindo dados}, ao
+passo que quando executado em um cliente o estado é o de \textit{recepção de
+dados}. Nesta seção, discute-se o funcionamento do mecanismo de transmissão e
+recepção de dados no \mudccp.
+
+Para o transporte de dados da aplicação, um \servs ou um \repasss deve criar
+pacotes do tipo \mudccp-Data ou o \mudccp-DataAck e enviá-los aos nós
+\clis através do socket correspondente à conexão estabelecida. Embora o
+protocolo \mudccps transmite dados sem garantia de entrega, em alguns casos,
+dados de controle podem ser transmitidos de forma confiável. Nestes casos,
+durante a transmissão de dados, um nó \mudccps utiliza-se do pacote do
+tipo \mudccp-Data para enviar dados, ao passo que utiliza-se pacote
+\mudccp-Ack para confirmar a recepção de pacotes, ou ainda, utiliza-se
+\mudccp-DataAck para enviar pacotes de dados e ao mesmo tempo confirmar a
+recepção de pacotes de dados vindos da direção oposta (\textit{piggyback}).
+
+\subsubsection{Buffer de Envio e Recepção:}
+
+A transmissão de um evento \events consiste no processo de disseminação
+dos pacotes \pks $\in$ \setpks através dos nós interessados em obtê-lo. Para
+isto, cada nó GMTP controla um buffer de envio e recepção no formato de uma
+estrutura de dados do tipo array, onde cada posição é utilizada para armazenar
+um pacote \pks (Figura~\ref{fig:buffer-envio-recepcao}). Ao receber \pk, um nó
+GMTP armazena-o no buffer e posteriormente o entrega para a aplicação, que o
+reproduz para o usuário final. Para o envio ou repasse de um pacote, o nó GMTP
+consome os pacotes \pks do buffer e transmite para o(s) nós interessados, seja
+em modo unicast e/ou em modo multicast. Isto porque é possível que um nó
+\repassu{\repassi_{1}} repasse \pks para um outro nó \repassu{\repassi_{2}}
+(unicast) ao mesmo tempo que \repassu{\repassi_{1}} pode repassar \setpks para
+seus nós \clis (multicast).
+
+O buffer de envio e recepção do GMTP tem seu tamanho definido no processo de
+estabelecimento de conexão, sendo determinado um valor mínimo e um valor
+máximo, sendo estes permanecendo fixos durante todo o ciclo de vida de uma
+conexão GMTP. Essa decisão é importante porque permite um nó \repasss alocar
+previamente o recurso necessário para um determido fluxo de dados \setpk. O
+tamanho do buffer é especificado pelo nó \servs e sempre é propagado para os
+demais nós no cabeçalho do pacote do tipo \pac{GMTP-MediaDesc}, como discutido
+a seguir. Este aspecto é muito importante, pois a aplicação que deve tomar tal
+decisão, de acordo com o tipo e formato da mídia a ser transmitida. Para o GMTP,
+é importante apenas ter conhecimento sobre o tamanho do buffer para executar
+ações de descarte de \pk.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=0.76]{imgs/buffer-envio-recepcao.pdf}
+\end{center}
+\vspace{-1cm}
+\caption{Exemplo da estrutura do buffer de envio e recepção de um nó GMTP com
+tamanho de 17 \pk.}
+\label{fig:buffer-envio-recepcao}
+\end{figure}
+
+\subsubsection{Mapa de \textit{buffer}:}
+
+O mapa de buffer do GMTP descreve o estado atual do buffer de envio e recepção
+de um nó GMTP. Como ilustrado na
+Figura~\ref{fig:mapa-buffer-envio-recepcao}, trata-se de uma estrutura de dados
+binária que determina se um pacote \pks está ou não presente no buffer de um
+respectivo nó GMTP.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=0.76]{imgs/mapa-buffer-envio-recepcao.pdf}
+\end{center}
+\vspace{-1cm}
+\caption{Exemplo do mapa de buffer de um nó GMTP com tamanho de 17 \pk.}
+\label{fig:mapa-buffer-envio-recepcao}
+\end{figure}
+
+O mapa de buffer é utilizado por um nó GMTP para sinalizar seu atual estado com
+relação a um determinado fluxo de dados \setpk. Um nó GTMP pode enviar o mapa de
+buffer completo, como ilustrado na Figura~\ref{fig:mapa-buffer-envio-recepcao},
+ou o mapa de buffer apenas dos \pks presentes ou ausentes. Na prática,
+um nó GMTP envia para um nó GMTP parceiro o mapa de buffer dos \pks presentes
+quando deseja indicar a sua atual disponibilidade; ao passo que envia o mapa de
+buffer dos \pks ausentes quando deseja obtê-los;
+
+As trocas do mapa de buffer entre os nós GMTP ocorrem sob demanda, utilizando o
+método \textit{pull}, uma vez que o método \textit{push} é utilizado por padrão.
+Neste caso, quando um nó \repasss percebe a falta de um ou mais pacotes \pk,
+este pode solicitar a um ou mais nós \repasss os pacotes \pks ausentes e então
+obtê-los usando o método \textit{pull}. Para isso, um nó \repasss enviar aos
+seus nós parceiros \repasss o mapa de buffer dos pacotes \pks ausentes e aguarda
+as respostas sobre tal disponibilidade. Essa sinalização ocorre através do uso
+do pacote do tipo \pac{GMTP-DataPullRequest}, que é preenchido com o mapa de
+buffer dos pacotes ausentes e transmitido aos respectivos nós parceiros. Ao
+receber esse tipo de requisição, um nó parceiro avalia seu conteúdo e responde
+com o pacote do tipo \pac{GMTP-DataPullResponse}, o qual contém o mapa de buffer
+dos pacotes disponíveis, seguido dos pacotes \pks do tipo \pac{GMTP-Data}. Note
+que os pacotes do tipo \pac{GMTP-DataPullRequest} e \pac{GMTP-DataPullResponse}
+são transmitidos com garantia de entrega, ou seja, caso sejam perdidos, o GMTP
+garante sua retransmissão. Para isto, o GMTP utiliza o mecanismo básico de
+envio e confirmação utilizando o pacote do tipo \pac{GMTP-DataPullAck}. No caso
+de falha na execução de uma requisição utilizando o método \textit{pull}, o nó
+GMTP pode reavaliar a necessidade de retransmitir o pedido, pois é possível que
+os \pks ausentes já tenham sido expirados e requisitá-los novamente não fará
+mais sentido.
+
+Na prática, o mapa de buffer utilizado para sinalizar a presença ou ausência de
+\pks é representado por faixas de acordo com o índice do buffer. Por exemplo,
+para representar o mapa de buffer dos pacotes ausentes ilustrados na
+Figura~\ref{fig:mapa-buffer-envio-recepcao}, o nó GMTP preenche o pacote do
+tipo \pac{GMTP-DataPullRequest} com a sequencia \textit{2;6-10;12}. Ao receber
+esta sequência, o nó \repasss parceiro responde com o pacote do tipo
+\pac{GMTP-DataPullResponse} contendo o mapa de buffer de quais
+pacotes serão enviados e começa a transmití-los nessa ordem.
+
+% * RELATAR TAXA DE RECEPCAO	- NO RELATA QUAL A TAXA DE RECEPÇÃO
+% (PREENCHIMENTO+ATUALIZAÇÃO DO BUFFER)
+% * USA ESSA INFO PARA SELECIONAR OS MELHORES PARCEIROS (FILTRO APRIMORADO)
+
+\subsubsection{Descarte de pacotes:}
+
+O descarte de pacotes \pks ocorre sempre no nó \repasss e em duas situações:
+
+\begin{enumerate}
+
+ \item \textbf{Por transbordo do buffer:} descartar os primeiros pacotes \pks
+recebidos se o buffer alcançou seu limite, mesmo que ainda não tenham
+sido repassados. Uma otimização não explorada neste trabalho, mas que é
+possível de ser realizada, é o descarta seletivo de pacotes, primeiro os que
+tenham menos impacto na qualidade da mídia, por exemplo, pacotes de dados
+contendo quadros B (codificação mpeg). Isto não impede que o vídeo seja
+reproduzido, porém com perda de qualidade, ao passo que permite-se a transmissão
+de conteúdo com os recursos disponíveis;
+
+ \item \textbf{Por duplicação:} ocorre quando o pacote \pks já foi recebido
+anteriormente. Tal verificação é feita de acordo com o número de sequência
+presente em cada pacote \pk.
+
+\end{enumerate}
+
+\subsubsection{Descrição do fluxo \setpk:}
+\label{subsubsec:desc-conteudo}
+
+O GMTP é um protocolo de transporte e por isto não precisa conhecer o tipo da
+mídia a ser transmitida. Porém, levando-se em consideração que uma das
+principais motivação do GMTP é promover a compatibilidade entre diferentes
+aplicações que o utiliza, faz-se necessário que as aplicações conheçam o tipo
+da mídia e assim permitir que qualquer aplicação consiga reproduzir o fluxo de
+dados \setpk.
+
+Nesse contexto, incorporou-se no GMTP um mecanismo para descrever \setpk e
+permitir que a camada de aplicação receba tal descrição. Para isto, utiliza-se o
+padrão SDP (\textit{Session Description Protocol}), definido na RFC
+2327~\cite{RFC2327}, uma vez que já é um padrão utilizado pela maioria das
+aplicações multimídia e portanto facilita a adaptação destas para o uso do GMTP.
+Apesar de ter um propósito geral para descrever sessões multimídia, no GMTP, o
+SDP tem o propósito de descrever o conteúdo de \setpk para permitir que os nós
+\clis interessados em \setpk interpretem seu conteúdo e sejam capazes e
+reproduzi-lo.
+
+Desta forma, o GMTP utiliza o pacote do tip \pac{GMTP-MediaDesc} para
+encapsular o conteúdo de descrição SDP. O conteúdo SDP é gerado pelo nó \servs
+e disseminado para os nós \repass, que os repassam para os nós \clis no
+processo de estabelecimento de conexão, descrito na
+Seção~\ref{subsec:conexao-requisicao}. Com isto, o nó \clis obtém as
+seguintes informações sobre \setpk:
+
+\begin{itemize}
+
+ \item Identificador do fluxo de dados \setpk;
+
+ \item A codificação e endereçamento da mídia:
+
+\begin{itemize}
+
+ \item O formato da mídia (H.261 video, MPEG video, etc.);
+
+ \item O endereço e porta para obter a mídia (multicast); e
+
+\end{itemize}
+
+ \item Informação para validação de cada pacote \pks $\in$ \setpk. Este assunto
+será retomado na Seção~\ref{subsec:seguranca}.
+
+\end{itemize}
+
+Um exemplo de uma mensagem SDP transmitida pelo GMTP é apresentado no Trecho de
+Código~\ref{algo:sdp-mediadesc}, onde:
+
+\begin{itemize}
+
+  \item \textit{v}, a versão do SDP;
+
+  \item \textit{o}, a lista de nós \servs que a distribui;
+
+  \item \textit{s}, o nome da mídia, como discutido na
+Seção~\ref{subsec:content-index};
+
+  \item \textit{i}, o título da mídia;
+
+  \item \textit{u}, a URI que descreve detalhes sobre a mídia;
+
+  \item \textit{c}, as informações de conexão, como o tipo da rede, a versão do
+protocolo de rede e o endereço do nó \repass;
+
+  \item \textit{k}, a chave de criptografia se os pacotes \pks $\in$ estiverem
+criptografados;
+
+  \item \textit{f}, o certificado digital emitido pelo nó \servs para validação
+do conteúdo de \pks, se desejado;
+
+  \item \textit{m}, o tipo da mídia, a porta de conexão e protocolo de
+transporte; e
+
+  \item \textit{a}, atributos adicionais sobre a mídia como, por exemplo,
+qualidade, idioma, taxa de bits mínima e máxima necessária para transmitir a
+mídia, em bytes.
+
+\end{itemize}
+
+\vspace{0.5cm}
+
+\begin{algorithm}[H]
+\label{algo:sdp-mediadesc}
+\SetAlgoLined
+
+\bigspace v=0\\
+\bigspace o=- IN IP4 177.135.177.241,
+IP4 186.192.82.163, IP6 2001:0db8:85a3::7344\\
+\bigspace s=72c44591-7d82-427c-825f-722f015787c1\tcc*[r]{ver
+Seção~\ref{subsec:content-index}}
+\bigspace i=An Introduction about Global Media Transmission Protocol (GMTP).\\
+\bigspace u=http://www.ic.ufal.br/projects/gmtp/introduction.ps\\
+\bigspace c=IN IP4 200.17.113.100\\
+\bigspace k=base64:aGVsbG8gd29ybGQK\\
+\bigspace f=x509:http://www.gmtp.org/certs/cert.crt\tcc*[r]{ver
+Seção~\ref{subsec:seguranca}}
+\bigspace m=audio 49170 GMTP/RTP/AVP 16000-20000\\
+\bigspace m=video 51372 GMTP/RTP/AVP 163840-655360\\
+\bigspace a=type:multicast\\
+\bigspace a=sendrecv\\
+\bigspace a=quality:10\tcc*[r]{ver Seção~\ref{subsec:adapt-flow}}
+\bigspace a=lang:en\tcc*[r]{ver RFC1766~\cite{RFC1766}}
+\bigspace a=framerate:23.0\\
+
+\caption{Exemplo de uma mensagem SDP no pacote \pac{GMTP-MediaDesc}.}
+\end{algorithm}
+\vspace{0.8cm}
+
+Nesse exemplo do Trecho de Código~\ref{algo:sdp-mediadesc}, utiliza-se a
+primeira versão do protocolo SDP e descreve-se a transmissão de dois fluxos
+\setpks (Linhas 10 e 11), sendo um deles de áudio e outro de vídeo. Os fluxos
+estão sendo distribuídos por três nós \servs (Linha 2), dos quais dois são
+acessíveis através de endereços IPv4 e um através de um endereço IPv6. Os dois
+fluxos de áudio e vídeo \setpks são repassados por um nó \repasss acessível por
+um endereço IPv4 (Linha 6) através das portas 49170 e 51372, respectivamente
+(Linhas 9 e 10). O conteúdo transmitido é criptografado utilizando base64 e a
+chave especificada deve ser utilizada para decifrar o conteúdo dos pacotes \pks
+(Linha 7). Nesse contexto de segurança, determina-se também que é possível
+realizar a verificação da autenticidade do conteúdo de cada pacote \pks
+através do certificado digital disponível na URL especificada na Linha 8. Alguns
+parâmetros adicionais da mídia são especificados entre as Linhas 13 e 17, como
+a qualidade da mídia, que varia entre 1 e 10. Além disso, informações
+importantes relacionadas as mídias são as taxas de bits sendo, neste exemplo, o
+áudio variando entre \ut{16000}{Bytes} à \ut{20000}{Bytes} e o vídeo entre
+\ut{156250}{Bytes} e \ut{625000}{Bytes} (Linhas 10 e 11).
+
+É importante salientar que os nós \repasss utilizam as informações de taxa de
+bits para determinar o tamanho do buffer necessário para permitir a transmissão
+da mídia, como discutido anteriormente. Note que o tamanho do buffer é definido
+em consonância com os parâmetros determinados pelo algoritmo de controle de
+congestionamento executado no módulo GMTP-Inter, a ser discutido em detalhes na
+Seção~\ref{subsec:ccgmtp}.
+
+
+\section{Controle de Congestionamento em \net}
+\label{subsec:ccgmtp}
+
+No \mudccp, disponibiliza-se um arcabouço para adição de novos algoritmos de
+controle de congestionamento de forma modularizada. Desta forma, permite-se a
+adição e remoção de novos algoritmos de controle de congestionamento.
+Atualmente, o GMTP oferece dois algoritmos, um voltado para transmissões em modo
+unicast e outro voltado para transmissões em modo multicast.
+
+Na prática, definiu-se um algoritmo para controle de congestionamento híbrido,
+cujo comportamento dependerá se o nó que o executa está transmitindo em modo
+unicast ou em multicast. Em modo de transmissão unicast, utilizado na
+comunicação entre os nós \repass, defini-se a taxa de transmissão de um nó
+\mudccps através de um algoritmo de janela deslizante baseado em uma equação
+cúbica, com suporte aos protocolos RCP~\cite{REF} e ConEx~\cite{REF}. Já em modo
+de transmissão multicast, executa-se um algoritmo baseado em relatórios
+transmitidos pelos nós \rel, eleitos em cada rede controlado por um nó \repass,
+tal que \rels $\in$ \subsetcli$($\repass$)$. Como ilustrado na
+Figura~\ref{fig:ucc-mcc-esquema}, para a parte do algoritmo que funciona em modo
+unicast, dar-se o nome de \textit{\mudccps Unicast Congestion Control}
+(\mudccp-UCC), ao passo que para a parte do algoritmo que funciona em modo
+multicast, dar-se o nome de \textit{\mudccps Multicast Congestion Control}
+(\mudccp-MCC).
+
+\begin{figure}[htb!]
+\begin{center}
+\includegraphics[scale=.7]{imgs/ucc-mcc-esquema.pdf}
+\end{center}
+\vspace{-1cm}
+\caption{Organização do algoritmo de controle de congestionamento no \mudccp.}
+\label{fig:ucc-mcc-esquema}
+\end{figure}
+
+\subsection{Controle de Congestionamento Unicast}
+\label{subsec:mudccp-ucc}
+
+O \mudccp-UCC funciona de forma similar ao protocolo RCP (Rate Control
+Protocol)~\cite{Dukkipati:2008:RCP:1368746}, porém com alguns diferenciais a
+serem discutidos a seguir. O RCP é um protocolo para controle de
+congestionamento assistido pela rede que tenta emular um \textit{Processor
+Sharing} (PS), como um roteador. Nesse caso, se um roteador pudesse obter a
+informação exata sobre o número de fluxos de entrada em um dado instante $t$, a
+taxa de transmissão ideal para cada fluxo de dados seria $R_{ps}(t) =
+\frac{C}{N(t)}$, onde $C$ corresponde à capacidade do link e $N(t)$ ao número de
+fluxos no instante $t$.
+
+Dessa forma, Nandita et. al\cite{Dukkipati:2008:RCP:1368746} argumenta que para
+um roteador funcionar de forma equânime, tal roteador deve oferecer a
+mesma taxa de transmissão para todos os fluxos transmitidos através dele,
+mantendo-se a fila de roteamento perto de zero a fim de evitar que apenas os
+fluxos que tem pacotes na fila de repasse compartilhem a largura de banda
+disponível. Com base nisso, Nandita et. al\cite{Dukkipati:2008:RCP:1368746}
+determinou a Equação~\ref{eq:cc-rcp-teoria}, onde $R(t)$ é a taxa de transmissão
+que deve ser oferecida para cada fluxo de dados que passa pelo roteador. Com
+base na Equação~\ref{eq:cc-rcp-teoria}, estima-se a largura de banda disponível
+em um determinado canal, representado pela porção $\alpha(C - y(t)) - \beta
+\frac{q(t)}{d_0}$ (mudança agregada) e a dividir por $N(t)$. Como é
+impossível determinar o valor exato de $N(t)$, estima-se $\hat{N}(t) =
+\frac{C}{R(t-T)}$ e para atualizar $R(t)$ com mais frequência do que no tempo de
+um RTT, escala-se a mudança agregada por $\frac{T}{d_0}$, resultando na
+Equação~\ref{eq:cc-rcp}, onde:
+
+  \begin{equation}
+  R(t) = R(t - d_0) + \frac{\alpha(C - y(t)) - \beta
+\frac{q(t)}{d_0}}{\hat{N}(t)}
+  \label{eq:cc-rcp-teoria}
+  \end{equation}
+
+  \begin{equation}
+  R(t) = R(t -T) \left[1+\frac{\frac{T}{d_0}\left(\alpha(C - y(t)) -
+\beta \frac{q(t)}{d_0}\right)}{C}\right]
+  \label{eq:cc-rcp}
+  \end{equation}
+
+  \begin{itemize}
+
+    \item $d_0$, é a média móvel dos valores de $RTT_{s}$, calculada através da
+Equação~\ref{eq:calcrtt-rcp}, onde $\theta$ é o ganho e corresponde a $0.02$.
+Note que quanto maior o valor de $\theta$, mais rápida será a convergência de
+$d_0$ ao valor de $RTT_{s}$.
+
+      \begin{equation}
+      d_0 = \theta \times RTT_{s} + (1 - \theta) \times d_0
+      \label{eq:calcrtt-rcp}
+      \end{equation}
+
+    \item $T = min(RTT_{user}$, $d_0))$, sendo $RTT_{user}$ um tempo definido
+pelo usuário caso seja necessário atualizar $R(t)$ mais rápido do que o tempo de
+$d_0$;
+
+    \item $R(t - T)$, é a última taxa de transmissão medida;
+
+    \item $y(t)$, é a taxa de tráfego de entrada medida no intervalo entre a
+última atualização da taxa de transmissão e $d_0$;
+
+    \item $q(t)$, é o tamanho instantâneo da fila de repasse, em bytes;
+
+%     \item $\hat{N}(t)$, é uma estimativa do número de fluxos em um tempo $t$,
+% por exemplo, o número de fluxos enviando pacotes de dados \pk;
+
+    \item $\alpha$ e $\beta$, são parâmetros pré-definidos que determinam
+a estabilidade e o desempenho;
+
+    \item $C$, é a capacidade do link.
+
+  \end{itemize}
+
+
+No GMTP-UCC, o algoritmo para controle de congestionamento, adaptado do
+RCP, funciona da seguinte forma:
+
+
+\begin{enumerate}[{\tab}1$^{\circ}$]
+
+  \item Todo nó \repasss mantém uma única taxa de transmissão $R(t)$, que é
+oferecida para todos os fluxos de dados passando por \repasss em um certo
+instante $t$. Cada nó \repasss atualizada $R(t)$ aproximadamente a cada RTT.
+  \label{step:rcp-gmtp-0}
+
+  \item Todo pacote dos tipos \pac{GMTP-Ack}, \pac{GMTP-Data} ou
+\pac{GMTP-DataAck} carrega duas informações de controle (campo no cabeçalho):
+  \label{step:rcp-gmtp-1}
+  \begin{itemize}
+
+    \item \textit{taxa de transmissão proposta} ($R_{p}$):
+corresponde à taxa de transmissão necessária para transmitir um fluxo de dados
+\setpk, em geral, calculada pelo nó \serv;
+
+    \item \textit{RTT na fonte} ($RTT_{s}$): corresponde ao RTT
+estimado entre quaisquer nós \transu{\transi},\transu{\transi+1} $\in$
+\setwayi, ou seja, o RTT entre dois nós \transu{\transi} e \transu{\transi+1}
+que processam o respectivo pacote \pks de um fluxo de dados \setpks para
+repassar aos seus nós \clis $\in$ \subsetcli(\trans) e em
+\subsetcli(\transu{\transi+1}), respectivamente.
+
+%     \item \textit{Diferença de RTT} (RTT$_{d}$): corresponde à diferença entre
+% RTT$_{s}$ e o RTT medido entre dois nós \way. Por exemplo, seja um
+% caminho \setwayis por onde o fluxo de dados \setpks é transmitido, com
+% \waysu{1}=\space \servu{1}, \waysu{2}=\space \repassu{1}, \waysu{3}=\space
+% \repassu{2} e \waysu{4}=\space \repassu{3}, tal que
+% \wayu{1},\wayu{2},\wayu{3},\wayu{4} $\in$ \setwayi. Considere que o RTT entre
+% \wayu{1} e \wayu{2} corresponda a um valor qualquer \textit{x}, o RTT entre
+% \wayu{2} e \wayu{3} corresponda a um valor qualquer \textit{y} e o RTT entre
+% \wayu{3} e \wayu{4} corresponda a um valor qualquer \textit{z}. Para esse caso,
+% \wayu{1} deve especificar RTT$_{s}$ = \textit{x} e RTT$_{d}$ = 0, \wayu{2} deve
+% especificar RTT$_{s}$ = \textit{x} e RTT$_{d}$ = \textit{y}; e \wayu{3} deve
+% especificar RTT$_{s}$ =
+% \textit{x+y} e RTT$_{d}$ = \textit{z}. Com isto, é possível que o nó
+% \wayu{4} saiba qual é o RTT acumulado entre \wayu{1} até seu nó parceiro
+% \wayu{3} (RTT$_{s}$) e também o RTT apenas entre \wayu{3} e \wayu{4}
+% (RTT$_{d}$). Com essas informações expostas para cada nó \ways em um caminho
+% \setway, qualquer nó \repasss poderá fazer uso de tais informações para decidir
+% com quais nós devem fazer parcerias ou quais são seus melhores parceiros.
+
+  \end{itemize}
+
+  \item No início de uma transmissão de um fluxo de dados \setpk, o nó \servs
+transmite um pacote \pks com o valor de $R_{p}$ correspondente à taxa de
+transmissão desejada para transmitir o referido fluxo \setpk, com o valor para
+$RTT_{s}$ = $\infty$. A taxa de transmissão desejada $R_{p}$ deve ser calculada
+pela aplicação, de acordo com a taxa de bits da mídia a ser transmitida e
+repassada à instância do GMTP no nó \serv.
+  \label{step:rcp-gmtp-2}
+
+  \item Todo nó \ways = \repasss que receber um pacote \pk, se $R(t) <
+R_{p}$, então $R_{p} \leftarrow R(t)$, caso contrário nenhuma
+modificação é realizada nesse campo. Nesse ínterim, se existir pelo menos um nó
+$\in$ \subsetcli$($\way) interessado em obter os pacotes \pks $\in$ \setpks
+(Seção~\ref{subsec:conexao-requisicao}), \ways executa as seguintes ações:
+  \label{step:rcp-gmtp-3}
+
+  \begin{enumerate}
+
+    \item repassa \pks para seus nós \clis em modo multicast
+(Seção~\ref{subsec:trocdados});
+
+    \item cria um pacote \pac{GMTP-Ack} contendo $R_{p}$ e o envia de volta
+para seu nó parceiro \wayu{\wayi-1}. O pacote \pac{GMTP-Ack} também carrega um
+campo de $RTT_{s}$. Quando \ways receber um pacote \pac{GMTPAck}, deve-se
+utilizar $RTT_{s}$ para atualizar a média móvel do RTT para os fluxos que
+passam por ele, representado por $d_0$.
+
+  \end{enumerate}
+
+  \item O nó \ways deve usar $R_{p}$ como a nova taxa de transmissão para
+enviar os próximos pacotes de dados \pks para seu nó parceiro \wayu{\wayi+1}. Na
+prática, $R_{p}$ é a menor taxa de transmissão oferecida ao longo do caminho
+\setwayi.
+
+  \item Todo nó \repasss atualiza periodicamente sua taxa de transmissão local
+$R(t)$ de acordo com a Equação~\ref{eq:cc-rcp}.
+
+\end{enumerate}
+
+
+Sendo assim, no caso do GMTP, a ideia básica é a seguinte: para quaisquer
+dois nós \transu{1},\transu{2} $\in$ \setwayi, a taxa de transmissão a ser
+utilizada por \transu{1} e \transu{2} será definida pela menor taxa de
+transmissão oferecida pelos nós \ways $\in$ \setwayis posicionados entre
+\transu{1} e \transu{2}. Com isto, se existir largura de banda disponível entre
+\transu{1} e \transu{2}, ou seja, $C - y(t) > 0$, então o GMTP compartilhará
+igualmente o canal entre todos os fluxos, inclusive para o fluxo entre
+\transu{1} e \transu{2}. Caso contrário, ou seja, se $C - y(t) < 0$, o canal
+é considerado saturado e o GMTP reduzá a taxa de transmissão igualmente para
+todos os fluxos, inclusive para o fluxo entre \transu{1} e \transu{2}.
+Especificamente, no intervalo de tempo T, a largura de banda necessária para
+repassar todos os pacotes \pks que estão na fila de repasse em um certo instante
+$t$ corresponde à $\frac{q(t)}{d_0}$.
+
+% \subsubsection{Diferença entre o RCP e o GMTP-UCC}
+%
+% Como discutido, o RCP é um protocolo para controle de congestionamento
+% fim-a-fim, % onde os sistemas finais de origem e destino se comunicam e trocam
+% pac tes de ACK % para determinar a nova taxa de transmissão $R(t)$ que o nó
+% transmissor deve  utilizar para transmitir um fluxo de dados \setpk. Porém, no
+% caso do GMTP um nó % \repassu{1} tem como principal função repassar os pacotes
+% de dados \pks $\in$ % \setpks do tipo \pac{GMTP-Data/DataAck} para seus nós
+% parceiros \repass, em c so % de $\mid$\subsetcli$($\repassu{1})$\mid$ $>$ $0$
+% para o fluxo de % dados setpk. Nesse interím, tais nós realizam ações para dar
+% suporte ao % ecanismo de controle de congestionamento da rede, como por exemplo
+% atualizar o % valor de $R_p$ e $RTT_s$. No RCP, o valor de $RTT_s$ é calculado
+% pelo sistema  final de origem, mas no GMTP, quando um nó \repassu{1} forma uma
+% parceria co % outros nós \repass, é como se \repassu{1} funcionasse como o nó de
+% origem \se vs % e portanto também deveria atualizar o valor para $RTT_s$. Para
+% isto, um nó % \repasss precisaria manter estado para cada fluxo de dados \setpk,
+% o que % significa manter um temporizador para cada fluxo de dados \setpks %
+% compart lhado. Do ponto de vista computacional, delegar tal responsabil dade %
+% para um roteador seria uma atividade onerosa porque múltiplos fluxo de dados, %
+% originados por diversas fontes \serv, podem passar por um roteador e facilment %
+% este se tornaria um ponto de gargalo por ter que processar cada pacote, ca cular
+% e atualizar o valor para $RTT_s$ para cada um deles.
+%
+% Diante desta questão, no GMTP-UCC, em vez de um nó \repasss manter o
+% temporizador para cada fluxo de dados \setpk, os nós relatores \rels, tal
+% que \rels $\in$ \subsetcli$($\repass) são responsáveis por tal atividade. Isto
+% significa que um nó cliente \cli=\rel, localizado na rede de \repass,
+% realizará a computação para obter o valor de $RTT_s$, bastando o nó \repasss
+% notificar qual nó \rels será responsável por manter tal estado. Isto só é
+% possível porque quando um nó \repasssu{1} se torna parceiro de outro nó
+% \repassu{2}, a condição $\mid$\subsetcli$($\repassu{1})$\mid$ $>$ $0$ é
+% satisfeita para um fluxo de dados \setpk.
+
+\subsubsection{Escolha do algoritmo RCP em detrimento ao XCP:}
+
+Tanto o RCP quanto o XCP são os protocolos mais famosos do estado da arte que
+tentam emular um PS entre os fluxos que passam por ele, e por este motivo as
+equações de controle tanto do RCP quanto do XCP são similares. O grande dilema
+foi decidir qual dos dois poderia ser adotado no GMTP-UCC. A diferença entre
+eles é o modo que cada um tenta convergir $R_{rcp}(t)$ e $R_{xcp}(t)$ para
+$R_{ps}(t)$. Especificamente, a diferença está no tipo de informação enviada
+para um nó transmissor de um fluxo de dados \setpks para atualizar o valor de
+$R_{rcp}(t)$ ou de $R_{xcp}(t)$. O XCP continuamente tenta convergir
+a taxa de transmissão para um ponto de equilíbrio onde todos os transmissores
+transmitirão pacotes de dados a uma taxa de transmissão $R_{xcp}(t)$, ao passo
+que o RCP calcula uma única taxa de transmissão que deve ser utilizada por
+todos os nós transmissores.
+
+No caso do XCP, o protocolo aumenta ou diminui a janela de congestionamento de
+um fluxo \setpks de acordo com o tamanho atual da sua janela de
+congestionamento. Isto ocorre porque o XCP reduz gradativamente os tamanhos da
+janela de congestionamento dos fluxos com $R_{xcp}(t)$ maior do que $R_{ps}(t)$
+e gradativamente aumenta o tamanho das janelas de congestionamento dos fluxos
+com $R_{xcp}(t)$ menor do que $R_{ps}(t)$. Porém, o tamanho da janela de
+congestionamento é sempre menor para os fluxos iniciados mais recente. Assim, em
+qualquer momento, os fluxos XCP podem ter diferentes tamanhos de janela de
+congestionamento e de RTTs, portanto diferentes taxas de transmissão
+$R_{xcp}(t)$.
+
+No RCP, todos os fluxos (novos e antigos) recebem a mesma taxa de transmissão
+$R_{rcp}(t)$ baseada no estado atual do nó \repasss com menor largura de banda
+disponível em um certo instante $t$. Isto permite que um fluxo de dados de
+curta duração termine o mais rápido possível ao passo que os fluxos de dados
+mais longos não influenciam diretamente no compartilhamento equânime do PS,
+alocando para estes também um taxa de transmissão sem permitir que parte da
+largura de banda disponível fique ociosa por muito tempo.
+
+O XCP é computacionalmente mais complexo do que o RCP, uma vez que define
+diferentes valores de \textit{feedback} para cada fluxo, envolvendo operações
+matemáticas (multiplicação e soma) para cada pacote, o que torna um XCP mais
+lento que o RCP. Pela estratégia de mudança no tamanho da janela de
+congestionamento, o XCP pode leva múltiplos RTTs para a maioria dos fluxos
+alcançarem a taxa de transmissão equânime entre eles, mas que mudam com o passar
+do tempo à medida que novos fluxos são injetados na rede e outros são
+finalizados, devido à natureza dinâmica das redes. No caso do RCP, esses
+problemas não ocorrem porque mantém-se uma única taxa de transmissão para todos
+os fluxos, não envolvendo qualquer computação adicional por pacote \pks que
+passa por \repass.
+
+Desta forma, os aspectos que determinam o funcionamento do RCP são fundamentais
+quando se trata de transmissão de conteúdos multimídia ao vivo, aliado às outras
+estratégias adotadas no GMTP para a distribuição de conteúdos multimídia ao
+vivo. Isto porque, ao tempo que o RCP define uma taxa de transmissão equânime
+para todos os fluxos, sua reação é rápida às mudanças circunstanciais na rede,
+tanto para uma super-utilização de um canal quanto para a sua sub-utilização.
+Como o RCP escala naturalmente com relação à capacidade de transmissão do canal
+e ao RTT, o seu desempenho é invariante com relação ao tamanho de um fluxo,
+portanto não importa qual tipo de fluxo as aplicações geram. Isto permite que
+fluxos de dados GMTP+RCP e TCP+RCP convivam harmoniozamente na Internet, com a
+adiação de que o GMTP evitará sobrecarga no nó \servs devido às outras funções
+de distribuição de fluxos de dados empregadas, explicadas anteriormente.
+
+%
+% =====>> PAREI AQUI. LER O ARQUIVO http://yuba.stanford.edu/rcp/RCP-IWQoS.pdf,
+% SEÇÃO 2.2
+%
+% Rate Control Protocol (RCP) is a congestion control algorithm designed for fast
+% download times (i.e. aka user response times, or flow-completion times). Whereas
+% other modifications to TCP (e.g. STCP, Fast TCP, XCP) are designed to work for
+% specialized applications that use long-lived flows (scientific applications and
+% supercomputer centers), RCP is designed for the typical flows of typical users
+% in the Internet today. For example, a mid-size flow in the Internet today
+% contains 1000 packets and TCP typically makes them last 10x longer than need-be
+% (XCP is even worse). RCP makes flows finish close to the minimum possible,
+% leading to a perceptible improvement for web users, distributed computing, and
+% distributed file-systems. We believe RCP is the only congestion control
+% algorithm to do this.
+% The main properties of RCP are:
+%
+% Typical Internet flows will see 10 times faster download times than TCP and 30
+% times faster than XCP. Winners are the greater than 90% of sessions that never
+% leave slow-start today.
+% Efficiently uses high bandwidth-delay product networks such as the long haul
+% optical links
+% Provably stable network independent of link-capacities, round-trip times and
+% number of flows
+% Flows are easy to police, to ensure they adhere to congestion control (not
+% generally possible with other schemes)
+% Network operators can give preference (or weighted preference) to some
+% flows/aggregates.
+% RCP has two components: (1) End-host congestion control layer that sits between
+% IP and TCP/UDP. During introduction, the end-host could adapt by testing for RCP
+% at each end and along the path, falling back to TCP if need-be. (2) Each router
+% maintains a single fair-share rate per link. Each packet carries the rate of the
+% bottleneck link. For each packet, the router compares the two values. If the
+% router's fair-share rate is smaller, it overwrites the value in the packet. This
+% way, the source learns the fair-share rate of bottleneck link. It is simple,
+% requires a very minor change to switches/routers and requires no per-flow
+% state.
+
+% \subsubsection{Considerações do GMTP-UCC em caminhos \setwayisfs e \setwayif}
+
+% \subsubsection{Integração do GMTP-UCC com o ConEx}
+%
+% COMPARAR O GMTP AO TCP NO QUE DIZ RESPEITO COMO AS INFORMAÇÕES SÃO EXPOSTAS VIA
+% CONEX.
+%
+% ========== REVER ===========
+%
+% No GMTP, os nós \repasss transmitem os vetores de ACKs para o seus nós \repasss
+% parceiros e não para o nó \servs que origina o fluxo de dados \setpk. Esta é
+% uma diferença considerável se o GMTP-UCC for comparado a qualquer variante do
+% protocolo TCP, onde um sistema final transmite os pacotes de ACK para o sistema
+% oposto e vice-versa. O ponto é o seguinte: sejam todos os caminhos \setwayis tal
+% que um nó \repasss= \ways $\in$ \setwayi. No GMTP, um nó \ways enviará o vetor
+% de ACKs apenas para seus nós parceiros \waysu{\wayi-1}. Essa estratégia é
+% fundamental para uma transmissão de um fluxo de dados ao vivo que leva em
+% consideração uma arquitetura P2P e o uso de um mecanismo para controle de
+% congestionamento. Quando um nó \way expõe o seu vetor de ACK apenas para seus
+% nós parceiros \waysu{wayi-1}, permite-se uma regulação da taxa de transmissão
+% específica apenas entre eles. Isto significa que o GMTP-UCC realiza controle
+% de congestionamento regulando a taxa de transmissão entre dois nós \repass
+% visinhos a fim de controlar apenas aquelas que estão envolvidos em um
+% congestionamento. Com isto, evita-se o aumento ou a redução da taxa de
+% transmissão de um fluxo \setpks para todo um caminho \setway, que ocorreria com
+% o uso de algoritmos de congestionamento fim-a-fim, como os adotados no TCP.
+% Consequentemente, o GMTP-UCC não sobrecarrega a rede com uma taxa de
+% transmissão acima do esperado e também não sub-utiliza a rede com uma taxa de
+% transmissão inferior a que a rede pode suportar.
+%
+% ============================
+%
+% Uma das funcionalidades do
+% TCP é computar os pacotes que alcançam o sistema de destino, uma vez que se
+% trata de um protocolo com suporte a garantia de entrega cujo mecanismo funciona
+% com base na retransmissão de cada pacote perdido. No caso de protocolos como
+% o \mudccp, a computação dos pacotes recebidos e perdidos pelo nó receptor é
+% realizada pelo algoritmo de controle de congestionamento. No \mudccp-UCC,
+% utiliza-se um mecanismo de vetores de ACKs, computado pelo nó receptor e
+% transmitido para o nó transmissor, que então são repassados para o algoritmo
+% Cubic a fim de definir a próxima taxa de transmissão. Os vetores de ACKs contém
+% informações sobre pacotes perdidos ou pacotes marcados com ECN. Para maiores
+% detalhes de como funciona o mecanismo de vetores de ACKs, o leitor pode
+% consultar a RFC4341~\cite{RFC4341}.
+%
+%
+% O ConEx é um protocolo que permite um nó remetente informar à rede sobre o
+% congestionamento experimentado por pacotes anteriormente transmitindo em uma
+% determinada transmissão de dados. No GMTP, especificamente no módulo
+% GMTP-Inter, discutido na Seção~\ref{subsec:gmtp-intra-inter}, incorporou-se o
+% ConEx para permitir que um nó \repasss possa obter as informações de
+% congestionamento experimentada pelos seus nós \repasss parceiros. Com tais
+% informações expostas aos nós \repass, é possível utilizá-las para realizar
+% gerenciamento de tráfego, por exemplo.
+
+% \subsubsection{Justificativa de uso do TCP-Cubic no GMTP}
+%
+% Por se tratar de um algoritmo já consolidado, decidiu-se omitir explicações
+% detalhadas do funcionamento do algoritmo Cubic no \mudccp. Embora não será
+% apresentada uma explicação detalhada do algoritmo TCP Cubic, considera-se de
+% suma importância justificar os motivos que levaram a escolha do TCP Cubic para
+% transmissões unicast no \mudccp.
+%
+% O primeiro motivo está relacionado com os diversos resultados de pesquisas
+% anteriores, incluindo uma série de resultados obtidos no contexto deste
+% trabalho. Nos últimos anos diversas pesquisas científicas constataram a eficácia
+% do TCP Cubic em termos da sua equidade para com outros fluxos TCP e, ao
+% mesmo tempo, para com fluxos de dados TCP transmitidos utilizando outras
+% variantes do TCP, como o TCP Vegas~\cite{Low:2002:UTV:506147.506152}, TCP
+% HSTCP~\cite{RFC3649} e o recém lançado TCP Compound~\cite{4146841,5472999},
+% utilizado na versão do sistema operacional Windows Vista em diante. O TCP Cubic
+% não degrada os fluxos de dados transmitidos utilizando estas variantes do TCP e
+% também não é degradado quando em disputa com fluxos de dados não-controlados,
+% como os transmitidos utilizando o protocolo UDP.
+%
+% O segundo motivo é que o TCP Cubic tem sido utilizado pela maioria dos sistemas
+% em execução na Internet da atualidade, uma vez que este é o algoritmo para
+% controle de congestionamento utilizado por padrão para o sistema operacional
+% Linux. Diante disto, desenvolver um protocolo cujo mecanismo para controle de
+% congestionamento seja compatível com a maioria dos fluxos de dados é uma decisão
+% primordial para o correto funcionamento e aproveitamento dos recursos de rede,
+% em especial na Internet.
+
+\subsection{Controle de Congestionamento Multicast}
+\label{subsec:mudccp-mcc}
+
+Da mesma forma que no \mudccp-UCC, o objetivo principal do \mudccp-MCC é
+determinar uma taxa de transmissão equânime entre os fluxos de dados
+transmitidos pelo GMTP e por outros protocolos, como o TCP, porém
+em modo de transmissão multicast. No caso GMTP-MCC, trata-se de um algoritmo
+responsável pelo controle de congestionamento em uma rede local constituída por
+\net$_{sub}$ = \repasss $\cup$ \subsetcli(\repass). Na prática, os nós da rede
+\net$_{sub}$ formam um grupo multicast para a transmissão e recepção de um ou
+mais fluxos de dados \setpk, onde o nó \repasss sempre será o transmissor e os
+nós \clis $\in$ \subsetcli(\repass) os receptores. A estratégia é que o
+valor da taxa de transmissão para um fluxo de dados \setpks seja tão próximo ao
+valor da taxa de transmissão que o fluxo TCP utilizaria caso fosse
+transmitido na rede, portanto um algoritmo \textit{TCP-Friendly}. Um fluxo de
+dados é considerado \textit{TCP-Friendly} quando este não degrada a taxa de
+transmissão de um fluxo de dados TCP mais do que outro fluxo TCP degradaria
+se começasse a ser transmitido na rede.
+
+O \mudccp-MCC foi inspirado em um protocolo publicado pela IETF chamado
+\textit{TCP-friendly Rate Control protocol (TFRC)} (RFC 3448~\cite{RFC3448}). O
+TFRC é um mecanismo para controle de congestionamento de fluxos unicast que
+tenta prevê a taxa de transmissão de um fluxo TCP e utilizá-la em protocolos
+diferentes do TCP~\cite{CONG:Floyd00:TFRC:art}. Trata-se de uma abordagem
+diferente da utilizada em algoritmos baseados em janela deslizante e que
+utilizam pacotes de confirmação para determinar a taxa de transmissão de uma
+conexão, como acontece no TCP. No TFRC, o receptor envia para o transmissor
+relatórios sobre as perdas observadas e, com base nesse relatório, o transmissor
+calcula a nova taxa de transmissão. O TFRC é categorizado com um protocolo
+de controle de congestionamento baseado em uma equação matemática
+(\textit{Equation Based Congestion Control}). Algoritmos desse tipo são adotados
+em diversos protocolos, como é o caso dos CCIDs 3 e 4 do
+DCCP~\cite{RFC4341,RFC4342}. Em linhas gerais, o algoritmo TFRC funciona da
+seguinte forma:
+
+\begin{enumerate}[{\tab}1$^{\circ}$]
+ \item o receptor mede a taxa de perda de pacotes e envia essa informação para o
+transmissor;
+ \item o transmissor usa esse relatório para medir o RTT até o
+receptor;
+ \item o transmissor utiliza a Equação~\ref{eq:trfcmudccp} para determinar qual
+será a sua próxima taxa de transmissão em função do relatório de perdas e o
+RTT obtidos anteriormente;
+ \item o transmissor então ajusta sua taxa de transmissão para o valor
+calculado no passo anterior.
+\end{enumerate}
+
+\begin{equation}
+R(RTT, p) = \frac{s}{RTT \times (\sqrt{\frac{2 \times p}{3}} + (12 \times
+\sqrt{\frac{3 \times p}{8}}) \times p \times (1 + 32 \times p^2))}
+\label{eq:trfcmudccp}
+\end{equation}
+
+\vspace{0.5cm}
+
+Na Equação~\ref{eq:trfcmudccp}~\cite{Padhye98model}, $T$ é a taxa de transmissão
+medida em bytes/segundo definida em função de \textit{s}, que é o tamanho do
+pacote medido em bytes; $RTT$, é o RTT entre o nó transmissor e o receptor,
+medido em segundos e $p$, a taxa de perda de pacotes observado pelo nó receptor.
+
+Apesar de ser uma estratégia interessante e funcionar em conexões unicast, em
+transmissões multicast o algoritmo descrito anteriormente não é eficiente. O
+algoritmo é limitado devido a um problema conhecido por \textit{explosão de
+retorno} (\textit{feedback implosion}). Esse problema ocorre quando há muitos
+receptores enviando relatórios de perdas para o mesmo transmissor, o que resulta
+em uma inundação de relatórios, os quais o transmissor é incapaz de processar em
+tempo hábil.
+
+Nesse contexto, para evitar o problema da \textit{explosão de retorno},
+determinou-se que apenas alguns nós \clis são obrigados a enviar tais
+relatórios ao nó \repass. Estes nós são chamados de nós GMTP Relatores e
+representados por \rel. No GMTP-MCC, a versão original do TFRC foi alterada e
+funciona da segunte forma:
+
+\begin{enumerate}[{\tab}1$^{\circ}$]
+
+  \item O nó \repasss executa um algoritmo de eleição de nós relatores \rels
+$\in$ \subsetcli(\repass). Na Seção~\ref{subsec:electrelsreps}, descreve-se o
+procedimento para eleger os nós \rel.
+
+  \item Os nós \rels calculam a taxa de transmissão utilizando a
+Equação~\ref{eq:trfcmudccp}, ao invés do transmissor realizar este cálculo,
+como na versão original do TFRC;
+  \label{step:gmtp-mcc2}
+
+  \item Os nós \rels determinam a taxa de eventos de perda, e não todos os
+receptores do grupo multicast. Para calcular o evento de perda $p$, utiliza-se
+o mesmo procedimento feito pelo TFRC~\cite{RFC3448,Padhye98model}, onde um
+intervalo de perda é determinado por consecutivas perdas de pacotes, desde do
+primeiro pacote perdido até o último pacote perdido, seguido de um pacote
+recebido com sucesso;
+
+  \item O RTT é calculado entre o nó \rels e o nó \repass, com o temporizador
+controlado pelos nós \rels e não pelo nó \repass. Isto evita que o nó \repasss
+tenha que manter estado de temporizador para cada fluxo de dados \setpks
+transmitido para os nós \clis $\in$ \subsetcli(\repass). Para determinar o valor
+do parâmetro RTT e calcular a taxa de transmissão através da
+Equação~\ref{eq:trfcmudccp}, o GMTP-MCC utiliza a
+Equação~\ref{eq:calcrtt-rcp}, com $\theta = 0.25$, padrão do TCP;
+
+  \item A taxa de transmissão a ser utilizada pelo nó \repasss é a média
+aritmética de todas as taxas enviadas pelos nós \rel;
+
+  \item Repete-se todos os passos a partir do passo~\ref{step:gmtp-mcc2} a cada
+intervalo igual ao RTT ou quando um intervalo de perda $p$ é determinado.
+
+\end{enumerate}
+
+Teoricamente, o GMTP-MCC seria um protocolo \textit{TCP-Friendly} se $R(RTT, p)$
+fosse o valor máximo entre as taxas de transmissão relatadas pelos nós \rel.
+Porém, optou-se por utilizar a média aritimética dos valores relatados pelos
+nós \rels porque, na prática, diversos fatores podem alterar o estado da rede no
+instante da transmissão usando o valor máximo da taxa de transmissão reportada
+pelos nós \rel. Com esta decisão, define-se uma margem de segurança
+evitando-se que o GMTP-MCC alcance o limite superior para o valor da taxa de
+transmissão de um fluxo transmitido com TCP. Além disso, a média aritimética
+suaviza os valores subsequentes para a taxa de transmissão a ser utilizada pelo
+nó \repass.
+
+Um aspecto importante na medição do RTT está relacionado com o início de uma
+conexão GMTP, pois não se sabe o valor para inicial para RTT até o final do
+processo de estabelecimento de uma conexão. Nesse caso, deve-se utilizar um
+valor consideravelmente alto para evitar taxas de transmissões maiores do
+que a rede tem capacidade de suportar. No GMTP, utiliza-se o valor inicial de
+RTT igual a \ut{150}{ms}. Quando um nó \clis envia um pedido de conexão
+utilizando o pacote do tipo \pac{GMTP-Request}, o mesmo deve realizar a sua
+primeira medição do valor de RTT, iniciando-se o marcador de tempo para o
+cálculo do RTT quando enviar o primeiro GMTP-Request e parando-o quando
+receber o pacote do tipo GMTP-Response. Em seguida, deve-se acionar o
+mecanismo de cálculo da taxa de transmissão através da
+Equação~\ref{eq:trfcmudccp}, caso o respectivo nó \clis seja eleito um
+nó relator.
+
+% No caso do \mudccp-MCC, cada nó \rels
+% agrega as perdas de pacotes que ocorrem dentro de um evento de perda, definido
+% por uma ou mais perdas de pacotes no espaço de tempo de um RTT. Para o cálculo
+% de $p$, utiliza-se a média dos tamanhos dos intervalos de perda, calculada
+% através da média ponderada dos $m$ mais recentes intervalos de perdas $l_k,
+% \dots, l_{k-m+1}$ seguindo a Equação~\ref{eq:losseventmean}. O conjunto de todos
+% os intervalos de perda é chamado de \textit{histórico de perdas}.
+%
+% \begin{equation}
+% l_{avg} = \frac{\sum_{i=0}^{m} w_i \times l_{k-i}}{\sum_{i=0}^{m} w_i}
+% \label{eq:losseventmean}
+% \end{equation}
+%
+% Os pesos $w_i$ são escolhidos de tal forma que os intervalos de perdas mais
+% recentes recebem pesos mais altos, decrescendo-os gradualmente até $1$
+% para os intervalos de perdas mais antigos. Por exemplo, para $8$ intervalos de
+% perda $m$, pode-se utilizar os pesos $w = [5, 5, 5, 5, 4, 3, 2, 1]$. Ao
+% utilizar-se da média ponderada para o cálculo da média dos tamanhos dos
+% intervalos de perda, obtem-se mudanças mais suaves para o valor de $l_{avg}$ à
+% medida que os tamanhos dos intervalos de perdas se tornam mais antigos. Para
+% grandes valores de $m$, obtem-se mudanças mais suaves para $p$ ao longo do
+% tempo, porém isto também reduz a capacidade de resposta e portanto a equidade do
+% protocolo. No TFRC, recomenda-se utilizar valores de $m$ entre $8$ e $32$ e por
+% este motivo no \mudccps é considerada esta recomendação. A
+% Equação~\ref{eq:losseventmean} é definida na RFC 3448~\cite{RFC3448} e foi
+% mantida no \mudccp. O protocolo DCCP também utiliza essa mesma abordagem no
+% algoritmo de controle de congestionamento CCID-3~\cite{RFC4342}.
+%
+% Uma vez definido como determina-se a média dos tamanhos dos intervalos de
+% perda, a taxa dos eventos de perda $p$ é definido pelo inverso de $l_{avg}$,
+% definido na Equação~\ref{eq:losseventrate}. Como um intervalo de perda é
+% definido em função do número de pacotes entre de eventos de perdas consecutidos,
+% o mais recente evento de perda não pode influenciar na taxa do evento de perda,
+% por isto utilizou a função \textit{max} no denominador da
+% Equação~\ref{eq:losseventrate}.
+%
+% \begin{equation}
+% p = \frac{1}{max(l_{avg}(k), l_{avg}(k-1))}
+% \label{eq:losseventrate}
+% \end{equation}
+%
+%
+% Uma outra observação com relação ao ajuste da nova taxa de transmissão de $s_i$
+% está relacionado ao fato de um nó $\hat{r}_i$ se desconectar ou perder
+% repentinamente sua conexão. Caso isto aconteça com algum nó $\hat{r}_x$, seu
+% valor $T_{\hat{r}_x}$ deverá ser desconsiderado no cálculo da nova taxa de
+% transmissão $T_{s_{i}}$. Existem duas formas que um relay $s_i$ pode perceber a
+% desconexão de um ou mais nós $\hat{r}_i$. A primeira forma é quando um nó
+% $\hat{r}_x$ envia explicitamente um pedido de desconexão para $s_i$,
+% tal processo é discutido na Seção~\ref{subsec:mudccp-desconexao}, ao passo que a
+% segunda forma é quando um contador de tempo de manutenção de conexão, mantido
+% pelo relay $s_i$ se expira, tal processo é discutido na
+% Seção~\ref{subsec:electrelsreps}. Com esta medida, evita-se utilizar um taxa de
+% transmissão $T_{s_{i}}$ incorreta, portanto não correr o risco de utilizar uma
+% taxa de transmissão não condizente com o estado atual da rede.
+%
+% \subsection{Taxa de Eventos de Perda $p$}
+% \label{subsec:mcclossevent}
+
+
+% Para mais discussões acerca de como funciona o mecanismo para medição dos
+% intervalos de perda, consulte a referência~\cite{CONG:Floyd00:TFRC:art}.
+
+% Um aspecto importante no cálculo do valor de $p$ é determinar o seu valor
+% inicial.
+
+% \subsection{Cálculo do RTT}
+% \label{subsec:mccrtt}
+%
+% O cálculo do RTT realizado no \mudccp-MCC é feito apenas pelos nós
+% reporters e funciona da seguinte forma. Um nó $\hat{r}_i$ transmite ao seu
+% respectivo relay $\hat{s}_i$ um pacote de controle e inicia um marcador de
+% tempo. Ao receber uma resposta do nó relay $\hat{s}_i$, o nó reporter
+% $\hat{r}_i$ pára o marcador de tempo e utiliza este tempo chamado de
+% $RTT_{instant}$ para calcular o valor do próximo $RTT$ de acordo com a
+% Equação~\ref{eq:calcrtt}.
+%
+% \begin{equation}
+% RTT = \beta \times RTT_{instant} + (1 - \beta) \times RTT
+% \label{eq:calcrtt}
+% \end{equation}
+%
+% Note que no \mudccp-MCC não se utiliza o valor de $RTT$ instantâneo
+% ($RTT_{instant}$) como o valor do $RTT$, mas sim utiliza-se de um mecanismo
+% para suavizar as mudanças do $RTT$ ao longo do ciclo de vida de uma conexão.
+% Desta forma, procura-se evitar que valores absurdos de $RTT_{instant}$ -- muito
+% baixos ou muito altos com relação aos valores medidos anteriormente --
+% influenciem demasiadamente na taxa de transmissão $T_{\hat{s}_i}$.
+%
+% O mecanismo mencionado anteriormente para suavizar as medições do valor de
+% $RTT$ é chamado de Médias Móveis Exponencialmente Ponderadas ou
+% \textit{Exponentially Weighted Moving Average} (EWMA). O EWMA foi primeiramente
+% utilizado para índices financeiros de medição de risco, onde a série de retornos
+% diários com $n$ observações é ponderada por um fator de decaimento. As
+% observações mais recentes no tempo são ponderadas com um peso maior que as
+% observações mais antigas. O peso de uma observação decai exponencialmente com
+% $n$. Em seguida, utilizou-se EWMA em medições de tempo do $RTT$ em protocolos
+% como o TCP. Como trata-se de uma estratégia conhecida para medição de RTT, no
+% \mudccp-MCC manteve-se o mesmo mecanismo, principalmente por já ter sido
+% exaustivamente testado e utilizado. Tanto no TCP quanto no caso do \mudccp,
+% utiliza-se $\beta = 0.25$ para o cálculo do valor de $RTT$ através da
+% Equação~\ref{eq:calcrtt}~\cite{kurose2006}.
+
+% Porém, diferentemente do mecanismo de medição de $RTT$ no TCP e no TFRC, os nós
+% reporters $\hat{r}_i$ são os responsáveis pela medição do $RTT$ e não o nó
+% transmissor. Um aspecto importante na medição do RTT está relacionado com o
+% início de uma conexão \mudccp, pois não se sabe o valor para $RTT_{instant}$
+% até o final do processo de estabelecimento de uma conexão. Nesse caso, deve-se
+% utilizar um valor consideravelmente alto para evitar taxas de transmissões
+% $T_{\hat{s}_i}$ muito maiores do que a rede tem capacidade de suportar. No
+% \mudccp, utiliza-se o valor inicial de $RTT_{instant}$ igual a \ut{150}{ms}.
+% Quando um nó $\hat{r}_i$ enviar um pedido de conexão utilizando o pacote do tipo
+% \mudccp-Request, o mesmo deve realizar a sua primeira medição do valor de
+% $RTT_{instant}$, iniciando-se o marcador de tempo para o cálculo do RTT quando
+% enviar o primeiro \mudccp-Request e parando-o quando receber o pacote do tipo
+% \mudccp-Response. Em seguida, deve-se acionar o mecanismo de cálculo de
+% $T_{\hat{r}_i}$, caso o respectivo nó $\hat{r}_i$ seja eleito como reporter.
+
+% \subsubsection{Confirmação de recepção de \pk}
+%
+% O GMTP realiza confirmação de recepção de pacotes \pks para avaliar a
+% capacidade de entrega e realizar controle de congestionamento.
+%
+% Nesse contexto, o GMTP é um protocolo orientado a mensagem, como o UDP e o DCCP,
+% e não a cadeia de bytes, como é o caso do TCP. Dessa forma, a unidade básica de
+% transporte no GMTP é um segmento completo e não cada byte individualmente. O
+% tamanho de um segmento varia de acordo com o MTU (\textit{Maximum Transport
+% Unit}) da rede, que em geral tem tamanho de \ut{1500}{bytes}, contando com o
+% espaço ocupado pelo cabeçalho.
+%
+% Vetor de ACK \pac{GMTP-DataAck}
+
+
+\section{Outras funções empregadas no GMTP}
+\label{sec:outros-aspectos}
+
+Nesta seção, apresentam-se brevemente outras funcionalidades do
+GMTP, tais como o procedimento de desconexão, adaptação de fluxo, eleição de
+nós relatores, segurança, implementação e implantação.
+
+\subsection{Procedimentos para desconexão}
+\label{subsec:desconexao}
+
+O processo de finalização de uma conexão \mudccps ocorre com algumas
+diferenças se comparado com outros protocolos orientados à conexão. Para
+sinalizar o pedido de desconexão, um cliente \mudccps transmite no canal de
+controle um pacote do tipo \mudccp-Close, contendo as informações de qual
+servidor e porta deseja se desconectar. Ao receber este tipo de pacote, o
+nó relay transmite ao cliente um pacote do tipo \mudccp-Reset para sinalizar que
+está ciente do fechamento da conexão. Este procedimento é suficiente para o
+pedido de finalização de uma conexão de um cliente \mudccp, porém para
+finalizar uma conexão de um nó cliente relay ou reporter, outros procedimentos
+devem ser realizados.
+
+A desconexão de um nó relay gera uma situação crítica para todos os nós
+clientes que recebem os dados de uma transmissão através dele. Por isso no
+\mudccps utiliza-se um mecanismo que promova um dos clientes conectados para se
+tornar relay em substituição aquele que está em processo de desconexão. No
+\mudccp, são clientes candidatos a relay todos os nós reporters conectados
+ao atual nó relay. Em linhas gerais, quando um nó relay deseja se desconectar, o
+mesmo transmite para o canal de controle um pacote do tipo \mudccp-Elect e
+aguarda por um \mudccp-ElectReply. Ao receber um ou mais \mudccp-ElectReply, o
+nó relay seleciona um dos nós que transmitiram o pacote \mudccp-ElectReply e
+envia um pacote do tipo \mudccp-ElectAck. O pacote do tipo \mudccp-ElectAck deve
+conter o endereço IP do cliente \mudccps eleito para se tornar um nó relay.
+Como este tipo de pacote é transmitido através do canal de controle, todos os
+outros clientes também o receberão e este passo é essencial no processo de
+substituição de um nó relay que solicita desconexão. Isto porque, a partir do
+momento que um cliente \mudccps é promovido a um nó \mudccps relay, os clientes
+outrora conectados ao nó relay em processo de desconexão devem estabelecer uma
+conexão com o novo nó relay.
+
+Uma estratégia complementar a anterior é o nó relay em processo de desconexão
+transmitir ao novo nó relay a lista de todas as conexões ativas. Desta forma
+evita-se que todos os clientes solicitem uma nova conexão ao novo nó relay.
+Apesar dessa estratégia reduzir a quantidade de dados de controle transmitidos
+na rede, na versão atual do \mudccps esta funcionalidade não foi
+incorporada por ser mais complexa e necessitar de mais estudos quanto a
+viabilidade desta solução. Isto porque se a quantidade de clientes conectados ao
+nó relay em processo de desconexão for muito grande, pode não dar tempo do relay
+em desconexão transmitir toda a lista de conexões. Além disso, para que este
+procedimento funcione, deve-se atualizar as informações de \textit{sockets} de
+todos os clientes para o endereço IP e porta do novo nó relay.
+
+A desconexão de um nó reporter não gera uma situação muito crítica ao protocolo
+\mudccps caso a quantidade de nós reporters seja maior do que $1$. Se existir
+apenas um nó reporter e mais outros nós clientes conectados a um relay e um nó
+reporter solicitar desconexão, o nó \mudccps deverá transmitir um pacote do tipo
+\mudccp-Elect através do canal de controle solicitando que algum cliente se
+promova a um nó reporter. Quando um cliente receber um pacote do tipo
+\mudccp-Elect, este deverá transmitir um pacote do tipo \mudccp-ElectReply
+através do canal de controle, da mesma forma que no processo de desconexão do
+relay, porém um indicador especial contido no pacote \mudccp-Elect sinalizará
+que trata-se de um processo de eleição de um nó reporter e não de um nó relay.
+
+
+
+Porém, isto não significa que não é aceitável a remoção, por exemplo, por
+desconexão, de um nó \ways $\in$ \setwayi. Pelo contrário, em se tratando de uma
+rede de sobreposição, faz-se necessário detectar tais desconexões e estabelecer
+uma nova relação entre os nós \wayu{\wayi-1} e \wayu{\wayi+1} se houver uma rota
+alternativa de rede entre \netru{j_1} sobreposto por \wayu{\wayi-1} e
+\netru{j_2} sobreposto por \wayu{\wayi+1}. Além disso, pode-se criar uma nova
+relação entre $w_{i-1}$ com um outro nó $w_j \in W_j$, ou seja, com um outro nó
+de um outro caminho.
+
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[natwidth=797,natheight=173,scale=.73]{imgs/bucket-brigade-principle-3.png}
+\end{center}
+\vspace{-0.8cm}
+\caption{Um usuário pode desconectar e é preciso um mecanismo de tolerância a
+falhas.}
+\label{fig:bucket-brigade-principle-3}
+\end{figure}
+
+\vspace{0.5cm}
+
+\subsection{Adaptação de Fluxo de Dados}
+\label{subsec:adapt-flow}
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[natwidth=794,natheight=170,scale=.73]{imgs/bucket-brigade-principle-2.png}
+\end{center}
+\vspace{-0.8cm}
+\caption{Uma aplicação pode não ter recurso suficiente, adaptações devem ser realizadas.}
+\label{fig:bucket-brigade-principle-2}
+\end{figure}
+
+
+Uma funcionalidade peculiar do \mudccps é sua capacidade de permitir a
+realização de adaptação de fluxos multimídia de forma distribuída. A maioria
+das soluções para transmissão de dados multimídia, além de realizar controle
+de congestionamento no nível de aplicação, realizam adaptação de fluxo
+multimídia na fonte geradora dos dados. Em diversas soluções
+existentes, os autores consideram a transmissão de fluxos de dados multimídia
+adaptados e transmitidos em diferentes canais, sendo que em cada canal
+transmite-se os fluxos multimídia em uma determinada qualidade. Dependendo da
+qualidade desejada pelo nó receptor, o sistema cliente solicita a transmissão em
+um determinado canal. O problema dessa abordagem é que o nó transmissor,
+necessariamente deve transmitir os dados em múltiplos canais, o que aumenta a
+complexidade da aplicação e a quantidade de fluxos de dados sendo transmitidos a
+partir do servidor.
+
+No \mudccp, é possível realizar a adaptação de fluxo de dados de forma
+distribuída, na prática, em cada relay. Por exemplo, considere duas redes
+adjacentes, rede 1 e rede 2. Considere que existe um nó relay na rede 1 e entre
+a rede 1 e o nó transmissor a largura de banda de transmissão disponível seja de
+\ut{100}{Mbps}. Caso a largura de banda disponível na rede 2 seja de no
+máximo \ut{10}{Mbps}, um nó receptor na rede 2 teria que solicitar um fluxo
+multimídia em um canal diferente, considerando as soluções que adotam a
+estratégia de adaptação de fluxo com o uso de múltiplos canais de transmissão.
+No caso do \mudccps é possível que um nó na rede 2 obtenha o fluxo multimídia
+através do relay presente na rede 1, com o relay da rede 1 adaptando o fluxo
+multimídia de acordo com a capacidade do canal de transmissão disponível para a
+rede 2. Desta forma, pode-se diminuir o tráfego na rede do nó transmissor e
+ainda permitir que nós em redes com largura de banda limitada consigam obter o
+fluxo multimídia adaptado (caso mais comum para clientes residenciais).
+
+
+
+
+
+
+
+
+
+
+Com essa estratégia, fica óbvio que quanto mais requisições de
+\textit{pull} por uma parte da mídia, mais urgente é o seu conteúdo para
+reprodução. Muitas requisições via \textit{pulling} é um sinal que a rede não
+está sendo capaz de entregar \pks tão rápido quanto o suficiente para permitir
+a reprodução sem que haja interrupções. Essa informação pode ser utilizada para
+adaptar o fluxo de dados \setpk, reduzindo-se sua qualidade e consequentemente
+exigindo menos da rede.
+
+
+
+
+\subsection{Eleição, Monitoramento e Tolerância a Desconexão}
+\label{subsec:electrelsreps}
+
+Os nós relays são selecionados de duas formas: (i) serão nós relays aqueles que
+iniciarem a primeira conexão unicast com algum outro nó relay ou com o nó
+servidor, ou seja, o nó transmissor original; (ii) serão relays aqueles que
+negociarem com algum outro nó relay sua promoção para tal. Note que
+para este segundo caso, o nó que conceder a promoção de um nó relay para outro
+nó, ele deverá se rebaixar para um cliente \mudccps ou estar em processo de
+desconexão, como discutido anteriormente. Além disso, quando um relay conceder
+este status a outro cliente, o mesmo poderá se desconectar do nó gerador
+(relay ou servidor) dos dados enviando um \mudccp-Close, que conterá o
+endereço do novo nó relay. É possível também que um nó relay eleja outros nós
+relays secundários, localizados na sua própria rede local. Esta funcionalidade é
+importante porque caso o atual relay perca sua conexão ou desconecte do nó
+transmissor gerador dos dados, qualquer relay secundário poderá assumir o papel
+de relay primário. Neste caso, o nó que passar a assumir este papel deverá
+enviar um pacote do tipo \mudccp-Elect informando que assumirá a transmissão de
+dados outrora provida pelo nó relay antigo.
+
+Ao \mudccps foi incorporado um mecanismo de tolerância a desconexão que
+funciona de modo a evitar que os nós clientes deixem de receber dados da
+transmissão em questão, caso um nó relay desconecte repentinamente sem conseguir
+transmitir um pacote do tipo \mudccp-ElectAck, tal como explicado na
+Seção~\ref{subsec:mudccp-desconexao}. Considere $T$ uma variável corresponde a
+$4$ vezes o valor do tempo do RTT. Um nó relay deve transmitir no canal de
+controle um pacote do tipo \mudccp-AdvConn a cada instante de $T$, anunciando
+aos demais nós da rede que está ativo e operando corretamente. Caso um nó relay
+secundário não receba o pacote do tipo \mudccp-AdvConn durante o período de
+tempo $T$, assume-se que o relay atual foi desconectado por algum motivo
+desconhecido e o relay secundário que não recebeu o pacote do tipo
+\mudccp-AdvConn deverá transmitir um pacote do tipo \mudccp-ElectAck. Na
+prática, o nó relay secundário torna-se um nó relay primário do o grupo de
+clientes, incluindo os nós reporters, conectados ao relay que foi desconectado.
+Neste caso, o novo nó relay deve iniciar um novo processo de estabelecimento de
+conexão. Após o estabelecimento dessa conexão, como descritos na
+Seção~\ref{sec:conexaomudccp}, o novo nó relay deve criar o canal de repasse e
+começa a repassar os dados da transmissão multimídia.
+
+Com relação aos nós reporters, o processo de eleição funciona de forma similar e
+da seguinte forma: à medida que um relay recebe pacotes do tipo \mudccp-Request,
+no pacote \mudccp-Response o nó relay ativa um indicador sinalizando que
+o cliente deverá se comportar como um nó reporter, passando a enviar relatórios
+da taxa de transmissão observada por ele. Note que este modo de transmissão deve
+ser implementado com garantia de entrega, ou seja, com a confirmação de recepção
+de pacotes e retransmissão caso este tipo de pacote seja perdido. Assim, um nó
+relay poderá ter controle sobre a quantidade de nós reporters e receber
+relatórios apenas de um sub-conjunto de nós da rede.
+
+
+
+
+
+
+
+\subsection{Segurança}
+\label{subsec:seguranca}
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[natwidth=797,natheight=213,scale=.74]{imgs/bucket-brigade-principle-4.png}
+\end{center}
+\vspace{-0.8cm}
+\caption{Usuários mal-intencionados podem poluir o sistema com conteúdos
+alterados.}
+\label{fig:bucket-brigade-principle-4}
+\end{figure}
+
+\section{Implemetação e Implantação}
+\label{sec:impl}
+
+PROVER API PARA SETAR AS INFOS DO SDP
+
+O \mudccp\space não necessita explicitamente da instalação de um nó na rede para
+encaminhar o conteúdo de uma rede externa para uma rede interna
+(\textit{proxy}). Além disso, o \mudccp\space mantém a \textit{interface} de
+programação com a camada de aplicação inalterada, apenas adicionando uma
+extensão na API padrão de socket BSD para preservar a compatibilidade
+com as aplicações multimídia existentes e, ao mesmo tempo, permitir que as
+aplicações façam uso dos novos recursos do \mudccp. Esta decisão pode ajudar em
+uma rápida adoção do GMTP nas aplicações multimídia, permitindo-se simples
+alterações das aplicações existentes e, ao mesmo tempo, a efetiva padronização
+da forma como algumas funcionalidades hoje em dia são implementadas.
+
+
+\section{Benefícios, Aplicabilidade e Justificativas}
+\label{sec:benef}
+
+Nesta seção, apresentam-se os benefícios e justificativas para diversas tomadas
+de decisões realizadas no processo de especificação do GMTP.
+
+\subsection{Benefícios e Aplicabilidade}
+
+O uso do \mudccps nas aplicações de distribuição de mídia ao vivo fomenta
+benefícios em três vertentes, para o desenvolvedor da aplicação; para os
+usuários interessados em assistir/ouvir uma mídia ao vivo e para a rede.
+
+Considerando-se as discussões realizadas nas Seção~\ref{sec:problematica} e
+os requisitos dos sistemas de transmissão de mídia em tempo real, o \mudccps
+atende-os na medida em que:
+
+\begin{itemize}
+
+  \item possibilita que os sistemas de transmissão de mídia ao vivo obtenham
+um melhor desempenho quanto a escalabilidade do número de usuários e
+possivelmente na qualidade da experiência do usuário (\textit{Quality of
+Experience} -- QoE). Nesse aspecto, o \mudccps é capaz de identificar a melhor
+forma que o conteúdo será transportado pela rede, permitindo-se o uso do modo de
+transmissão multicast sempre que possível ou de múltiplos fluxos unicast caso
+contrário, mas não proporcional ao número de clientes interessados;
+
+  \item permite que as aplicações façam uso de soluções estáveis e largamente
+testadas, uma vez adicionadas ao protocolo em questão. Neste caso, grupos
+diferentes de desenvolvimento podem adicionar e testar suas propostas em um
+protocolo de rede que, uma vez consideradas estáveis podem ser compartilhadas
+entre os diferentes sistemas. Até mesmo soluções já implementadas nos sistemas
+existentes podem ser portadas para o \mudccp;
+
+  \item padroniza a forma como os fluxos de dados multimídia gerados pelos
+sistemas considerados são transportados na Internet, incluindo aspectos de
+controle de congestionamento e compartilhamento desses fluxos de dados entre
+os nós participantes de uma transmissão, além de um arcabouço que permite
+estender o protocolo por meio da adição de novos algoritmos;
+
+  \item indiretamente diminui os fluxos de dados na rede sem qualquer controle
+de congestionamento, pois aplicações para distribuição de mídia ao vivo
+atualmente fazem uso do protocolo UDP ou variantes;
+
+  \item flexibilidade no acesso a rede por parte dos nós participantes, pois
+eles podem entrar e sair da rede a qualquer momento, realizando parcerias com um
+subconjunto de nós participantes a fim de receber o conteúdo multimídia
+interessado, caso esteja-se utilizando o \mudccp;
+
+  \item disponibiliza uma solução unificada que permite o uso da API padrão de
+\textit{sockets} BSD, o que facilita a migração das aplicações existentes para
+utilizam este novo protocolo. Além disso, permite-se que as aplicações continuem
+utilizando outros padrões de redes definidos pela IETF, tais como o RTP e o
+RSTP;
+
+   \item elimina ou pelo menos inibe a presença de nós \textit{free-riders} na
+rede, uma vez que todo nó \mudccps é obrigado a compartilhar conteúdo sem a
+influência da aplicação;
+
+  \item unifica as aplicações clientes no ponto de vista do processo de conexão
+e obtenção dos dados, uma vez que todo esse processo ocorre na camada de
+transporte sem qualquer influência da aplicação. Isto significa que se existir
+um nó executando um cliente do sistema PPLive e um outro cliente do sistema
+SopCast, desenvolvido por equipes diferentes, ambos ainda sim serão compatíveis
+e capazes de cooperar entre si na obtenção do fluxo de mídia de interesse comum.
+
+\end{itemize}
+
+Dentre os diversos sistemas P2P para transmissão de mídia ao vivo que podem se
+beneficiar com o uso do \mudccp, destacam-se os baseados em uma arquitetura em
+malha e sem organização rígida dos nós participantes do sistema. Isto também se
+aplica a todas as variantes dessa arquitetura como, por exemplo, híbrido por
+encaminhamento automático e pedido explícito (\textit{Push-Pull}) e híbrido
+árvore-malha (vide Capítulo~\ref{cap:fundamentacao}). Especificamente, os
+sistemas de distribuição de mídia ao vivo mais conhecidos e que podem se
+beneficiar diretamente com o uso do \mudccps são o
+Sopcast~\cite{fallica_quality_2008}, o PPLive~\cite{hei_insights_2006} e o
+GridMedia~\cite{li_zhao_gridmedia:_2005,zhang_peer--peer_2005}.
+
+\subsection{Justificativas}
+
+, principalmente no tocante aos frequentes
+questionamentos realizados
+durante as palestras sobre o GMTP ministradas pelo autor
+
+- Por que um protocolo de rede, invés de um middleware?
+1 - porque visualizei o GMTP como a forma primitiva de acesso, podendo ser
+acomplado em aplicações simples como sistemas mais avançados, que podem fazer
+uso de middlewares já existentes
+2 - a necessidade de executar algoritmos na camada de rede obriga uma interface
+de comunicação disponível na camada de transporte
+
+- Por que utilizar RCP?
+
+- Por que utilizar roteadores?
+
+- Qual o processo ideal para o deploy do GMTP na Internet?
+
+- Quais são as similares e diferenças entre o GMTP e o LibSwift?
+
+- O GMTP faz computação Per-Flow, se sim, quanto?
+
+- Por que não usar diretamente o traceroute? e o tcptraceroute?
+
+- Por que não manter um único RTT s?
+  R: porque todos os acks teriam que ser repassados para o nó originador do
+fluxo de dados, o que geraria uma explosão de acks e além disso, qual valor
+deveria ser considerado, já que um fluxo transmitido pelo servidor pode ser
+recebido indiretamente por muitos outros nós? Além disso, isto limitaria a taxa
+de transmissão R(t) entre um sub-caminho
+
+- O GMTP Inter pode ser exeutado em um cliente?
+
+- Em um mesmo domínio administrativo, contendo multiplos roteadores, sendo um
+de borda, é possível que ter apenas um nó repassador instalado em um roteador e
+os demais roteadores funcionarem como cliente/repassador?
+
+- Por que um cliente não pode ter mais de um repassador?
+R: o tráfego sempre passará pelo roteador padrão, onde tem o gmtp inter rodando
+
+- ... E considerando um rede com múltiplos roteadores?
+R: limitação do GMTP? tem que escolher um roteador como rota padrão
+
+- Por que usou a equação do reno?
+R: melhor seria usar cubic-like, interações com o pesquisador, contratado pela
+samsung, trabalhos futuros
+
+- Qual a vant de um r repassar?
+
+- tem que ler header de transporte? (pode colocar uma flag no campo opt do ip)
+
+- Por que tipos de pacotes, invez de flags
+
+================================ PAREI AQUI
+
+
+
+
+%\subsection{Seleção de Parceiros e de \textit{Chunks}}
+
+% \subsection{Balanceamento de Carga}
+%
+% Um outro aspecto interessante do protocolo \mudccps é sua capacidade em
+% permitir divisão de carga entre nós relays. Como os nós relays recebem e
+% repassam os fluxos de dados oriundos de um servidor, obtem-se natualmente uma
+% solução de distribuição de conteúdo multimídia sem sobrecarregar a fonte
+% geradora de dados (geralmente o servidor). Porém, mesmo considerando o
+% mecanismo atualmente empregado no \mudccps para divisão de carga entre nós
+% relays, atualmente estuda-se um mecanismo complementar de balanceamento de
+% carga a fim de evitar que os nós relays entre em colapso de congestionamento
+% devido ao grande número de clientes conectados a um determinado nó relay.
+%
+% Considerando isso, está em estudo no contexto do protocolo \mudccps um
+% mecanismo
+% de balanceamento de carga que quando um nó relay possui muitas conexões de
+% clientes permite-se que outro nó cliente seja... PROBLEMA: UM RELAY POR REDE!
+
+
+% \subsection{Outra Estratégia para Descoberta de Nós Relays}
+% \label{sec:arcdescorels}
+%
+% Um aspecto primordial do \mudccps é a capacidade de obter fluxos de
+% dados multimídia através de nós relays, os quais repassam esses dados vindo de
+% uma fonte geradora. No processo de conexão, esses nós relays são encontrados,
+% aceitam conexões de clientes e repassam dados da aplicação como se fossem o
+% nó servidor. Um gargalo no procedimento padrão adotado no \mudccps é que pode-se
+% demorar até que um cliente \mudccps encontre um nó relay e comece a receber o
+% fluxo de dados desejado devido ao mecanismo de busca por profundidade por nós
+% relays utilizando transmissões multicast, utilizando-se valores incrementais
+% para o campo de TTL presente no cabeçalho IP.
+%
+% Diante disso, está em estudo no contexto desse trabalho um mecanismo alternativo
+% para permitir que um nó cliente encontre um nó relay mais rapidamente. Este
+% mecanismo consiste em permitir que um nó cliente solicite diretamente ao nó
+% servidor a lista de nós relays conectados a ele, ou seja, a lista dos nós
+% relays de primeiro nível (Figura~\ref{fig:cenario-global-detailed}).
+%
+% O mecanismo de busca por nós relays permitirá que o cliente consulte, ao longo
+% dos níveis dos nós relays, aquele nó relay que mais se adequa aos requisitos da
+% aplicação, principalmente com relação ao atraso observado desde do servidor até
+% um determinado relay. Um nó cliente que desejar solicitar esse tipo de
+% requisição, utiliza o pacote do tipo \mudccp-RelayQuery e transmite o pedido de
+% consulta ao nó servidor, o qual responde ao cliente com a lista dos nós relays
+% de primeiro nível utilizando o pacote do tipo \mudccp-RelayReply. Com isto, é
+% possível encontrar um melhor relay cujo atraso não ultrapasse um determinado
+% limiar de tempo definido pela aplicação, o que não necessariamente será o nó
+% relay mais próximo geograficamente do nó cliente.
+
+
+
+% , dentre
+% outros referenciados em~\cite{REF, REF, REF, REF, REF}.
+
+% discutir aqui sobre o que o protocolo trás de bom para as aplicações
+%
+% - cloud computing
+%
+% - transmissão de casa
+%
+% - vod
+%
+% - youtube/copa america
+%
+% - twitcam
+
+% \section{Outros Aspectos Importantes do \mudccp}
+%
+% \subsubsection{Uso do Campo \textit{Offset} de Dados}
+%
+% \subsubsection{Uso do Campo \textit{CCVal} de Dados}
+%
+% \subsubsection{Soma de Verificação e Validação de Pacotes}
+%
+% \subsection{Compatibilidade com outras recomendação da IETF}
+%
+% - NAT - http://www.brynosaurus.com/pub/net/p2pnat/
+% - 4340
+% - GERAÇÃO DO NÚMERO DE SEQUÊNCIA
+% - RFC2365
+% - RFC4086
+% - RFC2119
+% - TFMCC 4654
+% - 5166
+% - TFRC 3448
+
+%\section{Considerações sobre redes de distribuição de conteúdo}
+
+%\section{Considerações sobre a escolha do DCCP como base para o \mudccp}
+
+% \section{Considerações sobre implementação}
+
+\section{Sumário do Capítulo}
+
+Neste capítulo, apresentou-se uma visão geral do \textit{Global Media
+Transmission Protocol} (\mudccp), um protocolo de transporte baseado em uma
+arquitetura P2P para distribuição de fluxos de dados multimídia de aplicações
+com um nó transmissor e muitos nós receptores (\mys), desenvolvido para operar
+principalmente na Internet. O \mudccp\space permite a transmissão de pacotes de
+dados com suporte a controle de congestionamento de fluxos não confiáveis,
+operando em modo de transmissão multicast ou múltiplos fluxos unicast
+compartilhados entre os nós participantes da transmissão, através de uma rede de
+favores constituída dinamicamente a fim de evitar a relação de uma conexão por
+cliente ao servidor, como acontece em protocolos unicast de transporte de dados
+multimídia disponíveis na literatura.
+
+O \mudccps possui um mecanismo de conexão separado em duas fases, onde a
+primeira fase acontece quando o primeiro nó em uma rede local deseja
+estabelecer uma conexão com um servidor que está transmitindo um determinado
+fluxo multimídia. Ao perceber que nenhum outro nó em sua rede local está
+recebendo o fluxo de dados desejado, o cliente estabelece uma conexão unicast
+com o servidor e se auto promove a um nó especial chamado de relay. A segunda
+fase do processo de conexão do \mudccps acontece quando um segundo nó cliente
+deseja obter o mesmo fluxo de dados multimídia que o primeiro nó cliente,
+considerado o nó relay daquela rede. No momento em que isto acontece, o nó
+cliente é capaz de perceber a presença de um relay e passa a receber o fluxo de
+dados através do nó relay em modo multicast, evitando assim um novo pedido de
+conexão ao nó servidor de dados.
+
+Um aspecto importante do \mudccps é seu mecanismo de controle de
+congestionamento de fluxos não confiáveis. O controle de congestionamento
+empregado no \mudccps funciona de forma híbrida, a depender do modo de conexão
+utilizado por um determinado nó. Quando o protocolo \mudccps está operando em
+modo unicast, utiliza-se o \mudccp-UCC, um algoritmo de controle de
+congestionamento baseado no TCP Cubic e escolhido para operar no \mudccps
+porque tem alta capacidade de convergência no compartilhamento do canal de
+transmissão entre os diferentes fluxos de dados. Existe também o \mudccp-MCC,
+que é o algoritmo para controle de congestionamento utilizado quando um nó
+\mudccps opera em transmissões multicast. Tal algoritmo é baseado em uma
+equação TFRC (\textit{TCP Friend Rate Control}) que faz uso de nós especiais
+para determinar a próxima taxa de transmissão que um nó transmissor \mudccps
+deverá utilizar. Esses nós especiais são chamados de reporters.
+
+Em seguida, discutiu-se sobre outras funcionalidades do protocolo \mudccp, tais
+como seu mecanismo para finalização de conexão, eleição, monitoramento e
+desconexão de nós relays e reporters, assim como possíveis mecanismos para
+adaptação de fluxos de dados multimídia de acordo com a capacidade do canal,
+ainda em definição e estudo no contexto deste trabalho. Por fim, apresentou-se
+os benefícios trazidos pelo \mudccps às aplicações que o utiliza.
+
+No próximo capítulo, continua-se com as discussões sobre o protocolo \mudccp,
+porém apresentando-o de forma mais técnica e com discussões sobre a sua
+implementação.

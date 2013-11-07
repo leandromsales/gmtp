@@ -1,0 +1,987 @@
+\chapter{Trabalhos Relacionados}
+\label{cap:trabalhosrelacionados}
+
+============
+
+ver 6035830, 5343509, 6121327
+
+- Trabalhos relacionados
+   * Escrever seção sobre o Coolstreaming / Denacast
+
+============
+
+Neste capítulo apresenta-se uma avaliação crítica acerca de um conjunto de
+trabalhos sobre protocolos de transporte para distribuição de conteúdos
+em aplicações caracterizadas por um nó transmissor e muitos nós receptores.
+Trabalhos que não apresentam uma proposta de protocolos de transporte de dados
+multimídia, mas que são considerados proeminentes na literatura também são
+apresentados e analisados por apresentarem alguma similaridade com a proposta
+do \mudccp.
+
+A compilação dos trabalhos a seguir foi realizada baseando-se em informações
+obtidas e adaptadas de publicações encontradas em diversas fontes
+(revistas, conferências, livros, teses e dissertações etc.) disponíveis na
+literatura.
+
+Na Seção~\ref{sec:proto-multi-padro} apresenta-se uma breve
+discussão acerca de protocolos multimídia padronizado. Em seguida, na
+Seção~\ref{sec:proto-trans-ea} discute-se o estado da arte acerca de protocolos
+de transporte, dando-se ênfase às propostas de protocolos de transporte que
+utilizam uma abordagem P2P. Por fim, na Seção~\ref{sec:trabrel-sumario-comp}
+apresenta-se um sumário comparativo sobre os protocolos apresentados e uma breve
+discussão sobre a proposta diferenciada promovida no \mudccp.
+
+% Inúmeras tecnologias destinadas a permitir a execução de aplicações multimídia
+% em tempo real na Internet foram desenvolvidas ao longo dos anos, proporcionando
+% assim um extenso ferramental e aplicações para áreas do conhecimento humano que
+% fazem uso de recursos de comunicação multimídia. Para tanto, diversos aspectos
+% da comunicação em rede tiveram de ser aperfeiçoados, visando, sobretudo, a
+% execução eficiente dessas aplicações pela Internet.
+
+% Uma vez que a lista apresentada não é exustiva e considerando a potencial
+% evolução destes trabalhos, à ausência de uma característica citada sobre um
+% trabalho, o leitor deve entender que durante o levantamento bibliográfico
+% realizado não foram encontrados investimentos por parte dos próprios autores do
+% trabalho para prover tal característica.
+
+\section{Protocolos Multimídia Padronizados}
+\label{sec:proto-multi-padro}
+
+Para permitir a criação, encerramento e controle de conferências multimídia,
+como videoconferência, audioconferência ou mesmo uma simples transmissão de
+dados de vídeo de uma parte a outra, em tempo real, padrões de comunicação foram
+desenvolvidos e disponibilizado publicamente. Nesta perspectiva, a seguir
+apresentam-se os protocolos de rede que merecem destaque, principalmente por
+serem empregado na maioria das aplicações multimídia existentes.
+
+O processo de desenvolvimento de padrões abertos iniciou com um grupo de
+estudos do ITU-T (\textit{International Telecommunication Union --
+Telecommunication Section}), em 1996. O ITU-T especificou o padrão
+H.323~\cite{liu2000}, que estabelece uma arquitetura de comunicação destinada ao
+controle de conferências de voz, vídeo e dados sobre redes TCP/IP. O H.323 se
+tornou largamente utilizado, uma vez que, a época da especificação de sua
+segunda versão, em 1998, não havia qualquer padrão aberto e aceito pelo mercado
+capaz de atender às aplicações multimídia. Embora as transmissões multimídia em
+tempo real por multicast já estivessem sendo realizadas no Mbone~\cite{819167}
+há algum tempo, não havia ainda qualquer padrão aberto para controle de
+conferências multimídia.
+
+Num período equivalente a maturação do H.323, a IETF iniciou o desenvolvimento
+de uma arquitetura de comunicação mais flexível e poderosa que o H.323.
+Alicerçada sobre o protocolo SIP (\textit{Session Initiation
+Protocol})~\cite{RFC3261}, a arquitetura SIP teve logo potencial reconhecido,
+uma vez que supria todos os pontos fracos da arquitetura H.323, como a demora no
+estabelecimento de conexão (canais H.225 e H.245) e a complexidade de operação.
+
+Devido à natureza da pilha de protocolos TCP/IP, voltada à transmissão de
+dados pelo paradigma do ``melhor esforço'', sem qualquer cumprimento a
+requisitos de tempo, novos protocolos foram propostos para as necessidades de
+transmissão de dados em tempo real. O protocolo em destaque neste sentido é o
+RTP (\textit{Real Time Protocol})~\cite{RFC3550}, um protocolo de transporte
+para aplicações de tempo real. O RTP atualmente constitui a base das
+transmissões multimídias em tempo real na Internet, sendo o padrão adotado em
+praticamente todas as soluções multimídia baseadas em IP. O RTP oferece um
+mecanismo para que as aplicações tenham controle sobre número de seqüência e
+marcas de tempo de cada pacote de dados transmitido, não oferecendo qualquer
+mecanismo de retransmissão de informações perdidas.
+
+Em paralelo ao RTP, as aplicações multimídia utilizam o \textit{Real
+Time Streaming Protocol} (RTSP)~\cite{RFC2326}. O RTSP é um protocolo a nível de
+aplicação desenvolvido pela IETF para controle na transferência de dados com
+propriedades de tempo real. Tal protocolo torna possível a transferência, sob
+demanda, de dados em tempo real como áudio e vídeo. Ele serve para estabelecer e
+controlar um único ou vários fluxos sincronizados de mídias contínuas
+pertencentes a uma apresentação.
+
+O conjunto de fluxos a ser controlado é definido por uma descrição de
+apresentação, normalmente um arquivo, que pode ser obtido por um cliente usando
+HTTP ou outros meios, podendo estar armazenado em um local diferente do servidor
+de mídia. Uma descrição de apresentação contém informações sobre um ou mais
+fluxos que compõe a apresentação, como endereços de rede e informações sobre o
+conteúdo da apresentação, além de parâmetros que tornam possível ao cliente
+escolher a combinação mais apropriada das mídias.
+
+Tanto o RTP quanto o RTSP são propostas desenvolvidas para suprir as carências
+encontradas em protocolos de transporte tradicionais da Internet, como o UDP e o
+TCP. Apesar de novos protocolos de transporte padronizados pela IETF, tais como
+o DCCP e o SCTP (\textit{Stream Control Transmission
+Protocol})~\cite{Jungmaier2003,iyengar_concurrent_2006}, o uso dos protocolos
+RTP/RTSP em conjunto com o protocolo UDP é predominante nas aplicações
+multimídia encontradas na Internet.
+
+As especificações e detalhes de funcionamento dos protocolos citados nesta
+seção estão disponíveis abertamente na literatura. Por serem documentos
+extensos e de conhecimento já bastante difundido, neste trabalho decidiu-se
+omitida discussões detalhadas sobre cada um deles, dando-se ênfase em
+protocolos cujas propostas se aproximam ao \mudccp.
+
+\section{Protocolos de Transporte de Dados Multimídia}
+\label{sec:proto-trans-ea}
+
+Apesar da existência de protocolos padronizados para a transmissão de dados na Internet,
+diversos grupos de pesquisa têm investido no desenvolvimento de novos protocolos ou na
+extensão dos existentes para o transporte de dados multimídia pela Internet. A seguir,
+apresentam-se os trabalhos representativos ao estado da arte neste sentido.
+
+\subsection{PPETP -- \textit{Peer-to-Peer Epi-Transport Protocol}}
+\label{subsec:ppetp}
+
+O \textit{Peer-to-Peer Epi-Transport Protocol} (PPETP) é um protocolo
+distribuído que utiliza uma abordagem P2P para transmissão de mídias em tempo
+real, sendo proposto para operar em redes com nós
+heterogêneos~\cite{bernardini2011}.
+
+O PPETP é um protocolo que constrói uma rede de sobreposição com suporte a
+transmissão em modo multicast. Em tal protocolo, propõe-se uma solução de fácil
+integração às aplicações multimídia existentes por meio de uma biblioteca de
+programação similar, porém não integrada, à \textit{Socket} BSD. O PPETP
+tem como principal aplicação os sistemas de transmissão de vídeo executados por
+usuários residenciais, geralmente conectados através de uma tecnologia xDSL, fornecendo
+uma visão de um protocolo de transporte multicast ao desenvolvedor da aplicação, embora o
+PPETP é executado na camada de aplicação.
+
+O PPETP utiliza uma abordagem de transmissão do tipo \textit{push} onde os nós
+iniciam e finalizam as conexões utilizando pacotes de controle e trocam dados
+em modo unicast. Ao desejar receber um fluxo de dados, um nó B envia um pedido
+de conexão ao servidor PPETP (Figura~\ref{fig:arq-ppetp}). Em seguida, o servidor responde
+com uma informação que determina qual nó o cliente B deve solicitar os dados da
+transmissão, além de solicitar que o nó B obtenha um arquivo de configuração
+dos parâmetros de conexão em um servidor de configuração chamado de
+\textit{starting point}. O servidor de configuração pode ser um nó diferente do
+servidor gerador do fluxo de dados multimídia. O nó B então requisita os dados
+ao nó determinado pelo servidor. No PPETP utiliza-se o protocolo UDP para
+transmissão de dados por padrão, embora permite-se o uso de outros protocolos,
+como o TCP e possivelmente o DCCP.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[natwidth=628,natheight=421,scale=0.7]{imgs/trabrel/arq-ppetp.png}
+\end{center}
+\vspace{-0.5cm}
+\caption{Arquitetura e funcionamento do protocolo PPETP.}
+\label{fig:arq-ppetp}
+\end{figure}
+
+Uma característica fundamental do PPETP é conhecida pelo nome de procedimento
+de redução (\textit{reduction procedure}). Considerando-se o princípio de que
+um fluxo de dados é uma sequência de pacotes, o procedimento de redução do PPETP evita que
+todos os nós do sistema tenham sempre que repassar todos os pacotes desse fluxo
+de dados, permitindo-se que mesmos os nós conectados na Internet através de
+canais com largura de banda limitada consigam contribuir com o sistema.
+
+No PPETP utiliza-se uma função de redução do tamanho do pacote que é
+parametrizável e diversas funções podem ser utilizadas através de uma
+arquitetura de componentes. Atualmente existem duas funções, a de
+\textit{Vandermonde} e a básica (sem redução). A função de \textit{Vandermonde}
+reduzido cada pacote por um fator R e então o pacote é repassado para outros
+nós. Cada nó recebe um conjunto de pacotes reduzidos, reconstrói o conteúdo do
+pacote, entrega-o para a aplicação e repete o procedimento de redução,
+repassando-o para outros nós interessados pelo conteúdo.
+
+Um aspecto importante do PPETP é sua capacidade de tolerar perdas de pacotes.
+Como o mecanismo de redução de pacotes permite a reprodução do conteúdo sem que
+todos os pacotes reduzidos alcancem o receptor, isto torna o protocolo
+resiliente a perdas de dados. Os autores prometem que em uma rede com N nós e
+um fator de redução R, a reconstrução de um pacote pode acontecer mesmo se $N
+- R$ nós se desconectarem.
+
+\subsubsection{Considerações sobre o trabalho}
+
+O aspecto positivo do PPETP é sua capacidade de funcionar com nós heterogêneos no
+ponto de vista dos recursos de rede disponíveis por cada um deles. O esquema
+de \textit{procedimento de redução} dos tamanhos dos pacotes parecer ser bastante
+promissor, porém ao que pôde-se constatar é complexo de ser implementado e só
+funciona com a participação de muitos nós.
+
+Os pontos fracos do PPETP são vários e enumerados a seguir.
+
+\begin{enumerate}
+
+  \item O PPETP é um protocolo na camada de aplicação e considerado pelos
+autores de ser um protocolo de pseudo-transporte, pois abstrai da aplicação diversas
+funcionalidades dos sistemas de transmissão de mídia em tempo real que utiliza a abordagem
+P2P. Neste sentido, a disponibilização e a efetiva utilização do PPETP por parte das
+aplicações pode ser dificultada por ser um protocolo de aplicação e não genuinamente de
+transporte. Isto significa que o PPETP não tem uma separação explícita de
+responsabilidade no ponto de vista de transporte de dados, misturando responsabilidades
+da camada de aplicação e da camada de transporte. No \mudccp, essa separação é explícita
+por se tratar de um protocolo disponibilizado na camada de transporte sem qualquer
+influência da aplicação, delegando para a mesma apenas responsabilidades de sinalização e
+descrição do conteúdo a ser transportado.
+
+  \item O fluxo de dados de controle é centralizado no servidor. Isto significa que para
+que um nó A comece a receber um fluxo de dados de um outro nó, primeiro o nó A precisa
+solicitar ao servidor o acesso ao conteúdo para em seguida efetivamente começar a
+recebê-lo. No \mudccps isto não acontece, pois qualquer nó pode funcionar como servidor, o
+que ocorre de forma transparente para a aplicação.
+
+  \item O PPETP atualmente utiliza o protocolo UDP que, como já discutido, possui
+diversas desvantagens para a aplicação e para a rede, principalmente em situação de
+congestionamento na rede. O \mudccps é um protocolo de transporte e portanto não necessita
+de nenhum outro protocolo da sua própria camada. Além disso, o \mudccps possui um
+arcabouço para adicionar novos algoritmos de controle de congestionamento, tanto para as
+transmissões em modo unicast quanto para as transmissões em modo multicast.
+
+  \item O PPETP não suporte transmissão de dados em modo multicast. No PPETP os
+dados são transmitidos entre os nós em modo unicast, apesar dos autores mencionarem que
+o protocolo funciona em modo multicast, pelo menos no ponto de vista da aplicação. O
+termo multicast empregado nesse contexto é apenas para dar a idéia que poucos
+fluxos são transmitidos a partir do nó transmissão, mas que todos os nós
+receptores os recebem através da rede sobreposição criada pelo PPETP. No
+\mudccps utiliza-se um mecanismo híbrido de transmissão: sempre que possível
+usa-se o modo multicast, caso contrário usa-se o modo unicast.
+
+  \item No PPETP alguns mecanismos bastante utilizados em sistemas de transmissão de
+mídias em tempo real, como o de descoberta de nós, deve ser implementado na camada de
+aplicação. Apesar dessa abordagem do PPETP funcionar por ser flexível para a camada de
+aplicação, a mesma limita o uso desses mecanismos à própria aplicação, impedindo que
+outras aplicações façam uso dos mesmos. No \mudccps procurou-se adicionar tal
+funcionalidade dentro do próprio protocolo, permitindo-se o reúso desses mecanismos
+em diferentes aplicações. Desta forma, é possível que um algoritmo para descoberta de
+nós seja implementado no \mudccp, em forma de componente, e qualquer outra aplicação
+reutilizar tal mecanismo. Com isto, o \mudccps permite a interioperabilidade entre
+diferentes aplicações a nível de camada de transporte.
+
+  \item Para que o PPETP funcione efetivamente nas aplicações serão necessárias diversas
+alterações em protocolos da camada de aplicação, como no RTSP e no SDP (\textit{Session
+Description Protocol}). Todas as modificações necessárias estão listadas no documento
+disponível na referência~\cite{bernardini2011}.
+
+\end{enumerate}
+
+\subsection{PPSP/Swift -- \textit{P2P Streaming Protocol} / \textit{The Generic
+Multiparty Transport Protocol}}
+\label{subsec:ppsp-swift}
+
+O \textit{Peer-to-Peer Streaming Protocol} (PPSP) é um protocolo para
+sinalização e controle para sistemas de transmissão de fluxos de dados em tempo
+real. Dentro do PPSP existe o Swift, um protocolo cujo objetivo é disseminar
+o conteúdo para um conjunto de nós interessados por um mesmo conteúdo.
+
+O PPSP define \textit{peers} e \textit{trackers} como dois tipos de nós para um
+sistema de transmissão de mídia baseado em P2P. Os \textit{peers} são nós que
+enviam e recebem conteúdos multimídia e os \textit{trackers} são nós conhecidos
+com conexão estável que mantêm meta informações sobre os conteúdos transmitidos
+e uma lista dinâmica de \textit{peers}. Os \textit{trackers} podem ser
+organizados de forma centralizada ou distribuída. No PPSP propõe-se dois
+protocolos base. O protocolo dos \textit{trackers}, que tratam as trocas de
+meta informações entre os \textit{trackers} e os \textit{peers}, tais como a
+lista dos peers e informações sobre os conteúdos. E o protocolo dos
+\textit{peers}, que controla os anúncios e informações sobre a disponibilidade
+de dados da mídia entre os \textit{peers}.
+
+O funcionamento básico do PPSP ocorre da seguinte forma~\ref{fig:arq-ppsp}. Um nó
+transmissor \textit{Peer-P} notifica ao tracker a transmissão realizada por ele
+(passo 1). O \textit{tracker} então transmite uma mensagem para os
+\textit{Peer-M} e \textit{Peer-D} interessados em receber o conteúdo multimídia
+para se juntarem ao grupo (passos 2 e 4). O \textit{Peer-P} transmite o conteúdo
+para o \textit{Peer-M}, que repassa para o \textit{Peer-D}. Em seguida, outros
+\textit{peers} se registram como clientes interessado o \textit{tracker}
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[natwidth=854,natheight=577,scale=0.6]{imgs/trabrel/arq-ppsp.png}
+\end{center}
+\vspace{-0.5cm}
+\caption{Arquitetura e funcionamento do protocolo PPSP/Swift.}
+\label{fig:arq-ppsp}
+\end{figure}
+
+O processo descrito anteriormente é governado pelo protocolo PPSP. Porém, como o
+PPSP não é um protocolo de transporte, seus idealizadores criaram o \textit{The
+Generic Multiparty Transport Protocol} (Swift). A responsabilidade do Swift no
+processo descrito é cuidar do transporte de dados entre os \textit{peers}
+\textit{Peer-M}, \textit{Peer-D} e quaisquer outros participantes da transmissão.
+O Swift especifica o conteúdo de um stream como pedaços chamados de
+\textit{chunks}. O Swift transmite os dados entre os \textit{peers} utilizando o
+protocolo de transporte UDP com suporte de controle de congestionamento chamado de
+LEDBAT~\cite{5560080,shalunov2011}, o mesmo adotado no BitTorrent.
+
+\subsubsection{Considerações sobre o trabalho}
+
+Os pontos positivos do PPSP/Swift são dois. O primeiro é a separação do mecanismo
+de sinalização e descrição da mídia da parte de transporte. O segundo ponto é
+o mecanismo do Swift de distribuição de conteúdo, baseado em enxames.
+
+Os pontos fracos do PPSP/Swift são enumerados a seguir.
+
+\begin{enumerate}
+
+  \item Ausência de suporte para extensão para recursos da aplicação, como por
+exemplo, descoberta, controle de congestionamento e tolerância à falhas. O
+\mudccps é extensível nesse aspecto.
+
+  \item Não suporta compartilhamento de conexão com suporte a transmissão em modo
+multicast.
+
+  \item Menciona o uso futuro do algoritmo para controle de congestionamento
+TFRC, porém não possui suporte a controle de congestionamento em grupo. No
+\mudccps isso é feito utilizando o algoritmo MCC, apresentado nas
+Seções~\ref{sec:cc} e~\ref{sec:mcc}.
+
+  \item A transmissão de conteúdo com o transporte de \textit{chunks} é
+interessante em aplicações para compartilhamento de arquivos, onde o tempo de
+resposta não é requisito fundamental para a qualidade de serviço no ponto de
+vista do usuário que o utiliza. O uso dessa abordagem em aplicações de
+transmissão de mídia em tempo real não é uma estratégia interessante devido a
+complexidade de indexar e remontar os pacotes de dados de acordo com cada
+\textit{chunck}. Esses procedimentos podem onerar o tempo em que um pacote de
+dados é entregue para a camada de aplicação, gerando-se um atraso no fluxo
+contínuo de dados para a camada de aplicação.
+
+  \item Uso do protocolo UDP, apesar de fornecer mecanismo para controle de
+congestionamento. Esta prática quebra a idéia da organização dos protocolos em
+camadas funcionais, onde uma camada fornece serviços para a camada superior e,
+obviamente, usufrui de serviços da camada inferior. Mecanismos para controle de
+congestionamento devem ser implementados na camada de transporte e não na camada
+de aplicação. Isso limita o uso dos recursos implementados no Swift apenas para
+aplicações que utilizam sua implementação, a \textit{libswift}, disponível em
+forma de biblioteca de software. O \mudccps é um protocolo de transporte e
+portanto independente de qualquer outro, além de implementar e suportar à adição
+de seus próprios algoritmos para controle de congestionamento.
+
+\end{enumerate}
+
+\section{Protocolos de Aplicação para Transmissão de Mídias}
+\label{sec:proto-app-ea}
+
+Nesta seção apresentam-se os trabalhos acadêmicos onde são protocolos
+para transmissão de conteúdos multimídia na camada de aplicação. Os
+trabalhos foram selecionados seguindo um critério de similaridade com as
+propostas do \mudccp.
+
+\subsection{PDTP -- \textit{Peer Distributed Transfer Protocol}}
+
+O protocolo \textit{Peer Distributed Transfer Protocol} (PDTP)~\cite{arcieri2004}
+surgiu em 2002 com a promessa de prover um método para transferência de arquivos e
+mídia em tempo real similar ao BitTorrent. O uso do protocolo foi perdendo força e
+no final de 2007 foi descontinuado. Sua implementação de referência era conhecida
+pelo nome de DistribuStream~\footnote{DistribuStream:
+\url{http://freecode.com/projects/distribustream}}.
+
+O PDTP previa o uso de servidores para gerenciamento automático de diretórios de
+conteúdo, fazendo-o similar a protocolos como o HTTP e o FTP. Além disso, na
+proposta do PDTP previa suporte a meta descrição e validação de integridade de
+conteúdo através do uso de assinatura digital. A \textit{Internet Assigned Numbers
+Authority} (IANA) alocou a porta 6086 para o uso do protocolo em aplicações
+multimídia. Suporta um mecanismo de \textit{tracker} similar ao PPSP/Swift e
+utiliza o protocolo UDP para transmissão de dados.
+
+O PDTP especifica um conjunto de nós chamados de \textit{hubs}, que tem como
+responsabilidade prover o mapa da rede, listagem de diretórios e serviço de
+arquivos. O serviço de arquivo é similar ao esquema de \textit{seed} do
+BitTorrent, com a diferença do uso de outro conjunto de nós chamados de
+\textit{Piece Proxies} (PP). Os PPs fazem download e cache de pedaços de arquivos
+armazenados nos nós hubs e então servem estes pedaços na rede sob demanda,
+reduzindo o consumo de banda dos \textit{hubs}. Segundo os autores, o BitTorrent
+resolve esse problema com o uso de multiplos \textit{seeds}, porém se não existir
+nenhum \textit{seed} disponível para um \textit{torrent} o conteúdo fica
+inacessível. Na Figura~\ref{fig:arq-pdtp} ilustra-se a organização geral dos nós
+PDTP.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[natwidth=623,natheight=322,scale=0.7]{imgs/trabrel/arq-pdtp.png}
+\end{center}
+\vspace{-0.5cm}
+\caption{Organização dos Nós PDTP.}
+\label{fig:arq-pdtp}
+\end{figure}
+
+\subsubsection{Considerações sobre o trabalho}
+
+A proposta do protocolo PDTP tem um ponto positivo porque organiza os nós
+interessados por um mesmo conteúdo de forma hierárquica e o conjunto de comandos
+disponíveis do protocolo é similar a protocolos tradicionais, como o HTTP e o FTP.
+
+Embora os autores mencionem a possibilidade de utilizar o PDTP em transmissões de
+mídia em tempo real, nenhum referência disponível menciona detalhes sobre tal
+capacidade. O uso do protocolo UDP caracteriza um protocolo com os problemas
+problemas já discutidos ao longo deste trabalho e presente nos outros trabalhos
+apresentados neste capítulo.
+
+\subsection{CPM -- \textit{Cooperative Peer Assists and Multicast}}
+
+No \textit{Cooperative Peer Assists and Multicast} (CPM)~\cite{5061910} propõe-se
+uma abordagem unificada para prover suporte eficiente de transmissão de vídeos sob
+de demanda para ser utilizada por provedores de serviços. O CPM é um protocolo de
+aplicação que suporta transmissão em modo multicast, cache de dados nos nós
+clientes, compartilhamento de dados entre os cliente, onde o servidor utiliza modo
+de transmissão unicast.
+
+Na Figura~\ref{fig:arq-cpm} ilustra-se a visão geral do funcionamento do CPM
+através de um diagrama de sequência. Primeiramente o cliente conecta o servidor
+para saber sobre a existência de algum grupo multicast, e então passa a
+receber o conteúdo em modo multicast. Caso não exista um grupo multicast para o
+conteúdo de interesse, o cliente solicita, através de um servidor de diretórios a
+lista de nós que detém o conteúdo de interesse e então inicia a transferência.
+Caso não exista nenhum nó com o conteúdo requisitado, o cliente requisita o
+conteúdo diretamente para o servidor.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[natwidth=913,natheight=522,scale=0.6]{imgs/trabrel/arq-cpm.png}
+\end{center}
+\vspace{-0.5cm}
+\caption{Diagrama de sequência do CPM (\textit{Cooperative Peer Assists and
+Multicast}).}
+\label{fig:arq-cpm}
+\end{figure}
+
+Na arquitetura do protocolo CPM existem três componentes principais: (1) o modelo
+de dados do vídeo; (2) um protocolo para descoberta e transferência de conteúdo e
+(3) um escalonador inteligente no lado do servidor.
+
+O modelo de dados divide o vídeo em pedaços (\textit{chunks}) de tamanhos fixos.
+Cada pedaço é identificado por um GUID (\textit{Globally Unique Identifier}), onde
+um segmento consiste em uma sequência de pedaços e uma sequência de segmentos
+constitui um vídeo.
+
+O protocolo de transferência assume que o vídeo deve está completamente armazenado
+no servidor para permitir que os nós façam cache dos pedaços e redistribuí-los
+\textit{a posteriori}. Quando um cliente envia um pedido de reprodução de vídeo, o
+servidor mapeia o conteúdo do vídeo requisitado, que é então formatado em
+sequências de pedaços e transmitidos para o cliente. Este procedimento é
+executado em paralelo com outros nós da rede. O modo de transmissão multicast é
+ativado pelo servidor e só ocorre quando múltiplos clientes tem interesse pelo
+mesmo conteúdo.
+
+\subsubsection{Considerações sobre o trabalho}
+
+A capacidade para transmitir o conteúdo em modo híbrido é um aspecto positivo
+para o CPM. A seguir enumeram-se os pontos fracos identicados.
+
+\begin{enumerate}
+
+  \item Para utilizar o modo de transmissão multicast, o cliente tem que ter
+rota multicast diretamente para o servidor, pois apenas este pode iniciar o
+processo de transmissão utilizando este modo. No \mudccps esse mecanismo é
+segmentado e qualquer nó pode transmitir em modo multicast.
+
+  \item O mecanismo de transmissão de conteúdo quebra os segmentos em pedaços, o
+que torna o gerenciamento mais complexo devido ao espalhamento dos pedaços entre
+os nós participantes da transmissão. Isto pode gerar atrasos na reprodução
+do conteúdo no cliente devido a necessidade de localizar cada pedaço
+individualmente, embora o uso dessa abordagem pode aumenta a velocidade de
+download. No \mudccps a existe a idéia de quebrar os segmentos em pedaços menores.
+Tal abordagem é deixada a cargo da aplicação.
+
+  \item O uso de servidor de diretórios para consultar a lista de nós que mantém
+o conteúdo multimídia desejado não faz muito sentido para sistemas de transmissão
+de mídia ao vivo. No \mudccps não utiliza-se este tipo de solução.
+
+  \item Como o CPM foi desenvolvido com foco em transmissão de vídeo sob demanda,
+os nós só podem começar a repassar o conteúdo se previamente o este já tenha
+reproduzido o vídeo no passado. No caso de sistemas transmissão de vídeo em tempo
+real esta abordagem é completamente inútil. No \mudccps qualquer nó é capaz de
+realizar o repasse de conteúdo, inclusive em modo multicast.
+
+\end{enumerate}
+
+\subsection{HySAC -- \textit{Hybrid Delivery System with Adaptive Content
+Management for IPTV Networks}}
+% http://202.194.20.8/proc/ICC2011/DATA/01-049-01.PDF
+
+No \textit{Hybrid Delivery System with Adaptive Content Management for IPTV
+Networks} (HySAC)~\cite{5962598} propõe-se uma nova arquitetura e um sistema
+adaptativo e híbrido que utiliza um esquema chamado de pre-população para
+distribuição de vídeos sob demanda em redes IPTV. Os autores do HySAC criticam
+o protocolo CPM ao afirmarem que tal abordagem não utiliza os recursos de rede de
+forma otimizada, uma vez que o conteúdo de mídia não é armazenado de modo
+pré-planejado de acordo com a demanda dos nós clientes, o que eleva o consumo de
+recursos de rede e provê uma baixa qualidade na transmissão do conteúdo
+multimídia ao usuário final.
+
+Diferente do CPM, o HySAC provê a arquitetura ilustrada na
+Figura~\ref{fig:arq-hysac}. Para evitar que a grande quantidade de usuários
+concorrents sobrecarregue os servidores de mídia, os autores do HySAC propõem um
+sistema adaptativo de transmissão de mídia que otimiza o processo de entrega de
+dados baseado na popularidade do conteúdo e nos recursos de rede disponíveis. O
+conteúdo é categorizado em diferentes classes e o modo de entrega do conteúdo é
+baseado na popularidade do mesmo. A popularidade de um conteúdo é computada
+baseando-se no interesse dos usuários e no número de requisições que chegam ao
+servidor. Os servidores HySAC categorizam os conteúdos e os servidores de
+indexação e descoberta utilizam Tabelas Dinâmicas de Hash (DHT) para encontrar os
+servidores que armazenam o conteúdo. Quando a localização de um conteúdo muda, os
+servidores de indexação são atualizados e quando um novo conteúdo é adicionado,
+os servidores cuidam da replicação do mesmo de acordo com a sua popularidade.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[natwidth=551,natheight=485,scale=0.7]{imgs/trabrel/arq-hysac.png}
+\end{center}
+\vspace{-0.5cm}
+\caption{Arquitetura do HySAC (\textit{Hybrid Delivery System with Adaptive
+Content Management for IPTV Networks}).}
+\label{fig:arq-hysac}
+\end{figure}
+
+O HySAC utiliza três modo de transmissão: unicast, multicast e P2P. Inicialmente
+o HySAC entrega o conteúdo baseado em informações estáticas sobre a popularidade
+do conteúdo. O HySAC gerencia um \textit{rank} de pupularidade do vídeo e
+dependendo de um determinado limiar de popularidade o vídeo é selecionado para
+ser transmitido em modo multicast. Quanto mais alto for a popularidade do vídeo,
+maior é a chance dele ser transmitido em modo multicast. Se a popularidade do
+vídeo for intermediária, o vídeo será transmitido em modo P2P e se for baixa o
+vídeo será transmitido do servidor diretamente para o cliente em modo unicast.
+
+\subsubsection{Considerações sobre o trabalho}
+
+A capacidade de transmitir o conteúdo em modo unicast, multicast e P2P é um
+aspecto positivo para o HySAC. A seguir enumeram-se os pontos fracos
+identicados.
+
+\begin{enumerate}
+
+  \item A decisão do modo de transmissão é baseado na popularidade do vídeo.
+Considerando-se transmissões de mídia em tempo real, a forma o como HySAC
+implementa o mecanismo de classificar o conteúdo requer um tempo de convergência,
+o que pode consumir recurso de rede desnecessariamente. No \mudccps utiliza-se
+multicast sempre que possível, possibilitando que outros clientes recebam o
+conteúdo até mesmo sem precisar contactar o servidor, utilizando-se o modo de
+conexão rápida.
+
+  \item Da mesma forma que outras soluções, o HySAC utiliza o protocolo UDP para
+transmissão de dados da aplicação multimídia. Não foi encontrado nenhuma menção a
+respeito do uso de algoritmos para controle de congestionamento, ao contrário do
+\mudccp.
+
+  \item Trata-se de um sistema de transmissão e não de um protocolo de rede
+propriamente dito. Isto significa que a proposta do HySAC servirá apenas para
+clientes que seguem sua especificação.
+
+\end{enumerate}
+
+\subsection{Outras propostas}
+
+Além das propostas de protocolos ou sistemas para distribuição de conteúdos
+multimídia, várias outras propostas foram encontradas durante o
+levantamento bibliográfico, com menor nível de similaridade com o trabalho
+aqui proposto. Por exemplo, vale ressaltar as tecnologias de distribuição de
+conteúdo conhecidas e utilizadas na indústria, tais como:
+GridMedia~\cite{zhao_gridmedia+:_2009},
+CoolStreaming~\cite{susu_xie_coolstreaming:_2007},
+AnySee~\cite{huang_anysee2:_2007}, PPLive~\cite{hei_insights_2006} e o
+ZIGZAG~\cite{tran_zigzag:_2003}. Estas
+tecnologias têm sido utilizadas com sucesso para a aplicações multimídia, contudo
+tais soluções foram concebidas para distribuição de conteúdo multimídia
+considerando um determinado propósito, com pouca flexibilidade no ponto de vista
+de extensibilidade e reúso dos mecanismos desenvolvidos.
+
+% yin_design_2009
+
+% \subsection{Pastry/SplitStream -- \textit{High-bandwidth content distribution}}
+% 
+% O Pastry/SplitStream é um sistema para distribuição de conteúdo desenvolvido no
+% centro de pesquisas da Microsoft. O SplitStream se baseia na capacidade dos
+% sistemas finais de transmitir dados em modo multicast e tem capacidade de tratar
+% falhas de nós e adaptabilidade quanto a diferentes capacidades de transmissão dos
+% nós participantes. A idéia principal empregada no SlitStream é transmitir o
+% conteúdo multimídia  de acordo com a disponibilidade de largura de banda do canal
+% de diferentes grupos de nós e transmiti-lo usando diferentes árvores multicast.
+
+
+
+% http://research.microsoft.com/en-us/um/people/antr/SplitStream/default.htm
+
+%%%% ==========================================================================
+
+% \subsection{SAAR -- \textit{Rethinking the Architecture for P2P Live Video
+% Streaming}}
+% http://www.mpi-sws.org/~animesh/projects/saar.html
+% selecionado-final/saar-nsdi07-talkslides.pdf
+% selecionado-final/dataplanes-TR.pdf
+% selecionado-final/dataplanes-sigmetrics09.pdf
+
+% X. Zhang, J. Liu, B. Li, and Y.-S.P.Yum, “Coolstreaming/donet : A datadriven
+% overlay network for live media streaming,” in Proceedings of
+% IEEE INFOCOM, March 2005.
+
+% N. Magharei and R. Rejaie, “PRIME: Peer-to-peer Receiver-drIven
+% MEsh-based Streaming,” in Proceedings of IEEE INFOCOM 2007, May
+% 2007.
+
+% V. Pai, K. Kumar, K. Tamilmani, V. Sambamurthy, and A. Mohr,
+% “Chainsaw: Eliminating trees from overlay multicast,” in IPTPS 2005,
+% Ithaca, NY. USA, Feb 2005.
+
+% \subsection{\textit{HTTP Live Streaming}}
+% 
+% \subsection{CHIPS}
+% 
+% \subsection{CDEEP Webcast}
+% 
+% \subsection{PeerCast}
+% http://en.wikipedia.org/wiki/PeerCast
+
+% http://tools.ietf.org/html/draft-pantos-http-live-streaming-07
+% http://developer.apple.com/library/ios/#documentation/NetworkingInternet/Concept
+% ual/StreamingMediaGuide/Introduction/Introduction.html
+
+% \subsection{LayeredCast -- \textit{Hybrid Peer-to-Peer Live Layered Video
+% Streaming Protocol}}
+% http://www.masoudmoshref.com/old/myworks/documentpages/layeredcast.htm
+
+% \section{Outros Protocolos de Transporte Multi-Ponto}
+% \label{sec:proto-trans-mp}
+
+% \subsection{BitTorrent/LEDBAT -- \textit{Low Extra Delay Background Transport}}
+% http://perso.telecom-paristech.fr/~valenti/papers/ledbat-icccn10.pdf
+% http://www.computer.org/portal/web/csdl/doi?doc=doi%2F10.1109%2FAINA.2011.98
+
+% 
+% \subsection{The one-to-many TCP overlay}
+% 
+% \subsection{PGM -- \textit{Pragmatic General Multicast}}
+% 
+% % http://en.wikipedia.org/wiki/Pragmatic_General_Multicast
+% 
+% \subsection{XCAST}
+% 
+% % http://en.wikipedia.org/wiki/XCAST
+% 
+% \subsection{TCP-XM}
+% 
+% % http://www.jeacle.ie/pub/theses/phd/
+% 
+% \subsection{XCAST}
+% 
+% \subsection{ALM}
+% 
+% \section{Protocolos de Aplicação}
+% 
+% http://en.wikipedia.org/wiki/Alluvium_(peercasting)
+% http://en.wikipedia.org/wiki/Octoshape - http://www.octoshape.com/
+% http://en.wikipedia.org/wiki/Pando_(application)
+% http://en.wikipedia.org/wiki/Rawflow
+% http://en.wikipedia.org/wiki/PeerCast
+% http://en.wikipedia.org/wiki/CoolStreaming
+% http://en.wikipedia.org/wiki/PPLive
+% http://en.wikipedia.org/wiki/PPStream
+% http://en.wikipedia.org/wiki/PULSE_(P2PTV)
+% http://en.wikipedia.org/wiki/Tribler
+% http://en.wikipedia.org/wiki/TVUnetworks
+% http://www.livestation.com/
+% http://en.wikipedia.org/wiki/Comparison_of_streaming_media_systems
+% http://p2peducation.pbworks.com/w/page/8897427/FrontPage
+% http://media.cs.tsinghua.edu.cn/~zhangm/
+% http://www.scvi.net/stream/soft.htm
+% http://www.scvi.net/stream/soft2.htm
+
+% \subsection{Outros Trabalhos}
+% 
+% Além dos trabalhos citados anteriormente, vários outros foram estudados e
+% analisados~\cite{REF,REF,REF,REF,REF,REF,REF,REF}, com menor nível de
+% similaridade com o trabalho proposto. Por exemplo, vale ressaltar as
+% tecnologias de distribuição de conteúdo conhecidas e utilizadas na indústria,
+% tais como: X, Y, Z. Estas tecnologias têm sido utilizadas com sucesso para a
+% aplicações multimídia, contudo tais soluções foram concebidas para distribuição
+% de conteúdo multimídia para um determinado propósito e com pouca flexibilidade
+% no ponto de vista do seu uso no desenvolvimento de outras aplicações para o
+% compartilhamento em larga escala de fluxos de dados multimídia em tempo real.
+
+% castro_splitstream:_2003
+% qi_huang_p2p_2007
+% tran_zigzag:_2003
+%huang_anysee2:_2007
+
+% \section{Sistemas de Transmissão Multimídia Ao Vivo}
+
+%yaning_liu_friendly_2008
+
+%feng_gefei_design_2009
+
+% \section{Protocolos de Transporte de Dados Multimídia}
+
+%yongxiang_liu_tcp-cm:_2002
+
+%noda_survey_2002
+
+%ju-won_park_tcp-rome:_2008
+
+%lin_ma_congestion_2007
+
+%lucas_fair_2009
+
+%\section{Experimentos, Melhorias e Desempenho do DCCP}
+
+\section{Sumário Comparativo}
+\label{sec:trabrel-sumario-comp}
+
+Nas seções anteriores, presentou-se as considerações sobre cada trabalho com
+comparações entre o respectivo trabalho e o protocolo \mudccp. Na
+Tabela~\ref{tab:comp-protocols} apresenta-se um sumário das comparações
+apresentadas anteriormente. Os critérios de comparação são apresentados a seguir.
+
+\begin{itemize}
+ \item Localizado na Camada de Transporte (CT)
+ \item Suporte ao compartilhamento de conexão (CS)
+ \item Suporte à transmissão em multicast e unicast (TMU)
+ \item Suporte à descoberta de nós de forma distribuída (DND)
+ \item Suporte a controle de congestionamento (CC)
+ \item Suporte à adaptação de fluxo multimídia (AFM)
+ \item Tolerância à desconexão (TD)
+ \item Extensibilidade para novos algoritmos (ENA)
+ \item Compatibilidade com API (\textit{Application Programming Interface}) de 
+\textit{socket} BSD/POSIX (CAS)
+\end{itemize}
+
+\renewcommand\multirowsetup{\centering}
+\begin{center}
+\footnotesize
+\begin{longtable}[tp]{|c|c|c|c|c|c|c|c|c|c|}
+\caption[Tabela comparativa dos protocolos para transmissão de mídia em tempo
+real.]{Tabela comparativa dos protocolos para transmissão de mídia em tempo
+real. \textbf{Legenda:} X = Suporta; $\frac{X}{2}$ = Suporta parcialmente,
+apenas para algoritmos de controle de congestionamento; S = Requer intervenção
+da aplicação; Ind. = Indefinido.}
+\label{tab:comp-protocols} \\
+
+\hline\hline
+
+\multirow{1}{*}{\textcolor{black}{\bfseries Protocolos}} &
+\multirow{1}{*}{\textcolor{black}{\bfseries CT}} &
+\multirow{1}{*}{\textcolor{black}{\bfseries CS}} &
+\multirow{1}{*}{\textcolor{black}{\bfseries TMU}} &
+\multirow{1}{*}{\textcolor{black}{\bfseries DND}} &
+\multirow{1}{*}{\textcolor{black}{\bfseries CC}} &
+\multirow{1}{*}{\textcolor{black}{\bfseries AFM}} &
+\multirow{1}{*}{\textcolor{black}{\bfseries TD}} &
+\multirow{1}{*}{\textcolor{black}{\bfseries ENA}} &
+\multirow{1}{*}{\textcolor{black}{\bfseries CAS}}
+\\
+
+\hline \hline
+\endfirsthead
+
+\multicolumn{10}{c}%
+{{\bfseries \tablename\ \thetable{} -- continuação da página anterior}} \\
+\hline\hline
+
+\multirow{1}{*}{\textcolor{black}{\bfseries Protocolos}} &
+\multirow{1}{*}{\textcolor{black}{\bfseries CT}} &
+\multirow{1}{*}{\textcolor{black}{\bfseries CS}} &
+\multirow{1}{*}{\textcolor{black}{\bfseries TMU}} &
+\multirow{1}{*}{\textcolor{black}{\bfseries CC}} &
+\multirow{1}{*}{\textcolor{black}{\bfseries DND}} &
+\multirow{1}{*}{\textcolor{black}{\bfseries AFM}} &
+\multirow{1}{*}{\textcolor{black}{\bfseries TD}} &
+\multirow{1}{*}{\textcolor{black}{\bfseries ENA}} &
+\multirow{1}{*}{\textcolor{black}{\bfseries CAS}}
+\\
+
+\hline \hline
+\endhead
+
+\hline\hline \multicolumn{10}{c}{Continuação na próxima página} \\ \hline \hline
+\endfoot
+
+\hline \hline
+\endlastfoot
+
+% INICIO DE LINHA
+\multirow{1}{*}{\textcolor{black}{\bfseries UDP}} & X &  & S &  &  &  &  &  & X
+\\ \cline{1-10}
+
+% INICIO DE LINHA
+\multirow{1}{*}{\textcolor{black}{\bfseries TCP}} & X &  & S &  &  &  &  &
+$\frac{X}{2}$ & X
+\\ \cline{1-10}
+
+% INICIO DE LINHA
+\multirow{1}{*}{\textcolor{black}{\bfseries DCCP}} & X &  &  &  &  &  &  &
+$\frac{X}{2}$ & X
+\\ \cline{1-10}
+
+% INICIO DE LINHA
+\multirow{1}{*}{\textcolor{black}{\bfseries SCTP}} & X &  &  & X &  &  &  &
+$\frac{X}{2}$ & X
+\\ \cline{1-10}
+
+% INICIO DE LINHA
+\multirow{1}{*}{\textcolor{black}{\bfseries PPETP}} &  &  &  & X & Ind. & X & X
+&  & S
+\\ \cline{1-10}
+
+% INICIO DE LINHA
+\multirow{1}{*}{\textcolor{black}{\bfseries PPSP/Swift}} &  &  &  & X & X &  & X
+&  & S
+\\ \cline{1-10}
+
+% INICIO DE LINHA
+\multirow{1}{*}{\textcolor{black}{\bfseries PDTP}} &  &  &   &  &  &  & X &  & S
+\\ \cline{1-10}
+
+% INICIO DE LINHA
+\multirow{1}{*}{\textcolor{black}{\bfseries CPM}} &  &  & X & X &  & X & X &  & 
+\\ \cline{1-10}
+
+% INICIO DE LINHA
+\multirow{1}{*}{\textcolor{black}{\bfseries HySAC}} &  &  & X & X &  & X & X &  &
+\\ \cline{1-10}
+
+% INICIO DE LINHA
+\multirow{1}{*}{\textcolor{black}{\bfseries Danacast}} & X & X & X & X & X & X 
+& X
+& X & X
+\\ \cline{1-10}
+
+% INICIO DE LINHA
+\multirow{1}{*}{\textcolor{black}{\bfseries \mudccp}} & X & X & X & X & X & X & X
+& X & X
+\\ \cline{1-10}
+
+\end{longtable}
+\end{center}
+
+\section{Sumário do Capítulo}
+
+Neste capítulo, apresentou-se uma avaliação crítica acerca de um conjunto de 
+sistemas e protocolos para distribuição de conteúdos multimídia. Discutiu-se 
+sobre trabalhos com propostas semalhantes ao protocolo \mudccp, entendendo-se 
+que os principais trabalhos disponíveis no estado da arte não contempla os 
+recursos e a forma de proposta do GMTP. De fato, apenas o Denacast contempla
+uma proposta próxima ao protocolo GMTP e, por este motivo, no
+Capítulo~\ref{cap:analisedesemp}, discute-se em detalhes seu desempenho em 
+comparação ao GMTP.
+
+\subsection{Preâmbulo ao GMTP}
+
+A definição do protocolo \mudccp\space se baseou nos requisitos e estado da 
+prática dos sistemas de distribuição de conteúdos 
+(Capítulo~\ref{cap:fundamentacao}), bem como no levantamento das proposta 
+disponíveis no estado da arte, como as discutidas nas seções anteriores deste 
+capítulo. Como complemento, três questionamentos foram primordiais motivadores 
+para o projeto de tal protocolo, são eles:
+
+\begin{enumerate}
+
+ \item Quais as funcionalidades dos sistemas de distribuição de conteúdos ao 
+vivo que poderiam que ser implementadas na camada de aplicação por falta de um
+protocolo de transporte de dados ideal para esse tipo de aplicação?
+
+ \item Quais dessas funcionalidades podem ser implementadas na camada de 
+transporte a fim de torná-las padronizadas para todas as aplicações existentes, 
+evitando-se o retrabalho de desenvolvimento?
+
+ \item Como se pode, de forma eficiente, distribuir um mesmo fluxo de 
+dados multimídia partindo de um servidor para múltiplos nós clientes conectados 
+a diferentes redes, considerando o fato de que diferentes aplicações clientes 
+possam ser utilizadas e com suporte a controle de congestionamento assistido 
+pela rede?
+
+\end{enumerate}
+
+Diante dessas questões, notou-se que ao tentar resolver problemas relacionados 
+a cada um desses questionamentos, os desenvolvedores desse tipo de sistema 
+enfrentam situações reincidentes, já experimentadas por outras equipes de 
+desenvolvimento. No \mudccp, propõe-se concentrar as principais funções dos 
+sistemas de transmissão de mídias ao vivo em um único protocolo de rede, 
+buscando-se contribuir com a evolução do estado da arte e da prática ao propor 
+um protocolo que desacopla o processo de transporte de datagramas IP, os quais
+carregam conteúdos de mídias ao vivo, da forma como estes são exibidos ao 
+usuário final através das aplicação de rede. Isto ocorre com o emprego de 
+técnicas de engenharia de software para abstrair a complexidade no 
+desenvolvimento de sistemas dessa natureza, ao passo que se propõe 
+algoritmos que otimizam o consumo de recursos de rede, tudo isto visando 
+melhorar a qualidade de experiência do usuário ao assistir um conteúdo ao vivo 
+através da Internet.
+
+Em termos arquiteturais, o GMTP está posicionado de tal forma que suas funções 
+são disponibilizadas para diferentes processos de aplicação em execução em um 
+sistema operacional, de modo que se torna independente de linguagem de 
+programação, bibliotecas de funções e dos mais variados tipos de dispositivos 
+de usuários finais (desktops, notebooks, tablets, smartphones, smartTVs, etc.), 
+independente da mobilidade dos usuários e podendo ser embarcado no núcleo de 
+qualquer sistema operacional moderno. Com isto, promove-se recursos funcionais 
+para a camada de aplicação cada vez mais estáveis e eficientes, propagando-se 
+as boas práticas (algoritmos) que passam a ser utilizadas e testadas por um 
+conjunto cada vez maior de desenvolvedores, aprimorando-as com o passar do 
+tempo sem causar um impacto direto à camada de aplicação, tal como tem ocorrido 
+com o protocolo TCP ao longo dos seus 32 anos de existência, desde da sua 
+primeira versão em 1981.
+
+Com esta visão, realizou-se um estudo sobre as principais estratégias adotadas 
+pelos desenvolvedores de sistemas de transmissão de conteúdos multimídia ao 
+vivo, objetivando-se mapear o estado da prática e utilizar este mapeamento como 
+artefato de tomada de decisão do projeto do GMTP. O resultado foi o seguinte:
+
+\begin{enumerate}
+
+  \item constatou-se que os sistemas mais robustos de distribuição de conteúdos 
+multimídia são baseados em arquiteturas híbridas P2P/CDN. Isto ocorre porque 
+se obtém escalabilidade do número de usuários e redução de custos com 
+infra-estrutura de rede por meio das redes P2P; e facilidade no gerenciamento e 
+maior estabilidade de disponibilização dos serviços, por meio 
+das CDNs~\cite{Xu04acdn-p2p,Dongyan2006,Meskovic2012,4012578,Huang:2008:UHC:1496046.1496064,6035830,5764567,5343509,4797271};
+
+  \item observou-se que nos sistemas desse tipo não se viabiliza o acesso a um 
+conteúdo ao vivo por parte de um usuário levando-se em consideração apenas 
+o seu interesse em assistir a um evento ao vivo (\textit{abordagem centrada 
+no conteúdo}). Nas soluções existentes, a forma de acesso ao conteúdo 
+de um evento ao vivo é dependente do local físico (servidor) onde tal conteúdo 
+está sendo transmitido (\textit{abordagem centrada no hospedeiro}), sendo 
+cruscial saber de qual nó fonte o evento está sendo recebido;
+
+  \item dado que na maioria dos sistemas de distribuição de conteúdos ao vivo 
+se transmite fluxos de dados UDP, tais sistemas não executam mecanismos para 
+controle de congestionamento. Desta forma, se isto for necessário em seus 
+sistemas, os desenvolvedores são forçados a executar algoritmos de controle de 
+congestionamento na camada de aplicação, sem qualquer padronização na forma como 
+os fluxos de dados são controlados, com diferentes equipes de desenvolvimento 
+implementando, das mais variadas formas, a mesma funcionalidade presente nesse 
+tipo de aplicação, sem qualquer compartilhamento desse 
+esforço~\cite{REF,REF,REF,LEDBAT};
+
+  \item não há uma forma efetiva de centralizar e/ou disponibilizar as boas 
+soluções e práticas (algoritmos) para as diferentes funcionalidades empregadas 
+nesse tipo de sistema. De fato, existem diversos \textit{middlewares} de 
+desenvolvimento de sistemas de distribuição de conteúdo que tentam suprir as 
+limitações existentes dos protocolos da camada de transporte, tratando-se de 
+soluções intermediárias e fragmentadas para o transporte de dados multimídia nas 
+redes de computadores, salvas suas devidas contribuições científicas e 
+reais~\cite{REF,REF,REF,REF}.
+% ~\cite{kohler_designing_2006,RFC4336}
+
+\end{enumerate}
+
+% Para facilitiar o entendimento, considere o seguinte cenário geral do sistema 
+% de TV tradicional (teledifusão). Quando uma pessoa está assistindo um canal e 
+% troca para outro canal, o aparelho de TV consegue interpretar o novo conteúdo 
+% mesmo este sendo transmitido por outra emissora de TV. Para que isto funcione, 
+% existem padrões que descrevem o formato do vídeo/áudio (NTSC, PAL-M etc.), a 
+% forma como os sinais devem ser transmitidos, em diferentes frequências, e como 
+% devem ser decodificados, de acordo com cada emissora de TV. Além disso, se duas 
+% ou mais emissoras estiverem transmitindo um mesmo evento ao vivo, pouco importa 
+% para o usuário final quando uma emissora de sua preferência se torna 
+% indisponível, pois o mais importante é assistir ao evento de interesse, apesar 
+% da preferência do usuário por um 
+% determinado canal. Assim, todas as TVs funcionam simplesmente porque seguem 
+% padrões, independente da sua marca e modelo, pois caso contrário só 
+% conseguiriam interpretar o sinal transmitido apenas de um conjunto restrito de 
+% emissoras de TV.
+% 
+% Apesar de existirem protocolos para a Internet que descrevem o conteúdo da mídia
+% sendo transmitida, tais como o \textit{Simple Description Protocol} (SDP), o 
+% \textit{Real Time Protocol} (RTP) e o \textit{Real Time Streaming Protocol} 
+% (RTSP), que de certa forma são considerados equivalentes aos padrões NTSC e 
+% PAL-M para TV, atualmente não existe uma solução de transporte de conteúdos
+% multimídia ao vivo que considere toda a complexidade existente em se trabalhar 
+% com redes orientadas a datagramas, ponderando-se as recentes soluções 
+% empregadas para o funcionamento dos sistemas estudados neste trabalho. Em vez 
+% disso, cada aplicação implementa suas próprias formas de transporte de dados, 
+% com predominância e variações de uso dos protocolos RTP/RTSP e UDP. Para 
+% se ter uma noção, durante as pesquisas realizadas no contexto deste trabalho, 
+% encontrou-se pelo menos 60 sistemas de transmissão de mídia ao vivo baseados em 
+% P2P/CDN, sem qualquer compatibilidade entre eles~\cite{REF,REF,REF}. Através 
+% dos nós servidores desses sistemas, transmite-se pacotes de dados que são 
+% recebidos por aplicações clientes para reproduzir o conteúdo recebido. 
+% 
+% Considerando a analogia anterior, os nós servidores desses sistemas são as 
+% emissoras de TV tradicionais, ao passo que as aplicações clientes, os aparelhos 
+% de TV. A diferença gritante é que as aplicações não seguem um padrão para 
+% transmitir e receber os dados e consequentemente uma aplicação cliente de um 
+% sistema não consegue reproduzir o conteúdo multimídia transmitido por outro 
+% sistema. É como se cada TV funcionasse apenas para um determinado conjunto de 
+% canais, mas não servindo para reproduzir o sinal de vídeo oriundo de outra 
+% emissora de TV.

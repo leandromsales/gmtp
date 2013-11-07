@@ -1,0 +1,9 @@
+#!/usr/bin/octave -q
+load output
+x = [1:292];
+plot(x,output);
+title("Request dalay of the 1click2eat daemon")
+xlabel("Request #")
+ylabel("Response delay (s)")
+grid
+print -dpng graph.png
