@@ -1,0 +1,15 @@
+[1] "=====================Shapiro Test - Sqrt ====================="
+
+	Shapiro-Wilk normality test
+
+data:  sqrt(arquivo$V) 
+W = 0.9935, p-value = 0.5263
+
+[1] ""
+[1] "=====================Shapiro Test - Log ====================="
+
+	Shapiro-Wilk normality test
+
+data:  log(arquivo$V) 
+W = 0.9866, p-value = 0.05607
+

@@ -1,0 +1,53 @@
+This is BibTeX, Version 0.99d (TeX Live 2011)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: projeto-e-pesquisa-3.aux
+The style file: plain.bst
+Database file #1: ref.bib
+Repeated entry---line 628 of file ref.bib
+ : @inproceedings{Jacobson1988
+ :                            ,
+I'm skipping whatever remains of this entry
+Warning--to sort, need author or key in RFC0793
+Warning--can't use both author and editor fields in Hersent2005
+You've used 20 entries,
+            2118 wiz_defined-function locations,
+            634 strings with 7397 characters,
+and the built_in function-call counts, 6029 in all, are:
+= -- 577
+> -- 289
+< -- 4
++ -- 115
+- -- 94
+* -- 372
+:= -- 985
+add.period$ -- 69
+call.type$ -- 20
+change.case$ -- 105
+chr.to.int$ -- 0
+cite$ -- 22
+duplicate$ -- 210
+empty$ -- 507
+format.name$ -- 94
+if$ -- 1290
+int.to.chr$ -- 0
+int.to.str$ -- 20
+missing$ -- 12
+newline$ -- 112
+num.names$ -- 38
+pop$ -- 164
+preamble$ -- 1
+purify$ -- 87
+quote$ -- 0
+skip$ -- 164
+stack$ -- 0
+substring$ -- 251
+swap$ -- 48
+text.length$ -- 4
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 74
+warning$ -- 2
+while$ -- 48
+width$ -- 22
+write$ -- 229
+(There was 1 error message)

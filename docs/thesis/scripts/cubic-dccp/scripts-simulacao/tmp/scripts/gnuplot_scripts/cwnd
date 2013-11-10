@@ -1,0 +1,16 @@
+#!/usr/bin/gnuplot -persist
+
+set terminal pdf;
+set output "cwnd.pdf";
+
+set title  "Congestion Window and Slow-Start Threshold"
+set xlabel "time (seconds)"
+set ylabel "packets"
+
+set key below	
+
+#set logscale x
+#set logscale y
+
+plot	"/tmp/dccp_probe.out" using 1:9 title "cwnd" with linespoints lt 3 pt 2,\
+	"/tmp/dccp_probe.out" using 1:($11 >= 4294967295.0 ? 0 : $11) title "ssthresh" with linespoints lt 1 pt 3

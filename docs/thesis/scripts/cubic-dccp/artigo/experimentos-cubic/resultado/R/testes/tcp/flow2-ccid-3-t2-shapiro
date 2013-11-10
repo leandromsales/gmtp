@@ -1,0 +1,6 @@
+
+	Shapiro-Wilk normality test
+
+data:  arquivo$V 
+W = 0.9227, p-value = 9.205e-09
+

@@ -1,0 +1,49 @@
+This is BibTeX, Version 0.99d (TeX Live 2011)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: sbc-template-copia-ivo.aux
+The style file: sbc.bst
+Database file #1: ref.bib
+Warning--empty booktitle in Leith2004
+Warning--can't use both author and editor fields in Welzl2005
+You've used 22 entries,
+            1935 wiz_defined-function locations,
+            607 strings with 8059 characters,
+and the built_in function-call counts, 8668 in all, are:
+= -- 876
+> -- 331
+< -- 21
++ -- 115
+- -- 108
+* -- 650
+:= -- 1480
+add.period$ -- 73
+call.type$ -- 22
+change.case$ -- 164
+chr.to.int$ -- 21
+cite$ -- 24
+duplicate$ -- 369
+empty$ -- 605
+format.name$ -- 144
+if$ -- 1745
+int.to.chr$ -- 2
+int.to.str$ -- 0
+missing$ -- 15
+newline$ -- 119
+num.names$ -- 66
+pop$ -- 167
+preamble$ -- 1
+purify$ -- 164
+quote$ -- 0
+skip$ -- 275
+stack$ -- 0
+substring$ -- 540
+swap$ -- 69
+text.length$ -- 9
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 130
+warning$ -- 2
+while$ -- 67
+width$ -- 0
+write$ -- 294
+(There were 2 warnings)
