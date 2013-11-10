@@ -54,6 +54,60 @@ projetados para transmitir dados multimídia em larga escala.
 % aumentando-se a complexidade de implantação de uma solução unificada em larga
 % escala na Internet.
 
+\section{Perguntas Frequentes}
+
+, principalmente no tocante aos frequentes
+questionamentos realizados
+durante as palestras sobre o GMTP ministradas pelo autor
+
+- Por que um protocolo de rede, invés de um middleware?
+1 - porque visualizei o GMTP como a forma primitiva de acesso, podendo ser
+acomplado em aplicações simples como sistemas mais avançados, que podem fazer
+uso de middlewares já existentes
+2 - a necessidade de executar algoritmos na camada de rede obriga uma interface
+de comunicação disponível na camada de transporte
+
+- Por que utilizar RCP?
+
+- Por que utilizar roteadores?
+
+- Qual o processo ideal para o deploy do GMTP na Internet?
+
+- Quais são as similares e diferenças entre o GMTP e o LibSwift?
+
+- O GMTP faz computação Per-Flow, se sim, quanto?
+
+- Por que não usar diretamente o traceroute? e o tcptraceroute?
+
+- Por que não manter um único RTT s?
+  R: porque todos os acks teriam que ser repassados para o nó originador do
+fluxo de dados, o que geraria uma explosão de acks e além disso, qual valor
+deveria ser considerado, já que um fluxo transmitido pelo servidor pode ser
+recebido indiretamente por muitos outros nós? Além disso, isto limitaria a taxa
+de transmissão R(t) entre um sub-caminho
+
+- O GMTP Inter pode ser exeutado em um cliente?
+
+- Em um mesmo domínio administrativo, contendo multiplos roteadores, sendo um
+de borda, é possível que ter apenas um nó repassador instalado em um roteador e
+os demais roteadores funcionarem como cliente/repassador?
+
+- Por que um cliente não pode ter mais de um repassador?
+R: o tráfego sempre passará pelo roteador padrão, onde tem o gmtp inter rodando
+
+- ... E considerando um rede com múltiplos roteadores?
+R: limitação do GMTP? tem que escolher um roteador como rota padrão
+
+- Por que usou a equação do reno?
+R: melhor seria usar cubic-like, interações com o pesquisador, contratado pela
+samsung, trabalhos futuros
+
+- Qual a vant de um r repassar?
+
+- tem que ler header de transporte? (pode colocar uma flag no campo opt do ip)
+
+- Por que tipos de pacotes, invez de flags
+
 \section{Estado atual de desenvolvimento da tese}
 
 Como discutido no Capítulo~\ref{cap:introducao}, o problema central abordado

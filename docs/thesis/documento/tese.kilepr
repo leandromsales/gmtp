@@ -4,7 +4,7 @@ img_extIsRegExp=false
 img_extensions=.eps .jpg .jpeg .png .pdf .ps .fig .gif
 kileprversion=2
 kileversion=2.1.0
-lastDocument=mudccp.tex
+lastDocument=tese-leandrosales.tex
 masterDocument=tese-leandrosales.tex
 name=tese-leandrosales
 pkg_extIsRegExp=false
@@ -153,7 +153,7 @@ Mode=LaTeX
 ReadWrite=true
 
 [document-settings,item:mudccp.tex]
-Bookmarks=3165,3176
+Bookmarks=3197,3165,3216,3201,3205,3208,3176,3212
 Encoding=ISO-8859-1
 FoldedColumns=
 FoldedLines=
@@ -486,7 +486,7 @@ ViMarks=
 CursorColumn=64
 CursorLine=2706
 JumpList=
-ViMarks=a,3216,14,b,3212,0,c,3201,0,d,3205,0,e,3197,0,f,3208,0
+ViMarks=a,3216,14,b,3212,0,c,3201,0,d,3205,0,e,3197,0,f,3208,0,g,3165,0,h,3176,0
 
 [view-settings,view=0,item:resumo.tex]
 CursorColumn=52

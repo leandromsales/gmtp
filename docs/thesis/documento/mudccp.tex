@@ -2310,8 +2310,8 @@ tanto para uma super-utilização de um canal quanto para a sua sub-utilização.
 Como o RCP escala naturalmente com relação à capacidade de transmissão do canal
 e ao RTT, o seu desempenho é invariante com relação ao tamanho de um fluxo,
 portanto não importa qual tipo de fluxo as aplicações geram. Isto permite que
-fluxos de dados GMTP+RCP e TCP+RCP convivam harmoniozamente na Internet, com a
-adiação de que o GMTP evitará sobrecarga no nó \servs devido às outras funções
+fluxos de dados GMTP+RCP e TCP+RCP coexistam na Internet de forma equânime,
+além do GMTP evitar sobrecarga nos nós \servs devido às outras funções
 de distribuição de fluxos de dados empregadas, explicadas anteriormente.
 
 %
@@ -2708,214 +2708,213 @@ Nesta seção, apresentam-se brevemente outras funcionalidades do GMTP, tais como
 o procedimento de desconexão, adaptação de fluxo, eleição de nós relatores,
 segurança, implementação e implantação.
 
-\subsection{Procedimentos para desconexão}
+\subsection{Procedimentos para desconexão de nós \cli, \rels e \repass}
 \label{subsec:desconexao}
+
+% \begin{figure}[ht]
+% \begin{center}
+% \includegraphics[natwidth=797,natheight=173,scale=.73]{imgs/bucket-brigade-principle-3.png}
+% \end{center}
+% \vspace{-0.8cm}
+% \caption{Um usuário pode desconectar e é preciso um mecanismo de tolerância à
+% desconexão.}
+% \label{fig:bucket-brigade-principle-3}
+% \end{figure}
+%
+% \vspace{0.5cm}
+
 
 O processo de finalização de uma conexão \mudccps ocorre com algumas
 diferenças se comparado com outros protocolos orientados à conexão. Para
-sinalizar o pedido de desconexão, um cliente \mudccps transmite no canal de
-controle um pacote do tipo \mudccp-Close, contendo as informações de qual
-servidor e porta deseja se desconectar. Ao receber este tipo de pacote, o
-nó relay transmite ao cliente um pacote do tipo \mudccp-Reset para sinalizar que
-está ciente do fechamento da conexão. Este procedimento é suficiente para o
-pedido de finalização de uma conexão de um cliente \mudccp, porém para
-finalizar uma conexão de um nó cliente relay ou reporter, outros procedimentos
-devem ser realizados.
+sinalizar uma desconexão, um nó \clis transmite um pacote do tipo
+\pac{\mudccp-Close} pelo canal de controle, contendo o nome do fluxo que deseja
+se desconectar. Ao receber este tipo de pacote, o nó \repasss transmite ao nó
+\clis um pacote do tipo \pac{\mudccp-Reset}, sinalizando que está ciente do
+fechamento da conexão. Nesse interim, os nós desalocam recursos relacionados à
+respectiva conexão. Este procedimento é suficiente para o pedido de finalização
+de uma conexão de um cliente \mudccp, porém para finalizar uma conexão de um nó
+\rel e \repasss outros procedimentos são necessários.
 
-A desconexão de um nó relay gera uma situação crítica para todos os nós
-clientes que recebem os dados de uma transmissão através dele. Por isso no
-\mudccps utiliza-se um mecanismo que promova um dos clientes conectados para se
-tornar relay em substituição aquele que está em processo de desconexão. No
-\mudccp, são clientes candidatos a relay todos os nós reporters conectados
-ao atual nó relay. Em linhas gerais, quando um nó relay deseja se desconectar, o
-mesmo transmite para o canal de controle um pacote do tipo \mudccp-Elect e
-aguarda por um \mudccp-ElectReply. Ao receber um ou mais \mudccp-ElectReply, o
-nó relay seleciona um dos nós que transmitiram o pacote \mudccp-ElectReply e
-envia um pacote do tipo \mudccp-ElectAck. O pacote do tipo \mudccp-ElectAck deve
-conter o endereço IP do cliente \mudccps eleito para se tornar um nó relay.
-Como este tipo de pacote é transmitido através do canal de controle, todos os
-outros clientes também o receberão e este passo é essencial no processo de
-substituição de um nó relay que solicita desconexão. Isto porque, a partir do
-momento que um cliente \mudccps é promovido a um nó \mudccps relay, os clientes
-outrora conectados ao nó relay em processo de desconexão devem estabelecer uma
-conexão com o novo nó relay.
+\subsubsection{Desconexão de um nó \rel}
 
-Uma estratégia complementar a anterior é o nó relay em processo de desconexão
-transmitir ao novo nó relay a lista de todas as conexões ativas. Desta forma
-evita-se que todos os clientes solicitem uma nova conexão ao novo nó relay.
-Apesar dessa estratégia reduzir a quantidade de dados de controle transmitidos
-na rede, na versão atual do \mudccps esta funcionalidade não foi
-incorporada por ser mais complexa e necessitar de mais estudos quanto a
-viabilidade desta solução. Isto porque se a quantidade de clientes conectados ao
-nó relay em processo de desconexão for muito grande, pode não dar tempo do relay
-em desconexão transmitir toda a lista de conexões. Além disso, para que este
-procedimento funcione, deve-se atualizar as informações de \textit{sockets} de
-todos os clientes para o endereço IP e porta do novo nó relay.
+Como apresentado na Seção~\ref{subsec:mudccp-mcc}, um nó \rels é responsável
+por relatar ao nó \repasss as condições de recepção de pacotes \pks $\in$
+\setpk em uma transmissão multicast e assim determinar a taxa de transmissão
+que deve ser utilizada para repassar o referido fluxo de dados. Sem os nós
+\rel, tal procedimento não seria possível. Sendo assim, deve-se realizar um
+procedimento para eleger um novo nó \rels quando um nó com tal responsabilidade
+solicite desconexão. São candidatos a nó \rels os nós \clis já recebendo
+o fluxo de dados \setpk, e o nó \rels em procedimento de desconexão deve
+esperar que o procedimento de nova eleição seja concluído. Nesse
+interim, o nó \rels em processo de desconexão deve continuar enviando pacotes
+do tipo \pac{GMTP-Ack} para o nó \repass.
 
-A desconexão de um nó reporter não gera uma situação muito crítica ao protocolo
-\mudccps caso a quantidade de nós reporters seja maior do que $1$. Se existir
-apenas um nó reporter e mais outros nós clientes conectados a um relay e um nó
-reporter solicitar desconexão, o nó \mudccps deverá transmitir um pacote do tipo
-\mudccp-Elect através do canal de controle solicitando que algum cliente se
-promova a um nó reporter. Quando um cliente receber um pacote do tipo
-\mudccp-Elect, este deverá transmitir um pacote do tipo \mudccp-ElectReply
-através do canal de controle, da mesma forma que no processo de desconexão do
-relay, porém um indicador especial contido no pacote \mudccp-Elect sinalizará
-que trata-se de um processo de eleição de um nó reporter e não de um nó relay.
+\subsubsection{Desconexão de um nó \repass}
 
+Um nó \repasss realiza o procedimento de desconexão não por intervenção da
+aplicação, mas sim quando \subsetcli(\repass) $= 0$ para um determinado
+fluxo de dados \setpk. Neste caso, pode ocorrer uma situação crítica para todos
+os nós parceiros de \repass, pois teoricamente estes não poderão mais receber
+os pacotes de dados \pks $\in$ \setpk. Para evitar um período de instabilidade
+na recepção de \setpk por parte dos nós parceiros de \repass, o GMTP define um
+parâmetro chamado de período de carência para novas parcerias (\textit{grace
+period for new partnerships}). Este parâmetro determina o tempo que um nó
+\repasss continuará repassando o fluxo de dados \setpks para seus parceiros. O
+valor para esse tempo é transmitido para os nós parceiros de \repass, que por
+sua vez deve iniciar o procedimento de realizar outras parcerias a fim de
+continuar recebendo o fluxo de dados \setpk. Opcionalmente, um nó \repasss pode
+aceitar receber de seus nós parceiros tal valor para o referido parâmetro,
+desde que não ultrapasse um limite máximo definido pelo administrador de
+\repass.
 
-
-Porém, isto não significa que não é aceitável a remoção, por exemplo, por
-desconexão, de um nó \ways $\in$ \setwayi. Pelo contrário, em se tratando de uma
-rede de sobreposição, faz-se necessário detectar tais desconexões e estabelecer
-uma nova relação entre os nós \wayu{\wayi-1} e \wayu{\wayi+1} se houver uma rota
-alternativa de rede entre \netru{j_1} sobreposto por \wayu{\wayi-1} e
-\netru{j_2} sobreposto por \wayu{\wayi+1}. Além disso, pode-se criar uma nova
-relação entre $w_{i-1}$ com um outro nó $w_j \in W_j$, ou seja, com um outro nó
-de um outro caminho.
-
-
-\begin{figure}[ht]
-\begin{center}
-\includegraphics[natwidth=797,natheight=173,scale=.73]{imgs/bucket-brigade-principle-3.png}
-\end{center}
-\vspace{-0.8cm}
-\caption{Um usuário pode desconectar e é preciso um mecanismo de tolerância a
-falhas.}
-\label{fig:bucket-brigade-principle-3}
-\end{figure}
-
-\vspace{0.5cm}
-
-\subsection{Adaptação de Fluxo de Dados}
-\label{subsec:adapt-flow}
-
-\begin{figure}[ht]
-\begin{center}
-\includegraphics[natwidth=794,natheight=170,scale=.73]{imgs/bucket-brigade-principle-2.png}
-\end{center}
-\vspace{-0.8cm}
-\caption{Uma aplicação pode não ter recurso suficiente, adaptações devem ser realizadas.}
-\label{fig:bucket-brigade-principle-2}
-\end{figure}
-
-
-Uma funcionalidade peculiar do \mudccps é sua capacidade de permitir a
-realização de adaptação de fluxos multimídia de forma distribuída. A maioria
-das soluções para transmissão de dados multimídia, além de realizar controle
-de congestionamento no nível de aplicação, realizam adaptação de fluxo
-multimídia na fonte geradora dos dados. Em diversas soluções
-existentes, os autores consideram a transmissão de fluxos de dados multimídia
-adaptados e transmitidos em diferentes canais, sendo que em cada canal
-transmite-se os fluxos multimídia em uma determinada qualidade. Dependendo da
-qualidade desejada pelo nó receptor, o sistema cliente solicita a transmissão em
-um determinado canal. O problema dessa abordagem é que o nó transmissor,
-necessariamente deve transmitir os dados em múltiplos canais, o que aumenta a
-complexidade da aplicação e a quantidade de fluxos de dados sendo transmitidos a
-partir do servidor.
-
-No \mudccp, é possível realizar a adaptação de fluxo de dados de forma
-distribuída, na prática, em cada relay. Por exemplo, considere duas redes
-adjacentes, rede 1 e rede 2. Considere que existe um nó relay na rede 1 e entre
-a rede 1 e o nó transmissor a largura de banda de transmissão disponível seja de
-\ut{100}{Mbps}. Caso a largura de banda disponível na rede 2 seja de no
-máximo \ut{10}{Mbps}, um nó receptor na rede 2 teria que solicitar um fluxo
-multimídia em um canal diferente, considerando as soluções que adotam a
-estratégia de adaptação de fluxo com o uso de múltiplos canais de transmissão.
-No caso do \mudccps é possível que um nó na rede 2 obtenha o fluxo multimídia
-através do relay presente na rede 1, com o relay da rede 1 adaptando o fluxo
-multimídia de acordo com a capacidade do canal de transmissão disponível para a
-rede 2. Desta forma, pode-se diminuir o tráfego na rede do nó transmissor e
-ainda permitir que nós em redes com largura de banda limitada consigam obter o
-fluxo multimídia adaptado (caso mais comum para clientes residenciais).
-
-
-
-
-
-
-
-
-
-
-Com essa estratégia, fica óbvio que quanto mais requisições de
-\textit{pull} por uma parte da mídia, mais urgente é o seu conteúdo para
-reprodução. Muitas requisições via \textit{pulling} é um sinal que a rede não
-está sendo capaz de entregar \pks tão rápido quanto o suficiente para permitir
-a reprodução sem que haja interrupções. Essa informação pode ser utilizada para
-adaptar o fluxo de dados \setpk, reduzindo-se sua qualidade e consequentemente
-exigindo menos da rede.
-
-
-
-
-\subsection{Eleição, Monitoramento e Tolerância a Desconexão}
+\subsection{Eleição de nós \rel}
 \label{subsec:electrelsreps}
 
-Os nós relays são selecionados de duas formas: (i) serão nós relays aqueles que
-iniciarem a primeira conexão unicast com algum outro nó relay ou com o nó
-servidor, ou seja, o nó transmissor original; (ii) serão relays aqueles que
-negociarem com algum outro nó relay sua promoção para tal. Note que
-para este segundo caso, o nó que conceder a promoção de um nó relay para outro
-nó, ele deverá se rebaixar para um cliente \mudccps ou estar em processo de
-desconexão, como discutido anteriormente. Além disso, quando um relay conceder
-este status a outro cliente, o mesmo poderá se desconectar do nó gerador
-(relay ou servidor) dos dados enviando um \mudccp-Close, que conterá o
-endereço do novo nó relay. É possível também que um nó relay eleja outros nós
-relays secundários, localizados na sua própria rede local. Esta funcionalidade é
-importante porque caso o atual relay perca sua conexão ou desconecte do nó
-transmissor gerador dos dados, qualquer relay secundário poderá assumir o papel
-de relay primário. Neste caso, o nó que passar a assumir este papel deverá
-enviar um pacote do tipo \mudccp-Elect informando que assumirá a transmissão de
-dados outrora provida pelo nó relay antigo.
+Para um fluxo de dados \setpk, o primeiro nó \rels será o nó \clis que iniciar a
+primeira conexão unicast para obter o referido fluxo. Os seguintes nós \rels
+serão os próximos nós \clis que se conectar para receber o fluxo de dados
+\setpk, até atingir um parâmetro que determinará a quantidade máxima de nós
+\rels por fluxo de dados \setpk. Tal parâmetro pode ser determinado pelo
+administrador do nó \repass.
 
-Ao \mudccps foi incorporado um mecanismo de tolerância a desconexão que
-funciona de modo a evitar que os nós clientes deixem de receber dados da
-transmissão em questão, caso um nó relay desconecte repentinamente sem conseguir
-transmitir um pacote do tipo \mudccp-ElectAck, tal como explicado na
-Seção~\ref{subsec:mudccp-desconexao}. Considere $T$ uma variável corresponde a
-$4$ vezes o valor do tempo do RTT. Um nó relay deve transmitir no canal de
-controle um pacote do tipo \mudccp-AdvConn a cada instante de $T$, anunciando
-aos demais nós da rede que está ativo e operando corretamente. Caso um nó relay
-secundário não receba o pacote do tipo \mudccp-AdvConn durante o período de
-tempo $T$, assume-se que o relay atual foi desconectado por algum motivo
-desconhecido e o relay secundário que não recebeu o pacote do tipo
-\mudccp-AdvConn deverá transmitir um pacote do tipo \mudccp-ElectAck. Na
-prática, o nó relay secundário torna-se um nó relay primário do o grupo de
-clientes, incluindo os nós reporters, conectados ao relay que foi desconectado.
-Neste caso, o novo nó relay deve iniciar um novo processo de estabelecimento de
-conexão. Após o estabelecimento dessa conexão, como descritos na
-Seção~\ref{sec:conexaomudccp}, o novo nó relay deve criar o canal de repasse e
-começa a repassar os dados da transmissão multimídia.
-
-Com relação aos nós reporters, o processo de eleição funciona de forma similar e
-da seguinte forma: à medida que um relay recebe pacotes do tipo \mudccp-Request,
-no pacote \mudccp-Response o nó relay ativa um indicador sinalizando que
-o cliente deverá se comportar como um nó reporter, passando a enviar relatórios
-da taxa de transmissão observada por ele. Note que este modo de transmissão deve
+Sendo assim, à medida que um nó \repass recebe pacotes do tipo
+\pac{\mudccp-Request}, no pacote de resposta \pac{\mudccp-Response}, o nó
+\repasss ativa um indicador sinalizando que o referido nó \clis em processo de
+conexão deverá se comportar como um nó \rel, passando a enviar relatórios
+da taxa de transmissão calculada por ele. Note que este modo de transmissão deve
 ser implementado com garantia de entrega, ou seja, com a confirmação de recepção
 de pacotes e retransmissão caso este tipo de pacote seja perdido. Assim, um nó
-relay poderá ter controle sobre a quantidade de nós reporters e receber
-relatórios apenas de um sub-conjunto de nós da rede.
+\repasss poderá ter controle sobre a quantidade de nós \rels e receber
+relatórios apenas dos nós \rels $\in$ \setrel.
+
+Uma outra situação que se faz necessária a eleição de nós \rels é no
+procedimento de desconexão, como explicado na Seção~\ref{subsec:desconexao}.
+Para esse caso, quando o nó \repasss receber o pacote do tipo
+\pac{\mudccp-Close}, este deve verificar se o referido nó \clis é um nó \rel. Em
+caso afirmativo, o nó \repasss deve transmitir para um dos nós \clis que
+também recebe o referido fluxo de dados \setpk (se houver), um pacote do tipo
+\pac{\mudccp-Elect} e aguardar por um \mudccp-ElectReply. Este procedimento
+deve ocorrer com garantia de entrega.
 
 
 
 
 
+
+% Ao \mudccps foi incorporado um mecanismo de tolerância a desconexão que
+% funciona de modo a evitar que os nós clientes deixem de receber dados da
+% transmissão em questão, caso um nó relay desconecte repentinamente sem conseguir
+% transmitir um pacote do tipo \mudccp-ElectAck, tal como explicado na
+% Seção~\ref{subsec:mudccp-desconexao}. Considere $T$ uma variável corresponde a
+% $4$ vezes o valor do tempo do RTT. Um nó relay deve transmitir no canal de
+% controle um pacote do tipo \mudccp-AdvConn a cada instante de $T$, anunciando
+% aos demais nós da rede que está ativo e operando corretamente. Caso um nó relay
+% secundário não receba o pacote do tipo \mudccp-AdvConn durante o período de
+% tempo $T$, assume-se que o relay atual foi desconectado por algum motivo
+% desconhecido e o relay secundário que não recebeu o pacote do tipo
+% \mudccp-AdvConn deverá transmitir um pacote do tipo \mudccp-ElectAck. Na
+% prática, o nó relay secundário torna-se um nó relay primário do o grupo de
+% clientes, incluindo os nós reporters, conectados ao relay que foi desconectado.
+% Neste caso, o novo nó relay deve iniciar um novo processo de estabelecimento de
+% conexão. Após o estabelecimento dessa conexão, como descritos na
+% Seção~\ref{sec:conexaomudccp}, o novo nó relay deve criar o canal de repasse e
+% começa a repassar os dados da transmissão multimídia.
+
+
+% \subsection{Adaptação de Fluxo de Dados}
+% \label{subsec:adapt-flow}
+%
+% \begin{figure}[ht]
+% \begin{center}
+% \includegraphics[natwidth=794,natheight=170,scale=.73]{imgs/bucket-brigade-principle-2.png}
+% \end{center}
+% \vspace{-0.8cm}
+% \caption{Uma aplicação pode não ter recurso suficiente, adaptações devem ser realizadas.}
+% \label{fig:bucket-brigade-principle-2}
+% \end{figure}
+%
+%
+% Uma funcionalidade peculiar do \mudccps é sua capacidade de permitir a
+% realização de adaptação de fluxos multimídia de forma distribuída. A maioria
+% das soluções para transmissão de dados multimídia, além de realizar controle
+% de congestionamento no nível de aplicação, realizam adaptação de fluxo
+% multimídia na fonte geradora dos dados. Em diversas soluções
+% existentes, os autores consideram a transmissão de fluxos de dados multimídia
+% adaptados e transmitidos em diferentes canais, sendo que em cada canal
+% transmite-se os fluxos multimídia em uma determinada qualidade. Dependendo da
+% qualidade desejada pelo nó receptor, o sistema cliente solicita a transmissão em
+% um determinado canal. O problema dessa abordagem é que o nó transmissor,
+% necessariamente deve transmitir os dados em múltiplos canais, o que aumenta a
+% complexidade da aplicação e a quantidade de fluxos de dados sendo transmitidos a
+% partir do servidor.
+%
+% No \mudccp, é possível realizar a adaptação de fluxo de dados de forma
+% distribuída, na prática, em cada relay. Por exemplo, considere duas redes
+% adjacentes, rede 1 e rede 2. Considere que existe um nó relay na rede 1 e entre
+% a rede 1 e o nó transmissor a largura de banda de transmissão disponível seja de
+% \ut{100}{Mbps}. Caso a largura de banda disponível na rede 2 seja de no
+% máximo \ut{10}{Mbps}, um nó receptor na rede 2 teria que solicitar um fluxo
+% multimídia em um canal diferente, considerando as soluções que adotam a
+% estratégia de adaptação de fluxo com o uso de múltiplos canais de transmissão.
+% No caso do \mudccps é possível que um nó na rede 2 obtenha o fluxo multimídia
+% através do relay presente na rede 1, com o relay da rede 1 adaptando o fluxo
+% multimídia de acordo com a capacidade do canal de transmissão disponível para a
+% rede 2. Desta forma, pode-se diminuir o tráfego na rede do nó transmissor e
+% ainda permitir que nós em redes com largura de banda limitada consigam obter o
+% fluxo multimídia adaptado (caso mais comum para clientes residenciais).
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+% Com essa estratégia, fica óbvio que quanto mais requisições de
+% \textit{pull} por uma parte da mídia, mais urgente é o seu conteúdo para
+% reprodução. Muitas requisições via \textit{pulling} é um sinal que a rede não
+% está sendo capaz de entregar \pks tão rápido quanto o suficiente para permitir
+% a reprodução sem que haja interrupções. Essa informação pode ser utilizada para
+% adaptar o fluxo de dados \setpk, reduzindo-se sua qualidade e consequentemente
+% exigindo menos da rede.
+%
+%
+%
+%
+%
 
 
 \subsection{Segurança}
 \label{subsec:seguranca}
+
+Em uma solução baseada em um modelo de serviço P2P, é possível que nós
+mal-intencionados poluam o sistema com conteúdos alterados
+(Figura~\ref{fig:bucket-brigade-principle-4}. Isto porque um nó \repasss ao
+processar um pacote do tipo \pks $\in$ \setpks pode injetar um conteúdo
+multimídia diferente do originalmente transmitido pelo nó \serv, comprometendo
+o sistema.
 
 \begin{figure}[ht]
 \begin{center}
 \includegraphics[natwidth=797,natheight=213,scale=.74]{imgs/bucket-brigade-principle-4.png}
 \end{center}
 \vspace{-0.8cm}
-\caption{Usuários mal-intencionados podem poluir o sistema com conteúdos
+\caption{Um nó \repasss mal-intencionados podem poluir o sistema com conteúdos
 alterados.}
 \label{fig:bucket-brigade-principle-4}
 \end{figure}
+
+Para evitar esta situação, empregou-se no GMTP um mecanismo para validação do
+conteúdo de \pks antes que o mesmo seja transmitido para os nós \clis $\in$
+\subsetcli(\repass). Esta função é opcional no GMTP e funciona da forma
+apresentada a seguir.
+
+\begin{enumerate}
+ \item
+\end{enumerate}
+
 
 \section{Implemetação e Implantação}
 \label{sec:impl}
@@ -3012,61 +3011,6 @@ beneficiar diretamente com o uso do \mudccps são o
 Sopcast~\cite{fallica_quality_2008}, o PPLive~\cite{hei_insights_2006} e o
 GridMedia~\cite{li_zhao_gridmedia:_2005,zhang_peer--peer_2005}.
 
-\subsection{Justificativas}
-
-, principalmente no tocante aos frequentes
-questionamentos realizados
-durante as palestras sobre o GMTP ministradas pelo autor
-
-- Por que um protocolo de rede, invés de um middleware?
-1 - porque visualizei o GMTP como a forma primitiva de acesso, podendo ser
-acomplado em aplicações simples como sistemas mais avançados, que podem fazer
-uso de middlewares já existentes
-2 - a necessidade de executar algoritmos na camada de rede obriga uma interface
-de comunicação disponível na camada de transporte
-
-- Por que utilizar RCP?
-
-- Por que utilizar roteadores?
-
-- Qual o processo ideal para o deploy do GMTP na Internet?
-
-- Quais são as similares e diferenças entre o GMTP e o LibSwift?
-
-- O GMTP faz computação Per-Flow, se sim, quanto?
-
-- Por que não usar diretamente o traceroute? e o tcptraceroute?
-
-- Por que não manter um único RTT s?
-  R: porque todos os acks teriam que ser repassados para o nó originador do
-fluxo de dados, o que geraria uma explosão de acks e além disso, qual valor
-deveria ser considerado, já que um fluxo transmitido pelo servidor pode ser
-recebido indiretamente por muitos outros nós? Além disso, isto limitaria a taxa
-de transmissão R(t) entre um sub-caminho
-
-- O GMTP Inter pode ser exeutado em um cliente?
-
-- Em um mesmo domínio administrativo, contendo multiplos roteadores, sendo um
-de borda, é possível que ter apenas um nó repassador instalado em um roteador e
-os demais roteadores funcionarem como cliente/repassador?
-
-- Por que um cliente não pode ter mais de um repassador?
-R: o tráfego sempre passará pelo roteador padrão, onde tem o gmtp inter rodando
-
-- ... E considerando um rede com múltiplos roteadores?
-R: limitação do GMTP? tem que escolher um roteador como rota padrão
-
-- Por que usou a equação do reno?
-R: melhor seria usar cubic-like, interações com o pesquisador, contratado pela
-samsung, trabalhos futuros
-
-- Qual a vant de um r repassar?
-
-- tem que ler header de transporte? (pode colocar uma flag no campo opt do ip)
-
-- Por que tipos de pacotes, invez de flags
-
-================================ PAREI AQUI
 
 
 
