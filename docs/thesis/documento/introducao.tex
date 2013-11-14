@@ -395,7 +395,7 @@ Nos últimos anos, diversos esforços acadêmicos e da indústria foram feitos para
 disponibilizar sistemas de distribuição de conteúdo ao vivo na
 Internet~\cite{6410737,wei_modeling_2011,Rod_Dru_2010,Yin:2009:DDH:1631272.1631279,agarwal_performance_2008,massoulie_rate-optimal_2008,pelc_push--pull_2007,venot_peer--peer_2007,liang_hierarchically_2007,huang_anysee2:_2007,qi_huang_p2p_2007,xinyan_zhang_coolstreaming/donet:_2005,zhang_large-scale_2005,wakamiya_retransmission_2004,castro_splitstream:_2003}.
 A disseminação de diferentes sistemas e protocolos de rede com este propósito
-tem levado a pulverização de soluções para transporte de dados, gerando uma
+tem levado à pulverização de soluções para transporte de dados, gerando uma
 falta de padronização na forma como tais sistemas transportam seus dados na
 Internet, principalmente por serem completamente implementadas na camada de
 aplicação~\cite{yaning_liu_friendly_2008,yan_multimedia-aware_2007,mulabegovic_lightweight_2002}.
@@ -404,8 +404,8 @@ de fluxos de dados da transmissão de um evento destinado a um sub-conjunto de
 redes contendo nós receptores interessados em tal
 evento~\cite{Pianese2011,5062221,Zhang:2012:SSP:2365364.2365643,6089062,5962881,4395123,Seibert2008,guo_survey_2008,4404148}.
 
-A transmissão de multiplos fluxos de dados com o mesmo conteúdo por parte de
-diferentes sistemas gera um consumo desnecessário de recursos de rede e,
+A transmissão de múltiplos fluxos de dados com o mesmo conteúdo por parte de
+diferentes sistemas, gera um consumo desnecessário de recursos de rede e,
 principalmente, a impossibilidade de que dois ou mais nós conectados em sistemas
 distintos possam cooperar entre si, compartilhando o mesmo fluxo de dados
 transmitido por um servidor da CDN ou não. Por exemplo, é comum encontrar na
@@ -413,29 +413,30 @@ Internet diversos sistemas de distribuição de conteúdo, cada um com milhares de
 usuários conectados, porém recebendo fluxos independentes do mesmo jogo de
 futebol, da corrida de fórmula 1, etc. A duplicação pode ser percebida até em
 cenários mais simples, como dois ou mais nós conectados à Internet pela mesma
-rede e utilizando diferentes sistemas para assistir o mesmo evento ao vivo.
+rede e utilizando diferentes sistemas para assistir ao mesmo evento ao vivo.
 Idealmente, os nós deveriam compartilhar o mesmo fluxo de dados e cada um
 renderizar o conteúdo da forma definida pela aplicação, desacoplando a forma de
 transportar os dados da forma como estes são apresentados pela aplicação
 (princípio da independência das aplicações) aos seus respectivos usuários, como
 no caso do serviço Web.
 
-No caso do serviço Web, seu grande sucesso, no ponto de vista de
-facilitadade de uso e aceitação por partes dos usuários, ocorre
-devido a independência da forma que os navegadores são implementados, onde todos
-transportam dados utilizando o protocolo TCP e evitando assim a pulverização de
-diferentes formas de prover tal serviço -- fica a cargo do desenvolvedor de cada
-aplicação decidir como exibir as informações recebidas. Contudo, percebe-se a
-inexistência de um protocolo equivalente ao TCP para os sistemas de distribuição
-de conteúdos multimídia, apesar da grande demanda e sucesso de utilização deste
-tipo de serviço por parte dos usuários na Internet. Um protocolo similar ao TCP
-para o cenário de distribuição de conteúdos multimídia ao vivo poderia evitar as
-duplicações de transmissão por meio de estratégias colaborativas entre os nós
-interessados por um mesmo conteúdo, uma vez que não há a necessidade de
-individualização dos dados transmitidos. Como consequência, seria possível fazer
-melhor uso dos canais de transmissão ao enviar fluxos de dados apenas quando
-necessário, restando para as aplicações a responsabilidade de renderizá-los ao
-seus usuários, como ocorre no serviço Web.
+O grande sucesso do serviço Web, no ponto de vista de facilidade de uso e adoção
+por partes dos usuários e desenvolvedores, ocorre devido à independência da
+forma que se implementa a comunicação entre o navegador e o servidor.
+Independente do modelo e versão do navegador e do servidor web, todos
+transportam dados utilizando o protocolo TCP, evitando-se assim a
+pulverização de diferentes formas de prover tal serviço -- fica apenas a cargo
+do desenvolvedor de cada aplicação decidir como exibir as informações recebidas.
+Contudo, percebe-se a inexistência de um protocolo equivalente ao TCP para os
+sistemas de distribuição de conteúdos multimídia, apesar da grande demanda e
+sucesso de utilização deste tipo de serviço por parte dos usuários na Internet.
+Um protocolo similar ao TCP para o cenário de distribuição de conteúdos
+multimídia ao vivo poderia evitar as duplicações de transmissão por meio de
+estratégias colaborativas entre os nós interessados por um mesmo conteúdo, uma
+vez que não há a necessidade de individualização dos dados transmitidos. Como
+consequência, seria possível fazer melhor uso dos canais de transmissão ao
+enviar fluxos de dados apenas quando necessário, restando para as aplicações a
+responsabilidade de renderizá-los ao seus usuários, como ocorre no serviço Web.
 
 Como esta visão atualmente não é empregada na Internet para o caso de
 distribuição de conteúdos multimídia ao vivo, em essência devido às limitações
@@ -548,11 +549,11 @@ isto é ruim. Este problema tem uma relação estreita com o dilema observado por
 Garrett Hardin em 1968 e denominado de Tragédia dos Bens Comuns (\textit{Tragedy
 of the Commons})~\cite{tragcomHardin}, presente em diferentes áreas do
 conhecimento. No caso de protocolos como o DCCP, a tragédia dos bens comuns
-ocorre porque à medida que novos fluxos são transmitidos na rede, menor será a
-taxa de transmissão individual de cada fluxo, a qual pode se tornar insuficiente
-para a recepção de um fluxo multimídia e, por consequência, nenhum nó receptor
-reproduzirá o fluxo transmitido pelo nó transmissor, embora todos os fluxos
-utilizarão, estatisticamente, de forma equanime o canal de transmissão.
+ocorre porque, à medida que novos fluxos são transmitidos na rede, menor é a
+taxa de transmissão alocada individual para cada fluxo, a qual pode se tornar
+insuficiente para a recepção de um fluxo multimídia e, por consequência, nenhum
+nó receptor reproduzirá o fluxo transmitido pelo nó transmissor, embora todos os
+fluxos utilizarão o canal de forma equânime.
 
 \end{enumerate}
 

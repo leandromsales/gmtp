@@ -8,6 +8,12 @@ stream. Citar o MDC ?? Multiple Description ????
  - ConEx
  - Analisar melhor o per-flow state para calcular o RTT
  - Estudar uma nova equação para o GMTP-MCC (Baseada em Cubic)?
+ - Avaliar com o ConEx???
+ - Terminar a implementação no kernel do Linux
+ - RFC
+ - Estudar a possibilidade de determinar padrões de parcerias (troca de
+tráfego, disponibilidade por dia/hora, usar parceiros ociosos etc.)
+
 
 
 % Neste capítulo apresentam-se as considerações finais deste trabalho.
@@ -107,6 +113,88 @@ samsung, trabalhos futuros
 - tem que ler header de transporte? (pode colocar uma flag no campo opt do ip)
 
 - Por que tipos de pacotes, invez de flags
+
+\subsection{Benefícios e Aplicabilidade}
+
+Nesta seção, apresentam-se os benefícios e justificativas para diversas tomadas
+de decisões realizadas no processo de especificação do GMTP.
+
+O uso do \mudccps nas aplicações de distribuição de mídia ao vivo fomenta
+benefícios em três vertentes: para a rede, para o desenvolvedor da aplicação
+e para os usuários interessados em reproduzir uma mídia ao vivo.
+
+Considerando-se as discussões realizadas nas Seção~\ref{sec:problematica} e
+os requisitos dos sistemas de transmissão de mídia em tempo real, o \mudccps
+atende-os na medida em que:
+
+\begin{itemize}
+
+  \item possibilita que os sistemas de transmissão de mídia ao vivo obtenham
+um melhor desempenho quanto a escalabilidade do número de usuários e
+possivelmente na qualidade da experiência do usuário (\textit{Quality of
+Experience} -- QoE). Nesse aspecto, o \mudccps é capaz de identificar a melhor
+forma que o conteúdo será transportado pela rede, permitindo-se o uso do modo de
+transmissão multicast sempre que possível ou de múltiplos fluxos unicast caso
+contrário, mas não proporcional ao número de clientes interessados;
+
+  \item permite que as aplicações façam uso de soluções estáveis e largamente
+testadas, uma vez adicionadas ao protocolo em questão. Neste caso, diferentes
+equipes de desenvolvimento podem adicionar e testar suas propostas em um
+protocolo de rede que, uma vez consideradas estáveis podem ser compartilhadas
+entre os diferentes sistemas. Até mesmo soluções já implementadas nos sistemas
+existentes podem ser portadas para o \mudccp;
+
+  \item padroniza a forma como os fluxos de dados multimídia gerados pelos
+sistemas considerados são transportados na Internet, incluindo aspectos de
+controle de congestionamento e compartilhamento desses fluxos de dados entre
+os nós participantes de uma transmissão.
+% , além de um arcabouço que permite
+% estender o protocolo por meio da adição de novos algoritmos;
+
+  \item indiretamente diminui os fluxos de dados na rede sem qualquer controle
+de congestionamento, pois aplicações para distribuição de mídia ao vivo
+atualmente fazem uso do protocolo UDP ou variantes;
+
+  \item flexibilidade no acesso a rede por parte dos nós participantes, pois
+eles podem entrar e sair da rede a qualquer momento, realizando parcerias com um
+subconjunto de nós participantes a fim de receber o conteúdo multimídia
+interessado. Neste caso específico, a estratégia de distribuição empregada no
+referido protocolo naturalmente reduz o impacto do churn, uma vez que os nós
+clientes passam a ter uma participação menos importante no processo de
+distribuição de uma mídia;
+
+  \item elimina ou pelo menos inibe a presença de nós \textit{free-riders} na
+rede, uma vez que todo nó \mudccps é obrigado a compartilhar a mídia a partir
+do momento que começa recebe-la;
+
+  \item disponibiliza uma solução unificada que permite o uso da API padrão de
+\textit{sockets} BSD, o que facilita e acelera a adaptação de aplicações
+existentes para usar o GMTP. Além disso, permite-se que as aplicações continuem
+utilizando outros padrões de redes definidos pela IETF, tais como o RTP;
+
+  \item unifica as aplicações clientes no ponto de vista do processo de conexão
+e obtenção dos dados, uma vez que todo esse processo ocorre na camada de
+transporte sem qualquer influência da aplicação. Isto significa que se existir
+um nó executando um cliente do sistema PPLive e um outro cliente do sistema
+SopCast, portanto desenvolvido por equipes diferentes, ambos ainda sim serão
+compatíveis e capazes de cooperar entre si na obtenção do fluxo de mídia de
+interesse comum.
+
+\end{itemize}
+
+De uma forma geral, dentre os diversos sistemas P2P para transmissão de mídia ao
+vivo que podem se beneficiar com o uso do \mudccp, destacam-se os baseados em
+uma arquitetura em malha e sem organização rígida dos nós participantes do
+sistema. Isto também se aplica a todas as variantes dessa arquitetura como, por
+exemplo, híbrido por encaminhamento automático e pedido explícito
+(\textit{Push-Pull}) e híbrido árvore-malha (vide
+Capítulo~\ref{cap:fundamentacao}). Na perspectiva das aplicações de rede para
+distribuição de conteúdos multimídia mais conhecidas, a grande maioria pode se
+beneficiar com o uso do \mudccps, especificamente as seguintes aplicações:
+Coolstreaming~\ref{REF}, LiveSky, Sopcast~\cite{fallica_quality_2008}, o
+PPLive~\cite{hei_insights_2006} e o
+GridMedia~\cite{li_zhao_gridmedia:_2005,zhang_peer--peer_2005}.
+
 
 \section{Estado atual de desenvolvimento da tese}
 

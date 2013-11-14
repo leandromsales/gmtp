@@ -2,39 +2,45 @@
 \label{cap:mudccp}
 
 O \textit{Global Media Transmission Protocol} (\mudccp) é um protocolo de rede
-multi-camada projetado para operar na Internet em sistemas de distribuição de
-fluxos dados ao vivo. O GMTP é baseados em uma arquitetura híbrida P2P/CDN e
-opera nas camadas de rede e transporte da pilha de protocolos TCP/IP. Isto
-ocorre através da constituição de uma rede de favores P2P, onde os nós cooperam
-entre si a fim de obterem um conteúdo multimídia de interesse, a ser reproduzido
-por um processo em execução na camada de aplicação, conectando-se a outros
-processos através da camada de transporte. O GMTP permite a interação dos nós
-receptores com servidores de uma ou mais redes CDNs, que atuam como super nós
-da rede P2P, auxiliando-os no envio e recebimento dos fluxos de dados de eventos
-ao vivo.
+que atual nas camadas de transporte e de rede (\textit{crossing-layer})
+projetado para operar na Internet, a ser utilizado em sistemas de distribuição
+de fluxos dados multimídia ao vivo. Trata-se de um protocolo baseado em uma
+arquitetura híbrida P2P/CDN, onde os dados de um ou mais sistemas são
+transmitidos através de uma rede de favores P2P, onde os nós cooperam entre si a
+fim de obterem um conteúdo multimídia de interesse ao mesmo tempo que ocorrem
+interações entre os servidores de uma ou mais redes CDNs, os quais atuam como
+super nós para a rede P2P, auxiliando-os no envio e recebimento dos fluxos de
+dados de eventos ao vivo. À medida que recebe um determinado fluxo de dados de
+um evento ao vivo, os nós cliente reproduzem tal conteúdo para o usuário final,
+através de um processo em execução na camada de aplicação, ao passo que o
+roteador de sua rede realiza parcerias com outros roteadores os quais possuem
+nós clientes também interessados no mesmo conteúdo a fim de reproduzi-lo aos
+seus usuários finais.
 
 As trocas de dados entre nós GMTP ocorrem por meio do envio e recebimento de
 pequenas partes do conteúdo de uma mídia, que são transmitidas por diferentes
 nós da rede, constituindo um fluxos de datagramas IP. Estes fluxos são
 transmitidos em modo \textit{multicast} ou em múltiplos fluxos \textit{unicast}
-compartilhados (multi-unicast), realizando-se controle de congestionamento
-desses fluxos sem garantia de entrega dos datagramas. A escolha do modo de
-transmissão utilizado para disseminar um determinado conteúdo ocorre
-automaticamente, de acordo com o suporte oferecido pela rede, priorizando-se o
-uso do modo \textit{multicast}. Este processo ocorre sem a influência da
-aplicação, de modo que os sistemas utilizam o GMTP através de uma API compatível
-com as especificações de socket BSD e POSIX.
+compartilhados (multi-unicast), realizando-se controle de congestionamento sem
+garantia de entrega. A escolha do modo de transmissão utilizado para disseminar
+um determinado conteúdo ocorre automaticamente, ou seja, sem a influência da
+aplicação que, simplesmente ``sintoniza'' sua conexão em um determinado canal
+definido pelo roteador, correspondete ao fluxo de dados de interesse do usuário
+final. Tal abstração para a camada de aplicação ocorre de modo que os processos
+em execução utilizam o GMTP através de uma API compatível com as especificações
+de socket BSD e POSIX.
 
-O GMTP permite o estabelecimento de conexões entre diversas aplicações,
-executadas de forma distribuída em cada sistema final, tornando-as
+Por conseguinte, o GMTP permite o estabelecimento de conexões entre diversas
+aplicações, executadas de forma distribuída em cada sistema final, tornando-as
 compatíveis entre si, uma vez que o protocolo desacopla a forma como os dados
-são transportados da forma como estes são exibidos ao usuário final. Isto
-promove a integração do GMTP em aplicações já existentes, quando se considera
-futuras adoções, ao tempo que se permite a utilização dos novos recursos
-introduzidos no protocolo, abstraindo-se a complexidade de construção
-dos sistemas de transmissão de fluxos de dados de eventos ao vivo.
+são transportados da forma como estes são exibidos ao usuário final, emulando
+os sistemas tradicionais de TV e rádio. Assim, promove-ve a integração do GMTP
+em aplicações já existentes, consideradas futuras adoções, ao tempo que
+permite-se a utilização dos novos recursos introduzidos no protocolo,
+evitando-se a complexidade de construção dos sistemas de transmissão de fluxos
+de dados de eventos ao vivo.
 
-Nas próximas seções deste capítulo, detalham-se o funcionamento do GMTP,
+Nas próximas seções deste capítulo, detalha-se o funcionamento do GMTP,
 conforme a seguinte organização:
 
 \begin{itemize}
@@ -48,27 +54,30 @@ protocolo, que serão utilizadas nas seções subsequentes.
 
 \item Na Seção~\ref{sec:connformnet}, descreve-se o processo de
 constituição da rede de favores, bem como aspectos de conexão multi-ponto
-através da introdução de um novo conceito de sockets P2P. Aspectos
-inerantes à constituição de uma rede P2P, como o registro de participação de um
-nó na rede e o processo de seleção de nós parceiros.
+através da introdução de um novo conceito de sockets P2P. Detalham-se os
+aspectos inerantes à constituição de uma rede P2P, tais como o registro de
+participação de um nó e o processo de seleção de nós parceiros.
 
 \item Na Seção~\ref{sec:asptransrecep}, discute-se sobre aspectos de
 transmissão e recepção de fluxos de dados, com os algoritmos utilizados para
 compartilhar um fluxos de dados e as estratégias de disponibilização e
-obtenção das partes de uma mídia. Além disso, apresenta-se um arcabouço para
-dar suporte aos algoritmos de controle de congestionamento, bem como os
-algoritmos atualmente adotados de acordo com os modos de transmissão
-suportados.
+obtenção das partes de uma mídia.
 
-\item Na Seção~\ref{sec:outros}, apresentam-se outros aspectos relacionados ao
-GMTP, tais como finalização de conexão, tolerância à desconexão, segurança e
-integração com outros protocolos de rede.
+\item Na Seção~\ref{subsec:ccgmtp}, apresentam-se detalhes de funcionamento dos
+algoritmos de controle de congestionamento utilizados no GMTP.
 
-\item Na Seção~\ref{sec:impl}, discute-se brevemente sobre aspectos de
-implementação e implantação do GMTP.
+\item E, por fim, na Seção~\ref{sec:outros-aspectos}, apresentam-se outros
+aspectos relacionados ao GMTP, tais como finalização de conexão, tolerância à
+desconexão, eleição de nós relatores e segurança.
 
-\item E, por fim, na Seção~\ref{sec:benef}, apresenta-se um resumo sobre os
-benefícios e as justificativas de decisões de projeto do protocolo GMTP.
+% e
+% integração com outros protocolos de rede.
+%
+% \item Na Seção~\ref{sec:impl}, discute-se brevemente sobre aspectos de
+% implementação e implantação do GMTP.
+%
+% \item E, por fim, na Seção~\ref{sec:benef}, apresenta-se um resumo sobre os
+% benefícios e as justificativas de decisões de projeto do protocolo GMTP.
 
 \end{itemize}
 
@@ -83,11 +92,16 @@ sistema, tais como conexão multi-ponto, multiplexação/demultiplexação de
 segmentos IP e controle de congestionamento. O \textit{GMTP Inter} é
 responsável por constituir uma rede de sobreposição P2P composta por roteadores,
 os quais funcionam como pontes de acesso aos servidores de uma rede CDN.
-
-Para viabilizar a disseminação de conteúdos multimídia, emprega-se o Princípio
-da Cooperação de Brigadas (\textit{Bucket Brigade Principle}), onde
-cada nó repassa o conteúdo recebido para outro nó e assim sucessivamente,
-análogo a ilustração da Figura~\ref{fig:bucket-brigade-principle-1}.
+Sendo assim, para viabilizar a disseminação de conteúdos multimídia, emprega-se
+o Princípio da Cooperação de Brigadas de Incêndio (\textit{Fire Bucket Brigade
+Principle}), onde cada nó roteador de um caminho constituído entre o servidor
+que transmite a mídia e o cliente interessado em obtê-la, pode replicar o
+conteúdo sendo roteado para os clientes conectados diretamente a ele e assim
+sucessivamente, análogo a ilustração da
+Figura~\ref{fig:bucket-brigade-principle-1}. No caso do GMTP, é como se cada
+roteador fosse responsável por apagar os focos de incêndio próximos a ele, ou
+melhor, atender a demanda dos clientes diretamente conectados a ele, ao passo
+que ajuda os outros a fazer o mesmo.
 
 \vspace{0.2cm}
 
@@ -96,13 +110,14 @@ análogo a ilustração da Figura~\ref{fig:bucket-brigade-principle-1}.
 \includegraphics[natwidth=706,natheight=152,scale=.71]{imgs/bucket-brigade-principle-1.png}
 \end{center}
 \vspace{-0.8cm}
-\caption{Princípio da Cooperação de Brigadas utilizado no \mudccp.}
+\caption{Analogia do Princípio da Cooperação de Brigadas utilizado no \mudccps
+para distribuição de conteúdos multimídia ao vivo.}
 \label{fig:bucket-brigade-principle-1}
 \end{figure}
 
 Na Figura~\ref{fig:cenario-global}, observa-se o cenário global de atuação do
-protocolo \mudccp, onde ilustram-se nós \textit{Clientes GMTP} interessados em
-obter o conteúdo de um determinado evento ao vivo. Neste caso,
+protocolo \mudccp, onde ilustram-se os nós \textit{Clientes GMTP} interessados
+em obter o conteúdo de um determinado evento ao vivo. Neste caso,
 observa-se também um \textit{Servidor GMTP}, que está conectado a uma rede CDN e
 atua como fonte geradora de dados. Na prática, os nós \textit{Clientes GMTP} são
 aplicações de rede capazes de iniciar uma sessão GMTP, que transmitem, recebem
@@ -118,7 +133,7 @@ GMTP}; e/ou iii) a partir de outro \textit{Servidor GMTP} (troca de dados entre
 os servidores da CDN). Os \textit{Servidores GMTP} recebem sinalizações de
 controle contendo requisições dos nós \textit{Repassadores GMTP}, que ao
 receberem uma resposta correspondente a sua requisição, atendem a demanda de um
-nó \textit{Cliente GMTP}.
+ou mais nós \textit{Clientes GMTP}.
 
 \begin{figure}[ht]
 \begin{center}
@@ -131,7 +146,7 @@ nó \textit{Cliente GMTP}.
 
 Quando um nó \textit{Cliente GMTP} deseja reproduzir um determinado evento,
 este envia uma requisição destinada ao nó \textit{Servidor GMTP} que está
-transmitido o conteúdo de interesse, como atualmente acontece em qualquer
+transmitindo o conteúdo de interesse, como atualmente acontece em qualquer
 conexão na Internet. A diferença é que um pedido de conexão é interceptado por
 algum nó \textit{Repassador GMTP} durante o trajeto do pedido de conexão até o
 nó \textit{Servidor GMTP}, que então determina os melhores parceiros para
@@ -146,9 +161,9 @@ GMTP}, quando motivados por requisições originadas pelos seus \textit{Clientes
 GMTP}.
 
 O posicionamento dos nós \textit{Repassadores GMTP} e suas habilidades permitem
-a redução do número de fluxos de dados correspondente a um mesmo evento e
-ainda uma maior escalabilidade do número de nós \textit{Clientes GMTP}
-interessado em receber um mesmo fluxo de dados. Por este mesmo motivo, o
+a redução do número de fluxos de dados correspondente a um mesmo evento. Além
+disso, permite-se uma maior escalabilidade do número de nós \textit{Clientes
+GMTP} interessado em receber um mesmo fluxo de dados. Por este mesmo motivo, o
 protocolo GMTP é flexível para permitir que um nó \textit{Repassador GMTP} atue
 somente encaminhando conteúdos multimídias entre duas ou mais redes
 distintas, mesmo que este não esteja conectado a nenhum nó \textit{Cliente
@@ -157,7 +172,7 @@ transmissão ociosos, em particular das redes residenciais, as quais seus
 usuários muitas vezes estão ausentes e portanto sem fazer uso dos recursos
 disponíveis, não necessitando, inclusive, manter um determinado computador da
 sua rede interna ativo (ligado), como é obrigatório em todas as outras soluções
-para este fim.
+similares e baseadas em arquitetura P2P.
 
 Pelo princípio da cooperação de brigadas empregado no GMTP, as requisições
 de conexão podem ser originados não apenas por nós \textit{Clientes GMTP} para
@@ -170,34 +185,12 @@ significa que um nó \textit{Repassador GMTP} pode agir como se fosse um nó
 requisição estivesse alcançado o \textit{Servidor GMTP} que oficialmente
 transmite o conteúdo, o que ocorre de forma transparente para a aplicação.
 
-As estratégias discutidas até aqui e adotadas no GMTP são diferenciais que
-permitem o protocolo disseminar mais rapidamente um determinado fluxo de dados
-originado no \textit{Servidor GMTP}. Como a rede de favores e os dados são
-trocados de forma distribuída, ou seja, nem sempre com a participação de um
-\textit{Servidor GMTP}, empregou-se também um mecanismo para validação dos dados
-transmitidos pelo servidor, evitando-se ataques de poluição, por exemplo. Além
-disso, incorporou-se um mecanismo no GMTP chamado de \textit{registro de
-participação} que, após um nó \textit{Repassador GMTP} se registrar em um nó
-\textit{Servidor GMTP}, permite-se que os \textit{Servidores GMTP} determinem
-quais são os candidatos a perceiros de um nó \textit{Repassador GMTP}, o que
-ocorre periodicamente. A vantagem disso é que se permite, \textit{a
-priori}, que os nós \textit{Repassadores GMTP} avaliem seus parceiros sem
-necessariamente um nó estar recebendo um fluxo de dados de um determinado
-evento. Com isto, um nó \textit{Repassador GMTP} pode repassar um fluxo de
-dados para um outro nó \textit{Repassador GMTP} sem que o primeiro tenha
-interesse no referido fluxo, mas devido ao seu posicionamento na rede e sua
-capacidade computacional e de rede, pode melhorar sobremaneira no
-processo de disseminação de um determinado fluxo de dados.
-
 Na Figura~\ref{fig:cenario-global-detailed}, observam-se detalhes do cenário
 supracitado, introduzindo-se o conceito de um grupo especial de nós chamados de
 nós \textit{Relatores GMTP}. Estes nós são responsáveis por enviar relatórios
 periódicos sobre o estado da transmissão ao seu nó \textit{Repassador GMTP}, que
 os utiliza para regular a taxa de transmissão de um ou mais fluxos de dados,
-impedindo-se que a rede entre em colapso de congestionamento. Na prática, os
-nós \textit{Repassadores GMTP} são nós \textit{Clientes GMTP}, eleitos
-automaticamente pelo seu nó \textit{Repassador GMTP}, dentre os nós
-\textit{Clientes GMTP} interessados em obter um determinado fluxo de dados.
+impedindo-se que a rede entre em colapso de congestionamento.
 
 \begin{figure}[ht]
 \begin{center}
@@ -241,18 +234,20 @@ gerar conteúdos multimídia ao vivo. Em geral, um \textit{Cliente GMTP} é um
 sistema final que executa um processo a nível de sistema operacional,
 representando uma aplicação manipulada pelo usuário final. A maioria dos
 \textit{Clientes GMTP} funciona apenas de forma passiva, recebendo o fluxo de
-dados de um conteúdo multimídia e entregando para um processo em execução.
+dados de um conteúdo multimídia e entregando para um processo em execução,
+contribuindo na execução do algoritmo de controle de congestionamento.
 
-  \item \textbf{Servidor GMTP:} é um \textit{nó GMTP} capaz de gerar ou
-receber, de um \textit{Cliente GMTP}, conteúdos multimídia ao vivo. Em geral,
-um \textit{Servidor GMTP} é um sistema final que compõe uma rede CDN.
+  \item \textbf{Servidor GMTP:} é um \textit{nó GMTP} capaz de capturar um
+evento ao vivo e gerar conteúdos digitais de áudio e vídeo ou ainda, receber de
+um \textit{Cliente GMTP} tais conteúdos. Em geral, um \textit{Servidor GMTP} é
+um sistema final que participa de uma rede CDN.
 
   \item \textbf{Repassador GMTP:} é um \textit{Nó GMTP} com habilidades de
 repassar os fluxos de dados originados de um ou mais \textit{Servidores GMTP}
 ou de um outro nó \textit{Repassador GMTP}.
 
   \item \textbf{Relator GMTP:} é um \textit{Cliente GMTP} com habilidades de
-enviar relatórios periódicos sobre o estado da transmissão ao repassador.
+enviar relatórios periódicos ao repassador sobre o estado da transmissão.
 
 \end{itemize}
 
@@ -263,28 +258,27 @@ enviar relatórios periódicos sobre o estado da transmissão ao repassador.
 
   \item \textbf{\textit{Unicast}:} toda comunicação que ocorre entre dois nós
 \textit{Repassadores GMTP}, com a interpretação do conceito definido por
-\textit{unicast}, no contexto de redes de computadores, em sua forma
-tradicional.
+\textit{unicast} em sua forma tradicional no contexto de redes de
+computadores.
 
   \item \textbf{\textit{Multi-unicast}:} é um conjunto formado por dois ou mais
-canais de {Canal Transmissão \textit{unicast}}.
+canais de transmissão \textit{unicast}.
 
 \item \textbf{\textit{Multicast}:} toda comunicação que ocorre entre um nó
 \textit{Repassador GMTP} e seus respectivos \textit{Clientes GMTP}, com a
-interpretação do conceito definido por \textit{multicast}, no contexto de redes
-de computadores, em sua forma tradicional.
+interpretação do conceito definido por \textit{multicast} em sua forma
+tradicional no contexto de redes de computadores.
 
 \end{itemize}
 
-O modo multicast sempre é utilizado, porém quando este modo não é
-suportado pela rede, o modo multi-unicast do protocolo é executado. É
-requerido que o modo multicast seja utilizado para transmissões de um salto, ou
-seja, em redes locais. O modo unicast é utilizado para que \textit{Clientes
-GMTP} estabeleçam uma conexão com um \textit{Servidor GMTP} ou um
-\textit{Repassador GMTP} e passe a distribuir o conteúdo de dados multimídia em
-sua rede local.
-
-\vspace{0.5cm}
+O modo \textit{multicast} sempre é utilizado para a transmissão dos datagramas
+correspondentes ao fluxo de dados multimídia, porém quando este modo não é
+suportado pela rede, executa-se o modo \textit{multi-unicast} do protocolo. É
+mandatório que o modo \textit{multicast} seja utilizado para transmissões entre
+um nó \textit{Repassador GMTP} e seus \textit{Clientes GMTP} diretos. O modo
+\textit{unicast} é utilizado para que \textit{Clientes GMTP} estabeleçam uma
+conexão com um \textit{Servidor GMTP} ou um \textit{Repassador GMTP} e passe a
+distribuir o conteúdo de dados multimídia em sua rede local.
 
 Deste ponto em diante, os termos \textit{Nó GMTP}, \textit{Cliente GMTP},
 \textit{Servidor GMTP}, \textit{Repassador GMTP} e \textit{Relator GMTP}
@@ -297,15 +291,21 @@ bem como os termos \textit{socket}, \textit{unicast}, \textit{multi-unicast} e
 um fluxo de datagramas IP correspondente a um evento ao vivo, utilizando-se o
 protocolo GMTP.
 
+Embora alguns autores considerem os termos \aspas{repasse} e \aspas{roteamento}
+como conceitos distintos, neste trabalho ambos os termos são considerados
+sinônimos e devem ser interpretados como a capacidade que um nó \mudccps tem de
+receber dados em uma interface de rede de entrada e encaminhar estes dados
+através de uma interface de rede de saída, permitindo-se que uma mesma interface
+de rede seja utilizada como entrada e saída ao mesmo tempo.
+
 As palavras \aspas{deve}, \aspas{não deve}, \aspas{requerido}, \aspas{pode},
 \aspas{não pode}, \aspas{recomendado} e \aspas{opcional}, incluindo suas
 variações morfológicas, devem ser interpretadas como descrito na RFC
 2119~\cite{RFC2119}, em inglês.
 
-\subsection{Arquitetura e Principais Características}
+\subsection{Arquitetura}
 
-Na Figura~\ref{fig:arq_geral_gmtp}, ilustra-se a arquitetura geral do
-GMTP, seguida de uma breve descrição das suas principais funcionalidades.
+Na Figura~\ref{fig:arq_geral_gmtp}, ilustra-se a arquitetura geral do GMTP.
 
 \begin{figure}[ht]
 \begin{center}
@@ -316,12 +316,89 @@ GMTP, seguida de uma breve descrição das suas principais funcionalidades.
 \label{fig:arq_geral_gmtp}
 \end{figure}
 
+\subsection{GMTP Intra e GMTP Inter}
+\label{subsec:gmtp-intra-inter}
+
+De acordo com a arquitetura apresentada na seção anterior, define-se:
+
+\begin{itemize}
+
+ \item \textbf{GMTP Intra:} parte do protocolo GMTP executada na camada de
+transporte da pilha de protocolos TCP/IP, corresponde ao módulo interno de uma
+rede, composta por nós clientes e relatores, disponibilizado no sistema
+operacional e utilizado pela aplicação através de uma API de socket GMTP. Um
+socket GMTP é a representação de uma instância do protocolo GMTP em execução,
+sendo responsável por gerenciar todas as atividades de comunicação da aplicação
+correspondente ao meio externo (outros processos GMTP). No contexto de uma
+conexão, o GMTP Intra mantém diversas variáveis de estado que representam uma
+instância e executa algoritmos para gerenciamento de conexão (estabelecimento e
+desconexão) e eleição de nós parceiros, determinação do formato e preenchimento
+dos parâmetros que definem uma determinada mídia digital, permitindo que a
+aplicação defina os valores de tais parâmetros e ou obtenham acesso aos valores
+dos mesmos, controle de congestionamento e multiplexação e demultiplexação de
+datagramas IP. O GMTP não faz verificação de conteúdo por mecanismo de soma de
+verificação.
+
+ \item \textbf{GMTP Inter:} parte do protocolo GMTP executada na camada de
+rede da pilha de protocolos TCP/IP e corresponde ao módulo externo de uma rede,
+composta por vários nós repassadores que cooperam entre si. É executado por um
+roteador de rede e aceita conexões oriundas de um nó cliente ou de um nó
+repassador. No contexto de uma conexão, o GMTP Inter mantém variáveis de estado
+relacionadas às funções de sua responsabilidade, tais como estabelecimento de
+conexão com nós servidores ou repassadores, seleção de nós repassadores
+parceiros, eleição de nós relatores, controle de congestionamento assistido pela
+rede e controle de compartilhamento de fluxos multimídia.
+
+No GMTP Inter, permite-se a configuração de parâmetros iniciais de configuração
+da rede de favores e da integração com servidores de uma ou mais CDN, como
+ilustrado na Figura~\ref{fig:tela-gmtp-inter}. Nesse caso, o usuário
+administrador de um nó repassador pode definir os seguintes parâmetros:
+
+\begin{itemize}
+
+  \item registro de participação em uma ou mais redes redes CDN;
+
+  \item largura de banda (\textit{download} e \textit{upload}) que deseja
+compartilhar;
+
+  \item o período (faixa de dias e horários) que o roteador funcionará como nó
+repassador;
+
+  \item quantidade máxima de parcerias que podem ser realizadas;
+
+  \item quantidade máxima de fluxos de dados que podem ser compartilhados;
+
+  \item parâmetros avançados relacionados aos algoritmos de controle de
+congestionamento;
+
+  \item download automático ou não do certificado digital de um nó servidor; e
+
+  \item realização de cache ou não dos certificados digitais obtidos.
+
+\end{itemize}
+
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[natwidth=664,natheight=340,scale=.5]{imgs/tela-gmtp-inter.png}
+\end{center}
+\vspace{-1cm}
+\caption{Tela da ferramenta de administração do OpenWRT~\cite{REF} com suporte
+ao GMTP. Nessa tela, permitir que o administrador do roteador configure
+registros de participação em uma ou mais redes CDN.}
+\label{fig:tela-gmtp-inter}
+\end{figure}
+
+\end{itemize}
+
+\subsection{Principais funções do GMTP}
+
 \begin{itemize}
 
   \item Registro de participação de um nó repassador em um nó servidor. Isto
-permite o suporte a pré-seleção de nós parceiros filtrados por métricas que
+permite o suporte à pré-seleção de nós parceiros filtrados por métricas que
 influenciam na qualidade de experiência do usuário ao assistir um
-evento ao vivo, como atraso fim-afim.
+evento ao vivo, como atraso fim-a-fim.
 
   \item Acesso a uma transmissão através de um processo de conexão em três-vias
 (\textit{3WHS}), com a requisição de conexão transmitida ao servidor e podendo
@@ -340,156 +417,112 @@ fenômeno da tragédia dos bens comuns, discutido na Seção~\ref{sec:problematica}.
 
   \item Suporte a algoritmos de controle de congestionamento assistidos pela
 rede e de fluxos multicast. Troca de relatórios periódicos entre os nós
-repassadores sobre a transmissão para dar suporte aos algoritmos de controle de
-congestionamento, além de ajudar na otimização do processo de seleção de
-nós parceiros.
+repassadores sobre a transmissão.
 
   \item Eleição de nós relatores com suporte a tolerância a desconexões de nós,
 com notificação e reeleição de novos nós.
 
-  \item Garantia de autenticidade das partes de uma mídia por meio do uso de
-certificados digitais para impedir ataques de poluição.
-
-\end{itemize}
-
-\subsection{GMTP Intra e GMTP Inter}
-\label{subsec:gmtp-intra-inter}
-
-\begin{itemize}
-
- \item \textbf{GMTP Intra:} é executado na camada de transporte da pilha
-de protocolos TCP/IP e corresponde à parte interna de uma rede, composta
-por vários nós clientes que possuem um nó repassador. É executado em um sistema
-final, operado por um usuário que deseja assitir a um evento ao vivo, através
-de uma aplicação que cria um socket GMTP. Um socket GMTP é a representação de
-uma instância do protocolo GMTP em execução, sendo responsável por gerenciar
-todas as atividades de comunicação da aplicação correspondente com o meio
-externo (outros processos GMTP). No contexto de uma conexão, o GMTP Intra
-mantém diversas variáveis de estado que representam uma instância do GMTP em
-execução, que executa algoritmos para: eleição de nós relatores, controle de
-congestionamento, validação de partes de uma mídia e multiplexação e
-demultiplexação de datagramas IP.
-
- \item \textbf{GMTP Inter:} é executado na camada de rede da pilha de
-protocolos TCP/IP e corresponde à parte externa de uma rede, composta por
-vários nós repassadores que cooperam entre si. É executado por um roteador de
-rede e aceita conexões oriundas de um nó cliente ou de um nó repassador. No
-contexto de uma conexão, o GMTP Inter mantém diversas variáveis de estado
-relacionadas às funções de sua responsabilidade: estabelecimento de conexão com
-nós servidores ou repassadores, seleção de nós repassadores parceiros, eleição
-de nós relatores, controle de congestionamento assistido pela rede, controle
-de compartilhamento de fluxos multimídia e validação da autenticidade das
-partes de uma mídia.
-
-Além disso, no GMTP Inter, permite-se a configuração de parâmetros
-iniciais de configuração da rede de cooperação e da integração com servidores
-de uma ou mais CDN, como ilustrado na Figura~\ref{fig:tela-gmtp-inter}. Nesse
-caso, o usuário pode configurar seu roteador como nó repassador para se
-autenticar em uma ou mais redes CDN, definir a largura de banda
-(\textit{download} e \textit{upload}) que deseja compartilhar, o período (dias
-da semana e horas) que permitirá seu roteador funcionar como repassador,
-dentre outras opções. É possível também que um repassador GMTP detecte
-automaticamente o suporte do GMTP em um servidor remoto, portanto sem a
-necessidade de uma configuração prévia.
-
-\begin{figure}[ht]
-\begin{center}
-\includegraphics[natwidth=664,natheight=340,scale=.5]{imgs/tela-gmtp-inter.png}
-\end{center}
-\vspace{-1cm}
-\caption{Ferramenta de administração do OpenWRT~\cite{REF} com suporte ao GMTP.
-Tela de configuração para permitir registro em um GMTP Inter a uma rede CDN.}
-\label{fig:tela-gmtp-inter}
-\end{figure}
+  \item Possibilidade de permitir que os nós clientes verifiquem a autenticidade
+das partes de uma mídia, por meio do uso de certificado digital determinado no
+nó servidor para impedir ataques de poluição.
 
 \end{itemize}
 
 \subsection{Canais de Comunicação}
 \label{subsec:canaiscommudccp}
 
-No protocolo GMTP, utilizam-se três canais de comunicação para implementar suas
-funcionalidades (Figura~\ref{fig:canais-comunicacao}). Embora alguns autores
-considerem os termos \aspas{repasse} e \aspas{roteamento} como conceitos
-distintos, neste trabalho ambos os termos são considerados sinônimos e devem
-ser interpretados como a capacidade que um nó \mudccps tem de receber dados em
-uma interface de rede de entrada e encaminhar estes dados através de uma
-interface de rede de saída, permitindo-se que uma mesma interface de rede seja
-utilizada como entrada e saída ao mesmo tempo.
+No GMTP, utilizam-se dois canais de comunicação para executar suas
+funcionalidades, o de transmissão unicast e o de transmissão multicast. A
+seguir, definem-se tais conceitos.
 
-\begin{figure}[ht]
-\begin{center}
-\includegraphics[scale=.86]{imgs/canais-comunicacao.pdf}
-\end{center}
-\vspace{-1cm}
-\caption{Canais de Comunicação do \mudccp.}
-\label{fig:canais-comunicacao}
-\end{figure}
+% (Figura~\ref{fig:canais-comunicacao}).
+%
+% \begin{figure}[ht]
+% \begin{center}
+% \includegraphics[scale=.86]{imgs/canais-comunicacao.pdf}
+% \end{center}
+% \vspace{-1cm}
+% \caption{Canais de Comunicação do \mudccp.}
+% \label{fig:canais-comunicacao}
+% \end{figure}
 
-\subsubsection{Canal de Controle:}
+\subsubsection{Canal de Transmissão Unicast:}
 
-Todo nó ao iniciar uma instância do protocolo \mudccps deve criar um
-socket multicast no endereço IP 238.255.255.250 e na porta $1900$.
-Através desse socket, um nó GMTP é capaz de enviar e receber
-pacotes de controle utilizados para implementar as funcionalidades do
-protocolo. Este socket, denominado \textit{canal de controle} é suma
-importância no processo de conexão do GMTP porque é utilizado para enviar e
-receber sinais de controle, principalmente entre um nó repassador e um nó
-cliente.
+O canal de controle e recepção unicast é criado por todos os nós repassadores ao
+iniciar uma instância do protocolo GMTP. Na prática, trata-se de um socket que
+os nós repassadores formam as devidas parcerias para transmitir os fluxos de
+dados uns para os outros e posteriormente serem disseminados em
+modo multicast pelos respectivos nós repassadores aos seus clientes.
 
-O canal de controle é utilizado para permitir que o nó repassador realize o
-processo de eleição e reeleição de nós relatores, procedimentos de
-estabelecimento de conexão, descoberta de nós e notificações de desconexões,
-envio e recebimento de relatórios para controle de congestionamento, entre
-outros. Tais recursos são fundamentais para o funcionamento do \mudccp, sendo
-umas das justificativas de sua originalidade, diferentemente de qualquer outro
-protocolo encontrados na literatura.
+Do ponto de vista de roteamento, todo nó repassador deve avaliar os datagramas
+GMTP e realizar as ações apropriadas, definidas nas próximas seções deste
+capítulo. Por exemplo, no processo de estabelecimento de conexão, a ser
+detalhado na Seção~\ref{subsec:conexao-requisicao}, ao processar um pacote GMTP
+transmitido por um nó cliente, o nó repassador deve verificar se o pacote é do
+tipo \pac{GMTP-Request} e, em caso positivo, deve-se retornar um pacote do tipo
+\pac{GMTP-Response} ao nó cliente, se o fluxo de dados de interesse do nó
+cliente especificado no pacote \pac{GMTP-Request} já estiver sendo recebido por
+tal nó repassador.
 
-A decisão do uso do endereço IP multicast 238.255.255.250 foi baseada na RFCs
-2365~\cite{RFC2365}, que define o escopo administrativo do uso dos endereços
-multicast entre 239.0.0.0 e 239.255.255.255. O endereço 238.255.255.250 é
-definido no escopo de uso global e por este motivo esse endereço foi o
-escolhido. Com a padronização do protocolo \mudccps e a publicação da sua RFC,
-será necessário registrar o uso desse endereço IP multicast ao \textit{Internet
-Assigned Numbers Authority} - IANA\footnote{IANA: http://www.iana.org/}.
+%  quando iniciarem uma instância do
+% protocolo \mudccp, devem criar um socket multicast no endereço IP
+% 238.255.255.250 e na porta $1900$, em toda interface de rede local, ou seja,
+% nas interfaces que existem nós clientes. Através desse socket, um nó GMTP é
+% capaz de enviar e receber pacotes de controle utilizados para negociar as
+% funções de transmissão de um determinado fluxo de dados de mídia ao vivo
+% através do canal de transmissão de dados. Por exemplo, este canal é utilizado
+% para permitir que um nó cliente descubra quais fluxos de dados já está sendo
 
-\subsubsection{Canal de Repasse:}
+% A decisão do uso do endereço IP multicast 238.255.255.250 foi baseada na RFCs
+% 2365~\cite{RFC2365}, que define o escopo administrativo do uso dos endereços
+% multicast entre 239.0.0.0 e 239.255.255.255. O endereço 238.255.255.250 é
+% definido no escopo de uso global e por este motivo esse endereço foi o
+% escolhido.
+
+% \subsubsection{Canal de Controle Unicast}
+%
+% Tal canal de controle é criado apenas entre os nós repassadores e relatores
+% para troca de informações implementar as funcionalidades do protocolo, tais como
+% procedimentos de estabelecimento de conexão, descoberta de nós e notificações de
+% desconexões, eleição de nós relatores e envio e recebimento de relatórios para
+% controle de congestionamento.
+
+\subsubsection{Canal de Repasse Multicast:}
 
 Além do canal de controle, define-se no protocolo \mudccps um canal de repasse
 utilizado por um nó repassador para encaminhar datagramas vindos de um servidor
 ou de outro repassador para a rede local. Esse canal de repasse, na prática, é
-um socket multicast criado pelo repassador para transmitir os
-datagramas para todos os seus clientes com interesse em reproduzir o mesmo
-fluxo de dados de um evento ao vivo.
+um socket multicast criado pelo nó repassador para transmitir os datagramas para
+todos os seus clientes com interesse em reproduzir o mesmo fluxo de dados de um
+evento ao vivo.
 
-O \textit{socket de repasse dos dados} deve ser criado quando um repassador
+O \textit{socket de repasse multicast} deve ser criado quando um nó repassador
 passa a obter um determinado fluxo de dados correspondente a um determinado
 evento de interesse de pelo menos um dos seus clientes. Na prática, quando
 isto acontece, o repassador deve criar um socket multicast em um
 endereço IP e número de porta escolhida aleatoriamente para repassar os dados
-vindos do servidor ou de outro repassador para dentro de sua rede. Isto
-permitirá alcançar um número maior de clientes em uma rede local, melhorando a
-escalabilidade do protocolo do ponto de vista da quantidade de clientes. A
-faixa de endereços IP multicast que um cliente deve utilizar para criar seu
-socket de repasse é a de escopo local 239.192.0.0/14, definida na RFC
-2365~\cite{RFC2365}. Como é uma faixa de endereços IP multicast de domínio
-local, não se faz necessário registrar o uso dessa faixa de endereços.
+vindos do servidor ou de outro repassador para dentro de sua rede. A
+faixa de endereços IP multicast que o nó repassador deve utilizar para criar seu
+socket de repasse para um determinado fluxo de dados é a de escopo local
+239.192.0.0/14, definida na RFC 2365~\cite{RFC2365}. Como é uma faixa de
+endereços IP multicast de domínio local, não se faz necessário registrar o uso
+desses endereços. Isto significa que para todo fluxo de dados de um evento ao
+vivo, deve-se alocar um endereço IP e uma porta. No caso do esquema de
+endereçamento IPv4, com isto, será possível definir a transmissão de
+exatamente de 17.179.607.040 (dezessete bilhões, cento e setenta e nove
+milhões, seiscentos e sete mil e quarenta) diferentes fluxos de dados em uma
+rede local, o que é mais do que suficiente e escalável por vários séculos.
 
-Um outro canal de repasse pode ser criado por um repassador A caso um outro
-repassador B esteja interessado por um fluxo de dados disponível no repassador
-A. Nesse caso, o repassador A negocia um canal de repasse unicast e informar ao
-repassador B o endereço IP e porta que este deve se conectar para obter
-os dados.
-
-\subsubsection{Canal de Recepção de Dados:}
-
-O canal de recepção de dados é um socket multicast criado por um
-cliente para receber um fluxo de dados transmitindo por um nó repassador em
-algum endereço IP da faixa 239.192.0.0/14. Alternativamente, um canal de
-recepção de dados será um socket unicast quando existir apenas um
-cliente em uma rede interessado por um fluxo de dados, utilizando-se o
-endereço da sua própria interface de rede local. O endereço IP e o
-número de porta que o cliente deve se conectar é determinado pelo nó repassador
-no momento da conexão.
+% \subsubsection{Canal de Recepção de Dados:}
+%
+% O canal de recepção de dados é um socket multicast criado por um
+% cliente para receber um fluxo de dados transmitindo por um nó repassador em
+% algum endereço IP da faixa 239.192.0.0/14. Alternativamente, um canal de
+% recepção de dados será um socket unicast quando existir apenas um
+% cliente em uma rede interessado por um fluxo de dados, utilizando-se o
+% endereço da sua própria interface de rede local. O endereço IP e o
+% número de porta que o cliente deve se conectar é determinado pelo nó repassador
+% no momento da conexão.
 
 % \subsection{Diagrama de Estados do GMTP}
 %
@@ -510,193 +543,227 @@ no momento da conexão.
 
 Toda comunicação entre dois ou mais nós GMTP ocorre através da troca de
 datagramas IP, que carregam sinalizações de controle e/ou dados da aplicação.
+Para isso, faz-se necessário registrar o uso de um código para o campo
+\textit{Protocolo} do cabeçalho de um datagrama IP junto à \textit{Internet
+Assigned Numbers Authority} -- IANA\footnote{IANA: http://www.iana.org/}. Com a
+padronização do protocolo \mudccps e a publicação da sua RFC, provavelmente
+será utilizado o código 100, como já está definido no documento \textit{Protocol
+Numbers}\footnote{O código 100 foi utilizado no passado por um outro protocolo
+de mesma sigla, mas foi descontinuado e se tornou obsoleto. O uso de tal
+identificador está sendo negociado junto a IETF e a IANA
+\murl{http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml}}
+da IANA.
 
-No cabeçalho dos pacotes \mudccps existe um campo denominado \emph{tipo do
-pacote}. Este campo determina que informação está contida em um determinado
-pacote \mudccps e, ao processá-los, um nó \mudccps executa uma determinada ação.
-Na Tabela~\ref{tab:tipospacotemudccp} são apresentados os possíveis valores
-desse campo, nome do pacote e sua função. Nas próximas seções serão descritas
-todas as funções do GMTP e os diferentes tipos de pacotes serão utilizados para
-descrever os algoritmos no tocante às ações realizadas pelo GMTP de acordo com
-um determinado evento.
+No cabeçalho dos pacotes \mudccp, existe um campo denominado \emph{tipo do
+pacote} com tamanho de \ut{4}{bits}, que são descritos a seguir. Este campo
+determina qual tipo de informação está contida em um determinado pacote \mudccps
+e, ao processá-lo, o nó \mudccps deve executar uma determinada ação.
 
-\begin{table}[ht]
-        \caption{Tipos de Pacotes do protocolo \mudccp.}
-        \label{tab:tipospacotemudccp}
-    \begin{center}
-	\vspace{-0.8cm}
-        \begin{tabular}{|p{1.0cm}|p{1.5cm}|p{1.5cm}|}
-            \hline
+\begin{enumerate}
+\setcounter{enumi}{-1}
 
-\multicolumn{1}{|>{\columncolor[rgb]{0.05,0.2,0.43}}c}{\textcolor{white}{\textbf
-{\#}}} &
-\multicolumn{1}{|>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}{
-\textbf{Tipo}}} &
-\multicolumn{1}{>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}{\textbf
-{Descrição}}}
-	    \\
-	    \hline
-	    \hline
-            \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{0}}
-& \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Request} &
-\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Pedido de
-estabelecimento de conexão multicast}
-	    \\
+  \item \textit{GMTP-Request:} Cliente envia rquisição para obter um fluxo
+de dados multimídia dado um nome do fluxo de interesse;
 
-\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{1}} &
-\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Response} &
-\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Resposta ao pedido de
-estabelecimento de conexão multicast}
-	    \\
-            \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{2}}
-& \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Data} &
-\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Contém dados da
-aplicação}
-	    \\
+  \item \textit{GMTP-RequestNotify:} Repassador notifica um cliente que um
+fluxo de dados está prestes a ser transmitido ou já está sendo transmitido em um
+determinado canal de repasse multicast;
 
-\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{3}} &
-\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Ack} &
-\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Confirmação de
-recebimento de pacote}
-	    \\
+  \item \textit{GMTP-Response:} Repassador confirma o estabelecimento de uma
+parceria com outros nó repassador, dado um determinado fluxo de dados;
 
-            \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{4}}
-& \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{DataAck} &
-\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Dados da aplicação e
-confirmação de recepção}
-	    \\
+  \item \textit{GMTP-RelayQuery:} Repassador pode solicitar ao servidor uma
+lista de possíveis nós repassadores parceiros;
 
-\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{5}} &
-\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Elect} &
-\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Inicia o processo de
-eleição de um nó em relay ou reporter}
-	    \\
+  \item \textit{GMTP-Data:} Qualquer nó utiliza para transmitir dados da
+aplicação;
 
-\multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{6}}
-& \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{ElectReply} &
-\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Sinaliza o interesse de
-um nó em se transformar em relay ou reporter}
-	    \\
+  \item \textit{GMTP-Ack:} Qualquer nó utiliza para confirmar a recepção de
+um determinado pacote, seja pacotes previamente contendo dados ou não;
 
-\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{7}} &
-\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{ElectAck} &
-\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Confirmação do nó
-eleito para relay ou reporter}
-	    \\
+  \item \textit{GMTP-DataAck:} Combinação dos pacotes GMTP-Data e GMTP-Ack
+(\textit{PiggyBack});
 
-\multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{8}}
-& \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{RelayQuery} &
-\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Transmitido por um nó
-para consultar a lista de relays}
-	    \\
+  \item \textit{GMTP-MediaDesc:} Servidor transmite esse pacote para
+descrever informações sobre a mídia sendo transmitida em uma
+determinada transmissão;
 
-\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{9}} &
-\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{RelayReply} &
-\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Resposta ao pedido
-de consulta da lista de relays}
-	    \\
+  \item \textit{GMTP-DataPullRequest:} Repassador envia um pedido para obter o
+mapa de buffer atual de um outro repassador parceiros;
 
-\multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{10}}
-& \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{AdvConn} &
-\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Utilizado por um nó
-relay ou reporter para anunciar que está ativo na rede}
-	    \\
+  \item \textit{GMTP-DataPullResponse:} Resposta ao pedido para obtenção de um
+mapa de buffer;
 
-\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{11}} &
-\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Reservado} &
-\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Uso futuro e ignorado
-pelo receptor}
-	    \\
+  \item \textit{GMTP-Elect:} Repassador envia para um cliente o pedido
+para tal cliente atuar como nó relator;
 
-\multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{12}} &
-\multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Reservado} &
-\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Uso futuro e ignorado
-pelo receptor}
-	    \\
+  \item \textit{GMTP-ElectReply:} Cliente envia para o repassador uma
+confirmação de que pode atuar como relator;
 
-\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{13}} &
-\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{CloseReq} &
-\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Servidor ou
-Relay solicita término de conexão sem TIMEWAIT}
-	    \\
+  \item \textit{Reservado:} Reservado para uso futuro e ignorado pelos nós que
+o processa;
 
-            \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{14}}
-& \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Close} &
-\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Servidor/Cliente/Relay
-solicita término da conexão}
-	    \\
-\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{15}} &
-\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Reset} &
-\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Determina,
-incondicionalmente, o final da conexão}
-	    \\
-            \hline
-        \end{tabular}
-    \end{center}
-% 	\scriptsize
-% 	$^1$ O tipo de pacote \textbf{\mudccp-Reset} é utilizado com este
-% propósito, porém utiliza-se também para outros motivos: para sinalizar número
-% de
-% porta incorreto; comportamento inapropriado de opções; desconexão prevista de
-% um
-% \mdrel\space etc.
-\end{table}
+  \item \textit{Reservado:} Reservado para uso futuro e ignorado pelos nós que
+o processa;
 
-\normalsize
+  \item \textit{GMTP-Close:} Servidor, repassador ou cliente solicita o término
+de uma conexão;
 
-No Apêndice~\ref{app:mudccp-tecnica} são apresentados detalhes acerca do uso
-dos tipos de pacotes do GMTP, sendo seu teor completamente técnico. Desta
-forma, tal apêndice é dedicado aos leitores interessados em sua implementação.
+  \item \textit{GMTP-Reset:} Determina, incondicionalmente, a finalização de
+uma conexão.
+
+\end{enumerate}
+
+Nas próximas seções, descreve-se todas as possíveis ações do GMTP e os tipos de
+pacotes envolvidos na comunicação entre os seus nós. No
+Apêndice~\ref{app:mudccp-tecnica}, apresenta-se detalhes acerca do uso dos
+tipos de pacotes do GMTP, sendo seu teor bastante técnico e portanto dedicado
+aos leitores interessados em sua implementação.
+
+% \begin{table}[ht]
+%         \caption{Tipos de Pacotes do protocolo \mudccp.}
+%         \label{tab:tipospacotemudccp}
+%     \begin{center}
+% 	\vspace{-0.8cm}
+%         \begin{tabular}{|p{1.0cm}|p{1.5cm}|p{1.5cm}|}
+%             \hline
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.05,0.2,0.43}}c}{\textcolor{white}{\textbf
+% {\#}}} &
+% \multicolumn{1}{|>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}{
+% \textbf{Tipo}}} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}{\textbf
+% {Descrição}}}
+% 	    \\
+% 	    \hline
+% 	    \hline
+%             \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{0}}
+% & \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Request} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Requisição de um fluxo
+% de dados multimídia a partir do seu nome}
+% 	    \\
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{1}} &
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{RequestNotify} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Notificar um nó
+% cliente que um fluxo de dados está pronto para ser transmitido.}
+% 	    \\
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{1}} &
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Response} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Resposta ao pedido de
+% estabelecimento de conexão multicast}
+% 	    \\
+%             \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{2}}
+% & \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Data} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Contém dados da
+% aplicação}
+% 	    \\
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{3}} &
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Ack} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Confirmação de
+% recebimento de pacote}
+% 	    \\
+%
+%             \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{4}}
+% & \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{DataAck} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Dados da aplicação e
+% confirmação de recepção}
+% 	    \\
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{5}} &
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Elect} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Inicia o processo de
+% eleição de um nó em relay ou reporter}
+% 	    \\
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{6}}
+% & \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{ElectReply} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Sinaliza o interesse de
+% um nó em se transformar em relay ou reporter}
+% 	    \\
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{7}} &
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{ElectAck} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Confirmação do nó
+% eleito para relay ou reporter}
+% 	    \\
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{8}}
+% & \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{RelayQuery} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Transmitido por um nó
+% para consultar a lista de relays}
+% 	    \\
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{9}} &
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{RelayReply} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Resposta ao pedido
+% de consulta da lista de relays}
+% 	    \\
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{10}}
+% & \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{AdvConn} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Utilizado por um nó
+% relay ou reporter para anunciar que está ativo na rede}
+% 	    \\
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{11}} &
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Reservado} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Uso futuro e ignorado
+% pelo receptor}
+% 	    \\
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{12}} &
+% \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Reservado} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Uso futuro e ignorado
+% pelo receptor}
+% 	    \\
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{13}} &
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{CloseReq} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Servidor ou
+% Relay solicita término de conexão sem TIMEWAIT}
+% 	    \\
+%
+%             \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c}{\textbf{14}}
+% & \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}c|}{Close} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Servidor/Cliente/Relay
+% solicita término da conexão}
+% 	    \\
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c}{\textbf{15}} &
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}c|}{Reset} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Determina,
+% incondicionalmente, o final da conexão}
+% 	    \\
+%             \hline
+%         \end{tabular}
+%     \end{center}
+% % 	\scriptsize
+% % 	$^1$ O tipo de pacote \textbf{\mudccp-Reset} é utilizado com este
+% % propósito, porém utiliza-se também para outros motivos: para sinalizar número
+% % de
+% % porta incorreto; comportamento inapropriado de opções; desconexão prevista de
+% % um
+% % \mdrel\space etc.
+% \end{table}
+
+% \normalsize
 
 
-FALAR:
- - O conteúdo do relatório e como esses dados são obtidos, qual a frequencia
-que são enviados
- - dizer que o no repassador pode repassar pacotes mesmo se não houver nó
-interessado pelo fluxo correspondente
- - Falar que os protocolos não são apropriados para os cenários considerados
-- Estudar e escrever sobre o RCP (base de CC para a rede intra); XCP; LEDBAT e
-ConEx. Arrumar justificativa para não usar o ConEx. Dizer que o GMTP pode
-englobar o uso de todos estes, caracterizando uma justificativa de que o GMTP é
-preparado para atendê-los após uma vasta revisão bibliográfica!
-- Declaração da tese: não esquecer de falar sobre uso do roteador e a
-unificação
-dos sistemas, além de que as rotas não mudam sempre porque as origens
-(servidores da cdn) são poucas
+% ver: http://peerstreamer.org
 
-- GMTP
-   * Escrever o algoritmo de CC para a rede P2P/roteador
-   * Algoritmo de seleção de peer e parcerias
-   * Escrever algoritmo para o mapa de buffer
-   * Escrever sobre o Inter o Intra
-   * Reorganizar como nazareno mencionou
-
-ver: http://peerstreamer.org
-
-Anotações após defesa:
- - Ler o survey: http://www.aicit.org/jcit/ppl/%20JCIT_MAY_30.pdf
- - Simuladores mais robustos: SimGrid [23], OPSS [26, 27], ChunkSim [29], 3LS
-[30], OPNET [30] (não sei se vai ser bom!)
- -
-- Resultados
-   * Comentar gráficos
-   * Lembrar de falar sobre redes móveis
-   * Sobre churn (roteador pode reduzir churn)
-- Implementação
-- Trabalho futuro:
-   * Avaliar com o ConEx???
-   * Terminar a implementação no kernel do Linux
-   * RFC
-- Corrigir capítulo de fundamentação (rever comentários do Nazareno)
-- Fazer Apendice explicando onde obter os códigos de simulação e implementação
-- Trabalho futuro tb é discutir aspectos de padrão de tráfego por dia/hora, por
-exemplo, e formar parcerias nesse sentido.
+% Anotações após defesa:
+%  - Ler o survey: http://www.aicit.org/jcit/ppl/%20JCIT_MAY_30.pdf
+%  - Simuladores mais robustos: SimGrid [23], OPSS [26, 27], ChunkSim [29], 3LS
+% [30], OPNET [30] (não sei se vai ser bom!)
+%  -
 
 \section{Definições, Relações e Restrições do GMTP}
 \label{sec:defsrests}
 
-Nesta seção, descrevem-se formalmente definições, relações e restrições do
-protocolo GMTP.  Para isto, faz-se uso de fundamentos da algebra booleana,
+Nesta seção, descrevem-se formalmente as definições, relações e restrições do
+protocolo GMTP.  Para isto, faz-se uso de fundamentos de algebra booleana,
 lógica proposicional, teoria de conjuntos e teoria dos
 grafos~\cite{Jonathan2003,Seroul2000,Courant1996,Devlin1979}.
 
@@ -1576,19 +1643,20 @@ O estabelecimento de uma conexão \mudccps ocorre quando um nó \clis cria um
 socket e envia um pacote do tipo \pac{GMTP-Request} contendo o nome do fluxo
 \setpk (camada de transporte), destinado ao nó \serv (camada de rede). Como na
 fase $1$ assume-se que não existe nenhum nó \clis recebendo o fluxo \setpks, o
-pacote \pac{GMTP-Request} alcança obrigatoriamente seu nó repassador
-\repassu{1}, que verifica a inexistência do registro de recepção do fluxo
-\setpks e por isso roteia o pacote \pac{GMTP-Request} com destino ao nó \servs
-correspondente. À medida que o pacote \pac{\mudccp-Request} é repassado através
-dos nós \repasss $\in$ \setway, selecionado conforme discutido na
-Seção~\ref{sec:descparc}, cada nó \repasss que o processa verifica se existe
-registro de recepção do fluxo \setpk. Se a verificação for válida, o respectivo
-nó \repasss envia um pacote do tipo \pac{GMTP-Response} para \repassu{1} que,
-ao recebê-lo, registra a recepção de \setpk, usa \pac{GMTP-RequestNotify}
-para notificar \cliu{1} que o fluxo \setpk será iniciado e envia um pacote do
-tipo \pac{GMTP-ResponseAck} para o nó \repass. Neste ponto, conclui-se a fase
+pacote \pac{GMTP-Request} alcança obrigatoriamente seu nó \repassu{1}, que
+verifica a inexistência do registro de recepção do fluxo \setpks e por isso
+roteia o pacote \pac{GMTP-Request} com destino ao nó \servs correspondente. À
+medida que o pacote \pac{GMTP-Request} é repassado através dos nós \repasss
+$\in$ \setway, selecionado conforme discutido na Seção~\ref{sec:descparc}, cada
+nó \repasss que o processar tal pacote, verifica se existe registro de recepção
+do fluxo \setpk. Em caso positivo, o respectivo nó \repasss envia um pacote do
+tipo \pac{GMTP-Response} para \repassu{1} que, ao recebê-lo, registra a recepção
+de \setpk, envia um pacote do tipo \pac{GMTP-RequestNotify} para notificar
+\cliu{1} que o fluxo \setpk será iniciado. Neste ponto, conclui-se a fase
 $1$ do processo de estabelecimento de conexão e o fluxo \setpk começa a ser
-transmitido entre os nós \repassu{1} e \repass.
+transmitido entre os nós \repassu{1} e \repass. Note que, por serem pacotes de
+controle, estes pacotes são transmitidos com garantia de entrega, similar ao
+mecanismo adotado pelo TCP.
 
 \subsection{Fase 2: próximas requisições para obter \setpk}
 
@@ -1694,7 +1762,8 @@ Seção~\ref{subsec:melhorcaminho}.
 
 \subsection{Compartilhamento de \setpks entre \servs}
 
-Além do processo transparente para se obter um fluxo de dados \setpk empregado
+Além do processo transparente para se obter um fluxo de dados \setpks
+empregado
 no GMTP, como os nós \servs constituem uma rede CDN, estes podem negociar entre
 si o envio e a recepção de um fluxo de dados \setpks de acordo com as
 requisições submetidas aos nós \repass. Desta forma, se um nó \repasss enviar
@@ -1736,12 +1805,11 @@ como será discutido no Capítulo~\ref{cap:analisedesemp}.
 
 Após o estabelecimento de conexão, os nós \repasss trocam dados entre si em modo
 unicast a fim de obter \setpk, constituído de pacotes \pks do tipo
-\pac{GMTP-Data} e \pac{GMTP-DataAckVec}. De forma similar, os nós \repasss
+\pac{GMTP-Data} e \pac{GMTP-DataAck}. De forma similar, os nós \repasss
 utilizam os mesmos tipos de pacotes para enviar \pks $\in$ \setpks para os nós
-\cli, porém em modo multicast. Em ambos os casos, o GMTP realiza controle de
-congestionamento, sendo tais aspectos introduzidos nas
-Seções~\ref{subsec:gmtp-intra-inter} e~\ref{subsec:canaiscommudccp}. Nesta
-seção, detalha-se como o GMTP executa tais funções.
+\cli, porém em modo multicast. Nesta seção, detalha-se como o GMTP executa as
+funções para transmissão que, em ambos os casos, realiza-se controle de
+congestionamento, sendo tal função descrita na Seção~\ref{subsec:ccgmtp}.
 
 Após o processo de estabelecimento de conexão, o \mudccps entra no
 estado de transmissão de dados. Se o \mudccps estiver em funcionamento em
@@ -1751,14 +1819,14 @@ dados}. Nesta seção, discute-se o funcionamento do mecanismo de transmissão e
 recepção de dados no \mudccp.
 
 Para o transporte de dados da aplicação, um \servs ou um \repasss deve criar
-pacotes do tipo \mudccp-Data ou o \mudccp-DataAck e enviá-los aos nós
+pacotes do tipo \pac{GMTP-Data} ou o \pac{GMTP-DataAck} e enviá-los aos nós
 \clis através do socket correspondente à conexão estabelecida. Embora o
 protocolo \mudccps transmite dados sem garantia de entrega, em alguns casos,
 dados de controle podem ser transmitidos de forma confiável. Nestes casos,
 durante a transmissão de dados, um nó \mudccps utiliza-se do pacote do
-tipo \mudccp-Data para enviar dados, ao passo que utiliza-se pacote
-\mudccp-Ack para confirmar a recepção de pacotes, ou ainda, utiliza-se
-\mudccp-DataAck para enviar pacotes de dados e ao mesmo tempo confirmar a
+tipo \pac{GMTP-Data} para enviar dados, ao passo que utiliza-se pacote
+\pac{GMTP-Ack} para confirmar a recepção de pacotes, ou ainda, utiliza-se
+\pac{GMTP-DataAck} para enviar pacotes de dados e ao mesmo tempo confirmar a
 recepção de pacotes de dados vindos da direção oposta (\textit{piggyback}).
 
 \subsubsection{Buffer de Envio e Recepção:}
@@ -1838,11 +1906,11 @@ dos pacotes disponíveis, seguido dos pacotes \pks do tipo \pac{GMTP-Data}. Note
 que os pacotes do tipo \pac{GMTP-DataPullRequest} e \pac{GMTP-DataPullResponse}
 são transmitidos com garantia de entrega, ou seja, caso sejam perdidos, o GMTP
 garante sua retransmissão. Para isto, o GMTP utiliza o mecanismo básico de
-envio e confirmação utilizando o pacote do tipo \pac{GMTP-DataPullAck}. No caso
-de falha na execução de uma requisição utilizando o método \textit{pull}, o nó
-GMTP pode reavaliar a necessidade de retransmitir o pedido, pois é possível que
-os \pks ausentes já tenham sido expirados e requisitá-los novamente não fará
-mais sentido.
+envio e confirmação utilizando o pacote do tipo \pac{GMTP-DataAck} ou
+\pac{GMTP-DataAck}. No caso de falha na execução de uma requisição utilizando o
+método \textit{pull}, o nó GMTP pode reavaliar a necessidade de retransmitir o
+pedido, pois é possível que os \pks ausentes já tenham sido expirados e
+requisitá-los novamente não fará mais sentido.
 
 Na prática, o mapa de buffer utilizado para sinalizar a presença ou ausência de
 \pks é representado por faixas de acordo com o índice do buffer. Por exemplo,
@@ -1973,7 +2041,7 @@ Seção~\ref{subsec:content-index}}
 \bigspace u=http://www.ic.ufal.br/projects/gmtp/introduction.ps\\
 \bigspace c=IN IP4 200.17.113.100\\
 \bigspace k=base64:aGVsbG8gd29ybGQK\\
-\bigspace f=x509:http://www.gmtp.org/certs/cert.crt\tcc*[r]{ver
+\bigspace f=x509:http://vid12.akamai.com/certs/cert.crt\tcc*[r]{ver
 Seção~\ref{subsec:seguranca}}
 \bigspace m=audio 49170 GMTP/RTP/AVP 16000-20000\\
 \bigspace m=video 51372 GMTP/RTP/AVP 163840-655360\\
@@ -2033,9 +2101,9 @@ transmitidos pelos nós \rel, eleitos em cada rede controlado por um nó \repass,
 tal que \rels $\in$ \subsetcli$($\repass$)$. Como ilustrado na
 Figura~\ref{fig:ucc-mcc-esquema}, para a parte do algoritmo que funciona em modo
 unicast, dar-se o nome de \textit{\mudccps Unicast Congestion Control}
-(\mudccp-UCC), ao passo que para a parte do algoritmo que funciona em modo
+(GMTP-UCC), ao passo que para a parte do algoritmo que funciona em modo
 multicast, dar-se o nome de \textit{\mudccps Multicast Congestion Control}
-(\mudccp-MCC).
+(GMTP-MCC).
 
 \begin{figure}[htb!]
 \begin{center}
@@ -2191,7 +2259,7 @@ $\in$ \subsetcli$($\way) interessado em obter os pacotes \pks $\in$ \setpks
 
     \item cria um pacote \pac{GMTP-Ack} contendo $R_{p}$ e o envia de volta
 para seu nó parceiro \wayu{\wayi-1}. O pacote \pac{GMTP-Ack} também carrega um
-campo de $RTT_{s}$. Quando \ways receber um pacote \pac{GMTPAck}, deve-se
+campo de $RTT_{s}$. Quando \ways receber um pacote \pac{GMTP-Ack}, deve-se
 utilizar $RTT_{s}$ para atualizar a média móvel do RTT para os fluxos que
 passam por ele, representado por $d_0$.
 
@@ -2562,8 +2630,8 @@ que a rede tem capacidade de suportar. No GMTP, utiliza-se o valor inicial de
 RTT igual a \ut{150}{ms}. Quando um nó \clis envia um pedido de conexão
 utilizando o pacote do tipo \pac{GMTP-Request}, o mesmo deve realizar a sua
 primeira medição do valor de RTT, iniciando-se o marcador de tempo para o
-cálculo do RTT quando enviar o primeiro GMTP-Request e parando-o quando
-receber o pacote do tipo GMTP-Response. Em seguida, deve-se acionar o
+cálculo do RTT quando enviar o primeiro \pac{GMTP-Request} e parando-o quando
+receber o pacote do tipo \pac{GMTP-Response}. Em seguida, deve-se acionar o
 mecanismo de cálculo da taxa de transmissão através da
 Equação~\ref{eq:trfcmudccp}, caso o respectivo nó \clis seja eleito um
 nó relator.
@@ -2701,12 +2769,12 @@ nó relator.
 % Vetor de ACK \pac{GMTP-DataAck}
 
 
-\section{Outras funções no GMTP}
+\section{Outras considerações sobre o GMTP}
 \label{sec:outros-aspectos}
 
 Nesta seção, apresentam-se brevemente outras funcionalidades do GMTP, tais como
-o procedimento de desconexão, adaptação de fluxo, eleição de nós relatores,
-segurança, implementação e implantação.
+o procedimento de desconexão, adaptação de fluxo, eleição de nós relatores e
+segurança.
 
 \subsection{Procedimentos para desconexão de nós \cli, \rels e \repass}
 \label{subsec:desconexao}
@@ -2727,9 +2795,9 @@ segurança, implementação e implantação.
 O processo de finalização de uma conexão \mudccps ocorre com algumas
 diferenças se comparado com outros protocolos orientados à conexão. Para
 sinalizar uma desconexão, um nó \clis transmite um pacote do tipo
-\pac{\mudccp-Close} pelo canal de controle, contendo o nome do fluxo que deseja
+\pac{GMTP-Close} pelo canal de controle, contendo o nome do fluxo que deseja
 se desconectar. Ao receber este tipo de pacote, o nó \repasss transmite ao nó
-\clis um pacote do tipo \pac{\mudccp-Reset}, sinalizando que está ciente do
+\clis um pacote do tipo \pac{GMTP-Reset}, sinalizando que está ciente do
 fechamento da conexão. Nesse interim, os nós desalocam recursos relacionados à
 respectiva conexão. Este procedimento é suficiente para o pedido de finalização
 de uma conexão de um cliente \mudccp, porém para finalizar uma conexão de um nó
@@ -2778,7 +2846,7 @@ serão os próximos nós \clis que se conectar para receber o fluxo de dados
 administrador do nó \repass.
 
 Sendo assim, à medida que um nó \repass recebe pacotes do tipo
-\pac{\mudccp-Request}, no pacote de resposta \pac{\mudccp-Response}, o nó
+\pac{GMTP-Request}, no pacote de resposta \pac{GMTP-Response}, o nó
 \repasss ativa um indicador sinalizando que o referido nó \clis em processo de
 conexão deverá se comportar como um nó \rel, passando a enviar relatórios
 da taxa de transmissão calculada por ele. Note que este modo de transmissão deve
@@ -2790,10 +2858,10 @@ relatórios apenas dos nós \rels $\in$ \setrel.
 Uma outra situação que se faz necessária a eleição de nós \rels é no
 procedimento de desconexão, como explicado na Seção~\ref{subsec:desconexao}.
 Para esse caso, quando o nó \repasss receber o pacote do tipo
-\pac{\mudccp-Close}, este deve verificar se o referido nó \clis é um nó \rel. Em
+\pac{GMTP-Close}, este deve verificar se o referido nó \clis é um nó \rel. Em
 caso afirmativo, o nó \repasss deve transmitir para um dos nós \clis que
 também recebe o referido fluxo de dados \setpk (se houver), um pacote do tipo
-\pac{\mudccp-Elect} e aguardar por um \mudccp-ElectReply. Este procedimento
+\pac{GMTP-Elect} e aguardar por um \pac{GMTP-ElectReply}. Este procedimento
 deve ocorrer com garantia de entrega.
 
 
@@ -2890,11 +2958,8 @@ deve ocorrer com garantia de entrega.
 \label{subsec:seguranca}
 
 Em uma solução baseada em um modelo de serviço P2P, é possível que nós
-mal-intencionados poluam o sistema com conteúdos alterados
-(Figura~\ref{fig:bucket-brigade-principle-4}. Isto porque um nó \repasss ao
-processar um pacote do tipo \pks $\in$ \setpks pode injetar um conteúdo
-multimídia diferente do originalmente transmitido pelo nó \serv, comprometendo
-o sistema.
+mal-intencionados poluam o sistema com conteúdos não originais, ou
+seja, gerados pelo servidor (Figura~\ref{fig:bucket-brigade-principle-4}.
 
 \begin{figure}[ht]
 \begin{center}
@@ -2906,113 +2971,63 @@ alterados.}
 \label{fig:bucket-brigade-principle-4}
 \end{figure}
 
-Para evitar esta situação, empregou-se no GMTP um mecanismo para validação do
-conteúdo de \pks antes que o mesmo seja transmitido para os nós \clis $\in$
-\subsetcli(\repass). Esta função é opcional no GMTP e funciona da forma
-apresentada a seguir.
+No GMTP, delega-se a questão de validação de um fluxo de dados \setpks para a
+aplicação em execução no nó \cli que, opcionamente, pode verificar a
+autenticidade dos pacotes de dados \pks. Isto pode ser feito através de
+mecanismos de segurança já consolidados, como o de certificação digital. A
+obtenção do certificado digital por um nó \clis deve ocorrer em modo unicast
+entre este e o nó \repass, com garantia de entrega.
 
-\begin{enumerate}
- \item
-\end{enumerate}
+Apesar da verificação de autenticidade ser verificada pelo nó \cli, o nó
+\repasss pode obter o certificado digital disponível no servidor. Isto é feito
+através do download do certificado digital pela URL especificada no parâmetro
+\textit{f} da descrição da mídia, como ilustra o no Trecho de
+Código~\ref{algo:sdp-mediadesc}, Linha 8. Após o download do referido
+certificado, o nó \repasss pode realizar cache de tal conteúdo para que os
+próximos nós \clis possam obtê-lo mais rapidamente. Independente da forma do
+download do certificado digital, uma vez o obtido, o nó \clis pode validar se o
+conteúdo de dados de cada pacote de dados \pks $\in$ \setpks.
 
+Como parâmetros de configuração, o administrador do nó \repasss pode habilitar
+ou não a opção de obter automaticamente o certificado digital ou se prefere que
+o nó \repasss o obtenha sob demanda. Para essa segunda opção, quando o primeiro
+nó \clis desejar obtê-lo, a requisição para seu download é transmitida para a
+URL especificada. É opcional também para o administrador escolher se o nó
+\repasss deve realizar cache dos certificados digitais. Se a opção para
+realização de cache estiver marcada, o nó \repasss deve obter o certificado
+digital e atualizar o parâmetro \textit{f} da descrição da mídia para a nova URL
+apropriada.
 
-\section{Implemetação e Implantação}
-\label{sec:impl}
-
-PROVER API PARA SETAR AS INFOS DO SDP
-
-O \mudccp\space não necessita explicitamente da instalação de um nó na rede para
-encaminhar o conteúdo de uma rede externa para uma rede interna
-(\textit{proxy}). Além disso, o \mudccp\space mantém a \textit{interface} de
-programação com a camada de aplicação inalterada, apenas adicionando uma
-extensão na API padrão de socket BSD para preservar a compatibilidade
-com as aplicações multimídia existentes e, ao mesmo tempo, permitir que as
-aplicações façam uso dos novos recursos do \mudccp. Esta decisão pode ajudar em
-uma rápida adoção do GMTP nas aplicações multimídia, permitindo-se simples
-alterações das aplicações existentes e, ao mesmo tempo, a efetiva padronização
-da forma como algumas funcionalidades hoje em dia são implementadas.
-
-
-\section{Benefícios, Aplicabilidade e Justificativas}
-\label{sec:benef}
-
-Nesta seção, apresentam-se os benefícios e justificativas para diversas tomadas
-de decisões realizadas no processo de especificação do GMTP.
-
-\subsection{Benefícios e Aplicabilidade}
-
-O uso do \mudccps nas aplicações de distribuição de mídia ao vivo fomenta
-benefícios em três vertentes, para o desenvolvedor da aplicação; para os
-usuários interessados em assistir/ouvir uma mídia ao vivo e para a rede.
-
-Considerando-se as discussões realizadas nas Seção~\ref{sec:problematica} e
-os requisitos dos sistemas de transmissão de mídia em tempo real, o \mudccps
-atende-os na medida em que:
-
-\begin{itemize}
-
-  \item possibilita que os sistemas de transmissão de mídia ao vivo obtenham
-um melhor desempenho quanto a escalabilidade do número de usuários e
-possivelmente na qualidade da experiência do usuário (\textit{Quality of
-Experience} -- QoE). Nesse aspecto, o \mudccps é capaz de identificar a melhor
-forma que o conteúdo será transportado pela rede, permitindo-se o uso do modo de
-transmissão multicast sempre que possível ou de múltiplos fluxos unicast caso
-contrário, mas não proporcional ao número de clientes interessados;
-
-  \item permite que as aplicações façam uso de soluções estáveis e largamente
-testadas, uma vez adicionadas ao protocolo em questão. Neste caso, grupos
-diferentes de desenvolvimento podem adicionar e testar suas propostas em um
-protocolo de rede que, uma vez consideradas estáveis podem ser compartilhadas
-entre os diferentes sistemas. Até mesmo soluções já implementadas nos sistemas
-existentes podem ser portadas para o \mudccp;
-
-  \item padroniza a forma como os fluxos de dados multimídia gerados pelos
-sistemas considerados são transportados na Internet, incluindo aspectos de
-controle de congestionamento e compartilhamento desses fluxos de dados entre
-os nós participantes de uma transmissão, além de um arcabouço que permite
-estender o protocolo por meio da adição de novos algoritmos;
-
-  \item indiretamente diminui os fluxos de dados na rede sem qualquer controle
-de congestionamento, pois aplicações para distribuição de mídia ao vivo
-atualmente fazem uso do protocolo UDP ou variantes;
-
-  \item flexibilidade no acesso a rede por parte dos nós participantes, pois
-eles podem entrar e sair da rede a qualquer momento, realizando parcerias com um
-subconjunto de nós participantes a fim de receber o conteúdo multimídia
-interessado, caso esteja-se utilizando o \mudccp;
-
-  \item disponibiliza uma solução unificada que permite o uso da API padrão de
-\textit{sockets} BSD, o que facilita a migração das aplicações existentes para
-utilizam este novo protocolo. Além disso, permite-se que as aplicações continuem
-utilizando outros padrões de redes definidos pela IETF, tais como o RTP e o
-RSTP;
-
-   \item elimina ou pelo menos inibe a presença de nós \textit{free-riders} na
-rede, uma vez que todo nó \mudccps é obrigado a compartilhar conteúdo sem a
-influência da aplicação;
-
-  \item unifica as aplicações clientes no ponto de vista do processo de conexão
-e obtenção dos dados, uma vez que todo esse processo ocorre na camada de
-transporte sem qualquer influência da aplicação. Isto significa que se existir
-um nó executando um cliente do sistema PPLive e um outro cliente do sistema
-SopCast, desenvolvido por equipes diferentes, ambos ainda sim serão compatíveis
-e capazes de cooperar entre si na obtenção do fluxo de mídia de interesse comum.
-
-\end{itemize}
-
-Dentre os diversos sistemas P2P para transmissão de mídia ao vivo que podem se
-beneficiar com o uso do \mudccp, destacam-se os baseados em uma arquitetura em
-malha e sem organização rígida dos nós participantes do sistema. Isto também se
-aplica a todas as variantes dessa arquitetura como, por exemplo, híbrido por
-encaminhamento automático e pedido explícito (\textit{Push-Pull}) e híbrido
-árvore-malha (vide Capítulo~\ref{cap:fundamentacao}). Especificamente, os
-sistemas de distribuição de mídia ao vivo mais conhecidos e que podem se
-beneficiar diretamente com o uso do \mudccps são o
-Sopcast~\cite{fallica_quality_2008}, o PPLive~\cite{hei_insights_2006} e o
-GridMedia~\cite{li_zhao_gridmedia:_2005,zhang_peer--peer_2005}.
+%
+% Para evitar esta situação, empregou-se no GMTP um mecanismo para validação do
+% conteúdo de \pks antes que o mesmo seja transmitido para os nós \clis $\in$
+% \subsetcli(\repass). Esta função é opcional no GMTP e funciona da forma
+% apresentada a seguir.
+%
+% \begin{enumerate}
+%  \item
+% \end{enumerate}
 
 
+% \section{Implemetação e Implantação}
+% \label{sec:impl}
+%
+% PROVER API PARA SETAR AS INFOS DO SDP
+%
+% O \mudccp\space não necessita explicitamente da instalação de um nó na rede para
+% encaminhar o conteúdo de uma rede externa para uma rede interna
+% (\textit{proxy}). Além disso, o \mudccp\space mantém a \textit{interface} de
+% programação com a camada de aplicação inalterada, apenas adicionando uma
+% extensão na API padrão de socket BSD para preservar a compatibilidade
+% com as aplicações multimídia existentes e, ao mesmo tempo, permitir que as
+% aplicações façam uso dos novos recursos do \mudccp. Esta decisão pode ajudar em
+% uma rápida adoção do GMTP nas aplicações multimídia, permitindo-se simples
+% alterações das aplicações existentes e, ao mesmo tempo, a efetiva padronização
+% da forma como algumas funcionalidades hoje em dia são implementadas.
 
+
+% \section{Benefícios, Aplicabilidade e Justificativas}
+% \label{sec:benef}
 
 
 %\subsection{Seleção de Parceiros e de \textit{Chunks}}
@@ -3110,52 +3125,70 @@ GridMedia~\cite{li_zhao_gridmedia:_2005,zhang_peer--peer_2005}.
 
 \section{Sumário do Capítulo}
 
-Neste capítulo, apresentou-se uma visão geral do \textit{Global Media
-Transmission Protocol} (\mudccp), um protocolo de transporte baseado em uma
-arquitetura P2P para distribuição de fluxos de dados multimídia de aplicações
-com um nó transmissor e muitos nós receptores (\mys), desenvolvido para operar
-principalmente na Internet. O \mudccp\space permite a transmissão de pacotes de
-dados com suporte a controle de congestionamento de fluxos não confiáveis,
-operando em modo de transmissão multicast ou múltiplos fluxos unicast
-compartilhados entre os nós participantes da transmissão, através de uma rede de
-favores constituída dinamicamente a fim de evitar a relação de uma conexão por
-cliente ao servidor, como acontece em protocolos unicast de transporte de dados
-multimídia disponíveis na literatura.
+Neste capítulo, apresentou-se os fundamentos do \textit{Global Media
+Transmission Protocol} (\mudccp), um protocolo de transporte e rede baseado em
+uma arquitetura híbrida P2P/CDN para distribuição de fluxos de dados multimídia
+ao vivo. Tal arquitetura é caracterizadas por um conjunto de nós servidores que
+obtém o conteúdo multimídia da fonte geradora e o transmite para muitos nós
+receptores (\mys). O GMTP foi proposto para operar principalmente na Internet,
+permitindo a transmissão de pacotes de dados com suporte a controle de
+congestionamento sem garantia de entrega, tudo ocorrendo de forma transparente
+para a aplicação. O GMTP opera na camada de transporte e rede da pilha de
+protocolos GMTP, realizando transmissão em modo multicast ou de múltiplos fluxos
+unicast compartilhados entre os nós participantes da transmissão. Neste segundo
+caso, tal ação ocorre através de uma rede de favores constituída dinamicamente
+entre os roteadores da rede, evitando a relação de uma conexão por cliente ao nó
+servidor.
 
-O \mudccps possui um mecanismo de conexão separado em duas fases, onde a
-primeira fase acontece quando o primeiro nó em uma rede local deseja
-estabelecer uma conexão com um servidor que está transmitindo um determinado
-fluxo multimídia. Ao perceber que nenhum outro nó em sua rede local está
-recebendo o fluxo de dados desejado, o cliente estabelece uma conexão unicast
-com o servidor e se auto promove a um nó especial chamado de relay. A segunda
-fase do processo de conexão do \mudccps acontece quando um segundo nó cliente
-deseja obter o mesmo fluxo de dados multimídia que o primeiro nó cliente,
-considerado o nó relay daquela rede. No momento em que isto acontece, o nó
-cliente é capaz de perceber a presença de um relay e passa a receber o fluxo de
-dados através do nó relay em modo multicast, evitando assim um novo pedido de
-conexão ao nó servidor de dados.
+Ao contrário de todos os outro protocolos de transporte e das soluções de
+aplicação para redes P2P, o foco de definição do GMTP foi reduzir
+responsabilidade dos nós clientes e aumentar a responsabilidade dos roteadores
+de rede no processo para distribuição de um determinado conteúdo multimídia.
+Este foco teve como principal motivação a proposta das Redes Centradas no
+Conteúdo (CCN), onde o roteador passa a ter um papel com maior participação no
+processo de entrega de um conteúdo para os nós interessados. Com vistas nos
+aspectos da CCN, o GMTP oferece um mecanismo de conexão separado em duas fases,
+quando se decide a forma como um determinado nó cliente obterá o conteúdo de
+interesse, contando com o suporte dos roteadores nesse processo. Nesse interim,
+uma grande peculiridade do GMTP é a função que os nós roteadores
+passam a ter de realizar parcerias entre si a fim de obter um determinado
+conteúdo multimídia de interesse, identificado por um nome, como especificado
+pela teoria das redes centradas no conteúdo.
 
-Um aspecto importante do \mudccps é seu mecanismo de controle de
-congestionamento de fluxos não confiáveis. O controle de congestionamento
-empregado no \mudccps funciona de forma híbrida, a depender do modo de conexão
-utilizado por um determinado nó. Quando o protocolo \mudccps está operando em
-modo unicast, utiliza-se o \mudccp-UCC, um algoritmo de controle de
-congestionamento baseado no TCP Cubic e escolhido para operar no \mudccps
-porque tem alta capacidade de convergência no compartilhamento do canal de
-transmissão entre os diferentes fluxos de dados. Existe também o \mudccp-MCC,
-que é o algoritmo para controle de congestionamento utilizado quando um nó
-\mudccps opera em transmissões multicast. Tal algoritmo é baseado em uma
-equação TFRC (\textit{TCP Friend Rate Control}) que faz uso de nós especiais
-para determinar a próxima taxa de transmissão que um nó transmissor \mudccps
-deverá utilizar. Esses nós especiais são chamados de reporters.
+Diversas estratégias adotadas no GMTP e apresentadas neste capítulo discutidas
+são diferenciais que permitem a disseminação mais rapidamente de um determinado
+fluxo de dados originado em um nó servidor. Incorporou-se um mecanismo de
+\textit{registro de participação} que, após um nó repassador se registrar em um
+nó servidor, permite-se que os servidores determinem quais são os candidatos a
+parceiros de um nó repassador, o que ocorre periodicamente. A vantagem é que,
+\textit{a priori}, permite-se que os nós repassadores avaliem seus parceiros sem
+necessariamente um nó estar recebendo um fluxo de dados de um determinado
+evento. Com isto, um nó repassador pode repassar um fluxo de dados para um outro
+nó repassador sem que o primeiro tenha interesse no referido fluxo, mas devido
+ao seu posicionamento na rede e sua capacidade computacional e de vazão, pode
+melhorar o processo de disseminação de um determinado fluxo de dados. Além
+disso, como se trata de uma rede de favores e os dados são trocados de forma
+distribuída, ou seja, nem sempre com a participação de um nó servidor, pode-se
+empregar um mecanismo para validação dos dados transmitidos pelo servidor,
+evitando-se ataques de poluição, por exemplo.
 
-Em seguida, discutiu-se sobre outras funcionalidades do protocolo \mudccp, tais
-como seu mecanismo para finalização de conexão, eleição, monitoramento e
-desconexão de nós relays e reporters, assim como possíveis mecanismos para
-adaptação de fluxos de dados multimídia de acordo com a capacidade do canal,
-ainda em definição e estudo no contexto deste trabalho. Por fim, apresentou-se
-os benefícios trazidos pelo \mudccps às aplicações que o utiliza.
+Um aspecto importante do GMTP são seus dois algoritmos para controle de
+congestionamento de fluxos de dados sem garantia de entrega, o \mudccp-UCC e o
+\mudccp-MCC. No primeiro, a ser aplicado na transmissão de fluxos de dados
+unicast entre os nós roteadores, emprega-se uma solução para controle de
+congestionamento assistido pela rede, onde oferta-se para cada fluxo de dados
+uma taxa de transmissão igual para todos os fluxos passando por todos os
+roteadores de um caminho. Nesse caso, a taxa de transmissão é determinada de
+acordo com a capacidade de transmissão do menor roteador em uma determinada
+rota. Já no segundo algorimo, a ser aplicado em fluxos de dados multicast,
+utiliza-se um algoritmo de controle de congestionamento baseado na equação TFRC
+(\textit{TCP Friend Rate Control}), fazendo-se uso de nós especiais chamados de
+relatores para determinar a próxima taxa de transmissão que o roteador deverá
+utilizar para distribuir o conteúdo multimídia para os nós clientes diretamente
+conectados a ele.
 
-No próximo capítulo, continua-se com as discussões sobre o protocolo \mudccp,
-porém apresentando-o de forma mais técnica e com discussões sobre a sua
-implementação.
+Por fim, discutiu-se sobre outras funcionalidades do protocolo \mudccp, tais
+como seu mecanismo para finalização de conexão dos tipos de nós do GMTP, eleição
+de nós relatores e considerações sobre segurança. No próximo capítulo,
+apresentam-se os resultados e discussões acerca do uso do protocolo GMTP para a
+distribuição de conteúdos multimídia ao vivo.
