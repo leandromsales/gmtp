@@ -557,19 +557,17 @@ fluxos utilizarão o canal de forma equânime.
 
 \end{enumerate}
 
-Desta forma, apesar dos algoritmos de controle de congestionamento buscarem
+Desta forma, apesar de os algoritmos de controle de congestionamento buscarem
 convergir para o caso do melhor global (equidade para com todos os fluxos e
 assim evitar congestionamento da rede), isto provoca o efeito do caso do pior
 local (redução da taxa de recepção de cada nó da rede). Este fato pode ser
 explicado analiticamente utilizando como base a Equação~\ref{eq:dccpeq-ccid3},
-que define cada taxa de transmissão \textit{$X_i$} calculada pelo
-DCCP\footnote{Essa equação é utilizada no DCCP pelo algoritmo para controle de
-congestionamento chamado de CCID-3 (\textit{Congestion Control IDentifier 3}).
-Para efeito de estudo, esta equação foi a escolhida, porém qualquer equação
-adotada em outros algoritmos para controle de congestionamento poderia ter sido
-utilizada.} durante a transmissão de dados para realizar o controle de
-congestionamento em cada conexão~\cite{Chiu:1989:AID:70207.70208}. Nesta
-equação:
+que define cada taxa de transmissão \textit{$X_i$} para realizar o controle de
+congestionamento em cada fluxo~\cite{Chiu:1989:AID:70207.70208}. Para efeito de
+estudo, esta equação do protocolo DCCP/CCID3 foi a escolhida, por ser utilizada
+em vários protocolos de rede, porém equações similares de outros algoritmos para
+controle de congestionamento poderia ter sido utilizada. Nesta equação,
+define-se:
 
 \begin{itemize}
  \item \textit{$X_i$} é a taxa de transmissão em bytes/segundo;
@@ -612,7 +610,7 @@ problema se agrava porque o protocolo DCCP disputará o canal de transmissão não
 apenas com fluxos DCCP, mas também com fluxos de protocolos como o TCP, UDP,
 SCTP~\cite{iyengar_concurrent_2006,huang_multimedia_2011}, dentre outros.
 
-Apesar do protocolo DCCP ter sido utilizado para evidenciar o problema que
+Apesar de o protocolo DCCP ter sido utilizado para evidenciar o problema que
 acabara de ser apresentado, esta discussão pode ser generalizada em direção a
 qualquer outro protocolo de rede que seja orientado à conexão e que realize
 controle de congestionamento de fluxos individualmente. A fim de aumentar a
@@ -720,22 +718,22 @@ Como propõe-se neste trabalho, combinar tópicos específicos do tema estudado em
 uma solução para melhorar a experiência do usuário ao reproduzir um conteúdo ao
 vivo é um grande desafio que ainda está em aberto, principalmente devido ao
 surgimento de novas técnicas, métodos e/ou paradigmas, como as redes centrada no
-conteúdo e os algorimos para controle de congestionamento assistidos pela rede.
+conteúdo e os algoritmos para controle de congestionamento assistidos pela rede.
 A distribuição de conteúdos multimídia em larga escala é cada vez mais relevante
 devido às características inerentes à classe de aplicações e cenários que têm
-sido considerados na Internet, tais como seleção de nós, tolerância à falhas,
-segurança, controle de congestionamento e sensibilidade a atrasos no
-envio de datagramas. Estas características aliadas à transparência da solução no
-ponto de vista do desenvolvedor da aplicação, tornam o tema ainda mais relevante
-para o contexto de boas práticas na forma como os serviços de distribuição de
-conteúdos multimídia são implementados atualmente.
+sido considerados na Internet, tais como seleção de nós, tolerância à
+desconexão, segurança e controle de congestionamento no envio de datagramas.
+Estas características, aliadas à transparência da solução na perspectiva do
+desenvolvedor da aplicação, tornam o tema ainda mais relevante para o contexto
+de boas práticas na forma de como os serviços de distribuição de conteúdos
+multimídia são implementados atualmente.
 
-Nesse contexto, apesar das soluções existentes resolverem parte do problema em
+Nesse contexto, apesar de as soluções existentes resolverem parte do problema em
 discussão, principalmente quando se utiliza redes de distribuição de conteúdo,
 argumenta-se que ainda é possível obter melhores resultados quanto ao desempenho
 dos sistemas com a finalidade que se discute neste trabalho, não somente na
 perspectiva do consumo de recursos de rede, mas também do estado da prática no
-que diz respeito a forma que tais sistemas são desenvolvidos. Como a demanda por
+que diz respeito à forma que tais sistemas são desenvolvidos. Como a demanda por
 serviços multimídia em redes de computadores tem aumentado dia após dia, o
 estudo sendo desenvolvido e os artefatos de software produzidos
 no contexto desta tese podem contribuir sobremaneira para o desenvolvimento de
@@ -751,7 +749,7 @@ da tese. Estes requisitos servem como motivação para a realização das atividades
 que foram desenvolvidas ao longo deste trabalho.
 
 O primeiro deles é a consistência teórica. O protocolo de rede proposto foi
-concebido a partir de evidências sólidas com base trabalhos anteriormente
+concebido a partir de evidências sólidas com base nos trabalhos anteriormente
 publicados e em simulações de rede, com o problema-chave apresentado e discutido
 por meio de fundamentos matemáticos e provas contundentes obtidas com o uso de
 um consagrado simulador de rede. Propõe-se a descrição do protocolo de forma
@@ -773,14 +771,14 @@ rede, assim como o conjunto de ferramentas desenvolvidas e que serão mantidas,
 tem como objetivo demonstrar que a abordagem é viável e praticável. Um protocolo
 de rede simplesmente especificado sem nenhuma implementação real tornaria as
 reais contribuções deste trabalho apenas suposições. O compromisso com a
-utilização dos conceitos para construir mecanismos que possam ser aplicados na
-indústria tornam o trabalho relevante em termos práticos, sobretudo em escala
+utilização dos conceitos para construir soluções que possam ser aplicadas na
+indústria, torna o trabalho relevante em termos práticos, sobretudo em escala
 global na Internet.
 
 \section{Resumo das Contribuições}
 \label{sec:contribuicoes}
 
-No contexto desta tese enumera-se as grandes contribuições de forma resumida.
+No contexto desta tese, enumera-se as grandes contribuições de forma resumida.
 
 \begin{enumerate}
 

@@ -762,9 +762,9 @@ aos leitores interessados em sua implementação.
 \section{Definições, Relações e Restrições do GMTP}
 \label{sec:defsrests}
 
-Nesta seção, descrevem-se formalmente as definições, relações e restrições do
-protocolo GMTP.  Para isto, faz-se uso de fundamentos de algebra booleana,
-lógica proposicional, teoria de conjuntos e teoria dos
+Nesta seção, descrevem-se as definições, relações e restrições do protocolo
+GMTP. Para isto, faz-se uso de fundamentos de algebra booleana, lógica
+proposicional, teoria de conjuntos e teoria dos
 grafos~\cite{Jonathan2003,Seroul2000,Courant1996,Devlin1979}.
 
 \newcommand{\transmission}{\Large$\tau$\normalsize\normalfont}
@@ -835,7 +835,7 @@ grafos~\cite{Jonathan2003,Seroul2000,Courant1996,Devlin1979}.
 \newcommand{\setwayc}{W}
 \newcommand{\setway}{$\setwayc$}
 \newcommand{\setways}{\setway\space}
-\newcommand{\setwayii}{j}
+\newcommand{\setwayii}{q}
 \newcommand{\setwayiu}[1]{$\setwayc_{#1}$}
 \newcommand{\setwayius}[1]{\setwayiu{#1}\space}
 \newcommand{\setwayi}{\setwayiu{\setwayii}}
@@ -924,123 +924,104 @@ grafos~\cite{Jonathan2003,Seroul2000,Courant1996,Devlin1979}.
 
 \begin{enumerate}
 
-  \item Seja \setnetrs $ = \{\netrconst_1, \netrconst_2, \netrconst_3, \ldots,
-$ \netr$\}$, onde $\netri \in \mathbb{N}$, o conjunto dos roteadores de uma
-rede de computadores, por exemplo, a Internet, tal que existe uma relação
-\setrepasss $\rightarrow$ \setnetrs que determina que os nós repassadores
-\repasss $\in$ \setrepasss podem sobrepor os roteadores em \setnetrs
-(\textit{overlay network}).
+  \item Seja o conjunto finito dos nós repassadores, definido por
+\setrepasss $ = \{\repassconst_1, \repassconst_2, \repassconst_3,
+\ldots, $ \repass$\}$, tal que $\repassi \in \mathbb{N}$.
 
-  \item Seja \setservs $ = \{\servconst_1, \servconst_2, \servconst_3, \ldots,
-$ \serv$\}$, onde $\servi \in \mathbb{N}$, o conjunto finito de todos os nós
-servidores.
+  \item Seja o conjunto finito dos roteadores de uma rede de computadores,
+definido por \setnetrs $ = \{\netrconst_1, \netrconst_2,
+\netrconst_3, \ldots, $ \netr$\}$, tal que $\netri \in \mathbb{N}$. Existe uma
+relação \setrepasss $\rightarrow$ \setnetrs que determina a sobreposição
+dos nós repassadores \repasss $\in$ \setrepasss sob os roteadores em \setnetrs
+(\textit{rede de sobreposição}).
 
-  \item Seja \setrepasss $ = \{\repassconst_1, \repassconst_2, \repassconst_3,
-\ldots, $ \repass$\}$, onde $\repassi \in \mathbb{N}$, o conjunto finito de
-todos
-os nós repassadores.
+  \item Seja o conjunto finito dos nós servidores, definido por \setservs $ =
+\{\servconst_1, \servconst_2, \servconst_3, \ldots, $ \serv$\}$, tal que $\servi
+\in \mathbb{N}$.
 
-  \item Seja \setclis $ = \{\cliconst_1, \cliconst_2, \cliconst_3, \ldots,
-$ \cli$\}$, onde $\clii \in \mathbb{N}$, o conjunto finito de todos os nós
-clientes.
+  \item Seja o conjunto finito dos nós clientes, definido por \setclis $ =
+\{\cliconst_1, \cliconst_2, \cliconst_3, \ldots, $ \cli$\}$, tal que $\clii \in
+\mathbb{N}$.
 
-  \item Seja $($\setpkall$,\prec) = \{\pkconst_1, \pkconst_2,
-\pkconst_3, \ldots, $\pku{\pkalli}$\}$, onde $\pkalli \in \mathbb{N}$,
-o conjunto \textit{totalmente ordenado (toset)}, sem repetição, dos pacotes de
+  \item Seja o conjunto \textit{totalmente ordenado (toset)} dos pacotes de
 dados gerados pelos nós \servs $\in$ \setservs durante a transmissão de um
-evento ao vivo \event. Note que o símbolo $\prec$ é utilizado para representar
+evento ao vivo \event, definido por $($\setpkall$,\prec) = \{\pkconst_1,
+\pkconst_2, \pkconst_3, \ldots, $\pku{\pkalli}$\}$, onde $\pkalli \in
+\mathbb{N}$. Note que o símbolo $\prec$ é utilizado para representar
 precedência entre dois elementos diferentes.
 
-  \item Seja \transmission $= \{$\setserv, \setrepass, \subsetcli, \setpk$\}$,
-as relações e restrições estabelecidas entre os diferentes tipos de nós
-participantes de uma transmissão de um evento ao vivo \event, tal que:
+  \item Sejam as relações e restrições estabelecidas entre os diferentes tipos
+de nós de uma transmissão de um evento ao vivo \event, definida por
+\transmission $= \{$\setserv, \setrepass, \subsetcli, \setpk$\}$, tal que:
 
 \begin{itemize}
 
-  \item Seja \subsetclis $:$ \repasss $\rightarrow$ \powerset{\setclic},
+  \item Seja uma função \subsetclis que denota todos os clientes relacionados a
+um nó \repass, de modo que nenhum nó \clis $\in$ \setclis pode estar relacionado
+com dois ou mais nós, portanto definida por \subsetclis $:$ \repasss
+$\rightarrow$ \powerset{\setclic},
 $\forall$\repassu{\repassi_{1}},\repassu{\repassi_{2}} $\in$
 \setrepass, \subsetcli$($\repassu{\repassi_{1}}$)$ $\cap$
-\subsetcli$($\repassu{\repassi_{2}}$)$ = $\{\emptyset\}$, uma função tal que
-\subsetcli$($\repass$)$ denota todos os clientes relacionados a
-um nó repassador \repass, de modo que nenhum nó \clis $\in$ \setclis pode estar
-relacionado com dois ou mais nós \repass;
+\subsetcli$($\repassu{\repassi_{2}}$)$ = $\{\emptyset\}$;
 
   \item $($\setpk$,\prec) = \{\pkconst_{1},\pkconst_{2}, \pkconst_{3}, \ldots,
-$\pku{x}$\}$, onde $x \in \mathbb{N}$. Isto é, o conjunto \textit{parcialmente
-ordenado (poset)} dos pacotes de dados \pks transmitidos por um nó \servs ou
-por um nó \repass, também chamado de fluxo de pacotes de dados ou apenas fluxo
-de dados, de modo que:
+$\pku{x}$\}$, tal que $x \in \mathbb{N}$. Isto é, o conjunto
+\textit{parcialmente ordenado (poset)} dos pacotes de dados \pks transmitidos
+por um nó \servs ou por um nó \repass, também chamado de fluxo de pacotes de
+dados ou apenas fluxo de dados.
 
-  \begin{itemize}
-    % se disser que P \subset P_{total} já é suficiente pra ser um P*?
-    \item Um fluxo de dados \setpks é dito \textit{fluxo completo},
-representado por \setpkf, se e somente se \setpks $\leftrightarrow$
-$\exists$\subsetpkalls (relação bijetora), tal que \subsetpkalls $\in$
-\powerset{\setpkallc} e \subsetpkalls $\neq \{\emptyset\}$. Ou seja, um
-\textit{fluxo completo} \setpkfs é um conjunto \textit{toset} e portanto
-não apresenta lacunas;
-
-    \item \subpkfs $: ($\pk$, $\setpk$) \rightarrow ($\subsetpk$, \prec) =
-\{$\pk, \pku{\pki+1}, \pku{\pki+2}, \pku{\pki+3}, $\ldots\}$, tal que
-\subsetpks $\subset$ \setpk, uma função \subpkf$($\pk$, $\setpk$)$ que define
-um sub-fluxo de pacotes de dados \setpks a partir de um determinado pacote \pks
-$\in$ \setpk. Neste caso, como \subsetpks $\subset$ \setpk, se \subsetpkfs
-$\rightarrow$ \setpkf.
-  \end{itemize}
+% , de modo que:
+%   \begin{itemize}
+%     % se disser que P \subset P_{total} já é suficiente pra ser um P*?
+%     \item Um fluxo de dados \setpks é dito \textit{fluxo completo},
+% representado por \setpkf, se e somente se \setpks $\leftrightarrow$
+% $\exists$\subsetpkalls (relação bijetora), tal que \subsetpkalls $\in$
+% \powerset{\setpkallc} e \subsetpkalls $\neq \{\emptyset\}$. Ou seja, um
+% \textit{fluxo completo} \setpkfs é um conjunto \textit{toset} e portanto
+% não apresenta lacunas;
+%
+%     \item \subpkfs $: ($\pk$, $\setpk$) \rightarrow ($\subsetpk$, \prec) =
+% \{$\pk, \pku{\pki+1}, \pku{\pki+2}, \pku{\pki+3}, $\ldots\}$, tal que
+% \subsetpks $\subset$ \setpk, uma função \subpkf$($\pk$, $\setpk$)$ que define
+% um sub-fluxo de pacotes de dados \setpks a partir de um determinado pacote \pks
+% $\in$ \setpk. Neste caso, como \subsetpks $\subset$ \setpk, se \subsetpkfs
+% $\rightarrow$ \setpkf.
+%   \end{itemize}
 
 \end{itemize}
 
-  \item Seja \setrels $= \{\relconst_1, \relconst_2, \ldots,
-$\rel$\}$, o conjunto finito de todos os nós relatores de uma transmissão
-\transmission, onde:
+  \item Seja o conjunto finito de todos os nós relatores de uma transmissão
+\transmission, definido por \setrels $= \{\relconst_1, \relconst_2, \ldots,
+$\rel$\}$, de modo que qualquer nó \clis $\in$ \subsetcli$($\repass$)$
+pode atuar como um nó relator \rels de um nó repassador \repass. Assim,
+para um subconjunto de nós \rels de \repass, definido por \subsetrels $\in$
+\powerset{\setclic_\subsetclii(\repassconst_\repassi)}, tem-se \rels $\in$
+\subsetrels tal que \subsetcli$($\repass$)$  $\cup$ \subsetrels $ = $
+\subsetcli$($\repass$)$.
   \label{i:cons-mcc-ri}
 
-  \begin{itemize}
-    \item \subsetrels $\subset$ \setrel, tal que \subsetrels $\in$
-\powerset{\setclic_\subsetclii(\repassconst_\repassi)} e \subsetrels $\neq
-\{\emptyset\}$, o conjunto de nós relatores de um nó repassador \repass. Ou
-seja, qualquer nó cliente \clis $\in$ \subsetcli$($\repass$)$ pode atuar como
-um nó relator \rels de um nó repassador \repass, pois
-\subsetcli$($\repass$)$ $\cup$ \subsetrels $ = $ \subsetcli$($\repass$)$.
-
-  \end{itemize}
-
-  \item Seja \settranss $= \{$\transs$\mid$ \transs $\in$ \setservrepasss e
-\transmits $ = 1\}$, tal que \setservrepasss $=$ \setservs $\cup$ \setrepasss e
-$\transi \in \mathbb{N}$, o conjunto dos nós \servs e \repasss que transmitem ou
-repassam os pacotes de dados \pks $\in$ \setpk, onde:
+  \item Seja um grafo determinado pelo conjunto de vértices \setservrepass, que
+podem estar interligados entre si por um conjunto de diferentes arestas,
+chamadas de caminhos \setway, por onde se transmite o fluxo de dados \setpk,
+definido por $\eta = G($\setservrepass$,$ \setway$)$, tal que:
 
     \begin{itemize}
 
-      \item $\varphi:$ (\trans, \setpk) $\rightarrow \{0, 1\},
-\forall ($\trans, \setpk$) \in \{$\settrans$ \times \{$\setpk$\}\}$, uma função
-booleana que determina se um nó \transs $\in$ \settranss transmite o fluxo de
-dados \pks $\in$ \setpks de um evento \event, onde 0 e 1 denotam,
-respectivamente, \textit{falso} e \textit{verdadeiro}.
+      \item \setservrepasss $=$ \setservs $\cup$ \setrepass;
 
-    \end{itemize}
-
-  \item Seja $\eta = G($\setservrepass$,$ \setway$)$, um grafo formado com
-vértices de nós servidores e repassadores, que podem estar interligados
-entre si por um conjunto de diferentes caminhos \setway, onde:
-
-\begin{itemize}
-
-    \item \setway $= \bigcup^{\setwayii}_{\wayi=1}$ \setwayi, onde $\setwayii
-\in \mathbb{N}$ é a quantidade de todos os possíveis caminhos \setwayi. Isto é,
-\setways é o conjunto de todos os caminhos por onde o fluxo de dados \setpk,
-pode ser transmitido, sendo um caminho definido por um conjunto
-$($\setwayi,$\prec)$ totalmente ordenado (\textit{toset}):
+    \item \setway $=$ $\bigcup^{j}_{\setwayii=1}$ \setwayi, onde $j \in
+\mathbb{N}$ e corresponde à quantidade de todos os possíveis caminhos \setwayi,
+tal que um caminho é definido por um conjunto \textit{toset}
+$($\setwayi,$\prec)$, que denota um dos possíveis caminhos por onde um fluxo de
+dados \setpks pode ser transmitido, obrigatoriamente a partir de um nó servidor
+\serv até um nó \repassu{1}, tal que:
 
 \begin{itemize}
     \item $($\setwayi$,\prec) = \{$\ways $\mid$
 \serv$,\repassconst_{1},\repassconst_{2},\repassconst_3,
-\ldots, $\repass$\}$, tal que \serv$,$\repasss $\in$
-\setservrepasss, tal que $\forall$\way$,$\waysu{\wayi+1}$\in$ \setwayis $:$
-\way$ \prec$ \wayu{\wayi+1} e \setwayis $\neq \{\emptyset\}$. Isto é, \setwayis
-é um conjunto de nós que denota um dos possíveis caminhos por onde um fluxo de
-dados \pks $\in$ \setpks pode ser transmitido, obrigatoriamente a partir de um
-nó servidor \serv, chamado de pivô ou raiz, até um nó \repassu{1};
+\ldots, $\repass$\}$, $\forall$\way$,$\waysu{\wayi+1}$\in$ \setwayis $:$
+\way$ \prec$ \wayu{\wayi+1} e \setwayis $\neq \{\emptyset\}$ e
+$\mid$\setwayi$\mid$ $>$ $1$;
 
     \item Um caminho \setwayis é dito \textit{caminho semi-completo},
 representado por \setwayisf, se e somente se \setwayis $\leftrightarrow$
@@ -1050,10 +1031,21 @@ todos os roteadores \netrs $\in$ \setnetrs são sobrepostos por um nó \repasss
 $\in$ \setwayisf;
 
     \item Um caminho \setwayis é dito \textit{caminho completo}, representado
-por \setwayif, se e somente se tal caminho for \setwayisfs e se $($\setwayisfs
-$-$ $\{$\serv$\})$ $\subset$ \settrans. Isto é, um caminho
-é completo se para todo nó $\forall$\ways $\in$ \setwayi, desconsiderando o nó
-\serv, todos os nós \repasss são transmitem o fluxo de dados \setpk.
+por \setwayif, se for \setwayisfs e se \setwayis $\subset$ \settrans, tal que
+\settranss $\subset$ \setservrepasss é o conjunto dos nós que transmitem ou
+repassam os pacotes de dados \pks $\in$ \setpk, definido por \settranss $=
+\{$\transs$\mid$ \transmitqus{\trans} $ = 1\}$, sendo $\transi \in \mathbb{N}$ e
+$\varphi$ uma função booleana que determina se um nó \transs $\in$ \settranss
+transmite os pacotes \pks $\in$ \setpks de um evento \events para \trans, ou
+para pelo menos um \clis $\in$ \subsetcli(\trans), ou seja:
+
+      \begin{itemize}
+
+	\item $\varphi:$ (\trans, \setpk) $\rightarrow \{0, 1\}, \forall
+($\trans, \setpk$) \in \{$\settrans$ \times \{$\setpk$\}\}$, onde 0 e 1 denotam,
+respectivamente, \textit{falso} e \textit{verdadeiro}.
+
+      \end{itemize}
 
 \end{itemize}
 
@@ -1061,8 +1053,7 @@ $-$ $\{$\serv$\})$ $\subset$ \settrans. Isto é, um caminho
 uma função reversa \invert{\setwayi} de um conjunto \textit{toset}.
 Isto é, se $($\setwayi$, \prec) = \{$\ways $\mid$
 \serv$,\repassconst_{1},\repassconst_{2},\ldots, $\repass$\}$, então
-\invert{\setwayi} $ = \{$\ways $\mid$
-\repass
+\invert{\setwayi} $ = \{$\ways $\mid$ \repass
 $,\repassconst_{\repassi-1},\repassconst_{\repassi-2},\ldots,\repassconst_{1},
 $\serv$\}$;
 
@@ -1084,29 +1075,35 @@ $:$ \way $\prec$ \wayu{\wayi+1}. No GMTP, utiliza-se a métrica atraso entre
 dois nós distintos para realizar o cálculo de custo, podendo-se utilizar
 outras métricas, como número total de saltos no caminho \setwayi;
 
-    \item Conjectura 1: $\forall$\repasss $\in$ \setrepasss e $\forall$\clis
-$\in$ \setcli, \repasss é mais estável que qualquer \clis com relação a sua
-disponibilidade e participação em uma rede de favores $\eta$. No ponto de vista
-das redes de computadores, um roteador torna-se indisponível com menos
-frequência (desconecta-se) se comparado com seus nós clientes. Como se sabe,
-nas transmissões de dados na Internet, a participação de um roteador no
-processo de transmissão de um fluxo de dados qualquer é fundamental, mesmo que
-seja apenas para rotear os pacotes de tal fluxo. Assim, dado que para um cliente
-receber um determinado pacote primeiramente este pacote deve passar pelo seu
-roteador padrão (de aborda), quando um roteador se desconecta, nenhum de seus
-clientes será capaz de receber os pacotes de dados, porém a recíproca não é
-verdadeira. Ou seja, caso um cliente se desconecte, outros clientes em sua
-mesma rede continuarão sendo capazes de receber um fluxo de dados encaminhados
-pelo seu roteador;
+    \item \textit{Conjectura 1}: $\forall$\repasss $\in$ \setrepasss e
+$\forall$\clis $\in$ \setcli, \repasss é mais estável que qualquer \clis com
+relação a sua disponibilidade e participação em uma rede de favores $\eta$. Em
+redes de computadores, um nó \netrs $\in$ \setnetr, portanto um nó \repass,
+fica indisponível com menos frequência se comparado aos seus nós
+\subsetcli(\repass). Nas transmissões de dados na Internet, a participação de um
+roteador no processo de transmissão de um fluxo de dados qualquer é fundamental,
+mesmo que seja apenas para rotear os pacotes de um fluxo de dados. Apesar
+de óbvia, tal observação é importante porque para um nó qualquer \clis receber
+um determinado fluxo de dados \setpk, primeiramente os pacotes de dados de tal
+fluxo deve passar pelo roteador padrão de \cli. Sendo assim, quando um nó
+\repass se desconecta, nenhum de seus nós \subsetcli(\repass) será capaz de
+receber \setpk, mas a recíproca não é verdadeira. Especificamente,
+pretende-se permitir que, mesmo se um nó \clis se desconectar, outros nós \clis
+possam continuar recebendo o fluxo de dados \setpk, pois este será encaminhado
+por \repasss e não mais por qualquer nó \cli, como acontece em soluções
+tradicionais de distribuição de conteúdos multimídia baseado em uma arquitetura
+P2P;
 
-    \item Conjectura 2: as tabelas de roteamento dos nós \ways $\in$ \setwayis
-não mudam frequentemente e são independentes umas das outras. No mundo real
-(Internet), as rotas entre quaisquer nós \cliu{\clii_1} e \cliu{\clii_2}
-$\in$ \setclis não se alteram com um nível de frequência que desestabilize a
-comunicação entre estes, apesar de se tratar de uma rede comutada por datagramas
-IP. Mesmo se estas mudanças ocorrerem em uma rota de um caminho \setwayi, o
-impacto causado é temporário e insignificante no ponto de vista da qualidade de
-experiência do usuário ao assistir a um evento \event.
+    \item \textit{Conjectura 2}: as tabelas de roteamento dos nós \ways $\in$
+\setwayis não mudam frequentemente e são independentes umas das outras. No mundo
+real (Internet, por exemplo), as rotas entre quaisquer nós \cliu{\clii_1} e
+\cliu{\clii_2} $\in$ \setclis não se alteram com um nível de frequência que
+desestabilize a comunicação entre estes, apesar de se tratar de uma rede
+comutada por datagramas IP. Mesmo se estas mudanças ocorrerem em uma rota de um
+caminho \setwayi, o impacto causado é temporário e insignificante no ponto de
+vista da experiência do usuário ao assistir a um evento \event. Com isto, é
+possível antecipar a formaçào de parcerias, ou seja, caminhos \setwayis antes
+da efetiva transmissão de um fluxo de dados \setpk.
 
 %   \item $\zeta:$ $\hat{r}_x$, $\hat{r}_y$, $\hat{t}_i$)} =
 % \textit{min$\{$cost($\hat{r}_y$, $\hat{r}_z$, $\hat{t}_i$)}$\}$, uma função
@@ -1131,18 +1128,20 @@ experiência do usuário ao assistir a um evento \event.
 \end{enumerate}
 
 Desta forma, $\eta$ representa formalmente a rede de sobreposição constituída
-pelo GTMP (informalmente ilustratada na
-Figura~\ref{fig:cenario-global-detailed}), definindo-se as relações e restrições
+pelo GTMP, definindo-se as relações e restrições
 estabelecidas em \transmissions e as conjecturas consideradas para a execução de
-tal protocolo.
+tal protocolo. Sendo assim, a Figura~\ref{fig:cenario-global-detailed} pode ser
+refeita como ilustratada na Figura~\ref{fig:cenario-global-detailed-formal}.
+
+FAZER UMA FIGURA COM A SOBREPOSIÇÃO E UM FUNDO SEMI-TRANSPARENTE
 
 Nas próximas seções, descrevem-se as funcionalidades do GMTP com base em
 $\eta$, explicando-se os mecanismos computacionais empregados no protocolo
 para a transmissão de um evento ao vivo \event. Para isto, utiliza-se uma
 abordagem \textit{top-down}, a partir do processo de constituição de $\eta$, em
 seguida discutindo-se aspectos inerantes ao processo de distribuição de
-conteúdos multimídia, que envolvem os nós em \transmission, \setclis e
-\setserv, e suas funções específicas.
+conteúdos multimídia, que envolvem os nós em \setservrepasss e suas funções
+específicas.
 
 \section{Constituição da Rede de Favores \net}
 \label{sec:connformnet}

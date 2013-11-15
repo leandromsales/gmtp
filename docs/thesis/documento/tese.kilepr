@@ -4,7 +4,7 @@ img_extIsRegExp=false
 img_extensions=.eps .jpg .jpeg .png .pdf .ps .fig .gif
 kileprversion=2
 kileversion=2.1.0
-lastDocument=mudccp.tex
+lastDocument=introducao.tex
 masterDocument=tese-leandrosales.tex
 name=tese-leandrosales
 pkg_extIsRegExp=false
@@ -153,7 +153,7 @@ Mode=LaTeX
 ReadWrite=true
 
 [document-settings,item:mudccp.tex]
-Bookmarks=3066,3035,3024
+Bookmarks=3181,3115,3184,3105,3174,3126
 Encoding=ISO-8859-1
 FoldedColumns=
 FoldedLines=
@@ -314,10 +314,10 @@ order=5
 
 [item:introducao.tex]
 archive=true
-column=3
+column=12
 encoding=ISO-8859-1
 highlight=LaTeX
-line=888
+line=612
 mode=LaTeX
 open=true
 order=4
@@ -344,10 +344,10 @@ order=1
 
 [item:mudccp.tex]
 archive=true
-column=53
+column=0
 encoding=ISO-8859-1
 highlight=LaTeX
-line=101
+line=763
 mode=LaTeX
 open=true
 order=1
@@ -359,8 +359,8 @@ encoding=ISO-8859-1
 highlight=LaTeX
 line=16
 mode=LaTeX
-open=false
-order=10
+open=true
+order=9
 
 [item:simbolos.tex]
 archive=true
@@ -377,7 +377,7 @@ archive=true
 column=1
 encoding=ISO-8859-1
 highlight=LaTeX
-line=170
+line=178
 mode=LaTeX
 open=true
 order=0
@@ -465,8 +465,8 @@ CursorColumn=33
 CursorLine=0
 
 [view-settings,view=0,item:introducao.tex]
-CursorColumn=3
-CursorLine=888
+CursorColumn=12
+CursorLine=612
 JumpList=
 ViMarks=
 
@@ -483,10 +483,10 @@ JumpList=
 ViMarks=
 
 [view-settings,view=0,item:mudccp.tex]
-CursorColumn=53
-CursorLine=101
+CursorColumn=0
+CursorLine=763
 JumpList=
-ViMarks=a,3083,45,b,3081,54,c,3074,48,d,3076,45,e,3074,48,f,3080,0,g,3034,0,h,3048,8,i,3046,41,j,3074,48,k,3033,0,l,3083,45,m,3074,48
+ViMarks=a,3193,45,b,3191,50,c,3183,75,d,3185,71,e,3183,75,f,3190,0,g,3124,0,h,3138,45,i,3137,8,j,3183,75,k,3123,0,l,3193,45,m,3183,75,n,3173,0,o,3125,0,p,3114,0
 
 [view-settings,view=0,item:resumo.tex]
 CursorColumn=52
@@ -502,7 +502,7 @@ ViMarks=
 
 [view-settings,view=0,item:tese-leandrosales.tex]
 CursorColumn=1
-CursorLine=170
+CursorLine=178
 JumpList=
 ViMarks=
 
