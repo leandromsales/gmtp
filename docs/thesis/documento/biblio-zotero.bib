@@ -3,7 +3,19 @@
 	title = {High-quality {P2P} video streaming system considering the cooperation of constitution information and delivery status},
 	isbn = {978-1-4244-8789-9},
 	doi = {10.1109/CCNC.2011.5766631},
-	abstract = {Recently, video streaming services using {P2P(Peer-to-Peer)} have attracted attention to solve the problem of load concentration on servers and reduce a lot of latency. Many {P2P} streaming systems, like Coolstreaming, however, have a complicated approach to control playback timings severely. And this leads to less churn resiliency and less adaptability to fluctuation of network traffic. Therefore, we focus on a simple and robust approach to realize “pseudo” streaming with high quality, which is based on {BitTorrent.} In the existing methods with the simple approach, peers download pieces just closer to playback timings to decrease the playback discontinuity. In contrast, in this paper, we propose a new {P2P} video streaming system considering the cooperation of three metrics; video structure, playback timings, and pieces dispersion on network. In this system, users vary three piece selections to suit the delivery status. Specifically, users preferentially download pieces which affect the 
+	abstract = {Recently, video streaming services using {P2P(Peer-to-Peer)}
+have attracted attention to solve the problem of load concentration on servers
+and reduce a lot of latency. Many {P2P} streaming systems, like Coolstreaming,
+however, have a complicated approach to control playback timings severely. And
+this leads to less churn resiliency and less adaptability to fluctuation of
+network traffic. Therefore, we focus on a simple and robust approach to realize
+“pseudo” streaming with high quality, which is based on {BitTorrent.} In the
+existing methods with the simple approach, peers download pieces just closer to
+playback timings to decrease the playback discontinuity. In contrast, in this
+paper, we propose a new {P2P} video streaming system considering the cooperation
+of three metrics; video structure, playback timings, and pieces dispersion on
+network. In this system, users vary three piece selections to suit the delivery
+status. Specifically, users preferentially download pieces which affect the
 video quality, are closer to playback timings, and improve the delivery efficiency. Moreover, we show the effectiveness of the proposed method by computer simulation.},
 	booktitle = {2011 {IEEE} Consumer Communications and Networking Conference {(CCNC)}},
 	publisher = {{IEEE}},
@@ -18,7 +30,20 @@ video quality, are closer to playback timings, and improve the delivery efficien
 	title = {Modeling {BitTorrent-Based} {P2P} Video Streaming Systems in the Presence of {NAT} Devices},
 	isbn = {978-1-61284-232-5},
 	doi = {10.1109/icc.2011.5963110},
-	abstract = {{BitTorrent} has been a very successful peer-to-peer {(P2P)} file-sharing application, and several {BitTorrent-based} {P2P} video streaming systems have been proposed in the literature. Nowadays, network address translation {(NAT)} has been widely used since it reduces the usage of {IP} addresses, but it is also considered as a factor that degrades the performance of {P2P} systems because {NAT} limits the direction of connectivity. In order to understand what impact {NAT} has on the performance of {BitTorrent-based} {P2P} video streaming systems, we build an analytical model which can be used to predict the average continuity index, a video streaming performance metric, when a fraction of the participating peers are behind {NAT} devices. A software simulator is written to validate our analytical model, and the simulation results also give some insights on the fairness issue of {P2P} video streaming systems in the presence of {NAT} devices. In this paper, both our analytical model and simulation 
+	abstract = {{BitTorrent} has been a very successful peer-to-peer {(P2P)}
+file-sharing application, and several {BitTorrent-based} {P2P} video streaming
+systems have been proposed in the literature. Nowadays, network address
+translation {(NAT)} has been widely used since it reduces the usage of {IP}
+addresses, but it is also considered as a factor that degrades the performance
+of {P2P} systems because {NAT} limits the direction of connectivity. In order to
+understand what impact {NAT} has on the performance of {BitTorrent-based} {P2P}
+video streaming systems, we build an analytical model which can be used to
+predict the average continuity index, a video streaming performance metric, when
+a fraction of the participating peers are behind {NAT} devices. A software
+simulator is written to validate our analytical model, and the simulation
+results also give some insights on the fairness issue of {P2P} video streaming
+systems in the presence of {NAT} devices. In this paper, both our analytical
+model and simulation
 results are presented and verified.},
 	booktitle = {2011 {IEEE} International Conference on Communications {(ICC)}},
 	publisher = {{IEEE}},
@@ -34,7 +59,20 @@ results are presented and verified.},
 	volume = {22},
 	issn = {1045-9219},
 	doi = {10.1109/TPDS.2010.123},
-	abstract = {{BitTorrent} is the most successful open Internet application for content distribution. Despite its importance, both in terms of its footprint in the Internet and the influence it has on emerging {P2P} applications, the {BitTorrent} Ecosystem is only partially understood. We seek to provide a nearly complete picture of the entire public {BitTorrent} Ecosystem. To this end, we crawl five of the most popular torrent-discovery sites over a ine-month period, identifying all of 4.6 million and 38,996 trackers that the sites reference. We also develop a high-performance tracker crawler, and over a narrow window of 12 hours, crawl essentially all of the public Ecosystem's trackers, obtaining peer lists for all referenced torrents. Complementing the torrent-discovery site and tracker crawling, we further crawl Azureus and Mainline {DHTs} for a random sample of torrents. Our resulting measurement data are more than an order of magnitude larger (in terms of number of torrents, trackers, or peers) than any 
+	abstract = {{BitTorrent} is the most successful open Internet
+application for content distribution. Despite its importance, both in terms of
+its footprint in the Internet and the influence it has on emerging {P2P}
+applications, the {BitTorrent} Ecosystem is only partially understood. We seek
+to provide a nearly complete picture of the entire public {BitTorrent}
+Ecosystem. To this end, we crawl five of the most popular torrent-discovery
+sites over a ine-month period, identifying all of 4.6 million and 38,996
+trackers that the sites reference. We also develop a high-performance tracker
+crawler, and over a narrow window of 12 hours, crawl essentially all of the
+public Ecosystem's trackers, obtaining peer lists for all referenced torrents.
+Complementing the torrent-discovery site and tracker crawling, we further crawl
+Azureus and Mainline {DHTs} for a random sample of torrents. Our resulting
+measurement data are more than an order of magnitude larger (in terms of number
+of torrents, trackers, or peers) than any
 earlier study. Using this extensive data set, we study in-depth the Ecosystem's torrent-discovery, tracker, peer, user behavior, and content landscapes. For peer statistics, the analysis is based on one typical snapshot obtained over 12 hours. We further analyze the fragility of the Ecosystem upon the removal of its most important tracker service.},
 	number = {7},
 	journal = {{IEEE} Transactions on Parallel and Distributed Systems},
@@ -109,7 +147,20 @@ earlier study. Using this extensive data set, we study in-depth the Ecosystem's 
 	issn = {0163-5980},
 	shorttitle = {{SplitStream}},
 	doi = {10.1145/1165389.945474},
-	abstract = {In tree-based multicast systems, a relatively small number of interior nodes carry the load of forwarding multicast messages. This works well when the interior nodes are highly-available, dedicated infrastructure routers but it poses a problem for application-level multicast in peer-to-peer systems. {SplitStream} addresses this problem by striping the content across a forest of interior-node-disjoint multicast trees that distributes the forwarding load among all participating peers. For example, it is possible to construct efficient {SplitStream} forests in which each peer contributes only as much forwarding bandwidth as it receives. Furthermore, with appropriate content encodings, {SplitStream} is highly robust to failures because a node failure causes the loss of a single stripe on average. We present the design and implementation of {SplitStream} and show experimental results obtained on an Internet testbed and via large-scale network simulation. The results show that {SplitStream} 
+	abstract = {In tree-based multicast systems, a relatively small number
+of interior nodes carry the load of forwarding multicast messages. This works
+well when the interior nodes are highly-available, dedicated infrastructure
+routers but it poses a problem for application-level multicast in peer-to-peer
+systems. {SplitStream} addresses this problem by striping the content across a
+forest of interior-node-disjoint multicast trees that distributes the forwarding
+load among all participating peers. For example, it is possible to construct
+efficient {SplitStream} forests in which each peer contributes only as much
+forwarding bandwidth as it receives. Furthermore, with appropriate content
+encodings, {SplitStream} is highly robust to failures because a node failure
+causes the loss of a single stripe on average. We present the design and
+implementation of {SplitStream} and show experimental results obtained on an
+Internet testbed and via large-scale network simulation. The results show that
+{SplitStream}
 distributes the forwarding load among all peers and can accommodate peers with different bandwidth capacities while imposing low overhead for forest construction and maintenance.},
 	number = {5},
 	journal = {{SIGOPS} Oper. Syst. Rev.},
@@ -141,7 +192,20 @@ distributes the forwarding load among all peers and can accommodate peers with d
 	volume = {9},
 	issn = {1520-9210},
 	doi = {10.1109/TMM.2007.907451},
-	abstract = {An emerging Internet application, {IPTV}, has the potential to flood Internet access and backbone {ISPs} with massive amounts of new traffic. Although many architectures are possible for {IPTV} video distribution, several mesh-pull {P2P} architectures have been successfully deployed on the Internet. In order to gain insights into mesh-pull {P2P} {IPTV} systems and the traffic loads they place on {ISPs}, we have undertaken an in-depth measurement study of one of the most popular {IPTV} systems, namely, {PPLive.} We have developed a dedicated {PPLive} crawler, which enables us to study the global characteristics of the mesh-pull {PPLive} system. We have also collected extensive packet traces for various different measurement scenarios, including both campus access networks and residential access networks. The measurement results obtained through these platforms bring important insights into {P2P} {IPTV} systems. Specifically, our results show the following. 1) {P2P} {IPTV} users have the similar 
+	abstract = {An emerging Internet application, {IPTV}, has the potential
+to flood Internet access and backbone {ISPs} with massive amounts of new
+traffic. Although many architectures are possible for {IPTV} video distribution,
+several mesh-pull {P2P} architectures have been successfully deployed on the
+Internet. In order to gain insights into mesh-pull {P2P} {IPTV} systems and the
+traffic loads they place on {ISPs}, we have undertaken an in-depth measurement
+study of one of the most popular {IPTV} systems, namely, {PPLive.} We have
+developed a dedicated {PPLive} crawler, which enables us to study the global
+characteristics of the mesh-pull {PPLive} system. We have also collected
+extensive packet traces for various different measurement scenarios, including
+both campus access networks and residential access networks. The measurement
+results obtained through these platforms bring important insights into {P2P}
+{IPTV} systems. Specifically, our results show the following. 1) {P2P} {IPTV}
+users have the similar
 viewing behaviors as regular {TV} users. 2) During its session, a peer exchanges video data dynamically with a large number of peers. 3) A small set of super peers act as video proxy and contribute significantly to video data uploading. 4) Users in the measured {P2P} {IPTV} system still suffer from long start-up delays and playback lags, ranging from several seconds to a couple of minutes. Insights obtained in this study will be valuable for the development and deployment of future {P2P} {IPTV} systems.},
 	number = {8},
 	journal = {{IEEE} Transactions on Multimedia},
@@ -261,7 +325,20 @@ viewing behaviors as regular {TV} users. 2) During its session, a peer exchanges
 	volume = {17},
 	issn = {1051-8215},
 	doi = {10.1109/TCSVT.2007.905365},
-	abstract = {We present a survey of transport methods for {3-D} video ranging from early analog {3DTV} systems to most recent digital technologies that show promise in designing {3DTV} systems of tomorrow. Potential digital transport architectures for {3DTV} include the {DVB} architecture for broadcast and the Internet Protocol {(IP)} architecture for wired or wireless streaming. There are different multiview representation/compression methods for delivering the {3-D} experience, which provide a tradeoff between compression efficiency, random access to views, and ease of rate adaptation, including the "video-plus-depth" compressed representation and various multiview video coding {(MVC)} options. Commercial activities using these representations in broadcast and {IP} streaming have emerged, and successful transport of such data has been reported. Motivated by the growing impact of the Internet protocol based media transport technologies, we focus on the ubiquitous Internet as the network infrastructure of 
+	abstract = {We present a survey of transport methods for {3-D} video
+ranging from early analog {3DTV} systems to most recent digital technologies
+that show promise in designing {3DTV} systems of tomorrow. Potential digital
+transport architectures for {3DTV} include the {DVB} architecture for broadcast
+and the Internet Protocol {(IP)} architecture for wired or wireless streaming.
+There are different multiview representation/compression methods for delivering
+the {3-D} experience, which provide a tradeoff between compression efficiency,
+random access to views, and ease of rate adaptation, including the
+"video-plus-depth" compressed representation and various multiview video coding
+{(MVC)} options. Commercial activities using these representations in broadcast
+and {IP} streaming have emerged, and successful transport of such data has been
+reported. Motivated by the growing impact of the Internet protocol based media
+transport technologies, we focus on the ubiquitous Internet as the network
+infrastructure of
 choice for future {3DTV} systems. Current research issues in unicast and multicast mode multiview video streaming include network protocols such as {DCCP} and peer-to-peer protocols, effective congestion control, packet loss protection and concealment, video rate adaptation, and network/service scalability. Examples of end-to-end systems for multiview video streaming have been provided.},
 	number = {11},
 	journal = {{IEEE} Transactions on Circuits and Systems for Video Technology},
@@ -308,7 +385,20 @@ choice for future {3DTV} systems. Current research issues in unicast and multica
 	title = {Performance of {P2P} live video streaming systems on a controlled test-bed},
 	isbn = {978-963-9799-24-0},
 	url = {http://portal.acm.org/citation.cfm?id=1390576.1390584},
-	abstract = {We evaluate and compare the performance of three {P2P} streaming systems that are capable of streaming live video on the Internet by testing them on a carefully controlled, traffic-shaped network test-bed. We first describe the construction of the test-bed based upon Internet measurements between geographically distributed hosts. Then, we present a methodology for evaluating these {P2P} video streaming systems by performing video quality and network usage analysis from the log information obtained via running these systems on the test-bed. Our methodology to assess {P2P} live video streaming systems comprises analyzing the objective quality of the received video, waiting time to receive the first data byte, and several network usage measures such as {P2P} protocol overhead, load on the server due to the inefficiencies of the {P2P} overlay, and measurements of the number of bytes exchanged between the peers. It is essential that every peer buffers packets for some time before playing out the 
+	abstract = {We evaluate and compare the performance of three {P2P}
+streaming systems that are capable of streaming live video on the Internet by
+testing them on a carefully controlled, traffic-shaped network test-bed. We
+first describe the construction of the test-bed based upon Internet measurements
+between geographically distributed hosts. Then, we present a methodology for
+evaluating these {P2P} video streaming systems by performing video quality and
+network usage analysis from the log information obtained via running these
+systems on the test-bed. Our methodology to assess {P2P} live video streaming
+systems comprises analyzing the objective quality of the received video, waiting
+time to receive the first data byte, and several network usage measures such as
+{P2P} protocol overhead, load on the server due to the inefficiencies of the
+{P2P} overlay, and measurements of the number of bytes exchanged between the
+peers. It is essential that every peer buffers packets for some time before
+playing out the
 video in order to ensure good quality. We report the time that the user has to wait before he can see the video playing. These measurements not only gauge the performance of currently available {P2P} streaming systems but also highlight desired improvements in current {P2P} video streaming systems.},
 	booktitle = {Proceedings of the 4th International Conference on Testbeds and research infrastructures for the development of networks \& communities},
 	publisher = {{ICST} {(Institute} for Computer Sciences, {Social-Informatics} and Telecommunications Engineering)},
@@ -370,7 +460,20 @@ video in order to ensure good quality. We report the time that the user has to w
 	shorttitle = {Survey of research towards robust peer-to-peer networks},
 	url = {http://portal.acm.org/citation.cfm?id=1228356.1228371},
 	doi = {10.1016/j.comnet.2006.02.001},
-	abstract = {The pace of research on peer-to-peer {(P2P)} networking in the last five years warrants a critical survey. {P2P} has the makings of a disruptive technology--it can aggregate enormous storage and processing resources while minimizing entry and scaling costs. Failures are common amongst massive numbers of distributed peers, though the impact of individual failures may be less than in conventional architectures. Thus the key to realizing {P2P's} potential in applications other than casual file sharing is {robustness.P2P} search methods are first couched within an overall {P2P} taxonomy. {P2P} indexes for simple key lookup are assessed, including those based on Plaxton trees, rings, tori, butterflies, de Bruijn graphs and skip graphs. Similarly, {P2P} indexes for keyword lookup, information retrieval and data management are explored. Finally, early efforts to optimize range, multiattribute, join and aggregation queries over {P2P} indexes are reviewed. Insofar as they are available in the primary 
+	abstract = {The pace of research on peer-to-peer {(P2P)} networking in
+the last five years warrants a critical survey. {P2P} has the makings of a
+disruptive technology--it can aggregate enormous storage and processing
+resources while minimizing entry and scaling costs. Failures are common amongst
+massive numbers of distributed peers, though the impact of individual failures
+may be less than in conventional architectures. Thus the key to realizing
+{P2P's} potential in applications other than casual file sharing is
+{robustness.P2P} search methods are first couched within an overall {P2P}
+taxonomy. {P2P} indexes for simple key lookup are assessed, including those
+based on Plaxton trees, rings, tori, butterflies, de Bruijn graphs and skip
+graphs. Similarly, {P2P} indexes for keyword lookup, information retrieval and
+data management are explored. Finally, early efforts to optimize range,
+multiattribute, join and aggregation queries over {P2P} indexes are reviewed.
+Insofar as they are available in the primary
 literature, robustness mechanisms and metrics are highlighted throughout. However, the low-level mechanisms that most affect robustness are not well isolated in the literature. Furthermore, there has been little consensus on robustness metrics. Recommendations are given for future research.},
 	number = {17},
 	journal = {Comput. Netw.},
@@ -388,7 +491,20 @@ literature, robustness mechanisms and metrics are highlighted throughout. Howeve
 	title = {Scalable media streaming to interactive users},
 	isbn = {1-59593-044-2},
 	doi = {10.1145/1101149.1101351},
-	abstract = {Recently, a number of scalable stream sharing protocols have been proposed with the promise of great reductions in the server and network bandwidth required for delivering popular media content. Although the scalability of these protocols has been evaluated mostly for sequential user accesses, a high degree of interactivity has been observed in the accesses to several real media servers. Moreover, some studies have indicated that user interactivity can severely penalize the scalability of stream sharing {protocols.This} paper investigates alternative mechanisms for scalable streaming to interactive users. We first identify a set of workload aspects that are determinant to the scalability of classes of streaming protocols. Using real workloads and a new interactive media workload generator, we build a rich set of realistic synthetic workloads. We evaluate Bandwidth Skimming and Patching, two state-of-the-art streaming protocols, covering, with our workloads, a larger region of the design space 
+	abstract = {Recently, a number of scalable stream sharing protocols have
+been proposed with the promise of great reductions in the server and network
+bandwidth required for delivering popular media content. Although the
+scalability of these protocols has been evaluated mostly for sequential user
+accesses, a high degree of interactivity has been observed in the accesses to
+several real media servers. Moreover, some studies have indicated that user
+interactivity can severely penalize the scalability of stream sharing
+{protocols.This} paper investigates alternative mechanisms for scalable
+streaming to interactive users. We first identify a set of workload aspects that
+are determinant to the scalability of classes of streaming protocols. Using real
+workloads and a new interactive media workload generator, we build a rich set of
+realistic synthetic workloads. We evaluate Bandwidth Skimming and Patching, two
+state-of-the-art streaming protocols, covering, with our workloads, a larger
+region of the design space
 than previous work. Finally, we propose and evaluate five optimizations to Bandwidth Skimming, the most scalable of the two protocols. Our best optimization reduces the average server bandwidth required for interactive workloads in up to 54\%, for unlimited client buffers, and 29\%, if buffers are constrained to 25\% of media size.},
 	booktitle = {Proceedings of the 13th annual {ACM} international conference on Multimedia},
 	publisher = {{ACM}},
@@ -414,7 +530,20 @@ than previous work. Finally, we propose and evaluate five optimizations to Bandw
 	volume = {6},
 	issn = {1551-6857},
 	doi = {10.1145/1865106.1865115},
-	abstract = {This article presents results from our measurement and modeling efforts on the large-scale peer-to-peer (p2p) overlay graphs spanned by the {PPLive} system, the most popular and largest p2p {IPTV} {(Internet} Protocol Television) system today. Unlike other previous studies on {PPLive}, which focused on either network-centric or user-centric measurements of the system, our study is unique in (a) focusing on {PPLive} overlay-specific characteristics, and (b) being the first to derive mathematical models for its distributions of node degree, session length, and peer participation in simultaneous overlays. Our studies reveal characteristics of multimedia streaming p2p overlays that are markedly different from existing file-sharing p2p overlays. Specifically, we find that: (1) {PPLive} overlays are similar to random graphs in structure and thus more robust and resilient to the massive failure of nodes, (2) Average degree of a peer in the overlay is independent of the channel population size and the 
+	abstract = {This article presents results from our measurement and
+modeling efforts on the large-scale peer-to-peer (p2p) overlay graphs spanned by
+the {PPLive} system, the most popular and largest p2p {IPTV} {(Internet}
+Protocol Television) system today. Unlike other previous studies on {PPLive},
+which focused on either network-centric or user-centric measurements of the
+system, our study is unique in (a) focusing on {PPLive} overlay-specific
+characteristics, and (b) being the first to derive mathematical models for its
+distributions of node degree, session length, and peer participation in
+simultaneous overlays. Our studies reveal characteristics of multimedia
+streaming p2p overlays that are markedly different from existing file-sharing
+p2p overlays. Specifically, we find that: (1) {PPLive} overlays are similar to
+random graphs in structure and thus more robust and resilient to the massive
+failure of nodes, (2) Average degree of a peer in the overlay is independent of
+the channel population size and the
 node degree distribution can be fitted by a piecewise function, (3) The availability correlation between {PPLive} peer pairs is bimodal, that is, some pairs have highly correlated availability, while others have no correlation, (4) Unlike p2p file-sharing peers, {PPLive} peers are impatient and session lengths (discretized, per channel) are typically geometrically distributed, (5) Channel population size is time-sensitive, self-repeated, event-dependent, and varies more than in p2p file-sharing networks, (6) Peering relationships are slightly locality-aware, and (7) Peer participation in simultaneous overlays follows a Zipf distribution. We believe that our findings can be used to understand current large-scale p2p streaming systems for future planning of resource usage, and to provide useful and practical hints for future design of large-scale p2p streaming systems.},
 	number = {4},
 	journal = {{ACM} Trans. Multimedia Comput. Commun. Appl.},
@@ -431,7 +560,20 @@ node degree distribution can be fitted by a piecewise function, (3) The availabi
 	volume = {4},
 	issn = {1551-6857},
 	doi = {10.1145/1386109.1386112},
-	abstract = {Real-world live peer-to-peer {(P2P)} streaming applications have been successfully deployed in the Internet, delivering live multimedia content to millions of users at any given time. With relative simplicity in design with respect to peer selection and topology construction protocols and without much algorithmic sophistication, current-generation live {P2P} streaming applications are able to provide users with adequately satisfying viewing experiences. That said, little existing research has provided sufficient insights on the time-varying internal characteristics of peer-to-peer topologies in live streaming. This article presents Magellan, our collaborative work with {UUSee} Inc., Beijing, China, for exploring and charting graph theoretical properties of practical {P2P} streaming topologies, gaining important insights in their topological dynamics over a long period of time. With more than 120 {GB} worth of traces starting September 2006 from a commercially deployed {P2P} live streaming system 
+	abstract = {Real-world live peer-to-peer {(P2P)} streaming applications
+have been successfully deployed in the Internet, delivering live multimedia
+content to millions of users at any given time. With relative simplicity in
+design with respect to peer selection and topology construction protocols and
+without much algorithmic sophistication, current-generation live {P2P} streaming
+applications are able to provide users with adequately satisfying viewing
+experiences. That said, little existing research has provided sufficient
+insights on the time-varying internal characteristics of peer-to-peer topologies
+in live streaming. This article presents Magellan, our collaborative work with
+{UUSee} Inc., Beijing, China, for exploring and charting graph theoretical
+properties of practical {P2P} streaming topologies, gaining important insights
+in their topological dynamics over a long period of time. With more than 120
+{GB} worth of traces starting September 2006 from a commercially deployed {P2P}
+live streaming system
 that represents {UUSee's} core product, we have completed a thorough and in-depth investigation of the topological properties in large-scale live {P2P} streaming, as well as their evolutionary behavior over time, for example, at different times of the day and in flash crowd scenarios. We seek to explore real-world {P2P} streaming topologies with respect to their graph theoretical metrics, such as the degree, clustering coefficient, and reciprocity. In addition, we compare our findings with results from existing studies on topological properties of {P2P} file sharing applications, and present new and unique observations specific to streaming. We have observed that live {P2P} streaming sessions demonstrate excellent scalability, a high level of reciprocity, a clustering phenomenon in each {ISP}, and a degree distribution that does not follow the power-law distribution.},
 	number = {3},
 	journal = {{ACM} Trans. Multimedia Comput. Commun. Appl.},
@@ -449,7 +591,20 @@ that represents {UUSee's} core product, we have completed a thorough and in-dept
 	issn = {0166-5316},
 	url = {http://dx.doi.org/10.1016/j.peva.2008.03.003},
 	doi = {http://dx.doi.org/10.1016/j.peva.2008.03.003},
-	abstract = {In this paper we consider the problem of sending data in real time from information sources to sets of receivers, using peer-to-peer communications. We consider several network models and for each model we identify schemes that achieve successful diffusion of data at optimal rates. For edge-capacitated networks, we show optimality of the so-called ''random-useful'' packet forwarding algorithm. As a byproduct, we obtain a novel proof of a famous theorem of Edmonds, characterising the broadcast capacity of a capacitated graph. For node-capacitated networks, assuming a complete communication graph, we show optimality of the so-called ''most-deprived'' neighbour selection scheme combined with random useful packet selection. We then show that optimality is preserved when each peer can exchange data with a limited number of neighbours, when neighbourhoods are dynamically adapted according to a particular scheme. Finally, we consider the case of multiple information sources, each creating distinct 
+	abstract = {In this paper we consider the problem of sending data in
+real time from information sources to sets of receivers, using peer-to-peer
+communications. We consider several network models and for each model we
+identify schemes that achieve successful diffusion of data at optimal rates. For
+edge-capacitated networks, we show optimality of the so-called ''random-useful''
+packet forwarding algorithm. As a byproduct, we obtain a novel proof of a famous
+theorem of Edmonds, characterising the broadcast capacity of a capacitated
+graph. For node-capacitated networks, assuming a complete communication graph,
+we show optimality of the so-called ''most-deprived'' neighbour selection scheme
+combined with random useful packet selection. We then show that optimality is
+preserved when each peer can exchange data with a limited number of neighbours,
+when neighbourhoods are dynamically adapted according to a particular scheme.
+Finally, we consider the case of multiple information sources, each creating
+distinct
 information to be disseminated to a specific set of receivers. In this context, we prove optimality of the so-called ''bundled most-deprived neighbour random useful packet'' selection.},
 	number = {11-12},
 	journal = {Perform. Eval.},
@@ -468,7 +623,20 @@ information to be disseminated to a specific set of receivers. In this context, 
 	isbn = {1-59593-456-1},
 	shorttitle = {{P2P} {IPTV} measurement},
 	doi = {10.1145/1368436.1368490},
-	abstract = {With the success of {P2P} file sharing applications, new emerging {P2P} applications arise on the Internet for broadcasting new content like voice {(VoIP)} or video {(IPTV).} Nowadays, there are a lot of works measuring file sharing [2] or telephony {P2P} applications [1], but there is still no comprehensive study about {P2P} {IPTV} applications [3]. However, we think {P2P} {IPTV} applications will be massively used in the future and it is very important to study the effect they will have on the network. We measured network traffic generated by {P2P} {IPTV} users watching the last {FIFA} world cup. We used several applications in different network environments to collect a large amount of various data. {FIFA} world cup is a large-scale event with live interest and we believe this will allow us to have a representative sample of large-scale {P2P} {IPTV} applications. With the huge amount of collected data, we can study users/applications behavior for {P2P} live streaming system and their impact 
+	abstract = {With the success of {P2P} file sharing applications, new
+emerging {P2P} applications arise on the Internet for broadcasting new content
+like voice {(VoIP)} or video {(IPTV).} Nowadays, there are a lot of works
+measuring file sharing [2] or telephony {P2P} applications [1], but there is
+still no comprehensive study about {P2P} {IPTV} applications [3]. However, we
+think {P2P} {IPTV} applications will be massively used in the future and it is
+very important to study the effect they will have on the network. We measured
+network traffic generated by {P2P} {IPTV} users watching the last {FIFA} world
+cup. We used several applications in different network environments to collect a
+large amount of various data. {FIFA} world cup is a large-scale event with live
+interest and we believe this will allow us to have a representative sample of
+large-scale {P2P} {IPTV} applications. With the huge amount of collected data,
+we can study users/applications behavior for {P2P} live streaming system and
+their impact
 on the traffic network.},
 	booktitle = {Proceedings of the 2006 {ACM} {CoNEXT} conference},
 	publisher = {{ACM}},
@@ -484,7 +652,20 @@ on the traffic network.},
 	issn = {1389-1286},
 	url = {http://dx.doi.org/10.1016/j.comnet.2008.09.024},
 	doi = {http://dx.doi.org/10.1016/j.comnet.2008.09.024},
-	abstract = {The Internet is currently experiencing one of the most important challenges in terms of content distribution since its first uses as a medium for content delivery: users from passive downloaders and browsers are moving towards content producers and publishers. They often distribute and retrieve multimedia contents establishing network communities. This is the case of peer-to-peer {IPTV} communities. In this work we present a detailed study of {P2P} {IPTV} traffic, providing useful insights on both transport- and packet-level properties as well as on the behavior of the peers inside the network. In particular, we provide novel results on the (i) ports and protocols used; (ii) differences between signaling and video traffic; (iii) behavior of the traffic at different time scales; (iv) differences between {TCP} and {UDP} traffic; (v) traffic generated and received by peers; (vi) peers neighborhood and session duration. The knowledge gained thanks to this analysis is useful for several tasks, e.g. 
+	abstract = {The Internet is currently experiencing one of the most
+important challenges in terms of content distribution since its first uses as a
+medium for content delivery: users from passive downloaders and browsers are
+moving towards content producers and publishers. They often distribute and
+retrieve multimedia contents establishing network communities. This is the case
+of peer-to-peer {IPTV} communities. In this work we present a detailed study of
+{P2P} {IPTV} traffic, providing useful insights on both transport- and
+packet-level properties as well as on the behavior of the peers inside the
+network. In particular, we provide novel results on the (i) ports and protocols
+used; (ii) differences between signaling and video traffic; (iii) behavior of
+the traffic at different time scales; (iv) differences between {TCP} and {UDP}
+traffic; (v) traffic generated and received by peers; (vi) peers neighborhood
+and session duration. The knowledge gained thanks to this analysis is useful for
+several tasks, e.g.
 traffic identification, understanding the performance of different {P2P} {IPTV} technologies and the impact of such traffic on network nodes and links, and building more realistic models for simulations.},
 	number = {4},
 	journal = {Comput. Netw.},
@@ -520,7 +701,20 @@ traffic identification, understanding the performance of different {P2P} {IPTV} 
 	shorttitle = {{KISS}},
 	url = {http://dx.doi.org/10.1109/TNET.2010.2044046},
 	doi = {http://dx.doi.org/10.1109/TNET.2010.2044046},
-	abstract = {This paper proposes {KISS}, a novel Internet classification engine. Motivated by the expected raise of {UDP} traffic, which stems from the momentum of {Peer-to-Peer} {(P2P)} streaming applications, we propose a novel classification framework that leverages on statistical characterization of payload. Statistical signatures are derived by the means of a {Chi-Square} (χ2)-like test, which extracts the protocol "format," but ignores the protocol "semantic" and "synchronization" rules. The signatures feed a decision process based either on the geometric distance among samples, or on Support Vector Machines. {KISS} is very accurate, and its signatures are intrinsically robust to packet sampling, reordering, and flow asymmetry, so that it can be used on almost any network. {KISS} is tested in different scenarios, considering traditional client-server protocols, {VoIP}, and both traditional and new {P2P} Internet applications. Results are astonishing. The average True Positive percentage is 99.6\%, 
+	abstract = {This paper proposes {KISS}, a novel Internet classification
+engine. Motivated by the expected raise of {UDP} traffic, which stems from the
+momentum of {Peer-to-Peer} {(P2P)} streaming applications, we propose a novel
+classification framework that leverages on statistical characterization of
+payload. Statistical signatures are derived by the means of a {Chi-Square}
+(χ2)-like test, which extracts the protocol "format," but ignores the protocol
+"semantic" and "synchronization" rules. The signatures feed a decision process
+based either on the geometric distance among samples, or on Support Vector
+Machines. {KISS} is very accurate, and its signatures are intrinsically robust
+to packet sampling, reordering, and flow asymmetry, so that it can be used on
+almost any network. {KISS} is tested in different scenarios, considering
+traditional client-server protocols, {VoIP}, and both traditional and new {P2P}
+Internet applications. Results are astonishing. The average True Positive
+percentage is 99.6\%,
 with the worst case equal to 98.1,\% while results are almost perfect when dealing with new {P2P} streaming applications.},
 	number = {5},
 	journal = {{IEEE/ACM} Trans. Netw.},
@@ -538,7 +732,20 @@ with the worst case equal to 98.1,\% while results are almost perfect when deali
 	title = {Quality-aware segment transmission scheduling in peer-to-peer streaming systems},
 	isbn = {978-1-60558-914-5},
 	doi = {10.1145/1730836.1730857},
-	abstract = {In peer-to-peer {(P2P)} mesh-based streaming systems, each video sequence is typically divided into segments, which are then streamed from multiple senders to a receiver. The receiver needs to coordinate the senders by specifying a transmission schedule for each of them. We consider the scheduling problem in both live and on-demand {P2P} streaming systems. We formulate the problem of scheduling segment transmission in order to maximize the perceived video quality of the receiver. We prove that this problem is {NP-Complete.} We present an integer linear programming {(ILP)} formulation for this problem, and we optimally solve it using an {ILP} solver. This optimal solution, however, is computationally expensive and is not suitable for real-time streaming systems. Thus, we propose a polynomial-time approximation algorithm, which yields transmission schedules with analytical guarantees on the worst-case performance. More precisely, we show that the approximation factor is at most 3, compared to the 
+	abstract = {In peer-to-peer {(P2P)} mesh-based streaming systems, each
+video sequence is typically divided into segments, which are then streamed from
+multiple senders to a receiver. The receiver needs to coordinate the senders by
+specifying a transmission schedule for each of them. We consider the scheduling
+problem in both live and on-demand {P2P} streaming systems. We formulate the
+problem of scheduling segment transmission in order to maximize the perceived
+video quality of the receiver. We prove that this problem is {NP-Complete.} We
+present an integer linear programming {(ILP)} formulation for this problem, and
+we optimally solve it using an {ILP} solver. This optimal solution, however, is
+computationally expensive and is not suitable for real-time streaming systems.
+Thus, we propose a polynomial-time approximation algorithm, which yields
+transmission schedules with analytical guarantees on the worst-case performance.
+More precisely, we show that the approximation factor is at most 3, compared to
+the
 absolutely optimal solution as a benchmark. We implement the proposed approximation and optimal algorithms in a packet-level simulator for {P2P} streaming systems. We also implement two other scheduling algorithms proposed in the literature and used in popular {P2P} streaming systems. By simulating large {P2P} systems and streaming nine real video sequences with diverse visual and motion characteristics, we demonstrate that our proposed approximation algorithm: (i) produces near-optimal perceived video quality, (ii) can run in real time, and (iii) outperforms other algorithms in terms of perceived video quality, smoothness of the rendered videos, and balancing the load across sending peers. For example, our simulation results indicate that the proposed algorithm outperforms heuristic algorithms used in current systems by up to 8 {dB} in perceived video quality and up to 20\% in continuity index.},
 	booktitle = {Proceedings of the first annual {ACM} {SIGMM} conference on Multimedia systems},
 	publisher = {{ACM}},
@@ -569,7 +776,20 @@ absolutely optimal solution as a benchmark. We implement the proposed approximat
 	issn = {1063-6692},
 	url = {http://dx.doi.org/10.1109/TNET.2010.2056382},
 	doi = {http://dx.doi.org/10.1109/TNET.2010.2056382},
-	abstract = {A number of commercial peer-to-peer {(P2P)} systems for live streaming have been introduced in recent years. The behavior of these popular systems has been extensively studied in several measurement papers. Due to the proprietary nature of these commercial systems, however, these studies have to rely on a "black-box" approach, where packet traces are collected from a single or a limited number of measurement points, to infer various properties of traffic on the control and data planes. Although such studies are useful to compare different systems from the end-user's perspective, it is difficult to intuitively understand the observed properties without fully reverse-engineering the underlying systems. In this paper, we describe the network architecture of Zattoo, one of the largest production live streaming providers in Europe at the time of writing, and present a large-scale measurement study of Zattoo using data collected by the provider. To highlight, we found that even when the Zattoo system 
+	abstract = {A number of commercial peer-to-peer {(P2P)} systems for live
+streaming have been introduced in recent years. The behavior of these popular
+systems has been extensively studied in several measurement papers. Due to the
+proprietary nature of these commercial systems, however, these studies have to
+rely on a "black-box" approach, where packet traces are collected from a single
+or a limited number of measurement points, to infer various properties of
+traffic on the control and data planes. Although such studies are useful to
+compare different systems from the end-user's perspective, it is difficult to
+intuitively understand the observed properties without fully reverse-engineering
+the underlying systems. In this paper, we describe the network architecture of
+Zattoo, one of the largest production live streaming providers in Europe at the
+time of writing, and present a large-scale measurement study of Zattoo using
+data collected by the provider. To highlight, we found that even when the Zattoo
+system
 was heavily loaded with as high as 20 000 concurrent users on a single overlay, the median channel join delay remained less than 2-5 s, and that, for a majority of users, the streamed signal lags over-the-air broadcast signal by no more than 3 s.},
 	number = {1},
 	journal = {{IEEE/ACM} Trans. Netw.},
@@ -588,7 +808,20 @@ was heavily loaded with as high as 20 000 concurrent users on a single overlay, 
 	isbn = {978-1-60558-608-3},
 	shorttitle = {Design and deployment of a hybrid {CDN-P2P} system for live video streaming},
 	doi = {10.1145/1631272.1631279},
-	abstract = {We present our design and deployment experiences with {LiveSky}, a commercially deployed hybrid {CDN-P2P} live streaming system. {CDNs} and {P2P} systems are the common techniques used for live streaming, each having its own set of advantages and disadvantages. {LiveSky} inherits the best of both worlds: the quality control and reliability of a {CDN} and the inherent scalability of a {P2P} system. We address several key challenges in the system design and implementation including (a) dynamic resource scaling while guaranteeing stream quality, (b) providing low startup latency, (c) ease of integration with existing {CDN} infrastructure, and (d) ensuring network-friendliness and upload fairness in the {P2P} operation. {LiveSky} has been commercially deployed and used for several large-scale live streaming events serving more than ten million users in China. We evaluate the performance of {LiveSky} using data from these real-world deployments. Our results indicate that such a hybrid {CDN-P2P} 
+	abstract = {We present our design and deployment experiences with
+{LiveSky}, a commercially deployed hybrid {CDN-P2P} live streaming system.
+{CDNs} and {P2P} systems are the common techniques used for live streaming, each
+having its own set of advantages and disadvantages. {LiveSky} inherits the best
+of both worlds: the quality control and reliability of a {CDN} and the inherent
+scalability of a {P2P} system. We address several key challenges in the system
+design and implementation including (a) dynamic resource scaling while
+guaranteeing stream quality, (b) providing low startup latency, (c) ease of
+integration with existing {CDN} infrastructure, and (d) ensuring
+network-friendliness and upload fairness in the {P2P} operation. {LiveSky} has
+been commercially deployed and used for several large-scale live streaming
+events serving more than ten million users in China. We evaluate the performance
+of {LiveSky} using data from these real-world deployments. Our results indicate
+that such a hybrid {CDN-P2P}
 system provides quality and user performance comparable to a {CDN} and effectively scales the system capacity when the user volume exceeds the {CDN} capacity.},
 	booktitle = {Proceedings of the 17th {ACM} international conference on Multimedia},
 	publisher = {{ACM}},
@@ -606,7 +839,20 @@ system provides quality and user performance comparable to a {CDN} and effective
 	isbn = {978-1-60558-005-0},
 	shorttitle = {Epidemic live streaming},
 	doi = {10.1145/1375457.1375494},
-	abstract = {Several peer-to-peer systems for live streaming have been recently deployed (e.g. {CoolStreaming}, {PPLive}, {SopCast).} These all rely on distributed, epidemic-style dissemination mechanisms. Despite their popularity, the fundamental performance trade-offs of such mechanisms are still poorly understood. In this paper we propose several results that contribute to the understanding of such trade-offs. Specifically, we prove that the so-called random peer, latest useful chunk mechanism can achieve dissemination at an optimal rate and within an optimal delay, up to an additive constant term. This qualitative result suggests that epidemic live streaming algorithms can achieve near-unbeatable rates and delays. Using mean-field approximations, we also derive recursive formulas for the diffusion function of two schemes referred to as latest blind chunk, random peer and latest blind chunk, random useful peer. Finally, we provide simulation results that validate the above theoretical results and allow us 
+	abstract = {Several peer-to-peer systems for live streaming have been
+recently deployed (e.g. {CoolStreaming}, {PPLive}, {SopCast).} These all rely on
+distributed, epidemic-style dissemination mechanisms. Despite their popularity,
+the fundamental performance trade-offs of such mechanisms are still poorly
+understood. In this paper we propose several results that contribute to the
+understanding of such trade-offs. Specifically, we prove that the so-called
+random peer, latest useful chunk mechanism can achieve dissemination at an
+optimal rate and within an optimal delay, up to an additive constant term. This
+qualitative result suggests that epidemic live streaming algorithms can achieve
+near-unbeatable rates and delays. Using mean-field approximations, we also
+derive recursive formulas for the diffusion function of two schemes referred to
+as latest blind chunk, random peer and latest blind chunk, random useful peer.
+Finally, we provide simulation results that validate the above theoretical
+results and allow us
 to compare the performance of various practically interesting diffusion schemes terms of delay, rate, and control overhead. In particular, we identify several peer/chunk selection algorithms that achieve near-optimal performance trade-offs. Moreover, we show that the control overhead needed to implement these algorithms may be reduced by restricting the neighborhood of each peer without substantial performance degradation.},
 	booktitle = {Proceedings of the 2008 {ACM} {SIGMETRICS} international conference on Measurement and modeling of computer systems},
 	publisher = {{ACM}},
@@ -637,7 +883,20 @@ to compare the performance of various practically interesting diffusion schemes 
 	title = {A Novel Distributed and Practical Incentive Mechanism for Peer to Peer Live Video Streaming},
 	isbn = {1-4244-0366-7},
 	doi = {10.1109/ICME.2006.262835},
-	abstract = {The successful deployment of peer-to-peer {(P2P)} live video streaming systems has practically demonstrated that it can scale to reliably support a large population of peers. However, peers, representing rational end users, tend to be non-cooperative when it comes to the duty rather than the self-interests, running counter to the fundamental design philosophy of {P2P} concept. The objective of this paper is to investigate the problem of encouraging users to balance what they take from the system with what they contribute. We first make a statistical analysis to the service logs of a practical {P2P} live video streaming system and reveal intrinsic characteristic of users' online duration. Second, we thus propose a novel incentive mechanism based on the composite contributions which consist of two objective metrics, i.e. the on-line duration and effective upstream traffic. This mechanism offers service differentiation to users with different contributions and has some desirable properties: (1) 
+	abstract = {The successful deployment of peer-to-peer {(P2P)} live video
+streaming systems has practically demonstrated that it can scale to reliably
+support a large population of peers. However, peers, representing rational end
+users, tend to be non-cooperative when it comes to the duty rather than the
+self-interests, running counter to the fundamental design philosophy of {P2P}
+concept. The objective of this paper is to investigate the problem of
+encouraging users to balance what they take from the system with what they
+contribute. We first make a statistical analysis to the service logs of a
+practical {P2P} live video streaming system and reveal intrinsic characteristic
+of users' online duration. Second, we thus propose a novel incentive mechanism
+based on the composite contributions which consist of two objective metrics,
+i.e. the on-line duration and effective upstream traffic. This mechanism offers
+service differentiation to users with different contributions and has some
+desirable properties: (1)
 distributed nature upon gossip-based overlay structure and (2) practical oriented evaluation criteria. The experiment results over {PlanetLab} further verify its effectiveness},
 	booktitle = {2006 {IEEE} International Conference on Multimedia and Expo},
 	publisher = {{IEEE}},
@@ -717,8 +976,33 @@ distributed nature upon gossip-based overlay structure and (2) practical oriente
 	issn = {1389-1286},
 	url = {http://dx.doi.org/10.1016/j.comnet.2008.09.025},
 	doi = {http://dx.doi.org/10.1016/j.comnet.2008.09.025},
-	abstract = {Video-on-demand {(VoD)} streaming has recently become a popular service on the Internet, with several companies offering videos to a global audience. However, traditional client/server based {VoD} streaming systems can be very bandwidth intensive and expensive to maintain, especially for high quality video content. To improve the scalability these systems, the use of peer-to-peer {(P2P)} networking has been proposed, but despite the efficiency of applications such as {BitTorrent} for downloading of large files, it is not simple to use {P2P} techniques for streaming. Problems such as firewalls and freeloaders reduce the efficiency of both types of {P2P} systems, but for real-time services such as streaming, the result can be reduced playback quality. Other issues include the traffic load imposed on {ISPs} by {P2P} networks, which can motivate {ISPs} to interfere with the {P2P} traffic. Finally, protecting against malicious modification of content can increase overhead, response times, and startup 
-delays. We consider these issues to be fundamental to the problem of {P2P} based {VoD}, but despite the large amount of research that has been done in this field, these issues have largely been ignored. To address this, we present an evaluation of the Streaming {P2P} Protocol {(SPP)} architecture. By studying the problem as a whole we have found a simple and comprehensive solution that addresses all the four issues listed above. To show that the system is not only scalable, but also that it can be implemented efficiently, we have used both simulations and experiments on {PlanetLab} for evaluation. The results show that the combination of cache nodes and use of end-user resources found in the {SPP} architecture can give a low load on servers and {ISPs}, even when firewalls are taken into consideration. Furthermore, we observed low startup delays and few playback errors during the {PlanetLab} experiments. The scalable and low-cost distribution of content possible with the {SPP} architecture should be suitable 
+	abstract = {Video-on-demand {(VoD)} streaming has recently become a
+popular service on the Internet, with several companies offering videos to a
+global audience. However, traditional client/server based {VoD} streaming
+systems can be very bandwidth intensive and expensive to maintain, especially
+for high quality video content. To improve the scalability these systems, the
+use of peer-to-peer {(P2P)} networking has been proposed, but despite the
+efficiency of applications such as {BitTorrent} for downloading of large files,
+it is not simple to use {P2P} techniques for streaming. Problems such as
+firewalls and freeloaders reduce the efficiency of both types of {P2P} systems,
+but for real-time services such as streaming, the result can be reduced playback
+quality. Other issues include the traffic load imposed on {ISPs} by {P2P}
+networks, which can motivate {ISPs} to interfere with the {P2P} traffic.
+Finally, protecting against malicious modification of content can increase
+overhead, response times, and startup
+delays. We consider these issues to be fundamental to the problem of {P2P} based
+{VoD}, but despite the large amount of research that has been done in this
+field, these issues have largely been ignored. To address this, we present an
+evaluation of the Streaming {P2P} Protocol {(SPP)} architecture. By studying the
+problem as a whole we have found a simple and comprehensive solution that
+addresses all the four issues listed above. To show that the system is not only
+scalable, but also that it can be implemented efficiently, we have used both
+simulations and experiments on {PlanetLab} for evaluation. The results show that
+the combination of cache nodes and use of end-user resources found in the {SPP}
+architecture can give a low load on servers and {ISPs}, even when firewalls are
+taken into consideration. Furthermore, we observed low startup delays and few
+playback errors during the {PlanetLab} experiments. The scalable and low-cost
+distribution of content possible with the {SPP} architecture should be suitable
 for both large-scale commercial distributors and users of community networks with limited resources.},
 	number = {4},
 	journal = {Comput. Netw.},
@@ -751,7 +1035,20 @@ for both large-scale commercial distributors and users of community networks wit
 	issn = {0733-8716},
 	shorttitle = {Understanding the Power of {Pull-Based} Streaming Protocol},
 	doi = {10.1109/JSAC.2007.071207},
-	abstract = {Most of the real deployed peer-to-peer streaming systems adopt pull-based streaming protocol. In this paper, we demonstrate that, besides simplicity and robustness, with proper parameter settings, when the server bandwidth is above several times of the raw streaming rate, which is reasonable for practical live streaming system, simple pull-based {P2P} streaming protocol is nearly optimal in terms of peer upload capacity utilization and system throughput even without intelligent scheduling and bandwidth measurement. We also indicate that whether this near optimality can be achieved depends on the parameters in pull-based protocol, server bandwidth and group size. Then we present our mathematical analysis to gain deeper insight in this characteristic of pull-based streaming protocol. On the other hand, the optimality of pull-based protocol comes from a cost -tradeoff between control overhead and delay, that is, the protocol has either large control overhead or large delay. To break the tradeoff, 
+	abstract = {Most of the real deployed peer-to-peer streaming systems
+adopt pull-based streaming protocol. In this paper, we demonstrate that, besides
+simplicity and robustness, with proper parameter settings, when the server
+bandwidth is above several times of the raw streaming rate, which is reasonable
+for practical live streaming system, simple pull-based {P2P} streaming protocol
+is nearly optimal in terms of peer upload capacity utilization and system
+throughput even without intelligent scheduling and bandwidth measurement. We
+also indicate that whether this near optimality can be achieved depends on the
+parameters in pull-based protocol, server bandwidth and group size. Then we
+present our mathematical analysis to gain deeper insight in this characteristic
+of pull-based streaming protocol. On the other hand, the optimality of
+pull-based protocol comes from a cost -tradeoff between control overhead and
+delay, that is, the protocol has either large control overhead or large delay.
+To break the tradeoff,
 we propose a pull-push hybrid protocol. The basic idea is to consider pull-based protocol as a highly efficient bandwidth-aware multicast routing protocol and push down packets along the trees formed by pull-based protocol. Both simulation and real-world experiment show that this protocol is not only even more effective in throughput than pull-based protocol but also has far lower delay and much smaller overhead. And to achieve near optimality in peer capacity utilization without churn, the server bandwidth needed can be further relaxed. Furthermore, the proposed protocol is fully implemented in our deployed {GridMedia} system and has the record to support over 220,000 users simultaneously online.},
 	number = {9},
 	journal = {{IEEE} Journal on Selected Areas in Communications},
@@ -768,7 +1065,20 @@ we propose a pull-push hybrid protocol. The basic idea is to consider pull-based
 	title = {Large-scale live media streaming over peer-to-peer networks through global internet},
 	isbn = {1-59593-248-8},
 	doi = {10.1145/1099384.1099388},
-	abstract = {We describe the design and implementation of unstructured peer-to-peer networks for large-scale live media streaming through global Internet in this paper. In so called {GridMedia} system, we adopt gossip-based protocol to organize end nodes into an application layer overlay. Each node in {GridMedia} independently selects its neighbors and utilizes a novel and efficient push-pull streaming mechanism to fetch data from neighbors with low latency and little redundancy. The traditional pull mode in the unstructured overlay has inherent robustness to high churn rate which is common in peer-to-peer environment while the push mode could efficiently diminish the accumulated latency observed at end users. A practical system based on this architecture has been developed, and we evaluate its performance on {PlanetLab} [10] in various rigorous conditions. All the results demonstrate that the proposed push-pull method in {GridMedia} achieves good performance even with high group change rate and very low 
+	abstract = {We describe the design and implementation of unstructured
+peer-to-peer networks for large-scale live media streaming through global
+Internet in this paper. In so called {GridMedia} system, we adopt gossip-based
+protocol to organize end nodes into an application layer overlay. Each node in
+{GridMedia} independently selects its neighbors and utilizes a novel and
+efficient push-pull streaming mechanism to fetch data from neighbors with low
+latency and little redundancy. The traditional pull mode in the unstructured
+overlay has inherent robustness to high churn rate which is common in
+peer-to-peer environment while the push mode could efficiently diminish the
+accumulated latency observed at end users. A practical system based on this
+architecture has been developed, and we evaluate its performance on {PlanetLab}
+[10] in various rigorous conditions. All the results demonstrate that the
+proposed push-pull method in {GridMedia} achieves good performance even with
+high group change rate and very low
 upload bandwidth limitation. Furthermore, this system was provided for {CCTV} (the largest {TV} station in China) to live broadcast the Gala Evening of Spring Festival 2005 over global Internet at the bit rate of 300 Kbps. It is evidenced that more than 500,000 users were attracted all over the world with the peak concurrent online users of 15,239 during the night.},
 	booktitle = {Proceedings of the {ACM} workshop on Advances in peer-to-peer multimedia streaming},
 	publisher = {{ACM}},
@@ -785,7 +1095,20 @@ upload bandwidth limitation. Furthermore, this system was provided for {CCTV} (t
 	isbn = {0-7803-8968-9},
 	shorttitle = {{CoolStreaming/DONet}},
 	doi = {10.1109/INFCOM.2005.1498486},
-	abstract = {This paper presents {DONet}, a data-driven overlay network for live media streaming. The core operations in {DONet} are very simple: every node periodically exchanges data availability information with a set of partners, and retrieves unavailable data from one or more partners, or supplies available data to partners. We emphasize three salient features of this data-driven design: 1) easy to implement, as it does not have to construct and maintain a complex global structure; 2) efficient, as data forwarding is dynamically determined according to data availability while not restricted by specific directions; and 3) robust and resilient, as the partnerships enable adaptive and quick switching among multi-suppliers. We show through analysis that {DONet} is scalable with bounded delay. We also address a set of practical challenges for realizing {DONet}, and propose an efficient member and partnership management algorithm, together with an intelligent scheduling algorithm that achieves real-time and 
+	abstract = {This paper presents {DONet}, a data-driven overlay network
+for live media streaming. The core operations in {DONet} are very simple: every
+node periodically exchanges data availability information with a set of
+partners, and retrieves unavailable data from one or more partners, or supplies
+available data to partners. We emphasize three salient features of this
+data-driven design: 1) easy to implement, as it does not have to construct and
+maintain a complex global structure; 2) efficient, as data forwarding is
+dynamically determined according to data availability while not restricted by
+specific directions; and 3) robust and resilient, as the partnerships enable
+adaptive and quick switching among multi-suppliers. We show through analysis
+that {DONet} is scalable with bounded delay. We also address a set of practical
+challenges for realizing {DONet}, and propose an efficient member and
+partnership management algorithm, together with an intelligent scheduling
+algorithm that achieves real-time and
 continuous distribution of streaming contents. We have extensively evaluated the performance of {DONet} over the {PlanetLab.} Our experiments, involving almost all the active {PlanetLab} nodes, demonstrate that {DONet} achieves quite good streaming quality even under formidable network conditions. Moreover, its control overhead and transmission delay are both kept at low levels. An Internet-based {DONet} implementation, called {CoolStreaming} v.0.9, was released on May 30, 2004, which has attracted over 30000 distinct users with more than 4000 simultaneously being online at some peak times. We discuss the key issues toward designing {CoolStreaming} in this paper, and present several interesting observations from these large-scale tests; in particular, the larger the overlay size, the better the streaming quality it can deliver.},
 	booktitle = {Proceedings {IEEE} {INFOCOM} 2005. 24th Annual Joint Conference of the {IEEE} Computer and Communications Societies},
 	publisher = {{IEEE}},
@@ -831,7 +1154,20 @@ continuous distribution of streaming contents. We have extensively evaluated the
 	isbn = {1-59593-308-5},
 	shorttitle = {Designing {DCCP}},
 	doi = {10.1145/1159913.1159918},
-	abstract = {Fast-growing Internet applications like streaming media and telephony prefer timeliness to reliability, making {TCP} a poor fit. Unfortunately, {UDP}, the natural alternative, lacks congestion control. High-bandwidth {UDP} applications must implement congestion control themselves-a difficult task-or risk rendering congested networks unusable. We set out to ease the safe deployment of these applications by designing a congestion-controlled unreliable transport protocol. The outcome, the Datagram Congestion Control Protocol or {DCCP}, adds to a {UDP-like} foundation the minimum mechanisms necessary to support congestion control. We thought those mechanisms would resemble {TCP's}, but without reliability and, especially, cumulative acknowledgements, we had to reconsider almost every aspect of {TCP's} design. The resulting protocol sheds light on how congestion control interacts with unreliable transport, how modern network constraints impact protocol design, and how {TCP's} reliable bytestream 
+	abstract = {Fast-growing Internet applications like streaming media and
+telephony prefer timeliness to reliability, making {TCP} a poor fit.
+Unfortunately, {UDP}, the natural alternative, lacks congestion control.
+High-bandwidth {UDP} applications must implement congestion control themselves-a
+difficult task-or risk rendering congested networks unusable. We set out to ease
+the safe deployment of these applications by designing a congestion-controlled
+unreliable transport protocol. The outcome, the Datagram Congestion Control
+Protocol or {DCCP}, adds to a {UDP-like} foundation the minimum mechanisms
+necessary to support congestion control. We thought those mechanisms would
+resemble {TCP's}, but without reliability and, especially, cumulative
+acknowledgements, we had to reconsider almost every aspect of {TCP's} design.
+The resulting protocol sheds light on how congestion control interacts with
+unreliable transport, how modern network constraints impact protocol design, and
+how {TCP's} reliable bytestream
 semantics intertwine with its other mechanisms, including congestion control.},
 	booktitle = {Proceedings of the 2006 conference on Applications, technologies, architectures, and protocols for computer communications},
 	publisher = {{ACM}},
@@ -865,7 +1201,20 @@ semantics intertwine with its other mechanisms, including congestion control.},
 	volume = {39},
 	issn = {0163-6804},
 	doi = {10.1109/35.917507},
-	abstract = {Emerging streaming media applications in the Internet primarily use {UDP} transport. The difficulty with supporting this type of traffic on the Internet is that they not only generate large volumes of traffic, but they are also not as responsive to network congestion as {TCP-based} applications. As a result, streaming media {UDP} traffic can cause two major problems in the Internet: congestion collapse and unfair allocations of bandwidth among competing traffic flows. A solution to these problems is available in many Internet environments. The Internet backbone, various {ISPs}, and {DSL} access networks rely on {ATM} as their layer 2 transport technology, and in such environments, {ATM's} available bit rate service can efficiently address these problems. {ABR} is able to avoid congestion collapse and provide fair bandwidth allocations by distributing the unutilized bandwidth fairly among competing flows. This article presents simulation results and empirical measurements that illustrate the 
+	abstract = {Emerging streaming media applications in the Internet
+primarily use {UDP} transport. The difficulty with supporting this type of
+traffic on the Internet is that they not only generate large volumes of traffic,
+but they are also not as responsive to network congestion as {TCP-based}
+applications. As a result, streaming media {UDP} traffic can cause two major
+problems in the Internet: congestion collapse and unfair allocations of
+bandwidth among competing traffic flows. A solution to these problems is
+available in many Internet environments. The Internet backbone, various {ISPs},
+and {DSL} access networks rely on {ATM} as their layer 2 transport technology,
+and in such environments, {ATM's} available bit rate service can efficiently
+address these problems. {ABR} is able to avoid congestion collapse and provide
+fair bandwidth allocations by distributing the unutilized bandwidth fairly among
+competing flows. This article presents simulation results and empirical
+measurements that illustrate the
 congestion collapse and unfairness problems, and {ATM} {ABR's} effectiveness in addressing those problems},
 	number = {4},
 	journal = {{IEEE} Communications Magazine},
@@ -882,7 +1231,20 @@ congestion collapse and unfairness problems, and {ATM} {ABR's} effectiveness in 
 	isbn = {0-7803-8968-9},
 	shorttitle = {The one-to-many {TCP} overlay},
 	doi = {10.1109/INFCOM.2005.1498445},
-	abstract = {We consider reliable multicast in overlay networks where nodes have finite-size buffers and are subject to failures. We address issues of end-to-end reliability and throughput scalability in this framework. We propose a simple architecture which consists of using distinct point-to-point {TCP} connections between adjacent pairs of end-systems, together with a back-pressure control mechanism regulating the transfers of adjacent {TCP} connections, as well as a back-up buffering system handling node failures. This architecture, that we call the one-to-many {TCP} overlay, is a natural extension of {TCP} to the one-to-many case, in that it adapts the rate of the group communication to local congestion in a decentralized way via the window back-pressure mechanism. Using theoretical investigations, experimentations in the Internet, and large network simulations, we show that this architecture provides end-to-end reliability and can tolerate multiple simultaneous node failures, provided the backup 
+	abstract = {We consider reliable multicast in overlay networks where
+nodes have finite-size buffers and are subject to failures. We address issues of
+end-to-end reliability and throughput scalability in this framework. We propose
+a simple architecture which consists of using distinct point-to-point {TCP}
+connections between adjacent pairs of end-systems, together with a back-pressure
+control mechanism regulating the transfers of adjacent {TCP} connections, as
+well as a back-up buffering system handling node failures. This architecture,
+that we call the one-to-many {TCP} overlay, is a natural extension of {TCP} to
+the one-to-many case, in that it adapts the rate of the group communication to
+local congestion in a decentralized way via the window back-pressure mechanism.
+Using theoretical investigations, experimentations in the Internet, and large
+network simulations, we show that this architecture provides end-to-end
+reliability and can tolerate multiple simultaneous node failures, provided the
+backup
 buffers are sized appropriately. We also show that under random perturbations caused by cross traffic described in the paper, the throughput of this reliable group communication is always larger than a positive constant, that does not depend on the group size. This scalability result contrasts with known results about the non-scalability of {IP-supported} multicast for reliable group communication.},
 	booktitle = {Proceedings {IEEE} {INFOCOM} 2005. 24th Annual Joint Conference of the {IEEE} Computer and Communications Societies},
 	publisher = {{IEEE}},
@@ -899,7 +1261,20 @@ continuous media},
 	isbn = {0-7803-7371-5},
 	shorttitle = {{TCP-CM}},
 	doi = {10.1109/IPCCC.2002.995139},
-	abstract = {We propose a new {TCP} friendly transport protocol, called {TCP-CM}, for continuous media applications over the Internet. {TCP-CM} is a direct modification of {TCP} to support continuous media applications without compromising the congestion control feature of {TCP}, which is critical to the stable functioning of the Internet. We design {TCP-CM} {API} to be compatible with the {BSD} socket interface, which requires minimum changes for applications to adopt {TCP-CM.} Continuous media applications that adopt {TCP-CM} as the transport protocol can be relieved from burdens such as rate control and scheduling for timely delivery, and hence can focus solely on advanced coding or compression techniques for adapting the content according to the available network bandwidth. We implement the {TCP-CM} in Linux 2.2.15 {TCP/IP} protocol stack, and run extensive experiments on {TCP-CM} using emulated video flows. Our experiments show that {TCP-CM} can be used for the timely delivery of continuous media data 
+	abstract = {We propose a new {TCP} friendly transport protocol, called
+{TCP-CM}, for continuous media applications over the Internet. {TCP-CM} is a
+direct modification of {TCP} to support continuous media applications without
+compromising the congestion control feature of {TCP}, which is critical to the
+stable functioning of the Internet. We design {TCP-CM} {API} to be compatible
+with the {BSD} socket interface, which requires minimum changes for applications
+to adopt {TCP-CM.} Continuous media applications that adopt {TCP-CM} as the
+transport protocol can be relieved from burdens such as rate control and
+scheduling for timely delivery, and hence can focus solely on advanced coding or
+compression techniques for adapting the content according to the available
+network bandwidth. We implement the {TCP-CM} in Linux 2.2.15 {TCP/IP} protocol
+stack, and run extensive experiments on {TCP-CM} using emulated video flows. Our
+experiments show that {TCP-CM} can be used for the timely delivery of continuous
+media data
 within the constraints of the available network bandwidth and can compete with {TCP} connections fairly},
 	booktitle = {Performance, Computing, and Communications Conference, 2002. 21st {IEEE} International},
 	publisher = {{IEEE}},
@@ -928,7 +1303,20 @@ within the constraints of the available network bandwidth and can compete with {
 	isbn = {978-1-4244-2324-8},
 	shorttitle = {Friendly {P2P}},
 	doi = {10.1109/GLOCOM.2008.ECP.334},
-	abstract = {{Peer-to-Peer} {(P2P)} file sharing applications use multiple {TCP} connections between peers to transfer data. The aggressiveness and robustness of {P2P} technology remarkably improve transfer efficiency and network bandwidth utilization. However, while the network bottleneck link is congested, {P2P} applications tend to unfairly steal bandwidth from other traditional Internet applications {(Client/Server} mode), which deteriorates the performance of traditional Internet applications. The paper proposes a {friendlyP2P} system with new application-level approaches for congestion detection and avoidance to keep fairness between {P2P} traffic and traditional Internet traffic. {friendlyP2P}, which is friendly to {ISPs}, namely to Internet networks and traditional Internet traffic, detects network congestion via throughput measurements and alleviates network congestion by optimization of the number of {P2P} connections from the viewpoint of {P2P} users. {friendlyP2P} system requires neither network 
+	abstract = {{Peer-to-Peer} {(P2P)} file sharing applications use
+multiple {TCP} connections between peers to transfer data. The aggressiveness
+and robustness of {P2P} technology remarkably improve transfer efficiency and
+network bandwidth utilization. However, while the network bottleneck link is
+congested, {P2P} applications tend to unfairly steal bandwidth from other
+traditional Internet applications {(Client/Server} mode), which deteriorates the
+performance of traditional Internet applications. The paper proposes a
+{friendlyP2P} system with new application-level approaches for congestion
+detection and avoidance to keep fairness between {P2P} traffic and traditional
+Internet traffic. {friendlyP2P}, which is friendly to {ISPs}, namely to Internet
+networks and traditional Internet traffic, detects network congestion via
+throughput measurements and alleviates network congestion by optimization of the
+number of {P2P} connections from the viewpoint of {P2P} users. {friendlyP2P}
+system requires neither network
 node support nor {TCP} modification, which makes it easy to deploy. Simulation experiments demonstrate that fairness and congestion avoidance can be achieved in presence of congestion, and network bandwidth can be effectively utilized in absence of congestion with {friendlyP2P} technology.},
 	booktitle = {{IEEE} Global Telecommunications Conference, 2008. {IEEE} {GLOBECOM} 2008},
 	publisher = {{IEEE}},
@@ -957,7 +1345,20 @@ node support nor {TCP} modification, which makes it easy to deploy. Simulation e
 	title = {A survey of transport layer protocols suited for real-time data delivery over Diffserv-capable networks},
 	isbn = {0-7695-1588-6},
 	doi = {10.1109/ICDCSW.2002.1030786},
-	abstract = {As the Internet evolves toward the global multiservice network of the future, a key consideration is the support for services with guaranteed quality of service {(QoS).} The current Internet has a number of barriers to {QoS} support for real-time data delivery. The proposed differentiated services {(Diffserv)} framework is seen as the key technology to achieve this. This paper examines standard transport layer protocols, i.e. {UDP} and {TCP}, suited for real-time data delivery over Diffserv-capable networks where bandwidth guarantees are provided. We designed a streaming video application that buffers a portion of data on the receiver before starting the playback and operates in a streaming mode. Streaming media applications currently used in the Internet adopt {UDP} because of the general belief that {TCP's} reliable delivery mechanisms, such as congestion control and retransmission, are unsuitable for time-sensitive delivery. However, {TCP} shows the better simulation results than {UDP} when 
+	abstract = {As the Internet evolves toward the global multiservice
+network of the future, a key consideration is the support for services with
+guaranteed quality of service {(QoS).} The current Internet has a number of
+barriers to {QoS} support for real-time data delivery. The proposed
+differentiated services {(Diffserv)} framework is seen as the key technology to
+achieve this. This paper examines standard transport layer protocols, i.e. {UDP}
+and {TCP}, suited for real-time data delivery over Diffserv-capable networks
+where bandwidth guarantees are provided. We designed a streaming video
+application that buffers a portion of data on the receiver before starting the
+playback and operates in a streaming mode. Streaming media applications
+currently used in the Internet adopt {UDP} because of the general belief that
+{TCP's} reliable delivery mechanisms, such as congestion control and
+retransmission, are unsuitable for time-sensitive delivery. However, {TCP} shows
+the better simulation results than {UDP} when
 packets are lost over Diffserv networks. In our simulation, {TCP} can adapt its sending rate to the guaranteed bandwidth and the buffer on the receiver allows {TCP} to retransmit lost packets before the playback. As for {TCP}, the employment of {SACK} option that can recover lost packets efficiently contributes to a better performance.},
 	booktitle = {22nd International Conference on Distributed Computing Systems Workshops, 2002. Proceedings},
 	publisher = {{IEEE}},
@@ -987,7 +1388,20 @@ TCP-ROME} provides the means to overcome bandwidth fluctuations and network bott
 	title = {Congestion Control in Distributed Media Streaming},
 	isbn = {1-4244-1047-9},
 	doi = {10.1109/INFCOM.2007.165},
-	abstract = {Distributed media streaming, which uses multiple senders to collaboratively and simultaneously stream media content to a receiver, poses new challenges in congestion control. Such approach establishes multiple flows within a session. Since conventional congestion control only aims to make each of these flows {TCP-friendly}, selfish users can increase the number of flows to grab a larger share of the bandwidth, introducing more congestion and degrading the overall network performance. To address this issue, we propose the idea of task-level {TCP-friendliness}, which enforces {TCP-friendliness} upon a set of flows belonging to a task instead of upon individual flow. We design {DMSCC}, a congestion control scheme, to achieve task-level {TCP-friendliness} in distributed media streaming. By observing shared congestion, {DMSCC} identifies the set of flows experiencing congestion and dynamically adjusts those flows such that their combined throughput is {TCP-friendly.} To achieve this goal, {DMSCC} 
+	abstract = {Distributed media streaming, which uses multiple senders to
+collaboratively and simultaneously stream media content to a receiver, poses new
+challenges in congestion control. Such approach establishes multiple flows
+within a session. Since conventional congestion control only aims to make each
+of these flows {TCP-friendly}, selfish users can increase the number of flows to
+grab a larger share of the bandwidth, introducing more congestion and degrading
+the overall network performance. To address this issue, we propose the idea of
+task-level {TCP-friendliness}, which enforces {TCP-friendliness} upon a set of
+flows belonging to a task instead of upon individual flow. We design {DMSCC}, a
+congestion control scheme, to achieve task-level {TCP-friendliness} in
+distributed media streaming. By observing shared congestion, {DMSCC} identifies
+the set of flows experiencing congestion and dynamically adjusts those flows
+such that their combined throughput is {TCP-friendly.} To achieve this goal,
+{DMSCC}
 addresses two issues: (i) given a beta (beta {\textless} 1), how to control a flow using {AIMD} such that it consumes beta-times the throughput of a {TCP} flow, and (ii) how to identify the set of flows that share a bottleneck. In our simulations, {DMSCC} can effectively regulate the throughput of flows on every bottleneck, resulting in a {TCP-friendly} combined throughput.},
 	booktitle = {{IEEE} {INFOCOM} 2007. 26th {IEEE} International Conference on Computer Communications},
 	publisher = {{IEEE}},
@@ -1004,7 +1418,20 @@ addresses two issues: (i) given a beta (beta {\textless} 1), how to control a fl
 	isbn = {0-7803-9746-0},
 	shorttitle = {{LM-MCM}},
 	doi = {10.1109/ICON.2006.302575},
-	abstract = {A major challenge in the Internet is to deliver live video content with a good quality to large number of heterogeneous receivers. Layered multicast is a promising solution to accomplish this task efficiently. However, schemes using it suffer from slow convergence time, lack of inter-session fairness and {TCP-friendliness}, and considerable losses induced by slow response; and failed join-experiments. This paper proposes a new layered multicast with multilevel congestion marking {(LM-MCM).} A fundamental contribution of this scheme is introducing a multilevel congestion marking strategy {(MCM)} which enables a router to mark the congestion-flag field of each arriving {LM-MCM} packet according to the average queue size. Furthermore, based on the average congestion-flag, each receiver can improve/reduce the quality of service it receives to respond to the network congestion. We evaluated {LM-MCM} in a number of scenarios on {NS2} simulator. The results show {LM-MCM} converges quickly to the 
+	abstract = {A major challenge in the Internet is to deliver live video
+content with a good quality to large number of heterogeneous receivers. Layered
+multicast is a promising solution to accomplish this task efficiently. However,
+schemes using it suffer from slow convergence time, lack of inter-session
+fairness and {TCP-friendliness}, and considerable losses induced by slow
+response; and failed join-experiments. This paper proposes a new layered
+multicast with multilevel congestion marking {(LM-MCM).} A fundamental
+contribution of this scheme is introducing a multilevel congestion marking
+strategy {(MCM)} which enables a router to mark the congestion-flag field of
+each arriving {LM-MCM} packet according to the average queue size. Furthermore,
+based on the average congestion-flag, each receiver can improve/reduce the
+quality of service it receives to respond to the network congestion. We
+evaluated {LM-MCM} in a number of scenarios on {NS2} simulator. The results show
+{LM-MCM} converges quickly to the
 optimal layer of subscription, induces less loss to track the available bandwidth, and has inter-session fairness and {TCP-friendliness}},
 	booktitle = {14th {IEEE} International Conference on Networks, 2006. {ICON} '06},
 	publisher = {{IEEE}},
@@ -1049,7 +1476,20 @@ AIADD} and {AIMD} algorithms. It is shown that (i) both classic and Westwood+ {T
 	title = {An Evaluation of Transport Protocols in {Peer-to-Peer} Media Streaming},
 	isbn = {978-0-7695-3187-8},
 	doi = {10.1109/NAS.2008.46},
-	abstract = {To solve the scalability issue of the traditional client-server architecture, many media streaming applications have adopted peer-to-peer {(P2P)} architecture in their implementations. Because of the success of using {TCP} in client-server streaming applications, most {P2P} streaming applications also use {TCP} as their transport protocol. On the other hand, some researchers argue that {UDP} is a better choice of transport protocol, as it is light-weight and meets the requirements of real-time streaming. However, there is no comparison study of using two transport protocols in global deployment of {P2P} applications. In this paper, we describe our efforts along this line. We first describe the designs of two {P2P} streaming systems: one using {TCP}, and the other using {UDP.} To simulate real deployment scenarios, both systems are developed based on similar designs used in current popular {P2P} streaming software products and comparative experiments are carried out on {PlanetLab}, a global 
+	abstract = {To solve the scalability issue of the traditional
+client-server architecture, many media streaming applications have adopted
+peer-to-peer {(P2P)} architecture in their implementations. Because of the
+success of using {TCP} in client-server streaming applications, most {P2P}
+streaming applications also use {TCP} as their transport protocol. On the other
+hand, some researchers argue that {UDP} is a better choice of transport
+protocol, as it is light-weight and meets the requirements of real-time
+streaming. However, there is no comparison study of using two transport
+protocols in global deployment of {P2P} applications. In this paper, we describe
+our efforts along this line. We first describe the designs of two {P2P}
+streaming systems: one using {TCP}, and the other using {UDP.} To simulate real
+deployment scenarios, both systems are developed based on similar designs used
+in current popular {P2P} streaming software products and comparative experiments
+are carried out on {PlanetLab}, a global
 Internet simulation platform.},
 	booktitle = {International Conference on Networking, Architecture, and Storage, 2008. {NAS} '08},
 	publisher = {{IEEE}},
@@ -1079,7 +1519,20 @@ Internet simulation platform.},
 	title = {{TCP-friendly} congestion control for layered video streaming using end-to-end bandwidth inference},
 	isbn = {978-1-4244-2294-4},
 	doi = {10.1109/MMSP.2008.4665123},
-	abstract = {More and more streaming protocols are developed for the multimedia applications. However, many streaming protocols only consider the network stability, but not the characteristics of streaming applications. In order to cooperate with {H.264/MPEG-4} {AVC} scalable extension which can achieve fine granularity of scalability at bit level to the time-vary heterogeneous networks, we design a {TCP-friendly} congestion control algorithm based on the bandwidth estimation to smoothly change sending rate to avoid unnecessary oscillations so that the subscription decision of {SVC} layers can be made to better utilize the network resource. In case of the unavoidable network congestion, we unsubscribe scalable video layers according to the packet lost rate and the recently received throughput instead of only dropping one layer at a time to rapidly accommodate the streaming service to the channels and avoid persecuting the other flows at the same bottleneck. In addition, the probing packets for estimating the 
+	abstract = {More and more streaming protocols are developed for the
+multimedia applications. However, many streaming protocols only consider the
+network stability, but not the characteristics of streaming applications. In
+order to cooperate with {H.264/MPEG-4} {AVC} scalable extension which can
+achieve fine granularity of scalability at bit level to the time-vary
+heterogeneous networks, we design a {TCP-friendly} congestion control algorithm
+based on the bandwidth estimation to smoothly change sending rate to avoid
+unnecessary oscillations so that the subscription decision of {SVC} layers can
+be made to better utilize the network resource. In case of the unavoidable
+network congestion, we unsubscribe scalable video layers according to the packet
+lost rate and the recently received throughput instead of only dropping one
+layer at a time to rapidly accommodate the streaming service to the channels and
+avoid persecuting the other flows at the same bottleneck. In addition, the
+probing packets for estimating the
 available bandwidth are encapsulated with {RTP/RTCP.} The simulations show that the proposed congestion control algorithm for real-time applications efficiently utilizes network bandwidth without hampering the performance of the existing {TCP} applications.},
 	booktitle = {2008 {IEEE} 10th Workshop on Multimedia Signal Processing},
 	publisher = {{IEEE}},
@@ -1169,7 +1622,20 @@ available bandwidth are encapsulated with {RTP/RTCP.} The simulations show that 
 	volume = {14},
 	issn = {1063-6692},
 	doi = {10.1109/TNET.2006.882843},
-	abstract = {Concurrent multipath transfer {(CMT)} uses the Stream Control Transmission Protocol's {(SCTP)} multihoming feature to distribute data across multiple end-to-end paths in a multihomed {SCTP} association. We identify three negative side-effects of reordering introduced by {CMT} that must be managed before efficient parallel transfer can be achieved: (1) unnecessary fast retransmissions by a sender; (2) overly conservative congestion window (cwnd) growth at a sender; and (3) increased ack traffic due to fewer delayed acks by a receiver. We propose three algorithms which augment and/or modify current {SCTP} to counter these side-effects. Presented with several choices as to where a sender should direct retransmissions of lost data, we propose five retransmission policies for {CMT.} We demonstrate spurious retransmissions in {CMT} with all five policies and propose changes to {CMT} to allow the different policies. {CMT} is evaluated against {AppStripe}, which is an idealized application that stripes 
+	abstract = {Concurrent multipath transfer {(CMT)} uses the Stream
+Control Transmission Protocol's {(SCTP)} multihoming feature to distribute data
+across multiple end-to-end paths in a multihomed {SCTP} association. We identify
+three negative side-effects of reordering introduced by {CMT} that must be
+managed before efficient parallel transfer can be achieved: (1) unnecessary fast
+retransmissions by a sender; (2) overly conservative congestion window (cwnd)
+growth at a sender; and (3) increased ack traffic due to fewer delayed acks by a
+receiver. We propose three algorithms which augment and/or modify current {SCTP}
+to counter these side-effects. Presented with several choices as to where a
+sender should direct retransmissions of lost data, we propose five
+retransmission policies for {CMT.} We demonstrate spurious retransmissions in
+{CMT} with all five policies and propose changes to {CMT} to allow the different
+policies. {CMT} is evaluated against {AppStripe}, which is an idealized
+application that stripes
 data over multiple paths using multiple {SCTP} associations. The different {CMT} retransmission policies are then evaluated with varied constrained receive buffer sizes. In this foundation work, we operate under the strong assumption that the bottleneck queues on the end-to-end paths used in {CMT} are independent},
 	number = {5},
 	journal = {{IEEE/ACM} Transactions on Networking},
@@ -1280,7 +1746,20 @@ experiences},
 	issn = {0140-3664},
 	url = {http://dx.doi.org/10.1016/j.comcom.2010.12.011},
 	doi = {http://dx.doi.org/10.1016/j.comcom.2010.12.011},
-	abstract = {Various solutions based on {Peer-to-Peer} {(P2P)} multicasting have been gaining much popularity in recent years, since {P2P} multicasting can effectively support live streaming of various content. In this work we assume that the {P2P} multicasting is used to distribute content with high reliability requirements, e.g., weather warnings, security updates, financial data, security warnings, etc. The main idea to provide protection of the system against network failures is to establish several (at least two) disjoint multicasting trees. Our discussion in this paper centers on the problem how additional survivability constraints to provide failure-disjoint trees impact the operation of {P2P} multicasting systems. As the performance metrics we propose to use: streaming cost, maximum delay and throughput. The possible failure scenario we take into account is a single failure of one of the following network elements: streaming server, overlay link, uploading node and {ISP} link. We examine the topic of 
+	abstract = {Various solutions based on {Peer-to-Peer} {(P2P)}
+multicasting have been gaining much popularity in recent years, since {P2P}
+multicasting can effectively support live streaming of various content. In this
+work we assume that the {P2P} multicasting is used to distribute content with
+high reliability requirements, e.g., weather warnings, security updates,
+financial data, security warnings, etc. The main idea to provide protection of
+the system against network failures is to establish several (at least two)
+disjoint multicasting trees. Our discussion in this paper centers on the problem
+how additional survivability constraints to provide failure-disjoint trees
+impact the operation of {P2P} multicasting systems. As the performance metrics
+we propose to use: streaming cost, maximum delay and throughput. The possible
+failure scenario we take into account is a single failure of one of the
+following network elements: streaming server, overlay link, uploading node and
+{ISP} link. We examine the topic of
 survivable {P2P} multicasting applying offline optimization methods and simulations. In the former case we formulate Mixed Integer Programming {(MIP)} models and use the {CPLEX} solver to obtain optimal results. For the streaming cost objective we compare two {MIP} formulations in terms of the complexity and execution time. Results show that our formulation provides much better performance compared to the classical {P2P} multicasting formulation proposed in the literature. Moreover, in the case of the streaming cost problem we propose a new evolutionary algorithm that yields results for larger networks than the {CPLEX} solver. The simulations are run to emulate a distributed network environment, in which each node makes its own decisions. Results obtained using both research methods confirm that the survivability of {P2P} multicasting can be achieved with relatively low additional system overhead for all three considered performance metrics: streaming cost, maximum delay and system throughput.},
 	number = {12},
 	journal = {Comput. Commun.},
@@ -1330,7 +1809,20 @@ survivable {P2P} multicasting applying offline optimization methods and simulati
 	title = {Designing a super-peer network},
 	isbn = {{0-7803-7665-X}},
 	doi = {10.1109/ICDE.2003.1260781},
-	abstract = {A super-peer is a node in a peer-to-peer network that operates both as a server to a set of clients, and as an equal in a network of super-peers. Super-peer networks strike a balance between the efficiency of centralized search, and the autonomy, load balancing and robustness to attacks provided by distributed search. Furthermore, they take advantage of the heterogeneity of capabilities (e.g., bandwidth, processing power) across peers, which recent studies have shown to be enormous. Hence, new and old {P2P} systems like {KaZaA} and Gnutella are adopting super-peers in their design. Despite their growing popularity, the behavior of super-peer networks is not well understood. For example, what are the potential drawbacks of super-peer networks? How can super-peers be made more reliable? How many clients should a super-peer take on to maximize efficiency? we examine super-peer networks in detail, gaming an understanding of their fundamental characteristics and performance tradeoffs. We also present 
+	abstract = {A super-peer is a node in a peer-to-peer network that
+operates both as a server to a set of clients, and as an equal in a network of
+super-peers. Super-peer networks strike a balance between the efficiency of
+centralized search, and the autonomy, load balancing and robustness to attacks
+provided by distributed search. Furthermore, they take advantage of the
+heterogeneity of capabilities (e.g., bandwidth, processing power) across peers,
+which recent studies have shown to be enormous. Hence, new and old {P2P} systems
+like {KaZaA} and Gnutella are adopting super-peers in their design. Despite
+their growing popularity, the behavior of super-peer networks is not well
+understood. For example, what are the potential drawbacks of super-peer
+networks? How can super-peers be made more reliable? How many clients should a
+super-peer take on to maximize efficiency? we examine super-peer networks in
+detail, gaming an understanding of their fundamental characteristics and
+performance tradeoffs. We also present
 practical guidelines and a general procedure for the design of an efficient super-peer network.},
 	booktitle = {19th International Conference on Data Engineering, 2003. Proceedings},
 	publisher = {{IEEE}},
@@ -1404,7 +1896,20 @@ practical guidelines and a general procedure for the design of an efficient supe
 	isbn = {1-4244-1047-9},
 	shorttitle = {Mesh or {Multiple-Tree}},
 	doi = {10.1109/INFCOM.2007.168},
-	abstract = {Existing approaches to {P2P} streaming can be divided into two general classes: (i) tree-based approaches use push-based content delivery over multiple tree-shaped overlays, and (ii) mesh-based approaches use swarming content delivery over a randomly connected mesh. Previous studies have often focused on a particular {P2P} streaming mechanism and no comparison between these two classes has been conducted. In this paper, we compare and contrast the performance of representative protocols from each class using simulations. We identify the similarities and differences between these two approaches. Furthermore, we separately examine the behavior of content delivery and overlay construction mechanisms for both approaches in static and dynamic scenarios. Our results indicate that the mesh-based approach consistently exhibits a superior performance over the tree-based approach. We also show that the main factors attributing in the inferior performance of the tree-based approach are (i) the static 
+	abstract = {Existing approaches to {P2P} streaming can be divided into
+two general classes: (i) tree-based approaches use push-based content delivery
+over multiple tree-shaped overlays, and (ii) mesh-based approaches use swarming
+content delivery over a randomly connected mesh. Previous studies have often
+focused on a particular {P2P} streaming mechanism and no comparison between
+these two classes has been conducted. In this paper, we compare and contrast the
+performance of representative protocols from each class using simulations. We
+identify the similarities and differences between these two approaches.
+Furthermore, we separately examine the behavior of content delivery and overlay
+construction mechanisms for both approaches in static and dynamic scenarios. Our
+results indicate that the mesh-based approach consistently exhibits a superior
+performance over the tree-based approach. We also show that the main factors
+attributing in the inferior performance of the tree-based approach are (i) the
+static
 mapping of content to a particular tree, and (ii) the placement of each peer as an internal node in one tree and as a leaf in all other trees.},
 	booktitle = {{IEEE} {INFOCOM} 2007. 26th {IEEE} International Conference on Computer Communications},
 	publisher = {{IEEE}},
@@ -1438,7 +1943,20 @@ mapping of content to a particular tree, and (ii) the placement of each peer as 
 	issn = {0733-8716},
 	shorttitle = {Understanding the Power of {Pull-Based} Streaming Protocol},
 	doi = {10.1109/JSAC.2007.071207},
-	abstract = {Most of the real deployed peer-to-peer streaming systems adopt pull-based streaming protocol. In this paper, we demonstrate that, besides simplicity and robustness, with proper parameter settings, when the server bandwidth is above several times of the raw streaming rate, which is reasonable for practical live streaming system, simple pull-based {P2P} streaming protocol is nearly optimal in terms of peer upload capacity utilization and system throughput even without intelligent scheduling and bandwidth measurement. We also indicate that whether this near optimality can be achieved depends on the parameters in pull-based protocol, server bandwidth and group size. Then we present our mathematical analysis to gain deeper insight in this characteristic of pull-based streaming protocol. On the other hand, the optimality of pull-based protocol comes from a cost -tradeoff between control overhead and delay, that is, the protocol has either large control overhead or large delay. To break the tradeoff, 
+	abstract = {Most of the real deployed peer-to-peer streaming systems
+adopt pull-based streaming protocol. In this paper, we demonstrate that, besides
+simplicity and robustness, with proper parameter settings, when the server
+bandwidth is above several times of the raw streaming rate, which is reasonable
+for practical live streaming system, simple pull-based {P2P} streaming protocol
+is nearly optimal in terms of peer upload capacity utilization and system
+throughput even without intelligent scheduling and bandwidth measurement. We
+also indicate that whether this near optimality can be achieved depends on the
+parameters in pull-based protocol, server bandwidth and group size. Then we
+present our mathematical analysis to gain deeper insight in this characteristic
+of pull-based streaming protocol. On the other hand, the optimality of
+pull-based protocol comes from a cost -tradeoff between control overhead and
+delay, that is, the protocol has either large control overhead or large delay.
+To break the tradeoff,
 we propose a pull-push hybrid protocol. The basic idea is to consider pull-based protocol as a highly efficient bandwidth-aware multicast routing protocol and push down packets along the trees formed by pull-based protocol. Both simulation and real-world experiment show that this protocol is not only even more effective in throughput than pull-based protocol but also has far lower delay and much smaller overhead. And to achieve near optimality in peer capacity utilization without churn, the server bandwidth needed can be further relaxed. Furthermore, the proposed protocol is fully implemented in our deployed {GridMedia} system and has the record to support over 220,000 users simultaneously online.},
 	number = {9},
 	journal = {{IEEE} Journal on Selected Areas in Communications},
@@ -1453,7 +1971,20 @@ we propose a pull-push hybrid protocol. The basic idea is to consider pull-based
 	title = {On some fundamental properties of {P2P} push/pull protocols},
 	isbn = {978-1-4244-2425-2},
 	doi = {10.1109/CCE.2008.4578935},
-	abstract = {The peer-to-peer communication paradigm is changing the way the Internet works, and the perspective network and service providers are looking at the telecommunication business. {P2P} applications and networks are taking foot by the day, and new systems are proposed continuously with ever novel features and better performances. In spite of attention and success, however, there is still a lack of fundamental analysis and understanding of the elementary properties of these systems. In this paper we consider a class of {P2P} protocols suitable both for content delivery (file-based communications) and for high-bandwidth media streaming like video and {TV}, and explore its fundamental properties. The class considered is known as mesh-based swarming push-pull systems or interleave protocols. They split the content in pieces and alternate continuously two phases: One where the peer pushes a piece to another peer to percolate information in the system, and the other when it pulls a piece trying to 
+	abstract = {The peer-to-peer communication paradigm is changing the way
+the Internet works, and the perspective network and service providers are
+looking at the telecommunication business. {P2P} applications and networks are
+taking foot by the day, and new systems are proposed continuously with ever
+novel features and better performances. In spite of attention and success,
+however, there is still a lack of fundamental analysis and understanding of the
+elementary properties of these systems. In this paper we consider a class of
+{P2P} protocols suitable both for content delivery (file-based communications)
+and for high-bandwidth media streaming like video and {TV}, and explore its
+fundamental properties. The class considered is known as mesh-based swarming
+push-pull systems or interleave protocols. They split the content in pieces and
+alternate continuously two phases: One where the peer pushes a piece to another
+peer to percolate information in the system, and the other when it pulls a piece
+trying to
 retrieve missing information. We compare synchronous and asynchronous models and explore the impact of protocols parameters, such as the dimension of the active neighborhood, trying to identify the efficiency of these very simple protocols in different scenarios, gaining insight to design the next protocol generation with performance and efficiency in mind.},
 	booktitle = {Second International Conference on Communications and Electronics, 2008. {ICCE} 2008},
 	publisher = {{IEEE}},
@@ -1470,7 +2001,20 @@ retrieve missing information. We compare synchronous and asynchronous models and
 	title = {Towards low-redundancy push-pull {P2P} live streaming},
 	isbn = {978-963-9799-26-4},
 	url = {http://portal.acm.org/citation.cfm?id=1535571.1535589},
-	abstract = {{P2P} live streaming systems are developed in two major approaches: tree-push versus mesh-pull. The hybrid push-pull streaming, as an emerging and promising approach, offers a good tradeoff between traffic overhead and system throughput. In this paper, we demonstrate that video redundancy is a large contributor of the traffic overhead in push-pull systems. To reduce the traffic overhead, we propose simple but effective sub-stream scheduling and re-scheduling mechanisms, implemented in a push-pull streaming prototype called Low-redundancy Streaming {(LStreaming).} To demonstrate its effectiveness on reducing the traffic overhead, we conduct both simulation and prototype experiments and compare the proposed {LStreaming} with random mesh-pull and {GridMedia.} The simulation results show that {LStreaming} significantly reduces the total traffic overhead, i.e., up to 33\% and 37\% reduction compared with mesh-pull and {GridMedia} in dynamic {P2P} environments, respectively. {LStreaming} also achieves 
+	abstract = {{P2P} live streaming systems are developed in two major
+approaches: tree-push versus mesh-pull. The hybrid push-pull streaming, as an
+emerging and promising approach, offers a good tradeoff between traffic overhead
+and system throughput. In this paper, we demonstrate that video redundancy is a
+large contributor of the traffic overhead in push-pull systems. To reduce the
+traffic overhead, we propose simple but effective sub-stream scheduling and
+re-scheduling mechanisms, implemented in a push-pull streaming prototype called
+Low-redundancy Streaming {(LStreaming).} To demonstrate its effectiveness on
+reducing the traffic overhead, we conduct both simulation and prototype
+experiments and compare the proposed {LStreaming} with random mesh-pull and
+{GridMedia.} The simulation results show that {LStreaming} significantly reduces
+the total traffic overhead, i.e., up to 33\% and 37\% reduction compared with
+mesh-pull and {GridMedia} in dynamic {P2P} environments, respectively.
+{LStreaming} also achieves
 the throughput, more close to the optimal value than the other two schemes, and sustains a better video playback quality. The prototype experiments show that {LStreaming} is practical and achieves the expected performance.},
 	booktitle = {Proceedings of the 5th International {ICST} Conference on Heterogeneous Networking for Quality, Reliability, Security and Robustness},
 	publisher = {{ICST} {(Institute} for Computer Sciences, {Social-Informatics} and Telecommunications Engineering)},
