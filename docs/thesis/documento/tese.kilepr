@@ -153,7 +153,7 @@ Mode=LaTeX
 ReadWrite=true
 
 [document-settings,item:mudccp.tex]
-Bookmarks=3264,3216,3148,3233,3166,3252,3185,3186,3255,3224,3208,3157,3244,3176,3261,3245,3262
+Bookmarks=3220,3287,3289,3224,3291,3292,3293,3294,3229,3232,3239,3307,3308,3241,3243,3311,3315,3248,3317,3252,3322,3325,3259,3260,3328,3262,3329,3263,3331,3336,3269,3270,3338,3271,3339,3340,3273,3275,3276,3345,3211,3278,3346,3279,3280,3348,3281,3215
 Encoding=ISO-8859-1
 FoldedColumns=
 FoldedLines=
@@ -210,7 +210,7 @@ highlight=LaTeX
 line=12
 mode=LaTeX
 open=true
-order=7
+order=6
 
 [item:agradecimentos.tex]
 archive=true
@@ -240,7 +240,7 @@ highlight=LaTeX
 line=25
 mode=LaTeX
 open=true
-order=2
+order=1
 
 [item:apendices.tex]
 archive=true
@@ -250,27 +250,27 @@ highlight=LaTeX
 line=14
 mode=LaTeX
 open=true
-order=8
+order=7
 
 [item:biblio-master.bib]
 archive=true
-column=23
+column=14
 encoding=ISO-8859-1
 highlight=BibTeX
-line=1763
+line=1076
 mode=BibTeX
-open=false
-order=8
+open=true
+order=9
 
 [item:biblio-phd.bib]
 archive=true
 column=13
 encoding=ISO-8859-1
 highlight=BibTeX
-line=630
+line=2358
 mode=BibTeX
 open=true
-order=3
+order=2
 
 [item:biblio-zotero.bib]
 archive=true
@@ -279,18 +279,18 @@ encoding=ISO-8859-1
 highlight=BibTeX
 line=73
 mode=BibTeX
-open=false
-order=6
+open=true
+order=10
 
 [item:conclusao.tex]
 archive=true
-column=67
+column=65
 encoding=ISO-8859-1
 highlight=LaTeX
-line=14
+line=76
 mode=LaTeX
 open=true
-order=5
+order=4
 
 [item:fundamentacao.tex]
 archive=true
@@ -300,7 +300,7 @@ highlight=LaTeX
 line=722
 mode=LaTeX
 open=true
-order=6
+order=5
 
 [item:impl-mudccp.tex]
 archive=true
@@ -320,7 +320,7 @@ highlight=LaTeX
 line=774
 mode=LaTeX
 open=true
-order=4
+order=3
 
 [item:metodoexperimento.tex]
 archive=true
@@ -344,13 +344,13 @@ order=1
 
 [item:mudccp.tex]
 archive=true
-column=28
+column=312
 encoding=ISO-8859-1
 highlight=LaTeX
-line=1522
+line=1600
 mode=LaTeX
 open=true
-order=1
+order=11
 
 [item:resumo.tex]
 archive=true
@@ -360,7 +360,7 @@ highlight=LaTeX
 line=16
 mode=LaTeX
 open=true
-order=9
+order=8
 
 [item:simbolos.tex]
 archive=true
@@ -431,14 +431,14 @@ JumpList=
 ViMarks=
 
 [view-settings,view=0,item:biblio-master.bib]
-CursorColumn=23
-CursorLine=1763
+CursorColumn=14
+CursorLine=1076
 JumpList=
 ViMarks=
 
 [view-settings,view=0,item:biblio-phd.bib]
 CursorColumn=13
-CursorLine=630
+CursorLine=2358
 JumpList=
 ViMarks=
 
@@ -449,8 +449,8 @@ JumpList=
 ViMarks=
 
 [view-settings,view=0,item:conclusao.tex]
-CursorColumn=67
-CursorLine=14
+CursorColumn=65
+CursorLine=76
 JumpList=
 ViMarks=
 
@@ -483,10 +483,10 @@ JumpList=
 ViMarks=
 
 [view-settings,view=0,item:mudccp.tex]
-CursorColumn=28
-CursorLine=1522
+CursorColumn=312
+CursorLine=1600
 JumpList=
-ViMarks=a,3266,45,b,3264,50,c,3256,75,d,3258,71,e,3256,75,f,3263,0,g,3197,0,h,3211,45,i,3210,8,j,3256,75,k,3196,0,l,3266,45,m,3256,75,n,3246,0,o,3198,0,p,3187,0,q,3257,0,r,3188,0,s,3199,0,t,3247,0,u,3178,0,v,3254,0,w,3150,0,x,3226,0,y,3229,0,z,3159,0
+ViMarks=a,3348,45,b,3346,50,c,3338,75,d,3340,71,e,3338,75,f,3345,0,g,3279,0,h,3293,45,i,3292,8,j,3338,75,k,3278,0,l,3348,45,m,3338,75,n,3328,0,o,3280,0,p,3269,0,q,3339,0,r,3270,0,s,3281,0,t,3329,0,u,3260,0,v,3336,0,w,3232,0,x,3308,0,y,3311,0,z,3241,0
 
 [view-settings,view=0,item:resumo.tex]
 CursorColumn=52
