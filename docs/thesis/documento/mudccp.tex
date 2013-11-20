@@ -1297,11 +1297,12 @@ formação de parcerias e enviar para o nó \repasss um pacote do tipo
 \SetKwFunction{Union}{Union}\SetKwFunction{length}{length}
 \SetKwFunction{Union}{Union}\SetKwFunction{extractAttribute}{extractAttribute}
 \SetKwFunction{Union}{Union}\SetKwFunction{isFlowBeingReceived}{isFlowBeingReceived}
-\SetKwFunction{Union}{Union}\SetKwFunction{respondToClient}{respondToClient}
+\SetKwFunction{Union}{Union}\SetKwFunction{respondToClients}{respondToClients}
 \SetKwFunction{Union}{Union}\SetKwFunction{getChannelOfFlow}{getChannelOfFlow}
 \SetKwFunction{Union}{Union}\SetKwFunction{GMTPRegister}{GMTP-Register}
 \SetKwFunction{Union}{Union}\SetKwFunction{isWaitingRegisterReply}{isWaitingRegisterReply}
 \SetKwFunction{Union}{Union}\SetKwFunction{waitRegisterReply}{waitRegisterReply}
+\SetKwFunction{Union}{Union}\SetKwFunction{clientWantsFlow}{clientWantsFlow}
 
 \tcc{The node \repasss uses this function to send a register of participation to
 a given node \serv. In case \pks is given, this means that a node \clis
@@ -1311,12 +1312,16 @@ wants to receive the flow \setpk, and this is also signaled to \serv.}
   \textit{\setpk} \attrib \extractAttribute{\pk, `flow'}\tcc*[r]{Extracts \setpks in \pk}
   \textit{\cli} \attrib \extractAttribute{\pk, `client'}\tcc*[r]{Extracts \cli in \pk}
   \uIf(){\isFlowBeingReceived{\setpk}} {
-    \tcc{Let \clis know that \setpks is already registered in this \repass. The function \respondToClient is defined in section \ref{subsec:conexao-requisicao}.}
-    \Return{\respondToClient{\setpk, \cli}}\;
-  } \ElseIf() {\textbf{not} \isWaitingRegisterReply{\setpk}} {
-      \tcc{send request to \servs and wait for \pac{GMTP-Register-Reply}. When received, executes onReceiveGMTPRegisterReply, defined in the Algorithm~\ref{algo:onReceiveGMTPRegisterReply}.}
-      \waitRegisterReply(\setpk)\;
-      \Return{\sendPktRdt{\GMTPRegister{\serv, \setpk}}}
+    \tcc{Let \clis know that \setpks is already registered in this \repass. The function \respondToClients is defined in section \ref{subsec:conexao-requisicao}.}
+    \Return{\respondToClients{\setpk, \cli}}\;
+  } \Else() {
+      \tcc{Add \clis in the list of receivers of \setpk.}
+      \clientWantsFlow{\cli, \setpk}\;
+      \If() {\textbf{not} \isWaitingRegisterReply{\setpk}} {
+	\tcc{send request to \servs and wait for \pac{GMTP-Register-Reply}. When received, executes onReceiveGMTPRegisterReply, defined in the Algorithm~\ref{algo:onReceiveGMTPRegisterReply}.}
+	\waitRegisterReply(\setpk)\;
+	\Return{\sendPktRdt{\GMTPRegister{\serv, \setpk}}}
+      }
   }
 }
 \If(){\textbf{not} \isWaitingRegisterReply{\serv}} {
@@ -1326,12 +1331,15 @@ wants to receive the flow \setpk, and this is also signaled to \serv.}
 \Return False;
 
 \end{algorithm}
+
 \vspace{0.8cm}
 
 Quando o pacote do tipo \pac{GMTP-Register-Reply} chegar no nó \repass, que
 solicitou o registro de participação, aciona-se o procedimento apresentado no Trecho de
 Código~\ref{algo:onReceiveGMTPRegisterReply}, executando-se os passos
 explicados anteriormente.
+
+\vspace{0.8cm}
 
 \begin{algorithm}[H]
 \label{algo:onReceiveGMTPRegisterReply}
@@ -1340,32 +1348,19 @@ explicados anteriormente.
 
 \SetKwFunction{Union}{Union}\SetKwFunction{createMulticastChannel}{createMulticastChannel}
 
-\If(\tcc*[f]{\servs confirmed registration}){\pks = OK} {
+\uIf(\tcc*[f]{\servs confirmed registration}){\pks = OK} {
   \servs[\length{servs}] \attrib \extractAttribute{\pk, `serv'}\tcc*[r]{Gets \serv}
   \textit{\setpk} \attrib \extractAttribute{\pk, `flow'}\tcc*[r]{Gets \setpks in \pk}
   \If(){\setpk $\neq$ NULL}{
     \textit{port} \attrib \extractAttribute{\pk, `port'}\tcc*[r]{Gets \setpks in \pk}
     \textit{channel} \attrib \createMulticastChannel{\serv, port}\;
-    \Return{\respondToClient{\textit{channel}}}\;
+    \Return{\respondToClients{\textit{channel}, \setpk}}\;
   }
-  pkt \attrib \recvPktRdt{GMTP-Register-Reply}\;
-  \uIf{pkt = OK} {
-    servs[\length{servs}] \attrib \serv\;
-    \setwayis \attrib \parsePath(pkt)\tcc*[r]{get the \setwayis until \serv} \nllabel{ln:parsepath}
-    \If(){\clis $\neq$ NULL}{
-      \tcc{notify \clis that \repasss is registered in \serv}
-      pkt \attrib \makePkt{GMTP-RequestNotify(1), \cli}\;
-      \sendPktRdt{pkt}\;
-    }
-  }
-  \Else{\tcc{Notify admin or try again?}
-    \If(){\clis $\neq$ NULL}{
-      \tcc{impossible to register \repasss in \serv. Notify \cli.}
-    }
-  }
+} \Else() {
+  \tcc{\servs refuses to accept the connection. This \repasss must notify the clients waiting for receiving \setpk.}
+  \Return False;
 }
 
-\Return servs;
 \end{algorithm}
 \vspace{0.8cm}
 
@@ -1960,9 +1955,11 @@ tempo de expiração (\textit{timeout}) e enviar um pacote do tipo
 \pac{GMTP-Reset}. Na RFC 5482~\cite{RFC5482}, discute-se sobre outros aspectos
 de expiração no tempo que podem ser adaptadas para o GMTP.
 
-Implementar o algoritmo da função \respondToClient:
-\respondToClient{\textit{channel}} % nessa tem que buscar os clientes esperando por resposta
-\respondToClient{\setpk, \cli}
+Implementar o algoritmo da função \respondToClients:
+\respondToClients{\textit{channel}} % nessa tem que buscar os clientes esperando por resposta
+\respondToClients{\setpk, \cli}
+
+tem que ter: getClientsWaitingForFlow(\setpk)
 
 % \textit{channel} \attrib \getChannelOfFlow{\setpk}\;
 % \textit{\pk} \attrib \makePkt{GMTP-Response(), \cli}\;
