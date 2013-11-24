@@ -1742,22 +1742,24 @@ combinação de \setwayi}
 O procedimento de formação de parcerias por combinação considera um nó
 \textit{pivot} \servs e consiste em combinar dois (ou mais) caminhos
 distintos \setwayiu{1} e \setwayiu{2} tal que \setwayiu{1} $\cap$ \setwayiu{2}
-$= \{$\serv$\}$, ou seja, os caminhos que se interceptam apenas em \serv, como
+$= \{$\serv$\}$, ou seja, os caminhos se interceptam apenas em \serv, como
 ilustra-se na Figura~\ref{fig:esquema-abstrato-formacao-parceria-combinacao},
 Passo 1. Dessa forma, dado um conjunto de caminhos conhecidos \setway, o nó
 \servs executa as combinações e instrui alguns nós \ways $\in$ $($\setwayiu{1}
-$\cup$ \setwayiu{2}$)$ posicionados estrategicamente na rede a se tornarem
-parcerios entre si a fim de compartilharem o mesmo fluxo de dados \setpks
-otimizar o processo de transmissão (entregar o fluxo de dados mais rapidamente).
-Tal procedimento pode ajudar sobremaneira os nós \repasss a expandirem suas
+$\cup$ \setwayiu{2}$)$ a se tornarem parcerios entre si a fim de compartilharem
+o mesmo fluxo de dados \setpks, entregando os pacotes de dados \pks $\in$
+\setpks mais rapidamente aos nós \clis interessados em obtê-los. Tal
+procedimento pode ajudar sobremaneira os nós \repasss a expandirem suas
 possibilidades de parcerias, incluindo a possibilidade de obter pacotes de dados
-\pks $\in$ \setpks de múltiplas fontes \repassu{q}.
+\pks $\in$ \setpks de múltiplos nós parceiros \repassu{q}.
 
 Com o registro de participação de cada nó \repasss em \serv, o nó \servs detém
 o conhecimento dos caminhos \setwayis $\subset$ \setways através dos quais se
 transmite o fluxos de dados \setpks e, por conseguinte, o nó \servs passa a
 conhece os dois nós \wayu{\wayi_{1}},\wayu{\wayi_{2}} que estão recebendo o
 mesmo fluxo de dados \setpk.
+
+E DAÍ, POR QUE É IMPORTANTE SABER QUEM PEDIU CONEXÃO?
 
 propõe-se que
 
@@ -1778,7 +1780,7 @@ do processo de formação de parcerias.
 \label{fig:esquema-abstrato-formacao-parceria-combinacao}
 \end{figure}
 
-Em geral, o algoritmo funciona da seguinte forma: \servu{2} processa os caminhos
+Em geral, o algoritmo funciona da seguinte forma: o nó \servu{2} processa os caminhos
 \setwayis conhecidos e determina quais são os melhores parceiros \repassu{q}
 para um determinado nó \repass, sendo tal informação enviada para \repass. No
 caso do cenário ilustrado na
@@ -1790,22 +1792,23 @@ no Passo 4 da Figura~\ref{fig:esquema-abstrato-formacao-parceria-combinacao}.
 Para decidir qual opção escolher, o nó \servu{2} compara os custos
 $\zeta($\setwayiu{1}$)$ e $\zeta($\setwayiu{2}$)$. Se $\zeta($\setwayiu{1}$)
 \geq \zeta($\setwayiu{2}$)$, então o nó \servu{2} solicita que \repassu{9}
-envie um pedido de conexão para \repassu{16} (Passo 4). Esta é a grande
-motivação da formação de parceria por combinação, pois quando o pedido de
-conexão do nó \repassu{9} alcançar o nó \repassu{15}, este o interceptará e,
-nesse instante, constitui-se um novo caminho \setwayis $=
+envie um pedido de conexão para \repassu{16} (Passo 4). Por fim, o nó
+\repassu{15} deve enviar uma notificação para o nó \servu{2} informando sobre a
+constituição do novo caminho \setwayi. Em caso de $\zeta($\setwayiu{1}$) \leq
+\zeta($\setwayiu{2}$)$, então o nó \servu{2} solicitará que \repassu{16} envie
+um pedido de conexão para \repassu{9} (Passo 3), ao passo que o restante do
+procedimento ocorrerá de forma similar ao que acabara de ser explicado.
+
+Esta é a grande motivação da formação de parceria por combinação, pois quando o
+pedido de conexão do nó \repassu{9} alcançar o nó \repassu{15}, este o
+interceptará e, nesse instante, constitui-se um novo caminho \setwayis $=
 \{$\repassu{15}$,$\repassu{14}$,$\repassu{6}$,$\repassu{7}$,$\repassu{8}$,
-$\repassu{9}$\}$. Por fim, o nó \repassu{15} deve enviar uma notificação para o
-nó \servu{2} informando sobre a constituição do novo caminho \setwayi. Em caso
-de $\zeta($\setwayiu{1}$) \leq \zeta($\setwayiu{2}$)$, então o nó \servu{2}
-solicitará que \repassu{16} envie um pedido de conexão para \repassu{9} (Passo
-3), ao passo que o restante do procedimento ocorrerá de forma similar ao que
-acabara de ser explicado.
+$\repassu{9}$\}$.
 
 É importante salientar que o pedido de conexão enviado pelo nó \repassu{9}
 para o nó \repassu{15} deve conter uma sinalização (\textit{flag}) que
-instruirá o nó \repassu{6} a não interceptar tal pedido de conexão. Para a
-\textit{flag} de finalização dá-se o nome de \textit{ignorar pedido de conexão},
+instruirá o nó \repassu{6} a não interceptar tal pedido de conexão. Para
+tal sinalização, dá-se o nome de \textit{ignorar pedido de conexão},
 do inglês \textit{bypass connection request}.
 
 Nessa estratégia de formação de parceria, permite-se que um nó \repasss obtenha
