@@ -18,6 +18,7 @@
 \usepackage{float}
 \usepackage{amssymb}
 \usepackage{amsmath}
+\usepackage{mathtools}
 %\usepackage[chapter]{algorithm}
 %\usepackage{algorithmic}
 \usepackage{subfigure}
@@ -103,6 +104,9 @@ showstringspaces=false
 \newcommand{\mdreps}{\mudccps Reporters}
 \newcommand{\tab}{\space\space\space\space\space\space}
 
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
+\DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
+
 %\hyphenation{a-va-li-a-das}
 
 \selectlanguage{portuges}
@@ -175,14 +179,14 @@ Conteúdos Multimídia Ao\\Vivo com suporte às Redes Centradas no Conteúdo}
 \hyphenation{ Hardware Software etc con-ges-tio-na-men-to a-di-cio-na-dos
 ge-ren-cia-men-to fun-cio-na-li-da-des }
 
-%\input{introducao}
-%\input{fundamentacao}
-%\input{trabrelacionados}
+% \input{introducao}
+% \input{fundamentacao}
+% \input{trabrelacionados}
 \input{mudccp}
 %%%\input{impl-mudccp}
 %%%\input{analise-desempenho-dccp}
-%\input{analise-desempenho-mudccp}
-%\input{conclusao}
+% \input{analise-desempenho-mudccp}
+% \input{conclusao}
 
 \bibliographystyle{unsrt} % estilo de bibliografia   plain,unsrt,alpha,abbrv.
 %\bibliographystyle{plain}

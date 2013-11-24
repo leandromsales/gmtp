@@ -1,4 +1,4 @@
-\chapter{Considerações Finais e Planejamento}
+\chapter{Considerações Finais}
 \label{cap:conclusao}
 
 Futuro:
@@ -61,63 +61,7 @@ projetados para transmitir dados multimídia em larga escala.
 % aumentando-se a complexidade de implantação de uma solução unificada em larga
 % escala na Internet.
 
-\section{Perguntas Frequentes}
-
-, principalmente no tocante aos frequentes
-questionamentos realizados
-durante as palestras sobre o GMTP ministradas pelo autor
-
-- Por que um protocolo de rede, invés de um middleware?
-1 - porque visualizei o GMTP como a forma primitiva de acesso, podendo ser
-acomplado em aplicações simples como sistemas mais avançados, que podem fazer
-uso de middlewares já existentes
-2 - a necessidade de executar algoritmos na camada de rede obriga uma interface
-de comunicação disponível na camada de transporte
-
-- Como seria a integração com o ConEx? Por que não foi utilizado?
-
-- Pode ocorrer a inundação de um roteador próximo do servidor?
-  Não, pois quanto mais conexões forem enviadas para s, mais roteadores
-distantes de s interceptará o pedido de conexão
-
-- Por que utilizar roteadores?
-
-- Qual o processo ideal para o deploy do GMTP na Internet?
-
-- Quais são as similares e diferenças entre o GMTP e o LibSwift?
-
-- O GMTP faz computação Per-Flow, se sim, quanto?
-
-- Por que não usar diretamente o traceroute? e o tcptraceroute?
-
-- Por que não manter um único RTT s?
-  R: porque todos os acks teriam que ser repassados para o nó originador do
-fluxo de dados, o que geraria uma explosão de acks e além disso, qual valor
-deveria ser considerado, já que um fluxo transmitido pelo servidor pode ser
-recebido indiretamente por muitos outros nós? Além disso, isto limitaria a taxa
-de transmissão R(t) entre um sub-caminho
-
-- O GMTP Inter pode ser exeutado em um cliente?
-
-- Em um mesmo domínio administrativo, contendo multiplos roteadores, sendo um
-de borda, é possível que ter apenas um nó repassador instalado em um roteador e
-os demais roteadores funcionarem como cliente/repassador?
-
-- Por que um cliente não pode ter mais de um repassador?
-R: o tráfego sempre passará pelo roteador padrão, onde tem o gmtp inter rodando
-
-- ... E considerando um rede com múltiplos roteadores?
-R: limitação do GMTP? tem que escolher um roteador como rota padrão
-
-- Por que usou a equação do reno?
-R: melhor seria usar cubic-like, interações com o pesquisador, contratado pela
-samsung, trabalhos futuros
-
-- Qual a vant de um r repassar?
-
-- tem que ler header de transporte? (pode colocar uma flag no campo opt do ip)
-
-- Por que tipos de pacotes, invez de flags
+\section{Conclusões}
 
 \subsection{Benefícios e Aplicabilidade}
 
@@ -131,6 +75,8 @@ e para os usuários interessados em reproduzir uma mídia ao vivo.
 Considerando-se as discussões realizadas nas Seção~\ref{sec:problematica} e
 os requisitos dos sistemas de transmissão de mídia em tempo real, o \mudccps
 atende-os na medida em que:
+
+- FALAR DA TORRE DA OPERADORA DE CELULAR E MOBILIDADE
 
 \begin{itemize}
 
@@ -200,8 +146,77 @@ Coolstreaming~\ref{REF}, LiveSky, Sopcast~\cite{fallica_quality_2008}, o
 PPLive~\cite{hei_insights_2006} e o
 GridMedia~\cite{li_zhao_gridmedia:_2005,zhang_peer--peer_2005}.
 
+\section{Perguntas Frequentes}
 
-\section{Estado atual de desenvolvimento da tese}
+, principalmente no tocante aos frequentes
+questionamentos realizados
+durante as palestras sobre o GMTP ministradas pelo autor
+
+- Por que um protocolo de rede, invés de um middleware?
+1 - porque visualizei o GMTP como a forma primitiva de acesso, podendo ser
+acomplado em aplicações simples como sistemas mais avançados, que podem fazer
+uso de middlewares já existentes
+2 - a necessidade de executar algoritmos na camada de rede obriga uma interface
+de comunicação disponível na camada de transporte
+
+- Como seria a integração com o ConEx? Por que não foi utilizado?
+
+- Pode ocorrer a inundação de um roteador próximo do servidor?
+  Não, pois quanto mais conexões forem enviadas para s, mais roteadores
+distantes de s interceptará o pedido de conexão
+
+- Por que utilizar roteadores?
+
+- Qual o processo ideal para o deploy do GMTP na Internet?
+
+- Quais são as similares e diferenças entre o GMTP e o LibSwift?
+
+- O GMTP faz computação Per-Flow, se sim, quanto?
+
+- Por que não usar diretamente o traceroute? e o tcptraceroute?
+
+- Por que não manter um único RTT s?
+  R: porque todos os acks teriam que ser repassados para o nó originador do
+fluxo de dados, o que geraria uma explosão de acks e além disso, qual valor
+deveria ser considerado, já que um fluxo transmitido pelo servidor pode ser
+recebido indiretamente por muitos outros nós? Além disso, isto limitaria a taxa
+de transmissão R(t) entre um sub-caminho
+
+- O GMTP Inter pode ser exeutado em um cliente?
+
+- Em um mesmo domínio administrativo, contendo multiplos roteadores, sendo um
+de borda, é possível que ter apenas um nó repassador instalado em um roteador e
+os demais roteadores funcionarem como cliente/repassador?
+
+- Por que um cliente não pode ter mais de um repassador?
+R: o tráfego sempre passará pelo roteador padrão, onde tem o gmtp inter rodando
+
+- ... E considerando um rede com múltiplos roteadores?
+R: limitação do GMTP? tem que escolher um roteador como rota padrão
+
+- Por que usou a equação do reno?
+R: melhor seria usar cubic-like, interações com o pesquisador, contratado pela
+samsung, trabalhos futuros
+
+- Qual a vant de um r repassar?
+
+- tem que ler header de transporte? (pode colocar uma flag no campo opt do ip)
+
+- Por que tipos de pacotes, invez de flags
+
+- Anycast?
+
+% http://en.wikipedia.org/wiki/Anycast
+% http://tools.ietf.org/html/rfc3258
+% http://tools.ietf.org/html/rfc4786
+% http://ieeexplore.ieee.org/xpl/articleDetails.jsp?reload=true&arnumber=991450
+% http://tools.ietf.org/html/draft-mcpherson-anycast-arch-implications-00.html
+
+
+
+
+\section{Trabalhos Futuros}
+\label{sec:trabsfuturos}
 
 Como discutido no Capítulo~\ref{cap:introducao}, o problema central abordado
 nesse trabalho é concernente à carência de soluções para dar suporte ao
@@ -391,8 +406,8 @@ próxima versão a ser desenvolvida no núcleo do sistema operacional Linux.
 % Laboratório de Sistemas Embarcados e Computação Pervasiva, localizado na
 % Universidade Federal de Campina Grande (UFCG).
 
-\section{Trabalhos Futuros e Cronograma}
-\label{sec:trabsfuturos}
+% \section{Trabalhos Futuros e Cronograma}
+
 
 Os trabalhos futuros estão organizados de acordo com as seguintes atividades:
 
@@ -481,7 +496,7 @@ entendimento dos procedimentos realizados no \mudccp.
 % Specification}, onde será apresentado o protocolo \mudccps e seus detalhes de
 % implementação.
 
-\subsection{Cronograma}
+% \subsection{Cronograma}
 
 Na Tabela~\ref{tab:cronograma} apresenta-se o cronograma das atividades a serem
 desenvolvidas no período de 1 ano e 2 meses.

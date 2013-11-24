@@ -571,7 +571,7 @@ de extensibilidade e reúso dos mecanismos desenvolvidos.
 % yin_design_2009
 
 % \subsection{Pastry/SplitStream -- \textit{High-bandwidth content distribution}}
-% 
+%
 % O Pastry/SplitStream é um sistema para distribuição de conteúdo desenvolvido no
 % centro de pesquisas da Microsoft. O SplitStream se baseia na capacidade dos
 % sistemas finais de transmitir dados em modo multicast e tem capacidade de tratar
@@ -606,11 +606,11 @@ de extensibilidade e reúso dos mecanismos desenvolvidos.
 % Ithaca, NY. USA, Feb 2005.
 
 % \subsection{\textit{HTTP Live Streaming}}
-% 
+%
 % \subsection{CHIPS}
-% 
+%
 % \subsection{CDEEP Webcast}
-% 
+%
 % \subsection{PeerCast}
 % http://en.wikipedia.org/wiki/PeerCast
 
@@ -629,27 +629,27 @@ de extensibilidade e reúso dos mecanismos desenvolvidos.
 % http://perso.telecom-paristech.fr/~valenti/papers/ledbat-icccn10.pdf
 % http://www.computer.org/portal/web/csdl/doi?doc=doi%2F10.1109%2FAINA.2011.98
 
-% 
+%
 % \subsection{The one-to-many TCP overlay}
-% 
+%
 % \subsection{PGM -- \textit{Pragmatic General Multicast}}
-% 
+%
 % % http://en.wikipedia.org/wiki/Pragmatic_General_Multicast
-% 
+%
 % \subsection{XCAST}
-% 
+%
 % % http://en.wikipedia.org/wiki/XCAST
-% 
+%
 % \subsection{TCP-XM}
-% 
+%
 % % http://www.jeacle.ie/pub/theses/phd/
-% 
+%
 % \subsection{XCAST}
-% 
+%
 % \subsection{ALM}
-% 
+%
 % \section{Protocolos de Aplicação}
-% 
+%
 % http://en.wikipedia.org/wiki/Alluvium_(peercasting)
 % http://en.wikipedia.org/wiki/Octoshape - http://www.octoshape.com/
 % http://en.wikipedia.org/wiki/Pando_(application)
@@ -669,7 +669,7 @@ de extensibilidade e reúso dos mecanismos desenvolvidos.
 % http://www.scvi.net/stream/soft2.htm
 
 % \subsection{Outros Trabalhos}
-% 
+%
 % Além dos trabalhos citados anteriormente, vários outros foram estudados e
 % analisados~\cite{REF,REF,REF,REF,REF,REF,REF,REF}, com menor nível de
 % similaridade com o trabalho proposto. Por exemplo, vale ressaltar as
@@ -722,7 +722,7 @@ apresentadas anteriormente. Os critérios de comparação são apresentados a seguir
  \item Suporte à adaptação de fluxo multimídia (AFM)
  \item Tolerância à desconexão (TD)
  \item Extensibilidade para novos algoritmos (ENA)
- \item Compatibilidade com API (\textit{Application Programming Interface}) de 
+ \item Compatibilidade com API (\textit{Application Programming Interface}) de
 \textit{socket} BSD/POSIX (CAS)
 \end{itemize}
 
@@ -813,7 +813,7 @@ $\frac{X}{2}$ & X
 \\ \cline{1-10}
 
 % INICIO DE LINHA
-\multirow{1}{*}{\textcolor{black}{\bfseries CPM}} &  &  & X & X &  & X & X &  & 
+\multirow{1}{*}{\textcolor{black}{\bfseries CPM}} &  &  & X & X &  & X & X &  &
 \\ \cline{1-10}
 
 % INICIO DE LINHA
@@ -821,7 +821,7 @@ $\frac{X}{2}$ & X
 \\ \cline{1-10}
 
 % INICIO DE LINHA
-\multirow{1}{*}{\textcolor{black}{\bfseries Danacast}} & X & X & X & X & X & X 
+\multirow{1}{*}{\textcolor{black}{\bfseries Danacast}} & X & X & X & X & X & X
 & X
 & X & X
 \\ \cline{1-10}
@@ -836,152 +836,156 @@ $\frac{X}{2}$ & X
 
 \section{Sumário do Capítulo}
 
-Neste capítulo, apresentou-se uma avaliação crítica acerca de um conjunto de 
-sistemas e protocolos para distribuição de conteúdos multimídia. Discutiu-se 
-sobre trabalhos com propostas semalhantes ao protocolo \mudccp, entendendo-se 
-que os principais trabalhos disponíveis no estado da arte não contempla os 
+Neste capítulo, apresentou-se uma avaliação crítica acerca de um conjunto de
+sistemas e protocolos para distribuição de conteúdos multimídia. Discutiu-se
+sobre trabalhos com propostas semalhantes ao protocolo \mudccp, entendendo-se
+que os principais trabalhos disponíveis no estado da arte não contempla os
 recursos e a forma de proposta do GMTP. De fato, apenas o Denacast contempla
 uma proposta próxima ao protocolo GMTP e, por este motivo, no
-Capítulo~\ref{cap:analisedesemp}, discute-se em detalhes seu desempenho em 
+Capítulo~\ref{cap:analisedesemp}, discute-se em detalhes seu desempenho em
 comparação ao GMTP.
 
 \subsection{Preâmbulo ao GMTP}
 
-A definição do protocolo \mudccp\space se baseou nos requisitos e estado da 
-prática dos sistemas de distribuição de conteúdos 
-(Capítulo~\ref{cap:fundamentacao}), bem como no levantamento das proposta 
-disponíveis no estado da arte, como as discutidas nas seções anteriores deste 
-capítulo. Como complemento, três questionamentos foram primordiais motivadores 
+A definição do protocolo \mudccp\space se baseou nos requisitos e estado da
+prática dos sistemas de distribuição de conteúdos
+(Capítulo~\ref{cap:fundamentacao}), bem como no levantamento das proposta
+disponíveis no estado da arte, como as discutidas nas seções anteriores deste
+capítulo. Como complemento, três questionamentos foram primordiais motivadores
 para o projeto de tal protocolo, são eles:
 
 \begin{enumerate}
 
- \item Quais as funcionalidades dos sistemas de distribuição de conteúdos ao 
+ \item Quais as funcionalidades dos sistemas de distribuição de conteúdos ao
 vivo que poderiam que ser implementadas na camada de aplicação por falta de um
 protocolo de transporte de dados ideal para esse tipo de aplicação?
 
- \item Quais dessas funcionalidades podem ser implementadas na camada de 
-transporte a fim de torná-las padronizadas para todas as aplicações existentes, 
+ \item Quais dessas funcionalidades podem ser implementadas na camada de
+transporte a fim de torná-las padronizadas para todas as aplicações existentes,
 evitando-se o retrabalho de desenvolvimento?
 
- \item Como se pode, de forma eficiente, distribuir um mesmo fluxo de 
-dados multimídia partindo de um servidor para múltiplos nós clientes conectados 
-a diferentes redes, considerando o fato de que diferentes aplicações clientes 
-possam ser utilizadas e com suporte a controle de congestionamento assistido 
+ \item Como se pode, de forma eficiente, distribuir um mesmo fluxo de
+dados multimídia partindo de um servidor para múltiplos nós clientes conectados
+a diferentes redes, considerando o fato de que diferentes aplicações clientes
+possam ser utilizadas e com suporte a controle de congestionamento assistido
 pela rede?
 
 \end{enumerate}
 
-Diante dessas questões, notou-se que ao tentar resolver problemas relacionados 
-a cada um desses questionamentos, os desenvolvedores desse tipo de sistema 
-enfrentam situações reincidentes, já experimentadas por outras equipes de 
-desenvolvimento. No \mudccp, propõe-se concentrar as principais funções dos 
-sistemas de transmissão de mídias ao vivo em um único protocolo de rede, 
-buscando-se contribuir com a evolução do estado da arte e da prática ao propor 
+Diante dessas questões, notou-se que ao tentar resolver problemas relacionados
+a cada um desses questionamentos, os desenvolvedores desse tipo de sistema
+enfrentam situações reincidentes, já experimentadas por outras equipes de
+desenvolvimento. No \mudccp, propõe-se concentrar as principais funções dos
+sistemas de transmissão de mídias ao vivo em um único protocolo de rede,
+buscando-se contribuir com a evolução do estado da arte e da prática ao propor
 um protocolo que desacopla o processo de transporte de datagramas IP, os quais
-carregam conteúdos de mídias ao vivo, da forma como estes são exibidos ao 
-usuário final através das aplicação de rede. Isto ocorre com o emprego de 
-técnicas de engenharia de software para abstrair a complexidade no 
-desenvolvimento de sistemas dessa natureza, ao passo que se propõe 
-algoritmos que otimizam o consumo de recursos de rede, tudo isto visando 
-melhorar a qualidade de experiência do usuário ao assistir um conteúdo ao vivo 
+carregam conteúdos de mídias ao vivo, da forma como estes são exibidos ao
+usuário final através das aplicação de rede. Isto ocorre com o emprego de
+técnicas de engenharia de software para abstrair a complexidade no
+desenvolvimento de sistemas dessa natureza, ao passo que se propõe
+algoritmos que otimizam o consumo de recursos de rede, tudo isto visando
+melhorar a qualidade de experiência do usuário ao assistir um conteúdo ao vivo
 através da Internet.
 
-Em termos arquiteturais, o GMTP está posicionado de tal forma que suas funções 
-são disponibilizadas para diferentes processos de aplicação em execução em um 
-sistema operacional, de modo que se torna independente de linguagem de 
-programação, bibliotecas de funções e dos mais variados tipos de dispositivos 
-de usuários finais (desktops, notebooks, tablets, smartphones, smartTVs, etc.), 
-independente da mobilidade dos usuários e podendo ser embarcado no núcleo de 
-qualquer sistema operacional moderno. Com isto, promove-se recursos funcionais 
-para a camada de aplicação cada vez mais estáveis e eficientes, propagando-se 
-as boas práticas (algoritmos) que passam a ser utilizadas e testadas por um 
-conjunto cada vez maior de desenvolvedores, aprimorando-as com o passar do 
-tempo sem causar um impacto direto à camada de aplicação, tal como tem ocorrido 
-com o protocolo TCP ao longo dos seus 32 anos de existência, desde da sua 
+Em termos arquiteturais, o GMTP está posicionado de tal forma que suas funções
+são disponibilizadas para diferentes processos de aplicação em execução em um
+sistema operacional, de modo que se torna independente de linguagem de
+programação, bibliotecas de funções e dos mais variados tipos de dispositivos
+de usuários finais (desktops, notebooks, tablets, smartphones, smartTVs, etc.),
+independente da mobilidade dos usuários e podendo ser embarcado no núcleo de
+qualquer sistema operacional moderno. Com isto, promove-se recursos funcionais
+para a camada de aplicação cada vez mais estáveis e eficientes, propagando-se
+as boas práticas (algoritmos) que passam a ser utilizadas e testadas por um
+conjunto cada vez maior de desenvolvedores, aprimorando-as com o passar do
+tempo sem causar um impacto direto à camada de aplicação, tal como tem ocorrido
+com o protocolo TCP ao longo dos seus 32 anos de existência, desde da sua
 primeira versão em 1981.
 
-Com esta visão, realizou-se um estudo sobre as principais estratégias adotadas 
-pelos desenvolvedores de sistemas de transmissão de conteúdos multimídia ao 
-vivo, objetivando-se mapear o estado da prática e utilizar este mapeamento como 
+Com esta visão, realizou-se um estudo sobre as principais estratégias adotadas
+pelos desenvolvedores de sistemas de transmissão de conteúdos multimídia ao
+vivo, objetivando-se mapear o estado da prática e utilizar este mapeamento como
 artefato de tomada de decisão do projeto do GMTP. O resultado foi o seguinte:
 
 \begin{enumerate}
 
-  \item constatou-se que os sistemas mais robustos de distribuição de conteúdos 
-multimídia são baseados em arquiteturas híbridas P2P/CDN. Isto ocorre porque 
-se obtém escalabilidade do número de usuários e redução de custos com 
-infra-estrutura de rede por meio das redes P2P; e facilidade no gerenciamento e 
-maior estabilidade de disponibilização dos serviços, por meio 
+  \item constatou-se que os sistemas mais robustos de distribuição de conteúdos
+multimídia são baseados em arquiteturas híbridas P2P/CDN. Isto ocorre porque
+se obtém escalabilidade do número de usuários e redução de custos com
+infra-estrutura de rede por meio das redes P2P; e facilidade no gerenciamento e
+maior estabilidade de disponibilização dos serviços, por meio
 das CDNs~\cite{Xu04acdn-p2p,Dongyan2006,Meskovic2012,4012578,Huang:2008:UHC:1496046.1496064,6035830,5764567,5343509,4797271};
 
-  \item observou-se que nos sistemas desse tipo não se viabiliza o acesso a um 
-conteúdo ao vivo por parte de um usuário levando-se em consideração apenas 
-o seu interesse em assistir a um evento ao vivo (\textit{abordagem centrada 
-no conteúdo}). Nas soluções existentes, a forma de acesso ao conteúdo 
-de um evento ao vivo é dependente do local físico (servidor) onde tal conteúdo 
-está sendo transmitido (\textit{abordagem centrada no hospedeiro}), sendo 
+  \item observou-se que nos sistemas desse tipo não se viabiliza o acesso a um
+conteúdo ao vivo por parte de um usuário levando-se em consideração apenas
+o seu interesse em assistir a um evento ao vivo (\textit{abordagem centrada
+no conteúdo}). Nas soluções existentes, a forma de acesso ao conteúdo
+de um evento ao vivo é dependente do local físico (servidor) onde tal conteúdo
+está sendo transmitido (\textit{abordagem centrada no hospedeiro}), sendo
 cruscial saber de qual nó fonte o evento está sendo recebido;
 
-  \item dado que na maioria dos sistemas de distribuição de conteúdos ao vivo 
-se transmite fluxos de dados UDP, tais sistemas não executam mecanismos para 
-controle de congestionamento. Desta forma, se isto for necessário em seus 
-sistemas, os desenvolvedores são forçados a executar algoritmos de controle de 
-congestionamento na camada de aplicação, sem qualquer padronização na forma como 
-os fluxos de dados são controlados, com diferentes equipes de desenvolvimento 
-implementando, das mais variadas formas, a mesma funcionalidade presente nesse 
-tipo de aplicação, sem qualquer compartilhamento desse 
+  \item dado que na maioria dos sistemas de distribuição de conteúdos ao vivo
+se transmite fluxos de dados UDP, tais sistemas não executam mecanismos para
+controle de congestionamento. Desta forma, se isto for necessário em seus
+sistemas, os desenvolvedores são forçados a executar algoritmos de controle de
+congestionamento na camada de aplicação, sem qualquer padronização na forma como
+os fluxos de dados são controlados, com diferentes equipes de desenvolvimento
+implementando, das mais variadas formas, a mesma funcionalidade presente nesse
+tipo de aplicação, sem qualquer compartilhamento desse
 esforço~\cite{REF,REF,REF,LEDBAT};
 
-  \item não há uma forma efetiva de centralizar e/ou disponibilizar as boas 
-soluções e práticas (algoritmos) para as diferentes funcionalidades empregadas 
-nesse tipo de sistema. De fato, existem diversos \textit{middlewares} de 
-desenvolvimento de sistemas de distribuição de conteúdo que tentam suprir as 
-limitações existentes dos protocolos da camada de transporte, tratando-se de 
-soluções intermediárias e fragmentadas para o transporte de dados multimídia nas 
-redes de computadores, salvas suas devidas contribuições científicas e 
+  \item não há uma forma efetiva de centralizar e/ou disponibilizar as boas
+soluções e práticas (algoritmos) para as diferentes funcionalidades empregadas
+nesse tipo de sistema. De fato, existem diversos \textit{middlewares} de
+desenvolvimento de sistemas de distribuição de conteúdo que tentam suprir as
+limitações existentes dos protocolos da camada de transporte, tratando-se de
+soluções intermediárias e fragmentadas para o transporte de dados multimídia nas
+redes de computadores, salvas suas devidas contribuições científicas e
 reais~\cite{REF,REF,REF,REF}.
 % ~\cite{kohler_designing_2006,RFC4336}
 
 \end{enumerate}
 
-% Para facilitiar o entendimento, considere o seguinte cenário geral do sistema 
-% de TV tradicional (teledifusão). Quando uma pessoa está assistindo um canal e 
-% troca para outro canal, o aparelho de TV consegue interpretar o novo conteúdo 
-% mesmo este sendo transmitido por outra emissora de TV. Para que isto funcione, 
-% existem padrões que descrevem o formato do vídeo/áudio (NTSC, PAL-M etc.), a 
-% forma como os sinais devem ser transmitidos, em diferentes frequências, e como 
-% devem ser decodificados, de acordo com cada emissora de TV. Além disso, se duas 
-% ou mais emissoras estiverem transmitindo um mesmo evento ao vivo, pouco importa 
-% para o usuário final quando uma emissora de sua preferência se torna 
-% indisponível, pois o mais importante é assistir ao evento de interesse, apesar 
-% da preferência do usuário por um 
-% determinado canal. Assim, todas as TVs funcionam simplesmente porque seguem 
-% padrões, independente da sua marca e modelo, pois caso contrário só 
-% conseguiriam interpretar o sinal transmitido apenas de um conjunto restrito de 
+% Para facilitiar o entendimento, considere o seguinte cenário geral do sistema
+% de TV tradicional (teledifusão). Quando uma pessoa está assistindo um canal e
+% troca para outro canal, o aparelho de TV consegue interpretar o novo conteúdo
+% mesmo este sendo transmitido por outra emissora de TV. Para que isto funcione,
+% existem padrões que descrevem o formato do vídeo/áudio (NTSC, PAL-M etc.), a
+% forma como os sinais devem ser transmitidos, em diferentes frequências, e como
+% devem ser decodificados, de acordo com cada emissora de TV. Além disso, se
+% duas
+% ou mais emissoras estiverem transmitindo um mesmo evento ao vivo, pouco
+% importa
+% para o usuário final quando uma emissora de sua preferência se torna
+% indisponível, pois o mais importante é assistir ao evento de interesse, apesar
+% da preferência do usuário por um
+% determinado canal. Assim, todas as TVs funcionam simplesmente porque seguem
+% padrões, independente da sua marca e modelo, pois caso contrário só
+% conseguiriam interpretar o sinal transmitido apenas de um conjunto restrito de
 % emissoras de TV.
-% 
+%
 % Apesar de existirem protocolos para a Internet que descrevem o conteúdo da mídia
-% sendo transmitida, tais como o \textit{Simple Description Protocol} (SDP), o 
-% \textit{Real Time Protocol} (RTP) e o \textit{Real Time Streaming Protocol} 
-% (RTSP), que de certa forma são considerados equivalentes aos padrões NTSC e 
+% sendo transmitida, tais como o \textit{Simple Description Protocol} (SDP), o
+% \textit{Real Time Protocol} (RTP) e o \textit{Real Time Streaming Protocol}
+% (RTSP), que de certa forma são considerados equivalentes aos padrões NTSC e
 % PAL-M para TV, atualmente não existe uma solução de transporte de conteúdos
-% multimídia ao vivo que considere toda a complexidade existente em se trabalhar 
-% com redes orientadas a datagramas, ponderando-se as recentes soluções 
-% empregadas para o funcionamento dos sistemas estudados neste trabalho. Em vez 
-% disso, cada aplicação implementa suas próprias formas de transporte de dados, 
-% com predominância e variações de uso dos protocolos RTP/RTSP e UDP. Para 
-% se ter uma noção, durante as pesquisas realizadas no contexto deste trabalho, 
-% encontrou-se pelo menos 60 sistemas de transmissão de mídia ao vivo baseados em 
-% P2P/CDN, sem qualquer compatibilidade entre eles~\cite{REF,REF,REF}. Através 
-% dos nós servidores desses sistemas, transmite-se pacotes de dados que são 
-% recebidos por aplicações clientes para reproduzir o conteúdo recebido. 
-% 
-% Considerando a analogia anterior, os nós servidores desses sistemas são as 
-% emissoras de TV tradicionais, ao passo que as aplicações clientes, os aparelhos 
-% de TV. A diferença gritante é que as aplicações não seguem um padrão para 
-% transmitir e receber os dados e consequentemente uma aplicação cliente de um 
-% sistema não consegue reproduzir o conteúdo multimídia transmitido por outro 
-% sistema. É como se cada TV funcionasse apenas para um determinado conjunto de 
-% canais, mas não servindo para reproduzir o sinal de vídeo oriundo de outra 
+% multimídia ao vivo que considere toda a complexidade existente em se trabalhar
+% com redes orientadas a datagramas, ponderando-se as recentes soluções
+% empregadas para o funcionamento dos sistemas estudados neste trabalho. Em vez
+% disso, cada aplicação implementa suas próprias formas de transporte de dados,
+% com predominância e variações de uso dos protocolos RTP/RTSP e UDP. Para
+% se ter uma noção, durante as pesquisas realizadas no contexto deste trabalho,
+% encontrou-se pelo menos 60 sistemas de transmissão de mídia ao vivo baseados
+% em
+% P2P/CDN, sem qualquer compatibilidade entre eles~\cite{REF,REF,REF}. Através
+% dos nós servidores desses sistemas, transmite-se pacotes de dados que são
+% recebidos por aplicações clientes para reproduzir o conteúdo recebido.
+%
+% Considerando a analogia anterior, os nós servidores desses sistemas são as
+% emissoras de TV tradicionais, ao passo que as aplicações clientes, os
+% aparelhos
+% de TV. A diferença gritante é que as aplicações não seguem um padrão para
+% transmitir e receber os dados e consequentemente uma aplicação cliente de um
+% sistema não consegue reproduzir o conteúdo multimídia transmitido por outro
+% sistema. É como se cada TV funcionasse apenas para um determinado conjunto de
+% canais, mas não servindo para reproduzir o sinal de vídeo oriundo de outra
 % emissora de TV.
