@@ -1897,13 +1897,143 @@ visualização.
 \section{Criptografia de Hash e Assinatura Digital}
 \label{sec:crypthashdigitalsign}
 
-DISSERTAÇÃO DO THI!
+Nesta seção, discute-se sobre os aspectos de criptografia baseada em chaves
+assimétricas, funções de \textit{hash} e assinatura digital. Os conceitos
+apresentados aqui são base para o entendimento de como se verifica a
+autenticidade de um conjunto de pacotes de dados, que corresponde a um fluxo de
+dados multimídia correspondente a um evento ao vivo, transmitido por um servidor
+a um ou mais clientes GMTP. Com relação a certificação digital, está permitirá
+que os nós clientes em uma transmissão GMTP possam confiar no conteúdo
+multimídia recebido de outros nós parceiros, através da validação do conteúdo
+transportado dentro de um pacote de dados a ser reproduzido, ou seja, se
+tal conteúdo foi realmente emitido pelo nó servidor, aquele gerador do fluxo de
+dados de interesse do nó cliente.
+
+Especificamente, os conceitos apresentados a seguir são referenciados no
+Capítulo~\ref{cap:mudccp}, Seção~\ref{sec:seguranca}.
 
 \subsection{Criptografia de Hash}
 
+Uma função de \textit{hash}~\cite{efficiente-hash-chain} $H(m)$ permite
+transformar uma mensagem \textit{m} de qualquer tamanho em um identificador
+digital \textit{m'} de tamanho fixo, chamado de valor de \textit{hash}. Uma vez
+obtido \textit{m'} para uma mensagem \textit{m}, é computacionalmente impossível
+fazer o processo inverso, ou seja, encontrar o valor \textit{m} tal que $H(m) =
+m'$. Desta forma, uma função de \textit{hash} tem a propriedade de ser uma
+função ``\textit{one way'}'. Além disso, este tipo de função deve oferecer as
+seguintes características:
+
+\begin{itemize}
+ \item $H(m)$ é relativamente fácil de ser computado, para qualquer valor de
+\textit{m};
+ \item $H(m)$ é livre de colisão. Ou seja, para quaisquer duas mensagens
+\textit{$m_{1}$} e \textit{$m_{2}$}, com $m_{1} \neq m_{2}$, deve-se sempre
+obter $H(m_{1}) \neq H(m_{2})$.
+\end{itemize}
+
+Algoritmos de \textit{hash} são amplamente utilizados em diversos contextos dos
+sistemas de informação, tais como em indexação em tabelas de
+\textit{hash}, detecção de dados duplicados, arquivos corrompidos etc. Os
+algoritmos de \textit{hash} também podem ser utilizados em processos de
+autenticação, tais como assinatudas digitais, verificações de senhas e cadeias
+de \textit{hash} (\textit{One-Way chains})~\cite{lamport}.
+
+%~\cite{efficiente-hash-chain}
+\subsection{Assinatura e Certificação Digital}
+\label{subsec:sign-digital-certificate}
+
+Uma assinatura digital~\cite{802657} é um modelo de autenticação de informações
+digitais tipicamente análoga à assinatura física em papel. Através de uma
+assinatura digital, pode-se provar que uma mensagem foi realmente enviada pelo
+emissor, o receptor pode confirmar que a assinatura foi feita pelo emissor
+(autenticidade) e que qualquer alteração da mensagem faz com que a assinatura
+digital não corresponda mais à mensagem (integridade). Basicamente, uma
+assinatura digital é construída a partir da combinação dos algoritmos de
+criptografia assimétrica e das funções de \textit{hash}.
+
+Como ilustra-se na Figura~\ref{fig:digital-sign}, para que um usuário
+\textit{A} envie uma mensagem \textit{m} assinada digitalmente ao usuário
+\textit{B}, aplica-se uma função de \textit{hash} à mensagem original
+\textit{m}, gerando \textit{m'} e, em seguida, cifra-se \textit{m'} utilizando a
+chave privada do emissor, resultando na assinatura digital. A mensagem e a
+assinatura digital são enviadas ao receptor através de um canal de comunicação.
+Note que, o emissor assina \textit{m'} com a sua chave privada, representada por
+$K^{-}_{A}$, ao passo que o receptor obtém \textit{m'} utilizando a chave
+pública do emissor, representada por $K^{+}_{A}$.
+
+\begin{figure}[ht]
+ \centering
+ \includegraphics[scale=0.35]{imagens/DigitalSign.pdf}
+ \caption{Geração de Assinaturas Digitais.}
+ \label{fig:digital-sign}
+\end{figure}
+
+Para comprovar uma assinatura digital é necessário realizar dois procedimentos:
+\begin{itemize}
+
+  \item calcular o valor de \textit{hash} da mensagem \textit{m} (gerando
+\textit{m'}); e
+
+  \item decifrar a assinatura com a chave pública do emissor (resultando em
+\textit{m'}). Em seguida, deve-se concluir o seguinte:
+
+  \begin{itemize}
+
+    \item Se os valores de \textit{hash} forem iguais, a mensagem
+\textit{m} está íntegra (não sofreu qualquer alteração) e portanto a assinatura
+está correta, pois foi gerada pela chave privada corresponde à chave pública
+utilizada na verificação; ou
+
+    \item Se os valores de \textit{hash} forem diferentes, a assinatura está
+incorreta e portanto houve alterações na mensagem \textit{m} ou na
+assinatura de tal mensagem.
+
+  \end{itemize}
+
+\end{itemize}
 
 
-\subsection{Assinatura Digital}
+
+O uso das funções de \textit{hash} pode contribuir para que o processamento da
+assinatura digital não seja comprometido devido à lentidão dos algoritmos de
+criptografia assimétrica, com rápida execução e uniforme, ou seja, independente
+do tamanho da mensagem a ser assinada. Ademais, as funções \textit{hash}
+garantem a integridade da mensagem, visto que a alteração em um bit da mensagem
+irá gerar outro valor de \textit{hash}. A criptografia assimétrica garante
+também a autenticidade e a não-repudiação do emissor, pois apenas tal emissor é
+capaz de cifrar a mensagem com a chave privada correspondente à chave pública
+utilizada pelo receptor para checar a autenticidade da mensagem.
+
+Os mecanismos oferecidos pela assinatura digital é uma forma eficaz de garantir
+a autoria de documentos eletrônicos. Em agosto de 2001, a medida provisória da
+República do Brasil, número 2.200~\cite{icp-brasil} (\textit{Infra-Estrutura de
+Chaves Públicas Brasileira - ICP-Brasil}), foi publicada para garantir a
+validade jurídica de documentos eletrônicos e a utilização de certificados
+digitais para atribuir autenticidade e integridade aos documentos. Este fato
+tornou a assinatura digital um instrumento válido, inclusive juridicamente.
+
+% \subsubsection{Certificado Digital e Autoridades Certificadoras}
+% \label{subsubsec:digital-sign-and-certificate-authorities}
+% Com a disseminação das assinaturas digitais, o gerenciamento das chaves de
+% criptografia passa a ter dois procedimentos: primeiro, deve-se localizar a chave
+% pública da entidade que se deseja comunicar e, segundo, deve-se obter uma
+% garantia de que a chave pública obtida é, de fato, da entidade alvo.
+%
+% Um certificado digital é um documento eletrônico assinado digitalmente e
+% objetiva associar uma entidade a uma chave pública. Um certificado digital
+% geralmente está no formato padrão ITU X.509~\cite{RFC5280,RFC6818} e normalmente
+% inclue informações como: nome da entidade a ser associada a chave pública,
+% período de validade do certificado, chave pública, nome e assinatura da entidade
+% que emitiu o certificado.
+%
+% A entidade responsável pela emissão dos certificados digitais é denominada
+% Autoridade Certificadora (CA), entidade de confiança que funciona como cartório
+% eletrônico. Desta forma, pela assinatura da chave pública e das informações
+% sobre um usuário \textit{A}, por exemplo, a CA garante que as informações sobre
+% \textit{A} está correta e que a chave pública em questão pertence a \textit{A}.
+% Um usuário \textit{B} confere a assinatura da CA e então utiliza a chave pública
+% disponível na certificação digital, seguro de que esta pertence a \textit{A}.
+
 
 
 

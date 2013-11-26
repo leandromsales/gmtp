@@ -1347,10 +1347,11 @@ wants to receive the flow \setpk, and this is also signaled to \serv.}
 
 \vspace{0.8cm}
 
-Quando o pacote do tipo \pac{GMTP-Register-Reply} for recebido pelo nó \repass, o qual
-solicitou o registro de participação, aciona-se o procedimento apresentado no Trecho de
-Código~\ref{algo:onReceiveGMTPRegisterReply}, executando-se o passos restantes explicados
-anteriormente.
+Quando o nó \repasss receber o pacote do tipo \pac{GMTP-Register-Reply},
+correspondente ao registro de participação transmitido anterioremente,
+aciona-se o procedimento apresentado no Trecho de
+Código~\ref{algo:onReceiveGMTPRegisterReply}, executando-se o passos restantes
+explicados anteriormente.
 
 \vspace{0.8cm}
 
@@ -1360,16 +1361,24 @@ anteriormente.
 \SetAlgoLined
 
 \SetKwFunction{Union}{Union}\SetKwFunction{createMulticastChannel}{createMulticastChannel}
-\SetKwFunction{Union}{Union}\SetKwFunction{getServerPublicKey}{getServerPublicKey}
+\SetKwFunction{Union}{Union}\SetKwFunction{getAndStoreServerPublicKey}{getAndStoreServerPublicKey}
+
+\tcc{The node \repasss executes this function when receives a packet of type
+\pac{GMTP-Register-Reply}, as response for a registration of participation
+reply sent to a \serv.}
 
 \uIf(\tcc*[f]{\servs confirmed registration}){\pks = OK} {
   \textit{\setpk} \attrib \getPacketFieldValue{\pk, `flow'}\tcc*[r]{Gets \setpks in \pk}
   \If(){\setpk $\neq$ NULL}{
     \servs \attrib \getPacketFieldValue{\pk, `server'}\tcc*[r]{Gets \serv}
-    \servs[\length{servs}] \attrib \serv\tcc*[r]{Store \servs as connected.}
-    \getServerPublicKey{\serv}\tcc*[r]{See Section~\ref{subsec:obterchavepublica}}
+    servs[\length{servs}] \attrib \serv\tcc*[r]{Store the new \serv}
+    \uIf(\tcc*[f]{Section~\ref{subsec:obterchavepublica}}){\servs enabled
+security layer} {
+      \getAndStoreServerPublicKey{\serv}\;
+    }
     \textit{channel} \attrib \createMulticastChannel{\serv, \setpk}\;
     \Return{\respondToClients{\textit{channel}}}\;
+
   }
 } \Else() {
   \tcc{\servs refuses to accept the connection. This \repasss must notify the clients waiting for receiving \setpk.}
@@ -1747,28 +1756,20 @@ ilustra-se na Figura~\ref{fig:esquema-abstrato-formacao-parceria-combinacao},
 Passo 1. Dessa forma, dado um conjunto de caminhos conhecidos \setway, o nó
 \servs executa as combinações e instrui alguns nós \ways $\in$ $($\setwayiu{1}
 $\cup$ \setwayiu{2}$)$ a se tornarem parcerios entre si a fim de compartilharem
-o mesmo fluxo de dados \setpks, entregando os pacotes de dados \pks $\in$
+o mesmo fluxo de dados \setpk, entregando os pacotes de dados \pks $\in$
 \setpks mais rapidamente aos nós \clis interessados em obtê-los. Tal
-procedimento pode ajudar sobremaneira os nós \repasss a expandirem suas
-possibilidades de parcerias, incluindo a possibilidade de obter pacotes de dados
-\pks $\in$ \setpks de múltiplos nós parceiros \repassu{q}.
+procedimento pode ajudar os nós \repasss a expandirem suas possibilidades de
+parcerias, incluindo a possibilidade de obter pacotes de dados \pks $\in$
+\setpks de múltiplos nós parceiros \repassu{q}.
 
-Com o registro de participação de cada nó \repasss em \serv, o nó \servs detém
-o conhecimento dos caminhos \setwayis $\subset$ \setways através dos quais se
-transmite o fluxos de dados \setpks e, por conseguinte, o nó \servs passa a
-conhece os dois nós \wayu{\wayi_{1}},\wayu{\wayi_{2}} que estão recebendo o
-mesmo fluxo de dados \setpk.
-
-E DAÍ, POR QUE É IMPORTANTE SABER QUEM PEDIU CONEXÃO?
-
-propõe-se que
-
- nós \repasss repassando um
-determinado fluxo de dados \setpk. Sendo
-assim, \servs pode determinar candidados a parcerios \repassu{q} de um
-determinado nó \repass, pois tal nó centraliza o conjunto dos possíveis caminhos
-\setwayi. Este é o único caso em que o nó \servs participa efetivamente
-do processo de formação de parcerias.
+Com o registro de participação de cada nó \repasss em \serv, o nó \servs
+conhece os caminhos \setwayis $\subset$ \setways através dos quais se
+transmite o fluxos de dados \setpk. Sendo assim, \servs pode determinar
+candidados a parcerios \repassu{q} de um determinado nó \repass. Por exemplo,
+se dois nós quaisquer \wayu{1} $\in$ \setwayiu{1} e \wayu{2} $\in$ \setwayiu{2}
+estiverem recebendo o fluxo de dados \setpk, o nó \servs pode instruir que
+ambos se tornem parceiros e apenas um fluxo de dados \setpks é transmitido, em
+vez de dois.
 
 \begin{figure}[ht]
 \begin{center}
@@ -1787,17 +1788,18 @@ caso do cenário ilustrado na
 Figura~\ref{fig:esquema-abstrato-formacao-parceria-combinacao}, Passo 2, é
 possível combinar os caminhos \setwayiu{1} e \setwayiu{2} pelos nós \repassu{6}
 e o \repassu{15}. Ao combinar dois caminhos \setwayiu{1} e \setwayiu{2}, sempre
-haverá duas opções de combinação, uma ilustrada no Passos 3 e outra ilustrada
-no Passo 4 da Figura~\ref{fig:esquema-abstrato-formacao-parceria-combinacao}.
-Para decidir qual opção escolher, o nó \servu{2} compara os custos
-$\zeta($\setwayiu{1}$)$ e $\zeta($\setwayiu{2}$)$. Se $\zeta($\setwayiu{1}$)
-\geq \zeta($\setwayiu{2}$)$, então o nó \servu{2} solicita que \repassu{9}
-envie um pedido de conexão para \repassu{16} (Passo 4). Por fim, o nó
-\repassu{15} deve enviar uma notificação para o nó \servu{2} informando sobre a
-constituição do novo caminho \setwayi. Em caso de $\zeta($\setwayiu{1}$) \leq
-\zeta($\setwayiu{2}$)$, então o nó \servu{2} solicitará que \repassu{16} envie
-um pedido de conexão para \repassu{9} (Passo 3), ao passo que o restante do
-procedimento ocorrerá de forma similar ao que acabara de ser explicado.
+haverá duas direções para a transmissão do fluxo de dados \setpk, uma ilustrada
+no Passos 3 e outra ilustrada no Passo 4 da
+Figura~\ref{fig:esquema-abstrato-formacao-parceria-combinacao}. Para decidir
+qual opção escolher, o nó \servu{2} compara os custos $\zeta($\setwayiu{1}$)$ e
+$\zeta($\setwayiu{2}$)$. Se $\zeta($\setwayiu{1}$) \geq \zeta($\setwayiu{2}$)$,
+então o nó \servu{2} solicita que \repassu{9} envie um pedido de conexão para
+\repassu{16} (Passo 4). Por fim, o nó \repassu{15} deve enviar uma notificação
+para o nó \servu{2} informando sobre a constituição do novo caminho \setwayi. Em
+caso de $\zeta($\setwayiu{1}$) \leq \zeta($\setwayiu{2}$)$, então o nó \servu{2}
+solicitará que \repassu{16} envie um pedido de conexão para \repassu{9} (Passo
+3), ao passo que o restante do procedimento ocorrerá de forma similar ao que
+acabara de ser explicado.
 
 Esta é a grande motivação da formação de parceria por combinação, pois quando o
 pedido de conexão do nó \repassu{9} alcançar o nó \repassu{15}, este o
@@ -2447,6 +2449,7 @@ Seção~\ref{subsec:content-index}}
 \bigspace k=base64:aGVsbG8gd29ybGQK\\
 \bigspace f=x509:http://vid12.akamai.com/certs/cert.crt\tcc*[r]{ver
 Seção~\ref{subsec:seguranca}}
+\label{line:sdp-mediadesc:f}
 \bigspace m=audio 49170 GMTP/RTP/AVP 16000-20000\\
 \bigspace m=video 51372 GMTP/RTP/AVP 163840-655360\\
 \bigspace a=type:multicast\\
@@ -3174,7 +3177,7 @@ nó relator.
 \label{sec:seguranca}
 
 Em uma solução baseada em um modelo de serviço P2P, é possível que nós
-mal-intencionados \repass poluam o sistema com conteúdos que não foram
+mal-intencionados \repasss poluam o sistema com conteúdos que não foram
 gerados pelo nó servidor (Figura~\ref{fig:bucket-brigade-principle-4}).
 
 \begin{figure}[ht]
@@ -3189,13 +3192,13 @@ que não foram gerados pelo nó \serv.}
 
 Para evitar esse tipo de ataque, executa-se um procedimento para verificar a
 autenticidade de um fluxo de dados \setpk. Para isto, os próprios nós \ways
-$\in$ \setwayi verificam se o conteúdo de um pacotes de dados \pks $\in$ \setpks
-foi alterado por algum nó \ways anterior, durante o procedimento de repasse.
-Apenas após comprovar a autenticidade de um pacote \pk, o nó \ways repassa tal
-pacote de dados \pks para o próximo nó \wayu{\wayconst+1}, transmitindo-os
-também para seus nós \clis $\in$ \subsetcli$($\way$)$, se houver demanda. Este
-procedimento evita que todos os nós \clis que receberem o fluxo de dados \setpks
-tenham que verificar a autenticidade dos pacotes \pk.
+$\in$ \setwayis verificam se o conteúdo de um pacotes de dados \pks $\in$
+\setpks foi alterado por algum nó \ways anterior, durante o procedimento de
+repasse. Apenas após comprovar a autenticidade de um pacote \pk, o nó \ways
+repassa tal pacote de dados \pks para o próximo nó \wayu{\wayconst+1},
+transmitindo-os também para seus nós \clis $\in$ \subsetcli$($\way$)$, se houver
+demanda. Este procedimento evita que todos os nós \clis que receberem o fluxo de
+dados \setpks tenham que verificar a autenticidade dos pacotes \pk.
 
 Porém, na prática, o ideal seria que todos nós \ways verificassem a
 autenticidade de cada pacote \pk, porém, tal ação pode onerar os recursos
@@ -3226,7 +3229,7 @@ $pc(t)$, apresentada na Equação~\ref{eq:qtpxcheck}, em função de:
 buffer de repasse de \ways em um instante $t$;
 
     \item $\frac{1}{\mid \setwayc^{\lhd}_{\setwayii} \mid -1}$, a probabilidade
-de um nó \repasss $\in$ \setwayids alterar o conteúdo de um ou mais \pks
+de um nó \repasss $\in$ \setwayids ter alterado o conteúdo de um ou mais \pks
 presente(s) no buffer de repasse de \way, onde \setwayids $=$
 \invert{$\delta(\wayconst_{\wayi+1}$, \setwayi$)$} e \setwayis é o caminho
 através do qual se transmite os pacotes de dados \pks $\in$ \setpk;
@@ -3243,8 +3246,8 @@ pc(t) = \floor*{bs(t) \times \left(1 - \frac{1}{\mid
 
 \vspace{0.5cm}
 
-Sendo assim, quanto mais distante um nó \ways estiver da fonte geradora \servs
-do fluxo de dados \setpk, mais pacotes \pks $\in$ \setpks deve-se verificar sua
+Sendo assim, quanto mais distante um nó \ways estiver do nó \serv, que gera o
+fluxo de dados \setpk, mais pacotes \pks $\in$ \setpks deve-se verificar sua
 autenticidade. Antes de entender o procedimento para verificar a autenticidade de
 um pacote \pk $\in$ \setpk, deve-se entender como o nó \servs deve gerar
 manipular os referidos pacotes de dados para que seja possível verificar sua
@@ -3272,11 +3275,11 @@ apresenta-se o procedimento de assinatura de um pacote \pks $\in$ \setpk.
 \SetAlgoLined
 \tcc{\servs executes this function to digital sign the packet content using
 its private key $K^{-}_{\servconst_{\servi}}$ and a pre-defined hash function,
-such as the well-know md5 function. \servs get the value of data field, which
-is the content that application wants to transport and generates a signature by
-encrypt the hash of the data using the \servs private key. After, put the
-generated signature in the signature field of the packet \pk. The signature
-field will be used later by a note \repasss to verify the packet \pks
+such as the well-know md5 or sha1 function. \servs get the value of data field,
+which is the content that application wants to transport and generates a
+signature by encrypt the hash of the data using the \servs private key. After,
+put the generated signature in the signature field of the packet \pk. The
+signature field will be used later by a note \repasss to verify the packet \pks
 authenticity executing the function verifyPacketAuthenticity(), defined in
 Algorithm~\ref{algo:verifyPacketAuthenticity}.}
 
@@ -3286,9 +3289,10 @@ Algorithm~\ref{algo:verifyPacketAuthenticity}.}
 \SetKwFunction{Union}{Union}\SetKwFunction{encrypt}{encrypt}
 
 \textit{data} \attrib \getPacketFieldValue{\pk, `data'}\;
-\textit{signatureHash} \attrib \hash{\textit{data}}\;
-\textit{signature} \attrib encrypt($K^{+}_{\servconst_{\servi}}$, \textit{signatureHash})\;
-\setPacketFieldValue{\pk, `data', \textit{signature}}\;
+\textit{hashValue} \attrib \hash{\textit{data}}\;
+\textit{signature} \attrib encrypt($K^{-}_{\servconst_{\servi}}$,
+\textit{hashValue})\;
+\setPacketFieldValue{\pk, `signature', \textit{signature}}\;
 \Return{\pk}\;
 
 \end{algorithm}
@@ -3310,19 +3314,19 @@ verificação de autenticidade que funciona a seguinte forma. Para cada pacote
 \pks $\in$ \setpk', extrai-se a assinatura do pacote \pk, gerada pelo nó \serv,
 como explicado na Seção~\ref{subsec:gerar-pacote-assinado}. Em seguida,
 extrai-se o campo de dados para que se possa verificar sua autenticidade. Para
-isto, gera-se o código \textit{hash} do campo de dados e compara-se com o
-código de \textit{hash} gerado pelo nó \servs no momento da transmissão do
-pacote \pk. Note que o valor para o código de \textit{hash} gerado pelo nó
-\servs é obtido através de processo de decriptar a assinatura do pacote de
-dados \pks utilizando a chave pública do nó \serv. Assim, se o valor do
-código de \textit{hash} gerado com base no conteúdo transportado no pacote \pks
-for igual ao valor do código de \textit{hash} disponível na assinatura do
-pacote, conclui-se que o pacote \pks não foi alterado por nenhum nó \ways $\in$
-\setwayids $=$ \invert{$\delta(\wayconst_{\wayi+1}$, \setwayi$)$}, então marca-o
-como aprovado para ser repassado, caso contrário, marca-o como desaprovado e
-deve ser descartado. No Trecho de Código~\ref{algo:verifyPacketAuthenticity},
-apresenta-se o procedimento de verificação de autenticidade de um pacote \pks
-$\in$ \setpk.
+isto, gera-se o valor de \textit{hash} do campo de dados e compara-se com o
+valor de \textit{hash} gerado pelo nó \servs no momento da transmissão do
+pacote \pk. Note que o valor de \textit{hash} gerado pelo nó \servs é obtido
+através de processo de decriptar a assinatura do pacote de dados \pks utilizando
+a chave pública do nó \serv. Assim, se o valor de \textit{hash} gerado com base
+no conteúdo transportado no pacote \pks for igual ao valor de \textit{hash}
+disponível na assinatura do pacote, conclui-se que o pacote \pks não foi
+alterado por nenhum nó \ways $\in$ \setwayids $=$
+\invert{$\delta(\wayconst_{\wayi+1}$, \setwayi$)$}. Se o pacote de dados \pks
+não foi alterado, marca-o como aprovado para ser repassado, caso contrário,
+marca-o como desaprovado e deve ser descartado. No Trecho de
+Código~\ref{algo:verifyPacketAuthenticity}, apresenta-se o procedimento de
+verificação de autenticidade de um pacote \pks $\in$ \setpk.
 
 \vspace{0.5cm}
 
@@ -3332,9 +3336,12 @@ $\in$ \setpk.
 
 \SetAlgoLined
 \tcc{\ways executes this function to check if the content of a subset of packets
-\pks $\in$ \setpk' was modified. It marks those packets that were not modified
-and those that were modified. For those packets not modified, the node \ways
-make them ready for relaying, for those packets modified, it must be discarded.}
+\setpk' $\subset$ \setpks was modified. It marks each \pks $\in$ \setpk' to be
+relayed or discarded. \ways uses the \servs public key to decrypt the \pks
+signature and compares it to the hash value of the \pks content. It marks \pks
+to be relayed if \pks content was not modified, otherwise it marks \pks to be
+discarded, because \pks was modified by a node in \setwayids $=$
+\invert{$\delta(\wayconst_{\wayi+1}$, \setwayi$)$}.}
 
 \SetKwFunction{Union}{Union}\SetKwFunction{getPacketFieldValue}{getPacketFieldValue}
 \SetKwFunction{Union}{Union}\SetKwFunction{GMTPResponse}{GMTPResponse}
@@ -3347,9 +3354,6 @@ verifiedPackets \attrib \textbf{array of} boolean;
 \ForEach{\pks $\in$ \setpk} {
   \textit{signature} \attrib \getPacketFieldValue{\pk, `signature'}\;
   \textit{data} \attrib \getPacketFieldValue{\pk, `data'}\;
-  \tcc{If next condition is True, packet \pks is market to be relayed,
-otherwise \pks was modified by a node in \setwayids $=$
-\invert{$\delta(\wayconst_{\wayi+1}$, \setwayi$)$} and must be destroyed.}
   \textit{verifiedPackets[$x$]} \attrib $($\hash{\textit{data}} =
 \decrypt{$K^{+}_{\servconst_{\servi}}$, \textit{signature}}$)$\;
 }
@@ -3392,13 +3396,15 @@ como descrito anteriormente.
 \subsection{Obter a chave pública $K^{+}_{\servconst_{\servi}}$ de \serv}
 \label{subsec:obterchavepublica}
 
-Um nó \repasss obtem a chave pública $K^{+}_{\servconst_{\servi}}$ de \serv
+Um nó \repasss obtem a chave pública $K^{+}_{\servconst_{\servi}}$ de \servs
 através do certificado digital disponível na URI especificada no parâmetro
-\textit{f} da descrição da mídia, como ilustra-se no Trecho de
-Código~\ref{algo:sdp-mediadesc}, Linha 8, da
+\textit{f} da descrição da mídia, como ilustrou-se no Trecho de
+Código~\ref{algo:sdp-mediadesc}, Linha~\ref{line:sdp-mediadesc:f}, da
 Seção~\ref{subsubsec:desc-conteudo}. Isto ocorre após o nó \repasss receber o
 pacote \pac{GMTP-Register-Reply}, que confirma o registro de participação ou a
-conexão para obter um fluxo de dados \setpk.
+conexão para obter um fluxo de dados \setpk, como apresentou-se no Trecho de
+Código~\ref{algo:registerRelay}, Linha X,
+Seção~\ref{subsec:registro-participacao}.
 
 Após obter o referido certificado digital do nó \serv, o nó \repasss pode
 realizar \textit{cache} de tal conteúdo para que os próximos nós \clis e evitar
