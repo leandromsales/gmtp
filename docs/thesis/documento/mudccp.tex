@@ -1282,19 +1282,19 @@ finais da respectiva rede, ou seja, seus nós \clis $\in$ \setcli. Este assunto
 será retomado na Seção~\ref{sec:asptransrecep}, onde discute-se as funções de
 conectividade IP empregadas no GMTP.
 
-No Trecho de Código \ref{algo:registerRelay}, apresenta-se o pseudo-algoritmo
-utilizado por um nó \repasss para se registrar a um nó \serv. Note que o nó
-\repasss não é obrigado a informar qual fluxo de dados \setpks está interessado
-em obter, tal como explicado anteriormente, lembre-se, o nó \repasss se
-comporta, por analogia, como uma antena de TV. Porém, da mesma forma que é
-possível uma antena de TV obter apenas o sinal correspondente a um determinal
-canal (frequência de TV), também é possível que um nó \repasss especifique
-exatamente qual fluxo de dados \setpks deseja começar a receber. Neste caso, o
-nó \servs executará um procedimento para determinar se aceita ou não o pedido de
-conexão para transmitir \setpk. Caso aceite, a transmissão do fluxo de dados
-\setpks entre \servs e \repasss ocorrerá em modo unicast, diretamente entre
-eles, caso contrário, o nó \servs delegará a transmissão de tal fluxo de dados
-\setpks para algum outro nó repassador \repassu{q} que se tornará parceiro do
+Nesse contexto, utiliza-se o Algoritmo~\ref{algo:registerRelay} para que
+um nó \repasss se registrar a um nó \serv. Note que o nó \repasss não é obrigado
+a informar qual fluxo de dados \setpks está interessado em obter, tal como
+explicado anteriormente, lembre-se, o nó \repasss se comporta, por analogia,
+como uma antena de TV. Porém, da mesma forma que é possível uma antena de TV
+obter apenas o sinal correspondente a um determinal canal (frequência de TV),
+também é possível que um nó \repasss especifique exatamente qual fluxo de dados
+\setpks deseja começar a receber. Neste caso, o nó \servs executará um
+procedimento para determinar se aceita ou não o pedido de conexão para
+transmitir \setpk. Caso aceite, a transmissão do fluxo de dados \setpks entre
+\servs e \repasss ocorrerá em modo unicast, diretamente entre eles, caso
+contrário, o nó \servs delegará a transmissão de tal fluxo de dados \setpks para
+algum outro nó repassador \repassu{q} que se tornará parceiro do
 nó requisitante \repass.
 
 \newcommand{\attrib}{$\leftarrow$ }
@@ -1349,9 +1349,8 @@ wants to receive the flow \setpk, and this is also signaled to \serv.}
 
 Quando o nó \repasss receber o pacote do tipo \pac{GMTP-Register-Reply},
 correspondente ao registro de participação transmitido anterioremente,
-aciona-se o procedimento apresentado no Trecho de
-Código~\ref{algo:onReceiveGMTPRegisterReply}, executando-se o passos restantes
-explicados anteriormente.
+aciona-se o Algoritmo~\ref{algo:onReceiveGMTPRegisterReply}, executando-se o
+passos restantes explicados anteriormente.
 
 \vspace{0.8cm}
 
@@ -1610,12 +1609,12 @@ participação de \repassu{9} e \repassu{11}, o nó \servs descobrirá, por
 intersecção, um sub-caminho de nós \repasss $\in$ $($\setwayiu{1} $\cap$
 \setwayiu{2}$)$ (Passo 2).
 
-No Trecho de Código~\ref{algo:findPartnerIntersectPath}, apresenta-se um
-pseudo-algoritmo para o procedimento de formação de parcerias por
-intersecção, executado no nó \servs ao receber um pedido de conexão originado
-por um nó \repasss qualquer para obter um fluxo de dados \setpk. O nó \servs
-compara os caminhos conhecidos \setwayis $\in$ \setways com o caminho
-\textit{\setwayiu{\repassconst_\repassi}} contido no pedido de conexão
+Nesse contexto, o nó \servs executa o
+Algoritmo~\ref{algo:findPartnerIntersectPath} para realizar a formação de
+parcerias por intersecção. Tal algoritmo é executado quando o nó \servs recebe
+um pedido de conexão originado por um nó \repasss para obter um fluxo de dados
+\setpk. O nó \servs compara os caminhos conhecidos \setwayis $\in$ \setways com
+o caminho \textit{\setwayiu{\repassconst_\repassi}} contido no pedido de conexão
 transmitido por \repass. Se \servs determinar um nó \ways em comum entre algum
 \setwayis e \textit{\setwayiu{\repassconst_\repassi}}, \servs instrui o nó
 \ways a interceptar os próximos pedidos de conexão para obter \setpks, caso
@@ -1643,36 +1642,35 @@ entre o nome do fluxo de dados \setpks e a lista dos nós \repasss que tal fluxo
 deve ser repassado. Um aspecto técnico muito importante que deve ser ressaltado
 é que apenas o nó \repasss que precisar repassar \pks $\in$ \setpks para seus
 nós \clis $\in$ \subsetcli$($\repass$)$ deve manter um mapeamento entre o fluxo
-de dados \setpks, o endereço e porta em que tal fluxo deve ser entregue. Como
-a transmissão de um fluxo de dados \setpks entre um nó \repass e seus nós
+de dados \setpk, o endereço e porta em que tal fluxo deve ser entregue. Como
+a transmissão de um fluxo de dados \setpks entre um nó \repasss e seus nós
 \clis $\in$ \subsetcli$($\repass$)$ ocorrerá em modo multicast, faz-se
-necessária apenas uma entrada no mapeamento do nó \repass por fluxo de dados
+necessária apenas uma entrada no mapeamento do nó \repasss por fluxo de dados
 \setpk, portanto utilizando-se pouco recurso de memória de um roteador.
 
-O algoritmo explicado anteriormente, foi originalmente concebido no processo de
-concepção do GMTP, que permite repasse de pacotes de dados \pks levando em
-consideração o fluxo de dados de interesse \setpk, portanto trata-se de uma
-abordagem centrada no conteúdo \textit{(content centric networks)}, e não
-centrada no sistema final \textit{(host centric networks)}. Essa proposta
-quebra um paradigma que tradicionalmente os pacotes de dados de uma aplicação
-são roteados com base no sistema final de destino. No caso do GMTP,
+O algoritmo explicado anteriormente permite repasse de pacotes de dados \pks
+levando em consideração o fluxo de dados de interesse \setpk, portanto trata-se
+de uma abordagem centrada no conteúdo \textit{(content centric networks)}, e não
+centrada no sistema final \textit{(host centric networks)}. Sendo assim, essa
+proposta quebra um paradigma que tradicionalmente os pacotes de dados de uma
+aplicação são roteados com base no sistema final de destino. No caso do GMTP,
 diferentemente de qualquer outros protocolo existente, para o cenário ilustrado
 no exemplo supracitado, quando qualquer nó \clis $\in$
 $\sum^{12}_{\repassi=8}$\subsetcli$($\repass$)$ solicitar o fluxo de dados
 \setpk, apesar de tal pedido ser enviado em direção ao nó \serv, o nó
-\repassu{7} analisará o pedido pelo nome do fluxo de dados \setpk e decidirá por
-encaminhar os pacotes de dados \pks $\in$ \setpks para o respectivo nó \repasss
-solicitante, naquele caso o nó \repassu{11}. Isto só é possível porque o nó
-\servs instrui o nó \repassu{7}, que é o primeiro nó comum entre os caminhos
-\setwayiu{1} e \setwayiu{2}, de tal forma que \transmitqu{\repassu{7}} $=1$.
-Como resultado, o nó \repassu{7} aciona um filtro para interceptar todo pacote
-de requisição para obter o fluxo de dados \setpk. A partir desse instante,
-como o nó \repassu{7} interceptará todos os pedidos de conexão com interesse em
-obter \setpk, \repassu{7} responderá ao nó \repasss solicitante como se
-\repassu{7} fosse o nó \servu{2}. Salienta-se também que há originalidade nesse
-algoritmo a partir do momento em que se permite que um nó \servs se
-comunique com um nó \repasss a fim de o delegar a responsabilidade em
-distribuir um determinado fluxo de dados \setpk.
+\repassu{7} analisará o pedido pelo nome do fluxo de dados \setpks e decidirá
+por encaminhar os pacotes de dados \pks $\in$ \setpks para o respectivo nó
+\repasss solicitante, naquele caso o nó \repassu{11}. Isto só é possível porque
+o nó \servs instrui o nó \repassu{7}, que é o primeiro nó comum entre os
+caminhos \setwayiu{1} e \setwayiu{2}, a se tornar transmissor de \setpk, ou
+seja, \transmitqu{\repassu{7}} $=1$. Como resultado, o nó \repassu{7} aciona
+um filtro para interceptar todo pacote de requisição para obter o fluxo de dados
+\setpk. A partir desse instante, como o nó \repassu{7} interceptará todos os
+pedidos de conexão com interesse em obter \setpk, \repassu{7} responderá ao nó
+\repasss solicitante como se fosse o nó \servu{2}. Salienta-se
+também que há originalidade nesse algoritmo a partir do momento em que se
+permite que um nó \servs se comunique com um nó \repasss a fim de delegar a
+responsabilidade em distribuir um determinado fluxo de dados \setpk.
 
 % Esse procedimento também cobre o caso em que dois (ou mais) nós \repasss podem
 % formar
@@ -1754,22 +1752,32 @@ distintos \setwayiu{1} e \setwayiu{2} tal que \setwayiu{1} $\cap$ \setwayiu{2}
 $= \{$\serv$\}$, ou seja, os caminhos se interceptam apenas em \serv, como
 ilustra-se na Figura~\ref{fig:esquema-abstrato-formacao-parceria-combinacao},
 Passo 1. Dessa forma, dado um conjunto de caminhos conhecidos \setway, o nó
-\servs executa as combinações e instrui alguns nós \ways $\in$ $($\setwayiu{1}
-$\cup$ \setwayiu{2}$)$ a se tornarem parcerios entre si a fim de compartilharem
-o mesmo fluxo de dados \setpk, entregando os pacotes de dados \pks $\in$
-\setpks mais rapidamente aos nós \clis interessados em obtê-los. Tal
-procedimento pode ajudar os nós \repasss a expandirem suas possibilidades de
-parcerias, incluindo a possibilidade de obter pacotes de dados \pks $\in$
-\setpks de múltiplos nós parceiros \repassu{q}.
+\servs executa as combinações e instrui, por exemplo, dois nós \wayu{1} $\in$
+\setwayiu{1} e \wayu{2} $\in$ \setwayiu{2} a se tornarem parcerios para
+compartilharem o mesmo fluxo de dados \setpk, entregando apenas um fluxo de
+dados \setpks para serem distribuídos aos nós \clis $\in$
+$($\subsetcli$($\wayu{1}$)$ $\cup$ \subsetcli$($\wayu{2}$))$ e, possíveis,
+para outros nós \clis que estejam conectados aos nós \repasss $\in$ \setwayi,
+tal que o caminho \setwayis é constituído como resultado da parceria entre
+\wayu{1} e \wayu{2}.
+
+% Tal procedimento pode ajudar os nós \repasss a expandirem
+% suas parcerias, incluindo a possibilidade de obter pacotes de dados \pks $\in$
+% \setpks de múltiplos nós parceiros \repassu{q}.
 
 Com o registro de participação de cada nó \repasss em \serv, o nó \servs
 conhece os caminhos \setwayis $\subset$ \setways através dos quais se
 transmite o fluxos de dados \setpk. Sendo assim, \servs pode determinar
 candidados a parcerios \repassu{q} de um determinado nó \repass. Por exemplo,
 se dois nós quaisquer \wayu{1} $\in$ \setwayiu{1} e \wayu{2} $\in$ \setwayiu{2}
-estiverem recebendo o fluxo de dados \setpk, o nó \servs pode instruir que
-ambos se tornem parceiros e apenas um fluxo de dados \setpks é transmitido, em
-vez de dois.
+estiverem recebendo o fluxo de dados \setpks diretamente do nó \serv, este pode
+instruir que \wayu{1} e \wayu{2} se tornem parceiros e apenas um fluxo de
+dados \setpks seja transmitido, em vez de dois. Para isso, o nó \servs instrui
+os nós \wayu{1} e \wayu{2} a executarem um algoritmo para determinar se
+\wayu{1} servirá \wayu{2} ou se \wayu{2} servirá \wayu{1}. Note que é possível
+que a parceria entre \wayu{1} e \wayu{2} não ocorra. Por exemplo, \wayu{1} se
+tornará parceiros de \wayu{2} apenas se o custo entre \wayu{1} e \wayu{2} for
+menor do que o custo entre \wayu{1} e \serv.
 
 \begin{figure}[ht]
 \begin{center}
@@ -1781,7 +1789,14 @@ vez de dois.
 \label{fig:esquema-abstrato-formacao-parceria-combinacao}
 \end{figure}
 
-Em geral, o algoritmo funciona da seguinte forma: o nó \servu{2} processa os caminhos
+Considerando esses aspectos, o nó \repasss  a
+execução da formação de parceria por combinação, o nó \servs envia um pacote do
+tipo \pac{GMTP-Partnership} aos nós \repass, escolhidos dentre os que estão
+conectados e recebendo o fluxo de dados \setpks diretamente de \serv, para
+executarem o Algoritmo~\ref{algo:findPartnerCombinePath}. Em geral funciona com
+base em busca binária, tendo como critério o custo entre $\zeta($\setwayiu{1}$)$
+e $\zeta($\setwayiu{2}$)$  da seguinte forma. O nó \servu{2} processa os
+caminhos
 \setwayis conhecidos e determina quais são os melhores parceiros \repassu{q}
 para um determinado nó \repass, sendo tal informação enviada para \repass. No
 caso do cenário ilustrado na
@@ -1819,9 +1834,8 @@ exemplo supracitado, o nó \repassu{6} pode continuar recebendo o fluxo de dados
 através do caminho \setwayiu{1} e também através do novo caminho \setwayis que
 acabara de ser constituído.
 
-Para generalizar, apresenta-se no Trecho de
-Código~\ref{algo:findPartnerCombinePath}, um pseudo-algoritmo para a formação
-de parceria por combinação, executado em qualquer nó \serv.\\
+Nesse contexto, para realizar a formação de parceria por combinação, o nó \servs
+executa o Algoritmo~\ref{algo:findPartnerCombinePath}.\\
 
 \begin{algorithm}[H]
 \label{algo:findPartnerCombinePath}
@@ -1858,7 +1872,8 @@ pkt $ \leftarrow$ make\_pkt(GMTP\_ADV\_RELAY(\textit{relayPartners}), \repass)\;
 
 send\_pkt\_rdt(pkt)\;
 
-\caption{matchPartnersByPathCombination(\setwayi, \repass)}
+\caption[matchPartnersByPathCombination(\setwayi,
+\repass)]{matchPartnersByPathCombination(\setwayi, \repass)}
 \end{algorithm}
 \vspace{0.8cm}
 
@@ -1959,7 +1974,9 @@ registrados, identificados pelos seus respectivos nomes.\\
 
 \begin{algorithm}[H]
 \label{algo:requestDNS}
+\caption{Requisição e resposta da lista de eventos de um distribuidor de conteúdo.}
 \SetAlgoLined
+\SetAlgorithmName{Listagem}{listagem}{.}
 
 \textbf{dig} -t SID globo.com\\
 \textbf{QUESTION SECTION:}\\
@@ -1978,7 +1995,6 @@ registrados, identificados pelos seus respectivos nomes.\\
 \bigspace SERVER: 192.168.1.252:53(192.168.1.252)\\
 \bigspace WHEN: Tue Jul 16 15:44:25 2013\\
 
-\caption{Requisição da lista de eventos de um distribuidor de conteúdo.}
 \end{algorithm}
 \vspace{0.8cm}
 
@@ -2387,14 +2403,13 @@ seguintes informações sobre \setpk:
 
 \begin{itemize}
 
- \item O formato da mídia (H.261 video, MPEG video, etc.);
+ \item O formato da mídia (H.261 video, MPEG video, etc.); e
 
- \item O endereço e porta para obter a mídia (multicast); e
+ \item O endereço e porta para obter a mídia (multicast).
 
 \end{itemize}
 
- \item Informação para validação de cada pacote \pks $\in$ \setpk. Este assunto
-será retomado na Seção~\ref{subsec:seguranca}.
+ \item Informação para verificação de autenticidade de cada pacote \pks $\in$ \setpk.
 
 \end{itemize}
 
@@ -2417,11 +2432,9 @@ Seção~\ref{subsec:content-index};
   \item \textit{c}, as informações de conexão, como o tipo da rede, a versão do
 protocolo de rede e o endereço do nó \repass;
 
-  \item \textit{k}, a chave de criptografia se os pacotes \pks $\in$ estiverem
-criptografados;
-
-  \item \textit{f}, o certificado digital emitido pelo nó \servs para validação
-do conteúdo de \pks, se desejado;
+  \item \textit{f}, o certificado digital emitido pelo nó \servs para verificação
+de autenticidade dos pacotes \pks $\in$ \setpk (opcional). Este assunto
+será retomado na Seção~\ref{sec:seguranca}.;
 
   \item \textit{m}, o tipo da mídia, a porta de conexão e protocolo de
 transporte; e
@@ -2438,6 +2451,8 @@ mídia, em bytes.
 \label{algo:sdp-mediadesc}
 \SetAlgoLined
 
+\SetAlgorithmName{Listagem}{listagem}{.}
+
 \bigspace v=0\\
 \bigspace o=- IN IP4 177.135.177.241,
 IP4 186.192.82.163, IP6 2001:0db8:85a3::7344\\
@@ -2446,23 +2461,21 @@ Seção~\ref{subsec:content-index}}
 \bigspace i=An Introduction about Global Media Transmission Protocol (GMTP).\\
 \bigspace u=http://www.ic.ufal.br/projects/gmtp/introduction.ps\\
 \bigspace c=IN IP4 200.17.113.100\\
-\bigspace k=base64:aGVsbG8gd29ybGQK\\
-\bigspace f=x509:http://vid12.akamai.com/certs/cert.crt\tcc*[r]{ver
-Seção~\ref{subsec:seguranca}}
+\bigspace f=x509:http://vid12.akamai.com/certs/cert.crt\tcc*[f]{ver Seção~\ref{sec:seguranca}}\\
 \label{line:sdp-mediadesc:f}
 \bigspace m=audio 49170 GMTP/RTP/AVP 16000-20000\\
 \bigspace m=video 51372 GMTP/RTP/AVP 163840-655360\\
 \bigspace a=type:multicast\\
 \bigspace a=sendrecv\\
-\bigspace a=quality:10\tcc*[r]{ver Seção~\ref{subsec:adapt-flow}}
-\bigspace a=lang:en\tcc*[r]{ver RFC1766~\cite{RFC1766}}
+\bigspace a=quality:10\\
+\bigspace a=lang:en\tcc*[f]{ver RFC1766~\cite{RFC1766}}\\
 \bigspace a=framerate:23.0\\
 
 \caption{Exemplo de uma mensagem SDP no pacote \pac{GMTP-MediaDesc}.}
 \end{algorithm}
 \vspace{0.8cm}
 
-Nesse exemplo do Trecho de Código~\ref{algo:sdp-mediadesc}, utiliza-se a
+No exemplo apresentado na Listagem~\ref{algo:sdp-mediadesc}, utiliza-se a
 primeira versão do protocolo SDP e descreve-se a transmissão de dois fluxos
 \setpks (Linhas 10 e 11), sendo um deles de áudio e outro de vídeo. Os fluxos
 estão sendo distribuídos por três nós \servs (Linha 2), dos quais dois são
@@ -2483,7 +2496,7 @@ bits para determinar o tamanho do buffer necessário para permitir a transmissão
 da mídia, como discutido anteriormente. Note que o tamanho do buffer é definido
 em consonância com os parâmetros determinados pelo algoritmo de controle de
 congestionamento executado no módulo GMTP-Inter, a ser discutido em detalhes na
-Seção~\ref{subsec:ccgmtp}.
+Seção~\ref{sec:ccgmtp}, a seguir.
 
 
 \section{Controle de Congestionamento em \net}

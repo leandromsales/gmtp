@@ -25,7 +25,7 @@
 \usepackage{tabularx}
 \usepackage{moreverb}
 \usepackage{enumerate}
-\usepackage[lined,ruled,linesnumbered,titlenumbered]{algorithm2e}
+\usepackage[portuguese,lined,ruled,linesnumbered,titlenumbered]{algorithm2e}
 %\usepackage{dsfont}
 %\usepackage{bbding}
 \usepackage{multirow}
@@ -33,6 +33,19 @@
 \usepackage{dcolumn,longtable,hhline}
 \usepackage[table]{xcolor}
 \usepackage{cite}
+
+\DeclareOption{portuguese}{%
+\renewcommand{\listalgorithmcfname}{Lista de Algoritmos}%
+\renewcommand{\algorithmcfname}{Algoritmo}%
+\renewcommand{\algorithmautorefname}{algoritmo}%
+\renewcommand{\algorithmcflinename}{linha}%
+\renewcommand{\algocf@typo}{}%
+\renewcommand{\@algocf@procname}{Procedimento}%
+\renewcommand{\@algocf@funcname}{Fun\c{c}\~{a}o}%
+\renewcommand{\procedureautorefname}{procedimento}%
+\renewcommand{\functionautorefname}{fun\c{c}\~{a}o}%
+\renewcommand{\algocf@languagechoosen}{portuguese}%
+}%
 
 % \usepackage[algoruled,lined, boxed, portugues]{algorithm2e}
 % \begin{figure}[htpb]
@@ -79,8 +92,14 @@ basicstyle=\footnotesize,
 stringstyle=\ttfamily,
 showstringspaces=false
 }
-\renewcommand{\lstlistingname}{C\'odigo Fonte}
-\renewcommand{\lstlistlistingname}{Lista de C\'odigos Fonte}
+
+% \renewcommand{\lstlistingname}{Trecho de Código}
+% \renewcommand{\lstlistlistingname}{Lista de C\'odigos Fonte}
+% \renewcommand{\listalgorithmname}{Lista de Trechos de Código Fonte}
+
+% \renewcommand*{\listalgorithmcfname}{Lista de Algoritmos}
+% \renewcommand*{\algorithmcfname}{Algoritmo}
+% \renewcommand*{\algorithmautorefname}{Trecho de Código}
 
 \newcommand{\fmtvar}[1]{\textrm{\textit{#1}}}
 \newcommand{\ut}[2]{\unit[#1]{\emph{#2}}}
@@ -172,6 +191,7 @@ Conteúdos Multimídia Ao\\Vivo com suporte às Redes Centradas no Conteúdo}
 \listoffigures
 \listoftables
 % \lstlistoflistings
+\listofalgorithms
 \newpage
 \cleardoublepage
 
