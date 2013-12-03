@@ -982,7 +982,7 @@ apenas fluxo de dados, definido por $($\setpk$,\prec) =
 \ldots, $\pku{x}$\}$, tal que $x \in \mathbb{N}$. Trata-se de um \textit{poset}
 porque o GMTP não garante entrega de \pk;
 
-	  \item Seja \subsetcli, uma função que denota os nós \cli relacionados
+	  \item Seja \subsetcli, uma função que denota os nós \clis relacionados
 a um nó \repass, de modo que nenhum nó \clis $\in$ \setclis pode estar
 relacionado com dois ou mais nós, definida por \subsetclis $:$ \repasss
 $\rightarrow$ \powerset{\setclic}, $\forall$\repass,\repassu{\repassi+1} $\in$
@@ -1025,7 +1025,7 @@ que \subsetrels $\subset$ \setrels e \subsetrels $\cup$
 tal que um caminho é definido por um conjunto \textit{toset}
 $($\setwayi,$\prec)$, que denota um dos possíveis caminhos por onde um fluxo de
 dados \setpks pode ser transmitido, obrigatoriamente a partir de um nó servidor
-\serv até um nó \repassu{1}, tal que:
+\servs até um nó \repassu{1}, tal que:
 
       \begin{enumerate}
 
@@ -1106,7 +1106,7 @@ nós \subsetcli(\repass) tornam-se capazes de receber \setpk, mas a recíproca não
 \repasss também se torna indisponível. Com base na aceitação dessa conjectura,
 especificamente para a rede \net, pretende-se permitir que outros nós \clis
 possam continuar recebendo \setpk, mesmo ocorrendo a desconexão de um nó
-\clis que esteja recebendo \setpk durante a recepção de um fluxo de dados
+\clis que esteja recebendo \setpks durante a recepção de um fluxo de dados
 \setpk. No GMTP, adota-se tal estratégia quando um nó \repasss passa a manter
 estado sobre tal transmissão e não mais por qualquer nó \cli, antes prática
 comumente adotada em soluções tradicionais de distribuição de conteúdos
@@ -1368,7 +1368,7 @@ reply sent to a \serv.}
 
 \uIf(\tcc*[f]{\servs confirmed registration}){\pks = OK} {
   \textit{\setpk} \attrib \getPacketFieldValue{\pk, `flow'}\tcc*[r]{Gets \setpks in \pk}
-  \If(){\setpk $\neq$ NULL}{
+  \If(){\setpks $\neq$ NULL}{
     \servs \attrib \getPacketFieldValue{\pk, `server'}\tcc*[r]{Gets \serv}
     servs[\length{servs}] \attrib \serv\tcc*[r]{Store the new \serv}
     \uIf(\tcc*[f]{Section~\ref{subsec:obterchavepublica}}){\servs enabled
@@ -1448,12 +1448,12 @@ um ou mais nós \cli.}
 
 No GMTP, a seleção de nós parceiros \repassu{q} ocorre antes e durante a
 transmissão de um fluxo de dados \setpk, através dos procedimentos de formação
-de parcerias apresentados a seguir, executa concorrentemente.
+de parcerias apresentados a seguir, executados concorrentemente.
 
 \begin{enumerate}
  \item Formação de parcerias intra \setwayi;
- \item Formação de parcerias por intersecção de \setwayi; e
- \item Formação de parcerias por combinação de \setwayi.
+ \item Formação de parcerias por intersecção de \setwayi. %; e
+%  \item Formação de parcerias por combinação de \setwayi.
 \end{enumerate}
 
 \subsubsection{\space\space\space\space\space\space1. Formação de parcerias
@@ -1576,7 +1576,7 @@ foi parcialmente introduzido no final da seção anterior, quando apresentou-se um
 cenário de falha de um nó \repass. Porém, o procedimento de formação de
 parceria introduzido nesta seção permite que o referido nó \ways comece
 replicar o fluxo de dados \setpks mesmo quando \subsetcli$($\way$) = 0$. Para
-este caso, o nó \servs transmite apenas um único fluxo de dados \setpk para
+este caso, o nó \servs transmite apenas um único fluxo de dados \setpks para
 duas ou mais sub-caminhos que contém o nó \way. Para entender melhor este
 caso, acompanhe a explicação a seguir com base na ilustração da
 Figura~\ref{fig:esquema-abstrato-formacao-parceria-interseccao}.
@@ -1617,12 +1617,12 @@ um pedido de conexão originado por um nó \repasss para obter um fluxo de dados
 o caminho \textit{\setwayiu{\repassconst_\repassi}} contido no pedido de conexão
 transmitido por \repass. Se \servs determinar um nó \ways em comum entre algum
 \setwayis e \textit{\setwayiu{\repassconst_\repassi}}, \servs instrui o nó
-\ways a interceptar os próximos pedidos de conexão para obter \setpks, caso
+\ways a interceptar os próximos pedidos de conexão para obter \setpk, caso
 contrário, \servs aceita o novo pedido de conexão e todo o caminho
 \textit{\setwayiu{\repassconst_\repassi}} passa a ser alimentado com o fluxo de
-dados \setpk para permitir futuras parcerias intra, por intersecção ou por
-combinação, a ser apresentada mais adiante. Note que após este procedimento, o
-nó \servs passa a conhecer o caminho \textit{\setwayiu{\repassconst_\repassi}}.
+dados \setpks para permitir futuras parcerias intra ou por intersecção. Note que
+após este procedimento, o nó \servs passa a conhecer o caminho
+\textit{\setwayiu{\repassconst_\repassi}}.
 
 Para o cenário ilustrado na
 Figura~\ref{fig:esquema-abstrato-formacao-parceria-interseccao}, o
@@ -1685,7 +1685,7 @@ responsabilidade em distribuir um determinado fluxo de dados \setpk.
 % um pedido de conexão ao nó \repassu{6}, resultando no cenário ilustrado no
 % Passo 4 da Figura~\ref{fig:esquema-abstrato-formacao-parceria-interseccao}.
 % Após a negociação entre os nós \repassu{4} e \repassu{6}, o nó \servu{1}
-% suspende a transmissão do fluxo de dados \setpk em direção ao nó \repassu{4}.
+% suspende a transmissão do fluxo de dados \setpks em direção ao nó \repassu{4}.
 % Note que este procedimento constituirá um novo caminho, representado por
 % \setwayiu{4} $=\{$\repassu{4}, \repassu{3},\repassu{2},\repassu{6}$\}$, que só
 % será efetivado se o nó \servsu{1} constatar a condição $\zeta($\setwayiu{3}$)
@@ -1737,189 +1737,190 @@ responsabilidade em distribuir um determinado fluxo de dados \setpk.
 % \pks \attrib \makePkt{\pac{GMTP-Response}(0), \repass}\;
 % \sendPktRdt(\pk)\;
 
-\caption{matchPartnersByPathIntersection(\repass: PeerRelay, \pk $=$
+\caption{matchPartnersByPathIntersection(\repass: PeerRelay, \pks $=$
 \pac{GMTP-Request})}
 \end{algorithm}
 \vspace{0.8cm}
 
-\subsubsection{\space\space\space\space\space\space3. Formação de parcerias por
-combinação de \setwayi}
-\label{subsec:parccombina}
+% \subsubsection{\space\space\space\space\space\space3. Formação de parcerias por
+% combinação de \setwayi}
+% \label{subsec:parccombina}
+%
+% O procedimento de formação de parcerias por combinação considera um nó
+% \textit{pivot} \servs e consiste em combinar dois (ou mais) caminhos
+% distintos \setwayiu{1} e \setwayiu{2} tal que \setwayiu{1} $\cap$ \setwayiu{2}
+% $= \{$\serv$\}$, ou seja, os caminhos se interceptam apenas em \serv, como
+% ilustra-se na Figura~\ref{fig:esquema-abstrato-formacao-parceria-combinacao},
+% Passo 1. Dessa forma, dado um conjunto de caminhos conhecidos \setway, o nó
+% \servs executa as combinações e instrui, por exemplo, dois nós \wayu{1} $\in$
+% \setwayiu{1} e \wayu{2} $\in$ \setwayiu{2} a se tornarem parcerios para
+% compartilharem o mesmo fluxo de dados \setpk, transmitindo apenas um fluxo de
+% dados \setpks para ser distribuídos aos nós \clis $\in$
+% $($\subsetcli$($\wayu{1}$)$ $\cup$ \subsetcli$($\wayu{2}$))$. Este procedimento
+% resultará na constituição de um caminho \setwayis contendo todos os nós \repasss
+% entre os \wayu{1} e \wayu{2}. Como consequência, pode-se repassar o mesmo fluxo
+% \setpks também para outros nós \clis $\in$ \subsetcli$($\repass$)$.
+%
+% \begin{figure}[ht]
+% \begin{center}
+% \includegraphics[scale=.5]{imgs/esquema-abstrato-formacao-parceria-combinacao.pdf}
+% \end{center}
+% \vspace{-0.8cm}
+% \caption{Cenário e passos para seleção de nós por combinação de caminhos
+% \setwayi.}
+% \label{fig:esquema-abstrato-formacao-parceria-combinacao}
+% \end{figure}
+%
+% % Tal procedimento pode ajudar os nós \repasss a expandirem
+% % suas parcerias, incluindo a possibilidade de obter pacotes de dados \pks $\in$
+% % \setpks de múltiplos nós parceiros \repassu{q}.
+%
+% Com o registro de participação de cada nó \repasss em \serv, o nó \servs
+% conhece os caminhos \setwayis $\subset$ \setways através dos quais se
+% transmite o fluxos de dados \setpk. Sendo assim, \servs pode determinar
+% candidados a parcerios \repassu{q} de um determinado nó \repasss e esse
+% procedimento acontece da seguinte forma. Um nó \repasss enviar uma mensagem ao
+% nó \servs para solicitando a lista de parceiros
+%
+% Para isso, o nó
+% \servs instrui
+% os nós \wayu{1} e \wayu{2} a executarem um algoritmo para determinar se
+% \wayu{1} servirá \wayu{2} ou se \wayu{2} servirá \wayu{1}. Note que é possível
+% que a parceria entre \wayu{1} e \wayu{2} não ocorra. Por exemplo, \wayu{1} se
+% tornará parceiros de \wayu{2} apenas se o custo entre \wayu{1} e \wayu{2} for
+% menor do que o custo entre \wayu{1} e \serv.
+%
+%  a
+% execução da formação de parceria por combinação, o nó \servs envia um pacote do
+% tipo \pac{GMTP-Partnership} aos nós \repass, escolhidos dentre os que estão
+% conectados e recebendo o fluxo de dados \setpks diretamente de \serv, para
+% executarem o Algoritmo~\ref{algo:findPartnerCombinePath}. Em geral funciona com
+% base em busca binária, tendo como critério o custo entre $\zeta($\setwayiu{1}$)$
+% e $\zeta($\setwayiu{2}$)$  da seguinte forma. O nó \servu{2} processa os
+% caminhos
+% \setwayis conhecidos e determina quais são os melhores parceiros \repassu{q}
+% para um determinado nó \repass, sendo tal informação enviada para \repass. No
+% caso do cenário ilustrado na
+% Figura~\ref{fig:esquema-abstrato-formacao-parceria-combinacao}, Passo 2, é
+% possível combinar os caminhos \setwayiu{1} e \setwayiu{2} pelos nós \repassu{6}
+% e o \repassu{15}. Ao combinar dois caminhos \setwayiu{1} e \setwayiu{2}, sempre
+% haverá duas direções para a transmissão do fluxo de dados \setpk, uma ilustrada
+% no Passos 3 e outra ilustrada no Passo 4 da
+% Figura~\ref{fig:esquema-abstrato-formacao-parceria-combinacao}. Para decidir
+% qual opção escolher, o nó \servu{2} compara os custos $\zeta($\setwayiu{1}$)$ e
+% $\zeta($\setwayiu{2}$)$. Se $\zeta($\setwayiu{1}$) \geq \zeta($\setwayiu{2}$)$,
+% então o nó \servu{2} solicita que \repassu{9} envie um pedido de conexão para
+% \repassu{16} (Passo 4). Por fim, o nó \repassu{15} deve enviar uma notificação
+% para o nó \servu{2} informando sobre a constituição do novo caminho \setwayi. Em
+% caso de $\zeta($\setwayiu{1}$) \leq \zeta($\setwayiu{2}$)$, então o nó \servu{2}
+% solicitará que \repassu{16} envie um pedido de conexão para \repassu{9} (Passo
+% 3), ao passo que o restante do procedimento ocorrerá de forma similar ao que
+% acabara de ser explicado.
+%
+% Esta é a grande motivação da formação de parceria por combinação, pois quando o
+% pedido de conexão do nó \repassu{9} alcançar o nó \repassu{15}, este o
+% interceptará e, nesse instante, constitui-se um novo caminho \setwayis $=
+% \{$\repassu{15}$,$\repassu{14}$,$\repassu{6}$,$\repassu{7}$,$\repassu{8}$,
+% $\repassu{9}$\}$.
+%
+% É importante salientar que o pedido de conexão enviado pelo nó \repassu{9}
+% para o nó \repassu{15} deve conter uma sinalização (\textit{flag}) que
+% instruirá o nó \repassu{6} a não interceptar tal pedido de conexão. Para
+% tal sinalização, dá-se o nome de \textit{ignorar pedido de conexão},
+% do inglês \textit{bypass connection request}.
+%
+% Nessa estratégia de formação de parceria, permite-se que um nó \repasss obtenha
+% os pacotes \pks $\in$ \setpks de duas ou mais fontes distintas. No caso do
+% exemplo supracitado, o nó \repassu{6} pode continuar recebendo o fluxo de dados
+% através do caminho \setwayiu{1} e também através do novo caminho \setwayis que
+% acabara de ser constituído.
+%
+% Nesse contexto, para realizar a formação de parceria por combinação, o nó \servs
+% executa o Algoritmo~\ref{algo:findPartnerCombinePath}.\\
+%
+% \begin{algorithm}[H]
+% \label{algo:findPartnerCombinePath}
+% \SetAlgoLined
+% \KwData{\textit{relayPartners} \attrib [ ]}
+%
+% \SetKwFunction{Union}{Union}\SetKwFunction{make_pkt}{make\_pkt}
+% \SetKwFunction{Union}{Union}\SetKwFunction{recv_pkt_rdt}{recv\_pkt\_rdt}
+% \SetKwFunction{Union}{Union}\SetKwFunction{send_pkt_rdt}{send\_pkt\_rdt}
+% \SetKwFunction{Union}{Union}\SetKwFunction{getKnownPaths}{getKnownPaths}
+% \SetKwFunction{Union}{Union}\SetKwFunction{matchSimilarPath}{matchSimilarPath}
+% \SetKwFunction{Union}{Union}\SetKwFunction{parse_path}{parse\_path}
+% \SetKwFunction{Union}{Union}\SetKwFunction{length}{length}
+%
+% mspf \attrib 0.4\tcc*[r]{paths are considered similar if similarity level is
+% equal or above mspf value}
+% pathSet \attrib \getKnownPaths{}\tcc*[r]{get \setways known in this \serv}
+%
+% \ForEach{\setwayiu{x} $\in$ \setway}{
+%   \If(){\matchSimilarPath{\setwayiu{x}, \setwayis} >= mspf}{
+%     \tcc{Get the closest partner in the path (intersection between \setwayiu{x}
+% and \setwayi) and add to the list of prospective partners for \repass.}
+%
+%     prosRelay = NULL\;
+%     \ForEach{\ways $\in$ \setwayiu{x}} {
+%       \If(){\ways $\in$ \setwayi} {
+% 	\textit{relayPartners}[\length{relayPartners}] \attrib prosRelay\;
+%       }
+%     }
+%   }
+% }
+%
+% pkt $ \leftarrow$ make\_pkt(GMTP\_ADV\_RELAY(\textit{relayPartners}), \repass)\;
+%
+% send\_pkt\_rdt(pkt)\;
+%
+% \caption[matchPartnersByPathCombination(\setwayi,
+% \repass)]{matchPartnersByPathCombination(\setwayi, \repass)}
+% \end{algorithm}
+% \vspace{0.8cm}
 
-O procedimento de formação de parcerias por combinação considera um nó
-\textit{pivot} \servs e consiste em combinar dois (ou mais) caminhos
-distintos \setwayiu{1} e \setwayiu{2} tal que \setwayiu{1} $\cap$ \setwayiu{2}
-$= \{$\serv$\}$, ou seja, os caminhos se interceptam apenas em \serv, como
-ilustra-se na Figura~\ref{fig:esquema-abstrato-formacao-parceria-combinacao},
-Passo 1. Dessa forma, dado um conjunto de caminhos conhecidos \setway, o nó
-\servs executa as combinações e instrui, por exemplo, dois nós \wayu{1} $\in$
-\setwayiu{1} e \wayu{2} $\in$ \setwayiu{2} a se tornarem parcerios para
-compartilharem o mesmo fluxo de dados \setpk, entregando apenas um fluxo de
-dados \setpks para serem distribuídos aos nós \clis $\in$
-$($\subsetcli$($\wayu{1}$)$ $\cup$ \subsetcli$($\wayu{2}$))$ e, possíveis,
-para outros nós \clis que estejam conectados aos nós \repasss $\in$ \setwayi,
-tal que o caminho \setwayis é constituído como resultado da parceria entre
-\wayu{1} e \wayu{2}.
-
-% Tal procedimento pode ajudar os nós \repasss a expandirem
-% suas parcerias, incluindo a possibilidade de obter pacotes de dados \pks $\in$
-% \setpks de múltiplos nós parceiros \repassu{q}.
-
-Com o registro de participação de cada nó \repasss em \serv, o nó \servs
-conhece os caminhos \setwayis $\subset$ \setways através dos quais se
-transmite o fluxos de dados \setpk. Sendo assim, \servs pode determinar
-candidados a parcerios \repassu{q} de um determinado nó \repass. Por exemplo,
-se dois nós quaisquer \wayu{1} $\in$ \setwayiu{1} e \wayu{2} $\in$ \setwayiu{2}
-estiverem recebendo o fluxo de dados \setpks diretamente do nó \serv, este pode
-instruir que \wayu{1} e \wayu{2} se tornem parceiros e apenas um fluxo de
-dados \setpks seja transmitido, em vez de dois. Para isso, o nó \servs instrui
-os nós \wayu{1} e \wayu{2} a executarem um algoritmo para determinar se
-\wayu{1} servirá \wayu{2} ou se \wayu{2} servirá \wayu{1}. Note que é possível
-que a parceria entre \wayu{1} e \wayu{2} não ocorra. Por exemplo, \wayu{1} se
-tornará parceiros de \wayu{2} apenas se o custo entre \wayu{1} e \wayu{2} for
-menor do que o custo entre \wayu{1} e \serv.
-
-\begin{figure}[ht]
-\begin{center}
-\includegraphics[scale=.5]{imgs/esquema-abstrato-formacao-parceria-combinacao.pdf}
-\end{center}
-\vspace{-0.8cm}
-\caption{Cenário e passos para seleção de nós por combinação de caminhos
-\setwayi.}
-\label{fig:esquema-abstrato-formacao-parceria-combinacao}
-\end{figure}
-
-Considerando esses aspectos, o nó \repasss  a
-execução da formação de parceria por combinação, o nó \servs envia um pacote do
-tipo \pac{GMTP-Partnership} aos nós \repass, escolhidos dentre os que estão
-conectados e recebendo o fluxo de dados \setpks diretamente de \serv, para
-executarem o Algoritmo~\ref{algo:findPartnerCombinePath}. Em geral funciona com
-base em busca binária, tendo como critério o custo entre $\zeta($\setwayiu{1}$)$
-e $\zeta($\setwayiu{2}$)$  da seguinte forma. O nó \servu{2} processa os
-caminhos
-\setwayis conhecidos e determina quais são os melhores parceiros \repassu{q}
-para um determinado nó \repass, sendo tal informação enviada para \repass. No
-caso do cenário ilustrado na
-Figura~\ref{fig:esquema-abstrato-formacao-parceria-combinacao}, Passo 2, é
-possível combinar os caminhos \setwayiu{1} e \setwayiu{2} pelos nós \repassu{6}
-e o \repassu{15}. Ao combinar dois caminhos \setwayiu{1} e \setwayiu{2}, sempre
-haverá duas direções para a transmissão do fluxo de dados \setpk, uma ilustrada
-no Passos 3 e outra ilustrada no Passo 4 da
-Figura~\ref{fig:esquema-abstrato-formacao-parceria-combinacao}. Para decidir
-qual opção escolher, o nó \servu{2} compara os custos $\zeta($\setwayiu{1}$)$ e
-$\zeta($\setwayiu{2}$)$. Se $\zeta($\setwayiu{1}$) \geq \zeta($\setwayiu{2}$)$,
-então o nó \servu{2} solicita que \repassu{9} envie um pedido de conexão para
-\repassu{16} (Passo 4). Por fim, o nó \repassu{15} deve enviar uma notificação
-para o nó \servu{2} informando sobre a constituição do novo caminho \setwayi. Em
-caso de $\zeta($\setwayiu{1}$) \leq \zeta($\setwayiu{2}$)$, então o nó \servu{2}
-solicitará que \repassu{16} envie um pedido de conexão para \repassu{9} (Passo
-3), ao passo que o restante do procedimento ocorrerá de forma similar ao que
-acabara de ser explicado.
-
-Esta é a grande motivação da formação de parceria por combinação, pois quando o
-pedido de conexão do nó \repassu{9} alcançar o nó \repassu{15}, este o
-interceptará e, nesse instante, constitui-se um novo caminho \setwayis $=
-\{$\repassu{15}$,$\repassu{14}$,$\repassu{6}$,$\repassu{7}$,$\repassu{8}$,
-$\repassu{9}$\}$.
-
-É importante salientar que o pedido de conexão enviado pelo nó \repassu{9}
-para o nó \repassu{15} deve conter uma sinalização (\textit{flag}) que
-instruirá o nó \repassu{6} a não interceptar tal pedido de conexão. Para
-tal sinalização, dá-se o nome de \textit{ignorar pedido de conexão},
-do inglês \textit{bypass connection request}.
-
-Nessa estratégia de formação de parceria, permite-se que um nó \repasss obtenha
-os pacotes \pks $\in$ \setpks de duas ou mais fontes distintas. No caso do
-exemplo supracitado, o nó \repassu{6} pode continuar recebendo o fluxo de dados
-através do caminho \setwayiu{1} e também através do novo caminho \setwayis que
-acabara de ser constituído.
-
-Nesse contexto, para realizar a formação de parceria por combinação, o nó \servs
-executa o Algoritmo~\ref{algo:findPartnerCombinePath}.\\
-
-\begin{algorithm}[H]
-\label{algo:findPartnerCombinePath}
-\SetAlgoLined
-\KwData{\textit{relayPartners} \attrib [ ]}
-
-\SetKwFunction{Union}{Union}\SetKwFunction{make_pkt}{make\_pkt}
-\SetKwFunction{Union}{Union}\SetKwFunction{recv_pkt_rdt}{recv\_pkt\_rdt}
-\SetKwFunction{Union}{Union}\SetKwFunction{send_pkt_rdt}{send\_pkt\_rdt}
-\SetKwFunction{Union}{Union}\SetKwFunction{getKnownPaths}{getKnownPaths}
-\SetKwFunction{Union}{Union}\SetKwFunction{matchSimilarPath}{matchSimilarPath}
-\SetKwFunction{Union}{Union}\SetKwFunction{parse_path}{parse\_path}
-\SetKwFunction{Union}{Union}\SetKwFunction{length}{length}
-
-mspf \attrib 0.4\tcc*[r]{paths are considered similar if similarity level is
-equal or above mspf value}
-pathSet \attrib \getKnownPaths{}\tcc*[r]{get \setways known in this \serv}
-
-\ForEach{\setwayiu{x} $\in$ \setway}{
-  \If(){\matchSimilarPath{\setwayiu{x}, \setwayis} >= mspf}{
-    \tcc{Get the closest partner in the path (intersection between \setwayiu{x}
-and \setwayi) and add to the list of prospective partners for \repass.}
-
-    prosRelay = NULL\;
-    \ForEach{\ways $\in$ \setwayiu{x}} {
-      \If(){\ways $\in$ \setwayi} {
-	\textit{relayPartners}[\length{relayPartners}] \attrib prosRelay\;
-      }
-    }
-  }
-}
-
-pkt $ \leftarrow$ make\_pkt(GMTP\_ADV\_RELAY(\textit{relayPartners}), \repass)\;
-
-send\_pkt\_rdt(pkt)\;
-
-\caption[matchPartnersByPathCombination(\setwayi,
-\repass)]{matchPartnersByPathCombination(\setwayi, \repass)}
-\end{algorithm}
-\vspace{0.8cm}
 
 
-
-\subsection{Sobre o melhor caminho \setwayi}
-\label{subsec:melhorcaminho}
-
-De acordo com os procedimentos empregados de seleção de nós, é possível obter
-diferentes caminhos \setwayi, partindo-se de um nó \repasss para um nó \serv.
-Por este motivo, é importante definir, a partir de um conjunto de caminhos
-possíveis, qual é o melhor caminho a utilizar e ordená-los de acordo com a
-prioridade de uso. Com isto, é possível obter \setpks a partir de múltiplos
-\repasss e usar caminhos alternativos em caso de falha de algum caminho, por
-exemplo, por desconexão. No GMTP, a ordem de prioridade para uso de cada
-caminho \setwayis é determinada de acordo com dois critérios:
-
-\begin{enumerate}
-  \item Menor atraso fim-a-fim entre \repasss e \serv; \label{i:c-atraso}
-  \item Maior tempo de disponibilidade dos nós \ways $\in$ \setwayi;
-\label{i:c-uptime}
-  \item Menor número de nós \ways $\in$ \setwayi; \label{i:c-nnos}
-  \item Se o caminho for \setwayif; \label{i:c-waycomp}
-  \item Escolha aleatória de \setwayis entre os \setways conhecidos.
-\label{i:c-aleat}
-\end{enumerate}
-
-O critério~\ref{i:c-atraso} é determinado através da medição do RTT. O
-critério~\ref{i:c-uptime} é obtido através de tal informação compartilhada por
-cada nó \ways $\in$ \setwayi. O critério~\ref{i:c-nnos} é determinado pela
-contagem simples do número de \ways $\in$ \setwayi. O
-critério~\ref{i:c-waycomp} é determinado através da verificação da condição
-$\mid$\setwayi$\mid$ $=$ $ttl($\repass$,$\setwayi$)$, onde \textit{ttl} é uma
-função que determina o número de saltos entre o nó \repasss até o último nó
-\ways $\in$ \setwayi, que é um nó \serv. Na prática, este valor pode ser obtido
-através do valor do campo TTL (\textit{Time-to-Live}), disponível no cabeçalho
-IP de qualquer pacote. O critério~\ref{i:c-aleat} é utilizado em caso de não
-determinação do melhor \setwayis até o critério anterior.
-
-Note que no GMTP é possível que um nó \repasss tenha simultaneamente mais de um
-nó parceiro \repassu{q}, porém não mais do que uma certa qualidade configurável
-devido ao fato de que os pacotes \pks dos fluxos \setpk serem transientes,
-portanto não faz sentido realizar muitas parcerias. No caso do GMTP, a
-quantidade máxima padrão de parcerias que um nós \repasss realiza é $5$, valor
-praticado em outros soluções similares para transmissão de fluxos de dados ao
-vivo baseados em arquitetura P2P.
+% \subsection{Sobre o melhor caminho \setwayi}
+% \label{subsec:melhorcaminho}
+%
+% De acordo com os procedimentos empregados de seleção de nós, é possível obter
+% diferentes caminhos \setwayi, partindo-se de um nó \repasss para um nó \serv.
+% Por este motivo, é importante definir, a partir de um conjunto de caminhos
+% possíveis, qual é o melhor caminho a utilizar e ordená-los de acordo com a
+% prioridade de uso. Com isto, é possível obter \setpks a partir de múltiplos
+% \repasss e usar caminhos alternativos em caso de falha de algum caminho, por
+% exemplo, por desconexão. No GMTP, a ordem de prioridade para uso de cada
+% caminho \setwayis é determinada de acordo com dois critérios:
+%
+% \begin{enumerate}
+%   \item Menor atraso fim-a-fim entre \repasss e \serv; \label{i:c-atraso}
+%   \item Maior tempo de disponibilidade dos nós \ways $\in$ \setwayi;
+% \label{i:c-uptime}
+%   \item Menor número de nós \ways $\in$ \setwayi; \label{i:c-nnos}
+%   \item Se o caminho for \setwayif; \label{i:c-waycomp}
+%   \item Escolha aleatória de \setwayis entre os \setways conhecidos.
+% \label{i:c-aleat}
+% \end{enumerate}
+%
+% O critério~\ref{i:c-atraso} é determinado através da medição do RTT. O
+% critério~\ref{i:c-uptime} é obtido através de tal informação compartilhada por
+% cada nó \ways $\in$ \setwayi. O critério~\ref{i:c-nnos} é determinado pela
+% contagem simples do número de \ways $\in$ \setwayi. O
+% critério~\ref{i:c-waycomp} é determinado através da verificação da condição
+% $\mid$\setwayi$\mid$ $=$ $ttl($\repass$,$\setwayi$)$, onde \textit{ttl} é uma
+% função que determina o número de saltos entre o nó \repasss até o último nó
+% \ways $\in$ \setwayi, que é um nó \serv. Na prática, este valor pode ser obtido
+% através do valor do campo TTL (\textit{Time-to-Live}), disponível no cabeçalho
+% IP de qualquer pacote. O critério~\ref{i:c-aleat} é utilizado em caso de não
+% determinação do melhor \setwayis até o critério anterior.
+%
+% Note que no GMTP é possível que um nó \repasss tenha simultaneamente mais de um
+% nó parceiro \repassu{q}, porém não mais do que uma certa qualidade configurável
+% devido ao fato de que os pacotes \pks dos fluxos \setpks serem transientes,
+% portanto não faz sentido realizar muitas parcerias. No caso do GMTP, a
+% quantidade máxima padrão de parcerias que um nós \repasss realiza é $5$, valor
+% praticado em outros soluções similares para transmissão de fluxos de dados ao
+% vivo baseados em arquitetura P2P.
 
 \section{Distribuição do fluxo de dados \setpks através de \net}
 \label{sec:asptransrecep}
@@ -1929,54 +1930,78 @@ No GMTP, a transmissão de dados é feita utilizando uma estratégia híbrida
 \textit{push} é adotado como padrão, onde os nós \servs iniciam a
 transmissão de \pks $\in$ \setpks para os demais nós \ways
 $\in$ \setwayi, onde \wayu{1} $=$ \serv. Já o método \textit{pull} é utilizado
-quando um nó \clis precisa obter parte de uma mídia que está prestes a ser
+quando um nó \clis precisa obter parte de uma mídia que está na iminência de ser
 reproduzida e ainda não foi repassada por um nó \repasss via \textit{push}, de
 acordo com o seu mapa de \textit{buffer}. Os nós \repasss e \clis mantêm seus
 próprios mapas de \textit{buffer}, sendo que um no \repasss sempre terá um mapa
-de \textit{buffer} mais atualizado do que os mapas de \textit{buffer} dos
-seus clientes.
+de \textit{buffer} mais atualizado do que os mapas de \textit{buffer} dos nós
+\clis $\in$ \subsetcli$($\repass$)$.
 
-Nessa seção, apresentam-se detalhes sobre como o GMTP realiza a disseminação de
-\setpks e como os nós \clis recebem tal conteúdo para reprodução, discutindo-se
-aspectos sobre indexação de conteúdos, requisição e recepção de uma mídia,
-compartilhamento e controle de congestionamento.
+Nessa seção, apresentam-se detalhes sobre como se realiza a disseminação de
+pacotes de dados \pks $\in$ \setpks e como os nós \clis recebem tal conteúdo
+para reprodução, discutindo-se aspectos sobre indexação, requisição, recepção e
+compartilhamento de um fluxo de dados \setpk.
 
 \subsection{Indexação de Conteúdo}
 \label{subsec:content-index}
 
 No GMTP, um fluxo de dados \setpks tem um nome único que o identifica em
-qualquer nó, seguindo o princípio das redes centradas no conteúdo. Sendo assim,
-todo evento \events é identificado por um nome que é utilizado por qualquer nó
-para solicitar o fluxo de dados \setpks corresponte a \event.
+qualquer nó, seguindo o princípio das redes centradas no conteúdo. Na
+prática, cada fluxo de dados \setpks corresponde a uma mídia gerada a partir de
+um evento real \event, por exemplo, a transmissão de um jogo de futebol, corrida
+de fórmula 1 etc.
 
-No caso do GMTP, um nome para o evento é definido por um UUID
+No GMTP, define-se um nome de um fluxo de dados \setpks por um UUID
 (\textit{Universally Unique IDentifier}) de 128 bits~\cite{RFC4122}. Na sua
-forma canônica, um evento \events é representado por uma sequência de 32
+forma canônica, \setpks é representado por uma sequência de 32
 dígitos hexadecimal, exibidos em cinco grupos separados por hífen, na forma de
-\{8\}-\{4\}-\{4\}-\{4\}-\{12\}. Por exemplo, \events $=$
+\{8\}-\{4\}-\{4\}-\{4\}-\{12\}. Por exemplo, \setpks $=$
 641f931f-d3ac-50e3-b625-537574541f1f.
 
-O identificador de um evento \events é criado pelo nó \servs que gera a mídia,
-que o divulga através de um serviço similar ao DNS ou por meio de uma busca
-de diretório. Além disso, um nó GMTP poderá requisitar uma lista dos fluxos
-transmitidos por \serv. De posse de um identificador para um evento \event, um
-nó GMTP poderá solicitar \setpks de \events aos seus nós parceiros \repassu{q}
-ou diretamente a um nó \serv. A divulgação dos identificadores de todos os
-eventos transmitidos por um nó \serv é feito no seguinte formato textual e
-consultado pelo registro do tipo SID (\textit{Streaming IDentifier}) do DNS. Por
-exemplo, suponha um serviço de distribuição de conteúdos multimídia da Rede
-Globo de Televisão, uma requisição poderá ocorrer como ilustrado no Trecho de
-Código~\ref{algo:requestDNS}, utilizando qualquer ferramenta de resolução de
-nomes por tipo de registro a um servidor DNS. Note que três eventos estão
-registrados, identificados pelos seus respectivos nomes.\\
+Na prática, a aplicação GMTP em execução no nó \serv, que é responsável por
+gerar os pacotes de dados \pks $\in$ \setpk, define o identificador para um
+fluxo de dados \setpks e o divulga através do serviço DNS. Já com relação ao
+título do conteúdo e sua descrição, tais informações podem ser divulgadas por
+meio de um serviço web, ou por meio de uma busca de diretório via um \textit{Web
+Services}. Independente da forma que o nó \servs disponibilize os nomes dos
+fluxos de dados \setpk, os nós \repasss mantém uma lista contendo os nomes dos
+fluxos de dados que estão repassando para seus clientes \clis $\in$
+\subsetcli$($\repass$)$ e, sendo assim, podem compartilhá-la para outros nós
+repassadores, o que caracteriza um modelo distribuído de indexação de conteúdo.
+
+De posse de um identificador de um fluxo de dados \setpk, um nó GMTP poderá
+solicitar os pacotes de dados \pks $\in$ \setpk. No caso do uso do DNS, o nó
+\servs divulga os identificadores de todos os eventos sendo transmitido
+por meio de um mecanismo de atualização dinâmica de registro de DNS, como
+especificado na RFC 2136~\cite{RFC2136}. Para o GMTP, criou-se um novo
+tipo de registro de DNS chamado de SID (\textit{Streaming IDentifier}).
+
+No Quadro~\ref{algo:requestDNS}, ilustra-se um exemplo de uma requisição DNS,
+utilizando a ferramenta \textit{dig}, um comando de terminal para Linux. Nesse
+exemplo, apresenta-se a lista dos nomes dos fluxos de dados transmitidos pelo
+domínio administrativo \textit{globo.com}. Por ser uma consulta simples de DNS,
+qualquer sistema final conectado à Internet pode realizar tal procedimento,
+enaltecendo-se a facilitar de adaptar aplicações multimídia existentes para
+utilizar o GMTP. Ao indexar o conteúdo através de um serviço de DNS, permite-se
+desacoplar a forma de indexar um determinado conteúdo e a forma de obtê-lo, que
+passa a ser de responsabilidade da infra-estrutura de rede e não de uma
+ou mais aplicações isoladamente. Isto pode permitir o aumento em grandes
+proporções das aplicações multimídia sem se preocupar como localizar um
+determinado conteúdo, extrapolando-se as barreiras administrativos de cada
+sistema de geração de conteúdos multimídia, bastante para isso apenas todos
+passarem a adotar o GMTP (quando desejado).
+
+\vspace{0.5cm}
 
 \newcommand{\bigspace}{~~~~~}
 
 \begin{algorithm}[H]
 \label{algo:requestDNS}
-\caption{Requisição e resposta da lista de eventos de um distribuidor de conteúdo.}
 \SetAlgoLined
-\SetAlgorithmName{Listagem}{listagem}{.}
+\SetAlgorithmName{Quadro}{quadro}{.}
+
+\caption{Exemplo de requisição e resposta da lista de nomes dos fluxos de dados
+\setpks de um distribuidor de conteúdos multimídia.}
 
 \textbf{dig} -t SID globo.com\\
 \textbf{QUESTION SECTION:}\\
@@ -1998,92 +2023,318 @@ registrados, identificados pelos seus respectivos nomes.\\
 \end{algorithm}
 \vspace{0.8cm}
 
+\subsubsection{Descrição de um fluxo de dados \setpk:}
+\label{subsubsec:desc-conteudo}
+
+Como uma das principais motivação do GMTP é promover a compatibilidade entre
+diferentes aplicações que o utiliza, afim de reduzir o tráfego de rede
+para um mesmo fluxo, faz-se necessária uma forma flexível de permitir que
+qualquer aplicação consiga reproduzir o fluxo de dados \setpk. Para isto,
+incorporou-se um mecanismo para permitir que as aplicações consigam obter mais
+detalhes sobre a mídia transmitida, flexibilizando-se o acesso a um
+determinado conteúdo, instruindo a aplicação como o conteúdo deve ser
+decodificado para ser reproduzido e consumido (escutado ou visualizado) pelo
+usuário final. Nesse contexto, adotou-se o SDP (\textit{Session Description
+Protocol}), definido na RFC 2327~\cite{RFC2327}, que permite um sistema final
+servidor descrever, de forma padronizada, o conteúdo mídia, tornando possível
+que os sistemas finais clientes possam interpretá-lo corretamente a fim de
+reproduzí-lo para o usuário final.
+
+No caso do GMTP, o nó \servs gera uma descrição SDP e envia para os nós \clis
+$\in$ \setclis que, com base na descrição da mídia recebida, a interpreta e a
+reproduzir para o usuário final. Com esta decisão, torna-se mais fácil
+implementar novas aplicações multimídia, ao passo que também fica mais fácil
+adaptar aplicações existentes para fazer uso do GMTP, uma vez que em sua grande
+maioria, utiliza-se o protocolo SDP. Do ponto de vista de engenharia de
+software, isto evitará a repetição de esforço com implementações já consolidadas
+e que, com o passar dos anos, provou-se funcionar a contento, como o SDP.
+Consequentemente, caso seja necessário a atualização do referido padrão, tal
+atualização será realizada internamente no GMTP e todas as aplicações
+automaticamente já poderão usufruir dos novos recursos disponibilizados.
+
+Na prática, a aplicação em execução no nó \servs determina as informações da
+mídia as fornecem ao GMTP, através de passagem de parâmetro via socket GMTP. Em
+seguida, o GMTP gera um pacote do tipo \pac{GMTP-MediaDesc}, que encapsula o
+conteúdo de descrição SDP e fica pronto para transmití-lo para o nó \repasss
+interessado em obter o fluxo de dados \setpk, além de poder disseminá-lo para
+seus nós parceiros \repassu{q}. No Quadro~\ref{algo:sdp-mediadesc}, apresenta-se
+um exemplo de uma mensagem SDP, que deve ser disponibilizada no campo de dados
+do pacote do tipo \pac{GMTP-MediaDesc}. Em seguida, apresenta-se o significado
+de cada atributo de uma mensagem SDP.
+
+\vspace{0.5cm}
+
+\begin{algorithm}[H]
+\label{algo:sdp-mediadesc}
+\SetAlgoLined
+\SetAlgorithmName{Quadro}{quadro}{.}
+
+\bigspace v=0\\
+\bigspace o=- IN IP4 177.135.177.241,
+IP4 186.192.82.163, IP6 2001:0db8:85a3::7344\\
+\bigspace s=72c44591-7d82-427c-825f-722f015787c1\tcc*[r]{ver
+Seção~\ref{subsec:content-index}}
+\bigspace i=An Introduction about Global Media Transmission Protocol (GMTP).\\
+\bigspace u=http://www.ic.ufal.br/projects/gmtp/introduction.ps\\
+\bigspace c=IN IP4 200.17.113.100\\
+\bigspace f=x509:http://vid12.akamai.com/certs/cert.crt\tcc*[f]{ver
+Seção~\ref{sec:seguranca}}\\
+\label{line:sdp-mediadesc:f}
+\bigspace m=audio 49170 GMTP/RTP/AVP 16000-20000\\
+\bigspace m=video 51372 GMTP/RTP/AVP 163840-655360\\
+\bigspace a=type:multicast\\
+\bigspace a=sendrecv\\
+\bigspace a=quality:10\\
+\bigspace a=lang:en\tcc*[f]{ver RFC1766~\cite{RFC1766}}\\
+\bigspace a=framerate:23.0\\
+
+\caption{Exemplo de uma mensagem SDP no pacote \pac{GMTP-MediaDesc}.}
+\end{algorithm}
+\vspace{0.8cm}
+
+\begin{itemize}
+
+  \item \textit{v}, a versão do SDP;
+
+  \item \textit{o}, a lista de nós \servs que a distribui;
+
+  \item \textit{s}, o nome da mídia, como discutido na
+Seção~\ref{subsec:content-index};
+
+  \item \textit{i}, o título da mídia;
+
+  \item \textit{u}, a URI que descreve detalhes sobre a mídia;
+
+  \item \textit{c}, as informações de conexão, como o tipo da rede, a versão do
+protocolo de rede e o endereço do nó \repass;
+
+  \item \textit{f}, o certificado digital emitido pelo nó \servs para
+verificação
+de autenticidade dos pacotes \pks $\in$ \setpks (opcional). Este assunto
+será retomado na Seção~\ref{sec:seguranca};
+
+  \item \textit{m}, o tipo da mídia, a porta de conexão e protocolo de
+transporte; e
+
+  \item \textit{a}, atributos adicionais sobre a mídia como, por exemplo,
+qualidade, idioma, taxa de bits mínima e máxima necessária para transmitir a
+mídia, em bytes.
+
+\end{itemize}
+
+No exemplo apresentado no Quadro~\ref{algo:sdp-mediadesc}, utiliza-se a
+primeira versão do protocolo SDP e descreve-se a transmissão de dois fluxos
+\setpks (Linhas 10 e 11), sendo um deles de áudio e outro de vídeo.
+A distribuição dos fluxos de dados \setpks ocorre com a geração dos pacotes de
+dados \pks $\in$ \setpks em três nós \servs (Linha 2), dos quais dois são
+acessíveis através de endereços IPv4 e um através de um endereço IPv6. Os fluxos
+de áudio e vídeo são repassados por um nó \repass, acessível por um endereço
+IPv4 (Linha 6), através das portas 49170 e 51372, respectivamente (Linhas 9 e
+10). As informações de endereço IP e porta do nó \repasss são utilizadas para
+que os nós \clis $\in$ \subsetcli$($\repass$)$ possam sintonizar seus sockets
+de conexão e iniciar a reprodução da mídia, através do modo de transmissão
+multicast (Linha 10). Em seguida, na Linha 8, observa-se uma URL do certificado
+digital a ser utilizado pelo nó \repasss para verificar a autenticidade do
+conteúdo de pacote de dados \pks $\in$ \setpks -- este assunto será discutido
+com mais detalhes na Seção~\ref{sec:seguranca}. Por fim, entre as Linhas 11 e 17
+especificam-se outros parâmetros para descrever a mídia, tais como o nível de
+qualidade da mídia, que varia entre 1 e 10, as taxas de bits para cada fluxo de
+dados, sendo para o áudio variando-se entre \ut{16000}{Bytes} e
+\ut{20000}{Bytes} e, para o vídeo, variando-se entre \ut{156250}{Bytes} e
+\ut{625000}{Bytes}. É importante salientar que os nós \repasss utilizam as
+informações de taxa de bits para determinar o tamanho do buffer necessário para
+permitir a transmissão da mídia -- este assunto será retomado na
+Seção~\ref{subsec:trocdados}.
+
+Na Seção~\ref{subsec:conexao-requisicao}, discute-se mais detalhes sobre o envio
+do pacote do tipo \pac{GMTP-MediaDesc}.
+
+% Além
+% disso, o tamanho do buffer é definido em consonância com os parâmetros
+% determinados pelo algoritmo de controle de congestionamento executado no módulo
+% GMTP-Inter, a ser discutido em detalhes na
+% Seção~\ref{sec:ccgmtp}, a seguir.
+
 \subsection{Estabelecimento de conexão e compartilhamento para obter \setpk}
 \label{subsec:conexao-requisicao}
 
-==============
-
-Após o registro de participação, o nó \repasss deve enviar periodicamente
-sinalizações de controle (\textit{polling}) sobre sua participação na rede de
-favores $\eta$. Este procedimento deve ser feito usando o pacote do tipo
-\pac{GMTP-Ack} em um tempo $t = max(300, t_{user}) - RTT$, onde $t$ e $RTT$ são
-definidos em segundos, e $t_{user}$ é um parâmetro de tempo definido pelo
-usuário. Quando \servs receber um pacote do tipo \pac{GMTP-Ack} do nó \repass,
-este deve enviar um pacote do mesmo tipo. Caso \repasss não receba
-\pac{GMTP-Ack} no período de $4 \times RTT$, deve-se repetir tal procedimento
-por no máximo 3 vezes, quando \repasss deve considerar a conexão finalizada por
-tempo de expiração (\textit{timeout}) e enviar um pacote do tipo
-\pac{GMTP-Reset}. Na RFC 5482~\cite{RFC5482}, discute-se sobre outros aspectos
-de expiração no tempo que podem ser adaptadas para o GMTP.
-
-Implementar o algoritmo da função \respondToClients:
-\respondToClients{\textit{channel}} % nessa tem que buscar os clientes esperando por resposta
-\respondToClients{\setpk, \cli}
-
-tem que ter: getClientsWaitingForFlow(\setpk) mandar o leitor ver a linha 7 do algoritmo algo:registerRelay
-
-% \textit{channel} \attrib \getChannelOfFlow{\setpk}\;
-% \textit{\pk} \attrib \makePkt{GMTP-Response(), \cli}\;
-% servs \attrib \getCurrRegedServers()\tcc*[r]{servs $\subset S$}
-% pkt \attrib \makePkt{GMTP-Register, \serv}\tcc*[r]{register request}
-
-
-==============
-
 O processo de conexão do protocolo \mudccps é separado em três fases. A
-primeira acontece quando um nó qualquer \cliu{1} deseja obter \setpks
-transmitido por um nó \servs e não existe nenhum outro nó \clis em sua rede
-local recebendo \setpks (passos 1 e 2 da Figura~\ref{fig:processo-conexao})
-através de um nó \repass, tal que \cliu{1} $\in$ \subsetcli$($\repass$)$. A
-segunda fase acontece quando um novo nó \cliu{2} $\in$
-\subsetcli$($\repass$)$ deseja obter o mesmo fluxo \setpks do nó \cliu{1}
-(passos 3 e 4 da Figura~\ref{fig:processo-conexao}). E, por fim, a terceira
-fase acontece quando o nó \repasss começa a buscar novos nós parceiros
-\repassu{q} a fim de obter \setpks.
+primeira acontece quando, por exemplo, um nó qualquer \cliu{1} $\in$
+\subsetcli$($\repass$)$ deseja obter \setpks
+transmitido por um nó \servu{1} e não existe nenhum outro nó
+\clis $\in$ \subsetcli$($\repass$)$ em sua rede local recebendo \setpk, através
+de um nó \repass. Já a segunda fase acontece quando um novo nó \cliu{2} $\in$
+\subsetcli$($\repass$)$ deseja obter o mesmo fluxo de dados \setpks que o nó
+\cliu{1} solicitou previamente. E, por fim, a terceira fase acontece quando o nó
+\repasss começa a buscar novos nós parceiros \repassu{q} a fim de obter
+\setpks através de fontes alternativas.
+
+Para entender o funcionamento de cada fase do processo de conexão do GMTP,
+considere a Figura~\ref{fig:processo-conexao}. Nesta figura, ilustra-se um nó
+\serv, que gera um fluxo de dados \setpk, conectado a uma rede com 12 nós
+\repass, dos quais 1 funciona como repassador de uma rede local, composta por 6
+nós \clis $\in$ \subsetcli$($\repass$)$.
 
 \begin{figure}[ht]
 \begin{center}
-\includegraphics[scale=.8]{imgs/processo-conexao.pdf}
+\includegraphics[scale=.7]{imgs/processo-conexao.pdf}
 \end{center}
 \vspace{-1cm}
-\caption{Processo Básico de Estabelecimento de Conexão do \mudccp.}
+\caption{Exemplo de Rede para o Estabelecimento de Conexão do \mudccp.}
 \label{fig:processo-conexao}
 \end{figure}
 
-\subsection{Fase 1: primeira requisição a um fluxo \setpk}
+Antes de seguir com a explicação sobre o processo de estabelecimento de conexão
+do GMTP, é importante entender que cada nó \repasss mantém uma tabela chamada
+\textit{Tabela de Recepção de Fluxos de Dados}, como ilustra-se na
+Figura~\ref{fig:tabela-recepcao-1}. A tabela de recepção de fluxos de
+dados serve para que um nó \repasss registre todos os fluxos de dados que estão
+sendo repassados para seus nós \clis $\in$ \subsetcli$($\cli$)$, mantendo-se as
+seguintes informações:
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=.55]{imgs/tabela-recepcao-fluxo-1.pdf}
+\end{center}
+\vspace{-1cm}
+\caption{Exemplo de uma tabela de recepção de fluxo mantida por um nó \repass.}
+\label{fig:tabela-recepcao-1}
+\end{figure}
+
+\begin{itemize}
+
+  \item \textbf{Nome do Fluxo de Dados \setpk:} é uma sequência de
+\ut{128}{bits} que determina o nome de um fluxo de dados, como descrito na
+Seção~\ref{subsec:content-index};
+
+  \item \textbf{Servidores \serv:} o endereço IP do nó \servs que gera o fluxo
+de dados \setpk;
+
+  \item \textbf{Repassadores \repassu{q}:} o endereço IP do nó \repassu{q},
+parceiro de \repass, que está transmitindo o fluxo de dados \setpks para
+\repass. Se nulo, significa que o fluxo de dados \setpks está sendo recebido
+diretamente do nó \serv;
+
+  \item \textbf{Porta de Recepção de \setpk:} o número da porta do nó remoto
+que está transmitindo o fluxo de dados \setpks para \repass. Nesse caso, o nó
+remoto pode ser o nó \serv, em caso de conexão direta com o servidor, ou um nó
+\repassu{q}, parceiro de \repass;
+
+  \item \textbf{Endereço do Canal Multicast:} o endereço IP multicast utilizado
+pelo nó \repasss para repassar o fluxo de dados \setpks para os nós clientes
+\clis $\in$ \subsetcli$($\repass$)$; e
+
+  \item \textbf{Porta do Canal Multicast:} o número da porta multicast utilizada
+pelo nó \repasss para repassar o fluxo de dados \setpks para os nós clientes
+\clis $\in$ \subsetcli$($\repass$)$.
+
+\end{itemize}
+
+Um nó \repasss deve consultar a tabela de recepção de fluxo de dados todas as
+vezes que receber um pacote do tipo \pac{GMTP-Request}, transmitido por um nó
+\clis $\in$ \subsetcli$($\repass$)$. Com base no estado da referida tabela, o nó
+\repasss realiza uma determinada ação de repasse, que dependerá de qual fase
+de conexão que o referido nó repassador estará com relação a um determinado
+fluxo de dados \setpk.
+
+Note que, independente da fase de conexão em que um nó \repasss se encontra
+para obter um fluxo de dados \setpk, o estabelecimento de uma conexão sempre
+se inicia no nó \cli, quando um usuário final de uma aplicação em execução no
+referido nó deseja obter \setpks e reproduzi-lo. A seguir, discutem-se esssas
+e outras questões relacionadas às fases do processo de estabelecimento de
+conexão do GMTP.
+
+\subsection{Fase 1: primeira requisição a um fluxo de dados \setpk}
 \label{subsec:conn-fase1}
 
-Na primeira fase, o nó \cliu{1} envia um pedido de conexão para o nó \serv, que
-é interceptado por \repass, cuja principal responsabilidade é repassar \setpks
-para quaisquer outros nós \clis $\in$ \subsetcli$($\repass$)$.
+Com base na Figura~\ref{fig:processo-conexao-1}, onde se ilustra um exemplo
+do processo de conexão do GMTP na Fase 1, considere:
 
-O estabelecimento de uma conexão \mudccps ocorre quando um nó \clis cria um
-socket e envia um pacote do tipo \pac{GMTP-Request} contendo o nome do fluxo
-\setpk (camada de transporte), destinado ao nó \serv (camada de rede). Como na
-fase $1$ assume-se que não existe nenhum nó \clis recebendo o fluxo \setpks, o
-pacote \pac{GMTP-Request} alcança obrigatoriamente seu nó \repassu{1}, que
-verifica a inexistência do registro de recepção do fluxo \setpks e por isso
-roteia o pacote \pac{GMTP-Request} com destino ao nó \servs correspondente. À
-medida que o pacote \pac{GMTP-Request} é repassado através dos nós \repasss
-$\in$ \setway, selecionado conforme discutido na Seção~\ref{sec:descparc}, cada
+\begin{itemize}
+
+  \item \setpk, um fluxo de dados cujo nome é definido por:\\
+\textit{72c44591-7d82-427c-825f-722f015787c1};
+
+  \item \servu{1}, o nó servidor que gera os pacotes de dados \pks $\in$ \setpk;
+
+  \item \repassu{1}, o nó repassador para os clientes \clis $\in$
+\subsetcli$($\repassu{1}$)$; e
+
+  \item \cliu{3}, um nó cliente que deseja obter um fluxo de dados \setpk, tal
+que \cliu{3} $\in$ \subsetcli$($\repassu{1}$)$.
+
+\end{itemize}
+
+Para obter o fluxo de dados \setpk, o nó \cliu{3} cria um socket GMTP e
+transmite um pacote do tipo \pac{GMTP-Request}
+(Figura~\ref{fig:processo-conexao-1}, Passo 1).
+Para construir o pacote do tipo \pac{GMTP-Request}, qualquer nó \clis deve
+obrigatoriamente especifica o valor para o endereço IP de destino o endereço do
+nó \servs que transmite \setpk, com o valor para o campo do cabeçalho de rede
+\textit{TTL=1}. Alternativamente, o nó \clis pode especificar o endereço IP de
+destino como sendo \textit{0.0.0.0}. Além dos valores para o IP de destino e
+para o \textit{TTL}, o nó \clis também deve informar o nome do fluxo de dados
+\setpks que o usuário deseja reproduzir, sendo tal informação incapsulada no
+campo \textit{nome do fluxo de dados} (\textit{flow name}), presente no
+cabeçalho de transporte do pacote do tipo \pac{GMTP-Request}. Definir o endereço
+IP de destino para o IP de \servs permite o roteador padrão obter o endereço IP
+do nó \servs que gera o fluxo de dados \setpk, sendo desnecessário realizar tal
+consulta no servidor DNS, como discutiu-se na Seção~\ref{subsec:content-index}.
+Além disso, com o valor de \textit{TTL=1}, permite-se interceptar o referido
+pacote de requisição, evitando-se extrapolar o domínio administrativo de tal
+rede local.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=.7]{imgs/processo-conexao-1.pdf}
+\end{center}
+\vspace{-1cm}
+\caption{Passos do Processo de Estabelecimento de Conexão do \mudccps (Fase 1).}
+\label{fig:processo-conexao-1}
+\end{figure}
+
+
+Como na Fase $1$ de estabelecimento de conexão para obter um fluxo de dados
+\setpk não existe nenhum nó \clis recebendo o referido fluxo, então quando o
+pacote \pac{GMTP-Request} alcançar o nó \repassu{1} (Passo 2 da
+Figura~\ref{fig:processo-conexao-1}), o estado da sua tabela de recepção de
+fluxos de dados não conterá um registro para o fluxo de dados \setpk, tal como
+ilustrou-se na Figura~\ref{fig:tabela-recepcao-1}. Nesse instante, o nó \repasss
+então inicia um processo de registro de participação para obter o fluxo de dados
+\setpk, tal como descreveu-se na Seção~\ref{subsec:registro-participacao},
+resultando na chamada do procedimento \textit{registerRelay(\serv, \pk)}, onde
+\pks é do tipo \pac{GMTP-Request}. Como resultado da invocação do procedimento
+de registro de participação, o nó \repassu{1} transmite o pacote do tipo
+\pac{GMTP-Register} e, à medida que os roteadores da rede repassam o pacote
+\pac{GMTP-Register} até alcançar o nó \serv, constitui-se o caminho \setwayiu{1}
+$=$
+$\{$\repassu{1},\repassu{2},\repassu{3},\repassu{4},\repassu{5},\servu{1}$\}$,
+destacado na cor vermelha da Figura~\ref{fig:processo-conexao-1}, conforme
+discutiu-se na Seção~\ref{sec:descparc}.
+
+AKI!!
+
+Considerando-se que se trata da Fase 1,
+nenhum nó \ways $\in$ \setwayi, cada
 nó \repasss que o processar tal pacote, verifica se existe registro de recepção
 do fluxo \setpk. Em caso positivo, o respectivo nó \repasss envia um pacote do
 tipo \pac{GMTP-Response} para \repassu{1} que, ao recebê-lo, registra a recepção
 de \setpk, envia um pacote do tipo \pac{GMTP-Request-Notify} para notificar
-\cliu{1} que o fluxo \setpk será iniciado. Neste ponto, conclui-se a fase
-$1$ do processo de estabelecimento de conexão e o fluxo \setpk começa a ser
+\cliu{1} que o fluxo \setpks será iniciado. Neste ponto, conclui-se a fase
+$1$ do processo de estabelecimento de conexão e o fluxo \setpks começa a ser
 transmitido entre os nós \repassu{1} e \repass. Note que, por serem pacotes de
 controle, estes pacotes são transmitidos com garantia de entrega, similar ao
 mecanismo adotado pelo TCP.
 
+
 \subsection{Fase 2: próximas requisições para obter \setpk}
 
-A fase $2$ de conexão ocorre quando futuras requisições a \setpk ocontecerem
+A fase $2$ de conexão ocorre quando futuras requisições a \setpks ocontecerem
 após a fase $1$, originadas por qualquer nó \clis $\in$
 \subsetcli$($\repassu{1}$)$. Tais solicitações são também interceptadas por
 \repassu{1}, que confirma a existência de recepção
 de fluxo \setpks e o repassa também para o nó \clis solicitante, notificando
-\clis, por exemplo, \cliu{2}, usando o pacote do tipo \pac{GMTP-RequestNotify},
+\cli, por exemplo, \cliu{2}, usando o pacote do tipo \pac{GMTP-RequestNotify},
 tal como ocorreu na fase $1$, porém com uma diferença: a configuração de um
 canal de transmissão multicast na rede local.
 
@@ -2097,11 +2348,11 @@ envia para o nó \cliu{2} e também notifica \cliu{1}, que então realiza as
 configurações devidas para receber o fluxo em modo \textit{multicast}. Além do
 bit de sinalização multicast, o pacote do tipo \pac{GMTP-RequestNotify} também
 contém um campo de endereço IP (\ut{32}{bits}), que especificará qual endereço
-IP o nó \repass passará a transmitir os dados (canal de repasse), e mais um
+IP o nó \repasss passará a transmitir os dados (canal de repasse), e mais um
 campo para especificar o número de porta (\ut{16}{bits}), que especifica a porta
 correspondente ao canal de repasse.
 
-\subsection{Fase 3: busca por mais parceiros \repasssu{q} para obter \setpk}
+\subsection{Fase 3: busca por mais parceiros \repassu{q} para obter \setpk}
 
 Na fase $3$, o nó \repasss inicia um processo de aumentar suas parcerias a fim
 de obter mais rapidamente os pacotes \pks $\in$ \setpks e caminhos \setways alternativos
@@ -2179,7 +2430,40 @@ Seção~\ref{subsec:melhorcaminho}.
 \label{fig:conn-phase3-2}
 \end{figure}
 
+
+==============
+
+Após o registro de participação, o nó \repasss deve enviar periodicamente
+sinalizações de controle (\textit{polling}) sobre sua participação na rede de
+favores $\eta$. Este procedimento deve ser feito usando o pacote do tipo
+\pac{GMTP-Ack} em um tempo $t = max(300, t_{user}) - RTT$, onde $t$ e $RTT$ são
+definidos em segundos, e $t_{user}$ é um parâmetro de tempo definido pelo
+usuário. Quando \servs receber um pacote do tipo \pac{GMTP-Ack} do nó \repass,
+este deve enviar um pacote do mesmo tipo. Caso \repasss não receba
+\pac{GMTP-Ack} no período de $4 \times RTT$, deve-se repetir tal procedimento
+por no máximo 3 vezes, quando \repasss deve considerar a conexão finalizada por
+tempo de expiração (\textit{timeout}) e enviar um pacote do tipo
+\pac{GMTP-Reset}. Na RFC 5482~\cite{RFC5482}, discute-se sobre outros aspectos
+de expiração no tempo que podem ser adaptadas para o GMTP.
+
+Implementar o algoritmo da função \respondToClients:
+\respondToClients{\textit{channel}} % nessa tem que buscar os clientes esperando
+por resposta
+\respondToClients{\setpk, \cli}
+
+tem que ter: getClientsWaitingForFlow(\setpk) mandar o leitor ver a linha 7 do
+algoritmo algo:registerRelay
+
+% \textit{channel} \attrib \getChannelOfFlow{\setpk}\;
+% \textit{\pk} \attrib \makePkt{GMTP-Response(), \cli}\;
+% servs \attrib \getCurrRegedServers()\tcc*[r]{servs $\subset S$}
+% pkt \attrib \makePkt{GMTP-Register, \serv}\tcc*[r]{register request}
+
+
+==============
+
 \subsection{Compartilhamento de \setpks entre \servs}
+\label{subsec:compartilhamento-de-p}
 
 Além do processo transparente para se obter um fluxo de dados \setpks
 empregado
@@ -2368,136 +2652,6 @@ presente em cada pacote \pk.
 
 \end{enumerate}
 
-\subsubsection{Descrição do fluxo \setpk:}
-\label{subsubsec:desc-conteudo}
-
-O GMTP é um protocolo de transporte e por isto não precisa conhecer o tipo da
-mídia a ser transmitida. Porém, levando-se em consideração que uma das
-principais motivação do GMTP é promover a compatibilidade entre diferentes
-aplicações que o utiliza, faz-se necessário que as aplicações conheçam o tipo
-da mídia e assim permitir que qualquer aplicação consiga reproduzir o fluxo de
-dados \setpk.
-
-Nesse contexto, incorporou-se no GMTP um mecanismo para descrever \setpk e
-permitir que a camada de aplicação receba tal descrição. Para isto, utiliza-se o
-padrão SDP (\textit{Session Description Protocol}), definido na RFC
-2327~\cite{RFC2327}, uma vez que já é um padrão utilizado pela maioria das
-aplicações multimídia e portanto facilita a adaptação destas para o uso do GMTP.
-Apesar de ter um propósito geral para descrever sessões multimídia, no GMTP, o
-SDP tem o propósito de descrever o conteúdo de \setpk para permitir que os nós
-\clis interessados em \setpk interpretem seu conteúdo e sejam capazes e
-reproduzi-lo.
-
-Desta forma, o GMTP utiliza o pacote do tip \pac{GMTP-MediaDesc} para
-encapsular o conteúdo de descrição SDP. O conteúdo SDP é gerado pelo nó \servs
-e disseminado para os nós \repass, que os repassam para os nós \clis no
-processo de estabelecimento de conexão, descrito na
-Seção~\ref{subsec:conexao-requisicao}. Com isto, o nó \clis obtém as
-seguintes informações sobre \setpk:
-
-\begin{itemize}
-
- \item Identificador do fluxo de dados \setpk;
-
- \item A codificação e endereçamento da mídia:
-
-\begin{itemize}
-
- \item O formato da mídia (H.261 video, MPEG video, etc.); e
-
- \item O endereço e porta para obter a mídia (multicast).
-
-\end{itemize}
-
- \item Informação para verificação de autenticidade de cada pacote \pks $\in$ \setpk.
-
-\end{itemize}
-
-Um exemplo de uma mensagem SDP transmitida pelo GMTP é apresentado no Trecho de
-Código~\ref{algo:sdp-mediadesc}, onde:
-
-\begin{itemize}
-
-  \item \textit{v}, a versão do SDP;
-
-  \item \textit{o}, a lista de nós \servs que a distribui;
-
-  \item \textit{s}, o nome da mídia, como discutido na
-Seção~\ref{subsec:content-index};
-
-  \item \textit{i}, o título da mídia;
-
-  \item \textit{u}, a URI que descreve detalhes sobre a mídia;
-
-  \item \textit{c}, as informações de conexão, como o tipo da rede, a versão do
-protocolo de rede e o endereço do nó \repass;
-
-  \item \textit{f}, o certificado digital emitido pelo nó \servs para verificação
-de autenticidade dos pacotes \pks $\in$ \setpk (opcional). Este assunto
-será retomado na Seção~\ref{sec:seguranca}.;
-
-  \item \textit{m}, o tipo da mídia, a porta de conexão e protocolo de
-transporte; e
-
-  \item \textit{a}, atributos adicionais sobre a mídia como, por exemplo,
-qualidade, idioma, taxa de bits mínima e máxima necessária para transmitir a
-mídia, em bytes.
-
-\end{itemize}
-
-\vspace{0.5cm}
-
-\begin{algorithm}[H]
-\label{algo:sdp-mediadesc}
-\SetAlgoLined
-
-\SetAlgorithmName{Listagem}{listagem}{.}
-
-\bigspace v=0\\
-\bigspace o=- IN IP4 177.135.177.241,
-IP4 186.192.82.163, IP6 2001:0db8:85a3::7344\\
-\bigspace s=72c44591-7d82-427c-825f-722f015787c1\tcc*[r]{ver
-Seção~\ref{subsec:content-index}}
-\bigspace i=An Introduction about Global Media Transmission Protocol (GMTP).\\
-\bigspace u=http://www.ic.ufal.br/projects/gmtp/introduction.ps\\
-\bigspace c=IN IP4 200.17.113.100\\
-\bigspace f=x509:http://vid12.akamai.com/certs/cert.crt\tcc*[f]{ver Seção~\ref{sec:seguranca}}\\
-\label{line:sdp-mediadesc:f}
-\bigspace m=audio 49170 GMTP/RTP/AVP 16000-20000\\
-\bigspace m=video 51372 GMTP/RTP/AVP 163840-655360\\
-\bigspace a=type:multicast\\
-\bigspace a=sendrecv\\
-\bigspace a=quality:10\\
-\bigspace a=lang:en\tcc*[f]{ver RFC1766~\cite{RFC1766}}\\
-\bigspace a=framerate:23.0\\
-
-\caption{Exemplo de uma mensagem SDP no pacote \pac{GMTP-MediaDesc}.}
-\end{algorithm}
-\vspace{0.8cm}
-
-No exemplo apresentado na Listagem~\ref{algo:sdp-mediadesc}, utiliza-se a
-primeira versão do protocolo SDP e descreve-se a transmissão de dois fluxos
-\setpks (Linhas 10 e 11), sendo um deles de áudio e outro de vídeo. Os fluxos
-estão sendo distribuídos por três nós \servs (Linha 2), dos quais dois são
-acessíveis através de endereços IPv4 e um através de um endereço IPv6. Os dois
-fluxos de áudio e vídeo \setpks são repassados por um nó \repasss acessível por
-um endereço IPv4 (Linha 6) através das portas 49170 e 51372, respectivamente
-(Linhas 9 e 10). Os nós \repasss podem verificar a autenticidade do conteúdo
-de cada pacote \pks através do certificado digital disponível no campo URL
-definido na Linha 8 (este assunto será retomadod na Seção~\ref{sec:seguranca}).
-Além disso, alguns parâmetros adicionais da mídia são especificados entre as
-Linhas 13 e 17, como a qualidade da mídia, que varia entre 1 e 10. Além disso,
-informações importantes relacionadas as mídias são as taxas de bits sendo, neste
-exemplo, o áudio variando entre \ut{16000}{Bytes} à \ut{20000}{Bytes} e o vídeo
-entre \ut{156250}{Bytes} e \ut{625000}{Bytes} (Linhas 10 e 11).
-
-É importante salientar que os nós \repasss utilizam as informações de taxa de
-bits para determinar o tamanho do buffer necessário para permitir a transmissão
-da mídia, como discutido anteriormente. Note que o tamanho do buffer é definido
-em consonância com os parâmetros determinados pelo algoritmo de controle de
-congestionamento executado no módulo GMTP-Inter, a ser discutido em detalhes na
-Seção~\ref{sec:ccgmtp}, a seguir.
-
 
 \section{Controle de Congestionamento em \net}
 \label{sec:ccgmtp}
@@ -2511,7 +2665,7 @@ unicast e outro voltado para transmissões em modo multicast.
 Na prática, definiu-se um algoritmo para controle de congestionamento híbrido,
 cujo comportamento dependerá se o nó que o executa está transmitindo em modo
 unicast ou em multicast. Em modo de transmissão unicast, utilizado na
-comunicação entre os nós \repass, defini-se a taxa de transmissão de um nó
+comunicação entre os nós \repass, define-se a taxa de transmissão de um nó
 \mudccps através de um algoritmo de janela deslizante baseado em uma equação
 cúbica, com suporte aos protocolos RCP~\cite{REF} e ConEx~\cite{REF}. Já em modo
 de transmissão multicast, executa-se um algoritmo baseado em relatórios
@@ -2856,7 +3010,7 @@ de distribuição de fluxos de dados empregadas, explicadas anteriormente.
 % de ACKs apenas para seus nós parceiros \waysu{\wayi-1}. Essa estratégia é
 % fundamental para uma transmissão de um fluxo de dados ao vivo que leva em
 % consideração uma arquitetura P2P e o uso de um mecanismo para controle de
-% congestionamento. Quando um nó \way expõe o seu vetor de ACK apenas para seus
+% congestionamento. Quando um nó \ways expõe o seu vetor de ACK apenas para seus
 % nós parceiros \waysu{wayi-1}, permite-se uma regulação da taxa de transmissão
 % específica apenas entre eles. Isto significa que o GMTP-UCC realiza controle
 % de congestionamento regulando a taxa de transmissão entre dois nós \repass
@@ -3233,7 +3387,7 @@ procedimento de verificação de autenticidade do fluxo de dados \setpk; e
 
   \item os nós \way, definidos pela Regra 1, não devem verificar todos os
 pacotes \pks $\in$ \setpk, mas apenas uma quantidade $pc(t)$ de pacotes de dados
-\pks $\in$ \setpk, em um instante $t$. Nesse caso, defini-se
+\pks $\in$ \setpk, em um instante $t$. Nesse caso, define-se
 $pc(t)$, apresentada na Equação~\ref{eq:qtpxcheck}, em função de:
 
   \begin{itemize}
@@ -3262,7 +3416,7 @@ pc(t) = \floor*{bs(t) \times \left(1 - \frac{1}{\mid
 Sendo assim, quanto mais distante um nó \ways estiver do nó \serv, que gera o
 fluxo de dados \setpk, mais pacotes \pks $\in$ \setpks deve-se verificar sua
 autenticidade. Antes de entender o procedimento para verificar a autenticidade de
-um pacote \pk $\in$ \setpk, deve-se entender como o nó \servs deve gerar
+um pacote \pks $\in$ \setpk, deve-se entender como o nó \servs deve gerar
 manipular os referidos pacotes de dados para que seja possível verificar sua
 autenticidade. Este procedimento é explicado a seguir.
 
@@ -3422,7 +3576,7 @@ Seção~\ref{subsec:registro-participacao}.
 Após obter o referido certificado digital do nó \serv, o nó \repasss pode
 realizar \textit{cache} de tal conteúdo para que os próximos nós \clis e evitar
 ter que obtê-lo a todo instante. De forma alternativa, o usuário administrador
-do nó \repasss pode obter o arquivo de certificação digital do nó \repass e
+do nó \repasss pode obter o arquivo de certificação digital do nó \repasss e
 salvá-lo, por meio de \textit{upload}, por exemplo, manualmente nas
 configurações do nó \repass. Deve ser opcional também para o usuário
 administrador do nó \repasss escolher se tal nó deve ou não realizar
@@ -3476,7 +3630,7 @@ de uma conexão de um cliente \mudccp, porém para finalizar uma conexão de um nó
 
 Como apresentado na Seção~\ref{subsec:mudccp-mcc}, um nó \rels é responsável
 por relatar ao nó \repasss as condições de recepção de pacotes \pks $\in$
-\setpk em uma transmissão multicast e assim determinar a taxa de transmissão
+\setpks em uma transmissão multicast e assim determinar a taxa de transmissão
 que deve ser utilizada para repassar o referido fluxo de dados. Sem os nós
 \rel, tal procedimento não seria possível. Sendo assim, deve-se realizar um
 procedimento para eleger um novo nó \rels quando um nó com tal responsabilidade
@@ -3493,7 +3647,7 @@ aplicação, mas sim quando \subsetcli(\repass) $= 0$ para um determinado
 fluxo de dados \setpk. Neste caso, pode ocorrer uma situação crítica para todos
 os nós parceiros \repasssu{q} de \repass, pois teoricamente estes não poderão
 mais receber os pacotes de dados \pks $\in$ \setpk. Para evitar um período de
-instabilidade na recepção de \setpk por parte dos nós parceiros de \repass,
+instabilidade na recepção de \setpks por parte dos nós parceiros de \repass,
 define-se no GMTP um parâmetro chamado de período de carência para novas
 parcerias (\textit{grace period for new partnerships}). Trata-se de um parâmetro
 que determina o tempo que um nó \repasss continuará repassando o fluxo de dados
@@ -3516,7 +3670,7 @@ serão os próximos nós \clis que se conectar para receber o fluxo de dados
 \rels por fluxo de dados \setpk. Tal parâmetro pode ser determinado pelo
 administrador do nó \repass.
 
-Sendo assim, à medida que um nó \repass recebe pacotes do tipo
+Sendo assim, à medida que um nó \repasss recebe pacotes do tipo
 \pac{GMTP-Request}, no pacote de resposta \pac{GMTP-Response}, o nó
 \repasss ativa um indicador sinalizando que o referido nó \clis em processo de
 conexão deverá se comportar como um nó \rel, passando a enviar relatórios
@@ -3531,7 +3685,7 @@ procedimento de desconexão, como explicado na Seção~\ref{subsec:desconexao}.
 Para esse caso, quando o nó \repasss receber o pacote do tipo
 \pac{GMTP-Close}, este deve verificar se o referido nó \clis é um nó \rel. Em
 caso afirmativo, o nó \repasss deve transmitir para um dos nós \clis que
-também recebe o referido fluxo de dados \setpk (se houver), um pacote do tipo
+também recebe o referido fluxo de dados \setpks (se houver), um pacote do tipo
 \pac{GMTP-Elect-Request} e aguardar por um \pac{GMTP-Elect-Response}. Este procedimento
 deve ocorrer com garantia de entrega.
 

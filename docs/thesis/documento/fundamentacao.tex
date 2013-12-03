@@ -1899,18 +1899,22 @@ visualização.
 
 Nesta seção, discute-se sobre os aspectos de criptografia baseada em chaves
 assimétricas, funções de \textit{hash} e assinatura digital. Os conceitos
-apresentados aqui são base para o entendimento de como se verifica a
-autenticidade de um conjunto de pacotes de dados, que corresponde a um fluxo de
-dados multimídia correspondente a um evento ao vivo, transmitido por um servidor
-a um ou mais clientes GMTP. Com relação a certificação digital, está permitirá
-que os nós clientes em uma transmissão GMTP possam confiar no conteúdo
-multimídia recebido de outros nós parceiros, através da validação do conteúdo
-transportado dentro de um pacote de dados a ser reproduzido, ou seja, se
-tal conteúdo foi realmente emitido pelo nó servidor, aquele gerador do fluxo de
-dados de interesse do nó cliente.
+apresentados aqui, adaptado de Sales at al~\cite{upnp-up-dissertacao}, são base
+para o entendimento de como se verifica a autenticidade de um conjunto de
+pacotes de dados, que corresponde a um fluxo de dados multimídia de um evento ao
+vivo, transmitido por um servidor para um ou mais clientes. Com relação a
+certificação digital, seu uso permite que os nós clientes em uma transmissão
+possam confiar no conteúdo recebido de outros sistemas remotos, através
+da validação do conteúdo transportado dentro de um pacote de dados, ou seja, se
+tal conteúdo foi realmente emitido pelo nó gerador do fluxo de dados de
+interesse do nó cliente.
 
-Especificamente, os conceitos apresentados a seguir são referenciados no
-Capítulo~\ref{cap:mudccp}, Seção~\ref{sec:seguranca}.
+Especificamente, os conceitos apresentados a seguir são base para o
+entendimento do mecanismo de verificação de autenticidade de um
+fluxo de dados multimídia transmitido por um sistema final servidor e recebido
+por um sistema final cliente, através da utilização do protocolo GMTP.
+Este assunto é discutido no Capítulo~\ref{cap:mudccp},
+Seção~\ref{sec:seguranca}.
 
 \subsection{Criptografia de Hash}
 
@@ -1938,7 +1942,26 @@ algoritmos de \textit{hash} também podem ser utilizados em processos de
 autenticação, tais como assinatudas digitais, verificações de senhas e cadeias
 de \textit{hash} (\textit{One-Way chains})~\cite{lamport}.
 
-%~\cite{efficiente-hash-chain}
+\subsection{Criptografia Assimétrica}
+
+Como ilustra-se na Figura~\ref{fig:criptografia}, em criptografia assimétrica
+um sistema final transmissor de uma mensagem criptografa o conteúdo a ser
+transmitido utizando a chave pública do sistema final receptor. Por sua vez, o
+sistema final receptor, ao receber a mensagem criptografada, utiliza sua chave
+privada, combinada com sua chave pública, para decifrar o conteúdo. Sendo
+assim, apenas o sistema final receptor pode decifrar o conteúdo da mensagem,
+uma vez que apenas tal sistema conhece a chave privada. Nesse contexto, a chave
+privada é representada por $K^{-}_{A}$, ao passo que a chave pública é
+representada por $K^{+}_{A}$.
+
+\begin{figure}[ht]
+ \centering
+ \includegraphics[scale=0.5]{imagens/CriptoAsym.pdf}
+ \caption{Modelo de criptografia assimétrica, chave pública representada por
+$K^{+}$ e chave privada presentada por $K^{-}$.}
+ \label{fig:criptografia}
+\end{figure}
+
 \subsection{Assinatura e Certificação Digital}
 \label{subsec:sign-digital-certificate}
 
@@ -1948,51 +1971,51 @@ assinatura digital, pode-se provar que uma mensagem foi realmente enviada pelo
 emissor, o receptor pode confirmar que a assinatura foi feita pelo emissor
 (autenticidade) e que qualquer alteração da mensagem faz com que a assinatura
 digital não corresponda mais à mensagem (integridade). Basicamente, uma
-assinatura digital é construída a partir da combinação dos algoritmos de
-criptografia assimétrica e das funções de \textit{hash}.
+assinatura digital é construída a partir da combinação das funções de
+\textit{hash} e dos algoritmos de criptografia assimétrica.
 
-Como ilustra-se na Figura~\ref{fig:digital-sign}, para que um usuário
-\textit{A} envie uma mensagem \textit{m} assinada digitalmente ao usuário
-\textit{B}, aplica-se uma função de \textit{hash} à mensagem original
-\textit{m}, gerando \textit{m'} e, em seguida, cifra-se \textit{m'} utilizando a
-chave privada do emissor, resultando na assinatura digital. A mensagem e a
-assinatura digital são enviadas ao receptor através de um canal de comunicação.
-Note que, o emissor assina \textit{m'} com a sua chave privada, representada por
-$K^{-}_{A}$, ao passo que o receptor obtém \textit{m'} utilizando a chave
-pública do emissor, representada por $K^{+}_{A}$.
+Como ilustra-se na Figura~\ref{fig:digital-sign}, para que um sistema final
+\textit{A} envie uma mensagem \textit{m} assinada digitalmente ao sistema
+final \textit{B}, o sistema final \textit{A} aplica uma função de \textit{hash}
+à mensagem original \textit{m}, gerando \textit{m'} e, em seguida, cifra
+\textit{m'} utilizando sua chave privada, resultando na assinatura digital. A
+mensagem e a assinatura digital são enviadas ao receptor através de um canal de
+comunicação.
 
 \begin{figure}[ht]
  \centering
- \includegraphics[scale=0.35]{imagens/DigitalSign.pdf}
+ \includegraphics[scale=0.5]{imagens/DigitalSign.pdf}
  \caption{Geração de Assinaturas Digitais.}
  \label{fig:digital-sign}
 \end{figure}
 
-Para comprovar uma assinatura digital é necessário realizar dois procedimentos:
+Quando o sistema final \textit{B} recebe a mensagem \textit{m} transmitida pelo
+sistema final \textit{A}, o sistema final \textit{B} comprova a autenticidade da
+mensagem realizando dois procedimentos:
+
 \begin{itemize}
 
-  \item calcular o valor de \textit{hash} da mensagem \textit{m} (gerando
-\textit{m'}); e
+  \item calcula-se o valor de \textit{hash} da mensagem \textit{m},
+resultando em \textit{$m'_{recebida}$}); e
 
-  \item decifrar a assinatura com a chave pública do emissor (resultando em
-\textit{m'}). Em seguida, deve-se concluir o seguinte:
+  \item decifra-se a assinatura digital com a chave pública do sistema final
+\textit{A}, que deve resultar em \textit{$m'_{enviada}$}. Em seguida,
+conclui-se o seguinte:
 
   \begin{itemize}
 
-    \item Se os valores de \textit{hash} forem iguais, a mensagem
-\textit{m} está íntegra (não sofreu qualquer alteração) e portanto a assinatura
-está correta, pois foi gerada pela chave privada corresponde à chave pública
-utilizada na verificação; ou
+    \item Se \textit{$m'_{recebida}$} $=$ \textit{$m'_{enviada}$}, a mensagem
+\textit{m} está íntegra, ou seja, a mensagem \textit{m} não sofreu qualquer
+alteração. Sendo assim, a assinatura está correta, pois foi gerada pela chave
+privada corresponde à chave pública utilizada na verificação; ou
 
-    \item Se os valores de \textit{hash} forem diferentes, a assinatura está
-incorreta e portanto houve alterações na mensagem \textit{m} ou na
-assinatura de tal mensagem.
+    \item Se \textit{$m'_{recebida}$} $\neq$ \textit{$m'_{enviada}$}, a
+a mensagem \textit{m} foi alterada, ou seja, a assinatura digital emitida pelo
+sistema final \textit{A} não corresponde à mensagem \textit{m}.
 
   \end{itemize}
 
 \end{itemize}
-
-
 
 O uso das funções de \textit{hash} pode contribuir para que o processamento da
 assinatura digital não seja comprometido devido à lentidão dos algoritmos de
@@ -2005,12 +2028,12 @@ capaz de cifrar a mensagem com a chave privada correspondente à chave pública
 utilizada pelo receptor para checar a autenticidade da mensagem.
 
 Os mecanismos oferecidos pela assinatura digital é uma forma eficaz de garantir
-a autoria de documentos eletrônicos. Em agosto de 2001, a medida provisória da
+a autoria de documentos eletrônicos. Em agosto de 2001, a Medida Provisória da
 República do Brasil, número 2.200~\cite{icp-brasil} (\textit{Infra-Estrutura de
 Chaves Públicas Brasileira - ICP-Brasil}), foi publicada para garantir a
 validade jurídica de documentos eletrônicos e a utilização de certificados
-digitais para atribuir autenticidade e integridade aos documentos. Este fato
-tornou a assinatura digital um instrumento válido, inclusive juridicamente.
+digitais para atribuir autenticidade e integridade aos documentos, formalizando
+o conceito de assinatura digital.
 
 % \subsubsection{Certificado Digital e Autoridades Certificadoras}
 % \label{subsubsec:digital-sign-and-certificate-authorities}
