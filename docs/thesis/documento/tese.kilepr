@@ -4,7 +4,7 @@ img_extIsRegExp=false
 img_extensions=.eps .jpg .jpeg .png .pdf .ps .fig .gif
 kileprversion=2
 kileversion=2.1.0
-lastDocument=mudccp.tex
+lastDocument=tese-leandrosales.tex
 masterDocument=tese-leandrosales.tex
 name=tese-leandrosales
 pkg_extIsRegExp=false
@@ -374,13 +374,13 @@ order=11
 
 [item:tese-leandrosales.tex]
 archive=true
-column=0
+column=32
 encoding=ISO-8859-1
 highlight=LaTeX
-line=208
+line=203
 mode=LaTeX
-open=false
-order=0
+open=true
+order=1
 
 [item:tese.kilepr]
 archive=true
@@ -501,8 +501,8 @@ JumpList=
 ViMarks=
 
 [view-settings,view=0,item:tese-leandrosales.tex]
-CursorColumn=0
-CursorLine=208
+CursorColumn=32
+CursorLine=203
 JumpList=
 ViMarks=
 
