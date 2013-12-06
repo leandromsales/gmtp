@@ -4,7 +4,7 @@ img_extIsRegExp=false
 img_extensions=.eps .jpg .jpeg .png .pdf .ps .fig .gif
 kileprversion=2
 kileversion=2.1.0
-lastDocument=fundamentacao.tex
+lastDocument=mudccp.tex
 masterDocument=tese-leandrosales.tex
 name=tese-leandrosales
 pkg_extIsRegExp=false
@@ -153,7 +153,7 @@ Mode=LaTeX
 ReadWrite=true
 
 [document-settings,item:mudccp.tex]
-Bookmarks=3704,3631,3668,3669,3709,3635,3711,3675,3640,3677,3715,3644,3681,3718,3719,3684,3649,3687,3659,3699
+Bookmarks=3848,3889,3926,3927,3929,3930,3931,3857,3933,3897,3934,3899,3936,3937,3902,3939,3874,3839,3914,3877,3879,3843,3880,3917,3919,3883,3920,3884
 Encoding=ISO-8859-1
 FoldedColumns=
 FoldedLines=
@@ -209,7 +209,7 @@ encoding=UTF-8
 highlight=LaTeX
 line=12
 mode=LaTeX
-open=true
+open=false
 order=5
 
 [item:agradecimentos.tex]
@@ -230,16 +230,16 @@ highlight=LaTeX
 line=4
 mode=LaTeX
 open=false
-order=2
+order=13
 
 [item:analise-desempenho-mudccp.tex]
 archive=true
-column=65
+column=26
 encoding=ISO-8859-1
 highlight=LaTeX
-line=25
+line=18
 mode=LaTeX
-open=true
+open=false
 order=1
 
 [item:apendices.tex]
@@ -249,7 +249,7 @@ encoding=ISO-8859-1
 highlight=LaTeX
 line=14
 mode=LaTeX
-open=true
+open=false
 order=6
 
 [item:biblio-master.bib]
@@ -259,17 +259,17 @@ encoding=ISO-8859-1
 highlight=BibTeX
 line=1076
 mode=BibTeX
-open=true
+open=false
 order=8
 
 [item:biblio-phd.bib]
 archive=true
-column=63
+column=37
 encoding=ISO-8859-1
 highlight=BibTeX
-line=2371
+line=2389
 mode=BibTeX
-open=true
+open=false
 order=2
 
 [item:biblio-zotero.bib]
@@ -279,27 +279,27 @@ encoding=ISO-8859-1
 highlight=BibTeX
 line=73
 mode=BibTeX
-open=true
+open=false
 order=9
 
 [item:conclusao.tex]
 archive=true
-column=53
+column=20
 encoding=ISO-8859-1
 highlight=LaTeX
-line=78
+line=18
 mode=LaTeX
-open=true
+open=false
 order=4
 
 [item:fundamentacao.tex]
 archive=true
-column=33
+column=18
 encoding=ISO-8859-1
 highlight=LaTeX
-line=2014
+line=2035
 mode=LaTeX
-open=true
+open=false
 order=13
 
 [item:impl-mudccp.tex]
@@ -314,12 +314,12 @@ order=5
 
 [item:introducao.tex]
 archive=true
-column=14
+column=15
 encoding=ISO-8859-1
 highlight=LaTeX
-line=97
+line=827
 mode=LaTeX
-open=true
+open=false
 order=3
 
 [item:metodoexperimento.tex]
@@ -344,13 +344,13 @@ order=1
 
 [item:mudccp.tex]
 archive=true
-column=25
+column=14
 encoding=ISO-8859-1
 highlight=LaTeX
-line=2221
+line=2357
 mode=LaTeX
 open=true
-order=10
+order=0
 
 [item:resumo.tex]
 archive=true
@@ -359,7 +359,7 @@ encoding=ISO-8859-1
 highlight=LaTeX
 line=16
 mode=LaTeX
-open=true
+open=false
 order=7
 
 [item:simbolos.tex]
@@ -369,17 +369,17 @@ encoding=ISO-8859-1
 highlight=LaTeX
 line=13
 mode=LaTeX
-open=true
+open=false
 order=11
 
 [item:tese-leandrosales.tex]
 archive=true
-column=11
+column=0
 encoding=ISO-8859-1
 highlight=LaTeX
-line=197
+line=208
 mode=LaTeX
-open=true
+open=false
 order=0
 
 [item:tese.kilepr]
@@ -394,12 +394,12 @@ order=-1
 
 [item:trabrelacionados.tex]
 archive=true
-column=11
+column=80
 encoding=ISO-8859-1
 highlight=LaTeX
-line=984
+line=20
 mode=LaTeX
-open=true
+open=false
 order=12
 
 [view-settings,view=0,item:abstract.tex]
@@ -419,8 +419,8 @@ JumpList=
 ViMarks=
 
 [view-settings,view=0,item:analise-desempenho-mudccp.tex]
-CursorColumn=65
-CursorLine=25
+CursorColumn=26
+CursorLine=18
 JumpList=
 ViMarks=
 
@@ -437,8 +437,8 @@ JumpList=
 ViMarks=
 
 [view-settings,view=0,item:biblio-phd.bib]
-CursorColumn=63
-CursorLine=2371
+CursorColumn=37
+CursorLine=2389
 JumpList=
 ViMarks=
 
@@ -449,14 +449,14 @@ JumpList=
 ViMarks=
 
 [view-settings,view=0,item:conclusao.tex]
-CursorColumn=53
-CursorLine=78
+CursorColumn=20
+CursorLine=18
 JumpList=
 ViMarks=
 
 [view-settings,view=0,item:fundamentacao.tex]
-CursorColumn=33
-CursorLine=2014
+CursorColumn=18
+CursorLine=2035
 JumpList=
 ViMarks=
 
@@ -465,8 +465,8 @@ CursorColumn=33
 CursorLine=0
 
 [view-settings,view=0,item:introducao.tex]
-CursorColumn=14
-CursorLine=97
+CursorColumn=15
+CursorLine=827
 JumpList=
 ViMarks=
 
@@ -483,10 +483,10 @@ JumpList=
 ViMarks=
 
 [view-settings,view=0,item:mudccp.tex]
-CursorColumn=25
-CursorLine=2221
+CursorColumn=14
+CursorLine=2357
 JumpList=
-ViMarks=a,3726,45,b,3724,50,c,3716,75,d,3718,71,e,3716,75,f,3723,0,g,3664,1,h,3671,45,i,3670,8,j,3716,75,k,3664,1,l,3726,45,m,3716,75,n,3706,0,o,3664,1,p,3664,1,q,3717,0,r,3664,1,s,3664,1,t,3707,0,u,3664,1,v,3714,0,w,3664,1,x,3686,0,y,3689,0,z,3664,1
+ViMarks=a,3939,45,b,3937,50,c,3929,75,d,3931,71,e,3929,75,f,3936,0,g,3877,1,h,3884,45,i,3883,8,j,3929,75,k,3877,1,l,3939,45,m,3929,75,n,3919,0,o,3877,1,p,3877,1,q,3930,0,r,3877,1,s,3877,1,t,3920,0,u,3877,1,v,3927,0,w,3877,1,x,3899,0,y,3902,0,z,3877,1
 
 [view-settings,view=0,item:resumo.tex]
 CursorColumn=52
@@ -501,13 +501,13 @@ JumpList=
 ViMarks=
 
 [view-settings,view=0,item:tese-leandrosales.tex]
-CursorColumn=11
-CursorLine=197
+CursorColumn=0
+CursorLine=208
 JumpList=
 ViMarks=
 
 [view-settings,view=0,item:trabrelacionados.tex]
-CursorColumn=11
-CursorLine=984
+CursorColumn=80
+CursorLine=20
 JumpList=
 ViMarks=

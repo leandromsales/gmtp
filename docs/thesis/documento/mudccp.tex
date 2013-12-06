@@ -1318,30 +1318,41 @@ nó requisitante \repass.
 \SetKwFunction{Union}{Union}\SetKwFunction{isWaitingRegisterReply}{isWaitingRegisterReply}
 \SetKwFunction{Union}{Union}\SetKwFunction{waitRegisterReply}{waitRegisterReply}
 \SetKwFunction{Union}{Union}\SetKwFunction{clientWantsFlow}{clientWantsFlow}
+\SetKwFunction{Union}{Union}\SetKwFunction{GMTPRequestReply}{GMTPRequestReply}
+
 
 \tcc{The node \repasss executes this function to send a register of participation to
-a given node \serv. In case \pks is given, this means that a node \clis
-wants to receive the flow \setpk, and this is also signaled to \serv.}
+a given node \serv. If \pks is given, node \clis wants to receive the flow \setpk, so
+notify \serv.}
 
 \If(){\pks $\neq$ NULL} {
   \textit{\setpk} \attrib \getPacketFieldValue{\pk, `flow'}\tcc*[r]{Extracts \setpks in \pk}
   \textit{\cli} \attrib \getPacketFieldValue{\pk, `client'}\tcc*[r]{Extracts \clis in \pk}
-  \uIf(){\isFlowBeingReceived{\setpk}} {
-    \tcc{Let \clis know that \setpks is already registered in this \repass. This means that the \clis can already get the flow \setpks from this node \repass. The function \respondToClients is defined in section \ref{subsec:conexao-requisicao}.}
-    \Return{\respondToClients{\setpk, \cli}}\;
+  \textit{channel} \attrib \isFlowBeingReceived{\setpk}\tcc*[r]{See Section~\ref{subsec:tabela-recepcao}}
+  \uIf(){\textit{channel} $\neq$ NULL} {
+    \label{algo-line:isFlowBeingReceived}
+    \tcc{Let \clis know that \setpks is already registered in this \repasss and is available from a multicast channel.}
+    \respondToClients{\textit{channel}}\tcc*[r]{See Section~\ref{subsec:conexao-requisicao}}
+    \label{algo-line:respondToClients1}
+    \Return{0}\;
   } \Else() {
-      \tcc{Add \clis in the list of receivers interested in obtaining \setpk, send request to \servs and wait for \pac{GMTP-Register-Reply}. When received, executes onReceiveGMTPRegisterReply, defined in the Algorithm~\ref{algo:onReceiveGMTPRegisterReply}. If the \pac{GMTP-Register} was already sent, nothing should be done other than wait for \pac{GMTP-Register-Reply}.}
+      \tcc{Add \clis in the list of receivers waiting to receive \setpk, send request to \servs and wait registration reply. When received, executes onReceiveGMTPRegisterReply (Algorithm~\ref{algo:onReceiveGMTPRegisterReply}).}
+%  If the \pac{GMTP-Register} was already sent, nothing should be done other than wait for \pac{GMTP-Register-Reply}.
       \clientWantsFlow{\cli, \setpk}\;
       \If() {\textbf{not} \isWaitingRegisterReply{\setpk}} {
 	\waitRegisterReply(\setpk)\;
-	\Return{\sendPktRdt{\GMTPRegister{\serv, \setpk}}}
+	\sendPktRdt{\GMTPRegister{\serv, \setpk}}\;
+	\Return{0}\;
       }
+      \tcc{Ask \clis to wait until receive registration reply}
+      \respondToClients{\GMTPRequestReply{\cli, \setpk}}\;
+      \Return{0}\;
   }
 }
 \If(){\textbf{not} \isWaitingRegisterReply{\serv}} {
   \Return{\sendPktRdt{\GMTPRegister{\serv}}}\;
 }
-\Return False;
+\Return{0};
 
 \end{algorithm}
 
@@ -1361,29 +1372,31 @@ passos restantes explicados anteriormente.
 
 \SetKwFunction{Union}{Union}\SetKwFunction{createMulticastChannel}{createMulticastChannel}
 \SetKwFunction{Union}{Union}\SetKwFunction{getAndStoreServerPublicKey}{getAndStoreServerPublicKey}
+\SetKwFunction{Union}{Union}\SetKwFunction{updateFlowReceptionTable}{updateFlowReceptionTable}
 
 \tcc{The node \repasss executes this function when receives a packet of type
-\pac{GMTP-Register-Reply}, as response for a registration of participation
-reply sent to a \serv.}
+\pac{GMTP-Register-Reply}, as response for a registration of participation sent to a \servs node.}
 
 \uIf(\tcc*[f]{\servs confirmed registration}){\pks = OK} {
+  \textit{\servs} \attrib \getPacketFieldValue{\pk, `server'}\tcc*[r]{Gets \servs in \pk}
   \textit{\setpk} \attrib \getPacketFieldValue{\pk, `flow'}\tcc*[r]{Gets \setpks in \pk}
-  \If(){\setpks $\neq$ NULL}{
-    \servs \attrib \getPacketFieldValue{\pk, `server'}\tcc*[r]{Gets \serv}
-    servs[\length{servs}] \attrib \serv\tcc*[r]{Store the new \serv}
-    \uIf(\tcc*[f]{Section~\ref{subsec:obterchavepublica}}){\servs enabled
-security layer} {
+  \If(\tcc*[f]{Reply to \clis $\in$ \subsetcli$($\repass$)$, waiting for \setpk}){\setpks $\neq$ NULL}{
+    \If(\tcc*[f]{Section~\ref{subsec:obterchavepublica}}){\servs enabled security layer} {
       \getAndStoreServerPublicKey{\serv}\;
     }
     \textit{channel} \attrib \createMulticastChannel{\serv, \setpk}\;
-    \Return{\respondToClients{\textit{channel}}}\;
-
+    \updateFlowReceptionTable{\textit{channel}}\tcc*[r]{Section~\ref{subsec:tabela-recepcao}}
+    \label{algo-line:updateFlowReceptionTable}
+    \tcc{Let \clis $\in$ \subsetcli$($\repass$)$ know the multicast channel to receive \setpk. See Section~\ref{subsec:conexao-requisicao}}
+    \respondToClients{\GMTPRequestReply{\textit{channel}}}
+    \label{algo-line:respondToClients2}
   }
+  \tcc{It was just a reply of a registration.}
+  \updateFlowReceptionTable{\textit{\serv}}\tcc*[r]{Section~\ref{subsec:tabela-recepcao}}
 } \Else() {
-  \tcc{\servs refuses to accept the connection. This \repasss must notify the clients waiting for receiving \setpk.}
+  \tcc{\servs refused to accept the registration of participation. This \repasss must notify the clients waiting for receiving \setpk.}
   \textit{errorCode} \attrib \getPacketFieldValue{\pk, `error'}\;
-  \respondToClients{\textit{errorCode}, \setpk}\;
-  \Return{-\textit{errorCode}}\;
+  \respondToClients{\GMTPRequestReply{\textit{errorCode}, \setpk}}\;
 }
 
 \end{algorithm}
@@ -1408,7 +1421,7 @@ tempo (devido ao procedimento de {keep-alive} ou explícita através do envio de
 formação de parcerias e enviar para o nó \repasss um pacote do tipo
 \pac{GMTP-Reset}.
 
-Para finalizar esse assunto, declara-se que o registro de participação do GMTP
+Para finalizar esse assunto, salienta-se que o registro de participação do GMTP
 permite que quanto mais nós \repasss se registrarem em nós \serv, mais caminhos
 \setwayis sejam conhecidos. Consequentemente, quanto mais caminhos forem
 conhecidos, mais parcerias poderão ser formadas entre os nós \repass. E,
@@ -1424,6 +1437,68 @@ Nesses casos, as redes de distribuição podem fazer uso do roteador desse usuário
 em momentos ociosos de recepção e transmissão de dados através da Internet. Como
 consequência, relações comerciais podem ser construídas entre o usuário e os
 provedores de rede, mas essa discussão está fora do escopo deste trabalho.
+
+\subsection{Tabela de Recepção de Fluxos de Dados}
+\label{subsec:tabela-recepcao}
+
+Antes de seguir com a explicação sobre o processo de estabelecimento de conexão
+do GMTP, é importante entender que cada nó \repasss mantém uma tabela chamada
+\textit{Tabela de Recepção de Fluxos de Dados}, como ilustra-se na
+Figura~\ref{fig:tabela-recepcao-1}. O nó \repasss utilizal tal tabela para
+registrar todos os fluxos de dados que estão sendo repassados para seus nós
+\clis $\in$ \subsetcli$($\repass$)$, mantendo-se as
+seguintes informações:
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=.55]{imgs/tabela-recepcao-fluxo-1.pdf}
+\end{center}
+\vspace{-1cm}
+\caption{Exemplo de uma tabela de recepção de fluxo mantida por um nó \repass.}
+\label{fig:tabela-recepcao-1}
+\end{figure}
+
+\begin{itemize}
+
+  \item \textbf{Nome do Fluxo de Dados \setpk:} é uma sequência de
+\ut{128}{bits} que determina o nome de um fluxo de dados, como descrito na
+Seção~\ref{subsec:content-index};
+
+  \item \textbf{Servidores \serv:} o endereço IP do nó \servs que gera o fluxo
+de dados \setpk;
+
+  \item \textbf{Repassadores \repassu{q}:} o endereço IP do nó \repassu{q},
+parceiro de \repass, que está transmitindo o fluxo de dados \setpks para
+\repass. Se nulo, significa que o fluxo de dados \setpks está sendo recebido
+diretamente do nó \serv;
+
+  \item \textbf{Porta de Recepção de \setpk:} o número da porta do nó remoto
+que está transmitindo o fluxo de dados \setpks para \repass. Nesse caso, o nó
+remoto pode ser o nó \serv, em caso de conexão direta com o servidor, ou um nó
+\repassu{q}, parceiro de \repass;
+
+  \item \textbf{Endereço do Canal Multicast:} o endereço IP multicast utilizado
+pelo nó \repasss para repassar o fluxo de dados \setpks para os nós clientes
+\clis $\in$ \subsetcli$($\repass$)$; e
+
+  \item \textbf{Porta do Canal Multicast:} o número da porta multicast utilizada
+pelo nó \repasss para repassar o fluxo de dados \setpks para os nós clientes
+\clis $\in$ \subsetcli$($\repass$)$.
+
+\end{itemize}
+
+Um nó \repasss consulta a tabela de recepção de fluxos de dados quando recebe um
+pedido de conexão para obter um fluxo de dados \setpk, tal como apresentou-se
+na Linha~\ref{algo-line:isFlowBeingReceived} do
+Algoritmo~\ref{algo:registerRelay},
+Seção~\ref{subsec:registro-participacao}. Além disso, um nó \repasss atualiza a
+tabela de recepção de fluxos de dados após receber uma confirmação do registro
+de participação, tal como apresentou-se na
+Linha~\ref{algo-line:updateFlowReceptionTable} do
+Algoritmo~\ref{algo:onReceiveGMTPRegisterReply},
+Seção~\ref{subsec:registro-participacao}. Mais adiante, na
+Seção~\ref{subsec:conexao-requisicao}, discute-se em mais detalhes as ações de
+consulta e atualização da tabela de recepção de fluxos de dados.
 
 \subsection{Formação de parcerias}
 \label{sec:descparc}
@@ -2023,7 +2098,7 @@ passarem a adotar o GMTP (quando desejado).
 \end{algorithm}
 \vspace{0.8cm}
 
-\subsubsection{Descrição de um fluxo de dados \setpk:}
+\subsubsection{Descrição de um fluxo de dados \setpk}
 \label{subsubsec:desc-conteudo}
 
 Como uma das principais motivação do GMTP é promover a compatibilidade entre
@@ -2146,9 +2221,6 @@ informações de taxa de bits para determinar o tamanho do buffer necessário para
 permitir a transmissão da mídia -- este assunto será retomado na
 Seção~\ref{subsec:trocdados}.
 
-Na Seção~\ref{subsec:conexao-requisicao}, discute-se mais detalhes sobre o envio
-do pacote do tipo \pac{GMTP-MediaDesc}.
-
 % Além
 % disso, o tamanho do buffer é definido em consonância com os parâmetros
 % determinados pelo algoritmo de controle de congestionamento executado no módulo
@@ -2162,18 +2234,17 @@ O processo de conexão do protocolo \mudccps é separado em três fases. A
 primeira acontece quando, por exemplo, um nó qualquer \cliu{1} $\in$
 \subsetcli$($\repass$)$ deseja obter \setpks
 transmitido por um nó \servu{1} e não existe nenhum outro nó
-\clis $\in$ \subsetcli$($\repass$)$ em sua rede local recebendo \setpk, através
-de um nó \repass. Já a segunda fase acontece quando um novo nó \cliu{2} $\in$
-\subsetcli$($\repass$)$ deseja obter o mesmo fluxo de dados \setpks que o nó
-\cliu{1} solicitou previamente. E, por fim, a terceira fase acontece quando o nó
+\clis $\in$ \subsetcli$($\repass$)$ em sua rede local recebendo \setpk. Já a
+segunda fase acontece quando um outro nó \cliu{2} $\in$
+\subsetcli$($\repass$)$ precisa obter o mesmo fluxo de dados \setpk, solicitado
+previamente pelo nó \cliu{1}. E, por fim, a terceira fase acontece quando o nó
 \repasss começa a buscar novos nós parceiros \repassu{q} a fim de obter
-\setpks através de fontes alternativas.
+\setpks através de nós repassadores alternativos.
 
-Para entender o funcionamento de cada fase do processo de conexão do GMTP,
-considere a Figura~\ref{fig:processo-conexao}. Nesta figura, ilustra-se um nó
-\serv, que gera um fluxo de dados \setpk, conectado a uma rede com 12 nós
-\repass, dos quais 1 funciona como repassador de uma rede local, composta por 6
-nós \clis $\in$ \subsetcli$($\repass$)$.
+Na Figura~\ref{fig:processo-conexao}, ilustram-se um nó \serv, que gera um fluxo
+de dados \setpk e 12 nós \repass, que constituem uma rede de diferentes domínios
+administrativos, sendo o nó \repassu{1} o repassador de um desses domínios,
+composto por 6 nós \clis $\in$ \subsetcli$($\repass$)$ (Rede Local).
 
 \begin{figure}[ht]
 \begin{center}
@@ -2184,71 +2255,29 @@ nós \clis $\in$ \subsetcli$($\repass$)$.
 \label{fig:processo-conexao}
 \end{figure}
 
-Antes de seguir com a explicação sobre o processo de estabelecimento de conexão
-do GMTP, é importante entender que cada nó \repasss mantém uma tabela chamada
-\textit{Tabela de Recepção de Fluxos de Dados}, como ilustra-se na
-Figura~\ref{fig:tabela-recepcao-1}. A tabela de recepção de fluxos de
-dados serve para que um nó \repasss registre todos os fluxos de dados que estão
-sendo repassados para seus nós \clis $\in$ \subsetcli$($\cli$)$, mantendo-se as
-seguintes informações:
-
-\begin{figure}[ht]
-\begin{center}
-\includegraphics[scale=.55]{imgs/tabela-recepcao-fluxo-1.pdf}
-\end{center}
-\vspace{-1cm}
-\caption{Exemplo de uma tabela de recepção de fluxo mantida por um nó \repass.}
-\label{fig:tabela-recepcao-1}
-\end{figure}
-
-\begin{itemize}
-
-  \item \textbf{Nome do Fluxo de Dados \setpk:} é uma sequência de
-\ut{128}{bits} que determina o nome de um fluxo de dados, como descrito na
-Seção~\ref{subsec:content-index};
-
-  \item \textbf{Servidores \serv:} o endereço IP do nó \servs que gera o fluxo
-de dados \setpk;
-
-  \item \textbf{Repassadores \repassu{q}:} o endereço IP do nó \repassu{q},
-parceiro de \repass, que está transmitindo o fluxo de dados \setpks para
-\repass. Se nulo, significa que o fluxo de dados \setpks está sendo recebido
-diretamente do nó \serv;
-
-  \item \textbf{Porta de Recepção de \setpk:} o número da porta do nó remoto
-que está transmitindo o fluxo de dados \setpks para \repass. Nesse caso, o nó
-remoto pode ser o nó \serv, em caso de conexão direta com o servidor, ou um nó
-\repassu{q}, parceiro de \repass;
-
-  \item \textbf{Endereço do Canal Multicast:} o endereço IP multicast utilizado
-pelo nó \repasss para repassar o fluxo de dados \setpks para os nós clientes
-\clis $\in$ \subsetcli$($\repass$)$; e
-
-  \item \textbf{Porta do Canal Multicast:} o número da porta multicast utilizada
-pelo nó \repasss para repassar o fluxo de dados \setpks para os nós clientes
-\clis $\in$ \subsetcli$($\repass$)$.
-
-\end{itemize}
-
-Um nó \repasss deve consultar a tabela de recepção de fluxo de dados todas as
-vezes que receber um pacote do tipo \pac{GMTP-Request}, transmitido por um nó
-\clis $\in$ \subsetcli$($\repass$)$. Com base no estado da referida tabela, o nó
-\repasss realiza uma determinada ação de repasse, que dependerá de qual fase
-de conexão que o referido nó repassador estará com relação a um determinado
-fluxo de dados \setpk.
-
-Note que, independente da fase de conexão em que um nó \repasss se encontra
-para obter um fluxo de dados \setpk, o estabelecimento de uma conexão sempre
-se inicia no nó \cli, quando um usuário final de uma aplicação em execução no
-referido nó deseja obter \setpks e reproduzi-lo. A seguir, discutem-se esssas
-e outras questões relacionadas às fases do processo de estabelecimento de
-conexão do GMTP.
+A regra geral é que um nó \repasss deve consultar a tabela de recepção de fluxo
+de dados todas as vezes que receber um pacote do tipo \pac{GMTP-Request},
+transmitido por um nó \clis $\in$ \subsetcli$($\repass$)$. Com base no estado da
+referida tabela, o nó \repasss realiza uma determinada ação de repasse,
+mediante a fase de conexão que o referido nó repassador se encontra com relação
+ao fluxo de dados \setpks solicitado.
 
 \subsection{Fase 1: primeira requisição a um fluxo de dados \setpk}
 \label{subsec:conn-fase1}
 
-Com base na Figura~\ref{fig:processo-conexao-1}, onde se ilustra um exemplo
+A Fase 1 ocorre quando nenhum nó \clis $\in$ \subsetcli$($\repass$)$ está
+recebendo um fluxo de dados \setpk. Com base na
+Figura~\ref{fig:processo-conexao-1}, onde ilustra-se um exemplo
 do processo de conexão do GMTP na Fase 1, considere:
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=.7]{imgs/processo-conexao-1.pdf}
+\end{center}
+\vspace{-1cm}
+\caption{Passos do Processo de Estabelecimento de Conexão do \mudccps (Fase 1).}
+\label{fig:processo-conexao-1}
+\end{figure}
 
 \begin{itemize}
 
@@ -2260,71 +2289,152 @@ do processo de conexão do GMTP na Fase 1, considere:
   \item \repassu{1}, o nó repassador para os clientes \clis $\in$
 \subsetcli$($\repassu{1}$)$; e
 
-  \item \cliu{3}, um nó cliente que deseja obter um fluxo de dados \setpk, tal
-que \cliu{3} $\in$ \subsetcli$($\repassu{1}$)$.
+  \item \cliu{1}, um nó cliente que deseja obter um fluxo de dados \setpk, tal
+que \cliu{1} $\in$ \subsetcli$($\repassu{1}$)$.
 
 \end{itemize}
 
 Para obter o fluxo de dados \setpk, o nó \cliu{3} cria um socket GMTP e
 transmite um pacote do tipo \pac{GMTP-Request}
-(Figura~\ref{fig:processo-conexao-1}, Passo 1).
-Para construir o pacote do tipo \pac{GMTP-Request}, qualquer nó \clis deve
-obrigatoriamente especifica o valor para o endereço IP de destino o endereço do
-nó \servs que transmite \setpk, com o valor para o campo do cabeçalho de rede
-\textit{TTL=1}. Alternativamente, o nó \clis pode especificar o endereço IP de
-destino como sendo \textit{0.0.0.0}. Além dos valores para o IP de destino e
-para o \textit{TTL}, o nó \clis também deve informar o nome do fluxo de dados
-\setpks que o usuário deseja reproduzir, sendo tal informação incapsulada no
-campo \textit{nome do fluxo de dados} (\textit{flow name}), presente no
-cabeçalho de transporte do pacote do tipo \pac{GMTP-Request}. Definir o endereço
-IP de destino para o IP de \servs permite o roteador padrão obter o endereço IP
-do nó \servs que gera o fluxo de dados \setpk, sendo desnecessário realizar tal
-consulta no servidor DNS, como discutiu-se na Seção~\ref{subsec:content-index}.
-Além disso, com o valor de \textit{TTL=1}, permite-se interceptar o referido
-pacote de requisição, evitando-se extrapolar o domínio administrativo de tal
-rede local.
+(Figura~\ref{fig:processo-conexao-1}, Passo 1). Para construir o pacote do tipo
+\pac{GMTP-Request}, qualquer nó \clis deve especificar o valor para o endereço
+IP de destino como sendo o endereço do nó \servs que transmite \setpk, com o
+valor para o campo do cabeçalho de rede \textit{TTL=1}. Alternativamente, o nó
+\clis pode especificar o endereço IP de destino como sendo \textit{0.0.0.0}.
+Além dos valores para o IP de destino e para o \textit{TTL}, o nó \clis também
+deve informar o nome do fluxo de dados \setpks que o usuário deseja reproduzir,
+sendo tal informação incapsulada no campo \textit{nome do fluxo de dados}
+(\textit{data flow name}), presente no cabeçalho de transporte do pacote do tipo
+\pac{GMTP-Request}. Ao definir o endereço IP de destino como sendo o IP de
+\serv, permite-se que o roteador padrão de \cliu{1}, no caso o nó \repassu{1},
+obter o endereço IP do nó \servs sem precisar consultar o servidor DNS. Caso
+contrário, quando o IP especificado for \textit{0.0.0.0}, o nó \repassu{1}
+deverá realizar tal consulta, como discutiu-se na
+Seção~\ref{subsec:content-index}. Além disso, pelo valor de \textit{TTL=1},
+permite-se interceptar o referido pacote de requisição, evitando-se extrapolar o
+domínio administrativo de tal rede local.
 
-\begin{figure}[ht]
-\begin{center}
-\includegraphics[scale=.7]{imgs/processo-conexao-1.pdf}
-\end{center}
-\vspace{-1cm}
-\caption{Passos do Processo de Estabelecimento de Conexão do \mudccps (Fase 1).}
-\label{fig:processo-conexao-1}
-\end{figure}
-
-
-Como na Fase $1$ de estabelecimento de conexão para obter um fluxo de dados
-\setpk não existe nenhum nó \clis recebendo o referido fluxo, então quando o
-pacote \pac{GMTP-Request} alcançar o nó \repassu{1} (Passo 2 da
-Figura~\ref{fig:processo-conexao-1}), o estado da sua tabela de recepção de
-fluxos de dados não conterá um registro para o fluxo de dados \setpk, tal como
-ilustrou-se na Figura~\ref{fig:tabela-recepcao-1}. Nesse instante, o nó \repasss
-então inicia um processo de registro de participação para obter o fluxo de dados
-\setpk, tal como descreveu-se na Seção~\ref{subsec:registro-participacao},
-resultando na chamada do procedimento \textit{registerRelay(\serv, \pk)}, onde
-\pks é do tipo \pac{GMTP-Request}. Como resultado da invocação do procedimento
-de registro de participação, o nó \repassu{1} transmite o pacote do tipo
-\pac{GMTP-Register} e, à medida que os roteadores da rede repassam o pacote
-\pac{GMTP-Register} até alcançar o nó \serv, constitui-se o caminho \setwayiu{1}
+Na Fase $1$ do processo de estabelecimento de conexão, considera-se que não
+existe nenhum nó \clis $\in$ \subsetcli$($\repassu{1}$)$ recebendo o fluxo de
+dados \setpk.
+Sendo assim, quando o pacote \pac{GMTP-Request} alcançar o nó \repassu{1}
+(Passo 2 da Figura~\ref{fig:processo-conexao-1}), o nó \repassu{1} consulta a
+tabela de recepção de fluxos de dados e constata que não há qualquer registro
+para o fluxo de dados \setpk, pois a referida tabela estará vazia, como
+apresentou-se na Figura~\ref{fig:tabela-recepcao-1},
+Seção~\ref{subsec:tabela-recepcao}. Nesse instante, o nó \repasss inicia um
+processo de registro de participação para obter o fluxo de dados \setpk, como
+descreveu-se na Seção~\ref{subsec:registro-participacao}. Isto significa que a
+execução do procedimento \textit{registerRelay(\serv, \pk)}, onde \pks é o
+pacote do tipo \pac{GMTP-Request}, fará o nó \repassu{1} transmitir um pacote do
+tipo \pac{GMTP-Register} em direção ao nó \servu{1} e, à medida que os nós
+\repasss repassam o pacote \pac{GMTP-Register} até alcançar o nó \servu{1},
+constitui-se o caminho \setwayiu{1}
 $=$
-$\{$\repassu{1},\repassu{2},\repassu{3},\repassu{4},\repassu{5},\servu{1}$\}$,
-destacado na cor vermelha da Figura~\ref{fig:processo-conexao-1}, conforme
-discutiu-se na Seção~\ref{sec:descparc}.
+$\{$\repassu{1},\repassu{2},\repassu{3},\repassu{4},\repassu{5},\servu{1}$\}$
+(Passo 3 da Figura~\ref{fig:processo-conexao-1}), conforme discutiu-se na
+Seção~\ref{sec:descparc}. Na Figura~\ref{fig:processo-conexao-1}, ilustra-se o
+caminho \setwayiu{1}, destacado na cor vermelha.
 
-AKI!!
+Em seguida, ao receber o pacote do tipo \pac{GMTP-Register-Reply}, como
+resposta ao registro de participação, o nó \repassu{1} cria um canal
+multicast e envia um pacote do tipo \pac{GMTP-RequestNotify} para um ou mais
+clientes \clis $\in$ \subsetcli$($\repassu{1}$)$ (Passo 4 da
+Figura~\ref{fig:processo-conexao-1}). Esta notificação sinalizará os nós
+clientes \clis qual canal multicast seus respectivos sockets devem
+ser ``sintonizado''. No caso do exemplo supracitado, o no \cliu{1}, após
+sintonizar o socket no canal multicast informado pelo nó \repassu{1}, este
+começa a receber os pacotes de dados \pks do tipo \pac{GMTP-Data} ou
+\pac{GTMP-DataAck} (Passo 5 da
+Figura~\ref{fig:processo-conexao-1}). Este assunto será retomado na
+Seção~\ref{sec:asptransrecep}.
 
-Considerando-se que se trata da Fase 1,
-nenhum nó \ways $\in$ \setwayi, cada
-nó \repasss que o processar tal pacote, verifica se existe registro de recepção
-do fluxo \setpk. Em caso positivo, o respectivo nó \repasss envia um pacote do
-tipo \pac{GMTP-Response} para \repassu{1} que, ao recebê-lo, registra a recepção
-de \setpk, envia um pacote do tipo \pac{GMTP-Request-Notify} para notificar
-\cliu{1} que o fluxo \setpks será iniciado. Neste ponto, conclui-se a fase
-$1$ do processo de estabelecimento de conexão e o fluxo \setpks começa a ser
-transmitido entre os nós \repassu{1} e \repass. Note que, por serem pacotes de
-controle, estes pacotes são transmitidos com garantia de entrega, similar ao
-mecanismo adotado pelo TCP.
+O Algoritmo~\ref{algo:respondToClients},
+
+\vspace{0.8cm}
+
+\begin{algorithm}[H]
+\label{algo:respondToClients}
+\caption{respondToClients(channel: MulticastChannel)}
+\SetAlgoLined
+\tcc{A \repasss node executes this algorithm to handle the response to clients
+after it receives a packet confirming the registration of participation and
+updading the table of flow reception. Specifically, this function is invoked in
+the Line~\ref{algo-line:respondToClients1} of
+Algorithm~\ref{algo:registerRelay} and in
+Line~\ref{algo-line:respondToClients2} of the
+Algorithm~\ref{algo:onReceiveGMTPRegisterReply}.}
+
+% \SetKwFunction{Union}{Union}\SetKwFunction{makePkt}{makePkt}
+% \SetKwFunction{Union}{Union}\SetKwFunction{getPacketFieldValue}{
+% getPacketFieldValue}
+% \SetKwFunction{Union}{Union}\SetKwFunction{recvPktRdt}{recvPktRdt}
+% \SetKwFunction{Union}{Union}\SetKwFunction{sendPktRdt}{sendPktRdt}
+% \SetKwFunction{Union}{Union}\SetKwFunction{length}{length}
+% \SetKwFunction{Union}{Union}\SetKwFunction{getKnownPathsOfFlow}{
+% getKnownPathsOfFlow}
+% \SetKwFunction{Union}{Union}\SetKwFunction{GMTPResponse}{GMTPResponse}
+%
+% \textit{\setpk} \attrib \getPacketFieldValue{\pk, `flow'}\tcc*[r]{Extracts
+% \setpks in \pk}
+% \textit{\setwayiu{\repassconst_\repassi}} \attrib \getPacketFieldValue{\pk,
+% `path'}\tcc*[r]{Extracts \setwayiu{\repassconst_\repassi} in \pk}
+%
+% \textit{\setwayiu{\setpkc}} \attrib \getKnownPathsOfFlow{\setpk,
+% \setway}\tcc*[r]{\setwayiu{\setpkc} $\subset$ \setway}
+% % \tcc*[r]{For a given flow and all the known paths \setways in this \serv, get
+% a sub set of paths used to transmit \setpk}
+%
+% \ForEach{\setwayis $\in$ \setwayiu{\setpkc}}{
+%     \ForEach{\ways $\in$ \setwayi} {
+%       \If(){\ways $\in$ \textit{\setwayiu{\repassconst_\repassi}}} {
+% 	\tcc{The node \ways is common in \setwayis and in
+% \textit{\setwayiu{\repassconst_\repassi}}.}
+% 	\textit{done} \attrib \textit{true}\;
+% 	break\;
+%       }
+%     }
+%     \If(){\textit{done}} {
+% %       \tcc{Create a \pac{GMTP-Response} and send it to \way. After receiving
+% \textit{\pk}, \ways becomes a relay of the flow \setpk.}
+% %       \pks \attrib \makePkt{\pac{GMTP-Response}(1), \ways}\;
+%       \tcc{\servs stores \textit{\setwayiu{\repassconst_\repassi}} as a known
+% path and replies to \repass, asking \ways to act as a relay for \setpk. \servs
+% actives the flag 'relay' of the \pac{GMTP-Response} packet.}
+%       \setway[\length{\setway}] \attrib
+% \textit{\setwayiu{\repassconst_\repassi}}\;
+%       \Return{\GMTPResponse{\way, relay=1}}\;
+% %       \sendPktRdt(\pk)\;
+% %       \exit{}\;
+%     }
+% }
+% \tcc{\servs must register \textit{\setwayiu{\repassconst_\repassi}} as a known
+% path and reply to \repasss by accepting its connection request, since no node
+% \ways is intersecting \textit{\setwayiu{\repassconst_\repassi}}.}
+% \setway[\length{\setway}] \attrib \textit{\setwayiu{\repassconst_\repassi}}\;
+% \Return{\GMTPResponse{\repass, relay=0}}\;
+% % \pks \attrib \makePkt{\pac{GMTP-Response}(0), \repass}\;
+% % \sendPktRdt(\pk)\;
+
+\end{algorithm}
+\vspace{0.8cm}
+
+
+Implementar o algoritmo da função \respondToClients:
+\respondToClients{\textit{channel}} % nessa tem que buscar os clientes esperando
+por resposta
+\respondToClients{\setpk, \cli}
+
+tem que ter: getClientsWaitingForFlow(\setpk) mandar o leitor ver a linha 7 do
+algoritmo algo:registerRelay
+
+===============
+
+
+
+
+
+
 
 
 \subsection{Fase 2: próximas requisições para obter \setpk}
@@ -2391,7 +2501,7 @@ parâmetros de periodicidade de requisições do tipo \pac{GMTP-RelayQuery} e a
 quantidade máxima de parcerias efetivas pode ser alteradas pelo administrador
 de \repasss e tem valores padrões de 10 minutos e 5 nós, respectivamente;
 
-  \item como ilustra-se na Figur~\ref{fig:conn-phase3-2}, apenas na Fase $3$,
+  \item como ilustra-se na Figura~\ref{fig:conn-phase3-2}, apenas na Fase $3$,
 permite-se requisições do tipo \pac{GMTP-Request} partindo de um nó
 \repassu{\repassi_{3}} em direção a outro nó \repassu{\repassi_{2}}, que irá
 enviar um resposta do tipo \pac{GMTP-Response} se \repassu{\repassi_{1}} enviar
@@ -2430,8 +2540,12 @@ Seção~\ref{subsec:melhorcaminho}.
 \label{fig:conn-phase3-2}
 \end{figure}
 
+\subsection{Manutenção da conexão}
+\label{subsec:manutencao-conexao}
 
-==============
+Note que, por serem pacotes de
+controle, estes pacotes são transmitidos com garantia de entrega, similar ao
+mecanismo adotado pelo TCP.
 
 Após o registro de participação, o nó \repasss deve enviar periodicamente
 sinalizações de controle (\textit{polling}) sobre sua participação na rede de
@@ -2446,21 +2560,6 @@ tempo de expiração (\textit{timeout}) e enviar um pacote do tipo
 \pac{GMTP-Reset}. Na RFC 5482~\cite{RFC5482}, discute-se sobre outros aspectos
 de expiração no tempo que podem ser adaptadas para o GMTP.
 
-Implementar o algoritmo da função \respondToClients:
-\respondToClients{\textit{channel}} % nessa tem que buscar os clientes esperando
-por resposta
-\respondToClients{\setpk, \cli}
-
-tem que ter: getClientsWaitingForFlow(\setpk) mandar o leitor ver a linha 7 do
-algoritmo algo:registerRelay
-
-% \textit{channel} \attrib \getChannelOfFlow{\setpk}\;
-% \textit{\pk} \attrib \makePkt{GMTP-Response(), \cli}\;
-% servs \attrib \getCurrRegedServers()\tcc*[r]{servs $\subset S$}
-% pkt \attrib \makePkt{GMTP-Register, \serv}\tcc*[r]{register request}
-
-
-==============
 
 \subsection{Compartilhamento de \setpks entre \servs}
 \label{subsec:compartilhamento-de-p}
