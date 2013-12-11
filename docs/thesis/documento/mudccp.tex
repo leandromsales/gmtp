@@ -434,9 +434,9 @@ nó servidor para impedir ataques de poluição.
 \subsection{Canais de Comunicação}
 \label{subsec:canaiscommudccp}
 
-No GMTP, utilizam-se dois canais de comunicação para executar suas
-funcionalidades, o de transmissão unicast e o de transmissão multicast. A
-seguir, definem-se tais conceitos.
+No GMTP, utilizam-se três canais de comunicação para executar suas
+funcionalidades, o canal de controle, o de transmissão unicast e o de
+transmissão multicast. A seguir, definem-se tais conceitos.
 
 % (Figura~\ref{fig:canais-comunicacao}).
 %
@@ -449,7 +449,27 @@ seguir, definem-se tais conceitos.
 % \label{fig:canais-comunicacao}
 % \end{figure}
 
-\subsubsection{Canal de Transmissão Unicast:}
+\subsubsection{Canal de Controle}
+
+Quando um nó repassador iniciar uma instância do protocolo \mudccp, este deve
+criar um socket multicast no endereço IP 238.255.255.250 e na porta $1900$, em
+toda interface de rede local, ou seja, nas interfaces por onde se fornece
+acesso aos nós clientes. Através desse socket, um nó GMTP é capaz de enviar e
+receber pacotes de controle utilizados para negociar as funções de transmissão
+de um determinado fluxo de dados de mídia ao vivo. Por exemplo, utiliza-se este
+canal para permitir que um nó cliente envie pedidos de conexão e descubrir quais
+fluxos de dados já estão sendo recebidos e qual canal multicast cada um deles
+está disponível.
+
+A decisão do uso do endereço IP multicast \textit{238.255.255.250} foi baseada
+na RFCs 2365~\cite{RFC2365}, que define o escopo administrativo do uso dos
+endereços multicast entre 239.0.0.0 e 239.255.255.255. O endereço
+\textit{238.255.255.250} é definido no escopo de uso global e sua alocação deve
+ser confirmada pela \textit{Internet Assigned Numbers Authority} --
+IANA\footnote{IANA: http://www.iana.org/} antes do uso massivo do GMTP na
+Internet.
+
+\subsubsection{Canal de Transmissão Unicast}
 
 O canal de controle e recepção unicast é criado por todos os nós repassadores ao
 iniciar uma instância do protocolo GMTP. Na prática, trata-se de um socket que
@@ -467,20 +487,7 @@ tipo \pac{GMTP-Request} e, em caso positivo, deve-se retornar um pacote do tipo
 cliente especificado no pacote \pac{GMTP-Request} já estiver sendo recebido por
 tal nó repassador.
 
-%  quando iniciarem uma instância do
-% protocolo \mudccp, devem criar um socket multicast no endereço IP
-% 238.255.255.250 e na porta $1900$, em toda interface de rede local, ou seja,
-% nas interfaces que existem nós clientes. Através desse socket, um nó GMTP é
-% capaz de enviar e receber pacotes de controle utilizados para negociar as
-% funções de transmissão de um determinado fluxo de dados de mídia ao vivo
-% através do canal de transmissão de dados. Por exemplo, este canal é utilizado
-% para permitir que um nó cliente descubra quais fluxos de dados já está sendo
 
-% A decisão do uso do endereço IP multicast 238.255.255.250 foi baseada na RFCs
-% 2365~\cite{RFC2365}, que define o escopo administrativo do uso dos endereços
-% multicast entre 239.0.0.0 e 239.255.255.255. O endereço 238.255.255.250 é
-% definido no escopo de uso global e por este motivo esse endereço foi o
-% escolhido.
 
 % \subsubsection{Canal de Controle Unicast}
 %
@@ -490,7 +497,7 @@ tal nó repassador.
 % desconexões, eleição de nós relatores e envio e recebimento de relatórios para
 % controle de congestionamento.
 
-\subsubsection{Canal de Repasse Multicast:}
+\subsubsection{Canal de Repasse Multicast}
 
 Além do canal de controle, define-se no protocolo \mudccps um canal de repasse
 utilizado por um nó repassador para encaminhar datagramas vindos de um servidor
@@ -547,8 +554,7 @@ rede local, o que é mais do que suficiente e escalável por vários séculos.
 Toda comunicação entre dois ou mais nós GMTP ocorre através da troca de
 datagramas IP, que carregam sinalizações de controle e/ou dados da aplicação.
 Para isso, faz-se necessário registrar o uso de um código para o campo
-\textit{Protocolo} do cabeçalho de um datagrama IP junto à \textit{Internet
-Assigned Numbers Authority} -- IANA\footnote{IANA: http://www.iana.org/}. Com a
+\textit{Protocolo} do cabeçalho de um datagrama IP à IANA. Com a
 padronização do protocolo \mudccps e a publicação da sua RFC, provavelmente
 será utilizado o código 100, como já está definido no documento \textit{Protocol
 Numbers}\footnote{O código 100 foi utilizado no passado por um outro protocolo
@@ -570,7 +576,8 @@ de dados multimídia dado um nome do fluxo de interesse;
 
   \item \textit{GMTP-RequestNotify:} Repassador notifica um cliente que um
 fluxo de dados está prestes a ser transmitido ou já está sendo transmitido em um
-determinado canal de repasse multicast;
+determinado canal de repasse multicast. Campo de dados contém a descrição da
+mídia a ser reproduzida;
 
   \item \textit{GMTP-Response:} Repassador confirma o estabelecimento de uma
 parceria com outro nó repassador, dado um determinado fluxo de dados;
@@ -1045,11 +1052,11 @@ $\in$ \setwayisf;
 	  \item Um caminho \setwayis é dito \textit{caminho completo},
 representado por \setwayif, se for \setwayisfs e se \setwayis $\subset$
 \settrans, tal que \settranss $\subset$ \setservrepasss é o conjunto dos nós que
-transmitem ou repassam os pacotes de dados \pks $\in$ \setpk, definido por
-\settranss $= \{$\transs$\mid$ \transmitqus{\trans} $ = 1\}$, sendo $\transi \in
+transmite os pacotes de dados \pks $\in$ \setpk, definido por \settranss $=
+\{$\transs$\mid$ \transmitqus{\trans} $ = 1\}$, sendo $\transi \in
 \mathbb{N}$ e $\varphi$ uma função booleana que determina se um nó \transs $\in$
-\settranss transmite os pacotes \pks $\in$ \setpks de um evento \events para
-\trans, ou para pelo menos um \clis $\in$ \subsetcli(\trans), ou seja:
+\settranss transmite os pacotes \pks $\in$ \setpks para \clis $\in$
+\subsetcli(\trans), ou seja:
 
 	      \begin{enumerate}
 
@@ -1282,20 +1289,22 @@ finais da respectiva rede, ou seja, seus nós \clis $\in$ \setcli. Este assunto
 será retomado na Seção~\ref{sec:asptransrecep}, onde discute-se as funções de
 conectividade IP empregadas no GMTP.
 
-Nesse contexto, utiliza-se o Algoritmo~\ref{algo:registerRelay} para que
-um nó \repasss se registrar a um nó \serv. Note que o nó \repasss não é obrigado
-a informar qual fluxo de dados \setpks está interessado em obter, tal como
-explicado anteriormente, lembre-se, o nó \repasss se comporta, por analogia,
-como uma antena de TV. Porém, da mesma forma que é possível uma antena de TV
-obter apenas o sinal correspondente a um determinal canal (frequência de TV),
-também é possível que um nó \repasss especifique exatamente qual fluxo de dados
-\setpks deseja começar a receber. Neste caso, o nó \servs executará um
-procedimento para determinar se aceita ou não o pedido de conexão para
-transmitir \setpk. Caso aceite, a transmissão do fluxo de dados \setpks entre
-\servs e \repasss ocorrerá em modo unicast, diretamente entre eles, caso
-contrário, o nó \servs delegará a transmissão de tal fluxo de dados \setpks para
-algum outro nó repassador \repassu{q} que se tornará parceiro do
-nó requisitante \repass.
+No Algoritmo~\ref{algo:registerRelay}, resume-se o procedimento de registro
+de participação explicado anteriormente. Um nó \repasss utiliza tal algoritmo
+para realizar o registro de participação em um nó \serv. Note que o nó \repasss
+não é obrigado a informar qual fluxo de dados \setpks está interessado em obter,
+pois lembre-se, o nó \repasss se comporta, por analogia, como uma antena de TV.
+Porém, da mesma forma que é possível uma antena de TV obter apenas o sinal
+correspondente a um determinal canal (frequência de TV), também é possível que
+um nó \repasss especifique exatamente qual fluxo de dados \setpks que deseja
+receber. Neste caso, o nó \servs executará um procedimento para determinar se
+aceita ou não o pedido de registro de participação para transmitir \setpks a
+\repass. Em caso de aceite, a transmissão do fluxo de dados \setpks de \servs
+para \repasss ocorrerá em modo unicast.
+
+% , caso contrário, o nó \servs delegará a transmissão de tal fluxo de
+% dados \setpks para algum outro nó repassador \repassu{q} que se tornará parceiro
+% do nó requisitante \repass.
 
 \newcommand{\attrib}{$\leftarrow$ }
 
@@ -1317,35 +1326,40 @@ nó requisitante \repass.
 \SetKwFunction{Union}{Union}\SetKwFunction{GMTPRegister}{GMTPRegister}
 \SetKwFunction{Union}{Union}\SetKwFunction{isWaitingRegisterReply}{isWaitingRegisterReply}
 \SetKwFunction{Union}{Union}\SetKwFunction{waitRegisterReply}{waitRegisterReply}
-\SetKwFunction{Union}{Union}\SetKwFunction{clientWantsFlow}{clientWantsFlow}
+\SetKwFunction{Union}{Union}\SetKwFunction{addClientWaitingFlow}{addClientWaitingFlow}
 \SetKwFunction{Union}{Union}\SetKwFunction{GMTPRequestReply}{GMTPRequestReply}
 
 
-\tcc{The node \repasss executes this function to send a register of participation to
-a given node \serv. If \pks is given, node \clis wants to receive the flow \setpk, so
-notify \serv.}
+\tcc{The node \repasss executes this algorithm to send a register of
+participation to a given node \serv. If \pks is given, node \clis wants to
+receive the flow \setpk, so notify \serv.}
 
 \If(){\pks $\neq$ NULL} {
-  \textit{\setpk} \attrib \getPacketFieldValue{\pk, `flow'}\tcc*[r]{Extracts \setpks in \pk}
+  \textit{\setpk} \attrib \getPacketFieldValue{\pk, `flow'}\tcc*[r]{Extracts\setpks in \pk}
+  \label{algo-line:registerRelay-getP}
   \textit{\cli} \attrib \getPacketFieldValue{\pk, `client'}\tcc*[r]{Extracts \clis in \pk}
   \textit{channel} \attrib \isFlowBeingReceived{\setpk}\tcc*[r]{See Section~\ref{subsec:tabela-recepcao}}
+  \tcc{Add \clis in the list of receivers waiting \setpk.}
+  \addClientWaitingFlow{\cli, \setpk}\;
+  \label{algo-line:addClientWaitingFlow}
   \uIf(){\textit{channel} $\neq$ NULL} {
     \label{algo-line:isFlowBeingReceived}
     \tcc{Let \clis know that \setpks is already registered in this \repasss and is available from a multicast channel.}
-    \respondToClients{\textit{channel}}\tcc*[r]{See Section~\ref{subsec:conexao-requisicao}}
+    \respondToClients{\GMTPRequestReply{\textit{channel}}}\;
     \label{algo-line:respondToClients1}
     \Return{0}\;
-  } \Else() {
-      \tcc{Add \clis in the list of receivers waiting to receive \setpk, send request to \servs and wait registration reply. When received, executes onReceiveGMTPRegisterReply (Algorithm~\ref{algo:onReceiveGMTPRegisterReply}).}
+    \label{algo-line:registerRelay-returnChannel}
+  } \Else(\tcc*[f]{Flow \setpks not registered yet.}) {
+      \tcc{Send request to \servs and wait registration reply. When \pac{GMTP-Register-Reply} is received, executes onReceiveGMTPRegisterReply (Algorithm~\ref{algo:onReceiveGMTPRegisterReply}).}
 %  If the \pac{GMTP-Register} was already sent, nothing should be done other than wait for \pac{GMTP-Register-Reply}.
-      \clientWantsFlow{\cli, \setpk}\;
       \If() {\textbf{not} \isWaitingRegisterReply{\setpk}} {
-	\waitRegisterReply(\setpk)\;
+	\isWaitingRegisterReply{\setpk, true}\;
 	\sendPktRdt{\GMTPRegister{\serv, \setpk}}\;
 	\Return{0}\;
       }
-      \tcc{Ask \clis to wait until receive registration reply}
-      \respondToClients{\GMTPRequestReply{\cli, \setpk}}\;
+      \tcc{Ask \subsetcli$($\repass$)$ to wait registration reply for \setpk.}
+      \respondToClients{\GMTPRequestReply{\setpk}}\;
+      \label{algo-line:respondToClients2}
       \Return{0}\;
   }
 }
@@ -1358,10 +1372,9 @@ notify \serv.}
 
 \vspace{0.8cm}
 
-Quando o nó \repasss receber o pacote do tipo \pac{GMTP-Register-Reply},
-correspondente ao registro de participação transmitido anterioremente,
-aciona-se o Algoritmo~\ref{algo:onReceiveGMTPRegisterReply}, executando-se o
-passos restantes explicados anteriormente.
+No Algoritmo~\ref{algo:onReceiveGMTPRegisterReply}, resume-se os passos
+descritos anteriormente, executados após o nó \repasss receber o pacote
+do tipo \pac{GMTP-Register-Reply}, correspondente ao registro de participação.
 
 \vspace{0.8cm}
 
@@ -1373,36 +1386,42 @@ passos restantes explicados anteriormente.
 \SetKwFunction{Union}{Union}\SetKwFunction{createMulticastChannel}{createMulticastChannel}
 \SetKwFunction{Union}{Union}\SetKwFunction{getAndStoreServerPublicKey}{getAndStoreServerPublicKey}
 \SetKwFunction{Union}{Union}\SetKwFunction{updateFlowReceptionTable}{updateFlowReceptionTable}
+\SetKwFunction{Union}{Union}\SetKwFunction{startRelay}{startRelay}
 
-\tcc{The node \repasss executes this function when receives a packet of type
+\tcc{The node \repasss executes this algorithm when receives a packet of type
 \pac{GMTP-Register-Reply}, as response for a registration of participation sent to a \servs node.}
 
+\isWaitingRegisterReply{\setpk, false}\;
 \uIf(\tcc*[f]{\servs confirmed registration}){\pks = OK} {
   \textit{\servs} \attrib \getPacketFieldValue{\pk, `server'}\tcc*[r]{Gets \servs in \pk}
   \textit{\setpk} \attrib \getPacketFieldValue{\pk, `flow'}\tcc*[r]{Gets \setpks in \pk}
-  \If(\tcc*[f]{Reply to \clis $\in$ \subsetcli$($\repass$)$, waiting for \setpk}){\setpks $\neq$ NULL}{
+  \If(\tcc*[f]{Reply to \subsetcli$($\repass$)$, waiting for \setpk}){\setpks $\neq$ NULL}{
     \If(\tcc*[f]{Section~\ref{subsec:obterchavepublica}}){\servs enabled security layer} {
       \getAndStoreServerPublicKey{\serv}\;
     }
     \textit{channel} \attrib \createMulticastChannel{\serv, \setpk}\;
     \updateFlowReceptionTable{\textit{channel}}\tcc*[r]{Section~\ref{subsec:tabela-recepcao}}
     \label{algo-line:updateFlowReceptionTable}
-    \tcc{Let \clis $\in$ \subsetcli$($\repass$)$ know the multicast channel to receive \setpk. See Section~\ref{subsec:conexao-requisicao}}
-    \respondToClients{\GMTPRequestReply{\textit{channel}}}
-    \label{algo-line:respondToClients2}
+    \tcc{Let \clis $\in$ \subsetcli$($\repass$)$ know the multicast channel to receive \setpks (Section~\ref{subsec:conexao-requisicao}).}
+    \respondToClients{\GMTPRequestReply{\textit{channel}}}\;
+    \label{algo-line:respondToClients3}
+    \tcc{Start to relay \setpks to clients (Section~\ref{subsec:trocdados}).}
+    \startRelay{\textit{channel}}\;
+    \label{algo-line:startRelay}
   }
-  \tcc{It was just a reply of a registration.}
+  \tcc{It was just a reply of a registration of participation. Update flow reception table.}
   \updateFlowReceptionTable{\textit{\serv}}\tcc*[r]{Section~\ref{subsec:tabela-recepcao}}
 } \Else() {
   \tcc{\servs refused to accept the registration of participation. This \repasss must notify the clients waiting for receiving \setpk.}
   \textit{errorCode} \attrib \getPacketFieldValue{\pk, `error'}\;
   \respondToClients{\GMTPRequestReply{\textit{errorCode}, \setpk}}\;
+  \label{algo-line:respondToClients4}
 }
 
 \end{algorithm}
 \vspace{0.8cm}
 
-Note que, no GMTP, toda transferência de pacotes de controle ocorre com
+Note que, no GMTP, toda transferência de pacotes de controle entre nós \repass ocorre com
 garantia de entrega, representando-se tais ações pelas funções com nomes
 contendo o sufixo \textit{Rdt} (\textit{Reliable data transfer}). Uma outra
 decisão importante tomada no GMTP é que um nó \repasss deve periodicamente
@@ -1684,18 +1703,18 @@ participação de \repassu{9} e \repassu{11}, o nó \servs descobrirá, por
 intersecção, um sub-caminho de nós \repasss $\in$ $($\setwayiu{1} $\cap$
 \setwayiu{2}$)$ (Passo 2).
 
-Nesse contexto, o nó \servs executa o
-Algoritmo~\ref{algo:findPartnerIntersectPath} para realizar a formação de
-parcerias por intersecção. Tal algoritmo é executado quando o nó \servs recebe
-um pedido de conexão originado por um nó \repasss para obter um fluxo de dados
-\setpk. O nó \servs compara os caminhos conhecidos \setwayis $\in$ \setways com
-o caminho \textit{\setwayiu{\repassconst_\repassi}} contido no pedido de conexão
-transmitido por \repass. Se \servs determinar um nó \ways em comum entre algum
-\setwayis e \textit{\setwayiu{\repassconst_\repassi}}, \servs instrui o nó
-\ways a interceptar os próximos pedidos de conexão para obter \setpk, caso
-contrário, \servs aceita o novo pedido de conexão e todo o caminho
+No Algoritmo~\ref{algo:findPartnerIntersectPath}, resume-se os passos
+descritos anterioremente que o nó \servs executa a fim de realizar a formação de
+parcerias por intersecção. No GMTP, executa-se tal algoritmo quando o nó \servs
+recebe um pedido de conexão originado por um nó \repasss para obter um fluxo de
+dados \setpk. O nó \servs compara os caminhos conhecidos \setwayis $\in$
+\setways com o caminho \textit{\setwayiu{\repassconst_\repassi}} contido no
+pedido de conexão transmitido por \repass. Se \servs determinar um nó \ways em
+comum entre algum \setwayis e \textit{\setwayiu{\repassconst_\repassi}}, \servs
+instrui o nó \ways a interceptar os próximos pedidos de conexão para obter
+\setpk. Caso contrário, \servs aceita o novo pedido de conexão e todo o caminho
 \textit{\setwayiu{\repassconst_\repassi}} passa a ser alimentado com o fluxo de
-dados \setpks para permitir futuras parcerias intra ou por intersecção. Note que
+dados \setpk, permitindo-se futuras parcerias intra ou por intersecção. Note que
 após este procedimento, o nó \servs passa a conhecer o caminho
 \textit{\setwayiu{\repassconst_\repassi}}.
 
@@ -1771,7 +1790,12 @@ responsabilidade em distribuir um determinado fluxo de dados \setpk.
 \begin{algorithm}[H]
 \label{algo:findPartnerIntersectPath}
 \SetAlgoLined
-\tcc{\servs executes this function to finds the first node \ways common to a known path \setwayis and the path \setwayiu{\repassconst_\repassi}. \setwayis is already used for transporting \setpks to node in $\delta($\way, \setwayi$)$, and \setwayiu{\repassconst_\repassi} contains all nodes between \repasss (requester) and \serv. The packet \pks carries \setwayiu{\repassconst_\repassi} and the name for \setpk.}
+\tcc{\servs executes this algorithm to finds the first node \ways common to a
+known path \setwayis and the path \setwayiu{\repassconst_\repassi}. \setwayis is
+already used for transporting \setpks to node in $\delta($\way, \setwayi$)$, and
+\setwayiu{\repassconst_\repassi} contains all nodes between \repasss (requester)
+and \serv. The packet \pks carries \setwayiu{\repassconst_\repassi} and the name
+for \setpk.}
 \textit{done} \attrib \textit{false}\tcc*[r]{It becomes true when \ways is found}
 
 \SetKwFunction{Union}{Union}\SetKwFunction{makePkt}{makePkt}
@@ -2230,37 +2254,36 @@ Seção~\ref{subsec:trocdados}.
 \subsection{Estabelecimento de conexão e compartilhamento para obter \setpk}
 \label{subsec:conexao-requisicao}
 
-O processo de conexão do protocolo \mudccps é separado em três fases. A
-primeira acontece quando, por exemplo, um nó qualquer \cliu{1} $\in$
-\subsetcli$($\repass$)$ deseja obter \setpks
-transmitido por um nó \servu{1} e não existe nenhum outro nó
-\clis $\in$ \subsetcli$($\repass$)$ em sua rede local recebendo \setpk. Já a
-segunda fase acontece quando um outro nó \cliu{2} $\in$
+No GMTP, divide-se o processo de estabelecimento de conexão em três fases. A
+Fase 1 acontece quando, por exemplo, um nó qualquer \cliu{1} $\in$
+\subsetcli$($\repass$)$ deseja obter \setpks transmitido por um nó \servu{1} e
+não existe nenhum outro nó \clis $\in$ \subsetcli$($\repass$)$ em sua rede local
+recebendo \setpk. Já a Fase 2 acontece quando um outro nó \cliu{2} $\in$
 \subsetcli$($\repass$)$ precisa obter o mesmo fluxo de dados \setpk, solicitado
-previamente pelo nó \cliu{1}. E, por fim, a terceira fase acontece quando o nó
+previamente pelo nó \cliu{1}. E, por fim, a Fase 3 acontece quando o nó
 \repasss começa a buscar novos nós parceiros \repassu{q} a fim de obter
-\setpks através de nós repassadores alternativos.
+\setpk.
 
 Na Figura~\ref{fig:processo-conexao}, ilustram-se um nó \serv, que gera um fluxo
-de dados \setpk e 12 nós \repass, que constituem uma rede de diferentes domínios
-administrativos, sendo o nó \repassu{1} o repassador de um desses domínios,
-composto por 6 nós \clis $\in$ \subsetcli$($\repass$)$ (Rede Local).
+de dados \setpks e 12 nós \repass, que constituem uma rede de diferentes
+domínios administrativos, sendo o nó \repassu{1} o repassador de um desses
+domínios, composto por 6 nós \clis $\in$ \subsetcli$($\repass$)$ (Rede Local).
 
 \begin{figure}[ht]
 \begin{center}
 \includegraphics[scale=.7]{imgs/processo-conexao.pdf}
 \end{center}
 \vspace{-1cm}
-\caption{Exemplo de Rede para o Estabelecimento de Conexão do \mudccp.}
+\caption{Exemplo de rede para o estabelecimento de conexão do \mudccp.}
 \label{fig:processo-conexao}
 \end{figure}
 
 A regra geral é que um nó \repasss deve consultar a tabela de recepção de fluxo
-de dados todas as vezes que receber um pacote do tipo \pac{GMTP-Request},
-transmitido por um nó \clis $\in$ \subsetcli$($\repass$)$. Com base no estado da
-referida tabela, o nó \repasss realiza uma determinada ação de repasse,
-mediante a fase de conexão que o referido nó repassador se encontra com relação
-ao fluxo de dados \setpks solicitado.
+de dados (Seção~\ref{subsec:tabela-recepcao}) todas as vezes que receber um
+pacote do tipo \pac{GMTP-Request}, transmitido por um nó \clis $\in$
+\subsetcli$($\repass$)$. Com base no estado da referida tabela, que define a
+fase de conexão para um determinado fluxo de dados \setpks solicitado, o nó
+\repasss realiza uma determinada ação de registro de participação e repasse.
 
 \subsection{Fase 1: primeira requisição a um fluxo de dados \setpk}
 \label{subsec:conn-fase1}
@@ -2268,14 +2291,14 @@ ao fluxo de dados \setpks solicitado.
 A Fase 1 ocorre quando nenhum nó \clis $\in$ \subsetcli$($\repass$)$ está
 recebendo um fluxo de dados \setpk. Com base na
 Figura~\ref{fig:processo-conexao-1}, onde ilustra-se um exemplo
-do processo de conexão do GMTP na Fase 1, considere:
+de conexão na Fase 1, considere:
 
 \begin{figure}[ht]
 \begin{center}
 \includegraphics[scale=.7]{imgs/processo-conexao-1.pdf}
 \end{center}
 \vspace{-1cm}
-\caption{Passos do Processo de Estabelecimento de Conexão do \mudccps (Fase 1).}
+\caption{Passos do processo de estabelecimento de conexão do \mudccps (Fase 1).}
 \label{fig:processo-conexao-1}
 \end{figure}
 
@@ -2294,47 +2317,43 @@ que \cliu{1} $\in$ \subsetcli$($\repassu{1}$)$.
 
 \end{itemize}
 
-Para obter o fluxo de dados \setpk, o nó \cliu{3} cria um socket GMTP e
-transmite um pacote do tipo \pac{GMTP-Request}
-(Figura~\ref{fig:processo-conexao-1}, Passo 1). Para construir o pacote do tipo
-\pac{GMTP-Request}, qualquer nó \clis deve especificar o valor para o endereço
-IP de destino como sendo o endereço do nó \servs que transmite \setpk, com o
-valor para o campo do cabeçalho de rede \textit{TTL=1}. Alternativamente, o nó
-\clis pode especificar o endereço IP de destino como sendo \textit{0.0.0.0}.
-Além dos valores para o IP de destino e para o \textit{TTL}, o nó \clis também
-deve informar o nome do fluxo de dados \setpks que o usuário deseja reproduzir,
-sendo tal informação incapsulada no campo \textit{nome do fluxo de dados}
-(\textit{data flow name}), presente no cabeçalho de transporte do pacote do tipo
-\pac{GMTP-Request}. Ao definir o endereço IP de destino como sendo o IP de
-\serv, permite-se que o roteador padrão de \cliu{1}, no caso o nó \repassu{1},
-obter o endereço IP do nó \servs sem precisar consultar o servidor DNS. Caso
-contrário, quando o IP especificado for \textit{0.0.0.0}, o nó \repassu{1}
-deverá realizar tal consulta, como discutiu-se na
-Seção~\ref{subsec:content-index}. Além disso, pelo valor de \textit{TTL=1},
-permite-se interceptar o referido pacote de requisição, evitando-se extrapolar o
-domínio administrativo de tal rede local.
+Para obter o fluxo de dados \setpk, o nó \cliu{1} inicia um canal de controle
+GMTP (Seção~\ref{subsec:canaiscommudccp}), se ainda não criado, e transmite um
+pacote do tipo \pac{GMTP-Request} (Figura~\ref{fig:processo-conexao-1}, Passo
+1). Para construir o pacote do tipo \pac{GMTP-Request}, qualquer nó \clis deve
+especificar o valor para o endereço IP de destino como sendo o endereço do nó
+\servs que transmite \setpk, com o valor para o campo do cabeçalho de rede
+\textit{TTL=1}. Alternativamente, o nó \clis pode especificar o endereço IP de
+destino como sendo \textit{0.0.0.0}. Além dos valores para o IP de destino e
+para o \textit{TTL}, o nó \clis também deve informar o nome do fluxo de dados
+\setpks que o usuário deseja reproduzir, sendo tal informação incapsulada no
+campo \textit{nome do fluxo de dados} (\textit{data flow name}), presente no
+cabeçalho de transporte do pacote do tipo \pac{GMTP-Request}. Ao definir o
+endereço IP de destino como sendo o IP de \serv, permite-se que o roteador
+padrão de \cliu{1}, no caso o nó \repassu{1}, obter o endereço IP do nó \servs
+sem precisar consultar o servidor DNS. Caso contrário, quando o IP especificado
+for \textit{0.0.0.0}, o nó \repassu{1} deverá realizar tal consulta, como
+discutiu-se na Seção~\ref{subsec:content-index}. Além disso, pelo valor de
+\textit{TTL=1}, permite-se interceptar o referido pacote de requisição,
+evitando-se extrapolar o domínio administrativo de tal rede local.
 
 Na Fase $1$ do processo de estabelecimento de conexão, considera-se que não
 existe nenhum nó \clis $\in$ \subsetcli$($\repassu{1}$)$ recebendo o fluxo de
-dados \setpk.
-Sendo assim, quando o pacote \pac{GMTP-Request} alcançar o nó \repassu{1}
+dados \setpk. Sendo assim, quando o pacote \pac{GMTP-Request} alcançar o nó \repassu{1}
 (Passo 2 da Figura~\ref{fig:processo-conexao-1}), o nó \repassu{1} consulta a
 tabela de recepção de fluxos de dados e constata que não há qualquer registro
-para o fluxo de dados \setpk, pois a referida tabela estará vazia, como
-apresentou-se na Figura~\ref{fig:tabela-recepcao-1},
-Seção~\ref{subsec:tabela-recepcao}. Nesse instante, o nó \repasss inicia um
+para o fluxo de dados \setpk. Nesse instante, o nó \repasss inicia um
 processo de registro de participação para obter o fluxo de dados \setpk, como
 descreveu-se na Seção~\ref{subsec:registro-participacao}. Isto significa que a
 execução do procedimento \textit{registerRelay(\serv, \pk)}, onde \pks é o
 pacote do tipo \pac{GMTP-Request}, fará o nó \repassu{1} transmitir um pacote do
-tipo \pac{GMTP-Register} em direção ao nó \servu{1} e, à medida que os nós
+tipo \pac{GMTP-Register} em direção ao nó \servu{1}. À medida que os nós
 \repasss repassam o pacote \pac{GMTP-Register} até alcançar o nó \servu{1},
 constitui-se o caminho \setwayiu{1}
 $=$
 $\{$\repassu{1},\repassu{2},\repassu{3},\repassu{4},\repassu{5},\servu{1}$\}$
-(Passo 3 da Figura~\ref{fig:processo-conexao-1}), conforme discutiu-se na
-Seção~\ref{sec:descparc}. Na Figura~\ref{fig:processo-conexao-1}, ilustra-se o
-caminho \setwayiu{1}, destacado na cor vermelha.
+(Passo 3 da Figura~\ref{fig:processo-conexao-1} e destacado na cor vermelha),
+conforme discutiu-se na Seção~\ref{sec:descparc}.
 
 Em seguida, ao receber o pacote do tipo \pac{GMTP-Register-Reply}, como
 resposta ao registro de participação, o nó \repassu{1} cria um canal
@@ -2343,128 +2362,131 @@ clientes \clis $\in$ \subsetcli$($\repassu{1}$)$ (Passo 4 da
 Figura~\ref{fig:processo-conexao-1}). Esta notificação sinalizará os nós
 clientes \clis qual canal multicast seus respectivos sockets devem
 ser ``sintonizado''. No caso do exemplo supracitado, o no \cliu{1}, após
-sintonizar o socket no canal multicast informado pelo nó \repassu{1}, este
-começa a receber os pacotes de dados \pks do tipo \pac{GMTP-Data} ou
-\pac{GTMP-DataAck} (Passo 5 da
-Figura~\ref{fig:processo-conexao-1}). Este assunto será retomado na
-Seção~\ref{sec:asptransrecep}.
+sintonizar o socket no canal multicast informado pelo nó \repassu{1}, começa
+a receber os pacotes de dados \pks do tipo \pac{GMTP-Data} ou \pac{GTMP-DataAck}
+(Passo 5 da Figura~\ref{fig:processo-conexao-1}). Na
+Seção~\ref{sec:asptransrecep}, discute-se em detalhes sobre os aspectos de
+transmissão de pacotes do tipo \pac{GMTP-Data} ou \pac{GTMP-DataAck}.
 
-O Algoritmo~\ref{algo:respondToClients},
+No Algoritmo~\ref{algo:respondToClients}, resume-se os passos descritos
+anteriormente para iniciar a transmissão dos pacotes de dados \pks $\in$ \setpks
+aos nós \clis $\in$ \subsetcli$($\repass$)$, após \repasss receber o pacote do
+tipo \pac{GMTP-RequestReply}. Note que, o nó \repasss invoca tal procedimento
+nas Linhas~\ref{algo-line:respondToClients1} e~\ref{algo-line:respondToClients2}
+do Algoritmo~\ref{algo:registerRelay} e nas
+Linhas~\ref{algo-line:respondToClients3} e~\ref{algo-line:respondToClients4} do
+Algoritmo~\ref{algo:onReceiveGMTPRegisterReply}
+(Seção~\ref{subsec:registro-participacao}).
+
+Como resultado da Fase 1, gera-se uma nova entrada na tabela de recepção de
+fluxos de dados do nó \repass, tal como ilustra-se na
+Figura~\ref{fig:tabela-recepcao-fluxo-11}. Com base no exemplo citado, a tabela
+de recepção antes vazia, agora contém uma entrada que informa a ocorrência de
+recepção do fluxo de dados \setpks $=$
+\textit{72c44591-7d82-427c-825f-722f015787c1}, originado no nó \serv,
+cujo endereço é \textit{177.135.177.241}, com porta de recepção \textit{49170}.
+Além disso, define-se o canal multicast no endereço
+\textit{239.192.68.79} e porta \textit{1900}, por onde os nós \clis $\in$
+\subsetcli$($\repass$)$ podem receber os pacotes de dados \pks $\in$ \setpk.
+
+
 
 \vspace{0.8cm}
 
 \begin{algorithm}[H]
 \label{algo:respondToClients}
-\caption{respondToClients(channel: MulticastChannel)}
+\caption{respondToClients(\pk: \pac{GMTP-RequestNotify})}
 \SetAlgoLined
-\tcc{A \repasss node executes this algorithm to handle the response to clients
-after it receives a packet confirming the registration of participation and
-updading the table of flow reception. Specifically, this function is invoked in
-the Line~\ref{algo-line:respondToClients1} of
+\tcc{A \repasss node executes this Algorithm to respond to clients waiting for
+receiving a flow \setpk. This algorithm is invoked in Lines~\ref{algo-line:respondToClients1}
+and~\ref{algo-line:respondToClients2} of
 Algorithm~\ref{algo:registerRelay} and in
-Line~\ref{algo-line:respondToClients2} of the
-Algorithm~\ref{algo:onReceiveGMTPRegisterReply}.}
+Lines~\ref{algo-line:respondToClients3} and~\ref{algo-line:respondToClients4}
+of the Algorithm~\ref{algo:onReceiveGMTPRegisterReply}.}
 
-% \SetKwFunction{Union}{Union}\SetKwFunction{makePkt}{makePkt}
-% \SetKwFunction{Union}{Union}\SetKwFunction{getPacketFieldValue}{
-% getPacketFieldValue}
-% \SetKwFunction{Union}{Union}\SetKwFunction{recvPktRdt}{recvPktRdt}
-% \SetKwFunction{Union}{Union}\SetKwFunction{sendPktRdt}{sendPktRdt}
-% \SetKwFunction{Union}{Union}\SetKwFunction{length}{length}
-% \SetKwFunction{Union}{Union}\SetKwFunction{getKnownPathsOfFlow}{
-% getKnownPathsOfFlow}
-% \SetKwFunction{Union}{Union}\SetKwFunction{GMTPResponse}{GMTPResponse}
-%
-% \textit{\setpk} \attrib \getPacketFieldValue{\pk, `flow'}\tcc*[r]{Extracts
-% \setpks in \pk}
-% \textit{\setwayiu{\repassconst_\repassi}} \attrib \getPacketFieldValue{\pk,
-% `path'}\tcc*[r]{Extracts \setwayiu{\repassconst_\repassi} in \pk}
-%
-% \textit{\setwayiu{\setpkc}} \attrib \getKnownPathsOfFlow{\setpk,
-% \setway}\tcc*[r]{\setwayiu{\setpkc} $\subset$ \setway}
-% % \tcc*[r]{For a given flow and all the known paths \setways in this \serv, get
-% a sub set of paths used to transmit \setpk}
-%
-% \ForEach{\setwayis $\in$ \setwayiu{\setpkc}}{
-%     \ForEach{\ways $\in$ \setwayi} {
-%       \If(){\ways $\in$ \textit{\setwayiu{\repassconst_\repassi}}} {
-% 	\tcc{The node \ways is common in \setwayis and in
-% \textit{\setwayiu{\repassconst_\repassi}}.}
-% 	\textit{done} \attrib \textit{true}\;
-% 	break\;
-%       }
-%     }
-%     \If(){\textit{done}} {
-% %       \tcc{Create a \pac{GMTP-Response} and send it to \way. After receiving
-% \textit{\pk}, \ways becomes a relay of the flow \setpk.}
-% %       \pks \attrib \makePkt{\pac{GMTP-Response}(1), \ways}\;
-%       \tcc{\servs stores \textit{\setwayiu{\repassconst_\repassi}} as a known
-% path and replies to \repass, asking \ways to act as a relay for \setpk. \servs
-% actives the flag 'relay' of the \pac{GMTP-Response} packet.}
-%       \setway[\length{\setway}] \attrib
-% \textit{\setwayiu{\repassconst_\repassi}}\;
-%       \Return{\GMTPResponse{\way, relay=1}}\;
-% %       \sendPktRdt(\pk)\;
-% %       \exit{}\;
-%     }
-% }
-% \tcc{\servs must register \textit{\setwayiu{\repassconst_\repassi}} as a known
-% path and reply to \repasss by accepting its connection request, since no node
-% \ways is intersecting \textit{\setwayiu{\repassconst_\repassi}}.}
-% \setway[\length{\setway}] \attrib \textit{\setwayiu{\repassconst_\repassi}}\;
-% \Return{\GMTPResponse{\repass, relay=0}}\;
-% % \pks \attrib \makePkt{\pac{GMTP-Response}(0), \repass}\;
-% % \sendPktRdt(\pk)\;
+\SetKwFunction{Union}{Union}\SetKwFunction{getClientsWaitingForFlow}{getClientsWaitingForFlow}
+\SetKwFunction{Union}{Union}\SetKwFunction{getCtrlChannel}{getCtrlChannel}
+\SetKwFunction{Union}{Union}\SetKwFunction{getMediaDescription}{getMediaDescription}
+\SetKwFunction{Union}{Union}\SetKwFunction{setPacketFieldValue}{setPacketFieldValue}
+\SetKwFunction{Union}{Union}\SetKwFunction{getPacketFieldValue}{getPacketFieldValue}
+\SetKwFunction{Union}{Union}\SetKwFunction{sendPktRdt}{sendPktRdt}
+\SetKwFunction{Union}{Union}\SetKwFunction{sendPkt}{sendPkt}
+\SetKwFunction{Union}{Union}\SetKwFunction{waitAck}{waitAck}
+\SetKwFunction{Union}{Union}\SetKwFunction{startRelay}{startRelay}
+\SetKwFunction{Union}{Union}\SetKwFunction{removeClientsWaitingForFlow}{removeClientsWaitingForFlow}
+
+% \clis \attrib \getPacketFieldValue{\pk, `client'}\;
+\textit{destAddress} \attrib \getCtrlChannel{}\tcc*[r]{238.255.255.250:1900}
+\setPacketFieldValue{\pk, `destinationAddress', destAddress}\;
+\textit{\setpk} \attrib \getPacketFieldValue{\pk, `flow'}\tcc*[r]{Extracts \setpks in \pk}
+
+\textit{errorCode} \attrib \getPacketFieldValue{\pk, `errorCode'}\;
+\If(){errorCode $\neq$ NULL} {
+  \removeClientsWaitingForFlow{\setpk}\tcc*[r]{See Algorithm~\ref{algo:registerRelay}}
+  \sendPkt{\pk}\;
+  \Return{0}\;
+}
+
+\textit{channel} \attrib \getPacketFieldValue{\pk, `channel'}\;
+\label{algo-line:respondToClients-getChannel}
+\uIf () {\textit{channel} $\neq$ NULL} {
+  \tcc{Node \repasss is already receiving \setpks and clients \subsetcli$($\repass$)$ must know the media description.}
+  \textit{mediaDescription} \attrib \getMediaDescription{\setpk}\;
+  \setPacketFieldValue{\pk, `data', mediaDescription}\;
+  \tcc{In Algorithm~\ref{algo:registerRelay}, Line~\ref{algo-line:addClientWaitingFlow}, \clis nodes are added in a list of clients waiting for flow \setpk. Now, \repasss notifies them, wait confirmation (ACKs) from them and start relaying \pks $\in$ \setpks to them through given channel.}
+  \sendPkt{\pk}\;
+  \subsetcli$($\repass$)$ \attrib \getClientsWaitingForFlow{\setpk}\;
+  \waitAck{\subsetcli$($\repass$)$, \setpk}\;
+  \label{algo-line:respondToClients-waitAck}
+} \Else (\tcc*[f]{Let \subsetcli$($\repass$)$ know \repasss is waiting for registration.}) {
+  \setPacketFieldValue{\pk, `waitingRegistration', true}\;
+  \sendPkt{\pk}\;
+}
+\Return{0}\;
 
 \end{algorithm}
 \vspace{0.8cm}
 
-
-Implementar o algoritmo da função \respondToClients:
-\respondToClients{\textit{channel}} % nessa tem que buscar os clientes esperando
-por resposta
-\respondToClients{\setpk, \cli}
-
-tem que ter: getClientsWaitingForFlow(\setpk) mandar o leitor ver a linha 7 do
-algoritmo algo:registerRelay
-
-===============
-
-
-
-
-
-
-
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=.55]{imgs/tabela-recepcao-fluxo-11.pdf}
+\end{center}
+\vspace{-1cm}
+\caption{Tabela de recepção de fluxos de dados após a Fase 1.}
+\label{fig:tabela-recepcao-fluxo-11}
+\end{figure}
 
 \subsection{Fase 2: próximas requisições para obter \setpk}
 
-A fase $2$ de conexão ocorre quando futuras requisições a \setpks ocontecerem
-após a fase $1$, originadas por qualquer nó \clis $\in$
-\subsetcli$($\repassu{1}$)$. Tais solicitações são também interceptadas por
-\repassu{1}, que confirma a existência de recepção
-de fluxo \setpks e o repassa também para o nó \clis solicitante, notificando
-\cli, por exemplo, \cliu{2}, usando o pacote do tipo \pac{GMTP-RequestNotify},
-tal como ocorreu na fase $1$, porém com uma diferença: a configuração de um
-canal de transmissão multicast na rede local.
+A Fase $2$ de conexão ocorre quando futuras requisições para obter o
+fluxo de dados \setpks são originadas por qualquer nó \clis $\in$
+\subsetcli$($\repassu{1}$)$. Considerando o exemplo anterior, citado na Fase 1,
+se um nó \cliu{2} $\in$ \subsetcli$($\repassu{1}$)$ também solicitar \setpk, o
+nó \repassu{1} simplesmente informará o canal multicast correspondente ao fluxo
+de dados \setpk, como ilustra-se na Figura~\ref{fig:processo-conexao-2}.
+Para isto, o nó \repassu{1} intercepta a requisição do nó \clisu{2}, consulta a
+tabela de recepção de fluxos de dados e dessa vez constata a recepção do fluxo
+de dados \setpk, criando-se o pacote do tipo \pac{GMTP-Request-Reply}. Este
+procedimento ocorre no registro de participação, especificamente no trecho de
+código definidos entre as Linhas~\ref{algo-line:registerRelay-getP}-\ref{algo-line:registerRelay-returnChannel} do
+Algoritmo~\ref{algo:registerRelay}. Em seguida, o pacote do tipo
+\pac{GMTP-Request-Reply} é transmitido para o nó \cliu{2}, como descreve-se no
+trecho de código entre as Linhas~\ref{algo-line:respondToClients-getChannel}-\ref{algo-line:respondToClients-waitAck} do
+Algoritmo~\ref{algo:respondToClients}. Tal procedimento se repete para cada
+novo nó \clis $\in$ \subsetcli$($\repassu{1}$)$ interessado em obter \setpk.
 
-O canal de transmissão multicast é configurado para atender ao mesmo tempo os
-nós \cliu{1} e \cliu{2}, ao permitir o envio do fluxo de dados \setpks para um
-grupo multicast configurado dinamicamente pelo nó \repass. A configuração
-automática consiste em gerar aleatoriamente um número de porta e enviar um
-pacote do tipo \pac{GMTP-RequestNotify} contendo tal informação e com a flag
-binária chamada multicast ativada. Após a crição de tal pacote, \repassu{1} o
-envia para o nó \cliu{2} e também notifica \cliu{1}, que então realiza as
-configurações devidas para receber o fluxo em modo \textit{multicast}. Além do
-bit de sinalização multicast, o pacote do tipo \pac{GMTP-RequestNotify} também
-contém um campo de endereço IP (\ut{32}{bits}), que especificará qual endereço
-IP o nó \repasss passará a transmitir os dados (canal de repasse), e mais um
-campo para especificar o número de porta (\ut{16}{bits}), que especifica a porta
-correspondente ao canal de repasse.
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=.6]{imgs/processo-conexao-2.pdf}
+\end{center}
+\vspace{-1cm}
+\caption{Passos do processo de estabelecimento de conexão do \mudccps (Fase 2).}
+\label{fig:processo-conexao-2}
+\end{figure}
 
 \subsection{Fase 3: busca por mais parceiros \repassu{q} para obter \setpk}
 
-Na fase $3$, o nó \repasss inicia um processo de aumentar suas parcerias a fim
+Na Fase $3$, o nó \repasss inicia um processo de aumentar suas parcerias a fim
 de obter mais rapidamente os pacotes \pks $\in$ \setpks e caminhos \setways alternativos
 em caso de falha e/ou desconexões de algum nó parceiro \repassu{q}. Ao
 considerar os aspectos discutido na Seção~\ref{sec:descparc}, nota-se que na
@@ -2791,24 +2813,26 @@ multicast, dar-se o nome de \textit{\mudccps Multicast Congestion Control}
 O \mudccp-UCC funciona de forma similar ao protocolo RCP (Rate Control
 Protocol)~\cite{Dukkipati:2008:RCP:1368746}, porém com alguns diferenciais a
 serem discutidos a seguir. O RCP é um protocolo para controle de
-congestionamento assistido pela rede que tenta emular um \textit{Processor
-Sharing} (PS), como um roteador. Nesse caso, se um roteador pudesse obter a
-informação exata sobre o número de fluxos de entrada em um dado instante $t$, a
-taxa de transmissão ideal para cada fluxo de dados seria $R_{ps}(t) =
-\frac{C}{N(t)}$, onde $C$ corresponde à capacidade do link e $N(t)$ ao número de
-fluxos no instante $t$.
+congestionamento assistido pela rede que tenta emular um Comutador
+Compartilhado, ou \textit{Processor Sharing} (PS), por exemplo, um
+roteador~\cite{Dukkipati:2005:PSF:2103175.2103204}. Nesse caso, se um roteador
+pudesse obter a informação exata sobre o número de fluxos de entrada em um
+instante $t$, a taxa de transmissão ideal para cada fluxo de dados seria
+$R_{ps}(t) = \frac{C}{N(t)}$, onde $C$ corresponde à capacidade do link e $N(t)$
+ao número de fluxos no instante $t$.
 
 Dessa forma, Nandita et. al\cite{Dukkipati:2008:RCP:1368746} argumenta que para
 um roteador funcionar de forma equânime, tal roteador deve oferecer a
 mesma taxa de transmissão para todos os fluxos transmitidos através dele,
-mantendo-se a fila de roteamento perto de zero a fim de evitar que apenas os
-fluxos que tem pacotes na fila de repasse compartilhem a largura de banda
-disponível. Com base nisso, Nandita et. al\cite{Dukkipati:2008:RCP:1368746}
+mantendo-se o número de pacotes na fila de roteamento perto de zero, a fim de
+evitar que apenas os fluxos que tem pacotes na fila de repasse compartilhem a
+largura de banda disponível. Com base nisso, Nandita et.
+al\cite{Dukkipati:2008:RCP:1368746}
 determinou a Equação~\ref{eq:cc-rcp-teoria}, onde $R(t)$ é a taxa de transmissão
-que deve ser oferecida para cada fluxo de dados que passa pelo roteador. Com
-base na Equação~\ref{eq:cc-rcp-teoria}, estima-se a largura de banda disponível
+que deve ser oferecida para cada fluxo de dados que passa pelo roteador. Pela
+Equação~\ref{eq:cc-rcp-teoria}, estima-se a largura de banda disponível
 em um determinado canal, representado pela porção $\alpha(C - y(t)) - \beta
-\frac{q(t)}{d_0}$ (mudança agregada) e a dividir por $N(t)$. Como é
+\frac{q(t)}{d_0}$ (mudança agregada) e a divide por $N(t)$. Porém, como é
 impossível determinar o valor exato de $N(t)$, estima-se $\hat{N}(t) =
 \frac{C}{R(t-T)}$ e para atualizar $R(t)$ com mais frequência do que no tempo de
 um RTT, escala-se a mudança agregada por $\frac{T}{d_0}$, resultando na
@@ -2883,9 +2907,9 @@ corresponde à taxa de transmissão necessária para transmitir um fluxo de dados
     \item \textit{RTT na fonte} ($RTT_{s}$): corresponde ao RTT
 estimado entre quaisquer nós \transu{\transi},\transu{\transi+1} $\in$
 \setwayi, ou seja, o RTT entre dois nós \transu{\transi} e \transu{\transi+1}
-que processam o respectivo pacote \pks de um fluxo de dados \setpks para
-repassar aos seus nós \clis $\in$ \subsetcli(\trans) e em
-\subsetcli(\transu{\transi+1}), respectivamente.
+que processam o respectivo pacote \pks de um fluxo de dados \setpk, a fim de
+repassar aos seus nós \clis $\in$ $($\subsetcli(\trans) $\cup$
+\subsetcli(\transu{\transi+1})$)$.
 
 %     \item \textit{Diferença de RTT} (RTT$_{d}$): corresponde à diferença entre
 % RTT$_{s}$ e o RTT medido entre dois nós \way. Por exemplo, seja um
@@ -2919,7 +2943,8 @@ repassada à instância do GMTP no nó \serv.
   \item Todo nó \ways = \repasss que receber um pacote \pk, se $R(t) <
 R_{p}$, então $R_{p} \leftarrow R(t)$, caso contrário nenhuma
 modificação é realizada nesse campo. Nesse ínterim, se existir pelo menos um nó
-$\in$ \subsetcli$($\way) interessado em obter os pacotes \pks $\in$ \setpks
+\clis $\in$ \subsetcli$($\way$)$ interessado em obter os pacotes \pks $\in$
+\setpks
 (Seção~\ref{subsec:conexao-requisicao}), \ways executa as seguintes ações:
   \label{step:rcp-gmtp-3}
 
@@ -2929,23 +2954,22 @@ $\in$ \subsetcli$($\way) interessado em obter os pacotes \pks $\in$ \setpks
 (Seção~\ref{subsec:trocdados});
 
     \item cria um pacote \pac{GMTP-Ack} contendo $R_{p}$ e o envia de volta
-para seu nó parceiro \repasssu{q} $=$ \wayu{\wayi-1}. O pacote \pac{GMTP-Ack}
+para seu nó parceiro \repassu{q} $=$ \wayu{\wayi-1}. O pacote \pac{GMTP-Ack}
 também carrega um campo de $RTT_{s}$. Quando \ways receber um pacote
 \pac{GMTP-Ack}, deve-se utilizar $RTT_{s}$ para atualizar a média móvel do RTT
-para os fluxos que passam por ele, representado por $d_0$.
+no intervalo de $d_0$.
 
   \end{enumerate}
 
   \item O nó \ways deve usar $R_{p}$ como a nova taxa de transmissão para
-enviar os próximos pacotes de dados \pks para seu nó parceiro \repasssu{q} $=$
-\wayu{\wayi+1}. Na prática, $R_{p}$ é a menor taxa de transmissão oferecida ao
-longo do caminho \setwayi.
+enviar os próximos pacotes de dados \pks para seu nó parceiro \repassu{q} $=$
+\wayu{\wayi+1}. Assim, $R_{p}$ é a menor taxa de transmissão oferecida ao
+longo do caminho \setwayis no intervalo de $RTT_{s}$.
 
   \item Todo nó \repasss atualiza periodicamente sua taxa de transmissão local
 $R(t)$ de acordo com a Equação~\ref{eq:cc-rcp}.
 
 \end{enumerate}
-
 
 Sendo assim, no caso do GMTP, a ideia básica é a seguinte: para quaisquer
 dois nós \transu{1},\transu{2} $\in$ \setwayi, a taxa de transmissão a ser
@@ -2954,12 +2978,12 @@ transmissão oferecida pelos nós \ways $\in$ \setwayis posicionados entre
 \transu{1} e \transu{2}. Com isto, se existir largura de banda disponível entre
 \transu{1} e \transu{2}, ou seja, $C - y(t) > 0$, então o GMTP compartilhará
 igualmente o canal entre todos os fluxos, inclusive para o fluxo entre
-\transu{1} e \transu{2}. Caso contrário, ou seja, se $C - y(t) < 0$, o canal
-é considerado saturado e o GMTP reduzá a taxa de transmissão igualmente para
-todos os fluxos, inclusive para o fluxo entre \transu{1} e \transu{2}.
-Especificamente, no intervalo de tempo T, a largura de banda necessária para
-repassar todos os pacotes \pks que estão na fila de repasse em um certo instante
-$t$ corresponde à $\frac{q(t)}{d_0}$.
+\transu{1} e \transu{2}. Caso contrário, ou seja, se $C - y(t) < 0$,
+considera-se o canal saturado e o GMTP reduzirá a taxa de transmissão igualmente
+para todos os fluxos, inclusive para o fluxo entre \transu{1} e \transu{2}.
+Especificamente, a largura de banda necessária para repassar todos os pacotes
+\pks $\in$ \setpks que estão na fila de roteamento no intervalo de um RTT
+corresponde à $\frac{q(t)}{d_0}$~\cite{Dukkipati:2005:PSF:2103175.2103204}.
 
 % \subsubsection{Diferença entre o RCP e o GMTP-UCC}
 %
@@ -2996,49 +3020,64 @@ $t$ corresponde à $\frac{q(t)}{d_0}$.
 
 \subsubsection{Escolha do algoritmo RCP em detrimento ao XCP:}
 
-Tanto o RCP quanto o XCP são os protocolos mais famosos do estado da arte que
-tentam emular um PS entre os fluxos que passam por ele, e por este motivo as
-equações de controle tanto do RCP quanto do XCP são similares. O grande dilema
-foi decidir qual dos dois poderia ser adotado no GMTP-UCC. A diferença entre
-eles é o modo que cada um tenta convergir $R_{rcp}(t)$ e $R_{xcp}(t)$ para
-$R_{ps}(t)$. Especificamente, a diferença está no tipo de informação enviada
-para um nó transmissor de um fluxo de dados \setpks para atualizar o valor de
-$R_{rcp}(t)$ ou de $R_{xcp}(t)$. O XCP continuamente tenta convergir
-a taxa de transmissão para um ponto de equilíbrio onde todos os transmissores
-transmitirão pacotes de dados a uma taxa de transmissão $R_{xcp}(t)$, ao passo
-que o RCP calcula uma única taxa de transmissão que deve ser utilizada por
-todos os nós transmissores.
+Tanto o RCP quanto o XCP são os protocolos mais conhecidos do estado da arte
+que tentam emular um PS e, por este motivo, suas equações de controle
+de congestionamento são similares. Porém, o modo que o RCP e o XCP tentam
+convergir as taxas de transmissão $R_{rcp}(t)$ e $R_{xcp}(t)$,
+respectivamente, para emular a taxa de transmissão do PS, definida por
+$R_{ps}(t)$, é bastante diferente. Dito isto, o grande dilema foi decidir qual
+dos dois protocolos seria mais adequado para o GMTP-UCC. Para tomar tal
+decisão, estudou-se a diferença entre tais protocolos e decidiu-se utilizar o
+RCP, de acordo com o que se discute a seguir.
+
+Especificamente, a diferença está no tipo de informação enviada para um nó
+transmissor de um fluxo de dados para atualizar o valor de $R_{rcp}(t)$
+ou de $R_{xcp}(t)$. O XCP continuamente tenta convergir a taxa de transmissão
+para um ponto de equilíbrio onde todos os transmissores transmitirão pacotes de
+dados a uma taxa de transmissão $R_{xcp}(t)$, ao passo que o RCP calcula uma
+única taxa de transmissão que deve ser utilizada por todos os nós transmissores
+em um certo instante \textit{t}. Apesar dessa diferença suscinta, deve-se
+entender minuciosamente o que isto significa.
 
 No caso do XCP, o protocolo aumenta ou diminui a janela de congestionamento de
-um fluxo \setpks de acordo com o tamanho atual da sua janela de
+um fluxo de dados de acordo com o tamanho atual da sua janela de
 congestionamento. Isto ocorre porque o XCP reduz gradativamente os tamanhos da
-janela de congestionamento dos fluxos com $R_{xcp}(t)$ maior do que $R_{ps}(t)$
-e gradativamente aumenta o tamanho das janelas de congestionamento dos fluxos
-com $R_{xcp}(t)$ menor do que $R_{ps}(t)$. Porém, o tamanho da janela de
-congestionamento é sempre menor para os fluxos iniciados mais recente. Assim, em
-qualquer momento, os fluxos XCP podem ter diferentes tamanhos de janela de
-congestionamento e de RTTs, portanto diferentes taxas de transmissão
-$R_{xcp}(t)$.
+janela de congestionamento dos fluxos com $R_{xcp}(t)$ maior do que o
+$R_{ps}(t)$ estimado, aumentando-se gradativamente o tamanho das janelas de
+congestionamento dos fluxos com $R_{xcp}(t)$ menor do que $R_{ps}(t)$ estimado.
+Porém, o tamanho da janela de congestionamento é sempre menor para os fluxos
+iniciados mais recente. Assim, em qualquer momento, os fluxos XCP podem ter
+diferentes tamanhos de janela de congestionamento e de RTTs, portanto diferentes
+taxas de transmissão $R_{xcp}(t)$, resultando em valores para $R_{xcp}(t)$ não
+equânimes para todos os fluxos de dados.
 
-No RCP, todos os fluxos (novos e antigos) recebem a mesma taxa de transmissão
+Já no RCP, todos os fluxos (novos e antigos) recebem a mesma taxa de transmissão
 $R_{rcp}(t)$ baseada no estado atual do nó \repasss com menor largura de banda
 disponível em um certo instante $t$. Isto permite que um fluxo de dados de
 curta duração termine o mais rápido possível ao passo que os fluxos de dados
-mais longos não influenciam diretamente no compartilhamento equânime do PS,
-alocando para estes também um taxa de transmissão sem permitir que parte da
-largura de banda disponível fique ociosa por muito tempo.
+mais longos não influenciam diretamente no compartilhamento equânime do PS, sem
+permitir que parte da largura de banda disponível fique ociosa por muito tempo.
+Este procedimento ocorre em um intervalo de tempo definido por $d_0$ que, no
+caso do GMTP, tal vamor não é definido entre o nó \servs e o nó
+\cli, como na versão original do RCP. Em vez disso, o tempo $d_0$ é definido
+entre dois nós \repasss consecutivos em um caminho \setwayi, tal que \repasss
+$\in$ \settrans.
 
-O XCP é computacionalmente mais complexo do que o RCP, uma vez que define
-diferentes valores de \textit{feedback} para cada fluxo, envolvendo operações
-matemáticas (multiplicação e soma) para cada pacote, o que torna um XCP mais
-lento que o RCP. Pela estratégia de mudança no tamanho da janela de
+O XCP é computacionalmente mais complexo do que o RCP, uma vez que o
+XCP define diferentes valores de \textit{feedback} para cada fluxo, envolvendo
+operações matemáticas (multiplicação e soma) para cada pacote, o que torna o XCP
+mais lento que o RCP. Pela estratégia de mudança no tamanho da janela de
 congestionamento, o XCP pode leva múltiplos RTTs para a maioria dos fluxos
 alcançarem a taxa de transmissão equânime entre eles, mas que mudam com o passar
 do tempo à medida que novos fluxos são injetados na rede e outros são
-finalizados, devido à natureza dinâmica das redes. No caso do RCP, esses
-problemas não ocorrem porque mantém-se uma única taxa de transmissão para todos
-os fluxos, não envolvendo qualquer computação adicional por pacote \pks que
-passa por \repass.
+finalizados, devido à natureza dinâmica das redes. No caso do RCP, essa
+complexidade é menor e há uma redução significativa de convergência entre o
+taxa de transmissão praticada $R_{rcp}(t)$ e a $R_{ps}(t)$. Isto porque
+mantém-se uma única taxa de transmissão para todos os fluxos, não envolvendo
+qualquer computação adicional por pacote \pks que passa por \repass. Além
+disso, para determinar $R_{rcp}(t)$, necessita-se apenas o tamanho da fila e da
+taxa agregada de entrada, sem necessitar manter estado por fluxo de dados e
+operações matemáticas por pacote de dados.
 
 Desta forma, os aspectos que determinam o funcionamento do RCP são fundamentais
 quando se trata de transmissão de conteúdos multimídia ao vivo, aliado às outras
@@ -3048,10 +3087,26 @@ para todos os fluxos, sua reação é rápida às mudanças circunstanciais na rede,
 tanto para uma super-utilização de um canal quanto para a sua sub-utilização.
 Como o RCP escala naturalmente com relação à capacidade de transmissão do canal
 e ao RTT, o seu desempenho é invariante com relação ao tamanho de um fluxo,
-portanto não importa qual tipo de fluxo as aplicações geram. Isto permite que
-fluxos de dados GMTP+RCP e TCP+RCP coexistam na Internet de forma equânime,
-além do GMTP evitar sobrecarga nos nós \servs devido às outras funções
-de distribuição de fluxos de dados empregadas, explicadas anteriormente.
+portanto não importa qual tipo de fluxo as aplicações geram (se de curta ou de
+longa duração; independente de qualquer protocolo de transporte). Com isto,
+permite-se que fluxos de dados GMTP+RCP e TCP+RCP coexistam na Internet de forma
+equânime, aliado às funções do GMTP de distribuição de conteúdo assistida pela
+rede, evitando-se sobrecarga nos nós \serv, como discutiu-se anteriormente.
+
+Ao perceber essa diferenças, nandita et al. PLATAR O GRÁFICO
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=0.25]{imgs/rcp-vs-xcp-vs-tcp.png}
+\end{center}
+\vspace{-1cm}
+\caption{Tempo médio, em segundos, de finalização de um fluxo de dados, ao
+utilizar os protocolos XCP, TCP e RCP, para C = \ut{2.4}{Gbps}. Os fluxos foram
+injetados na rede com base na distribuição pareto, com E[L] = \ut{25}{pacotes} e
+shape = 1.2. Extraído de~\cite{Dukkipati:2005:PSF:2103175.2103204}.}
+\label{fig:mapa-buffer-envio-recepcao}
+\end{figure}
+
 
 %
 % =====>> PAREI AQUI. LER O ARQUIVO http://yuba.stanford.edu/rcp/RCP-IWQoS.pdf,
@@ -3466,9 +3521,9 @@ transmitindo-os também para seus nós \clis $\in$ \subsetcli$($\way$)$, se houver
 demanda. Este procedimento evita que todos os nós \clis que receberem o fluxo de
 dados \setpks tenham que verificar a autenticidade dos pacotes \pk.
 
-Porém, na prática, o ideal seria que todos nós \ways verificassem a
-autenticidade de cada pacote \pk, porém, tal ação pode onerar os recursos
-computacionais de cada nó \ways e aumentar o tempo de entrega de \pks aos nós
+Na prática, o ideal seria que todos nós \ways verificassem a autenticidade de
+cada pacote \pk, porém, tal ação pode onerar os recursos computacionais de cada
+nó \ways e aumentar o tempo de entrega de \pks aos nós
 \clis $\in$ \subsetcli$($\way$)$. Isto porque os nós \ways também processam cada
 pacote de dados \pks para decidir sobre seu repasse, como discutido nas
 Seções~\ref{sec:connformnet} e~\ref{sec:asptransrecep}.
@@ -3481,8 +3536,9 @@ determinar a quantidade de pacotes que se deve realizar tal procedimento
 
 \begin{enumerate}
 
-  \item apenas os nós \way, tal que \transmitqu{\way} = 1, devem realizar o
-procedimento de verificação de autenticidade do fluxo de dados \setpk; e
+  \item apenas os nós \way, tal que \transmitqu{\way} = 1, ou seja, se \way
+$=$ \transs $\in$ \settrans, devem realizar o procedimento de verificação de
+autenticidade do fluxo de dados \setpk; e
 
   \item os nós \way, definidos pela Regra 1, não devem verificar todos os
 pacotes \pks $\in$ \setpk, mas apenas uma quantidade $pc(t)$ de pacotes de dados
@@ -3539,15 +3595,14 @@ apresenta-se o procedimento de assinatura de um pacote \pks $\in$ \setpk.
 \caption{digitalSignPacket(\pk: \pac{GMTP-Data})}
 
 \SetAlgoLined
-\tcc{\servs executes this function to digital sign the packet content using
+\tcc{\servs executes this algorithm to digital sign the packet content using
 its private key $K^{-}_{\servconst_{\servi}}$ and a pre-defined hash function,
 such as the well-know md5 or sha1 function. \servs get the value of data field,
 which is the content that application wants to transport and generates a
 signature by encrypt the hash of the data using the \servs private key. After,
 put the generated signature in the signature field of the packet \pk. The
 signature field will be used later by a note \repasss to verify the packet \pks
-authenticity executing the function verifyPacketAuthenticity(), defined in
-Algorithm~\ref{algo:verifyPacketAuthenticity}.}
+authenticity executing the Algorithm~\ref{algo:verifyPacketAuthenticity}.}
 
 \SetKwFunction{Union}{Union}\SetKwFunction{getPacketFieldValue}{getPacketFieldValue}
 \SetKwFunction{Union}{Union}\SetKwFunction{setPacketFieldValue}{setPacketFieldValue}
@@ -3556,8 +3611,8 @@ Algorithm~\ref{algo:verifyPacketAuthenticity}.}
 
 \textit{data} \attrib \getPacketFieldValue{\pk, `data'}\;
 \textit{hashValue} \attrib \hash{\textit{data}}\;
-\textit{signature} \attrib encrypt($K^{-}_{\servconst_{\servi}}$,
-\textit{hashValue})\;
+\textit{signature} \attrib \encrypt{$K^{-}_{\servconst_{\servi}}$,
+\textit{hashValue}}\;
 \setPacketFieldValue{\pk, `signature', \textit{signature}}\;
 \Return{\pk}\;
 
@@ -3601,9 +3656,9 @@ verificação de autenticidade de um pacote \pks $\in$ \setpk.
 \caption{verifyPacketAuthenticity(\setpk': \textbf{array of} \pac{GMTP-Data})}
 
 \SetAlgoLined
-\tcc{\ways executes this function to check if the content of a subset of packets
-\setpk' $\subset$ \setpks was modified. It marks each \pks $\in$ \setpk' to be
-relayed or discarded. \ways uses the \servs public key to decrypt the \pks
+\tcc{\ways executes this Algorithm to check if the content of a subset of
+packets \setpk' $\subset$ \setpks was modified. It marks each \pks $\in$ \setpk'
+to be relayed or discarded. \ways uses the \servs public key to decrypt the \pks
 signature and compares it to the hash value of the \pks content. It marks \pks
 to be relayed if \pks content was not modified, otherwise it marks \pks to be
 discarded, because \pks was modified by a node in \setwayids $=$

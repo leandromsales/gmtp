@@ -16,7 +16,9 @@ tráfego, disponibilidade por dia/hora, usar parceiros ociosos etc.)
  - Distribuição de registros de participação entre os nós da rede CDN
  - Um ataque pode gerar pacotes errados de um fluxo P e parar a recepção. Tem que
 pensar em um mecanismo de blacklist e reputação.
+Limitações:
  - Repetição de UUID
+ - Muitas msgs no canal de controle
 
 
 % Neste capítulo apresentam-se as considerações finais deste trabalho.
@@ -168,6 +170,13 @@ de comunicação disponível na camada de transporte
 distantes de s interceptará o pedido de conexão
 
 - Por que utilizar roteadores?
+
+- Qual a diferença entre NAT e o processo de conexão do GMTP?
+  Em conexões NAT, os fluxos não são compartilhados (o roteador não conhece o
+conteúdo, mas fim o host). Em NAT ocorre apenas tradução de nomes, com o GMTP é
+muito mais do que isso (controle de congestionamento e o compartilhamento do
+fluxo), além da parte que interceptação de requisições para obter P entre
+roteadores. Falar do canal multicast, o NAT não faz isso
 
 - Qual o processo ideal para o deploy do GMTP na Internet?
 
