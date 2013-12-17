@@ -1846,9 +1846,8 @@ for \setpk.}
 % \label{subsec:parccombina}
 %
 % O procedimento de formação de parcerias por combinação considera um nó
-% \textit{pivot} \servs e consiste em combinar dois (ou mais) caminhos
-% distintos \setwayiu{1} e \setwayiu{2} tal que \setwayiu{1} $\cap$ \setwayiu{2}
-% $= \{$\serv$\}$, ou seja, os caminhos se interceptam apenas em \serv, como
+% \textit{pivot} \servs e consiste em combinar caminhos distintos \setwayiu{1} e
+% \setwayiu{2}, tal que \setwayiu{1} $\cap$ \setwayiu{2} $= \{$\serv$\}$, como
 % ilustra-se na Figura~\ref{fig:esquema-abstrato-formacao-parceria-combinacao},
 % Passo 1. Dessa forma, dado um conjunto de caminhos conhecidos \setway, o nó
 % \servs executa as combinações e instrui, por exemplo, dois nós \wayu{1} $\in$
@@ -1977,49 +1976,47 @@ for \setpk.}
 % \end{algorithm}
 % \vspace{0.8cm}
 
+\subsection{Sobre o melhor caminho \setwayi}
+\label{subsec:melhorcaminho}
 
+De acordo com os procedimentos empregados de seleção de nós, é possível obter
+diferentes caminhos \setwayi, partindo-se de um nó \repasss para um nó \serv.
+Por este motivo, é importante definir, a partir de um conjunto de caminhos
+possíveis, qual é o melhor caminho a utilizar e ordená-los de acordo com a
+prioridade de uso. Com isto, é possível obter \setpks a partir de múltiplos
+\repasss e usar caminhos alternativos em caso de falha de algum caminho, por
+exemplo, por desconexão. No GMTP, a ordem de prioridade para uso de cada
+caminho \setwayis é determinada de acordo com dois critérios:
 
-% \subsection{Sobre o melhor caminho \setwayi}
-% \label{subsec:melhorcaminho}
-%
-% De acordo com os procedimentos empregados de seleção de nós, é possível obter
-% diferentes caminhos \setwayi, partindo-se de um nó \repasss para um nó \serv.
-% Por este motivo, é importante definir, a partir de um conjunto de caminhos
-% possíveis, qual é o melhor caminho a utilizar e ordená-los de acordo com a
-% prioridade de uso. Com isto, é possível obter \setpks a partir de múltiplos
-% \repasss e usar caminhos alternativos em caso de falha de algum caminho, por
-% exemplo, por desconexão. No GMTP, a ordem de prioridade para uso de cada
-% caminho \setwayis é determinada de acordo com dois critérios:
-%
-% \begin{enumerate}
-%   \item Menor atraso fim-a-fim entre \repasss e \serv; \label{i:c-atraso}
-%   \item Maior tempo de disponibilidade dos nós \ways $\in$ \setwayi;
-% \label{i:c-uptime}
-%   \item Menor número de nós \ways $\in$ \setwayi; \label{i:c-nnos}
-%   \item Se o caminho for \setwayif; \label{i:c-waycomp}
-%   \item Escolha aleatória de \setwayis entre os \setways conhecidos.
-% \label{i:c-aleat}
-% \end{enumerate}
-%
-% O critério~\ref{i:c-atraso} é determinado através da medição do RTT. O
-% critério~\ref{i:c-uptime} é obtido através de tal informação compartilhada por
-% cada nó \ways $\in$ \setwayi. O critério~\ref{i:c-nnos} é determinado pela
-% contagem simples do número de \ways $\in$ \setwayi. O
-% critério~\ref{i:c-waycomp} é determinado através da verificação da condição
-% $\mid$\setwayi$\mid$ $=$ $ttl($\repass$,$\setwayi$)$, onde \textit{ttl} é uma
-% função que determina o número de saltos entre o nó \repasss até o último nó
-% \ways $\in$ \setwayi, que é um nó \serv. Na prática, este valor pode ser obtido
-% através do valor do campo TTL (\textit{Time-to-Live}), disponível no cabeçalho
-% IP de qualquer pacote. O critério~\ref{i:c-aleat} é utilizado em caso de não
-% determinação do melhor \setwayis até o critério anterior.
-%
-% Note que no GMTP é possível que um nó \repasss tenha simultaneamente mais de um
-% nó parceiro \repassu{q}, porém não mais do que uma certa qualidade configurável
-% devido ao fato de que os pacotes \pks dos fluxos \setpks serem transientes,
-% portanto não faz sentido realizar muitas parcerias. No caso do GMTP, a
-% quantidade máxima padrão de parcerias que um nós \repasss realiza é $5$, valor
-% praticado em outros soluções similares para transmissão de fluxos de dados ao
-% vivo baseados em arquitetura P2P.
+\begin{enumerate}
+  \item Menor atraso fim-a-fim entre \repasss e \serv; \label{i:c-atraso}
+  \item Maior tempo de disponibilidade dos nós \ways $\in$ \setwayi;
+\label{i:c-uptime}
+  \item Menor número de nós \ways $\in$ \setwayi; \label{i:c-nnos}
+  \item Se o caminho for \setwayif; \label{i:c-waycomp}
+  \item Escolha aleatória de \setwayis entre os \setways conhecidos.
+\label{i:c-aleat}
+\end{enumerate}
+
+O critério~\ref{i:c-atraso} é determinado através da medição do RTT. O
+critério~\ref{i:c-uptime} é obtido através de tal informação compartilhada por
+cada nó \ways $\in$ \setwayi. O critério~\ref{i:c-nnos} é determinado pela
+contagem simples do número de \ways $\in$ \setwayi. O
+critério~\ref{i:c-waycomp} é determinado através da verificação da condição
+$\mid$\setwayi$\mid$ $=$ $ttl($\repass$,$\setwayi$)$, onde \textit{ttl} é uma
+função que determina o número de saltos entre o nó \repasss até o último nó
+\ways $\in$ \setwayi, que é um nó \serv. Na prática, este valor pode ser obtido
+através do valor do campo TTL (\textit{Time-to-Live}), disponível no cabeçalho
+IP de qualquer pacote. O critério~\ref{i:c-aleat} é utilizado em caso de não
+determinação do melhor \setwayis até o critério anterior.
+
+Note que no GMTP é possível que um nó \repasss tenha simultaneamente mais de um
+nó parceiro \repassu{q}, porém não mais do que uma certa qualidade configurável
+devido ao fato de que os pacotes \pks dos fluxos \setpks serem transientes,
+portanto não faz sentido realizar muitas parcerias. No caso do GMTP, a
+quantidade máxima padrão de parcerias que um nós \repasss realiza é $5$, valor
+praticado em outros soluções similares para transmissão de fluxos de dados ao
+vivo baseados em arquitetura P2P.
 
 \section{Distribuição do fluxo de dados \setpks através de \net}
 \label{sec:asptransrecep}
@@ -2280,10 +2277,11 @@ domínios, composto por 6 nós \clis $\in$ \subsetcli$($\repass$)$ (Rede Local).
 
 A regra geral é que um nó \repasss deve consultar a tabela de recepção de fluxo
 de dados (Seção~\ref{subsec:tabela-recepcao}) todas as vezes que receber um
-pacote do tipo \pac{GMTP-Request}, transmitido por um nó \clis $\in$
-\subsetcli$($\repass$)$. Com base no estado da referida tabela, que define a
-fase de conexão para um determinado fluxo de dados \setpks solicitado, o nó
-\repasss realiza uma determinada ação de registro de participação e repasse.
+pacote do tipo \pac{GMTP-Request} ou do tipo \pac{GMTP-Register}, transmitido
+por um nó \clis $\in$ \subsetcli$($\repass$)$. Com base no estado da referida
+tabela, que define a fase de conexão para um determinado fluxo de dados \setpks
+solicitado, o nó \repasss realiza uma determinada ação de registro de
+participação e repasse.
 
 \subsection{Fase 1: primeira requisição a um fluxo de dados \setpk}
 \label{subsec:conn-fase1}
@@ -2337,10 +2335,10 @@ discutiu-se na Seção~\ref{subsec:content-index}. Além disso, pelo valor de
 \textit{TTL=1}, permite-se interceptar o referido pacote de requisição,
 evitando-se extrapolar o domínio administrativo de tal rede local.
 
-Na Fase $1$ do processo de estabelecimento de conexão, considera-se que não
-existe nenhum nó \clis $\in$ \subsetcli$($\repassu{1}$)$ recebendo o fluxo de
-dados \setpk. Sendo assim, quando o pacote \pac{GMTP-Request} alcançar o nó \repassu{1}
-(Passo 2 da Figura~\ref{fig:processo-conexao-1}), o nó \repassu{1} consulta a
+Na Fase $1$ de conexão, considera-se que não existe nenhum nó \clis $\in$
+\subsetcli$($\repassu{1}$)$ recebendo o fluxo de dados \setpk. Sendo assim,
+quando o pacote \pac{GMTP-Request} alcançar o nó \repassu{1} (Passo 2 da
+Figura~\ref{fig:processo-conexao-1}), o nó \repassu{1} consulta a
 tabela de recepção de fluxos de dados e constata que não há qualquer registro
 para o fluxo de dados \setpk. Nesse instante, o nó \repasss inicia um
 processo de registro de participação para obter o fluxo de dados \setpk, como
@@ -2353,7 +2351,10 @@ constitui-se o caminho \setwayiu{1}
 $=$
 $\{$\repassu{1},\repassu{2},\repassu{3},\repassu{4},\repassu{5},\servu{1}$\}$
 (Passo 3 da Figura~\ref{fig:processo-conexao-1} e destacado na cor vermelha),
-conforme discutiu-se na Seção~\ref{sec:descparc}.
+conforme discutiu-se na Seção~\ref{sec:descparc}. É importante lembrar que,
+pelos processos de formação de parcerias intra ou por combinação, descritos na
+Seção~\ref{sec:descparc}, qualquer nó \repasss $\in$ \setwayiu{1} pode
+interceptar o pedido de registro de participação enviado por \repassu{1}.
 
 Em seguida, ao receber o pacote do tipo \pac{GMTP-Register-Reply}, como
 resposta ao registro de participação, o nó \repassu{1} cria um canal
@@ -2388,8 +2389,6 @@ cujo endereço é \textit{177.135.177.241}, com porta de recepção \textit{49170}.
 Além disso, define-se o canal multicast no endereço
 \textit{239.192.68.79} e porta \textit{1900}, por onde os nós \clis $\in$
 \subsetcli$($\repass$)$ podem receber os pacotes de dados \pks $\in$ \setpk.
-
-
 
 \vspace{0.8cm}
 
@@ -2464,9 +2463,9 @@ fluxo de dados \setpks são originadas por qualquer nó \clis $\in$
 se um nó \cliu{2} $\in$ \subsetcli$($\repassu{1}$)$ também solicitar \setpk, o
 nó \repassu{1} simplesmente informará o canal multicast correspondente ao fluxo
 de dados \setpk, como ilustra-se na Figura~\ref{fig:processo-conexao-2}.
-Para isto, o nó \repassu{1} intercepta a requisição do nó \clisu{2}, consulta a
+Para isto, o nó \repassu{1} intercepta a requisição do nó \cliu{2}, consulta a
 tabela de recepção de fluxos de dados e dessa vez constata a recepção do fluxo
-de dados \setpk, criando-se o pacote do tipo \pac{GMTP-Request-Reply}. Este
+de dados \setpk, criando o pacote do tipo \pac{GMTP-Request-Reply}. Este
 procedimento ocorre no registro de participação, especificamente no trecho de
 código definidos entre as Linhas~\ref{algo-line:registerRelay-getP}-\ref{algo-line:registerRelay-returnChannel} do
 Algoritmo~\ref{algo:registerRelay}. Em seguida, o pacote do tipo
