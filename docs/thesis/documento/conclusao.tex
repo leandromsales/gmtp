@@ -180,9 +180,26 @@ muito mais do que isso (controle de congestionamento e o compartilhamento do
 fluxo), além da parte que interceptação de requisições para obter P entre
 roteadores. Falar do canal multicast, o NAT não faz isso
 
+  Estou propondo o que posso chamar de um NAT distribuído pelo nome do fluxo,
+(ou seja, porém com conhecimento do conteúdo)? Distribuído porque todos os
+repassadores interceptam, pedem e repassam.
+
   Não tem nada em todos os roteadores
 
+- Qual o impacto do desempenho em um roteador?
+  Falar do Mikrotik, 36 portas, cada uma com um processador dedicado de 1.5Ghz
+e 16GB de memória.
+
+- O mal funcionamento (intencional) de um nó repassador, pode quebrar toda a
+lógica do GMTP para formação de parceria?
+  Sim, da mesma forma que o mal funcionamento do roteador pode quebrar o
+funcionamento do TCP, UDP, HTTP etc, basta para isso, tal roteador passar a
+desencapsular os cabeçalhos de tais pacotes e alterar seus cabeçalhos.
+
 - Qual o processo ideal para o deploy do GMTP na Internet?
+
+- Qual é a complexidade para adaptar os protocolos existentes de transporte
+usarem o GMTP?
 
 - Quais são as similares e diferenças entre o GMTP e o LibSwift?
 
