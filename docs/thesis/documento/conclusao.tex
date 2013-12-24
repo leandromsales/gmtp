@@ -21,6 +21,11 @@ Limitações:
  - Muitas msgs no canal de controle
  - Dizer que os estudos realizados na formação de redes P2P podem servir para
 pesquisas/trabalhos futuros
+ - Futuro: nem sempre colocar os ids de todos os roteadores no pacote register,
+pode-se pensar em algo otimizado (apesar de que um roteador pode fazer parte de
+caminhos diferentes, portanto, pode estar sempre em posições diferentes, que
+isso a necessidade de sempre colocar sua posição no pacote register. Isso pode
+ser melhorado?).
 
 
 % Neste capítulo apresentam-se as considerações finais deste trabalho.
@@ -186,6 +191,9 @@ repassadores interceptam, pedem e repassam.
 
   Não tem nada em todos os roteadores
 
+- Relacione os conceitos ICN, CCN, NDN ao protocolo GMTP? (pode ser que seja
+melhor isso aparecer nos trabalhos relacionados)
+
 - Qual o impacto do desempenho em um roteador?
   Falar do Mikrotik, 36 portas, cada uma com um processador dedicado de 1.5Ghz
 e 16GB de memória.
@@ -236,7 +244,41 @@ samsung, trabalhos futuros
 
 - Por que tipos de pacotes, invez de flags
 
-- Anycast?
+- Por que não explorar o Anycast?
+  Só serve mais para protocolos não orientados à conexão.
+
+% Anycast é uma forma de encaminhamento onde os dados são distribuídos ``ao
+% destino o mais próximo'' ou ``melhores'' definido pelo routing da rede.
+% Compare com unicast, broadcast e multicast.
+%
+%     No unicast, há uma associação um-para-um entre o endereço de origem e
+% endereço destino.
+%     Na broadcast e no multicast, há uns um-a-muitos associação entre endereços
+% de rede e endpoints de rede: cada endereço de destino identifica um jogo dos
+% endpoints do receptor, a que toda a informação replicada.
+%     No anycast, há também uns um-à-muitos associação entre endereços de rede e
+% endpoints de rede: cada endereço de destino identifica um jogo de endpoints do
+% receptor, mas somente um deles é escolhido em todo o tempo dado para receber a
+% informação de qualquer remetente dado.
+%
+% Na Internet, o anycast é executado geralmente usando o BGP para anunciar
+% simultaneamente à mesma faixa de endereço IP do destino de muitos lugares
+% diferentes na Internet. Isto resulta nos pacotes dirigidos aos endereços de
+% destino nesta escala que está sendo distribuída ao ponto ``o mais próximo'' na
+% rede que anuncia o IP address dado do destino.
+%
+% O anycast serve melhor para os protocolos connectionless (construídos geralmente
+% sobre UDP), ao invés dos protocolos orientados à conexão, como o TCP ou o UDP
+% baseados em protocolos que mantêm seu próprio estado, já que o receptor
+% selecionado para toda a fonte dada pode mudar de tempo em tempo como a mudança
+% otimizada das rotas, quebrando silenciosamente quaisquer conversações que
+% puderem estar em andamento naquele momento. Para os protocolos stateful onde se
+% requer que uma sessão inteira use o mesmo usuário, sistemas como os geodns são
+% mais apropriados.
+%
+% Para esta razão, o anycast é usado geralmente como uma maneira fornecer a
+% disponibilidade elevada e balanceamento de carga para serviços sem estado, como
+% o acesso a dados replicados.
 
 % http://en.wikipedia.org/wiki/Anycast
 % http://tools.ietf.org/html/rfc3258

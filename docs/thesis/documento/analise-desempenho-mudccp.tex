@@ -34,8 +34,13 @@ nova conexão no servidor e tudo se repete.
 - Colocar uma seção de preâmbulo, explicando cenário e parâmetros
 
 
-chunk loss , chunk delivery ratio , continuity index , chunk delivery delay ,
-end to end delay
+chunk loss ratio, chunk delivery ratio , continuity index , chunk delivery delay
+, end to end delay
+
+contagem de interceptações (isso significa uma conexão de deixou de ser
+estabelecida no servidor, ou seja, menos um fluxo de dados repetido na rede)
+
+http://www.cs.bu.edu/brite/user_manual/BritePaper.html
 
 denacast: in denacast every node select chunk from neighbors that have them. and
 it conside balacing policy, it select chunk from neighbor that have more upload
