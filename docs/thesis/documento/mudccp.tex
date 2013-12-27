@@ -1419,10 +1419,10 @@ receive the flow \setpk, so notify \serv.}
 \end{algorithm}
 \vspace{0.8cm}
 
-Note que, no GMTP, toda transferência de pacotes de controle entre nós \repass ocorre com
-garantia de entrega, representando-se tais ações pelas funções com nomes
-contendo o sufixo \textit{Rdt} (\textit{Reliable data transfer}). Uma outra
-decisão importante tomada no GMTP é que um nó \repasss deve periodicamente
+Note que, no GMTP, toda transferência de pacotes de controle entre nós \repass
+ocorre com garantia de entrega, representando-se tais ações pelas funções com
+nomes contendo o sufixo \textit{Rdt} (\textit{Reliable data transfer}). Uma
+outra decisão importante tomada no GMTP é que um nó \repasss deve periodicamente
 sinalizar sua participação na rede de favores \nets através de uma função
 tradicionalmente conhecida por \textit{keep-alive}, comumente utilizado em
 outros protocolos de rede consolidados, como o TCP. Nesse aspecto, o GMTP segue
@@ -1433,27 +1433,30 @@ Além disso, um nó \repasss pode sinalizar explicitamente sua desconexão a
 \serv, quando não desejar mais participar da rede de favores $\eta$ ou receber
 um fluxo de dados \setpk. Para isto, deve-se enviar um pacote do tipo
 \pac{GMTP-Close}. Em qualquer um dos casos de desconexão, por expiração do
-tempo (devido ao procedimento de {keep-alive} ou explícita através do envio de
-\pac{GMTP-Close}, o nó \servs deve desconsiderar \repasss no processo de
-formação de parcerias e enviar para o nó \repasss um pacote do tipo
-\pac{GMTP-Reset}.
+tempo (devido ao procedimento de \textit{keep-alive}) ou explicitamente através
+do envio do pacote do tipo \pac{GMTP-Close}, o nó \servs deve desconsiderar
+\repasss no processo de formação de parcerias e enviar para este um pacote do
+tipo \pac{GMTP-Reset}.
 
-Para finalizar esse assunto, salienta-se que o registro de participação do GMTP
-permite que quanto mais nós \repasss se registrarem em nós \serv, mais caminhos
-\setwayis sejam conhecidos. Consequentemente, quanto mais caminhos forem
-conhecidos, mais parcerias poderão ser formadas entre os nós \repass. E,
-portanto, quanto mais parcerias forem formadas, maior será o número de nós \clis
-capazes de receber um fluxo de dados \setpks originado em \serv, disponibilizado
-indiretamente através dos seus respectivos nós \repasss (antena na cidade!), sem
-nenhuma influência da camada de aplicação. No mundo real (Internet), os nós
-\repasss podem passar a constituir dinamicamente a rede de distribuição de
-conteúdos de uma empresa. Por exemplo, um usuário de uma conexão residencial
-xDSL, por exemplo, pode configurar seu roteador para registra-lo em múltiplas
-redes de distribuição, como ilustra-se na Figura~\ref{fig:tela-gmtp-inter}.
-Nesses casos, as redes de distribuição podem fazer uso do roteador desse usuário
-em momentos ociosos de recepção e transmissão de dados através da Internet. Como
-consequência, relações comerciais podem ser construídas entre o usuário e os
-provedores de rede, mas essa discussão está fora do escopo deste trabalho.
+Por fim, salienta-se que o registro de participação do GMTP permite que quanto
+mais nós \repasss se registrarem em nós \serv, mais caminhos \setwayis sejam
+conhecidos. Consequentemente, quanto mais caminhos forem conhecidos, mais
+parcerias poderão ser formadas entre os nós \repass. E, portanto, quanto mais
+parcerias forem formadas, maior será o número de nós \clis capazes de receber um
+fluxo de dados \setpks originado em \serv, disponibilizado indiretamente através
+dos seus respectivos nós \repass, sem nenhuma influência da camada de aplicação.
+No mundo real (Internet), os nós \repasss podem passar a constituir
+dinamicamente a rede de distribuição de conteúdos de uma empresa. Por exemplo,
+um usuário de uma conexão residencial xDSL, por exemplo, pode configurar seu
+roteador para registra-lo em múltiplas redes de distribuição, como ilustrou-se
+na Figura~\ref{fig:tela-gmtp-inter}. Nesses casos, as redes de distribuição
+podem fazer uso do roteador desse usuário em momentos ociosos de recepção e
+transmissão de dados através da Internet. Como consequência, relações comerciais
+podem ser construídas entre o usuário e os provedores de rede, mas essa
+discussão está fora do escopo deste trabalho.
+
+COLOCAR UMA SEÇÃO NO FINAL DESSE CAPÍTULO SOBRE A PROPOSTA DO TRABALHO ENVIADO
+PARA O TCE?! ACHO QUE VALE A PENA.
 
 \subsection{Tabela de Recepção de Fluxos de Dados}
 \label{subsec:tabela-recepcao}
@@ -2047,6 +2050,11 @@ passarem a adotar o GMTP (quando desejado).
 
 \subsubsection{Descrição de um fluxo de dados \setpk}
 \label{subsubsec:desc-conteudo}
+
+FALAR SOBRE MULTIPLE BIT-RATES
+
+MPEG DASH - T. Stockhammer, Dynamic adaptive streaming over HTTP:
+standards and design principles, ACM MMSys 2011
 
 Como uma das principais motivação do GMTP é promover a compatibilidade entre
 diferentes aplicações que o utiliza, afim de reduzir o tráfego de rede
