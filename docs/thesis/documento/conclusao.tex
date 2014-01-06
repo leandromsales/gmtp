@@ -26,6 +26,7 @@ pode-se pensar em algo otimizado (apesar de que um roteador pode fazer parte de
 caminhos diferentes, portanto, pode estar sempre em posições diferentes, que
 isso a necessidade de sempre colocar sua posição no pacote register. Isso pode
 ser melhorado?).
+ - Futuro: Trabalho futuro vanets
 
 
 % Neste capítulo apresentam-se as considerações finais deste trabalho.
@@ -194,6 +195,23 @@ repassadores interceptam, pedem e repassam.
 - Relacione os conceitos ICN, CCN, NDN ao protocolo GMTP? (pode ser que seja
 melhor isso aparecer nos trabalhos relacionados)
 
+Olher esse artigo: CCN Naming Scheme for Scalable Routing and Incremental
+Deployment
+http://edas.info/showManuscript.php?m=1569803821&ext=pdf&random=1430753124&type=
+stamped
+
+Md. F. Bari, S.R. Chowdhury, R. Ahmed, and B. Mathieu, A Survey of
+Naming and Routing in Information-Centric Networks, IEEE
+Communications Magazine, pp. 44-53, Dec. 2012.
+[2] V. Jacobson, D.K. Smetters, J.D. Thornton, M. Plass, N. Briggs, and R.
+Braynard, Networking Named Content, ACM CoNext, pp. 1-12, Dec.
+2009.
+[3] Yuan, Haowei, and Patrick Crowley, Experimental Evaluation of
+Content Distribution with NDN and HTTP. Proceedings of IEEE
+INFOCOM 2013 Mini-Conference, Apr. 2013.
+
+Artigos no desktop
+
 - Qual o impacto do desempenho em um roteador?
   Falar do Mikrotik, 36 portas, cada uma com um processador dedicado de 1.5Ghz
 e 16GB de memória.
@@ -205,6 +223,8 @@ funcionamento do TCP, UDP, HTTP etc, basta para isso, tal roteador passar a
 desencapsular os cabeçalhos de tais pacotes e alterar seus cabeçalhos.
 
 - Qual o processo ideal para o deploy do GMTP na Internet?
+
+- Por que gerar um id (Streaming Identifier) se IP e Porta já faz isso?
 
 - Qual é a complexidade para adaptar os protocolos existentes de transporte
 usarem o GMTP?

@@ -1,0 +1,11 @@
+load data
+#para usar acentos nas legendas
+gset encoding iso_8859_1;
+gset terminal postscript portrait enhanced color lw 3 "Times-Roman" 18;
+gset size 1.0,0.45
+gset out "graph.ps"
+gset xlabel "Time (s)"
+gset ylabel ""
+#gset logscale y 
+gset yrange[0:10];
+gplot([data(:,2), data(:,3)]) title "Throughput (Mbits/s)", ([data(:,2), data(:,4)]) title "Transmitted (Mbytes)" 
