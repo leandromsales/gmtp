@@ -4,7 +4,7 @@ img_extIsRegExp=false
 img_extensions=.eps .jpg .jpeg .png .pdf .ps .fig .gif
 kileprversion=2
 kileversion=2.1.0
-lastDocument=mudccp.tex
+lastDocument=conclusao.tex
 masterDocument=tese-leandrosales.tex
 name=tese-leandrosales
 pkg_extIsRegExp=false
@@ -153,7 +153,7 @@ Mode=LaTeX
 ReadWrite=true
 
 [document-settings,item:mudccp.tex]
-Bookmarks=3819,4020,4024,4025,4026,4028,4029,4030,3830,4031,4032,3966,4034,4035,3902,4036,4038,3971,3973,3908,3976,3978,3914,3847,3982,3983,3784,3918,3988,3991,3993,3860,3994,3997,3998,3866,4001,3872,4008,4009,3877,4014,3882,4018,4019
+Bookmarks=3819,4020,4024,4025,4026,4028,4029,4030,3830,4031,4032,3966,4034,4035,4036,3902,4038,3971,3973,3908,3976,3978,3914,3847,3982,3983,3784,3918,3988,3991,3993,3860,3994,3997,3998,3866,4001,3872,4008,4009,3877,4014,3882,4018,4019
 Encoding=ISO-8859-1
 FoldedColumns=
 FoldedLines=
@@ -284,10 +284,10 @@ order=9
 
 [item:conclusao.tex]
 archive=true
-column=67
+column=87
 encoding=ISO-8859-1
 highlight=LaTeX
-line=197
+line=199
 mode=LaTeX
 open=true
 order=1
@@ -449,8 +449,8 @@ JumpList=
 ViMarks=
 
 [view-settings,view=0,item:conclusao.tex]
-CursorColumn=67
-CursorLine=197
+CursorColumn=87
+CursorLine=199
 JumpList=
 ViMarks=
 
