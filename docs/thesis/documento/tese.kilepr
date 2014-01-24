@@ -4,7 +4,7 @@ img_extIsRegExp=false
 img_extensions=.eps .jpg .jpeg .png .pdf .ps .fig .gif
 kileprversion=2
 kileversion=2.1.0
-lastDocument=conclusao.tex
+lastDocument=mudccp.tex
 masterDocument=tese-leandrosales.tex
 name=tese-leandrosales
 pkg_extIsRegExp=false
@@ -153,7 +153,7 @@ Mode=LaTeX
 ReadWrite=true
 
 [document-settings,item:mudccp.tex]
-Bookmarks=3819,4020,4024,4025,4026,4028,4029,4030,3830,4031,4032,3966,4034,4035,4036,3902,4038,3971,3973,3908,3976,3978,3914,3847,3982,3983,3784,3918,3988,3991,3993,3860,3994,3997,3998,3866,4001,3872,4008,4009,3877,4014,3882,4018,4019
+Bookmarks=3887,4022,3893,4029,4030,3898,4035,3903,4039,4040,4041,3840,4045,4046,4047,4049,4050,4051,3851,4052,4053,3987,4055,4056,3923,4057,4059,3992,3994,3929,3997,3999,3935,3868,4003,4004,3939,3805,4009,4012,4014,3881,4015,4018,4019
 Encoding=ISO-8859-1
 FoldedColumns=
 FoldedLines=
@@ -284,10 +284,10 @@ order=9
 
 [item:conclusao.tex]
 archive=true
-column=87
+column=7
 encoding=ISO-8859-1
 highlight=LaTeX
-line=199
+line=204
 mode=LaTeX
 open=true
 order=1
@@ -344,10 +344,10 @@ order=1
 
 [item:mudccp.tex]
 archive=true
-column=27
+column=17
 encoding=ISO-8859-1
 highlight=LaTeX
-line=3948
+line=2871
 mode=LaTeX
 open=true
 order=5
@@ -449,8 +449,8 @@ JumpList=
 ViMarks=
 
 [view-settings,view=0,item:conclusao.tex]
-CursorColumn=87
-CursorLine=199
+CursorColumn=7
+CursorLine=204
 JumpList=
 ViMarks=
 
@@ -483,10 +483,10 @@ JumpList=
 ViMarks=
 
 [view-settings,view=0,item:mudccp.tex]
-CursorColumn=27
-CursorLine=3948
+CursorColumn=17
+CursorLine=2871
 JumpList=
-ViMarks=a,4038,45,b,4036,50,c,4028,75,d,4030,71,e,4028,75,f,4035,0,g,3976,1,h,3983,45,i,3982,8,j,4028,75,k,3976,1,l,4038,45,m,4028,75,n,4018,0,o,3976,1,p,3976,1,q,4029,0,r,3976,1,s,3976,1,t,4019,0,u,3976,1,v,4026,0,w,3976,1,x,3998,0,y,4001,0,z,3976,1
+ViMarks=a,4059,45,b,4057,50,c,4049,75,d,4051,71,e,4049,75,f,4056,0,g,3997,1,h,4004,45,i,4003,8,j,4049,75,k,3997,1,l,4059,45,m,4049,75,n,4039,0,o,3997,1,p,3997,1,q,4050,0,r,3997,1,s,3997,1,t,4040,0,u,3997,1,v,4047,0,w,3997,1,x,4019,0,y,4022,0,z,3997,1
 
 [view-settings,view=0,item:resumo.tex]
 CursorColumn=52
