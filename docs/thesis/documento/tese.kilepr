@@ -153,7 +153,7 @@ Mode=LaTeX
 ReadWrite=true
 
 [document-settings,item:mudccp.tex]
-Bookmarks=3887,4022,3893,4029,4030,3898,4035,3903,4039,4040,4041,3840,4045,4046,4047,4049,4050,4051,3851,4052,4053,3987,4055,4056,3923,4057,4059,3992,3994,3929,3997,3999,3935,3868,4003,4004,3939,3805,4009,4012,4014,3881,4015,4018,4019
+Bookmarks=3998,4072,3962,4110,3926,4114,4115,4004,3968,4120,4121,3973,4010,4122,4087,4124,4014,4125,4089,3978,3943,4094,4132,4097,4134,4062,3915,3880,4067,4104,3956,4069
 Encoding=ISO-8859-1
 FoldedColumns=
 FoldedLines=
@@ -264,10 +264,10 @@ order=7
 
 [item:biblio-phd.bib]
 archive=true
-column=16
+column=15
 encoding=ISO-8859-1
 highlight=BibTeX
-line=1405
+line=1395
 mode=BibTeX
 open=true
 order=4
@@ -344,10 +344,10 @@ order=1
 
 [item:mudccp.tex]
 archive=true
-column=17
+column=0
 encoding=ISO-8859-1
 highlight=LaTeX
-line=2871
+line=3133
 mode=LaTeX
 open=true
 order=5
@@ -377,7 +377,7 @@ archive=true
 column=0
 encoding=ISO-8859-1
 highlight=LaTeX
-line=0
+line=222
 mode=LaTeX
 open=true
 order=0
@@ -437,8 +437,8 @@ JumpList=
 ViMarks=
 
 [view-settings,view=0,item:biblio-phd.bib]
-CursorColumn=16
-CursorLine=1405
+CursorColumn=15
+CursorLine=1395
 JumpList=
 ViMarks=
 
@@ -483,10 +483,10 @@ JumpList=
 ViMarks=
 
 [view-settings,view=0,item:mudccp.tex]
-CursorColumn=17
-CursorLine=2871
+CursorColumn=0
+CursorLine=3133
 JumpList=
-ViMarks=a,4059,45,b,4057,50,c,4049,75,d,4051,71,e,4049,75,f,4056,0,g,3997,1,h,4004,45,i,4003,8,j,4049,75,k,3997,1,l,4059,45,m,4049,75,n,4039,0,o,3997,1,p,3997,1,q,4050,0,r,3997,1,s,3997,1,t,4040,0,u,3997,1,v,4047,0,w,3997,1,x,4019,0,y,4022,0,z,3997,1
+ViMarks=a,4134,45,b,4132,50,c,4124,75,d,4126,71,e,4124,75,f,4131,0,g,4072,1,h,4079,45,i,4078,8,j,4124,75,k,4072,1,l,4134,45,m,4124,75,n,4114,0,o,4072,1,p,4072,1,q,4125,0,r,4072,1,s,4072,1,t,4115,0,u,4072,1,v,4122,0,w,4072,1,x,4094,0,y,4097,0,z,4072,1
 
 [view-settings,view=0,item:resumo.tex]
 CursorColumn=52
@@ -502,7 +502,7 @@ ViMarks=
 
 [view-settings,view=0,item:tese-leandrosales.tex]
 CursorColumn=0
-CursorLine=0
+CursorLine=222
 JumpList=
 ViMarks=
 

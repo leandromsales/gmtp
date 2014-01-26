@@ -855,9 +855,13 @@ grafos~\cite{Jonathan2003,Seroul2000,Courant1996,Devlin1979}.
 \newcommand{\setways}{\setway\space}
 \newcommand{\setwayii}{v}
 \newcommand{\setwayiu}[1]{$\setwayc_{#1}$}
+\newcommand{\setwayiua}[2]{$\setwayc_{#1}^{#2}$}
+\newcommand{\setwayiuas}[2]{\setwayiua{#1}{#2}\space}
 \newcommand{\setwayius}[1]{\setwayiu{#1}\space}
 \newcommand{\setwayi}{\setwayiu{\setwayii}}
 \newcommand{\setwayis}{\setwayius{\setwayii}}
+\newcommand{\setwayia}{\setwayiua{\setwayii}{'}}
+\newcommand{\setwayias}{\setwayiuas{\setwayii}{'}}
 
 \newcommand{\setwayifu}[1]{$\setwayc^{\fullsymb}_{#1}$}
 \newcommand{\setwayifus}[1]{\setwayifu{#1}\space}
@@ -2869,24 +2873,14 @@ determinar que um nó \repasss desconecte de uma parceria com um outro nó
 \section{Controle de Congestionamento em \net}
 \label{sec:ccgmtp}
 
-No \mudccp, define-se dois algoritmos para controle de congestionamento, um
-para transmissões em modo unicast e outro para transmissões em modo
-multicast. Como ilustra-se na Figura~\ref{fig:ucc-mcc-esquema}, para a parte
-do algoritmo que funciona em modo unicast, dar-se o nome de \textit{\mudccps
-Unicast Congestion Control} (GMTP-UCC), ao passo que para a parte do algoritmo
-que funciona em modo multicast, dar-se o nome de \textit{\mudccps Multicast
-Congestion Control} (GMTP-MCC). Nesta seção, discute-se o funcionamento de cada
-um desses algoritmos.
-
-Na prática, definiu-se um algoritmo para controle de congestionamento híbrido,
+Na GMTP, executa-se um algoritmo para controle de congestionamento híbrido,
 cujo comportamento dependerá se o nó que o executa está transmitindo em modo
-unicast ou em multicast. Em modo de transmissão unicast, utilizado na
-comunicação entre os nós \repass, define-se a taxa de transmissão de um nó
-\mudccps através de uma versão modificada do protocolo RCP (Rate Control
-Protocol)~\cite{Dukkipati:2008:RCP:1368746}. Já em modo de transmissão
-multicast, executa-se um algoritmo baseado em relatórios (\textit{feedbacks})
-transmitidos pelos nós clientes \rel, eleitos em cada rede e controlados por um
-nó \repass, tal que \rels $\in$ \subsetcli$($\repass$)$.
+unicast ou em multicast. Como ilustra-se na Figura~\ref{fig:ucc-mcc-esquema},
+na prática, trata-se de dois algoritmos para controle de congestionamento, um
+que atual em transmissões unicast, chamado de \textit{\mudccps Unicast
+Congestion Control} (GMTP-UCC) e outro que atual em transmissões multicast,
+chamado de \textit{\mudccps Multicast Congestion Control} (GMTP-MCC). Nesta
+seção, discute-se o funcionamento de cada um desses algoritmos.
 
 \begin{figure}[htb!]
 \begin{center}
@@ -2896,6 +2890,14 @@ nó \repass, tal que \rels $\in$ \subsetcli$($\repass$)$.
 \caption{Organização do algoritmo de controle de congestionamento no \mudccp.}
 \label{fig:ucc-mcc-esquema}
 \end{figure}
+
+ Em modo de transmissão unicast, utilizado na
+comunicação entre os nós \repass, define-se a taxa de transmissão de um nó
+\mudccps através de uma versão modificada do protocolo RCP (Rate Control
+Protocol)~\cite{Dukkipati:2008:RCP:1368746}. Já em modo de transmissão
+multicast, executa-se um algoritmo baseado em relatórios (\textit{feedbacks})
+transmitidos pelos nós clientes \rel, eleitos em cada rede e controlados por um
+nó \repass, tal que \rels $\in$ \subsetcli$($\repass$)$.
 
 \subsection{Controle de Congestionamento Unicast}
 \label{subsec:mudccp-ucc}
@@ -2911,7 +2913,7 @@ seria $R_{ps}(t) = \frac{C}{N(t)}$, onde $C$ corresponde à capacidade do link e
 $N(t)$ ao número de fluxos no instante $t$.
 
 Partindo desse ponto, Nandita et. al\cite{Dukkipati:2008:RCP:1368746} argumenta
-que para um roteador funcionar de forma equânime, tal roteador deve oferecer a
+que para um roteador funcionar de forma equânime, este deve oferecer a
 mesma taxa de transmissão para todos os fluxos transmitidos através dele,
 mantendo-se o número de pacotes na fila de roteamento perto de zero, a fim de
 evitar que apenas os fluxos que tem pacotes na fila de repasse compartilhem a
@@ -2919,7 +2921,7 @@ largura de banda disponível. Com base nisso, Nandita et.
 al\cite{Dukkipati:2008:RCP:1368746} determinou a Equação~\ref{eq:cc-rcp-teoria},
 onde $R(t)$ é a taxa de transmissão que deve ser oferecida para cada fluxo de
 dados que passa pelo roteador. Pela Equação~\ref{eq:cc-rcp-teoria}, estima-se a
-largura de banda disponível em um determinado canal, representado pela porção
+largura de banda disponível em um determinado canal, representada pela porção
 $\alpha(C - y(t)) - \beta \frac{q(t)}{d_0}$ (mudança agregada) e a divide por
 $N(t)$. Porém, como é impossível determinar o valor exato de $N(t)$, estima-se
 $\hat{N}(t) = \frac{C}{R(t-T)}$ e para atualizar $R(t)$ com mais frequência do
@@ -2943,7 +2945,8 @@ resultando na Equação~\ref{eq:cc-rcp}, onde:
     \item $d_0$, é a média móvel dos valores de $RTT_{s}$, calculada através da
 Equação~\ref{eq:calcrtt-rcp}, onde $\theta$ é o ganho e corresponde a $0.02$.
 Note que quanto maior o valor de $\theta$, mais rápida será a convergência de
-$d_0$ ao valor de $RTT_{s}$.
+$d_0$ ao valor de $RTT_{s}$. $RTT_{s}$ é o tempo de ida e volta calculado na nó
+transmissor.
 
       \begin{equation}
       d_0 = \theta \times RTT_{s} + (1 - \theta) \times d_0
@@ -2951,7 +2954,7 @@ $d_0$ ao valor de $RTT_{s}$.
       \end{equation}
 
     \item $T = min(RTT_{user}$, $d_0)$, sendo $RTT_{user}$ um tempo definido
-pelo usuário (administrador do roteador) caso seja necessário atualizar $R(t)$
+pelo usuário (administrador do roteador), caso seja necessário atualizar $R(t)$
 mais rápido do que o tempo de $d_0$;
 
     \item $R(t - T)$, é a última taxa de transmissão medida;
@@ -2978,9 +2981,9 @@ No GMTP-UCC, o algoritmo para controle de congestionamento, adaptado do
 RCP, funciona da seguinte forma (acompanhe os passos de acordo com a
 Figura~\ref{fig:ccgmtp-interacao-1}):
 
-\begin{figure}[ht]
+\begin{figure}[htb!]
 \begin{center}
-\includegraphics[scale=0.8]{imgs/ccgmtp-interacao-1.pdf}
+\includegraphics[scale=0.75]{imgs/ccgmtp-interacao-1.pdf}
 \end{center}
 \vspace{-1cm}
 \caption{Cada \repasss mantém uma única taxa de transmissão $R(t)$ que é
@@ -2988,35 +2991,36 @@ atribuída em todos os pacotes de dados \pks no cabeçalho de qualquer pacote
 GMTP. A medida que o pacote passa através dos roteadores em um caminho \setwayi,
 se a taxa atual $R(t)$ no roteador for menor do que $R_{p}$ informado no pacote
 sendo processado, o roteador o sobrescreve com sua taxa atual $R(t)$. Quando o
-pacote alcançar o destino, o nó \serv utiliza $R_{p}$ para transmitir o fluxo de
-dados, pois trata-se da menor taxa de transmissão do roteador mais
-congestionado. Este procedimento se repete periodicamente utilizando os pacotes
-de dados \pac{GMTP-Data} e \pac{GMTP-Ack}.}
+pacote alcançar o nó \serv, este utiliza $R_{p}$ para transmitir o fluxo de
+dados, pois trata-se da taxa de transmissão do roteador mais congestionado no
+caminho \setwayi.}
 \label{fig:ccgmtp-interacao-1}
 \end{figure}
 
 \begin{enumerate}[{\tab}1$^{\circ}$]
 
-  \item Todo nó \repasss mantém uma única taxa de transmissão $R(t)$, que é
-oferecida para todos os fluxos de dados passando por \repasss em um certo
-instante $t$. Cada nó \repasss atualizada $R(t)$ aproximadamente a cada RTT.
+  \item Seja um caminho \setwayis, todo nó \ways mantém uma única taxa de
+transmissão $R(t)$, que é oferecida para todos os fluxos de dados passando por
+\ways em um certo instante $t$. Cada nó \ways atualiza $R(t)$
+aproximadamente a cada RTT.
   \label{step:rcp-gmtp-0}
 
-  \item Todo pacote GMTP carrega duas informações de controle (campo no
-cabeçalho):
+  \item Todo pacote GMTP carrega duas informações de controle no campo de
+cabeçalho:
   \label{step:rcp-gmtp-1}
   \begin{itemize}
 
-    \item \textit{taxa de transmissão proposta} ($R_{p}$):
-corresponde à taxa de transmissão necessária para transmitir um fluxo de dados
-\setpk, em geral, calculada pelo nó \serv;
+    \item \textit{taxa de transmissão proposta} ($R_{p}$): corresponde à taxa de
+transmissão do roteador com menor capacidade de transmissão em um instante
+\textit{t};
 
     \item \textit{RTT na fonte} ($RTT_{s}$): corresponde ao RTT
 estimado entre quaisquer nós \transu{\transi},\transu{\transi+1} $\in$
 \setwayi, ou seja, o RTT entre dois nós \transu{\transi} e \transu{\transi+1}
 que processam o respectivo pacote \pks de um fluxo de dados \setpk, a fim de
 repassar aos seus nós \clis $\in$ $($\subsetcli(\trans) $\cup$
-\subsetcli(\transu{\transi+1})$)$.
+\subsetcli(\transu{\transi+1})$)$. Apesar de uma mudança suscinta, este aspecto
+diferencia o GMTP-UCC do RCP e este assunto será retomado a seguir.
 
 %     \item \textit{Diferença de RTT} (RTT$_{d}$): corresponde à diferença entre
 % RTT$_{s}$ e o RTT medido entre dois nós \way. Por exemplo, seja um
@@ -3039,38 +3043,42 @@ repassar aos seus nós \clis $\in$ $($\subsetcli(\trans) $\cup$
 
   \end{itemize}
 
-  \item No início de uma transmissão de um fluxo de dados \setpk, o nó \clis
-transmite um pacote \pks com o valor de $R_{p} = \infty$ em direção a \serv.
+  \item No início da transmissão de um fluxo de dados \setpk, o nó \way,
+motivado por um ou mais nós \clis $\in$ \subsetcli$($\way$)$, transmite um
+pacote \pks com o valor de $R_{p} = \infty$ em direção a \serv.
   \label{step:rcp-gmtp-2}
 
-  \item Todo nó \ways = \repasss que receber um pacote \pk, se $R(t) <
-R_{p}$, então $R_{p} \leftarrow R(t)$, caso contrário nenhuma
-modificação é realizada nesse campo. Nesse ínterim, se existir pelo menos um nó
-\clis $\in$ \subsetcli$($\way$)$ interessado em obter os pacotes \pks $\in$
-\setpks (Seção~\ref{subsec:conexao-requisicao}), \ways executa as seguintes
-ações:
+  \item Todo nó \way, ao receber um pacote \pk, verifica se $R(t) < R_{p}$, em
+caso afirmativo, então $R_{p} \leftarrow R(t)$, caso contrário nenhuma
+modificação é realizada nesse campo. Nesse ínterim, se \transmitqu{\way}
+$=$ $1$, \ways também executa as seguintes ações:
   \label{step:rcp-gmtp-3}
 
   \begin{enumerate}
 
-    \item repassa \pks para seus nós \clis em modo multicast
-(Seção~\ref{subsec:trocdados});
+    \item repassa \pks para seus nós \clis em modo multicast, como discutiu-se
+na Seção~\ref{subsec:trocdados};
 
-    \item cria um pacote \pac{GMTP-Ack} contendo $R_{p}$ e o envia de volta
-para seu nó parceiro \repassu{q} $=$ \wayu{\wayi-1}. O pacote \pac{GMTP-Ack}
-também carrega um campo de $RTT_{s}$. Quando \ways receber um pacote
-\pac{GMTP-Ack}, deve-se utilizar $RTT_{s}$ para atualizar a média móvel do RTT
-no intervalo de $d_0$ (Equação~\ref{eq:calcrtt-rcp}).
+    \item utilizar $RTT_{s}$, presente no pacote \pk, para atualizar a média
+móvel do RTT no intervalo de $d_0$ (Equação~\ref{eq:calcrtt-rcp}) e assim
+utilizar para atualizar $R(t)$;
+
+    \item cria um pacote \pac{GMTP-Ack} contendo $R_{p}$ e o envia em direção a
+\serv.
 
   \end{enumerate}
 
-  \item O nó \ways deve usar $R_{p}$ como a nova taxa de transmissão para
-enviar os próximos pacotes de dados \pks para seu nó parceiro \repassu{q} $=$
-\wayu{\wayi+1}. Assim, $R_{p}$ é a menor taxa de transmissão oferecida ao
-longo do caminho \setwayis no intervalo de $RTT_{s}$.
+  \item O nó \transs deve usar $R_{p}$ como a nova taxa de transmissão para
+enviar os próximos pacotes de dados \pks para seu nó parceiro
+\transu{\transi+1}. Assim, $R_{p}$ é a menor taxa de transmissão oferecida ao
+longo do sub-caminho \setwayias $\subset$ \setwayi, tal que \setwayias $=$
+$\{$\trans, ..., \transu{\transi+1}$\}$.
 
-  \item Todo nó \repasss atualiza periodicamente sua taxa de transmissão local
-$R(t)$ de acordo com a Equação~\ref{eq:cc-rcp}.
+  \item Todo nó \repasss atualiza sua taxa de transmissão local $R(t)$ de acordo
+com a Equação~\ref{eq:cc-rcp}, no intervalo de tempo correspondente a $d_0$.
+
+  \item Ao receber um pacote contendo $R_{p}$, o nó \servs ajusta sua taxa
+de transmissão para o valor de $R_{p}$.
 
 \end{enumerate}
 
@@ -3078,15 +3086,21 @@ Sendo assim, no caso do GMTP, a ideia básica é a seguinte: para quaisquer
 dois nós \transu{1},\transu{2} $\in$ \setwayi, a taxa de transmissão a ser
 utilizada por \transu{1} e \transu{2} será definida pela menor taxa de
 transmissão oferecida pelos nós \ways $\in$ \setwayis posicionados entre
-\transu{1} e \transu{2}. Com isto, se existir largura de banda disponível entre
-\transu{1} e \transu{2}, ou seja, $C - y(t) > 0$, então o GMTP compartilhará
-igualmente o canal entre todos os fluxos, inclusive para o fluxo entre
-\transu{1} e \transu{2}. Caso contrário, ou seja, se $C - y(t) < 0$,
-considera-se o canal saturado e o GMTP reduzirá a taxa de transmissão igualmente
-para todos os fluxos, inclusive para o fluxo entre \transu{1} e \transu{2}.
-Especificamente, a largura de banda necessária para repassar todos os pacotes
-\pks $\in$ \setpks que estão na fila de roteamento no intervalo de um RTT
-corresponde à $\frac{q(t)}{d_0}$~\cite{Dukkipati:2005:PSF:2103175.2103204}.
+\transu{1} e \transu{2}. Isto significa que o GMTP-UCC segmenta um caminho
+\setwayi em vários sub-caminhos \setwayia. Com isto, se existir largura de banda
+disponível entre \transu{1} e \transu{2}, ou seja, $C - y(t) > 0$, então o
+GMTP-UCC compartilhará igualmente o canal entre todos os fluxos, inclusive para
+o fluxo entre \transu{1} e \transu{2}. Caso contrário, ou seja, se $C - y(t) <
+0$, considera-se o canal saturado e o GMTP-UCC reduzirá a taxa de transmissão
+igualmente para todos os fluxos, inclusive para o fluxo entre \transu{1} e
+\transu{2}. Por este motivo, o tempo $d_0$ é definido entre dois nós \transs e
+\transu{\transi+1} contidos em um caminho \setwayi. A consequência dessa
+estratégia de segmentar um caminho é muito importante e por esse motivo o
+GMTP-UCC é relativamente diferente se comparado ao RCP.
+
+% Especificamente, a largura de banda necessária para repassar todos
+% os pacotes \pks $\in$ \setpks que estão na fila de roteamento no intervalo de um
+% RTT corresponde à $\frac{q(t)}{d_0}$~\cite{Dukkipati:2005:PSF:2103175.2103204}.
 
 % \subsubsection{Diferença entre o RCP e o GMTP-UCC}
 %
@@ -3121,35 +3135,67 @@ corresponde à $\frac{q(t)}{d_0}$~\cite{Dukkipati:2005:PSF:2103175.2103204}.
 % \repassu{2}, a condição $\mid$\subsetcli$($\repassu{1})$\mid$ $>$ $0$ é
 % satisfeita para um fluxo de dados \setpk.
 
-\subsubsection{Segmentação de um caminho \setwayi e definição de $d_0$:}
+\subsubsection{Segmentação de um caminho \setwayi:}
 
-Falar do problema de usar o RCP (end-to-end pode ser um problema) e o GMTP
-segmenta isso
+O RCP considera todo o caminho entre o nó transmissor e o nó receptor para
+determinar o novo valor da taxa de transmissão do nó transmissor, que estará
+disponível em $R_{p}$. Porém, essa estratégia pode limitar alguns nós de
+receberem os pacotes de dados \pks $\in$ \setpks em uma taxa maior, quando
+disponível. Por exemplo, observe o cenário ilustrado na
+Figura~\ref{fig:ccgmtp-interacao-2}, abstraindo-se os nós clientes. Nesse
+cenário, observa-se um caminho \setwayi $=$ $\{$\transu{1}, \wayu{2},
+\transu{3}, \wayu{4}$\}$. Isto significa que existem nós \clis $\in$
+$($\subsetcli(\transu{1}) $\cup$ \subsetcli(\transu{3})$)$ recebendo os
+pacotes de dados \pk. Ao utilizar apenas o RCP, o nó \servs transmitirar
+pacotes de dados \pks a uma taxa de transmissão de \ut{1}{Mb/s} tanto para os
+nós \clis $\in$ \subsetcli(\transu{1}) quanto para os nós \clis $\in$
+\subsetcli(\transu{3}). Ora, isso faz sentido apenas para os nós \clis $\in$
+\subsetcli(\transu{1}) e não para os nós \clis $\in$ \subsetcli(\transu{3}),
+visto que em \transu{3} o valor de $R(t)$ é igual a \ut{4}{Mb/s} e o nó
+\wayu{4} não limita o uso dessa taxa de transmissão para os nós \clis $\in$
+\subsetcli(\transu{3}), já que corresponde a \ut{8}{Mb/s}.
 
-que, no caso do GMTP, não é definido entre o nó \servs
-e o nó \cli, como na versão original do RCP. Em vez disso, o tempo $d_0$ é
-definido entre dois nós \repasss e \repassu{q} parceiros entre si contidos em um
-caminho \setwayi, tal que \transmitqu{\repass} $=$ $1$ e
-\transmitqu{\repassu{q}} $=$ $1$.
+\begin{figure}[htb!]
+\begin{center}
+\includegraphics[scale=0.75]{imgs/ccgmtp-interacao-2.pdf}
+\end{center}
+\vspace{-1cm}
+\caption{O RCP utiliza uma abordagem fim-a-fim para determinar a taxa de
+transmissão, porém isto pode limitar alguns nós clientes a receberem em uma
+taxa maior.}
+\label{fig:ccgmtp-interacao-2}
+\end{figure}
 
-COLOCAR O CAMPO RTT? ISSO AJUDARÁ MUITO E SEGMENTARÁ O CAMINHO, EVITANDO-SE QUE
-A TRANSMISSÃO DE UM FLUXO NÃO SEJA DEGRADADA POR UM NÓ EM GARGALO QUE
-ESPECIFICARÁ UMA VELOCIDADE DE TAXA DE TRANSMISSÃO MENOR DO QUE SUPORTADO POR
-UM CAMINHO MAIS PRÓXIMO DO SERVIDOR:
+No caso do GMTP-UCC, esta limitação foi superada ao determinar que se
+\transmitqu{\way} $=$ $1$, ou seja, \way $=$ \transs $\in$ \settrans, então a
+taxa de transmissão informada em $R_{p}$ será utilizada por \way, porém não
+será considerada para determinar a taxa de transmissão do próximo nó
+\transu{\transi+1}. Por isso, o GMTP-UCC segmenta o caminho \setwayi de acordo
+com a menor taxa de transmissão entre dois nós \transs e \transu{\transi+1}.
+Como resultado dessa estratégia adotada no GMTP-UCC, o cenário ilustrado na
+Figura~\ref{fig:ccgmtp-interacao-2} pode ser atualizado e ilustrado na
+Figura~\ref{fig:ccgmtp-interacao-3}.
 
-S1 R1 R2 R3 R4 R5 (COMO O GMTP USA O RCP, SE R1,R5 RECEBEM P, O USO DO RCP PURO
-IMPACTARIA QUE A TAXA DE TRANSMISSÃO DE R1 SERIA GOVERNADA POR R5. GUARDANDO
-TAMBÉM, PODE-SE TER TX INFLUENCIADA APENAS PELOS NÓS DO SUBCAMINHO.)
+\begin{figure}[htb!]
+\begin{center}
+\includegraphics[scale=0.75]{imgs/ccgmtp-interacao-3.pdf}
+\end{center}
+\vspace{-1cm}
+\caption{O GMTP-UCC segmenta o caminho e dessa forma não limita a taxa de
+transmissão de um fluxo de dados para certos nós clientes.}
+\label{fig:ccgmtp-interacao-3}
+\end{figure}
+
+\subsubsection{Ordenação dos melhores caminhos com base em $R(t)$:}
+
+LEMBRAR DE MENCIONAR O ITEM QUE PRIORIZA ISSO, FASE 3 DE CONEXÃO
 
 \subsubsection{Diferença entre o GMTP-UCC e o RCP:}
 
 - quem inicia é o cliente, não o servidor
 - segmentação do caminho
 - o cliente sabe a qual taxa os pacotes irão chegar (pode adaptar fluxo)
-
-\subsubsection{Ordenação dos melhores caminhos com base em $R(t)$:}
-
-LEMBRAR DE MENCIONAR O ITEM QUE PRIORIZA ISSO, FASE 3 DE CONEXÃO
+- sugestão de caminhos com base na capacidade de transmissão
 
 \subsubsection{Escolha do algoritmo RCP em detrimento ao TCP e ao XCP:}
 
