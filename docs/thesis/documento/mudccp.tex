@@ -1380,7 +1380,7 @@ receive the flow \setpk, so notify \serv.}
       \If() {\textbf{not} \isWaitingRegisterReply{\setpk}} {
 	\isWaitingRegisterReply{\setpk, true}\;
 	\sendPktRdt{\GMTPRegister{\serv, \setpk}}\;
-	\Return{0}\;
+% 	\Return{0}\;
       }
       \tcc{Ask \subsetcli$($\repass$)$ to wait registration reply for \setpk.}
       \respondToClients{\GMTPRequestReply{\setpk}}\;
@@ -3138,22 +3138,22 @@ GMTP-UCC é relativamente diferente se comparado ao RCP.
 \subsubsection{Segmentação de um caminho \setwayi:}
 
 O RCP considera todo o caminho entre o nó transmissor e o nó receptor para
-determinar o novo valor da taxa de transmissão do nó transmissor, que estará
-disponível em $R_{p}$. Porém, essa estratégia pode limitar alguns nós de
-receberem os pacotes de dados \pks $\in$ \setpks em uma taxa maior, quando
-disponível. Por exemplo, observe o cenário ilustrado na
-Figura~\ref{fig:ccgmtp-interacao-2}, abstraindo-se os nós clientes. Nesse
-cenário, observa-se um caminho \setwayi $=$ $\{$\transu{1}, \wayu{2},
-\transu{3}, \wayu{4}$\}$. Isto significa que existem nós \clis $\in$
-$($\subsetcli(\transu{1}) $\cup$ \subsetcli(\transu{3})$)$ recebendo os
-pacotes de dados \pk. Ao utilizar apenas o RCP, o nó \servs transmitirar
-pacotes de dados \pks a uma taxa de transmissão de \ut{1}{Mb/s} tanto para os
-nós \clis $\in$ \subsetcli(\transu{1}) quanto para os nós \clis $\in$
-\subsetcli(\transu{3}). Ora, isso faz sentido apenas para os nós \clis $\in$
-\subsetcli(\transu{1}) e não para os nós \clis $\in$ \subsetcli(\transu{3}),
-visto que em \transu{3} o valor de $R(t)$ é igual a \ut{4}{Mb/s} e o nó
-\wayu{4} não limita o uso dessa taxa de transmissão para os nós \clis $\in$
-\subsetcli(\transu{3}), já que corresponde a \ut{8}{Mb/s}.
+determinar o novo valor da taxa de transmissão do nó transmissor, especificado
+em $R_{p}$. Porém, essa estratégia pode limitar alguns nós de receberem os
+pacotes de dados \pks $\in$ \setpks em uma taxa maior, quando disponível. Por
+exemplo, observe o cenário ilustrado na Figura~\ref{fig:ccgmtp-interacao-2},
+abstraindo-se os nós clientes. Nesse cenário, observa-se um caminho \setwayi $=$
+$\{$\transu{1}, \wayu{2}, \transu{3}, \wayu{4}$\}$. Isto significa que existem
+nós \clis $\in$ $($\subsetcli(\transu{1}) $\cup$ \subsetcli(\transu{3})$)$
+recebendo os pacotes de dados \pk. Ao utilizar apenas o RCP, o nó \servs
+transmitirá pacotes de dados \pks a uma taxa de transmissão de \ut{1}{Mb/s}
+tanto para os nós \clis $\in$ \subsetcli(\transu{1}) quanto para os nós \clis
+$\in$ \subsetcli(\transu{3}). Ora, isso faz sentido apenas para os nós \clis
+$\in$ \subsetcli(\transu{1}) e não para os nós \clis $\in$
+\subsetcli(\transu{3}), visto que em \transu{3} o valor de $R(t)$ é igual a
+\ut{4}{Mb/s} e o nó \wayu{4} não limita o uso dessa taxa de transmissão para os
+nós \clis $\in$ \subsetcli(\transu{3}), já que neste o valor de $R(t)$
+corresponde a \ut{8}{Mb/s}.
 
 \begin{figure}[htb!]
 \begin{center}
@@ -3161,8 +3161,8 @@ visto que em \transu{3} o valor de $R(t)$ é igual a \ut{4}{Mb/s} e o nó
 \end{center}
 \vspace{-1cm}
 \caption{O RCP utiliza uma abordagem fim-a-fim para determinar a taxa de
-transmissão, porém isto pode limitar alguns nós clientes a receberem em uma
-taxa maior.}
+transmissão, porém isto pode limitar alguns nós clientes a receberem os pacotes
+de dados em uma taxa maior.}
 \label{fig:ccgmtp-interacao-2}
 \end{figure}
 
@@ -3172,9 +3172,16 @@ taxa de transmissão informada em $R_{p}$ será utilizada por \way, porém não
 será considerada para determinar a taxa de transmissão do próximo nó
 \transu{\transi+1}. Por isso, o GMTP-UCC segmenta o caminho \setwayi de acordo
 com a menor taxa de transmissão entre dois nós \transs e \transu{\transi+1}.
-Como resultado dessa estratégia adotada no GMTP-UCC, o cenário ilustrado na
-Figura~\ref{fig:ccgmtp-interacao-2} pode ser atualizado e ilustrado na
-Figura~\ref{fig:ccgmtp-interacao-3}.
+Considerando o mesmo exemplo ilustrado na Figura~\ref{fig:ccgmtp-interacao-2},
+mas adotando essa estratégia de segmentar o caminho \setwayi, tal cenário
+corresponde ao ilustrado na Figura~\ref{fig:ccgmtp-interacao-3}. Note que no
+sub-caminho \setwayiua{1}{'} $=$ $\{$\transu{1}, \wayu{2}, \transu{3}$\}$ a
+taxa de transmissão de \transu{3} em direção a \transu{1} será de \ut{1}{Mb/s},
+ao passo que no sub-caminho \setwayiua{2}{'} $=$ $\{$\transu{3}, \wayu{4},
+\servu{1}$\}$ será de \ut{4}{Mb/s}. Sendo assim, os nós \clis $\in$
+\subsetcli(\transu{1}) receberão o fluxo de dados \setpks em uma taxa de
+\ut{1}{Mb/s}, ao passo que os nós \clis $\in$ \subsetcli(\transu{3}) receberam
+a uma taxa de \ut{4}{Mb/s}.
 
 \begin{figure}[htb!]
 \begin{center}
@@ -3182,26 +3189,26 @@ Figura~\ref{fig:ccgmtp-interacao-3}.
 \end{center}
 \vspace{-1cm}
 \caption{O GMTP-UCC segmenta o caminho e dessa forma não limita a taxa de
-transmissão de um fluxo de dados para certos nós clientes.}
+transmissão de um fluxo de dados para certos nós capazes de receber em uma
+taxa de transmissão maior.}
 \label{fig:ccgmtp-interacao-3}
 \end{figure}
 
 \subsubsection{Ordenação dos melhores caminhos com base em $R(t)$:}
 
-LEMBRAR DE MENCIONAR O ITEM QUE PRIORIZA ISSO, FASE 3 DE CONEXÃO
-
-\subsubsection{Diferença entre o GMTP-UCC e o RCP:}
-
-- quem inicia é o cliente, não o servidor
-- segmentação do caminho
-- o cliente sabe a qual taxa os pacotes irão chegar (pode adaptar fluxo)
-- sugestão de caminhos com base na capacidade de transmissão
+Na Seção~\ref{subsec:phase3}, discutiu-se a Fase 3 de conexão do GMTP, que
+permite um nó \servs sugerir possíveis nós \repassu{q} como candidatos a
+parceiros de um nó solicitante \repass. Um dos critérios para sugerir nós
+parceiros \repassu{q} é priorizar nós \repassu{q} que fazem parte de um
+caminho \setwayis com maiores capacidade de transmissão. No GMTP isto é possível
+porque os nós \servs conhecem a capacidade de transmissão de todo o caminho,
+inclusive os pontos de congestionamento, como explicado anteriormente. Sendo
+assim, dependendo da posição de um nó solicitante \repasss em um caminho
+\setwayi, o nó \servs determina os parceiros \repassu{q} e sugere ao nó \repasss
+através de um algoritmo simples de intersecção de caminhos, utilizando como
+custo a capacidade de transmissão dos caminhos conhecidos \setway.
 
 \subsubsection{Escolha do algoritmo RCP em detrimento ao TCP e ao XCP:}
-
-Essa seção foi escrita com base na
-referência~\cite{Dukkipati:2005:PSF:2103175.2103204}, incluindo seus gráficos,
-que foram extraídos da mesma referência.
 
 A motivação para o RCP é identificar um algoritmo para controle de
 congestionamento simples e prático para emular um PS independente da
@@ -3210,8 +3217,8 @@ diferente se comparada ao TCP e ao XCP. No RCP, em vez de monitorar a mudança de
 uma janela deslizante a cada tempo de RTT, busca-se determinar se existe uma
 taxa de transmissão a qual o roteador pode oferecer para todos os fluxos de
 modo a emular um PS, sem manter estado e nem filas por fluxo de dados, tampouco
-computação por cada pacote no roteador. Tanto o RCP quanto o XCP~\cite{REF} são
-os protocolos mais conhecidos do estado da arte que tentam emular um PS e, por
+computação por cada pacote no roteador. Tanto o RCP quanto o XCP são os
+protocolos mais conhecidos do estado da arte que tentam emular um PS e, por
 este motivo, suas equações de controle de congestionamento são similares. Porém,
 o modo que o RCP e o XCP tentam convergir suas respectivas taxas de transmissão
 $R_{rcp}(t)$ e $R_{xcp}(t)$ é bastante diferente, alocando-se tais taxas para
@@ -3264,7 +3271,8 @@ Ambos os gráficos são resultados de simulações com chegada de fluxo em Poisson e
 tamanhos do fluxo em distribuição Pareto com média de 30 pacotes (1000
 \ut{bytes}{pacote}), shape igual a $1.4$, capacidade do link igual a
 \ut{2.4}{Gbps} e RTT igual a \ut{100}{ms}, com carga ofertada igual a $0.9$. Os
-valores de PS foram calculados a partir de expressões analíticas.}
+valores de PS foram calculados a partir de expressões analíticas. Extraído
+de~\cite{Dukkipati:2005:PSF:2103175.2103204}.}
 \label{fig:xcp-vs-tcp-vs-ps}
 \end{figure}
 
@@ -3315,7 +3323,8 @@ utilizar os protocolos XCP, TCP e RCP como resultados de simulações com taxa de
 entrada de dados em Poisson e tamanhos do fluxo em distribuição Pareto com média
 de 25 pacotes (1000 \ut{bytes}{pacote}), shape igual a $1.2$, capacidade do link
 igual a \ut{2.4}{Gbps} e RTT igual a \ut{100}{ms}, com carga ofertada igual a
-$0.9$. Os valores de PS foram calculados a partir de expressões analíticas.}
+$0.9$. Os valores de PS foram calculados a partir de expressões analíticas.
+Extraído de~\cite{Dukkipati:2005:PSF:2103175.2103204}.}
 %  Os fluxos foram
 % injetados na rede com base na distribuição pareto, com E[L] = \ut{25}{pacotes} e
 % shape = 1.2.
@@ -3508,16 +3517,17 @@ determinar uma taxa de transmissão equânime entre os fluxos de dados
 transmitidos pelo GMTP e por outros protocolos, como o TCP, porém
 em modo de transmissão multicast. No caso GMTP-MCC, trata-se de um algoritmo
 responsável pelo controle de congestionamento em uma rede local constituída por
-\net$_{sub}$ = \repasss $\cup$ \subsetcli(\repass). Na prática, os nós da rede
-\net$_{sub}$ formam um grupo multicast para a transmissão e recepção de um ou
+\net$_{local}$ = \repasss $\cup$ \subsetcli(\repass). Na prática, os nós da rede
+\net$_{local}$ formam um grupo multicast para a transmissão e recepção de um ou
 mais fluxos de dados \setpk, onde o nó \repasss sempre será o transmissor e os
 nós \clis $\in$ \subsetcli(\repass) os receptores. A estratégia é que o
-valor da taxa de transmissão para um fluxo de dados \setpks seja tão próximo ao
-valor da taxa de transmissão que o fluxo TCP utilizaria caso fosse
-transmitido na rede, portanto um algoritmo \textit{TCP-Friendly}. Um fluxo de
-dados é considerado \textit{TCP-Friendly} quando este não degrada a taxa de
-transmissão de um fluxo de dados TCP mais do que outro fluxo TCP degradaria
-se começasse a ser transmitido na rede.
+valor a ser utilizado pelo GMTP-MCC para a taxa de transmissão de fluxo de dados
+\setpks seja tão próximo ao valor da taxa de transmissão que o TCP usaria
+se este fosse utilizado para transmitir \setpk, tornando-se o GMTP-MCC um
+algoritmo \textit{TCP-Friendly}. Um fluxo de dados é considerado
+\textit{TCP-Friendly} quando este não degrada a taxa de transmissão de um fluxo
+de dados TCP mais do que outro fluxo TCP degradaria se começasse a ser
+transmitido na rede.
 
 O \mudccp-MCC foi inspirado em um protocolo publicado pela IETF chamado
 \textit{TCP-friendly Rate Control protocol (TFRC)} (RFC 3448~\cite{RFC3448}). O
@@ -3530,35 +3540,36 @@ conexão, como acontece no TCP. No TFRC, o receptor envia para o transmissor
 relatórios sobre as perdas observadas e, com base nesse relatório, o transmissor
 calcula a nova taxa de transmissão. O TFRC é categorizado com um protocolo
 de controle de congestionamento baseado em uma equação matemática
-(\textit{Equation Based Congestion Control}). Algoritmos desse tipo são adotados
-em diversos protocolos, como é o caso dos CCIDs 3 e 4 do
-DCCP~\cite{RFC4341,RFC4342}. Em linhas gerais, o algoritmo TFRC funciona da
-seguinte forma:
+(\textit{Equation Based Congestion Control}) e algoritmos desse tipo são
+adotados em diversos protocolos, como no CCIDs 3 e 4 do
+DCCP~\cite{RFC4341,RFC4342}. Em resumo, o algoritmo TFRC funciona da seguinte
+forma:
 
 \begin{enumerate}[{\tab}1$^{\circ}$]
- \item o receptor mede a taxa de perda de pacotes e envia essa informação para o
-transmissor;
- \item o transmissor usa esse relatório para medir o RTT até o
+ \item o receptor mede a taxa de perda de pacotes e a envia para o
+nó transmissor;
+ \item o nó transmissor usa esse relatório para medir o RTT até o
 receptor;
- \item o transmissor utiliza a Equação~\ref{eq:trfcmudccp} para determinar qual
-será a sua próxima taxa de transmissão em função do relatório de perdas e o
-RTT obtidos anteriormente;
- \item o transmissor então ajusta sua taxa de transmissão para o valor
+ \item o nó transmissor utiliza a Equação~\ref{eq:trfcmudccp} para determinar
+qual será a sua próxima taxa de transmissão em função do relatório de perdas e o
+RTT obtidos;
+ \item o nó transmissor ajusta sua taxa de transmissão para o valor
 calculado no passo anterior.
 \end{enumerate}
 
 \begin{equation}
-R(p) = \frac{s}{RTT \times \left(\sqrt{\frac{2 \times p}{3}} + \left(12 \times
+R(s,p) = \frac{s}{RTT \times \left(\sqrt{\frac{2 \times p}{3}} + \left(12 \times
 \sqrt{\frac{3 \times p}{8}}\right) \times p \times (1 + 32 \times p^2)\right)}
 \label{eq:trfcmudccp}
 \end{equation}
 
 \vspace{0.5cm}
 
-Na Equação~\ref{eq:trfcmudccp}~\cite{Padhye98model}, $T$ é a taxa de transmissão
-medida em bytes/segundo definida em função de \textit{s}, que é o tamanho do
-pacote medido em bytes; $RTT$, é o RTT entre o nó transmissor e o receptor,
-medido em segundos e $p$, a taxa de perda de pacotes observado pelo nó receptor.
+Na Equação~\ref{eq:trfcmudccp}~\cite{Padhye98model}, $R(s,p)$ é a taxa de
+transmissão medida em bytes/segundo definida em função de \textit{s}, que é o
+tamanho do pacote medido em bytes e $p$, que corresponde a taxa de perda de
+pacotes observado pelo nó receptor; $RTT$ é o tempo de ida-volta entre o nó
+transmissor e o receptor, medido em segundos.
 
 Apesar de ser uma estratégia interessante e funcionar em conexões unicast, em
 transmissões multicast o algoritmo descrito anteriormente não é eficiente. O
@@ -3570,7 +3581,7 @@ tempo hábil.
 
 Nesse contexto, para evitar o problema da \textit{explosão de retorno},
 determinou-se que apenas alguns nós \clis são obrigados a enviar tais
-relatórios ao nó \repass. Estes nós são chamados de nós GMTP Relatores e
+relatórios ao nó \repass. Estes nós são chamados de nós relatores e
 representados por \rel. No GMTP-MCC, a versão original do TFRC foi alterada e
 funciona da segunte forma:
 
@@ -3581,16 +3592,16 @@ $\in$ \subsetcli(\repass). Na Seção~\ref{subsec:electrelsreps}, descreve-se o
 procedimento para eleger os nós \rel.
 
   \item Os nós \rels calculam a taxa de transmissão utilizando a
-Equação~\ref{eq:trfcmudccp}, ao invés do transmissor realizar este cálculo,
+Equação~\ref{eq:trfcmudccp}, em vez do transmissor realizar este cálculo,
 como na versão original do TFRC;
   \label{step:gmtp-mcc2}
 
   \item Os nós \rels determinam a taxa de eventos de perda, e não todos os
 receptores do grupo multicast. Para calcular o evento de perda $p$, utiliza-se
-o mesmo procedimento feito pelo TFRC~\cite{RFC3448,Padhye98model}, onde um
-intervalo de perda é determinado por consecutivas perdas de pacotes, desde do
-primeiro pacote perdido até o último pacote perdido, seguido de um pacote
-recebido com sucesso;
+o mesmo procedimento feito pelo TFRC, onde um intervalo de perda é determinado
+por consecutivas perdas de pacotes, desde do primeiro pacote perdido até o
+último pacote perdido, seguido de um pacote recebido com
+sucesso~\cite{RFC3448,Padhye98model};
 
   \item O RTT é calculado entre o nó \rels e o nó \repass, com o temporizador
 controlado pelos nós \rels e não pelo nó \repass. Isto evita que o nó \repasss
@@ -3598,7 +3609,8 @@ tenha que manter estado de temporizador para cada fluxo de dados \setpks
 transmitido para os nós \clis $\in$ \subsetcli(\repass). Para determinar o valor
 do parâmetro RTT e calcular a taxa de transmissão através da
 Equação~\ref{eq:trfcmudccp}, o GMTP-MCC utiliza a
-Equação~\ref{eq:calcrtt-rcp}, com $\theta = 0.25$, padrão do TCP;
+Equação~\ref{eq:calcrtt-rcp}, que também é utilizada no GMTP-UCC, porém com
+$\theta = 0.25$, valor igual ao utilizado no TCP e no DCCP;
 
   \item A taxa de transmissão a ser utilizada pelo nó \repasss é a média
 aritmética de todas as taxas enviadas pelos nós \rel;
@@ -3608,7 +3620,7 @@ intervalo igual ao RTT ou quando um intervalo de perda $p$ é determinado.
 
 \end{enumerate}
 
-Teoricamente, o GMTP-MCC seria um protocolo \textit{TCP-Friendly} se $R(RTT, p)$
+Teoricamente, o GMTP-MCC seria um protocolo \textit{TCP-Friendly} se $R(s,p)$
 fosse o valor máximo entre as taxas de transmissão relatadas pelos nós \rel.
 Porém, optou-se por utilizar a média aritimética dos valores relatados pelos
 nós \rels porque, na prática, diversos fatores podem alterar o estado da rede no
@@ -3624,12 +3636,12 @@ conexão GMTP, pois não se sabe o valor para inicial para RTT até o final do
 processo de estabelecimento de uma conexão. Nesse caso, deve-se utilizar um
 valor consideravelmente alto para evitar taxas de transmissões maiores do
 que a rede tem capacidade de suportar. No GMTP, utiliza-se o valor inicial de
-RTT igual a \ut{150}{ms}. Quando um nó \clis envia um pedido de conexão
-utilizando o pacote do tipo \pac{GMTP-Request}, o mesmo deve realizar a sua
-primeira medição do valor de RTT, iniciando-se o marcador de tempo para o
-cálculo do RTT quando enviar o primeiro \pac{GMTP-Request} e parando-o quando
-receber o pacote do tipo \pac{GMTP-Response}. Em seguida, deve-se acionar o
-mecanismo de cálculo da taxa de transmissão através da
+RTT igual a \ut{64}{ms}, que é o mesmo adotado no TCP. Quando um nó \clis envia
+um pedido de conexão utilizando o pacote do tipo \pac{GMTP-Request}, o mesmo
+deve realizar a sua primeira medição do valor de RTT, iniciando-se o marcador de
+tempo para o cálculo do RTT quando enviar o primeiro \pac{GMTP-Request} e
+parando-o quando receber o pacote do tipo \pac{GMTP-Response}. Em seguida,
+deve-se acionar o mecanismo de cálculo da taxa de transmissão através da
 Equação~\ref{eq:trfcmudccp}, caso o respectivo nó \clis seja eleito um
 nó relator.
 
