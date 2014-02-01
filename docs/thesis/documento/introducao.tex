@@ -394,103 +394,114 @@ rede.
 
 Nos últimos anos, diversos esforços acadêmicos e da indústria foram feitos para
 disponibilizar sistemas de distribuição de conteúdo ao vivo na
-Internet~\cite{6410737,wei_modeling_2011,Rod_Dru_2010,
-Yin:2009:DDH:1631272.1631279,agarwal_performance_2008,
-massoulie_rate-optimal_2008,pelc_push--pull_2007,venot_peer--peer_2007,
-liang_hierarchically_2007,huang_anysee2:_2007,qi_huang_p2p_2007,
-xinyan_zhang_coolstreaming/donet:_2005,zhang_large-scale_2005,
-wakamiya_retransmission_2004,castro_splitstream:_2003}.
+Internet~\cite{6410737,wei_modeling_2011,Rod_Dru_2010,Yin:2009:DDH:1631272.1631279,agarwal_performance_2008,massoulie_rate-optimal_2008,pelc_push--pull_2007,venot_peer--peer_2007,liang_hierarchically_2007,huang_anysee2:_2007,qi_huang_p2p_2007,xinyan_zhang_coolstreaming/donet:_2005,zhang_large-scale_2005,wakamiya_retransmission_2004,castro_splitstream:_2003}.
 A disseminação de diferentes sistemas e protocolos de rede com este propósito
 tem levado à pulverização de soluções para transporte de dados, gerando uma
 falta de padronização na forma como tais sistemas transportam seus dados na
-Internet, principalmente por serem completamente implementadas na camada de
-aplicação~\cite{yaning_liu_friendly_2008,yan_multimedia-aware_2007,
-mulabegovic_lightweight_2002}.
-Isto não seria um problema se essa pulverização não potencializasse duplicações
-de fluxos de dados da transmissão de um evento destinado a um sub-conjunto de
-redes contendo nós receptores interessados em tal
-evento~\cite{Pianese2011,5062221,Zhang:2012:SSP:2365364.2365643,6089062,5962881,
-4395123,Seibert2008,guo_survey_2008,4404148}.
+Internet, principalmente por tais soluções serem completamente implementadas na
+camada de
+aplicação~\cite{yaning_liu_friendly_2008,yan_multimedia-aware_2007,mulabegovic_lightweight_2002}.
+Isto não seria um problema para a infra-estrutura de rede e consequentemente
+para os sistemas finais se essa pulverização não potencializasse duplicações de
+fluxos de dados da transmissão de um evento destinado a um sub-conjunto de redes
+contendo nós receptores interessados em tal
+evento~\cite{Pianese2011,5062221,Zhang:2012:SSP:2365364.2365643,6089062,5962881,4395123,Seibert2008,guo_survey_2008,4404148}.
+Como consequência, exponencia-se o consumo desnecessário de recursos
+computacionais e de rede.
+
+Para entender o panorama atual nesse contexto, considere o seguinte cenário do
+sistema de TV tradicional (teledifusão). Quando uma pessoa está assistindo um
+canal e troca para outro, o receptor de sinal de TV consegue interpretar o novo
+conteúdo mesmo este sendo transmitido por outra emissora de TV. Para que isto
+funcione, existem padrões que descrevem o formato do vídeo/áudio (NTSC, PAL-M,
+TVD etc.), a forma como os sinais devem ser transmitidos, em diferentes
+frequências e como devem ser decodificados, de acordo com cada emissora de TV,
+etc. Isto é possível porque todas as TVs funcionam simplesmente porque seguem
+padrões, independente da sua marca e modelo, caso contrário somente conseguiriam
+interpretar o sinal transmitido apenas por um conjunto restrito de emissoras de
+TV.
+
+Considerando a analogia anterior, os nós servidores dos atuais sistemas de
+distribuição multimídia na Internet são as emissoras de TV, ao
+passo que as aplicações clientes, os aparelhos de TV. A diferença é que os
+sistemas não seguem um padrão para transmitir e receber os dados e
+consequentemente uma aplicação cliente de um sistema não consegue reproduzir o
+conteúdo transmitido pelo servidor de outro sistema. É como se cada TV
+funcionasse apenas para um determinado conjunto de canais que seguem um
+determinado padrão, sendo incapaz de reproduzir o sinal de vídeo oriundo de
+outras emissoras de TV que funcionam com base em outros padrões estabelecidos ou
+soluções proprietárias.
+
+Apesar de existirem protocolos para a Internet que descrevem o conteúdo da
+mídia transmitida~\cite{RFC2327,RFC3550,RFC2326}, atualmente não existe um
+protocolo de transporte de mídia ao vivo que considere toda a complexidade
+existente em se utilizar as redes orientadas a datagramas, ponderando-se as
+recentes soluções empregadas nos sistemas mais modernos e estudados neste
+trabalho. Em vez disso, cada sistema implementa suas próprias formas de
+transporte de dados, com a execução de ações complexas implementadas
+na camada de aplicação, com predominância e variações de uso dos protocolos
+RTP/RTSP combinado com o UDP.
 
 A transmissão de múltiplos fluxos de dados com o mesmo conteúdo por parte de
 diferentes sistemas, gera um consumo desnecessário de recursos de rede e,
 principalmente, a impossibilidade de que dois ou mais nós conectados em sistemas
 distintos possam cooperar entre si, compartilhando o mesmo fluxo de dados
 transmitido por um servidor, quando há interesse das partes envolvidas. Por
-exemplo, é comum encontrar na Internet diversos
-sistemas de distribuição de conteúdo, cada um com milhares de usuários
-conectados, porém recebendo fluxos independentes do mesmo jogo de futebol, da
-corrida de fórmula 1, etc. A duplicação pode ser percebida até em cenários mais
-simples, quando dois ou mais nós conectados à Internet pela mesma rede e
-utilizando diferentes sistemas para assistir ao mesmo evento ao vivo.
-Idealmente, os nós deveriam compartilhar o mesmo fluxo de dados e cada um
-renderizar o conteúdo da forma definida pela aplicação, desacoplando a forma de
-transportar os dados da forma como estes são apresentados pela aplicação
-(princípio da independência das aplicações) aos seus respectivos usuários, como
-no caso do serviço Web.
+exemplo, é comum encontrar na Internet diversos sistemas de distribuição de
+conteúdo, cada um com milhares de usuários conectados, porém recebendo fluxos
+independentes do mesmo jogo de futebol, da corrida de fórmula 1,
+etc~\cite{zhao_gridmedia+:_2009,fallica_quality_2008,susu_xie_coolstreaming:_2007,hei_insights_2006,4146695,tran_zigzag:_2003,huang_anysee2:_2007,zhang_large-scale_2005}.
+A duplicação pode ser percebida até em cenários mais simples, quando dois ou
+mais nós conectados à Internet pela mesma rede estão utilizando diferentes
+sistemas para assistir ao mesmo evento ao vivo. Idealmente, os nós deveriam
+compartilhar o mesmo fluxo de dados e cada um renderizar o conteúdo da forma
+definida pela aplicação, desacoplando a forma de transportar os dados da forma
+como estes são apresentados pela aplicação (princípio da independência dos
+serviços) aos seus respectivos usuários, como no caso do serviço Web.
 
-O grande sucesso do serviço Web, no ponto de vista de facilidade de uso e adoção
-por partes dos usuários e desenvolvedores, ocorre devido à independência da
-forma que se implementa a comunicação entre o navegador e o servidor.
+O grande sucesso do serviço Web, no ponto de vista de protocolo de comunicação,
+ocorre devido à independência da forma que se implementa desacopla o conteúdo a
+ser transmitido e a comunicação entre o cliente (navegador) e o servidor.
 Independente do modelo e versão do navegador e do servidor web, todos
 transportam dados utilizando o protocolo TCP, evitando-se assim a
 pulverização de diferentes formas de transportar os dados de tal serviço -- fica
 apenas a cargo do desenvolvedor de cada aplicação decidir como exibir as
 informações recebidas. Contudo, percebe-se a inexistência de um protocolo
-equivalente ao TCP para os sistemas de distribuição de conteúdos multimídia,
-apesar da grande demanda e sucesso de utilização dos mais variados serviços de
-transmissão multimídia disponíveis na Internet. Um protocolo similar ao TCP para
-o cenário de distribuição de conteúdos multimídia ao vivo poderia evitar as
-duplicações de transmissão por meio de estratégias colaborativas entre os nós
-interessados por um mesmo conteúdo, uma vez que não há a necessidade de
+equivalente ao TCP para os sistemas de distribuição de conteúdos
+multimídia, apesar da grande demanda e sucesso de utilização dos mais variados
+sistemas de transmissão multimídia disponíveis na Internet. Um protocolo similar
+ao TCP para o cenário de distribuição de conteúdos multimídia ao vivo poderia
+evitar as duplicações de transmissão por meio de estratégias colaborativas entre
+os nós interessados por um mesmo conteúdo, uma vez que não há a necessidade de
 individualização dos dados transmitidos. Como consequência, seria possível fazer
 melhor uso dos canais de transmissão ao enviar fluxos de dados apenas quando
 necessário, restando para as aplicações a responsabilidade de renderizá-los ao
-seus usuários, como ocorre no serviço Web.
+seus usuários, como ocorre no serviço Web. Nesse contexto, a arquitetura de
+serviço P2P~\cite{kurose2006} combinada com o \textit{Application Layer
+Multicast - ALM}~\cite{ALMbook2009} é uma abordagem interessante
+que explora os aspectos de compartilhamento de fluxo de dados, mas os
+desenvolvedores ainda continuam obrigados a imbutir a implementação das
+diretrizes do P2P/ALMA nas próprias aplicações, em vez de utilizá-las como os
+desenvolvedores de navegadores web ou de serviços web fazem: delegar ao TCP
+algumas importantes responsabilidades. O TCP abstrai toda complexidade de
+algumas responsabilidades da camada de transporte, tal como garantia de entrega
+de dados, ordenação de segmentos, controle de congestionamento etc. Algumas
+funções implementadas em soluções P2P/ALMA estão consolidadas e bastante
+utilizadas nos sistemas de distribuição de conteúdos multimídia ao vivo, cada
+um a sua maneira e, mesmo que sejam similares, ainda são incompatíveis.
 
-Uma maneira eficiente de se estruturar e enviar um fluxo de vídeo a um grupo de
-usuários na Internet seria a utilização de \textit{multicast} no nível de
-IP~\cite{guo_survey_2008}. Em uma sessão de \textit{multicast} IP, uma estrutura
-de árvore é formada. A fonte de vídeo se torna a raiz desta árvore
-\textit{multicast}, e os clientes recebem o fluxo de vídeo através dos vários
-nós desta árvore, formada pelos roteadores que suportam o \textit{multicast} em
-nível de IP. Para contornar a falta de suporte de \textit{multicast} em nível de
-IP, a função equivalente tem sido implementada no nível da camada de aplicação.
-Os servidores de vídeo e os usuários formam uma rede sobreposta à rede real e,
-assim, organizam-se para distribuir o fluxo de vídeo. De maneira similar ao
-\textit{multicast} IP, os participantes da sessão de vídeo formam uma árvore na
-camada de aplicação, cuja origem é o servidor de vídeo. Apesar de melhorar a
-escalabilidade no número de receptores do mesmo conteúdo ao vivo, tal estratégia
-ainda não é suficiente devido a complexidade de habilitar, principalmente em
-grande escala, os canais de comunicação \textit{multicast}, pois, para isso,
-precisa-se de intervenção humana. Além disso, a questão da pulverização de
-aplicações para este fim ocorre mais uma vez: cada sistema adota suas
-estratégias de formação da árvore \textit{multicast}, portanto incompatíveis
-entre si. Em vez disso, pode-se combinar as duas formas supracitadas em uma
-solução de protocolo disponível para qualquer aplicação de rede interessada em
-transmitir e/ou receber um fluxo de dados ao vivo. Ou seja, um protocolo que
-constitui uma rede de sobreposição formada por roteadores de rede, com suporte
-automático ao uso de \textit{multicast}, através da qual as aplicações possam
-trocar dados entre si de forma transparente. Isto signica mover alguns serviços
-consolidados na camada de aplicação para camadas mais abaixo, abstraindo-se a
-grande complexidade de se constituir redes P2P, principalmente compatíveis entre
-si. Nas
-Seções~\ref{sec:arq_p2p_media_aovivo} e~\ref{sec:sis_trans_aovivo}, estende-se
-essa discussão no sentido de entender o funcionamento e os aspectos
-arquiteturais das aplicações de distribuição de conteúdos multimídia ao vivo, em
-redes P2P, bem como os principais problemas com base em alguns cenários de uso.
-
-Como a visão supracitada atualmente não é empregada na Internet para o caso de
-distribuição de conteúdos multimídia ao vivo, em essência devido às limitações
-dos protocolos de transporte que não oferecem recursos para auxiliar a execução
-dos sistemas de distribuição de conteúdos multimídia ao vivo, passou-se a
-utilizar arquiteturas de sistemas baseadas em P2P, CDN e P2P/CDN. Nesse contexto
-e considerando as diversas soluções disponíveis, os desenvolvedores fazem uso de
-\textit{middlewares} que implementam as principais funções utilizadas nos
-sistemas de distribuição de conteúdos multimídia ao vivo. Devido a existência de
-diferentes opções, cada sistema faz uso de um middleware específico (quando o
-fazem), resultando novamente na pulverização dos sistemas devido a
-incompatibilidade entre os \textit{middlewares} utilizados.
+Como a visão supracitada atualmente (HTTP + TCP) não é empregada na Internet
+para o caso de distribuição de conteúdos multimídia ao vivo, em essência devido
+às limitações dos protocolos de transporte que não oferecem recursos para
+auxiliar a execução dos sistemas de distribuição de conteúdos multimídia ao
+vivo, passou-se a utilizar arquiteturas de sistemas baseadas na combinação
+P2P/CDN + UDP. Nesse contexto e considerando as diversas soluções disponíveis,
+os desenvolvedores fazem uso de \textit{middlewares} que implementam as
+principais funções utilizadas nos sistemas de distribuição de conteúdos
+multimídia ao vivo. Devido a existência de diferentes opções, cada sistema faz
+uso de um \textit{middleware} específico (quando o fazem), resultando novamente
+na pulverização dos sistemas devido a incompatibilidade entre os
+\textit{middlewares} utilizados.
 % Apesar de compatibilidade entre diferentes soluções ser uma decisão
 % dos provedores de serviço, neste trabalho, a incompatibilidade de tais sistemas
 % é considerada uma propriedade crítica para os casos em que o provedor deseja
@@ -501,8 +512,7 @@ incompatibilidade entre os \textit{middlewares} utilizados.
 % conseguiu escalar o serviço Web.
 
 Em geral, nos middlewares para distribuição de conteúdos multimídia ao vivo,
-implementam-se
-mecanismos para conexão multi-ponto e
+implementam-se mecanismos para conexão multi-ponto e
 topologias~\cite{4404148,5158452,Wu:2008:ELP:1386109.1386112,4215750,5061910,Garroppo:2012:TCS:2160187.2160451,4251077,4644134},
 seleção de
 nós~\cite{Dai:2009:SPP:1478659.1478730,Tang:2008:EPS:1792514.1792556,6214363,5580021},
@@ -527,6 +537,32 @@ mais abaixo, não apenas por aspecto de facilidade de desenvolvimento, mas também
 implantação em larga escala no mercado, pois todas as outras camadas estão implementadas do
 sistema operacional para baixo.
 
+De forma alternativa, uma maneira eficiente de se estruturar e enviar um fluxo
+de vídeo a um grupo de usuários na Internet seria a utilização de
+\textit{multicast} no nível de IP~\cite{guo_survey_2008}. Em uma sessão de
+\textit{multicast} IP, uma estrutura de árvore é formada. A fonte de vídeo se
+torna a raiz desta árvore \textit{multicast} e os clientes recebem o fluxo de
+vídeo através dos vários nós desta árvore, formada pelos roteadores que suportam
+\textit{multicast} em nível de IP. Apesar de melhorar a escalabilidade no número
+de receptores do mesmo conteúdo ao vivo, tal estratégia não é suficiente devido
+a complexidade de habilitar, principalmente em grande escala, os canais de
+comunicação \textit{multicast}, pois, para isso, precisa-se de intervenção
+humana. Para contornar a dificuldade em habilitar o modo \textit{multicast} em
+nível de IP, a arquitetura ALM, equivalente ao IP multicast, porém implementada
+a nível da camada de aplicação. A diferença entre o \textit{multicast} IP e o
+ALM é que no primeiro os roteadores duplicam e repassam os datagramas para os
+próximos roteadores até alcançar os sistemas finais, ao passo que no segundo os
+sistemas finais executam as ações citadas anteriormente, mas ainda dependem de
+funções de rede de mais baixo nível, o que pode aumentar o tempo de
+processamento e a complexidade da aplicação. Existes diversos
+\textit{middlewares} baseados em ALM e estes implementam suas próprias
+interfaces e uso e funcionalidades, incompatíveis entre
+si~\cite{Yeo:2003:FMV:947820.947823,Banerjee:2002:SAL:964725.633045,Banerjee:2006:OEO:1141103.1648579,1258118,jannotti_overcast:_2000,Kwon:2005:POM:1052084.1648646,1575808,castro_splitstream:_2003}.
+Apesar de todos esses esforços, questão da pulverização de aplicações
+mencionada no ínicio dessa seção vem à tona mais uma vez: cada sistema adota
+suas estratégias de formação da árvore \textit{multicast}, portanto
+incompatíveis entre si.
+
 % Em tal abordagem, os algoritmos de seleção de nós utilizam informações de
 % contexto para selecionar nós parceiros de melhor qualidade e assim melhorar a
 % experiência do usuário e reduzir a carga
@@ -536,6 +572,20 @@ sistema operacional para baixo.
 % (\textit{Application-Layer Traffic Optimization})~\cite{ALTO}, que prover às
 % aplicações informações de contexto e então alimentar os algoritmos de seleção
 % de nós parceiros.
+
+ Em vez disso, pode-se combinar as duas formas
+supracitadas em uma solução de protocolo disponível para qualquer aplicação de
+rede interessada em transmitir e/ou receber um fluxo de dados ao vivo. Ou seja,
+um protocolo que constitui uma rede de sobreposição formada por roteadores de
+rede, com suporte automático ao uso de \textit{multicast}, através da qual as
+aplicações possam trocar dados entre si de forma transparente. Isto signica
+mover alguns serviços consolidados na camada de aplicação para camadas mais
+abaixo, abstraindo-se a grande complexidade de se constituir redes P2P,
+principalmente compatíveis entre si. Nas Seções~\ref{sec:arq_p2p_media_aovivo}
+e~\ref{sec:sis_trans_aovivo}, estende-se essa discussão no sentido de entender o
+funcionamento e os aspectos arquiteturais das aplicações de distribuição de
+conteúdos multimídia ao vivo, em redes P2P, bem como os principais problemas com
+base em alguns cenários de uso.
 
 Por exemplo, os protocolos de transporte poderiam absorver parte da
 complexidade dos serviços de distribuição multimídia, mas não os fazem porque
@@ -549,13 +599,15 @@ redes CDN. Além disso, um outro motivo é o fato de que os sistemas foram sendo
 disponibilizados levando em consideração toda a complexidade na formação das
 redes P2P, uma vez que os protocolos de transporte não eram eficazes para a
 distribuição de datagramas IP em larga escala na Internet, cuja principal forma
-era utilizar \textit{multicast}. Como consequência, toda transmissão na
-prática termina sendo de múltiplos fluxos \textit{unicast} e
-independentes entre si, apesar dos esforços arquiteturais com o uso de P2P e da
-CDN. Isto ocorre porque os protocolos de transporte essencialmente funcionam em
-modo \textit{unicast}, com a carga para distribuição do conteúdo multimídia sob
-responsabilidade dos servidores das redes CDN, com auxílio cooperativo dos nós
-das redes P2P, nos melhores casos.
+era utilizar \textit{multicast} (seja na camada de rede ou na de aplicação).
+
+% Como consequência, toda transmissão na
+% prática termina sendo de múltiplos fluxos \textit{unicast} e
+% independentes entre si, apesar dos esforços arquiteturais com o uso de P2P e da
+% CDN. Isto ocorre porque os protocolos de transporte essencialmente funcionam em
+% modo \textit{unicast}, com a carga para distribuição do conteúdo multimídia sob
+% responsabilidade dos servidores das redes CDN, com auxílio cooperativo dos nós
+% das redes P2P, nos melhores casos.
 
 Além do TCP e do UDP, na segunda metade dos anos 2000, outros protocolos
 mais modernos passaram a apresentar avanços significativos para permitir a
@@ -668,47 +720,43 @@ trabalhos referenciados
 em~\cite{4146841,goutelle2004,CONG:Floyd00:TFRC:art,Sangtae2008,RFC3649,5472999,veno2003,464716,5735831,5560080,4579599,brosh_delay-friendliness_2010,lucas_fair_2009,ju-won_park_tcp-rome:_2008,elaarag_tcp_2008,RFC4960,lin_ma_congestion_2007,yongxiang_liu_tcp-cm:_2002,brassil_structuring_2002,banerjea_tenet_1996}
 e no Capítulo~\ref{cap:trabalhosrelacionados} deste documento.
 
-
-
-
-
-
-
 Para contornar os problemas discutidos até aqui, torna-se imprescindível
 projetar um protocolo de rede com vistas a reduzir a pulverização dos sistemas
 de distribuição de conteúdo, inspirando-se em casos consistentes ao longo dos
 anos, como o serviço Web, e que considere a evolução do estado da arte como
-aliado nesse processo, tal como as redes centradas no conteúdo e os algoritmos
-de controle de congestionamento assistidos pela rede.
+aliado nesse processo, tais como as funções consolidadas das redes P2P, os
+novos conceitos das redes redes centradas no conteúdo e os algoritmos
+de controle de congestionamento assistidos pela rede, que são mais eficazes se
+comparados aos algoritmos baseados em perda de pacotes, mudança no atraso e
+relatórios enviados pelos receptores aos
+transmissores~\cite{Sangtae2008,veno2003,RFC3649,Ha2007,4146841,shalunov2011,464716}.
 
 Diante do exposto, pretende-se responder a seguinte questão de pesquisa:
 \textit{como disseminar conteúdos multimídia ao vivo na Internet evitando o
 fenômeno da tragédia dos bens comuns dos protocolos de transporte, considerando
-o princípio da independência das aplicações de rede?}
+o princípio da independência dos serviços de rede?}
 
 % Observando esta questão que deu origem às pesquisas desenvolvidas
 % neste trabalho, propõe-se a seguinte tese de doutorado:
 
 \section{Hipótese}
 
-Para o problema em questão é adotada a hipótese de que \textit{o uso de redes
-CDN auxiliadas por uma rede P2P, constituída dinamicamente por roteadores,
-combinado com um protocolo que unifica as estratégias de comunicação de
-diferentes sistemas, que compartilha os fluxos de dados transmitidos pelos
-servidores da CDN, aliado ao uso transparente para a aplicação do modo de
-transmissão \textit{multicast} e com suporte ao controle de congestionamento
-assistido pela rede, possibilita a disseminação em larga escala de conteúdos
-multimídia ao vivo}.
+Para o problema em questão é adotada a hipótese de que \textit{a constituição
+de uma rede de favores entre roteadores que compartilham fluxos de dados
+transmitidos por servidores de uma CDN, através do uso transparente (para a
+aplicação) de \textit{multicast} negociado no processo de estabelecimento de
+conexão entre os nós transmissores e receptores, com o auxílio de um algoritmo
+de controle de congestionamento assistido pela rede, possibilita a disseminação
+em larga escala de conteúdos multimídia ao vivo}.
 
 Diante desta hipótese, remete-se esta pesquisa ao uso de técnicas e mudanças na
 perspectiva da execução de serviços em camadas inferiores a da aplicação,
-visto que a infra-estrutura de rede deve passar a dar um suporte mais efetivo
-no processo de disseminação de conteúdos multimídia ao vivo. Propõe-se que isto
-ocorra evitando-se que os desenvolvedores de aplicações implementem
-funcionalidades intrínsecas ao processo de distribuição de conteúdos na rede,
-garantindo-se a escalabilidade do número de nós e favorecendo-se a cooperação
-entre aqueles interessados em obter o conteúdo multimídia de um determinado
-evento.
+visto que argumenta-se neste trabalho que a infra-estrutura de rede deve
+fornecer um suporte mais efetivo no processo de disseminação de conteúdos
+multimídia ao vivo. Propõe-se que isto ocorra evitando-se que os desenvolvedores
+de aplicações implementem funcionalidades intrínsecas ao processo de
+distribuição de conteúdos na rede, com escalabilidade do número de nós e
+autenticidade do conteúdo distribuído através da rede de favores.
 
 % Para realizar o projeto de um protocolo de distribuição de conteúdos
 % multimídia
@@ -731,7 +779,6 @@ evento.
 % diferentes
 % sistemas e considera o uso de controle de congestionamento assistido pela
 % rede.}
-
 
 \section{Objetivo}
 

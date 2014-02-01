@@ -3,36 +3,28 @@
 
 ============
 
-ver 6035830, 5343509, 6121327, 4378429
+Usar na
+apresentação:
+http://www.cs.helsinki.fi/u/jakangas/Teaching/P2P/P2P-02-Systems.pdf
 
-- Trabalhos relacionados
-   * Escrever seção sobre o Coolstreaming / Denacast
-   * https://peercdn.com/ - só para conteúdos estáticos, mais uma para
-fragmentar
-   * Peer2View
-   * SmoothCache: HTTP-Live Streaming Goes Peer-To-Peer
-   * Browser to Browser Media Streaming with HTML5
-   * Is there a future for mesh-based live video streaming? (Set/2008)
-   * http://www.cs.helsinki.fi/u/jakangas/Teaching/P2P/P2P-02-Systems.pdf
-   *
-http://inet.cpt.haw-hamburg.de/teaching/ws-2012-13/master-projekt/maxjonas-werne
-% r_aw1.pdf
-   *
+5343509,
+6121327,
+4378429,
+https://peercdn.com/ - só para conteúdos estáticos, mais uma para fragmentar
+Is there a future for mesh-based live video streaming? (Set/2008) - analisar
+pra ver se rola...
+
+
+PODE PEGAR ESSE MATERIAL PARA MENCIONAR AS QUESTÕES DE SEGURANÇA E PORQUE O
+GMTP TEM
 % http://webhost.laas.fr/TSF/IFIPWG/Workshops&Meetings/53/workshop/8.Barcellos.pdf
-https://datatracker.ietf.org/wg/alto/
-http://tools.ietf.org/html/rfc5693
+
+
 CCNx, NCN, ICN
 *Supporting Mobile Applications with Information Centric
 Networking: the Case of P2P Live Adaptive Video
 Streaming - http://conferences.sigcomm.org/sigcomm/2013/papers/icn/p35.pdf
-
-FALAR SOBRE MULTIPLE BIT-RATES
-MPEG DASH - T. Stockhammer, Dynamic adaptive streaming over HTTP:
-standards and design principles, ACM MMSys 2011
-
-
-Ver os trabalhos relacionados desse:
-% http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6689688&tag= 1
+PEGAR OS ARTIGOS PRINCIPAIS SOBRE CCNx + Video
 
 ============
 
@@ -73,12 +65,15 @@ discussão sobre a proposta diferenciada promovida no \mudccp.
 \section{Protocolos Multimídia Padronizados}
 \label{sec:proto-multi-padro}
 
-Para permitir a criação, encerramento e controle de conferências multimídia,
-como videoconferência, audioconferência ou mesmo uma simples transmissão de
-dados de vídeo de uma parte a outra, em tempo real, padrões de comunicação foram
-desenvolvidos e disponibilizado publicamente. Nesta perspectiva, a seguir
-apresentam-se os protocolos de rede que merecem destaque, principalmente por
-serem empregado na maioria das aplicações multimídia existentes.
+Alguns protocolos padronizados pela IETF foram especificados, implementados e
+disponibilizado publicamente. Em geral, os protocolos dessa categoria permitem a
+criação, encerramento e controle de conferências, como videoconferência e
+uma transmissão ponto-a-ponto de um conteúdo de audio/vídeo em tempo real.
+Nesta perspectiva, a seguir, apresentam-se os protocolos de rede que merecem
+destaque, principalmente por serem empregado na maioria das aplicações
+multimídia existentes.
+
+\subsection{H.323 / ITU-T}
 
 O processo de desenvolvimento de padrões abertos iniciou com um grupo de
 estudos do ITU-T (\textit{International Telecommunication Union --
@@ -88,16 +83,20 @@ controle de conferências de voz, vídeo e dados sobre redes TCP/IP. O H.323 se
 tornou largamente utilizado, uma vez que, a época da especificação de sua
 segunda versão, em 1998, não havia qualquer padrão aberto e aceito pelo mercado
 capaz de atender às aplicações multimídia. Embora as transmissões multimídia em
-tempo real por multicast já estivessem sendo realizadas no Mbone~\cite{819167}
-há algum tempo, não havia ainda qualquer padrão aberto para controle de
-conferências multimídia.
+tempo real por \textit{multicast} já estivessem sendo realizadas no
+Mbone~\cite{819167} há algum tempo, não havia ainda qualquer padrão aberto para
+controle de conferências multimídia.
 
-Num período equivalente a maturação do H.323, a IETF iniciou o desenvolvimento
+\subsection{SIP -- \textit{Session Initiation Protocol}}
+
+No período equivalente a maturação do H.323, a IETF iniciou o desenvolvimento
 de uma arquitetura de comunicação mais flexível e poderosa que o H.323.
 Alicerçada sobre o protocolo SIP (\textit{Session Initiation
 Protocol})~\cite{RFC3261}, a arquitetura SIP teve logo potencial reconhecido,
 uma vez que supria todos os pontos fracos da arquitetura H.323, como a demora no
 estabelecimento de conexão (canais H.225 e H.245) e a complexidade de operação.
+
+\subsection{RTP -- \textit{Real Time Protocol}}
 
 Devido à natureza da pilha de protocolos TCP/IP, voltada à transmissão de
 dados pelo paradigma do ``melhor esforço'', sem qualquer cumprimento a
@@ -111,21 +110,32 @@ mecanismo para que as aplicações tenham controle sobre número de seqüência e
 marcas de tempo de cada pacote de dados transmitido, não oferecendo qualquer
 mecanismo de retransmissão de informações perdidas.
 
+\subsection{RTSP -- \textit{Real Time Streaming Protocol}}
+
 Em paralelo ao RTP, as aplicações multimídia utilizam o \textit{Real
 Time Streaming Protocol} (RTSP)~\cite{RFC2326}. O RTSP é um protocolo a nível de
 aplicação desenvolvido pela IETF para controle na transferência de dados com
 propriedades de tempo real. Tal protocolo torna possível a transferência, sob
-demanda, de dados em tempo real como áudio e vídeo. Ele serve para estabelecer e
-controlar um único ou vários fluxos sincronizados de mídias contínuas
-pertencentes a uma apresentação.
+demanda, de dados em tempo real como áudio e vídeo. O RTSP serve para
+estabelecer e controlar um único ou vários fluxos sincronizados de mídias
+contínuas pertencentes a uma apresentação.
 
 O conjunto de fluxos a ser controlado é definido por uma descrição de
 apresentação, normalmente um arquivo, que pode ser obtido por um cliente usando
-HTTP ou outros meios, podendo estar armazenado em um local diferente do servidor
-de mídia. Uma descrição de apresentação contém informações sobre um ou mais
-fluxos que compõe a apresentação, como endereços de rede e informações sobre o
-conteúdo da apresentação, além de parâmetros que tornam possível ao cliente
-escolher a combinação mais apropriada das mídias.
+HTTP ou outros meios, armazenado em um local diferente do servidor de mídia. Uma
+descrição de apresentação pode conter informações sobre um ou mais fluxos que
+compõe a apresentação, como endereços de rede e informações sobre o conteúdo da
+apresentação, além de parâmetros que tornam possível ao cliente escolher a
+combinação mais apropriada das mídias.
+
+\subsection{ALTO -- \textit{Application-Layer Traffic Optimization}}
+
+Preencher...
+
+https://datatracker.ietf.org/wg/alto/
+http://tools.ietf.org/html/rfc5693
+
+\subsection{UDP, DCCP e SCTP}
 
 Tanto o RTP quanto o RTSP são propostas desenvolvidas para suprir as carências
 encontradas em protocolos de transporte tradicionais da Internet, como o UDP e o
@@ -382,6 +392,35 @@ para transmissão de conteúdos multimídia na camada de aplicação. Os
 trabalhos foram selecionados seguindo um critério de similaridade com as
 propostas do \mudccp.
 
+\subsection{CoolStreaming}
+
+Preencher...
+
+CoolStreaming~\cite{susu_xie_coolstreaming:_2007}
+
+\subsection{Denacast}
+
+Preencher...
+
+\subsection{PeerCast}
+
+5935134
+
+% http://ieeexplore.ieee.org/xpl/articleDetails.jsp?tp=&arnumber=5935134&queryText%3DPeerCast
+
+\subsection{\textit{HTTP Live Streaming}}
+
+Preencher...
+
+% MPEG DASH - T. Stockhammer, Dynamic adaptive streaming over HTTP:
+% standards and design principles, ACM MMSys 2011
+
+%
+% http://tools.ietf.org/html/draft-pantos-http-live-streaming-07
+%
+% http://developer.apple.com/library/ios/#documentation/NetworkingInternet/Concept
+% ual/StreamingMediaGuide/Introduction/Introduction.html
+
 \subsection{PDTP -- \textit{Peer Distributed Transfer Protocol}}
 
 O protocolo \textit{Peer Distributed Transfer Protocol} (PDTP)~\cite{arcieri2004}
@@ -584,25 +623,20 @@ clientes que seguem sua especificação.
 
 \end{enumerate}
 
-\subsection{Outras propostas}
+\subsection{PULSE -- \textit{Peer-to-Peer Unstructured Live Streaming
+Experiment}}
 
-Além das propostas de protocolos ou sistemas para distribuição de conteúdos
-multimídia, várias outras propostas foram encontradas durante o
-levantamento bibliográfico, com menor nível de similaridade com o trabalho
-aqui proposto. Por exemplo, vale ressaltar as tecnologias de distribuição de
-conteúdo conhecidas e utilizadas na indústria, tais como:
-GridMedia~\cite{zhao_gridmedia+:_2009},
-CoolStreaming~\cite{susu_xie_coolstreaming:_2007},
-AnySee~\cite{huang_anysee2:_2007}, PPLive~\cite{hei_insights_2006} e o
-ZIGZAG~\cite{tran_zigzag:_2003}. Estas
-tecnologias têm sido utilizadas com sucesso para a aplicações multimídia, contudo
-tais soluções foram concebidas para distribuição de conteúdo multimídia
-considerando um determinado propósito, com pouca flexibilidade no ponto de vista
-de extensibilidade e reúso dos mecanismos desenvolvidos.
+4146695
 
-% yin_design_2009
+% http://en.wikipedia.org/wiki/PULSE_%28P2PTV%29
 
-% \subsection{Pastry/SplitStream -- \textit{High-bandwidth content distribution}}
+% http://ieeexplore.ieee.org/xpl/articleDetails.jsp?tp=&arnumber=4146695&queryText%3DPULSE+p2p
+
+\subsection{SmoothCache -- \textit{HTTP-Live Streaming Goes Peer-To-Peer}}
+
+https://www.sics.se/~roberto/files/Roverso-Smoothcache.pdf
+
+\subsection{Pastry/SplitStream -- \textit{High-bandwidth content distribution}}
 %
 % O Pastry/SplitStream é um sistema para distribuição de conteúdo desenvolvido no
 % centro de pesquisas da Microsoft. O SplitStream se baseia na capacidade dos
@@ -612,7 +646,7 @@ de extensibilidade e reúso dos mecanismos desenvolvidos.
 % conteúdo multimídia  de acordo com a disponibilidade de largura de banda do canal
 % de diferentes grupos de nós e transmiti-lo usando diferentes árvores multicast.
 
-
+Preencher...
 
 % http://research.microsoft.com/en-us/um/people/antr/SplitStream/default.htm
 
@@ -637,59 +671,48 @@ de extensibilidade e reúso dos mecanismos desenvolvidos.
 % “Chainsaw: Eliminating trees from overlay multicast,” in IPTPS 2005,
 % Ithaca, NY. USA, Feb 2005.
 
-% \subsection{\textit{HTTP Live Streaming}}
-%
-% \subsection{CHIPS}
-%
-% \subsection{CDEEP Webcast}
-%
-% \subsection{PeerCast}
-% http://en.wikipedia.org/wiki/PeerCast
+\subsection{LayeredCast -- \textit{Hybrid Peer-to-Peer Live Layered Video
+Streaming Protocol}}
 
-% http://tools.ietf.org/html/draft-pantos-http-live-streaming-07
-% http://developer.apple.com/library/ios/#documentation/NetworkingInternet/Concept
-% ual/StreamingMediaGuide/Introduction/Introduction.html
+Preencher...
 
-% \subsection{LayeredCast -- \textit{Hybrid Peer-to-Peer Live Layered Video
-% Streaming Protocol}}
 % http://www.masoudmoshref.com/old/myworks/documentpages/layeredcast.htm
 
 % \section{Outros Protocolos de Transporte Multi-Ponto}
 % \label{sec:proto-trans-mp}
 
-% \subsection{BitTorrent/LEDBAT -- \textit{Low Extra Delay Background Transport}}
+\subsection{BitTorrent/LEDBAT -- \textit{Low Extra Delay Background Transport}}
+
 % http://perso.telecom-paristech.fr/~valenti/papers/ledbat-icccn10.pdf
 % http://www.computer.org/portal/web/csdl/doi?doc=doi%2F10.1109%2FAINA.2011.98
 
-%
-% \subsection{The one-to-many TCP overlay}
-%
-% \subsection{PGM -- \textit{Pragmatic General Multicast}}
-%
-% % http://en.wikipedia.org/wiki/Pragmatic_General_Multicast
-%
-% \subsection{XCAST}
-%
-% % http://en.wikipedia.org/wiki/XCAST
-%
-% \subsection{TCP-XM}
-%
-% % http://www.jeacle.ie/pub/theses/phd/
-%
-% \subsection{XCAST}
-%
-% \subsection{ALM}
-%
+shalunov2011, 5560080
+
+Preencher...
+
+\subsection{Outras propostas}
+
+Falar aqui que a quantidade de aplicação é tanta e estas podem ser clientes do
+GMTP.
+
+Além das propostas de protocolos ou sistemas para distribuição de conteúdos
+multimídia, várias outras propostas foram encontradas durante o
+levantamento bibliográfico, com menor nível de similaridade com o trabalho
+aqui proposto. Por exemplo, vale ressaltar as tecnologias de distribuição de
+conteúdo conhecidas e utilizadas na indústria, tais como:
+GridMedia~\cite{zhao_gridmedia+:_2009}, Sopcast~\cite{fallica_quality_2008},
+AnySee~\cite{huang_anysee2:_2007}, PPLive~\cite{hei_insights_2006} e o
+ZIGZAG~\cite{tran_zigzag:_2003}. Estas tecnologias têm sido utilizadas com
+sucesso para a aplicações multimídia, contudo tais soluções foram concebidas
+para distribuição de conteúdo multimídia considerando um determinado propósito,
+com pouca flexibilidade no ponto de vista de extensibilidade e reúso dos
+mecanismos desenvolvidos.
+
+******* Adicionar mais esses aplicativos a seguir nas referência acima. Pegar
+só os que tem artigos publicados ********
+
 % \section{Protocolos de Aplicação}
 %
-% http://en.wikipedia.org/wiki/Alluvium_(peercasting)
-% http://en.wikipedia.org/wiki/Octoshape - http://www.octoshape.com/
-% http://en.wikipedia.org/wiki/Pando_(application)
-% http://en.wikipedia.org/wiki/Rawflow
-% http://en.wikipedia.org/wiki/PeerCast
-% http://en.wikipedia.org/wiki/CoolStreaming
-% http://en.wikipedia.org/wiki/PPLive
-% http://en.wikipedia.org/wiki/PPStream
 % http://en.wikipedia.org/wiki/PULSE_(P2PTV)
 % http://en.wikipedia.org/wiki/Tribler
 % http://en.wikipedia.org/wiki/TVUnetworks
@@ -699,43 +722,24 @@ de extensibilidade e reúso dos mecanismos desenvolvidos.
 % http://media.cs.tsinghua.edu.cn/~zhangm/
 % http://www.scvi.net/stream/soft.htm
 % http://www.scvi.net/stream/soft2.htm
-
-% \subsection{Outros Trabalhos}
-%
-% Além dos trabalhos citados anteriormente, vários outros foram estudados e
-% analisados~\cite{REF,REF,REF,REF,REF,REF,REF,REF}, com menor nível de
-% similaridade com o trabalho proposto. Por exemplo, vale ressaltar as
-% tecnologias de distribuição de conteúdo conhecidas e utilizadas na indústria,
-% tais como: X, Y, Z. Estas tecnologias têm sido utilizadas com sucesso para a
-% aplicações multimídia, contudo tais soluções foram concebidas para distribuição
-% de conteúdo multimídia para um determinado propósito e com pouca flexibilidade
-% no ponto de vista do seu uso no desenvolvimento de outras aplicações para o
-% compartilhamento em larga escala de fluxos de dados multimídia em tempo real.
-
-% castro_splitstream:_2003
-% qi_huang_p2p_2007
-% tran_zigzag:_2003
-%huang_anysee2:_2007
-
-% \section{Sistemas de Transmissão Multimídia Ao Vivo}
-
 %yaning_liu_friendly_2008
-
 %feng_gefei_design_2009
 
-% \section{Protocolos de Transporte de Dados Multimídia}
-
 %yongxiang_liu_tcp-cm:_2002
-
 %noda_survey_2002
-
 %ju-won_park_tcp-rome:_2008
-
 %lin_ma_congestion_2007
-
 %lucas_fair_2009
 
-%\section{Experimentos, Melhorias e Desempenho do DCCP}
+\section{Redes Centradas no Conteúdo}
+
+\subsection{CCNx -- \textit{Content Centric Network Protocol}}
+
+Preencher...
+
+\subsection{NDN -- \textit{Named Data Network}}
+
+Preencher...
 
 \section{Sumário Comparativo}
 \label{sec:trabrel-sumario-comp}
@@ -976,48 +980,3 @@ reais~\cite{REF,REF,REF,REF}.
 % ~\cite{kohler_designing_2006,RFC4336}
 
 \end{enumerate}
-
-% Para facilitiar o entendimento, considere o seguinte cenário geral do sistema
-% de TV tradicional (teledifusão). Quando uma pessoa está assistindo um canal e
-% troca para outro canal, o aparelho de TV consegue interpretar o novo conteúdo
-% mesmo este sendo transmitido por outra emissora de TV. Para que isto funcione,
-% existem padrões que descrevem o formato do vídeo/áudio (NTSC, PAL-M etc.), a
-% forma como os sinais devem ser transmitidos, em diferentes frequências, e como
-% devem ser decodificados, de acordo com cada emissora de TV. Além disso, se
-% duas
-% ou mais emissoras estiverem transmitindo um mesmo evento ao vivo, pouco
-% importa
-% para o usuário final quando uma emissora de sua preferência se torna
-% indisponível, pois o mais importante é assistir ao evento de interesse, apesar
-% da preferência do usuário por um
-% determinado canal. Assim, todas as TVs funcionam simplesmente porque seguem
-% padrões, independente da sua marca e modelo, pois caso contrário só
-% conseguiriam interpretar o sinal transmitido apenas de um conjunto restrito de
-% emissoras de TV.
-%
-% Apesar de existirem protocolos para a Internet que descrevem o conteúdo da mídia
-% sendo transmitida, tais como o \textit{Simple Description Protocol} (SDP), o
-% \textit{Real Time Protocol} (RTP) e o \textit{Real Time Streaming Protocol}
-% (RTSP), que de certa forma são considerados equivalentes aos padrões NTSC e
-% PAL-M para TV, atualmente não existe uma solução de transporte de conteúdos
-% multimídia ao vivo que considere toda a complexidade existente em se trabalhar
-% com redes orientadas a datagramas, ponderando-se as recentes soluções
-% empregadas para o funcionamento dos sistemas estudados neste trabalho. Em vez
-% disso, cada aplicação implementa suas próprias formas de transporte de dados,
-% com predominância e variações de uso dos protocolos RTP/RTSP e UDP. Para
-% se ter uma noção, durante as pesquisas realizadas no contexto deste trabalho,
-% encontrou-se pelo menos 60 sistemas de transmissão de mídia ao vivo baseados
-% em
-% P2P/CDN, sem qualquer compatibilidade entre eles~\cite{REF,REF,REF}. Através
-% dos nós servidores desses sistemas, transmite-se pacotes de dados que são
-% recebidos por aplicações clientes para reproduzir o conteúdo recebido.
-%
-% Considerando a analogia anterior, os nós servidores desses sistemas são as
-% emissoras de TV tradicionais, ao passo que as aplicações clientes, os
-% aparelhos
-% de TV. A diferença gritante é que as aplicações não seguem um padrão para
-% transmitir e receber os dados e consequentemente uma aplicação cliente de um
-% sistema não consegue reproduzir o conteúdo multimídia transmitido por outro
-% sistema. É como se cada TV funcionasse apenas para um determinado conjunto de
-% canais, mas não servindo para reproduzir o sinal de vídeo oriundo de outra
-% emissora de TV.

@@ -1252,11 +1252,11 @@ estruturar e organizar os sistemas de transmissão ao vivo em arquiteturas P2P.
 A transmissão de vídeos na Internet pode se classificar em duas grandes
 categorias: vídeos pré-armazenados, enviados sob demanda (\textit{on-demand}) e
 vídeos ao vivo (\textit{live}). Os usuários de vídeos assistidos sob demanda têm
-a flexibilidade de assistir um conteúdo previamente armazenado, da maneira que
-eles querem e no momento desejado. De forma contrária, um conteúdo ao vivo é
-transmitido no mesmo momento em que o fluxo é gerado. Logo, todos os usuários
-devem estar sincronizados e devem assistir o fluxo de vídeo ao mesmo tempo. Essa
-é a classe de transmissão de conteúdo tratado neste trabalho.
+a flexibilidade de assistir um conteúdo previamente armazenado, a qualquer
+momento. De forma contrária, um conteúdo ao vivo é transmitido no mesmo momento
+em que o fluxo é gerado. Logo, todos os usuários devem estar sincronizados e
+devem assistir o fluxo de vídeo ao mesmo tempo. Essa é a classe de transmissão
+de conteúdo tratado neste trabalho.
 
 A solução básica para o envio do fluxo de vídeo na Internet é a utilização
 do modelo cliente-servidor. Nesse modelo, um cliente cria uma conexão com um
@@ -1271,13 +1271,12 @@ vídeo ao vivo e sob-demanda na Internet, com baixo custo
 operacional~\cite{vu_understanding_2010,purandare_alliance_2007,
 castro_splitstream:_2003,xiaojun_hei_measurement_2007,bonald_epidemic_2008,
 susu_xie_coolstreaming:_2007,fallica_quality_2008,zhang_peer--peer_2005,
-zhang_large-scale_2005}.
-As redes entre pares (P2P) emergiram como um novo paradigma para construir
-aplicações distribuídas. Neste tipo de aplicação, os usuários são encorajados
-a atuarem como clientes e servidores. Em uma rede P2P, os participantes, além
-de obterem serviços da rede, também os provêem. Assim, a banda de rede dos
-usuários finais é utilizada para reduzir a grande demanda por banda de rede,
-outrora necessária aos servidores.
+zhang_large-scale_2005}. As redes entre pares (P2P) emergiram como um novo
+paradigma para construir aplicações distribuídas. Neste tipo de aplicação, os
+usuários são encorajados a atuarem como clientes e servidores. Em uma rede P2P,
+os nós participantes, além de obterem serviços da rede, também os provêem.
+Assim, a banda de rede dos usuários finais é utilizada para reduzir a grande
+demanda por banda de rede, outrora necessária aos servidores.
 
 Os sistemas de envio de vídeo que utilizam arquitetura P2P podem ser
 classificados em duas categorias quanto a sua estrutura: os baseados em
@@ -1289,7 +1288,7 @@ descrever funcionamento de cada uma dessas estruturas.
 Os sistemas baseados em árvore têm uma estrutura sobreposta bem organizada e,
 tipicamente, distribuem o fluxo de vídeo enviando dos nós para seus filhos.
 Um dos maiores problemas desta abordagem é que são vulneráveis à entrada e
-abandono dos participantes da rede
+abandono dos nós participantes da rede
 (\textit{churns})~\cite{cui_optimizing_2008,magharei_mesh_2007}. Assim, quando
 um participante deixa a rede, a estrutura de árvore se rompe, e parte do sistema
 sofre, temporariamente, uma ruptura no fluxo do vídeo.
@@ -1305,8 +1304,8 @@ IP, a função equivalente tem sido implementada no nível da camada de aplicação.
 Os servidores de vídeo e os usuários formam uma rede sobreposta à rede real e,
 assim, organizam-se para distribuir o fluxo de vídeo. De maneira similar ao
 \textit{multicast} IP, formado por uma árvore de roteadores no nível de rede, os
-participantes da sessão de vídeo formam uma árvore na camada de aplicação, cuja
-origem é o servidor de vídeo.
+nós participantes da sessão de vídeo formam uma árvore na camada de aplicação,
+cuja origem é o servidor de vídeo.
 
 Cada nó do sistema se conecta à árvore em um certo nível. Em seguida, cada nó
 recebe o vídeo de seus pais, no nível superior, e reenvia o conteúdo aos seus
@@ -1326,11 +1325,11 @@ participantes.
 
 Existem várias maneiras possíveis de se construir a árvore para o envio de fluxo
 de vídeo. Deve-se considerar a altura da árvore e a quantidade de filhos de cada
-nó da árvore. Nós em níveis inferiores da árvore recebem o fluxo de vídeo
-após ele percorrer vários outros nós, e isto pode induzir a grandes latências.
-Para reduzir esse problema, deve-se preferir uma árvore com o mínimo de níveis
-possível, o que pode requerer a participação de nós com grande largura de banda,
-retransmitindo para vários filhos.
+nó da árvore. Os nós em níveis inferiores da árvore recebem o fluxo de vídeo
+após tal fluxo percorrer vários outros nós, e isto pode induzir a grandes
+latências. Para reduzir esse problema, deve-se preferir uma árvore com o mínimo
+de níveis possível, o que pode requerer a participação de nós com grande largura
+de banda, retransmitindo para vários filhos.
 
 Tão importante quanto a construção da árvore é a manutenção da sua estrutura.
 Os usuários de uma aplicação de vídeo em sistemas P2P podem ser muito dinâmicos,
@@ -1361,7 +1360,7 @@ e um ponto de falha~\cite{guo_survey_2008}. Vários algoritmos distribuídos
 abordam e tratam o problema de manutenção e construção da árvore de maneira
 distribuída~\cite{tran_zigzag:_2003}. Mesmo assim, uma abordagem baseada em
 árvore não consegue se recuperar de maneira rápida o suficiente para lidar com a
-dinâmica dos participantes, pois a constante interrupção do fluxo e a
+dinâmica dos nós participantes, pois a constante interrupção do fluxo e a
 reconstrução da árvore de envio de fluxo contínuo podem causar uma sensação de
 baixa qualidade no serviço
 oferecido~\cite{cui_optimizing_2008,guo_survey_2008,magharei_mesh_2007}.
@@ -1375,8 +1374,8 @@ em~\cite{castro_splitstream:_2003}. Nesta abordagem, um servidor divide o fluxo
 de vídeo em vários subfluxos e para cada um destes, uma árvore
 \textit{multicast} ao nível de aplicação é construída. Cada participante deve se
 conectar a todas as árvores criadas, para obter um fluxo de vídeo completo.
-Preferivelmente, os participantes se conectam em lugares diferentes nos vários
-níveis existentes. Assim, os nós folhas de uma árvore podem se tornar nós
+Preferencialmente, os nós participantes se conectam em lugares diferentes nos
+vários níveis existentes. Assim, os nós folhas de uma árvore podem se tornar nós
 internos em outra, fazendo melhor uso da capacidade disponível. A
 Figura~\ref{fig:mod_sis_p2p_aovivo_arvore_2_subfluxos} ilustra uma aplicação de
 envio de fluxo de vídeo com duas árvores.
@@ -1392,45 +1391,46 @@ envio de fluxo de vídeo com duas árvores.
 
 \subsection{Estrutura Baseada em Malha}
 
-Em uma estrutura baseada em malha (\textit{mesh-based}), os participantes não se
-organizam em uma topologia estática. As relações são estabelecidas baseando-se
-nos recursos disponíveis momentaneamente. Um participante se conecta a um
-subconjunto de outros participantes do sistema e, periodicamente, eles trocam
-informações. Os dados são buscados nos participantes que já os têm. Como um
-participante tem múltiplos vizinhos ao mesmo tempo, a organização em malha é
-robusta à dinâmica dos nós. Entretanto, essa relação dinâmica faz com que a
-distribuição de vídeo se torne imprevisível.
+Em uma estrutura baseada em malha (\textit{mesh-based}), os nós participantes
+não se organizam em uma topologia estática. As relações são estabelecidas
+baseando-se nos recursos disponíveis momentaneamente. Um nó participante se
+conecta a um
+subconjunto de outros nós participantes do sistema e, periodicamente, todos
+trocam informações entre si. Os dados são buscados nos nós participantes que já
+os têm. Como um nó participante tem múltiplos vizinhos ao mesmo tempo, a
+organização em malha é robusta à dinâmica dos nós. Entretanto, essa relação
+dinâmica faz com que a distribuição de vídeo se torne imprevisível.
 
 Diversos trabalhos recentes na área de fluxo contínuo P2P adotam uma estrutura
 baseada em
 malha~\cite{hei_iptv_2008,susu_xie_coolstreaming:_2007,zhang_peer--peer_2005,xinyan_zhang_coolstreaming/donet:_2005}.
 Em um sistema desse tipo não existe uma topologia fixa da rede P2P. Os nós
-estabelecem suas conexões dinamicamente, de acordo com seus interesses. Os
-participantes sempre mantêm parcerias com vários outros vizinhos. Eles podem
-fazer envio ou recepção de dados de múltiplos parceiros e, se um participante
-deixa o sistema, seus vizinhos continuam recebendo o conteúdo desejado dos
-demais nós, com os quais eles mantêm contato. Caso seja do interesse de um
-participante, ele poderá encontrar novos parceiros para manter um nível de
-conectividade alto. Um alto grau de conectividade faz com que a estrutura em
-malha torne-se robusta à dinâmica dos participantes do sistema. Trabalhos
-recentes, como o disponível na referência~\cite{magharei_mesh_2007}, mostram que
-uma estrutura baseada em malha tem um desempenho superior a uma estrutura
-baseada em árvores.
+estabelecem suas conexões dinamicamente, de acordo com seus interesses. Os nós
+participantes sempre mantêm parcerias com vários outros vizinhos, podendo fazer
+envio ou recepção de dados de múltiplos nós parceiros e, se um nó participante
+deixar o sistema, seus vizinhos continuam recebendo o conteúdo desejado dos
+demais nós parceiros, com os quais eles mantêm contato. Caso seja do interesse
+de um nó participante, este pode encontrar novos nós parceiros para manter um
+nível de conectividade alto. Um alto grau de conectividade faz com que a
+estrutura em malha se torne robusta à dinâmica dos nós participantes do sistema.
+Trabalhos recentes, como o disponível na referência~\cite{magharei_mesh_2007},
+mostram que uma estrutura baseada em malha tem um desempenho superior a uma
+estrutura baseada em árvores.
 
 De maneira similar ao que acontece a um dos sistemas de compartilhamento de
 arquivos mais populares, o BitTorrent\texttrademark\space, uma estrutura em
-malha, tem um servidor centralizado. Esse servidor mantém uma lista dos
-participantes ativos na sessão de vídeo. Quando um usuário junta-se à aplicação
-de distribuição de mídia contínua ao vivo, ele contata este servidor e se
-cadastra. O servidor de \textit{bootstrap}, \textit{rendevouz} ou
-\textit{tracker}, como costuma ser chamado, retorna ao novo participante uma
-lista com informação de um subconjunto aleatório de participantes da sessão de
-vídeo.
+malha, tem um servidor centralizado. Esse servidor mantém uma lista dos nós
+participantes ativos na sessão de vídeo. Quando um usuário utiliza o sistema
+cliente de distribuição de mídia contínua ao vivo pela primeira vez, tal
+usuário realiza um cadastro no servidor. O servidor de \textit{bootstrap},
+\textit{rendevouz} ou \textit{tracker}, como costuma ser chamado, retorna à
+aplicação cliente do usuário uma lista com informação de um subconjunto
+aleatório de outros usuários da sessão de vídeo.
 
-Após receber a lista com os possíveis parceiros, o novo participante tenta
-realizar as parcerias. Se a parceria é aceita pelo nó contatado, o novo
-participante irá adicioná-lo a sua lista de vizinhos. Depois de obter alguns
-vizinhos, o novo participante começa a trocar pedaços de vídeo com seus
+Após receber a lista com os possíveis nós parceiros, o novo nó participante
+tenta realizar as parcerias. Se a parceria é aceita pelo nó contatado, o novo
+nó participante irá adicioná-lo a sua lista de vizinhos. Depois de obter alguns
+vizinhos, o novo nó participante começa a trocar pedaços de vídeo com seus nós
 parceiros. A Figura~\ref{fig:mod_sis_p2p_aovivo_malha_novato} mostra o processo
 inicial de cadastro no sistema e realização das parcerias iniciais.
 
@@ -1443,37 +1443,38 @@ inicial de cadastro no sistema e realização das parcerias iniciais.
 \label{fig:mod_sis_p2p_aovivo_malha_novato}
 \end{figure}
 
-Os participantes do sistema trocam regularmente mensagens de informação de vida
-(\textit{keep-live messages} ou \textit{ping}). Caso um vizinho não responda às
-mensagens de vida, seu nó parceiro o remove da lista e, possivelmente,
-tenta obter novos parceiros para manter sua
+Os nós participantes do sistema trocam regularmente mensagens de informação de
+vida (\textit{keep-live messages} ou \textit{ping}). Caso um vizinho não
+responda às mensagens de vida, seu nó parceiro o remove da lista e,
+possivelmente, tenta obter novos nós parceiros para manter sua
 conectividade~\cite{zhang_peer--peer_2005}. Uma parceria é estabelecida por um
 acordo mútuo entre os nós participantes. Os diferentes sistemas existentes
 possuem estratégias variadas para estabelecimento destes acordos. Por exemplo, o
 número de vizinhos que os participantes possuem, a banda de rede disponível, a
 dinâmica dos seus vizinhos e a qualidade percebida do fluxo de
-vídeo~\cite{guo_survey_2008}. Com base nesses critérios, um participante se
+vídeo~\cite{guo_survey_2008}. Com base nesses critérios, um nó participante se
 conecta a um novo vizinho e também procura por novas parcerias.
 
 Em uma estrutura baseada em árvore, o fluxo de vídeo é transmitido a partir de
-uma fonte geradora para todos os participantes do sistema, seguindo a estrutura
-lógica da árvore formada. Em uma estrutura baseada em malha, não existe um fluxo
-contínuo transmitido nestes mesmos moldes. Nesses sistemas, a fonte do vídeo
-(servidor) faz a codificação e a divisão do vídeo, criando os pequenos pedaços
-chamados \textit{chunks}. Cada \textit{chunk} contém dado para um pequeno
-intervalo de tempo de visualização. Por exemplo, as aplicações atuais transmitem
-dados a uma taxa aproximada de 6 \textit{chunks} por segundo de
+uma fonte geradora para todos os nós participantes do sistema, seguindo a
+estrutura lógica da árvore formada. Em uma estrutura baseada em malha, não
+existe um fluxo contínuo transmitido nestes mesmos moldes. Nesses sistemas, a
+fonte do vídeo (servidor) faz a codificação e a divisão do vídeo, criando os
+pequenos pedaços chamados \textit{chunks}. Cada \textit{chunk} contém dado para
+um pequeno intervalo de tempo de visualização. Por exemplo, as aplicações atuais
+transmitem dados a uma taxa aproximada de 6 \textit{chunks} por segundo de
 vídeo~\cite{guo_survey_2008}. Esses \textit{chunks} são numerados em
-uma sequência temporal, para que os participantes possam identificar e executar
-o vídeo correspondente de forma apropriada. Os pedaços do fluxo são disseminados
-a partir do servidor para diversos participantes da rede, que os disseminam para
-seus companheiros, e assim por diante. Como os \textit{chunks} tomam diferentes
-caminhos para atingir os diversos pontos da rede, eles chegam a um usuário fora
-de ordem e, para uma execução contínua do vídeo, os participantes guardam os
-chunks em um armazenamento temporário de memória, onde são ordenados antes de
-sua apresentação. Dependendo do tipo de aplicação, o armazenamento pode variar
-de segundos a minutos. Em uma sessão de vídeo ao vivo, que é o período em que um
-fluxo de mídia é transmitido, a sequência de identificação dos \textit{chunks}
+uma sequência temporal, para que os nós participantes possam identificar e
+executar o vídeo correspondente de forma apropriada. Os pedaços do fluxo são
+disseminados a partir do servidor para diversos participantes da rede, que os
+disseminam para seus companheiros, e assim por diante. Como os \textit{chunks}
+tomam diferentes caminhos para atingir os diversos pontos da rede, estes chegam
+a um usuário fora de ordem e, para uma execução contínua do vídeo, os nós
+participantes guardam os \textit{chunks} em um armazenamento temporário de
+memória, onde são ordenados antes de sua apresentação. Dependendo do tipo de
+aplicação, o armazenamento pode variar de segundos a minutos. Em uma sessão de
+vídeo ao vivo, que é o período em que um fluxo de mídia é transmitido, a
+sequência de identificação dos \textit{chunks}
 cresce enquanto o vídeo é disseminado.
 
 Os dados são trocados principalmente através de duas estratégias: requisitando
@@ -1481,32 +1482,33 @@ ou enviando (\textit{pull} e \textit{push}). Em um sistema do tipo
 \textit{mesh-push} (malha e requisição), um nó envia os dados que recebe aos
 seus vizinhos que provavelmente ainda não os obtiveram. Não há uma relação
 clara de pai-filho neste esquema e o envio dos dados é estabelecido por
-interações passadas entre os participantes, onde indicam quais são os dados
-desejados. Um participante pode estabelecer parcerias com diversos outros e
-anunciar a necessidade por dados a todos estes. Por consequência, pode existir
-envio de dados redundantes na rede, pois mais de um dos parceiros pode responder
-por um pedido. Para tratar esse problema deve existir um planejamento entre os
-participantes do sistema, com escalonamento das transferências dos
-dados~\cite{zhang_peer--peer_2005}.
+interações passadas entre os nós participantes, onde indicam quais são os dados
+desejados. Um nó participante pode estabelecer parcerias com diversos outros
+nós e anunciar a necessidade por dados a todos estes. Por consequência, pode
+existir envio de dados redundantes na rede, pois mais de um dos nós parceiros
+pode responder por um pedido. Para tratar esse problema deve existir um
+planejamento entre os nós participantes do sistema, com escalonamento das
+transferências dos dados~\cite{zhang_peer--peer_2005}.
 
-Caso seja usado um sistema \textit{mesh-pull}, os participantes, periodicamente,
-trocam entre si um mapa de \textit{chunks}. Este mapa tem informações dos
-\textit{chunks} disponíveis localmente por um participante. Além disso, no
-mapa de \textit{chunks} contém também informações sobre os dados faltantes. Ao
-obter os mapas de seus vizinhos, um participante decide como escalonar o pedido
-de \textit{chunks} (e a qual vizinho enviar o pedido). As transmissões
-redundantes são evitadas, uma vez que os participantes solicitam \textit{chunks}
-a um único parceiro. Porém, as frequentes trocas de mapas de \textit{chunks} e
-mensagens por pedidos aumentam a sobrecarga do protocolo e podem introduzir
-novos atrasos ao sistema.
+Caso seja usado um sistema \textit{mesh-pull}, os nós participantes,
+periodicamente, trocam entre si um mapa de \textit{chunks}. Este mapa tem
+informações dos \textit{chunks} disponíveis localmente por um participante. Além
+disso, no mapa de \textit{chunks} contém também informações sobre os dados
+faltantes. Ao obter os mapas de seus vizinhos, um participante decide como
+escalonar o pedido de \textit{chunks} (e a qual vizinho enviar o pedido). As
+transmissões redundantes são evitadas, uma vez que os participantes solicitam
+\textit{chunks} a um único parceiro. Porém, as frequentes trocas de mapas de
+\textit{chunks} e mensagens por pedidos aumentam a sobrecarga do protocolo e
+podem introduzir novos atrasos ao sistema.
 
 Na Figura~\ref{fig:mod_sis_p2p_aovivo_malha_trocadados}, ilustra-se a troca de
 \textit{chunks} em uma aplicação com estrutura baseada em malha. Por esta
-figura, o nó 2 gera seu mapa, indicando quais \textit{chunks} ele tem disponível
-em seu armazenamento temporário. Ele troca este mapa com os participantes 1 e,
-como resposta, o nó 1 envia o seu mapa. Observe que o nó 1 possui uma lista com
-os diversos mapas de seus parceiros. Os pedaços de vídeo faltantes no nó 2 serão
-requisitados ao nó 1. Finalmente, o nó 1 responde às requisições pelo nó 2.
+figura, o nó 2 gera seu mapa, indicando quais \textit{chunks} tem disponível
+em seu armazenamento temporário. O nó 2 então troca este mapa com o nó
+participante 1 e, como resposta, o nó 1 envia também o seu mapa. Observe que o
+nó 1 possui uma lista com os diversos mapas de seus parceiros. Os pedaços de
+vídeo faltantes no nó 2 serão requisitados ao nó 1. Finalmente, o nó 1 responde
+às requisições pelo nó 2.
 
 \begin{figure}[htb!]
 \begin{center}
@@ -1522,33 +1524,33 @@ requisitados ao nó 1. Finalmente, o nó 1 responde às requisições pelo nó 2.
 Uma estrutura híbrida para transmissões ao vivo em P2P pode ser caracterizada de
 duas formas. Na primeira, a arquitetura da rede é um misto entre uma arquitetura
 baseada em árvores e uma arquitetura baseada em malhas. Na segunda, o método
-de transmissão de dados entre os participantes é um misto entre um sistema P2P,
-orientado por pedidos explícitos por dados, e um encaminhamento automático dos
-dados da mídia. Em ambos os casos, há uma tentativa de se obter os benefícios de
-cada uma das propostas e isolar os pontos fracos das mesmas.
+de transmissão de dados entre os nós participantes é um misto entre um sistema
+P2P, orientado por pedidos explícitos por dados, e um encaminhamento automático
+dos dados da mídia. Em ambos os casos, há uma tentativa de se obter os
+benefícios de cada uma das propostas e isolar os pontos fracos das mesmas.
 
 \subsubsection{Híbrido de Árvore-Malha}
 
-Em uma rede sobreposta P2P baseada em árvore, os participantes da rede são
+Em uma rede sobreposta P2P baseada em árvore, os nós participantes da rede são
 organizados de forma hierárquica. Assim, a transmissão ao vivo flui dos níveis
-mais altos na hierarquia (do participante que está codificando o vídeo) para os
-níveis mais baixos. Os participantes mais próximos à fonte apresentam menores
-latências no vídeo assistido e menos problemas com relação a rupturas na
+mais altos na hierarquia (do nó participante que está codificando o vídeo) para
+os níveis mais baixos. Os nós participantes mais próximos à fonte apresentam
+menores latências no vídeo assistido e menos problemas com relação a rupturas na
 hierarquia da árvore.
 
 As estruturas baseadas em malha contornam o problema de rupturas na árvore.
-Nesse modelo, os participantes do sistema realizam parcerias e trocam dados
+Nesse modelo, os nós participantes do sistema realizam parcerias e trocam dados
 entre si. Não há hierarquias, entretanto, a recepção dos dados da transmissão
 ao vivo está sujeita a atrasos e imprevisibilidade~\cite{qi_huang_p2p_2007}.
 
 Uma abordagem de construção híbrida da rede sobreposta adota partes da rede
-como uma árvore, e outras partes como uma rede em malha. Os participantes
+como uma árvore, e outras partes como uma rede em malha. Os nós participantes
 do sistema podem participar de ambas as estruturas. Sistemas
-como o Anysee2~\cite{huang_anysee2:_2007} adotam estratégias de alocação dos
+como o Anysee2~\cite{huang_anysee2:_2007} adotam estratégias de alocação dos nós
 participantes na árvore e, na rede em malha formada, adotam estratégias para
 otimizar o agendamento de entrega de dados. Alguns dos critérios utilizados para
-alocar os participantes na árvore são estabilidade do participante na rede e
-proximidade entre os participantes na rede física.
+alocar os nós participantes na árvore são estabilidade do nó participante na
+rede e a proximidade entre os nós participantes na rede física.
 
 Mais precisamente, no Anysee2, estrutura-se os nós participantes em uma rede de
 controle e em uma rede de troca de dados. A rede de controle é baseada em uma
@@ -1564,18 +1566,18 @@ encaminhar/receber a mídia transmitida: o encaminhamento automático da mídia
 (encaminhamento automático) e \textit{Pull} (pedido explícita), são utilizadas
 em uma rede P2P não estruturada. Dessa forma, esses sistemas quase sempre
 apresentam um protocolo/estrutura simples, sem a necessidade de coordenação e
-hierarquia entre participantes. Isso torna o sistema naturalmente resistente à
-dinâmica dos participantes e a outros imprevistos.
+hierarquia entre os nós participantes. Isso torna o sistema naturalmente
+resistente à dinâmica dos nós participantes e a outros imprevistos.
 
 Existem alguns mecanismos propostos com a combinação do
 \aspas{\textit{push-pull}}~\cite{pelc_push--pull_2007,meng_zhang_understanding_2007}.
 Esses mecanismos usam o \aspas{\textit{push}} para espalhar os dados rapidamente
 e o \aspas{\textit{pull}} para preencher as lacunas dos dados recebidos. Nesses
 dois trabalhos supracitados, ambos os mecanismos coexistem, não havendo uma
-alternância entre eles.
+alternância entre ambos.
 
 O protocolo proposto em~\cite{lo_cigno_fundamental_2008} alterna as operações de
-\aspas{\textit{push}} e \aspas{\textit{pull}}. Cada participante é autônomo e
+\aspas{\textit{push}} e \aspas{\textit{pull}}. Cada nó participante é autônomo e
 independente, sem a necessidade de sincronia com outros nós participantes.
 Durante a operação de \aspas{\textit{push}}, o nó participante envia dados
 alguns de seus nós parceiros. Na operação de \aspas{\textit{pull}}, o nó
@@ -1597,10 +1599,10 @@ Nesta seção, apresentam-se a descrição e o funcionamento de uma aplicação de
 envio de mídia ao vivo em P2P. A descrição apresentada utiliza como base as
 principais aplicações existentes atualmente, como a
 Sopcast~\cite{fallica_quality_2008}, o PPLive~\cite{hei_insights_2006}, o
-GridMedia~\cite{li_zhao_gridmedia:_2005,zhang_peer--peer_2005} e o
+GridMedia~\cite{li_zhao_gridmedia:_2005,zhang_peer--peer_2005}, Octoshape,  e o
 CoolStreaming~\cite{4395123,susu_xie_coolstreaming:_2007}. Na
-Figura~\ref{fig:mod_sis_p2p_aovivo}, ilustra-se um exemplo do sistema de
-transmissão ao vivo em P2P que será detalhado nessa seção.
+Figura~\ref{fig:mod_sis_p2p_aovivo}, ilustra-se um cenário exemplo de um sistema
+de transmissão ao vivo em P2P que será detalhado nessa seção.
 
 \begin{figure}[ht]
 \begin{center}
@@ -1615,23 +1617,23 @@ As principais entidades envolvidas nesses sistemas são as seguintes:
 
 \begin{itemize}
  \item \textbf{servidor da transmissão ao vivo:} o servidor de transmissão é um
-nó especial do sistema P2P. Ele captura e codifica o vídeo que será transmitido
-pela rede. O servidor é a fonte inicial dos dados de vídeo da rede;
+nó especial do sistema P2P. Este nó captura e codifica o vídeo que será
+transmitido pela rede. O servidor é a fonte inicial dos dados de vídeo da rede;
 
  \item \textbf{servidor de \textit{boot}:} o servidor de \textit{boot} (ou
 \textit{bootstrap}) é uma entidade centralizadora por meio do qual os demais
 nós do sistema encontram seus parceiros iniciais para entrar na rede P2P. Todo
 nó se registra nesse servidor para fazer parte da lista dos nós do sistema.
-Quando um novo nó se registra, o servidor de \textit{boot} envia a ele uma lista
-com alguns nós parceiros candidatos. Quando um nó antigo deseja realizar mais
-parcerias, este pede ao servidor de \textit{boot} uma lista com alguns
-nós para tentar novos contatos.
+Quando um novo nó se registra, o servidor de \textit{boot} envia ao nó
+requisitante uma lista com alguns nós parceiros candidatos. Quando um nó antigo
+deseja realizar mais parcerias, este pede ao servidor de \textit{boot} uma lista
+com alguns nós para tentar novos contatos.
 
  \item \textbf{participantes (clientes/nós/\textit{peers})}: são os usuários do
-sistema P2P de transmissão ao vivo. Cada participante está em contato com um
-subconjunto de todos os participantes do sistema. Não há hierarquia entre esses
-participantes, e qualquer um pode servir dados de vídeo e também responder a
-pedidos por dados oriundos de seus parceiros.
+sistema P2P de transmissão ao vivo. Cada nó participante está em contato com um
+subconjunto de todos os nós participantes do sistema. Não há hierarquia entre
+esses participantes, e qualquer um pode servir dados de vídeo e também responder
+a pedidos por dados oriundos de seus parceiros.
 
 \end{itemize}
 
@@ -1656,8 +1658,8 @@ formada é pouco dinâmica.
 Os sistemas mais populares de envio de mídia ao vivo em P2P utilizam uma rede
 sobreposta baseada em malha. Mais ainda, no modelo de malha, a rede não é
 estruturada de forma rígida e as parcerias no sistema são formadas
-aleatoriamente. As interações e trocas de dados entre os participantes $p_i$ e
-$p_j$, com $i \neq j$, são normalmente orientadas pelos pedidos de dados e
+aleatoriamente. As interações e trocas de dados entre os nós participantes $p_i$
+e $p_j$, com $i \neq j$, são normalmente orientadas pelos pedidos de dados e
 informações entre $p_i$ e $p_j$. Assim, esse tipo de rede sobreposta do tipo
 malha é utilizada para aliviar os efeitos de entrada e saída dos nós
 participantes na rede~\cite{li_zhao_gridmedia:_2005,zhao_gridmedia+:_2009}.
@@ -1675,12 +1677,12 @@ ponto da mídia ao vivo que está sendo gerada pelo servidor $S$ e saberá a partir
 de qual ponto deverá solicitar os dados para reproduzir a mídia ao vivo.
 
 O novo nó $p_i$ seleciona, aleatoriamente, uma quantidade $n$ de nós de $LPC_i$
-como parceiros candidatos. Eles formarão o conjunto de parceiros de $p_i$,
-denominado $LP_i$ ($LP_i \subseteq LPC_i$). Os conjuntos $LPC_i$ e $LP_i$ são
-dinâmicos, pois cada nó $p_j$ está livre para abandonar o sistema. Quando $p_j
-\in LP_i$ e o nó $p_i$ detecta a inatividade deste parceiro, $p_i$ remove $p_j$
-de $LPC_i$ e $LP_i$ e seleciona um novo elemento de $LPC_i$ para criar uma nova
-parceria.
+como parceiros candidatos. Estes nós candidatos formarão o conjunto de parceiros
+de $p_i$, denominado $LP_i$ ($LP_i \subseteq LPC_i$). Os conjuntos $LPC_i$ e
+$LP_i$ são dinâmicos, pois cada nó $p_j$ está livre para abandonar o sistema.
+Quando $p_j \in LP_i$ e o nó $p_i$ detecta a inatividade deste parceiro, $p_i$
+remove $p_j$ de $LPC_i$ e $LP_i$ e seleciona um novo elemento de $LPC_i$ para
+criar uma nova parceria.
 
 O nó $p_i$ sempre tenta manter sua $LPC_i$ com um número de candidatos acima de
 um limiar $L_i$. O valor de $L_i$ pode ser dado pela capacidade de recurso de
@@ -1690,9 +1692,9 @@ para $LPC_i$.
 
 Cada nó $p_i$ também contém um mapa de partes da mídia de tamanho \textit{m},
 representado por $cm_i$. Esse mapa sinaliza os \textit{chunks}
-da mídia que ele contém ou necessita. Ou seja, o mapa $cm_i$ representa um
-trecho contínuo da mídia transmitida ao vivo pelo sistema P2P que será
-reproduzida pelo nó $p_i$.
+da mídia que o nó $p_i$ contém ou necessita. Ou seja, o mapa $cm_i$
+representa um trecho contínuo da mídia transmitida ao vivo pelo sistema P2P que
+será reproduzida pelo nó $p_i$.
 
 Inicialmente, cada posição do mapa é marcada como \aspas{desejada}, ou seja,
 $cm_i[x] = desejada$, onde $x = [0..m]$. Periodicamente, $p_i$ requisita
@@ -1701,7 +1703,7 @@ $p_i$ verifica quais parceiros podem satisfazer a sua necessidade por
 determinado \textit{chunk} $c_t$. Quando $p_i$ recebe um \textit{chunk}
 \textit{x} qualquer, $p_i$ marca $cm_i[x] = disponivel$.
 
-Periodicamente, $p_i$ verifica quais \textit{chunks} $c_t$ ele necessita
+Periodicamente, $p_i$ verifica quais \textit{chunks} $c_t$ são necessários
 ($cm_i[c_t] = desejada$) e verifica entre seus parceiros $p_j$, com $p_j \in
 LP_i$, quais possuem o \textit{chunk} $c_t$ com $cm_j [c_t] = disponivel$. O
 parceiro $p_j$ que contém o \textit{chunk} $c_t$ e que possui maior
@@ -1728,33 +1730,45 @@ vivo.}
 	    \hline
 	    \hline
 
-\multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{\textit{S}} &
-\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Servidor de mídia contínua.}
-	    \\
-
-\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{$P = p_1, p_2,..., p_n$} &
-\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Conjunto dos participantes do sistema.}
+\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{\textit{S}} &
+\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Servidor de mídia contínua.}
 	    \\
 
 \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{\textit{B}} &
 \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{\textit{Bootstrap} ou rastreador do sistema.}
 	    \\
 
-\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{$p_i$} &
-\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Participante $i$ do sistema}
+\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{$P = p_1, p_2,..., p_n$} &
+\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Conjunto dos nós
+participantes do sistema.}
 	    \\
 
-\multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{$LP_i$} &
-\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Conjunto de parceiros de $i$.}
+\multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{$p_i$} &
+\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Nó participante $i$
+do sistema}
 	    \\
 
-\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{$LPC_i$} &
-\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Conjunto de parceiros candidatos de $i$.}
+\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{$LP_i$} &
+\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Conjunto de nós parceiros de $i$.}
 	    \\
 
-\multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{$L_i$} &
-\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Número de candidatos mínimo de $p_i$.}
+\multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{$LPC_i$} &
+\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Conjunto de
+nós parceiros candidatos de $i$.}
 	    \\
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{$L_i$} &
+\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Número mínimo de nós candidatos $p_i$.}
+	    \\
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{$cm_i$} &
+\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Mapa de \textit{chunks} de $p_i$.}
+	    \\
+
+\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{$cm_i[x] = desejada$, onde $x = [0..m]$} &
+\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Conteúdo inicial do mapa de \textit{chunks} de $p_i$.}
+	    \\
+
             \hline
 
         \end{tabular}
@@ -1774,7 +1788,7 @@ $cm_s[c_t] = disponivel$.
 Os parceiros do servidor $S$ atualizarão as informações sobre o buffer do
 servidor $S$ a partir da troca dos mapas de \textit{chunks} e perceberão a
 existência de novos dados. Os nós fazem requisições ao servidor $S$ por
-\textit{chunks} produzidos por ele e então $S$ começará a disseminar os dados da
+\textit{chunks} produzidos e então $S$ começará a disseminar os dados da
 mídia. Outros nós do sistema irão encontrar os novos dados produzidos por $S$
 quando algum de seus parceiros os receberem, seja por um pedido direto a $S$ ou
 por outro nó do sistema.
@@ -1820,81 +1834,6 @@ ao vivo em sistemas P2P.}
     \end{center}
 \end{table}
 
-\subsection{Realização de Parcerias}
-
-Um nó $p_i$ realiza parcerias logo após seu primeiro contato com o servidor de
-\textit{boostrap} $B$. A partir do estabelecimento das parcerias iniciais, o nó
-efetivamente começa a participar do sistema de envio de mídia contínua ao vivo
-em P2P. Além deste momento inicial de estabelecimento de parcerias, um nó pode
-ser contatado por um outro participante $p_j$, requisitando sua parceria, ou
-$p_i$ pode tentar novas parcerias para aumentar sua conectividade.
-
-Tanto no estabelecimento inicial de parcerias, quanto na descoberta de novos
-parceiros para aumento da conectividade, o nó $p_i$ recorre à lista de parceiros
-candidatos $LPC_i$ para selecionar um nó, ao qual envia uma requisição de
-parcerias. Vários critérios podem ser utilizados para a escolha do candidato
-$p_k$, como uma escolha aleatória entre os nós pertencentes a $LPC_i$ ou
-pelos recursos disponíveis em $p_k$, informados por $B$.
-
-Uma vez selecionado o candidato, $p_i$ envia uma mensagem de pedido de
-parceria ao candidato $p_k$ selecionado de $LPC_i$. Caso $p_k$ tenha recursos
-disponíveis (por exemplo, banda de rede, conexões disponíveis na aplicação
-etc.), adiciona $p_i$ à $LP_k$ e responde a solicitação de $p_i$. Quando $p_i$
-recebe a resposta de $p_k$, ele adiciona $p_k$ à $LPC_i$ e a nova parceria é
-formalmente estabelecida. Caso não seja de interesse de $p_k$ o estabelecimento
-da nova parceria (por exemplo, por falta de recursos), $p_k$ ignora o pedido de
-nova parceria. O nó $p_i$ espera por um período de tempo pela resposta de $p_k$
-e, caso não a receba, $p_i$ retira o candidato $p_k$ de sua $LPC$ e repete o
-processo com um novo candidato selecionado.
-
-No momento que um nó $p_i$ adiciona um novo parceiro $p_k$ à $LPC$, $p_i$ cria
-um temporizador $T_{ik}$, o qual é acionado em intervalos de tempo $tp_i$. A
-cada acionamento do temporizador $T_{ik}$, o nó $p_i$ envia uma mensagem ao
-parceiro $p_k$ para verificar seu estado na aplicação. O objetivo desta
-mensagem é verificar se a parceria está ativa, além de haver troca
-de informações, como os mapas de \textit{chunks} de ambos os nós.
-
-O nó $p_i$ espera a resposta de $p_k$ acerca do pedido de parceria por um
-intervalo de tempo $tr_i$. Caso $p_k$ não responda, $p_i$ remove $p_k$ de sua
-$LP$. Caso $p_i$ receba a resposta de $p_k$, $p_i$ atualiza os dados relativos
-a $p_k$, como por exemplo, o mapa de \textit{chunks} $cm_k$.
-
-Na Tabela~\ref{tab:param_sis_p2p_parceria} apresenta-se um resumo dos elementos
-utilizados para descrever a realização de parcerias no sistema de transmissão
-ao vivo em P2P.
-
-\begin{table}[ht]
-        \caption{Resumo dos elementos utilizados na realização de parcerias.}
-        \label{tab:param_sis_p2p_parceria}
-    \begin{center}
-        \begin{tabular}{|p{1.0cm}|p{1.5cm}|}
-            \hline
-
-\multicolumn{1}{|>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}{
-\textbf{Elemento}}} &
-
-\multicolumn{1}{>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}{\textbf{Descrição}}}
-	    \\
-	    \hline
-	    \hline
-
-\multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{$T_{ik}$} &
-\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Temporizador de \textit{Ping} entre $p_i$ e $p_k$.}
-	    \\
-
-\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{$tp_i$} &
-\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Intervalo de tempo para acionar $T_{ik}$.}
-	    \\
-
-\multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{$tp_k$} &
-\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Tempo máximo de espera de resposta de \textit{Ping}.}
-	    \\
-            \hline
-
-        \end{tabular}
-    \end{center}
-\end{table}
-
 \subsection{Armazenamento e Consumo de Dados}
 
 Os nós do sistema P2P de transmissão ao vivo devem conseguir obter a mídia da
@@ -1907,9 +1846,9 @@ nós do sistema P2P.
 
 Caso a latência seja alta, os nós irão experimentar um atraso indesejável e, no
 pior dos casos, a informação será exibida muito tempo depois do fato ocorrido.
-Por exemplo, um gol em uma partida de futebol poderá ser comemorado pelo vizinho
-e muito tempo depois o usuário do nó com recepção em atraso o verá em sua
-aplicação responsável por reproduzir o conteúdo. Por esse motivo,
+Por exemplo, um gol em uma partida de futebol poderá ser comemorado por um
+usuário de um nó e somente muito tempo deopis o usuário de um nó vizinho com
+recepção em atraso visualizará a mesma cena em sua aplicação. Por esse motivo,
 os nós devem obter a mídia a uma taxa de \textit{c} \textit{chunks} por segundo.
 Essa é a mesma taxa de produção \textit{chunks} pelo servidor $S$.
 
@@ -1921,7 +1860,7 @@ inicializada com conteúdo vazio e, à medida que $p_i$ recebe os \textit{chunks}
 de seus parceiros, cada posição vai sendo preenchida. Nesse esquema de
 armazenamento temporário, o nó $p_i$ tem por objetivo manter o \textit{buffer}
 $B_i$ preenchido de forma que se garanta uma contínua exibição da mídia ao vivo,
-mesmo se ele perder conexão temporariamente com seus parceiros.
+mesmo se este perder conexão temporariamente com seus parceiros.
 
 Inicialmente, o \textit{buffer} $B_i$ pode ser representado por uma estrutura do
 tipo \aspas{\textit{buffer} circular}. Dois processos trabalham em conjunto para
@@ -1951,13 +1890,13 @@ unidade de tempo, o nó deve tentar obter o próximo \textit{chunk} criado. Assim,
 a cada intervalo de tempo, o nó desloca a sua janela de interesse para o próximo
 \textit{chunk} indicado em seu mapa.
 
-No primeiro momento da Figura~\ref{fig:cons_media_aovivo}, esse participante
+No primeiro momento da Figura~\ref{fig:cons_media_aovivo}, esse nó participante
 irá consumir o \textit{chunk} à esquerda da janela de interesse. No segundo
-momento, a janela de interesse é deslocada para a direita e esse participante não tem o
-respectivo \textit{chunk} para consumo (poderá haver uma falha na exibição).
-Neste mesmo instante, o participante consegue obter o \textit{chunk} mais
-recente de seu interesse. Finalmente, o processo continua e o participante
-consome o próximo \textit{chunk}.
+momento, a janela de interesse é deslocada para a direita e esse nó participante
+não tem o respectivo \textit{chunk} para consumo (poderá haver uma falha na
+exibição). Neste mesmo instante, o nó participante consegue obter o
+\textit{chunk} mais recente de seu interesse. Finalmente, o processo continua e
+o nó participante consome o próximo \textit{chunk}.
 
 \begin{figure}[ht]
 \begin{center}
@@ -1983,7 +1922,7 @@ P2P. A primeira é chamada de \aspas{Mais Raro Primeiro}, que é adotada em
 protocolos de aplicações de compartilhamento de arquivos em P2P, como o
 BitTorrent, e em envio de mídia ao vivo P2P, como o
 CoolStreaming~\cite{susu_xie_coolstreaming:_2007}. A segunda estratégia
-é denominada \aspas{Gulosa}, onde os participantes privilegiam a escolha de
+é denominada \aspas{Gulosa}, onde os nós participantes privilegiam a escolha de
 \textit{chunks} que estão próximos ao fim de suas janelas de visualização.
 
 \subsubsection{Estratégia \aspas{Mais Raro Primeiro}}
@@ -1991,7 +1930,7 @@ CoolStreaming~\cite{susu_xie_coolstreaming:_2007}. A segunda estratégia
 Na estratégia \aspas{Mais Raro Primeiro}, um nó $p_i$ irá requisitar o
 \textit{chunk} que está menos replicado pelo sistema de transmissão.
 
-Para exemplificar essa estratégia, considere o \textit{buffer} $B_i$ do
+Para exemplificar essa estratégia, considere o \textit{buffer} $B_i$ do nó
 participante $p_i$. A posição $B_i[0]$ será a mais rara e está vazia, pois
 acabara de ser criada pelo servidor $S$. A probabilidade de encontrar um
 parceiro que tenha esse dado disponível cresce com o tempo. Assim, no próximo
@@ -2015,66 +1954,103 @@ esteja preenchido em seu \textit{buffer}, depois o \textit{chunk} $B_i[n-1]$ e
 assim por diante. Desse modo, os nós do sistema tendem a ter armazenado em seus
 \textit{buffers} os dados mais antigos produzidos pelo servidor $S$.
 
-\subsection{Seleção de Parceiros para Troca de Dados}
+\subsection{Realização de parcerias e obtenção de \textit{chunks}}
 
-Um participante $p_i$ do sistema de transmissão ao vivo em P2P, além de
-selecionar quais \textit{chunks} ele deve buscar em um determinado momento,
-deve escolher de qual parceiro realizar o pedido. Vários critérios podem ser
-utilizados para definir essa escolha, entre eles, critérios baseados em
-disponibilidade de recursos, proximidade temporal e até mesmo proximidade
-geográfica.
+Um nó $p_i$ realiza parcerias logo após seu primeiro contato com o servidor de
+\textit{boostrap} $B$. A partir do estabelecimento das parcerias iniciais, o nó
+efetivamente começa a participar do sistema de envio de mídia contínua ao vivo
+em P2P. Além deste momento inicial de estabelecimento de parcerias, um nó pode
+ser contatado por um outro nó participante $p_j$, requisitando sua parceria ou
+$p_i$ pode tentar novas parcerias para aumentar sua conectividade.
 
-O modelo apresentado realiza uma seleção de parceiros em duas etapas. Por
-simplificação, adota-se a disponibilidade de recursos como critério de escolha
-de um parceiro para realização do pedido por um \textit{chunk} específico.
-Essa mesma maneira de seleção pode ser realizada com quaisquer outros
-critérios de seleção.
+Tanto no estabelecimento inicial de parcerias, quanto na descoberta de novos nós
+parceiros para aumento da conectividade, o nó $p_i$ recorre à lista de nós
+parceiros candidatos $LPC_i$ para selecionar um nó, ao qual envia uma requisição
+de parceria. Vários critérios podem ser utilizados para a escolha do candidato
+$p_k$, como uma escolha aleatória entre os nós pertencentes a $LPC_i$, com base
+nos recursos disponíveis em $p_k$, proximidade temporal ou até mesmo proximidade
+geográfica, informados por $B$ ou por comunicação direta entre os parceiros.
 
-Na primeira etapa, um nó $p_i$ seleciona o parceiro $p_k$ entre todos os seus
-parceiros, que apresenta maior disponibilidade de recursos em um
-determinado instante. Os recursos de um participante podem ser conhecidos
-por duas maneiras: por informação direta entre os parceiros, ou por requisição e
-envio de informações no servidor $B$. No caso apresentado a seguir, os nós
-parceiros trocam essas informações entre si e o recurso monitorado é a banda de
-rede disponível para o compartilhamento.
+Uma vez selecionado o nó candidato, $p_i$ envia uma mensagem de pedido de
+parceria ao nó candidato $p_k$, selecionado de $LPC_i$. Caso $p_k$ tenha
+recursos disponíveis (por exemplo, banda de rede, conexões disponíveis na
+aplicação etc.), este adiciona $p_i$ à $LP_k$ e responde a solicitação de $p_i$.
+Quando $p_i$ recebe a resposta de $p_k$, este adiciona $p_k$ à $LPC_i$ e a nova
+parceria é de fato estabelecida. No momento que um nó $p_i$ adiciona um novo nó
+parceiro $p_k$ à $LPC_i$, este inicia um temporizador $t_{ik}$, o qual é
+acionado em intervalos de tempo $tp_i$. A cada expiração do temporizador
+$t_{ik}$, o nó $p_i$ envia uma mensagem ao nó parceiro $p_k$ para verificar seu
+estado na aplicação. O objetivo desta mensagem é verificar se a parceria está
+ativa, além de haver troca de informações, como os mapas de \textit{chunks} de
+ambos os nós.
 
 A partir da seleção de $p_k$, o nó $p_i$ envia uma requisição pelo
-\textit{chunk} de interesse $c_j$. O participante $p_i$ cria um temporizador
-para esse pedido. Quando $p_k$ recebe um pedido por dados vindo de um parceiro
-ativo $p_i$ ($p_i \in LP_k$), $p_k$ cria uma mensagem de resposta contendo o
-\textit{chunk} $c_j$ requisitado e o envia ao nó $p_i$. Caso o pedido seja
-enviado por um parceiro não parceiro, ou seja, $pi \notin LPk$, $p_k$ ignora o
-pedido por $c_j$, mas adiciona $p_i$ à lista de parceiros candidatos $LPC_k$.
+\textit{chunk} de interesse $c_j$. Quando $p_k$ recebe um pedido por dados vindo
+de um parceiro ativo $p_i \in LP_k$, este cria uma mensagem de resposta contendo
+o \textit{chunk} $c_j$ requisitado e o envia ao nó $p_i$. Caso o pedido seja
+enviado por um nó não parceiro, ou seja, $pi \notin LP_k$, $p_k$ ignora o pedido
+por $c_j$, mas adiciona $p_i$ à lista de nós parceiros candidatos $LPC_k$. O nó
+$p_i$ espera a resposta de $p_k$ acerca do pedido de parceria por um
+intervalo de tempo $tp_i$. Caso $p_k$ não responda no intervalo de tempo $tp_i$,
+$p_i$ remove $p_k$ de sua $LP_i$. Caso $p_i$ receba a resposta de $p_k$, $p_i$
+atualiza os dados relativos a $p_k$, como por exemplo, o mapa de \textit{chunks}
+$cm_k$. Se o pedido pelo \textit{chunk} $c_j$ for respondido durante o intervalo
+de tempo esperado, $p_i$ coloca o novo dado em seu \textit{buffer} de reprodução
+e o assinala como disponível em seu mapa de \textit{chunks}, ou seja, $cm_i[c_j]
+= disponivel$. Fazendo-se dessa forma, $p_i$ passa a ter a capacidade de
+compartilhar o \textit{chunk} recebido com seus nós parceiros. Esse processo
+pode ser repetido até que o \textit{chunk} $c_i$ seja recebido corretamente, ou
+que não faça mais sentido obter aquele determinado \textit{chunk}, por exemplo,
+por já ter passado o seu tempo de visualização.
 
-Se o pedido pelo chunk $c_j$ for respondido durante o intervalo de tempo
-esperado, $p_i$ coloca o novo dado em seu \textit{buffer} de reprodução e o
-assinala como disponível em seu mapa de \textit{chunks}, ou seja, $cm_i[c_j] =
-disponivel$. Fazendo-se dessa forma, $p_i$ passa a ter a capacidade de
-compartilhar o \textit{chunck} que acabara de ser recebido com seus
-nós parceiros.
+% Na Tabela~\ref{tab:param_sis_p2p_parceria}, apresenta-se um resumo dos elementos
+% utilizados para descrever a realização de parcerias no sistema de transmissão
+% ao vivo em P2P.
+%
+% \begin{table}[ht]
+%         \caption{Resumo dos elementos utilizados na realização de parcerias.}
+%         \label{tab:param_sis_p2p_parceria}
+%     \begin{center}
+%         \begin{tabular}{|p{1.0cm}|p{1.5cm}|}
+%             \hline
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}{
+% \textbf{Elemento}}} &
+%
+% \multicolumn{1}{>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}{\textbf{Descrição}}}
+% 	    \\
+% 	    \hline
+% 	    \hline
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{$t_{ik}$} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Temporizador de \textit{Ping} entre $p_i$ e $p_k$.}
+% 	    \\
+%
+% \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{$tp_i$} &
+% \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Intervalo de tempo para acionar $t_{ik}$.}
+% 	    \\
+%
+%             \hline
+%
+%         \end{tabular}
+%     \end{center}
+% \end{table}
 
-A segunda etapa ocorre caso o pedido por uma parceria não seja respondido até a
-expiração de um temporizador marcado em $p_i$. Nesse caso, $p_i$ refaz
-o processo de seleção de parceiros e escolhe um novo parceiro $p_l$, onde $l
-\neq k$. Esse processo pode ser repetido até que o \textit{chunk} $c_i$ seja
-recebido corretamente, ou que não faça mais sentido a obtenção daquele
-determinado \textit{chunk}, por exemplo, por já ter passado o seu tempo de
-visualização.
 
 \section{Criptografia de Hash e Assinatura Digital}
 \label{sec:crypthashdigitalsign}
 
-Nesta seção, discute-se sobre os aspectos de criptografia baseada em chaves
-assimétricas, funções de \textit{hash} e assinatura digital. Os conceitos
-apresentados aqui, adaptado de Sales at al~\cite{upnp-up-dissertacao}, são base
-para o entendimento de como se verifica a autenticidade de um conjunto de
-pacotes de dados, que corresponde a um fluxo de dados multimídia de um evento ao
-vivo, transmitido por um servidor para um ou mais clientes. Com relação a
-certificação digital, seu uso permite que os nós clientes em uma transmissão
-possam confiar no conteúdo recebido de outros sistemas remotos, através
-da validação do conteúdo transportado dentro de um pacote de dados, ou seja, se
-tal conteúdo foi realmente emitido pelo nó gerador do fluxo de dados de
-interesse do nó cliente.
+Mudando de assunto, nesta seção, discute-se sobre os aspectos de criptografia
+baseada em chaves assimétricas, funções de \textit{hash} e assinatura digital.
+Os conceitos apresentados aqui, adaptado de~\cite{upnp-up-dissertacao}, são
+base para o entendimento de como, no protocolo proposta neste trabalho,
+verifica-se a autenticidade de um conjunto de pacotes de dados, que corresponde
+a um fluxo de dados multimídia de um evento ao vivo, transmitido por um servidor
+para um ou mais clientes. Com relação a certificação digital, seu uso permite
+que os nós clientes em uma transmissão possam confiar no conteúdo recebido de
+outros sistemas remotos, através da validação do conteúdo transportado dentro de
+um pacote de dados, ou seja, se tal conteúdo foi realmente emitido pelo nó
+gerador do fluxo de dados de interesse do nó cliente.
 
 Especificamente, os conceitos apresentados a seguir são base para o
 entendimento do mecanismo de verificação de autenticidade de um
@@ -3925,8 +3901,8 @@ especial: o servidor de mídia ao vivo. Este servidor captura o vídeo a ser
 transmitido, codifica-o em um formato apropriado e disponibiliza-o para toda a
 rede P2P.
 
-Os nós têm um armazenamento local, onde guardam os dados do vídeo
-para uma execução contínua. Eles devem verificar quais pedaços de dados são
+Os nós têm um armazenamento local, onde guardam os dados do vídeo para uma
+execução contínua. Estes nós devem verificar quais pedaços de dados são
 necessários, havendo maneiras apropriadas de seleciona-los e requisitá-los.
 Para isso, apresentou-se duas abordagens denominadas \aspas{Gulosa} e
 \aspas{Mais Raro Primeiro}. Essas estratégias mantém o fluxo da execução sem
