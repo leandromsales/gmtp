@@ -76,7 +76,7 @@ projetados para transmitir dados multimídia em larga escala.
 
 \section{Conclusões}
 
-\subsection{Benefícios e Aplicabilidade}
+\section{Benefícios e Aplicabilidade}
 
 Nesta seção, apresentam-se os benefícios e justificativas para diversas tomadas
 de decisões realizadas no processo de especificação do GMTP.
@@ -200,6 +200,14 @@ GMTP não precisa alterar a app, ela continua pedindo via ip + porta
 
 GMTP é específico para streaming, CCN é mais para propósito geral (pensar se
 falar isso)
+
+CCN mantém mais estado de controle do que o GMTP porque é mais generico. Para uma aplicação, CCN faz tudo (entrega confiável), etc???
+para o GMTP, todas as outras coisas além das funções de distruição é om um protocolo diferente TCP
+
+
+O modelo de pull-based do CCN não é bom se  comparado ao de push-based do GMTP
+a aplicação precisa ficar renovando o interesse de tempos em tempos e quando
+ela pára de pedir, o que faz um roteador CCN continuar recebendo?
 
 Como no GMTP a informação de endereçamento ainda existe, roteadores que não
 suportam GMTP não terão problema de rotear os pacotes. Isso não é verdade para

@@ -380,7 +380,7 @@ incluindo suas variações morfológicas, devem ser interpretadas como descrito na
 RFC 2119~\cite{RFC2119}.
 
 
-\subsection{Resumo das principais funções}
+\subsection{Resumo das Principais Funcionalidades}
 
 \begin{itemize}
 
@@ -1078,7 +1078,7 @@ valores reservados para uso futuro e ignorado pelos nós que o processa.
 % tipos de pacotes do GMTP, sendo seu teor bastante técnico e portanto dedicado
 % aos leitores interessados em sua implementação.
 
-\subsection{Registro de participação de \repasss em \net}
+\subsection{Registro de Participação de \repasss em \net}
 \label{subsec:registro-participacao}
 
 O procedimento de registro de participação de um nó \repasss em uma rede $\eta$
@@ -1390,7 +1390,7 @@ Seção~\ref{subsec:registro-participacao}. Mais adiante, na
 Seção~\ref{subsec:conexao-requisicao}, discute-se em mais detalhes as ações de
 consulta e atualização da tabela de recepção de fluxos de dados.
 
-\subsection{Formação de parcerias}
+\subsection{Formação de Parcerias}
 \label{sec:descparc}
 
 Dado que as parcerias ocorrem entre os nós \repasss $\in$ \setrepasss
@@ -2040,7 +2040,7 @@ adicionar uma nova entrada na tabela de recepção de fluxos de dados.
 % GMTP-Inter, a ser discutido em detalhes na
 % Seção~\ref{sec:ccgmtp}, a seguir.
 
-\subsection{Estabelecimento de conexão entre \clis e \servs para obter \setpk}
+\subsection{Estabelecimento de Conexão entre \clis e \servs para Obter \setpk}
 \label{subsec:conexao-requisicao}
 
 No GMTP, divide-se o processo de estabelecimento de conexão em três fases. A
@@ -2073,7 +2073,7 @@ tipo \pac{GMTP-Register}, transmitido por um nó \clis $\in$
 fase de conexão para um determinado fluxo de dados \setpks solicitado, o nó
 \repasss realiza uma determinada ação de registro de participação e repasse.
 
-\subsection{Fase 1: primeira requisição a um fluxo de dados \setpk}
+\subsection{Fase 1: Primeira Requisição a um Fluxo de Dados \setpk}
 \label{subsec:conn-fase1}
 
 A Fase 1 ocorre quando nenhum nó \clis $\in$ \subsetcli$($\repass$)$ está
@@ -2227,7 +2227,7 @@ of the Algorithm~\ref{algo:onReceiveGMTPRegisterReply}.}
 \label{fig:tabela-recepcao-fluxo-11}
 \end{figure}
 
-\subsection{Fase 2: próximas requisições para obter \setpk}
+\subsection{Fase 2: Próximas Requisições para Obter \setpk}
 
 A Fase $2$ de conexão ocorre quando futuras requisições para obter o
 fluxo de dados \setpks são originadas por qualquer nó \clis $\in$
@@ -2260,7 +2260,7 @@ obter \setpk.
 \label{fig:processo-conexao-2}
 \end{figure}
 
-\subsection{Fase 3: busca por mais parceiros \repassu{q} para obter \setpk}
+\subsection{Fase 3: Busca por Mais Parceiros \repassu{q} para Obter \setpk}
 \label{subsec:phase3}
 
 
@@ -2577,7 +2577,7 @@ rede, fazendo-se uso dos recursos computacionais e de rede de forma mais
 apropriada, como será discutido no Capítulo~\ref{cap:analisedesemp}
 (Resultados).
 
-\subsection{Envio e recebimento de \pks $\in$ \setpks em \net}
+\subsection{Envio e Recebimento de \pks $\in$ \setpks em \net}
 \label{subsec:trocdados}
 
 Após o estabelecimento de conexão, os nós \repasss trocam dados entre si em modo
@@ -3737,7 +3737,7 @@ verificar a autenticidade de um pacote \pks $\in$ \setpk, deve-se entender como
 o nó \servs deve gerar os referidos pacotes de dados para que seja possível
 verificar sua autenticidade. Este procedimento é explicado a seguir.
 
-\subsection{Transmissão e assinatura de autenticidade de \pks $\in$ \setpk}
+\subsection{Transmissão e Assinatura de Autenticidade de \pks $\in$ \setpk}
 \label{subsec:gerar-pacote-assinado}
 
 Quando o nó \servs gerar cada pacote de dados \pks $\in$ \setpk, este deve
@@ -3783,7 +3783,7 @@ authenticity executing the Algorithm~\ref{algo:verifyPacketAuthenticity}.}
 \end{algorithm}
 \vspace{0.8cm}
 
-\subsection{Verificação de autenticidade de \pks $\in$ \setpk}
+\subsection{Verificação de Autenticidade de \pks $\in$ \setpk}
 \label{subsec:verifyPacketAuthenticity}
 
 Após definir as regras para verificação de autenticidade do fluxo de dados
@@ -3848,7 +3848,7 @@ verifiedPackets \attrib \textbf{array of} boolean;
 \vspace{0.8cm}
 
 
-\subsection{Habilitar / desabilitar validação dos pacotes \pks $\in$ \setpk}
+\subsection{Habilitar / Desabilitar a Validação de Pacotes \pks $\in$ \setpk}
 
 A função de verificação de autenticidade de um fluxo de dados \setpks do GMTP é
 opcional e desabilitada por padrão. Isto porque um sistema de transmissão, em
@@ -3881,7 +3881,7 @@ de dados transportado em um pacote, no GMTP não realiza-se checagem de erro por
 soma de verificação (checksum), tradicionalmente utilizado em protocolos como
 TCP, UDP, DCCP e SCTP.
 
-\subsection{Obtenção da chave pública $K^{+}_{\servconst_{\servi}}$ de \serv}
+\subsection{Obtenção da Chave Pública $K^{+}_{\servconst_{\servi}}$ de \serv}
 \label{subsec:obterchavepublica}
 
 Um nó \repasss obtem a chave pública $K^{+}_{\servconst_{\servi}}$ de \servs
@@ -3914,7 +3914,7 @@ nó deve ou não realizar \textit{cache} dos certificados digitais dos nós \serv.
 % \end{enumerate}
 
 
-\section{Outras considerações}
+\section{Outras Considerações}
 \label{sec:outros-aspectos}
 
 Nesta seção, apresentam-se brevemente outras funcionalidades do GMTP, tais como
@@ -4073,7 +4073,7 @@ do que suficiente e escalável por vários séculos.
 % =========
 
 
-\subsection{Procedimentos para desconexão de nós \cli, \rels e \repass}
+\subsection{Procedimentos para Desconexão de nós \cli, \rels e \repass}
 \label{subsec:desconexao}
 
 % \begin{figure}[ht]

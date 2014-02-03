@@ -151,7 +151,7 @@ P2P)~\cite{Li2008,4251077,6295665,4378429} e
 cliente-servidor com suporte de uma rede de distribuição de conteúdos
 (\textit{Content Delivery Network} - CDNs)~\cite{1250586,1323289,939452}. Isto
 porque há evidências contundentes
-~\cite{Xu04acdn-p2p,Dongyan2006,Meskovic2012,4012578,Huang:2008:UHC:1496046.1496064,6035830,5764567,5343509,4797271}
+~\cite{6121327,Xu04acdn-p2p,Dongyan2006,Meskovic2012,4012578,Huang:2008:UHC:1496046.1496064,6035830,5764567,5343509,4797271}
 de que se trata da principal escolha dos sistemas mais robustos, conseguindo-se
 escalabilidade do número de usuários e redução de custos com infra-estrutura de
 rede, por meio das redes P2P; ao passo que se consegue facilidade no
@@ -304,13 +304,18 @@ trabalho tal abordagem é adotada. Para isto, destaca-se o protocolo
 utilizado de forma adaptada para atender às necessidades do protocolo
 proposto neste trabalho. Outros protocolos desta mesma classe também deve ser mencionado, como
 o \textit{eXplicit Control Protocol} (XCP)~\cite{Katabi2003,Katabi:2002:CCH:964725.633035,Katabi:2002:CCH:633025.633035}, o
-\textit{Variable-Structure Congestion Control Protocol} (VCP)~\cite{4460574,Huixiang2008,Vinodhini2012,Zhang:2008:FCV:1424657.1424685,5260888} e o
-\textit{Congestion Exposure} (ConEx)~\cite{RFC6789,ConExGRP,Eardley:2011:DAF:1983741.1983751}.
-Este último, não é considerado um protocolo para controle de congestionamento propriamente dito,
-mas auxilia uma fonte transmissora de um fluxo de dados a expor para a rede informações sobre
-o congestionamento sofrido pelos pacotes anteriormente transmitidos dentro do
-referido fluxo. Com base nas informações de congestionamento, um algoritmo de
-congestionamento pode tomar decisões para regular a taxa de transmissão mais apropriada para os sistemas finais.
+\textit{Variable-Structure Congestion Control Protocol}
+(VCP)~\cite{4460574,Huixiang2008,Vinodhini2012,Zhang:2008:FCV:1424657.1424685,
+5260888} e o \textit{Congestion Exposure}
+(ConEx)~\cite{RFC6789,ConExGRP,Eardley:2011:DAF:1983741.1983751}. Apesar de
+citar o ConEx, este não é considerado um protocolo para controle de
+congestionamento propriamente dito, mas pode ser útel para auxilia uma fonte
+transmissora de um fluxo de dados a expor para a rede informações sobre o
+congestionamento sofrido pelos pacotes anteriormente transmitidos no contexto
+de um fluxo de dados (por exemplo, a quantidade de pacotes perdidos). Em
+seguida, com base nas informações de congestionamento, um algoritmo de
+congestionamento pode tomar decisões para regular a taxa de transmissão mais
+apropriada para os sistemas finais.
 
 Apesar dos avanços apresentados nos trabalhos citados anteriormente, tais soluções
 ainda não foram aplicadas em cenários de distribuição de multimídia que consideram
@@ -335,8 +340,9 @@ ser compartilhados, mantendo-se o princípio da independência dos serviços de
 rede, ou seja, sem que a aplicação precise se preocupar como isto é feito.
 
 Com esse norte, delimitou-se algumas métricas que determinam a qualidade de
-serviço para permitir que os usuários assistam conteúdo ao vivo na Internet.
-Tais métricas são divididas em três grupos, detalhados a seguir:
+serviço para permitir que os usuários assistam conteúdo ao vivo na Internet
+com base na referência~\cite{5343509}. Tais métricas são divididas em três
+grupos, detalhados a seguir:
 
 \begin{enumerate}
 
@@ -406,8 +412,8 @@ para os sistemas finais se essa pulverização não potencializasse duplicações de
 fluxos de dados da transmissão de um evento destinado a um sub-conjunto de redes
 contendo nós receptores interessados em tal
 evento~\cite{Pianese2011,5062221,Zhang:2012:SSP:2365364.2365643,6089062,5962881,4395123,Seibert2008,guo_survey_2008,4404148}.
-Como consequência, exponencia-se o consumo desnecessário de recursos
-computacionais e de rede.
+Como consequência, exponencia-se o consumo desnecessário de
+recursoscomputacionais e de rede.
 
 Para entender o panorama atual nesse contexto, considere o seguinte cenário do
 sistema de TV tradicional (teledifusão). Quando uma pessoa está assistindo um
@@ -515,16 +521,19 @@ Em geral, nos middlewares para distribuição de conteúdos multimídia ao vivo,
 implementam-se mecanismos para conexão multi-ponto e
 topologias~\cite{4404148,5158452,Wu:2008:ELP:1386109.1386112,4215750,5061910,Garroppo:2012:TCS:2160187.2160451,4251077,4644134},
 seleção de
-nós~\cite{Dai:2009:SPP:1478659.1478730,Tang:2008:EPS:1792514.1792556,6214363,5580021},
+nós~\cite{6077007,Dai:2009:SPP:1478659.1478730,Tang:2008:EPS:1792514.1792556,6214363,5580021},
 tolerância à desconexões e de outros problemas causados pelo
 \textit{churn}~\cite{5502009,Vassilakis:2010:MNC:1838764.1838902,Garroppo:2012:TCS:2160187.2160451,6354810,5158452},
 disponibilização de informação de contexto sobre rede para dar suporte à
-execução dos serviços das aplicações, como níveis de congestionamento e taxa de
-transmissão~\cite{5284511,6077007,Madhyastha:2009:INP:1558977.1558987},
+execução dos serviços das aplicações, como localização da rede, custos entre
+redes em uma granularidade configurável e outras propriedades dos sistemas
+finais~\cite{6115303,5284511,6077007,Madhyastha:2009:INP:1558977.1558987},
 estratégias para incentivos à cooperação entre
 nós~\cite{Agarwal:2007:AIG:1287576.1340418,5451106,Agarwal:2006:GBS:1193215.1194219,1309377,6185363,1388342,5580021},
 algoritmos para inibir a participação de nós
-\textit{free-riders}~\cite{1309377,5161007,5421459,4608940}
+\textit{free-riders}~\cite{1309377,5161007,5421459,4608940},
+adaptação de fluxo baseado na capacidade de recepção dos
+nós~\cite{4251079,6713779,Pantos2013,6077864}
 e segurança~\cite{vieira_borges_2010,4539702,4738451,865073,1388342}. Temas como
 estes foram ganhando importância ao longo dos anos porque os serviços
 de transmissão de mídias ao vivo foi se tornando uma tendência e hoje é uma
@@ -728,8 +737,8 @@ aliado nesse processo, tais como as funções consolidadas das redes P2P, os
 novos conceitos das redes redes centradas no conteúdo e os algoritmos
 de controle de congestionamento assistidos pela rede, que são mais eficazes se
 comparados aos algoritmos baseados em perda de pacotes, mudança no atraso e
-relatórios enviados pelos receptores aos
-transmissores~\cite{Sangtae2008,veno2003,RFC3649,Ha2007,4146841,shalunov2011,464716}.
+relatórios enviados pelos receptores aos transmissores~\cite{5462976}.
+% ~\cite{Sangtae2008,veno2003,RFC3649,Ha2007,4146841,shalunov2011,464716}.
 
 Diante do exposto, pretende-se responder a seguinte questão de pesquisa:
 \textit{como disseminar conteúdos multimídia ao vivo na Internet evitando o
@@ -922,15 +931,14 @@ permitindo que estas sejam implementadas de tal forma a promover o reúso em
 soluções existentes, utilizando-se dos recursos de rede de forma mais eficiente.
 
   \item a implementação de artefatos de software que permitem a reprodução do
-ambiente de estudo, tais como implementações no simulador de rede~\cite{XU2011}
-OMNet++ e NS2, bem como um protótipo de implementação no núcleo do sistema
-operacional Linux;
+ambiente de estudo, tais como implementações no simulador de rede
+OMNet++ e NS2~\cite{XU2011}, bem como um protótipo de implementação no núcleo do
+sistema operacional Linux;
 
   \item os resultados e discussões aprofundadas acerca do protocolo introduzido
 frente a outra proeminente solução denominada Denacast e CCNx. O primeiro é um
-sistema baseado no serviço Coolstreaming com suporte a uma arquitetura P2P/CDN,
-ao passo que o segundo é um protocolo que segue as diretrizes das redes
-centradas no conteúdo; e
+sistema baseado no CoolStreaming que combina P2P e CDN, ao passo que o segundo é
+um protocolo que segue as diretrizes das redes centradas no conteúdo; e
 
   \item os encaminhamentos da pesquisa sobre futuros avanços do estado da arte,
 tais como as limitações do protocolo proposto e uma breve discussão de como

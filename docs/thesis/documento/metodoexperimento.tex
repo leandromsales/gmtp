@@ -57,7 +57,7 @@ de congestionamento, compartilhamento de conexão etc.
 Para os tratamentos que apresentam resultados do confronto entre o protocolo
 \mudccps e o DCCP, cujo principal objetivo é apresentar a capacidade de
 escalabilidade de ambos os protocolos, as simulações foram executadas de forma
-isolada, primeiramente o DCCP e em seguida o \mudccp. 
+isolada, primeiramente o DCCP e em seguida o \mudccp.
 
 O tempo de duração da execução de cada ensaio foi de \ut{400}{s}, onde cada
 ensaio foi repetido a quantidade de vezes necessárias até atingir um intervalo
@@ -408,11 +408,11 @@ n = (\frac{1.96 \times s}{0.05 \times \mu}) ^ 2
 \end{equation}
 
 % \section{Metodologia para Comparação da Qualidade de Vídeo}
-% 
+%
 % O método escolhido para realizar a comparação da qualidade de vídeo transmitido
 % dentro do simulador foi o PSNR (\textit{Peak Signal to Noise
-% Ratio})~\cite{Webster93anobjective}. 
-% 
+% Ratio})~\cite{Webster93anobjective}.
+%
 % O PSNR representa a relação sinal ruído em função do erro quadrático médio, o
 % MSE (\textit{Mean Squared Error}). Quanto mais próxima a imagem transmitida em
 % relação da recebida, maior será o PSNR. A Equação~\ref{eq:psnr} é utilizada
@@ -421,18 +421,18 @@ n = (\frac{1.96 \times s}{0.05 \times \mu}) ^ 2
 % imagem recebida pelo usuário, segundo a Equação~\ref{eq:mse}, onde $u_{ij}$ e
 % $\bar{u}_{ij}$ representam os pixels das imagens original e reconstruída,
 % respectivamente.
-% 
+%
 % \begin{equation}
 % PSNR = 10 \log_{10} (\frac{(2^n - 1)^2}{MSE})
 % \label{eq:psnr}
 % \end{equation}
-% 
+%
 % \begin{equation}
 % MSE = (\frac{1}{MN}) \sum_{i=1}^{N} \sum_{j=1}^{M} (u_{ij} -
 % \bar{u}_{ij})^2
 % \label{eq:mse}
 % \end{equation}
-% 
+%
 % Quanto maior o valor do PSNR, maior é a relação entre a potência do sinal pela
 % potência do ruído, o que significa melhor qualidade. Em termos gerais, valores
 % de PSNR acima de \ut{42}{dB} correspondem à compressões que introduzem perdas
@@ -440,7 +440,7 @@ n = (\frac{1.96 \times s}{0.05 \times \mu}) ^ 2
 % considerar que vídeos com PSNR acima de \ut{36}{dB} tem qualidade bastante
 % aceitável, entre \ut{30}{dB} e \ut{36}{dB} uma qualidade mediana e abaixo de
 % \ut{30}{dB} a qualidade já é bem ruim.
-% 
+%
 % Para mais detalhes sobre o uso do PSNR para medição objetiva da qualidade do
 % vídeo, pode-se consultar a referência \cite{Webster93anobjective}. Note que os
 % valores de PSNR apresentados nos resultados presentes no
@@ -450,14 +450,14 @@ n = (\frac{1.96 \times s}{0.05 \times \mu}) ^ 2
 
 % \section{Metodologia para Comparação da Qualidade de Áudio}
 % \label{sec:metcompaudio}
-% 
+%
 % % EAC use an algo which I wrote by myself, but it is closely related to the following :
 % % http://en.wikipedia.org/wiki/Longest_common_subsequence
 % % http://en.wikipedia.org/wiki/Longest_increasing_subsequence
-% 
+%
 % Existem basicamente dois métodos para comparar a qualidade de um arquivo de
 % áudio: o método subjetivo e o método objetivo.
-% 
+%
 % Nas abordagens que utilizam o método subjetivo, geralmente o interessado em
 % comparar os áudios solicita que um conjunto (geralmente grande) de pessoas
 % escute os áudios transmitidos e comparem com o áudio original. Em seguida, essas
@@ -465,14 +465,14 @@ n = (\frac{1.96 \times s}{0.05 \times \mu}) ^ 2
 % bastante utilizada é a MOS (\emph{Mean Opinion Score})~\cite{MOS-ITU} que define
 % uma tabela que relaciona uma pontuação de $0$ à $100$ com a qualidade do áudio,
 % onde $0$ significa muito ruim e $100$ muito boa.
-% 
+%
 % Por outro lado, a metodologia objetiva pode ser útil quando se deseja realizar
 % utilizar métodos estatísticos para determinar a qualidade do áudio transmitido
 % através da rede, também baseando-se na qualidade do áudio original. A
 % comparações entre o áudio original e os áudios transmitidos na rede por cada
 % protocolo é baseado em amostras recuperadas tanto do áudio original quanto do
 % áudio transmitido.
-% 
+%
 % Existem diversos mecanismo que são utilizados nesta abordagem, uma delas é a
 % RMS (\emph{Root Mean Square}). Esta foi a abordagem adotada neste trabalho para
 % determinar a qualidade de um áudio transmitido na rede. Esta abordagem foi
@@ -482,17 +482,17 @@ n = (\frac{1.96 \times s}{0.05 \times \mu}) ^ 2
 % porque com ela é possível relacionar as perdas de informações que ocorrem
 % durante a transmissão do fluxo de áudio e verificar o impacto dessa perda na
 % qualidade do áudio.
-% 
+%
 % Especificamente a $RMS$ é uma medida estatística da magnitude de uma quantidade
 % variável. Pode-se calcular para uma série de valores discretos ou para uma
 % função variável contínua. O nome deriva do fato de que é a raiz quadrada da
 % média aritmética dos quadrados dos valores discretos, ou seja:
-% 
+%
 % \begin{equation}
 % RMS  = \sqrt{\frac{(x_1)^2 + (x_2)^2 + (x_3)^2 + ... + (X_n)^2}{n}}
 % \label{eq:rms}
 % \end{equation}
-% 
+%
 % Para o caso específico dos áudios utilizados nos experimentos, a cada
 % \ut{8}{ms} o valor de RMS foi coletado dos dois canais do áudio, haja vista que
 % o formato de áudio transmitido foi um arquivo \emph{MP3} de \ut{44100}{Mhz}, a
@@ -503,7 +503,7 @@ n = (\frac{1.96 \times s}{0.05 \times \mu}) ^ 2
 % RMS_i  = 10^{rms\_dB/20}
 % \label{eq:rmsNorm}
 % \end{equation}
-% 
+%
 % Onde,
 % \begin{itemize}
 %  \item rms\_dB é o valor RMS em decibél~\cite{REF}\marginpar{<<<<}.
@@ -518,7 +518,7 @@ n = (\frac{1.96 \times s}{0.05 \times \mu}) ^ 2
 %http://wapedia.mobi/en/Root_mean_square
 %http://www.opamp-electronics.com/tutorials/measurements_of_ac_magnitude_2_01_03.htm
 
-% 
+%
 % Por amplitude??
 % http://www.mp3-tech.org/programmer/docs/2001-P03a.pdf
 % EAC
