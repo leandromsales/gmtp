@@ -257,15 +257,20 @@ por um determinado conteúdo. Esta decisão também se baseia no fato de que se
 existir um nó \textit{c} interessado por um fluxo de dados \textit{P},
 transmitido por um servidor \textit{s} através de um roteador \textit{r}, os
 pacotes de dados de \textit{P} que deverão ser entregues a \textit{c} passarão
-obrigatoriamente por \textit{r}.
+obrigatoriamente por \textit{r}. Os resultados de medições realizadas no
+contexto de trabalhos anteriores, como as apresentadas em~\cite{5332297},
+corroboram com tal abordagem ao discutir questões relacionadas à localidade de
+tréfego e o conhecimento que a rede possui sobre os fluxos de dados sendo
+transmitido.
 
-O uso de tal abordagem é justificado por uma tendência em utilizar os
-roteadores para auxiliar e otimizar os serviços das camadas TCP/IP mais acima,
-como os serviços de controle de congestionamento, NAT dinâmico (\textit{Dynamic
-Network Address Translation}) através de UPnP (\textit{Universal Plug and
-Play})~\cite{968819}, DNS dinâmico~\cite{1203676}, dentre outros. Essa tendência
-é também sustentada pelas Redes Centradas no Conteúdo
-(\textit{Content-Centric Networks} -- CCN), proposta por Van
+De forma mais extensiva, pode-se afirmar que o uso da abordagem supracitada é
+justificado por uma tendência em utilizar os roteadores para auxiliar e otimizar
+os serviços das camadas TCP/IP mais acima, como os serviços de controle de
+congestionamento, NAT dinâmico (\textit{Dynamic Network Address Translation})
+através de UPnP (\textit{Universal Plug and Play})~\cite{968819}, DNS
+dinâmico~\cite{1203676}, dentre outros. Essa tendência é também sustentada pelas
+Redes Centradas no Conteúdo (\textit{Content-Centric Networks} -- CCN), proposta
+por Van
 Jacobson~\cite{5936152,6419703,Eardley:2011:DAF:1983741.1983751,6384450,6386696}.
 O princípio é que uma rede de comunicação deve viabilizar o acesso ao conteúdo
 de interesse de um usuário (\textit{content-centric approach}) independente do
@@ -582,19 +587,18 @@ incompatíveis entre si.
 % aplicações informações de contexto e então alimentar os algoritmos de seleção
 % de nós parceiros.
 
- Em vez disso, pode-se combinar as duas formas
-supracitadas em uma solução de protocolo disponível para qualquer aplicação de
-rede interessada em transmitir e/ou receber um fluxo de dados ao vivo. Ou seja,
-um protocolo que constitui uma rede de sobreposição formada por roteadores de
-rede, com suporte automático ao uso de \textit{multicast}, através da qual as
-aplicações possam trocar dados entre si de forma transparente. Isto signica
-mover alguns serviços consolidados na camada de aplicação para camadas mais
-abaixo, abstraindo-se a grande complexidade de se constituir redes P2P,
-principalmente compatíveis entre si. Nas Seções~\ref{sec:arq_p2p_media_aovivo}
-e~\ref{sec:sis_trans_aovivo}, estende-se essa discussão no sentido de entender o
-funcionamento e os aspectos arquiteturais das aplicações de distribuição de
-conteúdos multimídia ao vivo, em redes P2P, bem como os principais problemas com
-base em alguns cenários de uso.
+Em vez disso, pode-se combinar as duas formas supracitadas em uma solução de
+protocolo disponível para qualquer aplicação de rede interessada em transmitir
+e/ou receber um fluxo de dados ao vivo. Ou seja, um protocolo que constitui uma
+rede de sobreposição formada por roteadores de rede, com suporte automático ao
+uso de \textit{multicast}, através da qual as aplicações possam trocar dados
+entre si de forma transparente. Isto signica mover alguns serviços consolidados
+na camada de aplicação para camadas mais abaixo, abstraindo-se a grande
+complexidade de se constituir redes P2P, principalmente compatíveis entre si.
+Nas Seções~\ref{sec:arq_p2p_media_aovivo} e~\ref{sec:sis_trans_aovivo},
+estende-se essa discussão no sentido de entender o funcionamento e os aspectos
+arquiteturais das aplicações de distribuição de conteúdos multimídia ao vivo, em
+redes P2P, bem como os principais problemas com base em alguns cenários de uso.
 
 Por exemplo, os protocolos de transporte poderiam absorver parte da
 complexidade dos serviços de distribuição multimídia, mas não os fazem porque
@@ -603,12 +607,12 @@ desse tipo de serviço e alterá-los requer um grande esforço, principalmente por
 serem de domínio público e utilizados abundantemente por serviços com esta
 finalidade. Este fato acontece primeiro por um motivo histórico, pois na época
 que tais protocolos foram propostos não se discutia sobre este tipo de serviço,
-tampouco sobre sistemas P2P e muito menos sobre
-redes CDN. Além disso, um outro motivo é o fato de que os sistemas foram sendo
-disponibilizados levando em consideração toda a complexidade na formação das
-redes P2P, uma vez que os protocolos de transporte não eram eficazes para a
-distribuição de datagramas IP em larga escala na Internet, cuja principal forma
-era utilizar \textit{multicast} (seja na camada de rede ou na de aplicação).
+tampouco sobre sistemas P2P e muito menos sobre redes CDN. Além disso, um outro
+motivo é o fato de que os sistemas foram sendo disponibilizados levando em
+consideração toda a complexidade na formação das redes P2P, uma vez que os
+protocolos de transporte não eram eficazes para a distribuição de datagramas IP
+em larga escala na Internet, cuja principal forma era utilizar
+\textit{multicast} (seja na camada de rede ou na de aplicação).
 
 % Como consequência, toda transmissão na
 % prática termina sendo de múltiplos fluxos \textit{unicast} e
@@ -936,9 +940,11 @@ OMNet++ e NS2~\cite{XU2011}, bem como um protótipo de implementação no núcleo do
 sistema operacional Linux;
 
   \item os resultados e discussões aprofundadas acerca do protocolo introduzido
-frente a outra proeminente solução denominada Denacast e CCNx. O primeiro é um
-sistema baseado no CoolStreaming que combina P2P e CDN, ao passo que o segundo é
-um protocolo que segue as diretrizes das redes centradas no conteúdo; e
+frente ao CoolStreaming/Denacast~\cite{5764567} e a uma solução baseada no
+protocolo CCNx~\cite{REF}. O primeiro é um sistema de distribuição de mídias ao
+vivo baseado no CoolStreaming com suporte a uma rede de distribuição de
+conteúdos (P2P/CDN), ao passo que o segundo é uma solução para distribuição de
+mídias ao vivo que segue as diretrizes das redes centradas no conteúdo; e
 
   \item os encaminhamentos da pesquisa sobre futuros avanços do estado da arte,
 tais como as limitações do protocolo proposto e uma breve discussão de como

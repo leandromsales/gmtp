@@ -949,39 +949,242 @@ de seus próprios algoritmos para controle de congestionamento.
 \subsection{DONet/CoolStreaming}
 
 O CoolStreaming é um sistema para distribuição de mídias ao vivo baseado em uma
-arquitetura
-P2P~\cite{4509752,susu_xie_coolstreaming:_2007,
+arquitetura P2P~\cite{4509752,susu_xie_coolstreaming:_2007,
 xinyan_zhang_coolstreaming/donet:_2005}. A primeira versão do Coolstreaming foi
 lançada em 2004 e aprimorada ao longo dos anos, tornando-se o sistema mais
 conhecido e robusto para transmissão de mídias ao vivo em larga escala.
+Atualmente (2014), o sistema CoolStreaming é uma das principais referências no
+contexto de distribuição de mídias ao vivo, tanto no contexto acadêmico quanto
+comercial. O sistema CoolStreaming está disponível para uso no mercado, servindo
+a milhares de nós ao redor do mundo e, por ter sido descrito e estudado
+exaustivamente, também está disponível na rede PlanetLab e nos principais
+simuladores de redes P2P, com o OMNet++/Oversim\footnote{OMNet++/Oversim: de
+fato, o CoolStreaming está disponível através do projeto Denacast, desenvolvido
+com base no OMNet++/Oversim. Na Seção~\ref{subsec:denacast}, detalha-se o
+Denacast.} e o OMNet++/OSSim.
 
-Os autores do DONet/CoolStreaming~\cite{xinyan_zhang_coolstreaming/donet:_2005}
-(\textit{Data-drive Overlay Network}), como foi nomeado, propuseram que partes
-da mídia fossem distribuídas sobre uma rede de sobreposição onde os nós sempre
-repassavam os dados para outros nós interessados pelo mesmo dado, sem nenhuma
-regra pre-definida, como nó pai e nó filho; interno ou externo; capacidade de
-upload e download, etc. Com essa visão centrada no dado, os autores decidiram
-que a disponibilidade do dado era o critério para guiar as estratégias de
-escalonamento dos fluxos de dados (quais nós deveriam transmitir e quais nós
-deveriam receber os dados) transmitidos através da rede de sobreposição,
-adaptando-se melhor às dinâmicas dos nós em uma rede P2P. Todos os
-nós periodicamente trocavam informações sobre a sua disponibilidade de
-\textit{chunk} com um conjunto de nós parceiros, e obtinham os dados não
-disponíveis a partir dos nós os anunciavam como disponíveis.
+A sigla DONet significa \textit{Data-drive Overlay Network} e CoolStreaming
+significa \textit{Cooperative Overlay Streaming}, sendo a implementação de
+referência da DONet. Desde a primeira versão, seus autores propuseram que
+partes da mídia fossem distribuídas sobre uma rede de sobreposição onde os nós
+sempre repassavam as partes de uma mídia para outros nós interessados pelo mesmo
+conteúdo, sem nenhuma regra pre-definida, como nó pai ou filho; nó interno ou
+externo; capacidade de upload e download, etc. Com essa visão centrada no dado,
+os autores decidiram que a disponibilidade do dado era o critério para guiar as
+estratégias de escalonamento dos fluxos de dados transmitidos através da rede de
+sobreposição, adaptando-se melhor às dinâmicas dos nós em uma rede P2P. Cada nó
+periodicamente troca informações sobre a sua disponibilidade de \textit{chunk}
+transmitindo seu mapa de buffer com um conjunto de nós parceiros, obtendo os
+\textit{chunks} ausentes a partir dos nós que os anunciam como disponíveis.
 
-O DONet/CoolStreaming se tornou uma solução proeminente para distribuição de
-conteúdos multimídia em larga escala. Isto porque não é necessário construir uma
-estrutura global e de manutenção complexa e à medida que as parcerias são
-formadas e as informações sobre disponibilidade dos dados são trocadas entre os
-nós participantes, permite-se uma mudança adaptativa entre os nós provedores de
-dados.
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{0.47\textwidth}
+        \centering
+        \includegraphics[natwidth=683,natheight=571,width=\textwidth]{imgs/trabrel/coolstreaming1.png}
+        \caption{CoolStreaming 1.0.}
+        \label{fig:coolstreaming1}
+    \end{subfigure}
+    ~~~~
+    \begin{subfigure}[b]{0.47\textwidth}
+        \centering
+        \includegraphics[natwidth=683,natheight=571,width=\textwidth]{imgs/trabrel/coolstreaming2.png}
+        \caption{CoolStreaming 2.0.}
+        \label{fig:coolstreaming2}
+    \end{subfigure}
+    \caption{Arquitetura genérica de blocos funcionais do CoolStreaming 1.0 e
+do 2.0.}
+    \label{fig:coolstreaming}
+\end{figure}
+
+
+Conforme ilustra-se na Figura~\ref{fig:coolstreaming}, o sistema CoolStreaming
+teve duas versões de produção. Na Figura\ref{fig:coolstreaming1},
+ilustra-se o diagrama genérico do sistema para um nó na rede DONet,
+quando se utilizava apenas o método \textit{pull} para obtenção de conteúdo,
+estratégia bastante similar ao BitTorrent, com seleção aleatória de nós
+parceiros. Já na Figura\ref{fig:coolstreaming1}, ilustra-se o diagrama genérico
+da versão aprimorada do CoolStreaming, onde diversos aspectos foram aprimorados
+e o mecanismo de obtenção das partes da mídia foi remodelado para uma abordagem
+híbrida \textit{pull/push} de obtenção dos blocos de vídeo (\textit{chunks}).
+Na versão mais atual do CoolStreaming, organiza-se um fluxo de dados multimídia
+em sub-fluxos que carregam blocos de dados contendo partes da mídia para ser
+reproduzida na aplicação em execução no nó receptor. Na primeira versão, os
+blocos de dados eram obtidos sempre utilizando o método \textit{pull}, o que
+acarretava o aumento no atraso para obter o conteúdo em 1 RTT. Na segunda
+versão, a estratégia híbrida \textit{pull/push} mudou para a seguinte forma.
+Quando um nó $C_1$, interessados em obter um determinado bloco de vídeo,
+recebe de um nó parceiro $C_2$ o mapa de buffer contendo a disponibilidade dos
+blocos do vídeo, $C_1$ envia uma requisiçao à $C_2$ solicitando os blocos de
+vídeo desejados (\textit{pull}). Em seguida, o nó $C_2$ transmite os blocos de
+vídeo para $C_1$ e, a partir desse momento, todo novo bloco de vídeo que $C_2$
+receber, repassa ao nó $C_1$ (\textit{push}).
+
+Os outros componentes do sistema CoolStreaming são:
+\begin{itemize}
+
+  \item \textit{Membership manager}, que permitem os nós do sistema manterem uma
+visão parcial da rede de sobreposição, sendo adicionado na versão 2 um
+componente chamado \textit{mCache}, que registra uma lista parcial dos atuais
+nós ativos na rede;
+
+  \item \textit{Partnership manager}, que estabelece e mantém as parcerias com
+os outros nós e também é responsável por trocar o mapa de \textit{buffer}. O
+algoritmos padrão para seleção de nós é baseado em uma escolha aleatória entre
+os nós disponíveis na lista \textit{mCache};
+
+  \item \textit{Stream Manager}, que efetivamente transmite os fluxos de dados
+representados nos blocos de vídeo. Este componente é responsável por escalonar
+o momento exato de enviar cada \textit{chunk} correspondente a um vídeo sendo
+compartilhado com outros nós do sistema;
+
+  \item \textit{Buffer Map}, que representa o estado atual do buffer para um
+determinado vídeo. Como discutido no Capítulo~\ref{cap:fundamentacao}, um nó
+pode sinalizar os blocos de vídeo que estão disponíveis ou os blocos de vídeo
+que estão ausentes e portanto necessários.
+
+\end{itemize}
+
+Além da mudança para uma abordagem híbrida \textit{pull/push}, os autores do
+CoolStreaming 2.0 propuseram o conceito de sub-fluxo. O nó transmissor divide o
+vídeo em blocos de tamanhos iguais, e a cada bloco é assinalado um número de
+sequência para permitir a reprodução do conteúdo em ordem. Dessa forma, cada nó
+pode obter diferentes blocos de vídeo a partir de diferentes nós parceiros. Com
+isto, espera-se reduzir o impacto causado na rede devido à saída ou falha de
+comunicação em um nó transmissor.
+
 
 % http://totoro.cs.nthu.edu.tw/~gdemon/download/pdf/Present-%20Coolstreaming_%20Design,%20Theory,%20and%20Practice.pdf
 % VER: http://www.docstoc.com/docs/160021567/Inside-the-New-Coolstreaming-Principles_-Measurements-and
 
 \subsubsection{Considerações sobre o trabalho}
 
+A robustez do CoolStreaming em tratar a dinâmica da rede, bem como a
+possibilidade de realizar as ações apresentadas anteriormente sem requerer
+qualquer suporte da rede física, são aspectos positivos do CoolStreaming. Suas
+características possibilitaram a aplicação do CoolStreaming em cenários reais.
+
+Por outro lado, os pontos negativos do sistema CoolStreaming são apresentados a
+seguir.
+
+\begin{enumerate}
+
+  \item O conceito de sub-fluxo adiciona complexidade à solução sem
+necessariamente resultado em ótimos resultados. Em~\cite{4509752}, os autores
+do CoolStreaming discutem que aumentar a quantidade de número de sub-fluxos não
+melhora proporcionalmente algumas métricas, como o índice de continuidade e
+utilização da capacidade de upload dos nós transmissores (em média). Os autores
+executaram simulações e pôde-se observar que a partir de 8 sub-fluxos, as duas
+métricas citadas anteriormente não sofrem alterações positivas, em alguns casos
+até pioram (quando se utiliza nós com capacidade heterogêneas de transmissão).
+No GMTP, utiliza-se sempre o método push após um nó estabelecer uma conexão,
+mas os roteadores no caminho entre o nó servidor e o nó cliente podem
+interceptar os pedidos de conexão transmitidos por outros nós clientes.
+Essa estratégia reduzir a quantidade de requisições ao servidor e o tempo para
+iniciar a reprodução de um vídeo ao usuário final (apenas o primeiro usuário
+perceberá um atraso maior do que os demais);
+
+  \item Um nó recém integrado à rede DONet, pode levar muito tempo (em alguns
+casos 20 segundos) para obter os primeiros blocos de vídeo e assim iniciar a
+reprodução do conteúdo ao usuário final. Isto porque, ao se juntar à rede, um
+nó solicita o mapa de \textit{buffer} a um conjunto de nós parceiros informados
+por um servidor de \textit{boostrap}. Porém, o desafio é definir a partir de
+qual ponto do \textit{buffer} um nó deve começar a solicitar os blocos de
+vídeo. Por exemplo, se o novo nó requisitar um bloco de vídeo muito
+antigo, este podem não mais estar disponíveis, um vez que após sua reprodução,
+tais blocos são removidos. Por outro lado, se o nó requisitar um bloco de vídeo
+muito recente, pode ser que nenhum de seus nós parceiros tenha disponível. No
+GMTP, situações como essas não ocorrem porque se utiliza, por padrão o método
+\textit{push} e o conteúdo poderá já está disponível no próprio roteador de
+borda do nó solicitante. Outras decisão nesse sentido foram tomadas no GMTP, as
+quais serão elucidadas no Capítulo~\ref{cap:mudccp}.
+
+  \item A seleção de nós sistema CoolStreaming ocorre com base na escolha
+aleatória de um sub-conjunto de nós disponíveis em uma lista de parceiros. Após
+realizar parcerias com um sub-conjunto de nós, um nó começa a receber os blocos
+de vídeo, ao mesmo tempo que monitora o status de recepção dos sub-fluxos,
+transmitidos por diferentes nós parceiros. Quando um nó percebe que a taxa de
+recepção não está satisfatória, inicia-se um processo para selecionar novos nós
+parceiros. A grande questão é definir quando, de fato, a taxa de recepção não
+está sendo suficiente. No CoolStreaming isso é feito monitorando o
+\textit{buffer} de recepção dado um sub-fluxo $j$ transmitido por um nó $C_{1}$
+ao nó $C_{2}$ observando as inequações~\ref{eq:coolstreaming-substream-monitor1}
+e~\ref{eq:coolstreaming-substream-monitor2}, onde:
+
+\begin{itemize}
+
+  \item {$T_{s}$, $T_{p}$} são duas métricas para especificar a capacidade de
+upload de um nó $C_1$. $T_{s}$ e $T_{p}$ são números de sequência de blocos para
+um sub-fluxos qualquer $j$ no nó $C_2$;
+
+  \item $T_{s}$, é o limite do máximo número de sequência permitido entre os
+últimos blocos de vídeo recebidos qualquer dois sub-fluxos no nó $C_2$;
+
+  \item $T_{p}$, é o limite do máximo número de sequência dos últimos blocos de
+vídeo recebidos entre os nós parceiros de $C_2$ e os nós pais de $C_2$. A
+diferença entre os nós perceiros de um nó $C$ e os nós pais de um nó $C$ é
+a seguinte: as parcerias são estabelecidas entre dois nós que trocaram mapas
+de \textit{buffer} com informações de disponibilidade de blocos de vídeo, ao
+passo que a relação pai e filho é estabelecida quando um nó (filho) está, de
+fato, recebendo o conteúdo de vídeo de um outro nó (pai);
+
+  \item $H_{S_{i,C_2}}$, é o número de sequência do último bloco de vídeo de um
+sub-fluxo $S_{i}$ no nó $C_2$;
+
+  \item $K$, é o número de sub-fluxos gerados pelo nó transmissor que origina o
+conteúdo de vídeo.
+
+\end{itemize}
+
+  \begin{equation}
+    max\{|H_{S_{i,C_{2}}} - H_{S_{j,C_{1}}}| : i \le K\} < T_{s}
+  \label{eq:coolstreaming-substream-monitor1}
+  \end{equation}
+
+  \begin{equation}
+    max\{H_{S_{i,q}} : i \le K,q \in partners\} - H_{S_{j,C_{1}}} < T_{s}
+  \label{eq:coolstreaming-substream-monitor2}
+  \end{equation}
+
+  A inequação~\ref{eq:coolstreaming-substream-monitor1} é utilizada para
+monitorar o \textit{status} do \textit{buffer} do nó $C_{2}$. Se a
+inequação~\ref{eq:coolstreaming-substream-monitor1} for falsa, significa que
+pelo menos um sub-fluxo está atrasado com relação ao limite estabelecido
+$T_{s}$. Isto indica que o nó $C_{2}$ deve selecionar outro nó para receber o
+fluxo de dados, pois o seu nó pai atual não tem capacidade de upload suficiente.
+A inequação~\ref{eq:coolstreaming-substream-monitor2} é utilizada para monitorar
+o status do buffer dos nós pais do nó $C_{2}$. Seja o conjunto $parents$,
+definido pelos nós pais do nó $C_{2}$ e o conjunto $partners$, definido
+pelos nós parceiros de $C_{2}$. O nó $C_2$ compara o status do \textit{buffer}
+dos nós em $parents$ com relação aos status do \textit{buffer} dos nós em
+$partners$. Se a inequação~\ref{eq:coolstreaming-substream-monitor2} for falsa
+para algum caso, implica que o nó pai $C_1$ está atrasado com relação ao número
+de blocos de vídeos comparado com pelo menos um dos nós em $partners$. Isto
+fará com que o nó $C_{2}$ finalize a comunicação com o nó $C_1$ atrasado e
+selecione um novo nó $C_1$ do cojunto $partners$.
+
+  Essa estratégia de seleção de nós aplicado no CoolStreaming é muito complexa
+porque exige o monitoramente constante dos buffers dos sub-fluxos, o que
+implica em exaustivas trocas de mapa de \textit{buffer}, dependendo da
+quantidade de nós no conjunto $parents$ e $partners$ para um dado nó $C_2$. A
+consequência disso é um aumento significativo na qualidade de dados de controle
+trocados entre os nós parceiros e nós pais, além da troca de dados
+correspondentes ao vídeo. No GMTP, as parcerias são formadas de uma forma
+bastante diferente, que basicamente consiste em envolver um algoritmo de
+controle de congestionamento assistido pela rede que compartilha a sua
+capacidade de transmissão em um determinado instante \textit{t}. Dessa forma,
+tanto um nó receptor quanto o nó transmissor conhecem a capacidade máxima de
+transmissão no canal que separa ambos. Sendo assim, o nó transmissor ajusta sua
+taxa de transmissão em direção ao nó receptor de acordo com a taxa de
+transmissão disponível em qualquer pacote de dados. No caso do GMTP, os nós são
+os roteadores de rede, que simplesmente repassam para os clientes os fluxos de
+dados que contém partes da mídia, correspondentes aos blocos de vídeo do
+CoolStreaming.
+
+\end{enumerate}
+
 \subsection{Denacast}
+\label{subsec:denacast}
 
 Preencher...
 
@@ -1009,9 +1212,12 @@ Nesse contexto, durante o levantamento bibliográfico realizado no
 contexto deste trabalho, catalogou-se outras propostas que não foram detalhadas
 nas seções anteriores, mas que devem ser mencionadas. São elas:
 AnySee~\cite{huang_anysee2:_2007},
+BEAM/Alliances~\cite{4378429},
 BitTorrentLIVE~\cite{4797218},
+DLNA-P2P~\cite{5456206}.
 GridMedia~\cite{zhao_gridmedia+:_2009,li_towards_2008,4395127},
 IV5S~\cite{5373760},
+Joost~\cite{Alhaisoni2009,4575245},
 LayeredCast~\cite{5734106},
 LiveSky~\cite{Yin:2010:LEC:1823746.1823750},
 Octoshape~\cite{4498187},
@@ -1083,6 +1289,21 @@ Procurar mais, pegar aqueles publicados no NDN
 % 6607500
 % http://ieeexplore.ieee.org/xpl/articleDetails.jsp?tp=&arnumber=6607500&queryText
 %3DHTTP+Dynamic+Streaming
+
+
+% http://ieeexplore.ieee.org/xpl/articleDetails.jsp?tp=&arnumber=6386696&queryText
+%3DCCN+and+live+streaming
+
+% http://ieeexplore.ieee.org/xpl/articleDetails.jsp?tp=&arnumber=6503529&queryText
+%3DCCN+and+live+streaming
+
+% http://ieeexplore.ieee.org/xpl/articleDetails.jsp?tp=&arnumber=6691438&queryText
+%3DCCN+and+live+streaming
+
+% http://ieeexplore.ieee.org/xpl/articleDetails.jsp?tp=&arnumber=6550523&queryText
+%3DCCN+and+live+streaming
+
+6666771
 
 \subsection{Escolher outra solução e colocar aqui -- VoCCN??}
 
