@@ -159,8 +159,8 @@ Streaming}, \textit{DASH -- Dynamic Adaptive Streaming over HTTP} e
 
 Os protocolos HLS (\textit{HTTP Live Streaming})~\cite{Pantos2013}, HDS
 (\textit{HTTP Dynamic Streaming})~\cite{REF}, o MPEG-DASH \textit{Dynamic
-Adaptive
-Streaming over HTTP}~\cite{6077864,5986186}, e o {Smooth Streaming}~\cite{REF},
+Adaptive Streaming over HTTP}~\cite{6077864,5986186}, e o {Smooth
+Streaming}~\cite{REF},
 %  e o WebRTC
 são quatro protocolos independentes propostos pela Apple, Adobe, MPEG
 e Microsoft, respectivamente.
@@ -226,7 +226,7 @@ arquivos que contém, de fato, os bits de dados da mídia.
 \end{center}
 \vspace{-1cm}
 \caption{Arquitetura do HLS para transmissão de conteúdos multimídia
-baseado no protocolo HTTP. Adaptado de~\cite{Pantos2013}.}
+baseado no protocolo HTTP. Figura extraída e adaptada de~\cite{Pantos2013}.}
 \label{fig:hls_transport_stream}
 \end{figure}
 
@@ -408,7 +408,7 @@ PDTP.
 \includegraphics[natwidth=623,natheight=322,scale=0.7]{imgs/trabrel/arq-pdtp.png}
 \end{center}
 \vspace{-0.5cm}
-\caption{Organização dos Nós PDTP.}
+\caption{Organização dos Nós PDTP. Figura extraída de~\ref{arcieri2004}.}
 \label{fig:arq-pdtp}
 \end{figure}
 
@@ -455,7 +455,7 @@ conteúdo diretamente para o servidor.
 \end{center}
 \vspace{-0.5cm}
 \caption{Diagrama de sequência do CPM (\textit{Cooperative Peer Assists and
-Multicast}).}
+Multicast}). Figura extraída de~\ref{5061910}.}
 \label{fig:arq-cpm}
 \end{figure}
 
@@ -555,7 +555,7 @@ os servidores cuidam da replicação do mesmo de acordo com a sua popularidade.
 \end{center}
 \vspace{-0.5cm}
 \caption{Arquitetura do HySAC (\textit{Hybrid Delivery System with Adaptive
-Content Management for IPTV Networks}).}
+Content Management for IPTV Networks}). Figura extraída de~\ref{5962598}.}
 \label{fig:arq-hysac}
 \end{figure}
 
@@ -947,6 +947,7 @@ de seus próprios algoritmos para controle de congestionamento.
 \end{enumerate}
 
 \subsection{DONet/CoolStreaming}
+\label{subsec:coolstreaming}
 
 O CoolStreaming é um sistema para distribuição de mídias ao vivo baseado em uma
 arquitetura P2P~\cite{4509752,susu_xie_coolstreaming:_2007,
@@ -982,14 +983,14 @@ transmitindo seu mapa de buffer com um conjunto de nós parceiros, obtendo os
     \begin{subfigure}[b]{0.47\textwidth}
         \centering
         \includegraphics[natwidth=683,natheight=571,width=\textwidth]{imgs/trabrel/coolstreaming1.png}
-        \caption{CoolStreaming 1.0.}
+        \caption{CoolStreaming 1.0. Extraído de~\cite{xinyan_zhang_coolstreaming/donet:_2005}.}
         \label{fig:coolstreaming1}
     \end{subfigure}
     ~~~~
     \begin{subfigure}[b]{0.47\textwidth}
         \centering
         \includegraphics[natwidth=683,natheight=571,width=\textwidth]{imgs/trabrel/coolstreaming2.png}
-        \caption{CoolStreaming 2.0.}
+        \caption{CoolStreaming 2.0. Extraído de~\cite{4509752}.}
         \label{fig:coolstreaming2}
     \end{subfigure}
     \caption{Arquitetura genérica de blocos funcionais do CoolStreaming 1.0 e
@@ -1074,15 +1075,50 @@ necessariamente resultado em ótimos resultados. Em~\cite{4509752}, os autores
 do CoolStreaming discutem que aumentar a quantidade de número de sub-fluxos não
 melhora proporcionalmente algumas métricas, como o índice de continuidade e
 utilização da capacidade de upload dos nós transmissores (em média). Os autores
-executaram simulações e pôde-se observar que a partir de 8 sub-fluxos, as duas
-métricas citadas anteriormente não sofrem alterações positivas, em alguns casos
-até pioram (quando se utiliza nós com capacidade heterogêneas de transmissão).
-No GMTP, utiliza-se sempre o método push após um nó estabelecer uma conexão,
-mas os roteadores no caminho entre o nó servidor e o nó cliente podem
-interceptar os pedidos de conexão transmitidos por outros nós clientes.
-Essa estratégia reduzir a quantidade de requisições ao servidor e o tempo para
-iniciar a reprodução de um vídeo ao usuário final (apenas o primeiro usuário
-perceberá um atraso maior do que os demais);
+executaram simulações com 40 mil nós e 24 servidores auxiliares (que
+funcionaram apenas como nós transmissores) e observaram que a partir de 8
+sub-fluxos, as duas métricas citadas anteriormente não melhora e, em alguns
+casos, até pioram (quando se utiliza nós com capacidade heterogêneas de
+transmissão). No GMTP, utiliza-se sempre o método \textit{push} após um nó
+estabelecer uma conexão e os roteadores no caminho entre o nó servidor e o nó
+cliente podem interceptar os pedidos de conexão transmitidos por outros nós
+clientes. Essa estratégia reduzir a quantidade de requisições ao servidor e o
+tempo para iniciar a reprodução de um vídeo ao usuário final (apenas o primeiro
+usuário perceberá um atraso maior do que os demais). Com isso, se no caminho
+entre o nó cliente e o nó servidor não ocorrer nenhuma interceptação, a
+requisição alcançará o nó servidor, e a troca de dados ocorre. Porém, os
+próximos nós clientes que transmitirem seu pedido de conexão através de pelo
+menos parte do mesmo caminho já utilizado anteriormente, um nó servidor
+instruirá um roteador nesse caminho a replicar o fluxo para o novo nó cliente,
+em vez de responder com a aceitação do pedido de conexão.
+
+  \item No sistema CoolStreaming, a rede de sobreposição é centrada no dado. Os
+nós realizam parcerias considerando quais parceiros possuem as partes da mídia
+de interesse e a troca de parcerias ocorre ao longo da transmissão. Isso gera
+instabilidades na transmissão, impactando diretamente em métricas como o índice
+de continuidade. Além disso, as parcerias são efetivadas independente da posição
+lógica do nó na rede, levando-se em consideração apenas o nó que detém um
+determinado contéudo de interesse e sua capacidade de upload, o que pode gerar
+sobrecarga na troca de informações de controle. No GMTP, a rede de sobreposição
+é centrada na conexão e a constituição de tal rede ocorre de forma transparente
+à aplicação. A formação da rede acontece no processo de pedido de conexão, onde
+os nós intermediários (roteadores), localizados entre o nó interessado pela
+mídia (cliente) o nó transmissor (servidor) são autorizados a interceptar o
+pedido de conexão e responder ao nó cliente como se fosse o servidor original.
+Somente depois dessa fase, os nós roteadores GMTP iniciam um processo de
+expansão de parcerias, onde podem realizar parcerias com outros nós que não
+estejam, necessariamente, conectados em um mesmo servidor da CDN.
+
+  \item Os nós da rede de sobreposição do sistema CoolStreaming são os sistemas
+finais, que executam aplicações de rede. No GMTP, constitui-se uam rede de
+sobreposição entre os roteadores da rede e não entre os sistemas finais. Dessa
+forma, a rede se torna estável com relação a dinâmica de entradas e saídas das
+redes, sendo possível continuar utilizando os recursos de um roteador (em
+geral, o da borda de uma rede), mesmo quando seus nós clientes desistem de
+continuar obtendo a mídia de interesse, por exemplo, se o usuário fechar o
+aplicativo. Sendo assim, os nós roteadores podem continuar transmitindo o fluxo
+de vídeo para outros nós, pelo menos momentaneamente, enquanto seus parceiros
+realizam outras parcerias.
 
   \item Um nó recém integrado à rede DONet, pode levar muito tempo (em alguns
 casos 20 segundos) para obter os primeiros blocos de vídeo e assim iniciar a
@@ -1183,12 +1219,104 @@ CoolStreaming.
 
 \end{enumerate}
 
+
 \subsection{Denacast}
 \label{subsec:denacast}
 
-Preencher...
+O Denacast é um sistema para distribuição de mídias ao vivo baseado em um
+arquitetura híbrida P2P/CDN~\cite{5764567}. A porção P2P do sistema é adaptada
+do sistema CoolStreaming de modo que suporte a porção CDN. O escalonador do
+Denacast distribuição de mídias é idêntico ao do CoolStreaming que, segundo os
+próprios autores, é considerado o \aspas{coração} do sistema.
+% Sendo assim, a seguir, discute-se apenas as diferenças entre ambos, com foco em
+% aspectos relacionados às interações entre a rede P2P e a rede CDN.
+
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{0.47\textwidth}
+        \centering
+
+\includegraphics[natwidth=683,natheight=571,width=\textwidth]{imgs/trabrel/denacast-unconnected-mesh.png}
+        \caption{Cenário de uma rede P2P/CDN de malhas desconectadas.}
+        \label{fig:denacast1}
+    \end{subfigure}
+    ~~~~
+    \begin{subfigure}[b]{0.47\textwidth}
+        \centering
+
+\includegraphics[natwidth=683,natheight=571,width=\textwidth]{imgs/trabrel/denacast-connected-mesh}
+        \caption{Cenário de uma rede P2P/CDN de malhas conectadas.}
+        \label{fig:denacast2}
+    \end{subfigure}
+    \caption{Arquiteturas CDN/P2P utilizadas no Denacast. Figuras extraídas
+de~\cite{5764567}.}
+    \label{fig:denacast}
+\end{figure}
+
+Como ilustra-se na Figura~\ref{fig:denacast}, no Denacast, adota-se duas
+arquiteturas CDN/P2P, que tem em comum nós servidores como nós folhas de uma
+rede CDN \textit{multicast}, os quais funcionam como nós fontes da mídia
+transmitida para a rede P2P.
+
+\begin{itemize}
+
+  \item P2P/CDN de malhas desconectadas (Figura~\ref{fig:denacast1}):
+constitui-se diferentes redes de malhas independentes coordenadas por um
+servidor da rede CDN. Nessa arquitetura, cada servidor da CDN funciona como um
+nó \textit{tracker} da sua respectiva rede malha;
+
+  \item P2P/CDN de malhas conectadas (Figura~\ref{fig:denacast2}): constitui-se
+uma única rede de malhas formada por todos os nós servidores da CDN e todos os
+nós da rede P2P. Além dos vários servidores da CDN, utiliza-se também um nó que
+desempenha o papel de \textit{tracker}. A responsabilidade do \textit{tracker}
+é construir as redes de malhas e conectá-las à rede CDN.
+
+\end{itemize}
+
+Para a construção da rede de malha, o nó \textit{tracker} mantém uma lista dos
+nós da rede P2P que estao ativos. Um nó fonte da mídia se anuncia ao nó
+\textit{tracker}. Cada nó da rede P2P requisita uma lista de possíveis nós
+parceiros ao nó \textit{tracker} e informando o número de parcerias que deseja
+efetivar. A nó fonte codifica as partes da mídia à medida que se captura o
+evento ao vivo e as coloca em um \textit{buffer} de transmissão. No mesmo
+instante, gera-se o mapa do \textit{buffer} que é anunciado para os nós
+parceiros do nó fonte. Os nós parceiros do nó fonte solicita as partes da mídia
+de acordo com o mapa de \textit{buffer} e em seguida a transmissão entre
+eles ocorre de forma similar ao CoolStreaming. Quando um novo nó receptor
+deseja se conectar à rede, este se conecta ao nó \textit{tracker}, que
+seleciona a rede de malha com menos nós clientes e retorna a lista de
+candidatos a nós parceiros.
+
+O diferencial do Denacast comparado ao CoolStreaming é seu mecanismo de
+conectar duas ou mais redes de malhas. A regra geral considerada pelo nó
+\textit{tracker} é a seguinte: duas redes de malha se unirão através de dois
+nós receptores conectados em cada uma das redes de malha a ser unidas. Isto
+ocorre quanto a quantidade de nós ativos nas duas redes ultrapassa o valor do
+número de nós servidores da CDN disponíveis no sistema vezes o número limite de
+nós em cada rede de malha antes do início da transmissão. Quando uma rede de
+malha A é unida a uma rede de malha B, o nó \textit{tracker} passa a sugerir
+nós da rede A para a rede B e vice-versa.
+
 
 \subsubsection{Considerações sobre o trabalho}
+
+No ponto de vista da rede P2P, as considerações sobre o sistema Denacast são
+similares ao caso do CoolStreaming. Com relação a arquitetura geral, o Denacast
+tem uma melhor organização da rede de sobreposição devido ao uso de servidores
+de uma rede CDN. Isto permite um melhor agrupamento dos nós em uma determinada
+região lógica da rede (delimitada pela localização do nó servidor da CDN). Nesse
+sentido, o Denacast escala melhor o número de nós e melhora as métricas de
+qualidade de serviço relacionadas à transmissão de uma mídia ao vivo se
+comparado ao CoolStreaming.
+
+O Denacast é o sistema que mais se aproxima ao GMTP, devido a sua estratégia de
+unir diferentes redes de malha quando a quantidade de nós em uma determinada
+rede extrapola um determinado limite. Porém, como já foi discutido na
+Seção~\ref{subsec:coolstreaming}, em discussão sobre o CoolStreaming e que se
+estende ao Denacast, o GMTP oferece funções diferenciadas e detalhadas no
+Capítulo~\ref{cap:mudccp}, ao passo que ambos os protocolos foram confrontados
+em simulações de rede e os resultados são apresentados no
+Capítulo~\ref{cap:analisedesemp}.
 
 \subsection{Outras propostas}
 
@@ -1198,23 +1326,25 @@ abordagens, das mais simples, como as baseadas em arquiteturas cliente
 servidor, às mais complexas, como as baseadas em P2P e/ou P2P/CDN. Diante desse
 cenário, realizou-se uma exaustiva pesquisa sobre os trabalhos relacionados à
 proposta apresentada nessa tese de doutorado, destacando-se os principais, tal
-como apresentou ao longo dessa seção. Apesar desse filtro, pode-se afirmar que
-as soluções propostas nessa área de pesquisa são apresentadas considerando os
-aspectos discutidos no Capítulo~\ref{cap:fundamentacao}. Em geral, decide-se
-sobre se a estrutura da rede de sobreposição será em árvore e/ou em malha; sobre
-se os nós realização periodicamente requisições das partes da mídia
-(\textit{pull-based}) e/ou se os nós transmissores enviarão as partes da mídia
-para o nó receptor após este último sinalizar interesse por tal conteúdo
-(\textit{push-based}); e, sobre a arquitetura do serviço, se será P2P e/ou
-P2P/CDN.
+como foram apresentadas ao longo dessa seção. Apesar desse filtro, pode-se
+afirmar que as soluções propostas nessa área de pesquisa são apresentadas
+considerando os aspectos discutidos no Capítulo~\ref{cap:fundamentacao}. Em
+geral, decide-se sobre se a estrutura da rede de sobreposição será em árvore
+e/ou em malha; sobre se os nós realizam periodicamente requisições das partes
+da mídia (\textit{pull-based}) e/ou se os nós transmissores enviarão as partes
+da mídia para o nó receptor após este último sinalizar interesse por tal
+conteúdo (\textit{push-based}); e, sobre a arquitetura do serviço, se será P2P
+e/ou P2P/CDN (modelos tradicionais como cliente/servidor não tem sido mais
+consideradas).
 
-Nesse contexto, durante o levantamento bibliográfico realizado no
-contexto deste trabalho, catalogou-se outras propostas que não foram detalhadas
-nas seções anteriores, mas que devem ser mencionadas. São elas:
+Durante o levantamento bibliográfico realizado no contexto deste trabalho,
+catalogou-se uma série de outras propostas que não foram aqui detalhadas, mas
+que, ao menos, devem ser mencionadas, para se ter uma noção da pulverização de
+soluções para este fim. São elas (em ordem alfabética):
 AnySee~\cite{huang_anysee2:_2007},
 BEAM/Alliances~\cite{4378429},
 BitTorrentLIVE~\cite{4797218},
-DLNA-P2P~\cite{5456206}.
+DLNA-P2P~\cite{5456206},
 GridMedia~\cite{zhao_gridmedia+:_2009,li_towards_2008,4395127},
 IV5S~\cite{5373760},
 Joost~\cite{Alhaisoni2009,4575245},
@@ -1231,9 +1361,9 @@ SAMP~\cite{6689688},
 SmoothCache~\cite{Roverso2012},
 Sopcast~\cite{fallica_quality_2008},
 TURINstream~\cite{5580077} e
-ZIGZAG~\cite{tran_zigzag:_2003}. Além dessas, diversas outras soluções foram
-encontradas, mas foram excluídas porque não se apresentaram como trabalhos
-acadêmicos, mas sim como produtos de software, não sendo possível referênciá-las
+ZIGZAG~\cite{tran_zigzag:_2003}. Além dessas, diversas outras propostas foram
+investigadas, mas não foram consideradas nessa lista porque se tratam de
+produtos de software proprietários, não sendo possível referenciá-las
 formalmente.
 
 % ******* Adicionar mais esses aplicativos a seguir nas referência acima. Pegar
