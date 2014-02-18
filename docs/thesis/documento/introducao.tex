@@ -23,15 +23,9 @@
 % \end{center}
 % \vspace{1cm}
 
-Nos últimos anos, tem ocorrido uma revolução com relação às formas de criação e
-transmissão de mídias (áudio e/ou vídeo) na Internet. O número crescente de
-conexões de banda larga à Internet têm provocado o aumento do consumo e da
-exigência de qualidade dos conteúdos multimídia, que eleva os custos com
-largura de banda dos distribuidores de conteúdo. Por exemplo, o
-YouTube\texttrademark\space registra um custo operacional com largura de banda
-da ordem de \ut{US\$1}{milhão} por mês para atender cerca de 20 milhões de
-usuários por dia, para transmitir o equivalente a 60 mil anos de vídeos se
-fossem reproduzidos sequencialmente~\cite{5506093}. Estima-se que em 2014 o
+A Internet é um sucesso tecnológico e sua infra-estrutura global conecta bilhões de hospedeiros, transmitindo-se uma volumosa quantidade de dados digitais diariamente. A proposta inicial foi de interconectar hospedeiros para compartilhar recursos computacionais antes escassos, enquanto atualmente (2014) serve para recuperar diferentes tipos de conteúdos, proporcionando-se uma grande revolução com relação aos métodos de transmissão de mídias ao vivo (áudio e/ou vídeo).
+
+O número crescente de conexões de banda larga à Internet têm provocado o aumento do consumo e da exigência de qualidade de serviço, que eleva os custos com largura de banda dos distribuidores de conteúdo. Por exemplo, o YouTube\texttrademark\space registra um custo operacional com largura de banda da ordem de \ut{US\$1}{milhão} por mês para atender cerca de 20 milhões de usuários por dia, para transmitir o equivalente a 60 mil anos de vídeos se fossem reproduzidos sequencialmente~\cite{5506093}. Estima-se que em 2014 o
 tráfego de video será maior do que foi o tráfego de redes entre pares (P2P) para
 compartilhamento de arquivos em 2009, correspondendo a \ut{39}{\%} do tráfego de
 dados total na Internet. Além disso, estima-se que o tráfego de VoIP, vídeo e
@@ -64,7 +58,7 @@ principalmente os casos de transmissões empresariais e residenciais ao vivo,
 como o PPLive\texttrademark\space e o UStream.tv\texttrademark. Nesses últimos
 casos, os sistemas permitem a transmissão de conteúdos ao vivo gerados a partir
 do computador de um usuário para milhares de outros usuários conectados à
-Internet~\cite{Silva:2011:LSU:2048614.2048874}. O sistema recebe mais de 50
+Internet~\cite{Silva:2011:LSU:2048614.2048874}. O UStream.tv recebe mais de 50
 milhões de acessos e transmite 1,5 milhão de horas de vídeo ao vivo por mês, com
 mais de 2 milhões de usuários cadastrados e um dos
 canais\footnote{\murl{http://www.ustream.tv/decoraheagles}. O nome do canal é
@@ -101,19 +95,16 @@ Partners: http://www.bgcpartners.com/}.
     \subfigure[Percentual de consumo de dados transmitidos e recebidos por
 aplicação.\vspace{0.5cm}] {
       \label{fig:network-traffic1-1}
-	  \includegraphics[scale=0.47,
-	      natwidth=620,natheight=432]{imgs/network-traffic1-2.png}
+	  \includegraphics[scale=0.38,natwidth=620,natheight=432]{imgs/network-traffic1-2.png}
     }
-
-    \subfigure[Tráfego de Internet em redes de acesso de banda
-larga.] {
+    \qquad
+    \subfigure[Tráfego de Internet em redes de acesso de banda larga.] {
       \label{fig:network-traffic1-2}
-	  \includegraphics[scale=0.4,
-	      natwidth=620,natheight=744]{imgs/network-traffic1-1.png}
+	  \includegraphics[scale=0.26,natwidth=620,natheight=744]{imgs/network-traffic1-1.png}
     }
   \end{center}
-  \caption[Perfil de Tráfego de Rede da América do Norte durante o horário de
-pico.]{Perfil de Tráfego de Rede da América do Norte durante o horário de pico
+  \caption[Perfil de tráfego de rede da américa do norte durante o horário de
+pico.]{Perfil de tráfego de rede da américa do norte durante o horário de pico
 (considerando-se redes fixas)~\cite{netflix-king}.}
   \label{fig:network-traffic1}
 \end{figure}
@@ -149,42 +140,15 @@ utilizados nos sistemas baseados em uma arquitetura de rede híbrida P2P/CDN, ou
 seja, par-a-par (\textit{Peer to Peer} -
 P2P)~\cite{Li2008,4251077,6295665,4378429} e
 cliente-servidor com suporte de uma rede de distribuição de conteúdos
-(\textit{Content Delivery Network} - CDNs)~\cite{1250586,1323289,939452}. Isto
+(\textit{Content Delivery Network} - CDNs)~\cite{1250586,1323289,939452} (Figura~\ref{fig:esquema-p2p-cdn}). Isto
 porque há evidências contundentes
-~\cite{6121327,Xu04acdn-p2p,Dongyan2006,Meskovic2012,4012578,Huang:2008:UHC:1496046.1496064,6035830,5764567,5343509,4797271}
-de que se trata da principal escolha dos sistemas mais robustos, conseguindo-se
+~\cite{6121327,Xu04acdn-p2p,Dongyan2006,Meskovic2012,4012578,Huang:2008:UHC:1496046.1496064,6035830,5764567,5343509,4797271} de que se trata da principal escolha dos sistemas mais robustos, conseguindo-se
 escalabilidade do número de usuários e redução de custos com infra-estrutura de
-rede, por meio das redes P2P; ao passo que se consegue facilidade no
-gerenciamento e maior estabilidade de disponibilização dos serviços, por meio
-das CDNs.
-
-Nesse tipo de arquitetura de rede, os servidores da CDN atuam como super nós
-para a rede P2P, ao passo que os nós da rede P2P cooperam entre si a fim de
-disseminar mais rapidamente os datagramas, reproduzindo-os também localmente. Do
-ponto de vista de protocolos de rede, utiliza-se conexões TCP
-(\textit{Transmission Control Protocol})~\cite{4346548} para
-selecionar os nós parceiros e para troca de mapas de \textit{buffers}, que
-servem para indexar quais nós possuem quais partes da mídia; ao passo que
-utiliza-se o UDP (\textit{User Datagram Protocol})~\cite{comer2004} para
-transmitir datagramas contendo as partes da mídia e exibi-las ao usuário final.
-Um aspecto importante para esses sistemas é definir de que forma os nós devem
-escalonar o uso de seus recursos de forma que a alocação seja a mais eficiente
-possível, evitando-se sobrecarga nos servidores da CDN e nos canais de
-comunicação.
-
-Em sistemas dessa natureza, ilustrado na Figura~\ref{fig:esquema-p2p-cdn},
-os nós estão sempre acessando e disponibilizando recursos uns dos outros, ao
-mesmo tempo que os servidores da CDN organizam os nós da rede P2P e mantém os
-serviços de distribuição mais estáveis, tornando o sistema menos vulnerável ao
-dinamismo de participação dos nós de uma redes P2P, também conhecido por
-\textit{churn}~\cite{Stutzbach:2006:UCP:1177080.1177105,5502009}.
-
-% chegada e partida de nós, tempo de disponibilidade, heterogeneidade quanto a
-% capacidade de \textit{download} e \textit{upload} etc.
+rede, por meio das redes P2P; ao passo que se consegue facilidade no gerenciamento e maior estabilidade de disponibilização dos serviços, por meio das CDNs.
 
 \begin{figure}[h]
 \begin{center}
-\includegraphics[scale=0.525]{imgs/esquema-p2p-cdn.pdf}
+\includegraphics[scale=0.5]{imgs/esquema-p2p-cdn.pdf}
 \end{center}
 \vspace{-1.5cm}
 \caption[Esquema de uma arquitetura híbrida P2P/CDN para distribuição de
@@ -192,6 +156,28 @@ conteúdo multimídia.]{Estrutura de rede de uma arquitetura híbrida
 P2P/CDN para distribuição de conteúdo multimídia.}
 \label{fig:esquema-p2p-cdn}
 \end{figure}
+
+Nesse tipo de arquitetura de rede, os servidores da CDN atuam como super nós
+para a rede P2P, ao passo que os nós da rede P2P cooperam entre si a fim de
+disseminar mais rapidamente os datagramas, reproduzindo-os também localmente. Os datagramas são transmitidos após a captura dos quadros de um vídeo e uma aplicação os comprime, empacota-os e imediatamente os transmite para os sistemas remotos interessados. Do ponto de vista de protocolos de rede, utiliza-se conexões TCP
+(\textit{Transmission Control Protocol})~\cite{4346548} para
+selecionar os nós parceiros e para troca de mapas de \textit{buffers}, que
+servem para indexar quais nós possuem quais partes da mídia; ao passo que
+utiliza-se o UDP (\textit{User Datagram Protocol})~\cite{comer2004} para
+transmitir datagramas contendo as partes da mídia e exibi-las ao usuário final.
+
+Um aspecto importante para esses sistemas é definir de que forma os nós devem
+escalonar o uso de seus recursos de forma que a alocação seja a mais eficiente
+possível, evitando-se sobrecarga nos servidores da CDN e nos canais de
+comunicação. Em sistemas dessa natureza, os nós estão sempre acessando e 
+disponibilizando recursos uns dos outros, ao mesmo tempo que os servidores da 
+CDN organizam os nós da rede P2P e mantém os serviços de distribuição mais 
+estáveis, tornando o sistema menos vulnerável ao dinamismo de participação dos 
+nós de uma redes P2P, também conhecido por
+\textit{churn}~\cite{Stutzbach:2006:UCP:1177080.1177105,5502009}.
+
+% chegada e partida de nós, tempo de disponibilidade, heterogeneidade quanto a
+% capacidade de \textit{download} e \textit{upload} etc.
 
 Isto posto, os cenários de aplicação considerados neste trabalho são os que
 apresentam um nó de rede gerador de um conteúdo multimídia e milhares de nós
@@ -269,16 +255,15 @@ os serviços das camadas TCP/IP mais acima, como os serviços de controle de
 congestionamento, NAT dinâmico (\textit{Dynamic Network Address Translation})
 através de UPnP (\textit{Universal Plug and Play})~\cite{968819}, DNS
 dinâmico~\cite{1203676}, dentre outros. Essa tendência é também sustentada pelas
-Redes Centradas no Conteúdo (\textit{Content-Centric Networks} -- CCN), proposta
-por Van
-Jacobson~\cite{5936152,6419703,Eardley:2011:DAF:1983741.1983751,6384450,6386696}.
-O princípio é que uma rede de comunicação deve viabilizar o acesso ao conteúdo
-de interesse de um usuário (\textit{content-centric approach}) independente do
-local físico onde tal conteúdo está armazenado, enfraquecendo a abordagem
-restrita de organização dos protocolos em camadas funcionais
-(\textit{host-centric approach}). Em linhas gerais, abstrai-se o esquema de
-acesso a um recurso pelo endereço IP passando a acessá-lo pelo seu nome,
-independente da localização do nó gerador do conteúdo de interesse. Isto porque
+Redes Centradas na Informação (\textit{Information-Centric Networks} -- 
+ICN)~\cite{6563278,6231276,5936152,Ghodsi:2011:INS:2070562.2070563}. O 
+princípio é que uma rede de comunicação deve viabilizar o acesso ao conteúdo de 
+interesse de um usuário (\textit{content-centric approach}) independente do 
+local físico onde tal conteúdo está armazenado, enfraquecendo a abordagem 
+restrita de organização dos protocolos em camadas funcionais 
+(\textit{host-centric approach}). Em linhas gerais, abstrai-se o esquema de 
+acesso a um recurso pelo endereço IP passando a acessá-lo pelo seu nome, 
+independente da localização do nó gerador do conteúdo de interesse. Isto porque 
 se considera que entregar o conteúdo é mais importante do que a forma de
 obtê-lo, pois \ut{90}{\%} do tráfego na Internet consistem de dados
 disseminados a partir de uma fonte para diversos destinos~\cite{6419703}.
@@ -968,13 +953,13 @@ Distribution of Live Multimedia Content over the Internet.} A ser
 submetido para IEEE Transactions on Broadcasting (JCR 2.087) ou IEEE Network
 (JCR 2.853).
 
-% \item \textit{Designing GMTP: The Global Media Transmission Protocol for Massive
-% Multimedia Distribution with Supporting of Hybrid P2P/CDN Routers.} A ser
-% submetido para IEEE Network (JCR 2.853).
+\item \textit{Designing GMTP: The Global Media Transmission Protocol for Massive
+Multimedia Distribution over the Internet.} A ser submetido para IEEE Software (JCR 1.62).
 
-\item \textit{Sharing Resources with Live Streaming Systems to Improve Users'
-QoE on Consumer Electronic Devices.} IEEE Transaction on Consumers Eletronics
+\item \textit{Generalized Connection and Incentives for Supporting CE Devices in P2P/CDN Live Streaming Systems.} IEEE Transaction on Consumers Eletronics
 (JCR 1.087).
+
+% Sharing Resources with Live Streaming Systems to Improve Users' QoE on Consumer Electronic Devices.
 
  \item \textit{About Encouraging Residential Users to Share Upload
 Bandwidth with CDN/P2P Live Streaming Systems.} 31st IEEE International

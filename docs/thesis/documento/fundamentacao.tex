@@ -1253,10 +1253,14 @@ A transmissão de vídeos na Internet pode se classificar em duas grandes
 categorias: vídeos pré-armazenados, enviados sob demanda (\textit{on-demand}) e
 vídeos ao vivo (\textit{live}). Os usuários de vídeos assistidos sob demanda têm
 a flexibilidade de assistir um conteúdo previamente armazenado, a qualquer
-momento. De forma contrária, um conteúdo ao vivo é transmitido no mesmo momento
+momento. Por outro lado, um conteúdo ao vivo é transmitido no mesmo momento
 em que o fluxo é gerado. Logo, todos os usuários devem estar sincronizados e
-devem assistir o fluxo de vídeo ao mesmo tempo. Essa é a classe de transmissão
-de conteúdo tratado neste trabalho.
+devem assistir o fluxo de vídeo ao mesmo tempo. Isto significa que esses 
+sistemas têm requisitos críticos de tempo e a retransmissão baseada no controle 
+de erro não é adequado em cenários de altos atrasos. Por isso, tais sistemas 
+utilizam suas próprias funções para tolerar perda de pacotes, como mascarar 
+erros e adaptação de conteúdo, em transmissões de fluxos de dados sem garantia 
+de entrega, utilizando UDP.
 
 A solução básica para o envio do fluxo de vídeo na Internet é a utilização
 do modelo cliente-servidor. Nesse modelo, um cliente cria uma conexão com um
@@ -1267,11 +1271,8 @@ comunicação utilizados pelo servidor, o que gera um alto custo
 operacional~\cite{guo_survey_2008}.
 
 Recentemente, vários sistemas P2P foram desenvolvidos para prover conteúdo de
-vídeo ao vivo e sob-demanda na Internet, com baixo custo
-operacional~\cite{vu_understanding_2010,purandare_alliance_2007,
-castro_splitstream:_2003,xiaojun_hei_measurement_2007,bonald_epidemic_2008,
-susu_xie_coolstreaming:_2007,fallica_quality_2008,zhang_peer--peer_2005,
-zhang_large-scale_2005}. As redes entre pares (P2P) emergiram como um novo
+vídeo ao vivo e sob-demanda na Internet, com baixo custo operacional~\cite{vu_understanding_2010,purandare_alliance_2007,castro_splitstream:_2003,xiaojun_hei_measurement_2007,bonald_epidemic_2008,susu_xie_coolstreaming:_2007,fallica_quality_2008,zhang_peer--peer_2005,zhang_large-scale_2005}.
+As redes entre pares (P2P) emergiram como um novo
 paradigma para construir aplicações distribuídas. Neste tipo de aplicação, os
 usuários são encorajados a atuarem como clientes e servidores. Em uma rede P2P,
 os nós participantes, além de obterem serviços da rede, também os provêem.

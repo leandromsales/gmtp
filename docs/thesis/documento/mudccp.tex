@@ -2,7 +2,7 @@
 \label{cap:mudccp}
 
 O \textit{Global Media Transmission Protocol} (\mudccp) é um protocolo que atual
-nas camadas de transporte e de rede (\textit{crossing-layer})
+nas camadas de transporte e de rede (\textit{cross-layer})
 projetado para operar na Internet, a ser utilizado em sistemas de distribuição
 de fluxos dados multimídia ao vivo. Trata-se de um protocolo baseado em uma
 arquitetura híbrida P2P/CDN, transmitindo-se os dados de um ou mais
@@ -322,16 +322,16 @@ formatados em itálico, bem como os termos \textit{socket}, \textit{unicast},
 denotar-se-á a transmissão de um fluxo de datagramas IP correspondente a um
 evento ao vivo, utilizando-se o protocolo GMTP.
 
-Quando um nó cliete deseja reproduzir um determinado evento, este envia uma
+Quando um nó cliente deseja reproduzir um determinado evento, este envia uma
 requisição em direção ao nó servidor que está transmitindo o conteúdo de
 interesse, como atualmente acontece em qualquer conexão na Internet. A diferença
-é que um nó repassador pode interceptar tal requisio durante seu trajeto até o
+é que um nó repassador pode interceptar tal requisito durante seu trajeto até o
 nó servidor, que então determina os melhores parceiros para atendê-la. Em geral,
 isto ocorre já no roteador de borda do nó cliente, que funciona como nó
 repassador de origem. Caso o nó repassador não encontre nenhum nó parceiro capaz
 repassar a mídia de interesse ou já esteja recebendo o referido fluxo, este
 encaminha tal requisição ao nó servidor que transmite a mídia correspondente, já
-que o pedido de conexão é intencionamente endereço ao nó servidor que transmite
+que o pedido de conexão é intencionalmente endereço ao nó servidor que transmite
 o fluxo de dados de interesse. Em todo caso, sempre o nó repassador de origem
 assumirá o controle de uma requisição do nó cliente, habilitando-se como
 candidato a parceiro para outros nós repassadores, quando motivados por
@@ -573,7 +573,7 @@ retomado na Seção~\ref{sec:seguranca}.
 \label{sec:defsrests}
 
 Nesta seção, descrevem-se as definições, relações e restrições do protocolo
-GMTP. Para isto, faz-se uso de fundamentos de algebra booleana, lógica
+GMTP. Para isto, faz-se uso de fundamentos de álgebra booleana, lógica
 proposicional, teoria de conjuntos e teoria dos
 grafos~\cite{Jonathan2003,Seroul2000,Courant1996,Devlin1979}.
 
@@ -929,7 +929,7 @@ desestabilize a comunicação entre estes. Mesmo se estas mudanças ocorrerem em
 uma rota de um caminho \setwayi, o impacto causado é temporário e insignificante
 para a transmissão de um evento \events quando se utiliza um conjunto de
 algoritmos que tratem essas mudanças. Com base na aceitação dessa conjectura,
-pode-se antecipar a formação de parcerias pre-selecionando nós \repasss em
+pode-se antecipar a formação de parcerias pré-selecionando nós \repasss em
 \setservrepasss antes da efetiva transmissão de um fluxo de dados \setpk. No
 GMTP, adota-se tal estratégia ao permitir que no processo de conexão, todos os
 nós \repasss $\in$ \setrepasss informem sua posição na mensagem de requisição
@@ -962,7 +962,7 @@ utiliza o conjunto de caminhos conhecidos para sugerir parcerias entre os nós
 \end{enumerate}
 
 Desta forma, \nets representa formalmente a rede de sobreposição constituída
-pelo GTMP, definindo-se as relações, restrições estabelecidas em \transmissions
+pelo GMTP, definindo-se as relações, restrições estabelecidas em \transmissions
 e as conjecturas consideradas para a execução de tal protocolo.
 
 \section{Constituição da Rede de Favores \net}
@@ -1090,13 +1090,13 @@ de um fluxo de dados \setpk, ou durante sua transmissão. Em ambos os casos, o
 algoritmo de registro de participação é similar, com uma diferença: se um nó
 \repasss solicitar previamente um registro de participação a um \servs sem
 interesse por um fluxo de dados \setpks qualquer, será possível mapear
-antecipadamente e selecionar um subconjunto de possíveis nós parcerios
+antecipadamente e selecionar um subconjunto de possíveis nós parceiros
 \repassu{q} para executar a distribuição de um fluxo de dados \setpk. Neste
 caso, pode-se utilizar \repasss para repassar pacotes de dados \pks $\in$
 \setpks mesmo quando \subsetcli$($\repass$) = \{\emptyset\}$, ou seja, mesmo se
 o nó repassador não tiver nós clientes para repassar o fluxo de dados \setpk.
 Assim, os nós \repass passam a funcionar como se fossem servidores de uma rede
-CDN, porém di âmicos, que podem ser acionados quando conveniente.
+CDN, que podem ser acionados dinamicamente, quando conveniente.
 
 Para realizar um registro de participação, um nó \repasss envia uma mensagem
 para um nó \servs utilizando o pacote \pac{GMTP-Register}, o que permite a
@@ -1211,11 +1211,10 @@ participation to a given node \serv. If \pks is given, node \clis wants to
 receive the flow \setpk, so notify \serv.}
 
 \If(){\pks $\neq$ NULL} {
-  \textit{\setpk} \attrib \getPacketFieldValue{\pk, `flow'}\tcc*[r]{Extracts
-\setpks in \pk}
+  \textit{\setpk} \attrib \getPacketFieldValue{\pk, `flow'}\tcc*[r]{Extracts \setpks in \pk}
   \label{algo-line:registerRelay-getP}
   \textit{\cli} \attrib \getPacketFieldValue{\pk, `client'}\tcc*[r]{Extracts \clis in \pk}
-  \textit{channel} \attrib \isFlowBeingReceived{\setpk}\tcc*[r]{See Section~\ref{subsec:tabela-recepcao}}
+  \textit{channel} \attrib \isFlowBeingReceived{\setpk}\tcc*[r]{Ver Seção~\ref{subsec:tabela-recepcao}}
   \tcc{Add \clis in the list of receivers waiting \setpk.}
   \addClientWaitingFlow{\cli, \setpk}\;
   \label{algo-line:addClientWaitingFlow}
@@ -1312,8 +1311,8 @@ provedores de rede, mas essa discussão está fora do escopo deste trabalho.
 \label{subsec:manutencao-conexao}
 
 Após o registro de participação, o nó \repasss deve enviar periodicamente
-sinalizações de controle (\textit{polling}) sobre sua participação na rede de
-favores $\eta$. Este procedimento deve ser feito usando o pacote do tipo
+sinalizações de controle sobre sua participação na rede de favores $\eta$.
+Este procedimento deve ser feito usando o pacote do tipo
 \pac{GMTP-Ack} em um tempo $t = max(300, t_{user})$, onde $t_{user}$ é definido
 em segundos e corresponde a um tempo definido
 pelo administrador do nó \repass, caso deseje um tempo menor que \ut{300}{s}

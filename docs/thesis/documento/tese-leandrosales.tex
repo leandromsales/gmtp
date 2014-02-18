@@ -1,5 +1,9 @@
 \documentclass[a4paper,titlepage]{copin}
-\usepackage[portuges,english]{babel}
+% \usepackage[portuges,english]{babel}
+
+\usepackage[portuges]{babel}
+% \usepackage[utf8]{inputenc}
+
 \usepackage{copin,doutor,epsfig}
 \usepackage{times}
 \usepackage{ucs}
@@ -21,8 +25,10 @@
 \usepackage{mathtools}
 %\usepackage[chapter]{algorithm}
 %\usepackage{algorithmic}
-\usepackage{caption}
-\usepackage{subcaption}
+% \usepackage{caption}
+% \usepackage[caption=false]{subfig}
+% \usepackage{subcaption}
+\usepackage{subfigure}
 \usepackage{tabularx}
 \usepackage{moreverb}
 \usepackage{enumerate}
@@ -34,53 +40,6 @@
 \usepackage{dcolumn,longtable,hhline}
 \usepackage[table]{xcolor}
 \usepackage{cite}
-
-\DeclareOption{portuguese}{%
-\renewcommand{\listalgorithmcfname}{Lista de Algoritmos}%
-\renewcommand{\algorithmcfname}{Algoritmo}%
-\renewcommand{\algorithmautorefname}{algoritmo}%
-\renewcommand{\algorithmcflinename}{linha}%
-\renewcommand{\algocf@typo}{}%
-\renewcommand{\@algocf@procname}{Procedimento}%
-\renewcommand{\@algocf@funcname}{Fun\c{c}\~{a}o}%
-\renewcommand{\procedureautorefname}{procedimento}%
-\renewcommand{\functionautorefname}{fun\c{c}\~{a}o}%
-\renewcommand{\algocf@languagechoosen}{portuguese}%
-}%
-
-% \usepackage[algoruled,lined, boxed, portugues]{algorithm2e}
-% \begin{figure}[htpb]
-% \begin{procedure}[H]
-% \linesnumbered
-%
-% \Entrada{Solução $s$, Inteiro $ILSmax$, Inteiro $kp_{0}$, Função $f$(.)}
-% \Saida{Solução $s^{*}$ de qualidade superior ou igual à $s$ de acordo com a
-% função $f$}
-% $s^{*} \leftarrow$ BuscaLocal($s$)\;
-% $kp \leftarrow kp_{0}$\;
-% \Enqto{ critério de parada não satisfeito }
-% {
-% $iter \leftarrow 0$\;
-% \Enqto{ $iter < ILSmax$ \textbf{and} critério de parada não satisfeito }
-% {
-% $s' \leftarrow$ perturbação($s^{*}, kp$)\;
-% $s'' \leftarrow$ BuscaLocal($s', f$)\;
-%
-% \eSe{ $s''$ for melhor que $s^{*}$ de acordo com a função $f$ }{
-% $s^{*} \leftarrow s''$\;
-% $kp$ $\leftarrow$ $kp_{0}$\;
-% $iter$ $\leftarrow$ $0$\;
-% }{
-% $iter \leftarrow iter + 1$\;
-% }
-%
-% }$kp \leftarrow kp + delta$\;
-% }Retorne $s^{*}$\;
-% \caption{ILS()}
-% \end{procedure}
-% \centering
-% \caption{Algoritmo ILS proposto \label{alg:ils} }
-% \end{figure}
 
 \lstset{numbers=left,
 stepnumber=1,
@@ -94,40 +53,20 @@ stringstyle=\ttfamily,
 showstringspaces=false
 }
 
-% \renewcommand{\lstlistingname}{Trecho de Código}
-% \renewcommand{\lstlistlistingname}{Lista de C\'odigos Fonte}
-% \renewcommand{\listalgorithmname}{Lista de Trechos de Código Fonte}
-
-% \renewcommand*{\listalgorithmcfname}{Lista de Algoritmos}
-% \renewcommand*{\algorithmcfname}{Algoritmo}
-% \renewcommand*{\algorithmautorefname}{Trecho de Código}
-
 \newcommand{\fmtvar}[1]{\textrm{\textit{#1}}}
 \newcommand{\ut}[2]{\unit[#1]{\emph{#2}}}
 \newcommand{\mys}{1 $\rightarrow$ \textit{n}}
 \newcommand{\murl}[1]{\texttt{\small \url{#1}}}
 \newcommand{\aspas}[1]{``#1''}
 \newcommand{\pac}[1]{\textit{#1}}
-% \newcommand{\mudccp}{MU-DCCP}
-% \newcommand{\mudccps}{MU-DCCP\space}
-% \newcommand{\mdrel}{MU-DCCP Relay}
-% \newcommand{\mdrep}{MU-DCCP Reporter}
-% \newcommand{\mdrels}{MU-DCCP Relays}
-% \newcommand{\mdreps}{MU-DCCP Reporters}
 
 \newcommand{\mudccp}{GMTP}
 \newcommand{\lmudccp}{gmtp}
 \newcommand{\mudccps}{\mudccp\space}
-\newcommand{\mdrel}{\mudccps Relay}
-\newcommand{\mdrep}{\mudccps Reporter}
-\newcommand{\mdrels}{\mudccps Relays}
-\newcommand{\mdreps}{\mudccps Reporters}
 \newcommand{\tab}{\space\space\space\space\space\space}
 
 \DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
 \DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
-
-%\hyphenation{a-va-li-a-das}
 
 \selectlanguage{portuges}
 \sloppy
@@ -203,7 +142,7 @@ pelo Compartilhamento de Fluxos de Dados em Redes P2P Formada por Roteadores}
 	     {\fancyplain{}{\emph{\rightmark}}}\rhead[\fancyplain{}{\bfseries\leftmark}]%
              {\fancyplain{}{\bfseries\thepage}}\cfoot{}
 
-\selectlanguage{portuges}
+% \selectlanguage{portuges}
 
 \Sumario
 % \ListadeSimbolos
@@ -215,8 +154,8 @@ pelo Compartilhamento de Fluxos de Dados em Redes P2P Formada por Roteadores}
 \cleardoublepage
 
 \Introducao
-\hyphenation{Hardware Software etc con-ges-tio-na-men-to a-di-cio-na-dos
-ge-ren-cia-men-to fun-cio-na-li-da-des }
+\hyphenation{a-va-li-a-das con-ges-tio-na-men-to a-di-cio-na-dos
+ge-ren-cia-men-to fun-cio-na-li-da-des co-nhe-ça me-lho-ri-as}
 
 % \input{introducao}
 % \input{fundamentacao}

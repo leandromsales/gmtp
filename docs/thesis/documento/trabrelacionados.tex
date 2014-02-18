@@ -460,16 +460,11 @@ Multicast}). Figura extraída de~\ref{5061910}.}
 \end{figure}
 
 Na arquitetura do protocolo CPM existem três componentes principais: (1) o
-modelo
-de dados do vídeo; (2) um protocolo para descoberta e transferência de conteúdo
-e
-(3) um escalonador inteligente no lado do servidor.
-
-O modelo de dados divide o vídeo em pedaços (\textit{chunks}) de tamanhos fixos.
-Cada pedaço é identificado por um GUID (\textit{Globally Unique Identifier}),
-onde
-um segmento consiste em uma sequência de pedaços e uma sequência de segmentos
-constitui um vídeo.
+modelo de dados do vídeo; (2) um protocolo para descoberta e transferência de conteúdo
+e (3) um escalonador inteligente no lado do servidor. O modelo de dados divide o vídeo
+em pedaços (\textit{chunks}) de tamanhos fixos. Cada pedaço é identificado por um GUID
+(\textit{Globally Unique Identifier}), onde um segmento consiste em uma sequência de
+pedaços e uma sequência de segmentos constitui um vídeo.
 
 O protocolo de transferência assume que o vídeo deve está completamente
 armazenado
@@ -978,26 +973,21 @@ periodicamente troca informações sobre a sua disponibilidade de \textit{chunk}
 transmitindo seu mapa de buffer com um conjunto de nós parceiros, obtendo os
 \textit{chunks} ausentes a partir dos nós que os anunciam como disponíveis.
 
-\begin{figure}
-    \centering
-    \begin{subfigure}[b]{0.47\textwidth}
-        \centering
-        \includegraphics[natwidth=683,natheight=571,width=\textwidth]{imgs/trabrel/coolstreaming1.png}
-        \caption{CoolStreaming 1.0. Extraído de~\cite{xinyan_zhang_coolstreaming/donet:_2005}.}
-        \label{fig:coolstreaming1}
-    \end{subfigure}
-    ~~~~
-    \begin{subfigure}[b]{0.47\textwidth}
-        \centering
-        \includegraphics[natwidth=683,natheight=571,width=\textwidth]{imgs/trabrel/coolstreaming2.png}
-        \caption{CoolStreaming 2.0. Extraído de~\cite{4509752}.}
-        \label{fig:coolstreaming2}
-    \end{subfigure}
-    \caption{Arquitetura genérica de blocos funcionais do CoolStreaming 1.0 e
-do 2.0.}
-    \label{fig:coolstreaming}
-\end{figure}
 
+\begin{figure}
+  \centering
+  \subfigure[CoolStreaming 1.0. Extraído de~\cite{xinyan_zhang_coolstreaming/donet:_2005}.] {
+    \label{fig:coolstreaming1}
+    \includegraphics[natwidth=683,natheight=571,scale=0.25]{imgs/trabrel/coolstreaming1.png}
+  }
+  \qquad
+  \subfigure[CoolStreaming 2.0. Extraído de~\cite{4509752}.] {
+    \label{fig:coolstreaming2}
+    \includegraphics[natwidth=683,natheight=571,scale=0.37]{imgs/trabrel/coolstreaming2.png}
+  }%
+  \caption{Arquitetura genérica de blocos funcionais do CoolStreaming 1.0 e do 2.0.}
+  \label{fig:coolstreaming}
+\end{figure}
 
 Conforme ilustra-se na Figura~\ref{fig:coolstreaming}, o sistema CoolStreaming
 teve duas versões de produção. Na Figura\ref{fig:coolstreaming1},
@@ -1225,33 +1215,27 @@ CoolStreaming.
 
 O Denacast é um sistema para distribuição de mídias ao vivo baseado em um
 arquitetura híbrida P2P/CDN~\cite{5764567}. A porção P2P do sistema é adaptada
-do sistema CoolStreaming de modo que suporte a porção CDN. O escalonador do
-Denacast distribuição de mídias é idêntico ao do CoolStreaming que, segundo os
-próprios autores, é considerado o \aspas{coração} do sistema.
+do sistema CoolStreaming de modo que suporte a porção CDN. Segundo seus autores,
+o escalonador de distribuição de mídias do Denacast é idêntico ao do CoolStreaming,
+que é considerado o \aspas{coração} do sistema.
 % Sendo assim, a seguir, discute-se apenas as diferenças entre ambos, com foco em
 % aspectos relacionados às interações entre a rede P2P e a rede CDN.
 
 \begin{figure}
-    \centering
-    \begin{subfigure}[b]{0.47\textwidth}
-        \centering
-
-\includegraphics[natwidth=683,natheight=571,width=\textwidth]{imgs/trabrel/denacast-unconnected-mesh.png}
-        \caption{Cenário de uma rede P2P/CDN de malhas desconectadas.}
-        \label{fig:denacast1}
-    \end{subfigure}
-    ~~~~
-    \begin{subfigure}[b]{0.47\textwidth}
-        \centering
-
-\includegraphics[natwidth=683,natheight=571,width=\textwidth]{imgs/trabrel/denacast-connected-mesh}
-        \caption{Cenário de uma rede P2P/CDN de malhas conectadas.}
-        \label{fig:denacast2}
-    \end{subfigure}
-    \caption{Arquiteturas CDN/P2P utilizadas no Denacast. Figuras extraídas
-de~\cite{5764567}.}
-    \label{fig:denacast}
+  \centering
+  \subfigure[Cenário de uma rede P2P/CDN de malhas desconectadas.] {
+    \label{fig:denacast1}
+    \includegraphics[natwidth=683,natheight=571,scale=0.36]{imgs/trabrel/denacast-unconnected-mesh.png}
+  }
+  \qquad
+  \subfigure[Cenário de uma rede P2P/CDN de malhas conectadas.] {
+    \label{fig:denacast2}
+    \includegraphics[natwidth=683,natheight=571,scale=0.275]{imgs/trabrel/denacast-connected-mesh.png}
+  }%
+  \caption{Arquiteturas CDN/P2P utilizadas no Denacast. Figuras extraídas de~\cite{5764567}.}
+  \label{fig:denacast}
 \end{figure}
+
 
 Como ilustra-se na Figura~\ref{fig:denacast}, no Denacast, adota-se duas
 arquiteturas CDN/P2P, que tem em comum nós servidores como nós folhas de uma
@@ -1356,6 +1340,7 @@ Pastry/SplitStream~\cite{castro_splitstream:_2003},
 PeerCast~\cite{5935134},
 PPLive~\cite{hei_insights_2006},
 PRIME~\cite{4803721},
+PROMISE~\cite{Hefeeda:2003:PPM:957013.957022},
 PULSE~\cite{4146695},
 SAMP~\cite{6689688},
 SmoothCache~\cite{Roverso2012},
@@ -1395,59 +1380,211 @@ formalmente.
 % apresentam-se os trabalhos representativos ao estado da arte neste sentido.
 
 
-\section{Redes Centradas no Conteúdo}
-\label{sec:trab-redes-centradas-conteudo}
+\section{Redes Centradas na Informação}
+\label{sec:trab-redes-centradas-informacao}
+
+Desde da criação da Internet, diversos módulos complementares foram disponibilizados para atender as necessidades dos usuários, como o NAT, DNS com  suporte a balanceamento de carga, etc. Entretanto, essas soluções criaram seus próprios problemas~\cite{moore2002}, que foram resolvidos por outras proposta~\cite{RFC3489} ou utilizadas de forma 
+errada~\cite{Vixie:2009:DNS:1610252.1610269}. Em geral, essas mudanças tem levado a situações complexas de gerenciamento de rede, ao passo que tem  sido disponibilizados avanços incipientes e lentos com foco no núcleo da rede. No entanto, uma nova vertente de pesquisa tem surgido com foco em propor a  próxima arquitetura de serviço para a Internet. Nesse contexto, considera-se o princípio de que os nós da rede devem trocar dados com base em qual informação se tem interesse em obter, e não sobre sua localização, definindo-se uma nova sub-área de estudo conhecida por Redes Centradas na Informação, ou originalmente, \textit{Information Centric Networks (ICN)} (Figura~\ref{fig:icn-abstracao}).
+
+\begin{figure}
+  \centering
+  \subfigure[Telefonia: nomeia o caminho.] {
+    \label{fig:icn-telefonia}
+    \includegraphics[natwidth=664,natheight=312,scale=0.4]{imgs/trabrel/icn-telefonia.png}
+  }
+  \qquad
+  \subfigure[IP: nomeia os sistemas finais.] {
+    \label{fig:icn-ip}
+    \includegraphics[natwidth=998,natheight=374,scale=0.275]{imgs/trabrel/icn-ip.png}
+  }
+  \qquad
+  \subfigure[ICN: nomeia o conteúdo.] {
+    \label{fig:icn-ndn}
+    \includegraphics[natwidth=1008,natheight=380,scale=0.275]{imgs/trabrel/icn-ndn.png}
+  }
+  \caption{Evolução das abstrações das redes de comunicação. Figuras de Van Jacobson.}
+  \label{fig:icn-abstracao}
+\end{figure}
+
+Nas ICNs, objetiva-se facilitar a distribuição de conteúdo definindo rotas, 
+funções de transporte e decisões de repasse com base no nome do conteúdo e não 
+mais em sua localização. Isto significa que um roteador de rede pode fazer 
+\textit{cache} de um conteúdo bastante acessado e retorná-lo quando houver 
+interesse por mais de um nó da rede. Atualmente (2014), todas as propostas para uma nova arquitetura para a Internet estão em estágio inicial de desenvolvimento, de modo que seus modelos de serviço e interfaces de transporte estão longes de uma versão final. Por isso, os benefícios de utilizar tais arquiteturas para a distribuição de vídeo ao vivo são questionáveis e ainda não foram apresentados resultados contundentes sobre seu uso em larga escala na Internet. Por exemplo, é impossível para um nó receptor adaptar o 
+fluxo de dados de acordo com as características de uma rota de rede, pois as 
+partes de um vídeo podem ser servidas por diferentes nós de \textit{cache}. De 
+fato, suportar a distribuição eficiente de mídias ao vivo usando ICN ainda 
+necessita de várias melhorias no projeto arquitetural, por exemplo, desenvolver 
+protocolos de transporte estendendo as interfaces atuais e considerando o 
+paradigma atual de transmissão fim-a-fim~\cite{6691438}.
+
+Dentre as propostas de uma nova arquitetura para a Internet com base no princípio das ICNs, destacam-se a \textit{Named-Data Networks (NDN)\footnote{\textit{Named-Data 
+Networks}: nova denominação para o que originalmente ficou conhecido por 
+\textit{Content-Centric Networks}.}}~\cite{6419703,Jacobson:2012:NNC:2063176.2063204, 6419703,6386696} ou Redes de Dados Nomeados e a \textit{Publish-Subscribe Internetworking 
+(PSI)}~\cite{6231279} ou Redes de Publicação e Subscrição. Existem outras 
+propostas em estágio embrionário~\cite{6563278,6231276,5936152,6384450}, sendo a 
+CCN e a PSI as mais evoluídas, com diferenças substanciais em seus 
+modelos de serviço para prover o conteúdo de interesse e suas funções 
+disponíveis no núcleo da rede. Por esse motivo, nas próximas seções, discute-se 
+em mais detalhes sobre tais propostas e suas aplicações no contexto de 
+distribuição de mídias ao vivo.
+
+\subsection{Redes de Dados Nomeados (NDN)}
+
+A arquitetura NDN, originalmente conhecida por \textit{Content-Centric Network 
+(CCN)}, nomeia os pacotes de conteúdos e prover um modelo de serviço orientado 
+a pedido e resposta, onde os nós obtêm os pacotes de dados a partir da 
+rede, não necessariamente a partir dos nós finais. Como ilustra-se na 
+Figura~\ref{fig:ccn-fib-pit}, os nós requisitam os pacotes de dados enviando 
+uma requisição informando o nome do conteúdo de interesse, que o identifica 
+unicamente, em um pacote especial chamado de \textit{Interest Packets} (Pacotes 
+de Interesse). Como resposta, os nós recebem os pacotes de dados com o
+conteúdo (\textit{payload}) requisitado. Toda interação ocorre sem o uso de 
+endereçamento de origem/destino. Para cada envio de pacote de interesse, o 
+nó recebe um pacote de dados, então existe uma estrita relação um-para-um 
+entre os pacotes de interesse e os pacotes de dados. A definição dos nomes dos 
+conteúdos seguem uma estrutura similar às URIs: os nomes são definidos em 
+hierarquias com componentes de tamanhos variados, por exemplo, 
+\textit{/a/b/c.mp4}.
+
+
+
+\begin{figure}
+\begin{center}
+\includegraphics[scale=0.25]{imgs/trabrel/ccn-fib-pit.png}
+\end{center}
+\vspace{-1cm}
+\caption[Um exemplo de interação da \textit{Named-Data Network 
+(NDN)}.]{Um exemplo de interação da \textit{Named-Data Network 
+(NDN)}. $U_1$ envia um pacote de interesse por /a/b/c.mp4, que está localizado 
+em $S$. Com as setas, ilustra-se a direção de propagação do pacote de 
+interesse. O pacote de dados segue o caminho inverso. Observa-se também as 
+tabelas FIB e PIT para o roteador $R_3$. Figura extraída de~\cite{6691438}.}
+\label{fig:ccn-fib-pit}
+\end{figure}
+
+Os roteadores propagam os pacotes de interesse e retornam os pacotes de dados 
+utilizando o caminho inverso através do qual o pacote de interesse foi roteado. 
+Isto acontece com o uso de três estruturas da dados, definidas por:
+
+\begin{enumerate}
+
+  \item \textit{Forwarding Information Base (FIB):} é uma tabela de repasse 
+baseada no nome do contéudo. Ao receber um pacote de interesse, o roteador 
+realiza uma verificação de correspondência mais longa (\textit{Longest Prefix 
+Match}) na FIB e então encaminha o pacote de interesse em direção ao nó fonte.
+
+  \item \textit{Pending Interest Table (PIT):} o roteador adiciona um 
+pacote de interesse na tabela PIT antes de roteá-lo. Após roteá-lo, o roteador 
+monitora suas interfaces de entrada verificando a recepção de pacote de 
+dados correspondente ao pacote de interesse roteado anteriormente. Ao receber 
+um pacote de dados, o roteador remove a entrada correspondente ao pacote de 
+interesse e repassa o pacote de dados na direção inversa. Se o roteador receber 
+múltiplas requisições em diferentes interfaces, duplica-se o pacote de dados e 
+o transmite através das interfaces correspondentes.
+
+  \item \textit{Cache Store (CS):} é um \textit{cache} contendo os pacotes de 
+dados que já foram repassados pelo respectivo roteador. Ao receber um pacote de 
+interesse, o roteador verifica em seu \textit{cache} a existência do pacote de 
+dados correspondente. Se o pacote de dados estiver em \textit{cache}, 
+transmite-se imediatamente uma resposta de volta, através da interface que 
+acabara de receber o pacote de interesse.
+
+\end{enumerate}
+
+O NDN também suporte \textit{anycast}, quando o mesmo dado está disponível em 
+múltiplos \textit{caches}, e \textit{multihoming}, quando é possível acessar o 
+nó fonte a partir de múltiplos caminhos. No NDN, implementa-se essas duas 
+funções apontando as entradas na FIB para múltiplas interfaces de saída. Apesar 
+de relatar o suporte às funcionalidades mencionadas anteriormente, a execução 
+de tais funções ainda não estão bem definidas no contexto da 
+NDN~\cite{Chai:2012:CLM:2342042.2342046}.
+
+A estratégia de transmissão baseada em pacotes de interesse essencialmente constitui um modelo de comunicação do tipo pedido/resposta. O transporte de dados é orientado ao nó receptor e os nós fontes não mantém qualquer estado de conexão, simplesmente respondem pacotes de dados à medida que recebem pacotes de interesse. As principais funções de transporte são implementadas pelos nós receptores. Por exemplo, para controle de perda/erro de pacotes, o nó receptor retransmite um pacote de interesse correspondente aos pacotes de dados perdidos. As funções de controle de fluxo e controle de congestionamento são também executadas pelo nó receptor, controlando a taxa em que os pacotes de interesse são transmitidos utilizando um modelo baseado em janela deslizante, similar ao TCP~\cite{6193510}.
+
+\subsubsection{Aplicações de transmissão de mídias ao vivo}
 
 COLOCAR ESSA CONVERSA DAQUI COMO SENDO: UMA SOLUÇÃO QUE USA CCN E NESSE
 TRABALHO COMPARA-SE O GMTP COM ELA. COMENTAR TODAS AS COISAS ANOTADAS NA SEÇÃO
 DE CONCLUSÃO, E ISTO SERÁ JUSTIFICATIVA PARA DIZER, NO CAPÍTULO DE RESULTADOS,
 PORQUE QUE O GMTP FOI MELHOR
 
-ICN
-
-Falar sobre o CCNx -- \textit{Content Centric Network Protocol}
-
-Falar sobre o NDN -- \textit{Named Data Network}
-
-*Supporting Mobile Applications with Information Centric
-Networking: the Case of P2P Live Adaptive Video
-Streaming - http://conferences.sigcomm.org/sigcomm/2013/papers/icn/p35.pdf
-PEGAR OS ARTIGOS PRINCIPAIS SOBRE CCNx + Video
-
-Procurar mais, pegar aqueles publicados no NDN
-
-% 6607500
-% http://ieeexplore.ieee.org/xpl/articleDetails.jsp?tp=&arnumber=6607500&queryText
-%3DHTTP+Dynamic+Streaming
+O suporte de sistemas de distribuição de mídias ao vivo em NDN tem atraído o interesse da comunidade científica desde suas primeiras versões~\cite{6550523,6607500,Zhu:2011:AAC:2018584.2018601,Tsilopoulos:2011:SDT:2018584.2018588,Jacobson:2009:VVC:1658978.1658980,6666771,6550523,6386696}. Em NDN, em vez de um nó servidor transmitir os datagramas diretamente para os sistemas finais receptores (UDP/IP), o servidor anuncia os datagramas na FIB e os nós receptores interessados em obtê-los requisita cada pacote de dados separadamente.
 
 
-% http://ieeexplore.ieee.org/xpl/articleDetails.jsp?tp=&arnumber=6386696&queryText
-%3DCCN+and+live+streaming
-
-% http://ieeexplore.ieee.org/xpl/articleDetails.jsp?tp=&arnumber=6503529&queryText
-%3DCCN+and+live+streaming
-
-% http://ieeexplore.ieee.org/xpl/articleDetails.jsp?tp=&arnumber=6691438&queryText
-%3DCCN+and+live+streaming
-
-% http://ieeexplore.ieee.org/xpl/articleDetails.jsp?tp=&arnumber=6550523&queryText
-%3DCCN+and+live+streaming
+6607500
+An experimental analysis of Dynamic Adaptive Streaming over HTTP in Content 
+Centric Networks
 
 6666771
+Peer-to-peer live adaptive video streaming for Information Centric
+cellular networks
 
-\subsection{Escolher outra solução e colocar aqui -- VoCCN??}
+6550523
+CCN-TV: A Data-centric Approach to Real-Time Video Services
 
-Preencher
+6386696
+Live Streaming with Content Centric Networking
 
-\subsection{Escolher uma solução e colocar aqui -- CCNx + HLS}
+6550523
+CCN-TV: A Data-centric Approach to Real-Time Video Services
 
-Preencher...
+Jacobson:2009:VVC:1658978.1658980
+VoCCN: Voice-over Content-centric Networks
 
-\subsection{Escolher outra solução e colocar aqui -- CCNx + MPEG-DASH}
+IEEE COMSOC MMTC E-Letter, July 2013
+Video Streaming over Named Data Networking
 
-Preencher
+Zhu:2011:AAC:2018584.2018601
+ACT: Audio Conference Tool over Named Data Networking
+
+
 
 \subsubsection{Considerações sobre o trabalho}
+
+- Política de atualização de \textit{cache} e interações com o sub-sistema de 
+roteamento são tópicos de pesquisa ainda em 
+aberto~\cite{Chai:2012:CLM:2342042.2342046}.
+
+
+
+PIT Overload Analysis in Content Centric Networks
+% http://delivery.acm.org/10.1145/2500000/2491225/p67-virgilio.pdf?ip=200.17.114.1
+% 08&id=2491225&acc=PUBLIC&key=C2716FEBFA981EF11A0D4D06D7800D651F777200C2243D46&CF
+% ID=409082029&CFTOKEN=57009383&__acm__=1392112777_0f8cf4928775a601a677364f509d6ab
+% e
+
+Optimizing Bi-directional Low-Latency
+
+Communication in Named Data Networking
+% http://delivery.acm.org/10.1145/2570000/2567564/p13-almishari.pdf?ip=200.17.114.
+% 108&id=2567564&acc=ACTIVE%20SERVICE&key=C2716FEBFA981EF11A0D4D06D7800D651F777200
+% C2243D46&CFID=409082029&CFTOKEN=57009383&__acm__=1392112708_06ab4a22e241a90ab42e
+% dba856c07e27
+
+Supporting Diverse Traffic Types in Information Centric 
+
+Networks 
+
+% http://delivery.acm.org/10.1145/2020000/2018588/p13-tsilopoulos.pdf?ip=200.17.11
+% 4.108&id=2018588&acc=PUBLIC&key=C2716FEBFA981EF11A0D4D06D7800D651F777200C2243D46
+% &CFID=409082029&CFTOKEN=57009383&__acm__=1392112697_1c4d4929c4503989dac5849a87ee
+% fd86
+
+A Push-Enabling Scheme for Live Streaming System 
+
+in Content-Centric Networking 
+
+% http://delivery.acm.org/10.1145/2540000/2537162/p49-kim.pdf?ip=200.17.114.108&id
+% =2537162&acc=ACTIVE%20SERVICE&key=C2716FEBFA981EF11A0D4D06D7800D651F777200C2243D
+% 46&CFID=409082029&CFTOKEN=57009383&__acm__=1392112683_860ced47fa67fabbb5057c9c01
+% ff3e5c
+
+\subsection{Redes de Publicar e Subscrever}
+
+
+\subsubsection{Considerações sobre o trabalho}
+
 
 \section{Sumário Comparativo}
 \label{sec:trabrel-sumario-comp}
