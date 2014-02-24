@@ -21,31 +21,38 @@ Neste capítulo, apresenta-se uma avaliação crítica acerca de um conjunto de
 trabalhos sobre sistemas e protocolos para distribuição de mídias ao vivo.
 Nesse contexto, inclui-se também os trabalhos que, apesar de não apresentarem
 uma proposta completa para distribuição de mídias ao vivo, apresentam-se como
-parte de um todo, com similaridades relevantes se comparado ao \mudccp.
+parte de um todo, com similaridades relevantes se comparado ao \mudccp. A compilação dos trabalhos a seguir foi realizada com base em informações obtidas e adaptadas de publicações encontradas em diversas fontes (revistas, conferências, livros, teses e dissertações) disponíveis na literatura.
 
-A compilação dos trabalhos a seguir foi realizada com base em informações
-obtidas e adaptadas de publicações encontradas em diversas fontes
-(revistas, conferências, livros, teses e dissertações) disponíveis na
-literatura. Na Seção~\ref{sec:proto-app-ea}, apresenta-se uma breve
-discussão acerca das aplicações e protocolos de distribuição de mídias
-ao vivo, enfatizando às propostas de protocolos que utilizam uma abordagem P2P
-e/ou P2P/CDN. Na Seção~\ref{sec:trab-redes-centradas-conteudo}, apresenta-se os
-trabalhos relevantes para distribuição de mídias ao vivo em redes centradas no
-conteúdo. E, por fim, na Seção~\ref{sec:trabrel-sumario-comp}, apresenta-se uma
-breve discussão comparativa sobre os principais protocolos discutidos e o GMTP.
-
-% Inúmeras tecnologias destinadas a permitir a execução de aplicações multimídia
-% em tempo real na Internet foram desenvolvidas ao longo dos anos, proporcionando
-% assim um extenso ferramental e aplicações para áreas do conhecimento humano que
-% fazem uso de recursos de comunicação multimídia. Para tanto, diversos aspectos
-% da comunicação em rede tiveram de ser aperfeiçoados, visando, sobretudo, a
-% execução eficiente dessas aplicações pela Internet.
+Para uma leitura linear deste capítulo, na próxima seção, apresenta-se uma breve discussão sobre os principais marcos na área de distribuição de mídias ao vivo, posicionando o GMTP em uma ilustração macro sobre o estado da arte. Em seguida, na Seção~\ref{sec:proto-app-ea}, apresenta-se detalhes dos principais sistemas e protocolos de distribuição de mídias ao vivo, enfatizando suas respectivas arquiteturas e modelos de serviço. Já na Seção~\ref{sec:trab-redes-centradas-informacao}, apresenta-se uma nova vertente de pesquisa sobre distribuição de dados na Internet, conhecida por Redes Centradas na Informação, enfatizando suas principais características e os trabalhos relacionados à distribuição de mídias ao vivo. E, por fim, na Seção~\ref{sec:trabrel-sumario}, apresenta-se um breve resumo sobre este capítulo. Caso o leitor deseje realizar uma leitura mais focada e levando em consideração sua experiência sobre distribuição de mídias ao vivo, recomenda-se a leitura apenas das seções que abordam os trabalhos mais fortemente relacionados ao GMTP. Nesse caso, recomenda-se a leitura da Seção~\ref{subsec:coolstreaming}, onde se discute sobre o projeto CoolStreaming; a Seção~\ref{subsec:denacast}, onde se discute sobre o projeto Denacast e, por fim, toda a Seção~\ref{sec:trab-redes-centradas-informacao}.
 
 % Uma vez que a lista apresentada não é exustiva e considerando a potencial
 % evolução destes trabalhos, à ausência de uma característica citada sobre um
 % trabalho, o leitor deve entender que durante o levantamento bibliográfico
 % realizado não foram encontrados investimentos por parte dos próprios autores do
 % trabalho para prover tal característica.
+
+\section{Visão Geral das Propostas para Distribuição de Mídias ao Vivo}
+\label{sec:visaogerao-propostas-dmv}
+
+Diversas propostas e tecnologias destinadas à distribuição de mídias ao vivo foram desenvolvidas ao longo dos anos, disponibilizando-se um extenso ferramental e sistemas para este fim. Como resultado, aperfeiçoou-se a forma de comunicação entre redes visando, sobretudo, melhorar a qualidade de serviço e, consequentemente, a experiência do usuário final ao assistir um evento ao vivo através da Internet.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=0.55]{imgs/gmtp-posicao.pdf}
+\end{center}
+\vspace{-1cm}
+\caption{Representantes e marcos importantes no contexto de distribuição de mídias ao vivo. Evolução das arquiteturas e modelos de serviços adotados na Internet (incluindo o GMTP). Antes do GMTP, todas as soluções tem uma forte dependência dos sistemas finais para executar suas funções. No GMTP, os sistemas finais têm um papel coadjuvante na execução das funções, realizando-se parcerias entre os roteadores da rede.}
+\label{fig:gmtp-posicao}
+\end{figure}
+
+Nesse contexto, ilustra-se na Figura~\ref{fig:gmtp-posicao}, os principais representantes e marcos importantes no contexto de distribuição de mídias ao vivo, bem como a evolução das arquiteturas e modelos de serviços adotados na Internet (incluindo o GMTP). Como pode-se observar, atualmente existem duas vertentes para transmissão de dados na Internet: as Redes IP e as Redes Centradas na Informação. Para as soluções disponíveis nas redes IP, destacam-se o sistema DONet/CoolStreaming~\cite{xinyan_zhang_coolstreaming/donet:_2005}, o Denacast~\cite{5764567} e o protocolo DASH~\cite{6077864}, detalhados na Seção~\ref{sec:proto-app-ea}.
+
+Até 2004, predominaram soluções de transmissão de mídias ao vivo baseado no modelo de serviço cliente/servidor. Em seguida, com base nas pesquisas sobre compartilhamento de arquivos considerando o modelo de serviço P2P, estenderam-se tal modelo de serviço para distribuição de mídias ao vívo. Naquela época (2005), destacou-se o projeto CoolStreaming, sendo o primeiro capaz de distribuir um mesmo evento para aproximadamente 40 mil nós clientes. Em 2008, os autores propuseram melhorias arquiteturais, propondo-se a mudança do método \textit{pull} para um o método \textit{push-pull} de \textit{download} das partes de uma mídia. Em paralelo, entre 2002 e 2005, publicaram-se as primeiras soluções sobre um protocolo de controle de congestionamento assistido pela rede chamado XCP~\cite{Katabi2003}. As pesquisas também evoluíram, quando propuseram os protocolos RCP (2008)~\cite{Dukkipati:2008:RCP:1368746} e o VCP~\cite{4460574}, após identificarem algumas limitações do XCP. Desde então, as pesquisas nesse sentido desaceleraram, sem mais nenhuma proposta contundente nesse contexto. Em 2011, dentre as várias soluções para distribuição de mídias ao vivo, pode-se destacar a Denacast, propondo-se modelo híbrido P2P/CDN para distribuição de mídas ao vivo com base no CoolStreaming. Entre 2012 aos dias atuais, existem diversas pesquisas para distribuição de mídias ao vivo através do uso do protocolo HTTP/TCP, permitindo-se que os nós clientes obtenham as partes da mídia que mais se adequar a sua capacidade de recepção, ao passo que a infra-estrutura de rede é baseada em diferentes modelos de serviço. Nesse último caso, destacam-se o uso exclusive grandes redes de distribuição de conteúdo (CDN), bem como soluções híbridas, P2P/CDN com base em HTTP. Até o presente momento, o foco é completamente em soluções na camada de aplicação.
+
+Com relação às Redes Centradas na Informação, em 2006 Van Jacobson introduziu o assunto em uma palestra proferida para um grupo seleto de pesquisadores de várias partes do mundo, no GooglePlex, Montain View, Califórnia~\cite{VanJ2006}. Argumentou-se que o modelo de requisição origem/destino empregado na Internet não mais se sustenta, considerando o aumento significativo do tráfego de dados atual, dando início à uma nova vertente de pesquisa que ficou conhecida por Redes Centradas na Informação ou ICN (\textit{Information Centric Networks}). A verdade é que alguns autores argumentam que essa vertente de pesquisa já existia desde os anos 1970, mas sem evolução até 2006. A partir de 2006, surgiram as seguintes propostas: DONA (\textit{Data Oriented Network Architecture}), PSI (\textit{Publish-Subscribe Internet Routing}), NetInf (\textit{Network of Information}) e o CCN (\textit{Content-Centric Networks}), atualmente conhecida pela sigla NDN (\textit{Named-Data Networks}). Em 2013, propuseram-se o CCN-TV, o primeiro sistema para distribuição de mídias ao vivo em NDN e com suporte ao DASH. Na Seção~\ref{sec:trab-redes-centradas-informacao}, discute-se mais detalhes sobre as ICN, em especial a NDN. Além disso, destaca-se as propostas para distribuição de mídias ao vivo, com destaque ao CCN-TV.
+
+Não obstante, neste trabalho, propõe-se o GMTP, apresentado em versão incipiente no final de 2011 e neste trabalho em sua versão aprimorada. No restante deste capítulo, confronta-se diversas propostas para distribuição de mídias ao vivo com o GMTP, ao passo que no Capítulo~\ref{cap:mudccp}, detalha-se seu funcionamento. Dentre todas as soluções discutidas, considera-se o CoolStreaming/Denacast e o CCN-TV as propostas fundamentalmente mais próximas ao GMTP. Por esse motivo, no Capítulo~\ref{cap:analisedesemp}, compara-se em mais detalhes o desempenho de ambas em comparação ao GMTP.
+
 
 \section{Aplicações e Protocolos para Distribuição de Mídias ao Vivo}
 \label{sec:proto-app-ea}
@@ -159,9 +166,9 @@ Streaming}, \textit{DASH -- Dynamic Adaptive Streaming over HTTP} e
 \label{subsec:http-streaming}
 
 Os protocolos HLS (\textit{HTTP Live Streaming})~\cite{Pantos2013}, HDS
-(\textit{HTTP Dynamic Streaming})~\cite{REF}, o MPEG-DASH \textit{Dynamic
-Adaptive Streaming over HTTP}~\cite{6077864,5986186}, e o {Smooth
-Streaming}~\cite{REF},
+(\textit{HTTP Dynamic Streaming})~\cite{AdobeInc2014}, o MPEG-DASH \textit{Dynamic
+Adaptive Streaming over HTTP}~\cite{6077864,5986186}, e o HSS (\textit{Smooth
+Streaming})~\cite{6583390},
 %  e o WebRTC
 são quatro protocolos independentes propostos pela Apple, Adobe, MPEG
 e Microsoft, respectivamente.
@@ -945,13 +952,7 @@ de seus próprios algoritmos para controle de congestionamento.
 \label{subsec:coolstreaming}
 
 O CoolStreaming é um sistema para distribuição de mídias ao vivo baseado em uma
-arquitetura P2P~\cite{4509752,susu_xie_coolstreaming:_2007,
-xinyan_zhang_coolstreaming/donet:_2005}. A primeira versão do Coolstreaming foi
-lançada em 2004 e aprimorada ao longo dos anos, tornando-se o sistema mais
-conhecido e robusto para transmissão de mídias ao vivo em larga escala.
-Atualmente (2014), o sistema CoolStreaming é uma das principais referências no
-contexto de distribuição de mídias ao vivo, tanto no contexto acadêmico quanto
-comercial. O sistema CoolStreaming está disponível para uso no mercado, servindo
+arquitetura P2P~\cite{4509752,susu_xie_coolstreaming:_2007,xinyan_zhang_coolstreaming/donet:_2005}. A primeira versão do Coolstreaming foi lançada em 2004 e aprimorada ao longo dos anos, tornando-se o sistema mais conhecido e robusto para transmissão de mídias ao vivo em larga escala. Atualmente (2014), o sistema CoolStreaming é uma das principais referências no contexto de distribuição de mídias ao vivo, tanto no contexto acadêmico quanto comercial. O sistema CoolStreaming está disponível para uso no mercado, servindo
 a milhares de nós ao redor do mundo e, por ter sido descrito e estudado
 exaustivamente, também está disponível na rede PlanetLab e nos principais
 simuladores de redes P2P, com o OMNet++/Oversim\footnote{OMNet++/Oversim: de
@@ -1387,17 +1388,17 @@ Desde da criação da Internet, diversos módulos complementares foram disponibiliz
   \centering
   \subfigure[Telefonia: nomeia o caminho.] {
     \label{fig:icn-telefonia}
-    \includegraphics[natwidth=664,natheight=312,scale=0.4]{imgs/trabrel/icn-telefonia.png}
+    \includegraphics[natwidth=664,natheight=312,scale=0.55]{imgs/trabrel/icn-telefonia.png}
   }
   \qquad
   \subfigure[IP: nomeia os sistemas finais.] {
     \label{fig:icn-ip}
-    \includegraphics[natwidth=998,natheight=374,scale=0.275]{imgs/trabrel/icn-ip.png}
+    \includegraphics[natwidth=998,natheight=374,scale=0.4]{imgs/trabrel/icn-ip.png}
   }
   \qquad
   \subfigure[ICN: nomeia o conteúdo.] {
     \label{fig:icn-ndn}
-    \includegraphics[natwidth=1008,natheight=380,scale=0.275]{imgs/trabrel/icn-ndn.png}
+    \includegraphics[natwidth=1008,natheight=380,scale=0.4]{imgs/trabrel/icn-ndn.png}
   }
   \caption{Evolução das abstrações das redes de comunicação. Figuras de Van Jacobson.}
   \label{fig:icn-abstracao}
@@ -1687,57 +1688,8 @@ Com relação a arquitetura de rede ICN, em especial a NDN, e o GMTP, enumeram-se 
 % \end{center}
 
 \section{Sumário do Capítulo}
+\label{sec:trabrel-sumario}
 
-Neste capítulo, apresentou-se uma avaliação crítica acerca de um conjunto de protocolos e sistemas para distribuição de mídias ao vivo. Discutiu-se sobre propostas concorrentes ao \mudccp, entendendo-se que nenhuma contempla os recursos e métodos empregados no GMTP. De fato, a combinação das funções do GMTP e o foco no transporte de fluxos de dados de mídias ao vivo, faz do GMTP um protocolo inédito. Sendo assim, como ilustra-se na Figura~\ref{fig:gmtp-posicao}, pode-se afirmar que o GMTP é uma evolução significativa do estado da arte, posicionado entre as diversas soluções existentes para distribuição de mídias ao vivo e arquiteturas de rede para a Internet do futuro, ainda circundadas de muitas incertezas.
+Neste capítulo, apresentou-se uma avaliação crítica acerca de um conjunto de protocolos e sistemas para distribuição de mídias ao vivo, considerando-se apenas os aspectos arquiteturais e de modelo de serviço de cada solução. Discutiu-se sobre as propostas julgadas como concorrentes ao \mudccp, contrapondo-se as limitações de cada solução frente ao GMTP, esclarecendo-as individualmente.
 
-\begin{figure}[ht]
-\begin{center}
-\includegraphics[scale=0.55]{imgs/gmtp-posicao.pdf}
-\end{center}
-\vspace{-1cm}
-\caption{Representantes e marcos importantes no contexto de distribuição de mídias ao vivo. Evolução das arquiteturas e modelos de serviços adotados na Internet (incluindo o GMTP). Antes do GMTP, todas as soluções tem uma forte dependência dos sistemas finais para executar suas funções. No GMTP, os sistemas finais têm um papel coadjuvante na execução das funções, realizando-se parcerias entre os roteadores da rede.}
-\label{fig:gmtp-posicao}
-\end{figure}
-
-Nesse contexto, considera-se o CoolStreaming/Denacast e o CCN-TV as propostas mais próximas ao GMTP, principalmente pela última se tratar de uma nova vertente de pesquisa. Por esse motivo, no Capítulo~\ref{cap:analisedesemp}, discute-se em detalhes o desempenho de ambas as soluções em comparação ao GMTP.
-
-\subsection{Preâmbulo ao GMTP}
-
-A definição do protocolo \mudccp\space se baseou nos requisitos e estado da
-prática dos sistemas de distribuição de conteúdos
-(Capítulo~\ref{cap:fundamentacao}), bem como no levantamento das proposta
-disponíveis no estado da arte, como as discutidas nas seções anteriores deste
-capítulo. Como complemento, quatro questionamentos foram primordiais motivadores
-para o projeto de tal protocolo, são eles:
-
-\begin{enumerate}
-
-  \item Quais as funcionalidades dos sistemas de distribuição de conteúdos ao
-vivo que poderiam que ser implementadas na camada de aplicação por falta de um
-protocolo de transporte de dados ideal para esse tipo de aplicação?
-
-  \item Quais dessas funcionalidades podem ser implementadas na camada de
-transporte a fim de torná-las padronizadas para todas as aplicações existentes,
-evitando-se o retrabalho de desenvolvimento?
-
-  \item Como se pode, de forma eficiente, distribuir um mesmo fluxo de
-dados multimídia partindo de um servidor para múltiplos nós clientes conectados
-a diferentes redes, considerando o fato de que diferentes aplicações clientes
-podem obter o mesmo fluxo de dados?
-
-  \item Seria possível utilizar informações sobre o congestionamento nas rotas entre o nó servidor e os nós clientes para sugerir parcerias entre os roteadores de rede, não mais entre os sistemas finais, como se faz atualmente?
-
-\end{enumerate}
-
-Diante dessas questões, notou-se que ao tentar resolver problemas relacionados
-a cada um desses questionamentos, os desenvolvedores desse tipo de sistema
-enfrentam situações reincidentes, já experimentadas por outras equipes de
-desenvolvimento. No \mudccp, propõe-se concentrar as principais funções dos
-sistemas de transmissão de mídias ao vivo em um único protocolo de rede. Busca-se contribuir com a evolução do estado da arte e da prática ao desacopla o processo de transporte de datagramas IP, contendo partes da mídias, da forma como estas são exibidas ao usuário final, por meio de uma aplicação cliente, que se torna coadjuvantes nesse processo.
-
-Nesse sentido, o GMTP está posicionado de tal forma que suas funções são disponibilizadas para diferentes processos de aplicação em execução em um
-sistema operacional, de modo que se torna independente de linguagem de
-programação, bibliotecas de funções e dos mais variados tipos de dispositivos
-de usuários finais (desktops, notebooks, tablets, smartphones, smartTVs, etc.). Além disso, torna-se independente da mobilidade dos usuários e pode ser embarcado no núcleo de qualquer sistema operacional moderno, promovendo-se funções para a camada de aplicação cada vez mais estáveis e eficientes, podendo ser aprimoradas com o passar do
-tempo sem causar um impacto direto à camada de aplicação, tal como tem ocorrido
-com o protocolo TCP ao longo de 33 anos de existência (1981--2014+).
+Após o detalhamento do funcionamento do protocolo GMTP no próximo capítulo, no Capítulo~\ref{cap:resultado}, retoma-se outra discussão comparativa, porém sobre o desempenho do GMTP frente aos seus principais concorrentes: o Denacast e o CCN-TV.

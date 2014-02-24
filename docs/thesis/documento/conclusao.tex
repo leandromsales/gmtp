@@ -1,6 +1,108 @@
 \chapter{Considerações Finais}
 \label{cap:conclusao}
 
+ De fato, a combinação das funções do GMTP e o foco no transporte de fluxos de dados de mídias ao vivo, faz do GMTP um protocolo inédito. No ponto de vista teórico, pode-se assim afirmar que o GMTP é uma evolução significativa do estado da arte no contexto de redes IP, posicionado paralelamente às novas arquiteturas de rede para a Internet do futuro, ainda necessitando de melhorias para distribuição de mídias ao vivo, circundadas de incertezas sobre sua aplicabilidade para este fim.
+
+
+A definição do protocolo \mudccp\space se baseou nos requisitos e estado da
+arte/prática dos sistemas de distribuição de conteúdos
+(Capítulo~\ref{cap:fundamentacao}), bem como no levantamento das proposta
+disponíveis no estado da arte, como as discutidas nas seções anteriores deste
+capítulo. Como complemento, quatro questionamentos foram primordiais motivadores
+para o projeto de tal protocolo, são eles:
+
+\begin{enumerate}
+
+  \item Quais as funcionalidades dos sistemas de distribuição de conteúdos ao
+vivo que poderiam que ser implementadas na camada de aplicação por falta de um
+protocolo de transporte de dados ideal para esse tipo de aplicação?
+
+  \item Quais dessas funcionalidades podem ser implementadas na camada de
+transporte a fim de torná-las padronizadas para todas as aplicações existentes,
+evitando-se o retrabalho de desenvolvimento?
+
+  \item Como se pode, de forma eficiente, distribuir um mesmo fluxo de
+dados multimídia partindo de um servidor para múltiplos nós clientes conectados
+a diferentes redes, considerando o fato de que diferentes aplicações clientes
+podem obter o mesmo fluxo de dados?
+
+  \item Seria possível utilizar informações sobre o congestionamento nas rotas entre o nó servidor e os nós clientes para sugerir parcerias entre os roteadores de rede, não mais entre os sistemas finais, como se faz atualmente?
+
+\end{enumerate}
+
+Diante dessas questões, notou-se que ao tentar resolver problemas relacionados
+a cada um desses questionamentos, os desenvolvedores desse tipo de sistema
+enfrentam situações reincidentes, já experimentadas por outras equipes de
+desenvolvimento. No \mudccp, propõe-se concentrar as principais funções dos
+sistemas de transmissão de mídias ao vivo em um único protocolo de rede. Busca-se contribuir com a evolução do estado da arte e da prática ao desacopla o processo de transporte de datagramas IP, contendo partes da mídias, da forma como estas são exibidas ao usuário final, por meio de uma aplicação cliente, que se torna coadjuvantes nesse processo.
+
+Nesse sentido, o GMTP está posicionado de tal forma que suas funções são disponibilizadas para diferentes processos de aplicação em execução em um
+sistema operacional, de modo que se torna independente de linguagem de
+programação, bibliotecas de funções e dos mais variados tipos de dispositivos
+de usuários finais (desktops, notebooks, tablets, smartphones, smartTVs, etc.). Além disso, torna-se independente da mobilidade dos usuários e pode ser embarcado no núcleo de qualquer sistema operacional moderno, promovendo-se funções para a camada de aplicação cada vez mais estáveis e eficientes, podendo ser aprimoradas com o passar do
+tempo sem causar um impacto direto à camada de aplicação, tal como tem ocorrido
+com o protocolo TCP ao longo de 33 anos de existência (1981--2014+).
+
+
+
+
+
+Com esta visão, realizou-se um estudo sobre as principais estratégias adotadas
+pelos desenvolvedores de sistemas de transmissão de conteúdos multimídia ao
+vivo e o resultado foi o seguinte:
+
+\begin{enumerate}
+
+  \item constatou-se que os sistemas mais robustos de distribuição de conteúdos
+multimídia são baseados em arquiteturas híbridas P2P/CDN. Isto ocorre porque
+se obtém escalabilidade do número de usuários e redução de custos com
+infra-estrutura de rede por meio das redes P2P; e facilidade no gerenciamento e
+maior estabilidade de disponibilização dos serviços, por meio
+das CDNs~\cite{Xu04acdn-p2p,Dongyan2006,Meskovic2012,4012578,Huang:2008:UHC:1496046.1496064,6035830,5764567,5343509,4797271};
+
+  \item observou-se que nos sistemas desse tipo não se viabiliza o acesso a um
+conteúdo ao vivo por parte de um usuário levando-se em consideração apenas
+o seu interesse em assistir a um evento ao vivo (\textit{abordagem centrada
+no conteúdo}). Nas soluções existentes, a forma de acesso ao conteúdo
+de um evento ao vivo é dependente do local físico (servidor) onde tal conteúdo
+está sendo transmitido (\textit{abordagem centrada no hospedeiro}), sendo
+cruscial saber de qual nó fonte o evento está sendo recebido;
+
+  \item dado que na maioria dos sistemas de distribuição de conteúdos ao vivo
+se transmite fluxos de dados UDP, tais sistemas não executam mecanismos para
+controle de congestionamento. Desta forma, se isto for necessário em seus
+sistemas, os desenvolvedores são forçados a executar algoritmos de controle de
+congestionamento na camada de aplicação, sem qualquer padronização na forma como
+os fluxos de dados são controlados, com diferentes equipes de desenvolvimento
+implementando, das mais variadas formas, a mesma funcionalidade presente nesse
+tipo de aplicação, sem qualquer compartilhamento desse
+esforço~\cite{REF,REF,REF,LEDBAT};
+
+  \item não há uma forma efetiva de centralizar e/ou disponibilizar as boas
+soluções e práticas (algoritmos) para as diferentes funcionalidades empregadas
+nesse tipo de sistema. De fato, existem diversos \textit{middlewares} de
+desenvolvimento de sistemas de distribuição de conteúdo que tentam suprir as
+limitações existentes dos protocolos da camada de transporte, tratando-se de
+soluções intermediárias e fragmentadas para o transporte de dados multimídia nas
+redes de computadores, salvas suas devidas contribuições científicas e
+reais~\cite{REF,REF,REF,REF}.
+% ~\cite{kohler_designing_2006,RFC4336}
+
+\end{enumerate}
+
+
+
+
+
+
+
+
+
+==============================
+
+
+
+
 Futuro:
  - if the video is encoded with multiple bit rate (MBR) streams [8] or scalable
 stream. Citar o MDC ?? Multiple Description ????
@@ -298,49 +400,6 @@ samsung, trabalhos futuros
 
 
 
-
-Com esta visão, realizou-se um estudo sobre as principais estratégias adotadas
-pelos desenvolvedores de sistemas de transmissão de conteúdos multimídia ao
-vivo e o resultado foi o seguinte:
-
-\begin{enumerate}
-
-  \item constatou-se que os sistemas mais robustos de distribuição de conteúdos
-multimídia são baseados em arquiteturas híbridas P2P/CDN. Isto ocorre porque
-se obtém escalabilidade do número de usuários e redução de custos com
-infra-estrutura de rede por meio das redes P2P; e facilidade no gerenciamento e
-maior estabilidade de disponibilização dos serviços, por meio
-das CDNs~\cite{Xu04acdn-p2p,Dongyan2006,Meskovic2012,4012578,Huang:2008:UHC:1496046.1496064,6035830,5764567,5343509,4797271};
-
-  \item observou-se que nos sistemas desse tipo não se viabiliza o acesso a um
-conteúdo ao vivo por parte de um usuário levando-se em consideração apenas
-o seu interesse em assistir a um evento ao vivo (\textit{abordagem centrada
-no conteúdo}). Nas soluções existentes, a forma de acesso ao conteúdo
-de um evento ao vivo é dependente do local físico (servidor) onde tal conteúdo
-está sendo transmitido (\textit{abordagem centrada no hospedeiro}), sendo
-cruscial saber de qual nó fonte o evento está sendo recebido;
-
-  \item dado que na maioria dos sistemas de distribuição de conteúdos ao vivo
-se transmite fluxos de dados UDP, tais sistemas não executam mecanismos para
-controle de congestionamento. Desta forma, se isto for necessário em seus
-sistemas, os desenvolvedores são forçados a executar algoritmos de controle de
-congestionamento na camada de aplicação, sem qualquer padronização na forma como
-os fluxos de dados são controlados, com diferentes equipes de desenvolvimento
-implementando, das mais variadas formas, a mesma funcionalidade presente nesse
-tipo de aplicação, sem qualquer compartilhamento desse
-esforço~\cite{REF,REF,REF,LEDBAT};
-
-  \item não há uma forma efetiva de centralizar e/ou disponibilizar as boas
-soluções e práticas (algoritmos) para as diferentes funcionalidades empregadas
-nesse tipo de sistema. De fato, existem diversos \textit{middlewares} de
-desenvolvimento de sistemas de distribuição de conteúdo que tentam suprir as
-limitações existentes dos protocolos da camada de transporte, tratando-se de
-soluções intermediárias e fragmentadas para o transporte de dados multimídia nas
-redes de computadores, salvas suas devidas contribuições científicas e
-reais~\cite{REF,REF,REF,REF}.
-% ~\cite{kohler_designing_2006,RFC4336}
-
-\end{enumerate}
 
 
 
