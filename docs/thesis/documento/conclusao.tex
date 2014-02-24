@@ -196,48 +196,6 @@ repassadores interceptam, pedem e repassam.
 
   Não tem nada em todos os roteadores
 
-- Relacione os conceitos ICN, CCN, NDN ao protocolo GMTP? (pode ser que seja
-melhor isso aparecer nos trabalhos relacionados)
-
-GMTP não precisa alterar a app, ela continua pedindo via ip + porta
-
-GMTP é específico para streaming, CCN é mais para propósito geral (pensar se
-falar isso)
-
-CCN mantém mais estado de controle do que o GMTP porque é mais generico. Para uma aplicação, CCN faz tudo (entrega confiável), etc???
-para o GMTP, todas as outras coisas além das funções de distruição é om um protocolo diferente TCP
-
-
-O modelo de pull-based do CCN não é bom se  comparado ao de push-based do GMTP
-a aplicação precisa ficar renovando o interesse de tempos em tempos e quando
-ela pára de pedir, o que faz um roteador CCN continuar recebendo?
-
-Como no GMTP a informação de endereçamento ainda existe, roteadores que não
-suportam GMTP não terão problema de rotear os pacotes. Isso não é verdade para
-o CCNx.
-
-As parcerias no GMTP é feita por intersecções de caminho, no CCNx não é assim
-(ver como é! ou se faz).
-
-O GMTP não precisa que todos os roteadores rodem o gmtp-inter.
-
-Olher esse artigo: CCN Naming Scheme for Scalable Routing and Incremental
-Deployment
-% http://edas.info/showManuscript.php?m=1569803821&ext=pdf&random=1430753124&type=
-stamped
-
-Md. F. Bari, S.R. Chowdhury, R. Ahmed, and B. Mathieu, A Survey of
-Naming and Routing in Information-Centric Networks, IEEE
-Communications Magazine, pp. 44-53, Dec. 2012.
-[2] V. Jacobson, D.K. Smetters, J.D. Thornton, M. Plass, N. Briggs, and R.
-Braynard, Networking Named Content, ACM CoNext, pp. 1-12, Dec.
-2009.
-[3] Yuan, Haowei, and Patrick Crowley, Experimental Evaluation of
-Content Distribution with NDN and HTTP. Proceedings of IEEE
-INFOCOM 2013 Mini-Conference, Apr. 2013.
-
-Artigos no desktop
-
 - Qual o impacto do desempenho em um roteador?
   Falar do Mikrotik, 36 portas, cada uma com um processador dedicado de 1.5Ghz
 e 16GB de memória.
@@ -335,6 +293,63 @@ samsung, trabalhos futuros
 % http://tools.ietf.org/html/rfc4786
 % http://ieeexplore.ieee.org/xpl/articleDetails.jsp?reload=true&arnumber=991450
 % http://tools.ietf.org/html/draft-mcpherson-anycast-arch-implications-00.html
+
+
+
+
+
+
+Com esta visão, realizou-se um estudo sobre as principais estratégias adotadas
+pelos desenvolvedores de sistemas de transmissão de conteúdos multimídia ao
+vivo e o resultado foi o seguinte:
+
+\begin{enumerate}
+
+  \item constatou-se que os sistemas mais robustos de distribuição de conteúdos
+multimídia são baseados em arquiteturas híbridas P2P/CDN. Isto ocorre porque
+se obtém escalabilidade do número de usuários e redução de custos com
+infra-estrutura de rede por meio das redes P2P; e facilidade no gerenciamento e
+maior estabilidade de disponibilização dos serviços, por meio
+das CDNs~\cite{Xu04acdn-p2p,Dongyan2006,Meskovic2012,4012578,Huang:2008:UHC:1496046.1496064,6035830,5764567,5343509,4797271};
+
+  \item observou-se que nos sistemas desse tipo não se viabiliza o acesso a um
+conteúdo ao vivo por parte de um usuário levando-se em consideração apenas
+o seu interesse em assistir a um evento ao vivo (\textit{abordagem centrada
+no conteúdo}). Nas soluções existentes, a forma de acesso ao conteúdo
+de um evento ao vivo é dependente do local físico (servidor) onde tal conteúdo
+está sendo transmitido (\textit{abordagem centrada no hospedeiro}), sendo
+cruscial saber de qual nó fonte o evento está sendo recebido;
+
+  \item dado que na maioria dos sistemas de distribuição de conteúdos ao vivo
+se transmite fluxos de dados UDP, tais sistemas não executam mecanismos para
+controle de congestionamento. Desta forma, se isto for necessário em seus
+sistemas, os desenvolvedores são forçados a executar algoritmos de controle de
+congestionamento na camada de aplicação, sem qualquer padronização na forma como
+os fluxos de dados são controlados, com diferentes equipes de desenvolvimento
+implementando, das mais variadas formas, a mesma funcionalidade presente nesse
+tipo de aplicação, sem qualquer compartilhamento desse
+esforço~\cite{REF,REF,REF,LEDBAT};
+
+  \item não há uma forma efetiva de centralizar e/ou disponibilizar as boas
+soluções e práticas (algoritmos) para as diferentes funcionalidades empregadas
+nesse tipo de sistema. De fato, existem diversos \textit{middlewares} de
+desenvolvimento de sistemas de distribuição de conteúdo que tentam suprir as
+limitações existentes dos protocolos da camada de transporte, tratando-se de
+soluções intermediárias e fragmentadas para o transporte de dados multimídia nas
+redes de computadores, salvas suas devidas contribuições científicas e
+reais~\cite{REF,REF,REF,REF}.
+% ~\cite{kohler_designing_2006,RFC4336}
+
+\end{enumerate}
+
+
+
+
+
+
+
+
+
 
 
 

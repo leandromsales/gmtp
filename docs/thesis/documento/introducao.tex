@@ -23,7 +23,7 @@
 % \end{center}
 % \vspace{1cm}
 
-A Internet é um sucesso tecnológico e sua infra-estrutura global conecta bilhões de hospedeiros, transmitindo-se uma volumosa quantidade de dados digitais diariamente. A proposta inicial foi de interconectar hospedeiros para compartilhar recursos computacionais antes escassos, enquanto atualmente (2014) serve para recuperar diferentes tipos de conteúdos, proporcionando-se uma grande revolução com relação aos métodos de transmissão de mídias ao vivo (áudio e/ou vídeo).
+A Internet é um sucesso tecnológico e sua infra-estrutura global conecta bilhões de hospedeiros, transmitindo-se uma volumosa quantidade de dados digitais diariamente. Para se ter uma ideia, estima-se que em 2016 ocorrerão aproximadamente 18,9 bilhões de conexões de rede -- quase 2,5 conexões para cada pessoa no planeta -- em comparação aos 10,3 bilhões registrados em 2011~\cite{cisco2013-report}.
 
 O número crescente de conexões de banda larga à Internet têm provocado o aumento do consumo e da exigência de qualidade de serviço, que eleva os custos com largura de banda dos distribuidores de conteúdo. Por exemplo, o YouTube\texttrademark\space registra um custo operacional com largura de banda da ordem de \ut{US\$1}{milhão} por mês para atender cerca de 20 milhões de usuários por dia, para transmitir o equivalente a 60 mil anos de vídeos se fossem reproduzidos sequencialmente~\cite{5506093}. Estima-se que em 2014 o
 tráfego de video será maior do que foi o tráfego de redes entre pares (P2P) para
@@ -33,7 +33,7 @@ jogos na Internet atingirá a marca de 40 exabytes por mês, quase \ut{50}{\%} do
 tráfego de dados total na Internet previsto para 2014~\cite{5604156}. Segundo um
 estudo da empresa Cisco\texttrademark, estima-se que em 2016 cerca de 1,2
 milhão de minutos serão transmitidos pela Internet a cada segundo -- o
-equivalente a 833 dias ou mais de dois anos~\cite{cisco2012-report}.
+equivalente a 833 dias ou mais de dois anos~\cite{cisco2013-report}.
 
 % estima-se que o tráfego IP em redes públicas e privadas gerados por consumidores
 % e usuários corporativos deve crescer a uma taxa anual composta (CAGR) de
@@ -55,8 +55,7 @@ processo de prover alguns serviços. Um exemplo notório é o serviço de
 distribuição de conteúdos multimídia, sejam serviços onde as empresas
 disponibilizam conteúdos armazenados, como o YouTube e Netflix\texttrademark, ou
 principalmente os casos de transmissões empresariais e residenciais ao vivo,
-como o PPLive\texttrademark\space e o UStream.tv\texttrademark. Nesses últimos
-casos, os sistemas permitem a transmissão de conteúdos ao vivo gerados a partir
+como o CoolStreaming\texttrademark, PPLive\texttrademark\space e o UStream.tv\texttrademark. Nesses últimos casos, os sistemas permitem a transmissão de conteúdos ao vivo gerados a partir
 do computador de um usuário para milhares de outros usuários conectados à
 Internet~\cite{Silva:2011:LSU:2048614.2048874}. O UStream.tv recebe mais de 50
 milhões de acessos e transmite 1,5 milhão de horas de vídeo ao vivo por mês, com
@@ -169,10 +168,10 @@ transmitir datagramas contendo as partes da mídia e exibi-las ao usuário final.
 Um aspecto importante para esses sistemas é definir de que forma os nós devem
 escalonar o uso de seus recursos de forma que a alocação seja a mais eficiente
 possível, evitando-se sobrecarga nos servidores da CDN e nos canais de
-comunicação. Em sistemas dessa natureza, os nós estão sempre acessando e 
-disponibilizando recursos uns dos outros, ao mesmo tempo que os servidores da 
-CDN organizam os nós da rede P2P e mantém os serviços de distribuição mais 
-estáveis, tornando o sistema menos vulnerável ao dinamismo de participação dos 
+comunicação. Em sistemas dessa natureza, os nós estão sempre acessando e
+disponibilizando recursos uns dos outros, ao mesmo tempo que os servidores da
+CDN organizam os nós da rede P2P e mantém os serviços de distribuição mais
+estáveis, tornando o sistema menos vulnerável ao dinamismo de participação dos
 nós de uma redes P2P, também conhecido por
 \textit{churn}~\cite{Stutzbach:2006:UCP:1177080.1177105,5502009}.
 
@@ -255,15 +254,15 @@ os serviços das camadas TCP/IP mais acima, como os serviços de controle de
 congestionamento, NAT dinâmico (\textit{Dynamic Network Address Translation})
 através de UPnP (\textit{Universal Plug and Play})~\cite{968819}, DNS
 dinâmico~\cite{1203676}, dentre outros. Essa tendência é também sustentada pelas
-Redes Centradas na Informação (\textit{Information-Centric Networks} -- 
-ICN)~\cite{6563278,6231276,5936152,Ghodsi:2011:INS:2070562.2070563}. O 
-princípio é que uma rede de comunicação deve viabilizar o acesso ao conteúdo de 
-interesse de um usuário (\textit{content-centric approach}) independente do 
-local físico onde tal conteúdo está armazenado, enfraquecendo a abordagem 
-restrita de organização dos protocolos em camadas funcionais 
-(\textit{host-centric approach}). Em linhas gerais, abstrai-se o esquema de 
-acesso a um recurso pelo endereço IP passando a acessá-lo pelo seu nome, 
-independente da localização do nó gerador do conteúdo de interesse. Isto porque 
+Redes Centradas na Informação (\textit{Information-Centric Networks} --
+ICN)~\cite{6563278,6231276,5936152,Ghodsi:2011:INS:2070562.2070563}. O
+princípio é que uma rede de comunicação deve viabilizar o acesso ao conteúdo de
+interesse de um usuário (\textit{content-centric approach}) independente do
+local físico onde tal conteúdo está armazenado, enfraquecendo a abordagem
+restrita de organização dos protocolos em camadas funcionais
+(\textit{host-centric approach}). Em linhas gerais, abstrai-se o esquema de
+acesso a um recurso pelo endereço IP passando a acessá-lo pelo seu nome,
+independente da localização do nó gerador do conteúdo de interesse. Isto porque
 se considera que entregar o conteúdo é mais importante do que a forma de
 obtê-lo, pois \ut{90}{\%} do tráfego na Internet consistem de dados
 disseminados a partir de uma fonte para diversos destinos~\cite{6419703}.
@@ -925,11 +924,7 @@ OMNet++ e NS2~\cite{XU2011}, bem como um protótipo de implementação no núcleo do
 sistema operacional Linux;
 
   \item os resultados e discussões aprofundadas acerca do protocolo introduzido
-frente ao CoolStreaming/Denacast~\cite{5764567} e a uma solução baseada no
-protocolo CCNx~\cite{REF}. O primeiro é um sistema de distribuição de mídias ao
-vivo baseado no CoolStreaming com suporte a uma rede de distribuição de
-conteúdos (P2P/CDN), ao passo que o segundo é uma solução para distribuição de
-mídias ao vivo que segue as diretrizes das redes centradas no conteúdo; e
+frente ao CoolStreaming/Denacast~\cite{5764567} e a arquitetura de rede NDN~\cite{6419703}. O primeiro é um sistema de distribuição de mídias ao vivo baseado no CoolStreaming com suporte a uma rede de distribuição de conteúdos (P2P/CDN), ao passo que o segundo é um novo modelo de serviço onde o acesso aos conteúdos ocorre através dos seus nomes e não mais através de sua localização (endereço IP); e
 
   \item os encaminhamentos da pesquisa sobre futuros avanços do estado da arte,
 tais como as limitações do protocolo proposto e uma breve discussão de como
