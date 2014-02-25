@@ -298,7 +298,7 @@ o \textit{eXplicit Control Protocol} (XCP)~\cite{Katabi2003,Katabi:2002:CCH:9647
 5260888} e o \textit{Congestion Exposure}
 (ConEx)~\cite{RFC6789,ConExGRP,Eardley:2011:DAF:1983741.1983751}. Apesar de
 citar o ConEx, este não é considerado um protocolo para controle de
-congestionamento propriamente dito, mas pode ser útel para auxilia uma fonte
+congestionamento propriamente dito, mas pode ser útil em auxiliar uma fonte
 transmissora de um fluxo de dados a expor para a rede informações sobre o
 congestionamento sofrido pelos pacotes anteriormente transmitidos no contexto
 de um fluxo de dados (por exemplo, a quantidade de pacotes perdidos). Em
@@ -319,7 +319,7 @@ utilizados, tais como transmissões de fluxos de dados em modo
 \textit{multicast}. No caso do \textit{multicast}, embora esteja disponível há
 mais de 20 anos, utilizar tal abordagem largamente na Internet não se mostrou
 uma opção viável e poucas soluções o adotaram largamente na
-Internet~\cite{819167}. Isto ocorre devido às barreiras administrativas que
+Internet~\cite{6681208,819167}. Isto ocorre devido às barreiras administrativas que
 dificultam a manipulação de rotas \textit{multicast}, principalmente por conta
 da dependência do administrador da rede em ter que habilitar explicitamente este
 tipo de tráfego de dados para um cenário específico de aplicação. Contudo, é
@@ -996,40 +996,29 @@ Referência \cite{leandro2008}.
 
 O restante deste documento está organizado da seguinte forma:
 
-TBD
+\begin{itemize}
+  \item No Capítulo~\ref{cap:fundamentacao}, apresentam-se os principais
+conceitos relacionados aos sistemas de distribuição de mídias ao vivo em
+arquiteturas P2P.
 
-% \begin{itemize}
-%   \item No Capítulo~\ref{cap:fundamentacao} são apresentados os principais
-% conceitos relacionados aos sistemas de distribuição de mídias ao vivo em
-% arquiteturas P2P;
-%
-%   \item No Capítulo~\ref{cap:mudccp} é apresentada uma visão geral do
-% \textit{Global Media Transmission Protocol} (\mudccp), um protocolo de
-% transporte baseado em uma arquitetura P2P para distribuição de fluxos de dados
-% multimídia de aplicações com um nó transmissor e muitos nós receptores (\mys),
-% desenvolvido para operar principalmente na Internet.
-%
+  \item No Capítulo~\ref{cap:trabalhosrelacionados}, apresentam-se os
+trabalhos relacionados a esta pesquisa, destacando-se os principais avanços
+científicos no que diz respeito aos protocolos e sistemas de distribuição de mídias ao vivo.
+
+  \item No Capítulo~\ref{cap:mudccp}, apresenta-se uma visão geral do
+\textit{Global Media Transmission Protocol} (\mudccp).
+
 %   \item No Capítulo~\ref{cap:mudccp-tecnica} continua-se com as discussões
 % sobre o protocolo \mudccp, porém fornecendo-se detalhes acerca do funcionamento
 % do protocolo no tocante a três principais aspectos, o cabeçalho de pacotes, o
 % processo de conexão e o mecanismo para controle de congestionamento.
-%
-%   \item No Capítulo~\ref{cap:metodosexperimentos} são apresentados os métodos e
+
+%   \item No Capítulo~\ref{cap:metodosexperimentos}, apresentam-se  são apresentados os métodos e
 % experimentos adotados neste trabalho, destacando-se o mecanismo estatístico
 % utilizado para obtenção de métricas específicas a fim de analizar o desempenho
 % do protocolo \mudccps em transmissões de fluxos de dados multimídia.
-%
-%   \item No Capítulo~\ref{cap:analisedesemp} são apresentados os resultados
-% preliminares obtidos no contexto deste trabalho, destacando-se os resultados
-% obtidos em simulações de rede com o uso do protocolo \mudccp, apresentado no
-% Capítulo~\ref{cap:mudccp}.
-%
-%   \item No Capítulo~\ref{cap:trabalhosrelacionados} são apresentados os
-% trabalhos relacionados a esta pesquisa, destacando-se os principais avanços
-% científicos no que diz respeito a protocolos de transporte com ênfase na
-% distribuição de conteúdos multimídia utilizando arquiteturas P2P.
-%
-%   \item Por fim, no Capítulo~\ref{cap:conclusao} são apresentadas as
-% considerações finais, discutindo-se os principais tópicos elencados
-% neste trabalho e o planejamento para a conclusão deste trabalho.
-% \end{itemize}
+
+  \item No Capítulo~\ref{cap:analisedesemp}, apresentam-se os resultados sobre o desempenho do protocolo GMTP quando confrontado com duas outras proeminentes soluções disponíveis na literatura.
+
+  \item Por fim, no Capítulo~\ref{cap:conclusao}, apresentam-se as considerações finais, discutindo-se os principais tópicos elencados neste trabalho, conclusões e trabalhos futuros.
+\end{itemize}

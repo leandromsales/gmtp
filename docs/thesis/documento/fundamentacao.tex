@@ -30,16 +30,10 @@ A concepção de protocolos de rede para sistemas de distribuição de conteúdos
 multimídia em tempo real trás à tona uma série de conceitos necessários para o
 entendimento da solução proposta neste trabalho.
 
-Neste capítulo, apresentam-se as funções dos sistemas de distribuição de mídia
-ao vivo em arquiteturas P2P, o funcionamento de um sistema de distribuição de
-conteúdos multimídia ao vivo e os conceitos básicos sobre criptografia e
-assinatura digital. Se o leitor se considera familiarizado com esses assuntos,
+Neste capítulo, apresentam-se os protocolos existentes para gerenciamento e sincronização de mídias ao vivo na Internet, bem como as principais arquiteturas e modelos de serviços empregados nos sistemas de distribuição de mídia ao vivo. Para finalizar, discute-se brevemente sobre conceitos básicos de criptografia e
+assinatura digital. Caso o leitor se considera familiarizado com esses assuntos,
 recomenda-se, pelo menos, a leitura do sumário deste capítulo, disponível na
-Seção~\ref{sec:fundamentacao-sumario}. Com relação aos conceitos sobre os
-protocolos de rede e outros temas como controle de congestionamento e modos de
-transmissão, estes não são abordados neste capítulo por serem assuntos
-consolidados e vastamente disponíveis na literatura. Apesar dessas omissões,
-recomenda-se (re)visitar as seguintes referências:
+Seção~\ref{sec:fundamentacao-sumario}. Caso necessário, sugere-se as seguintes referências complementares:
 
 \begin{itemize}
 
@@ -1226,6 +1220,82 @@ sobre os conceitos apresentados neste capítulo.
 % O mecanismo de busca é implementado através da organização dos participantes
 % em uma rede sobreposta estruturada, e pelo roteamento da mensagem na rede
 % sobreposta até o participante responsável pelo conteúdo.
+
+\section{Protocolos para Gerenciamento e Sincronização de Mídias Ao Vivo}
+\label{sec:protocolos-media-gerenciamento}
+
+\subsection{H.323, SIP, RTP e RTSP}
+
+O processo de desenvolvimento de padrões abertos para distribuição de mídias ao
+vivo em larga escala teve início com um grupo de estudos da ITU-T
+(\textit{International Telecommunication Union -- Telecommunication Section}),
+em 1996. O ITU-T especificou o padrão H.323~\cite{liu2000}, que estabelece uma
+arquitetura de comunicação destinada ao controle de conferências de voz, vídeo e
+dados sobre redes TCP/IP. O H.323 se tornou largamente utilizado, uma vez que, a
+época da especificação de sua segunda versão, em 1998, não havia qualquer padrão
+aberto e aceito pelo mercado capaz de atender às aplicações multimídia. Embora
+as transmissões multimídia em tempo real por \textit{multicast} já estivessem
+sendo realizadas no Mbone~\cite{819167} há algum tempo, não havia ainda qualquer
+padrão aberto para controle de conferências multimídia e utilizar o Mbone
+exigia muita intervenção humana e empresarial~\cite{6681208}.
+
+No período equivalente a maturação do H.323, a IETF iniciou o desenvolvimento
+de uma arquitetura de comunicação mais flexível e poderosa que o H.323.
+Alicerçada sobre o protocolo SIP (\textit{Session Initiation
+Protocol})~\cite{RFC3261}, a arquitetura SIP teve logo potencial reconhecido,
+uma vez que supria todos os pontos fracos da arquitetura H.323, como a demora no
+estabelecimento de conexão (canais H.225 e H.245) e a complexidade de operação.
+Apesar do SIP ser muito utilizado atualmente, trata-se de um protocolo de
+negociação de sessões focado para chamadas telefônica sobre uma rede IP, apesar
+de também oferecer suporte para negociação de vídeo.
+
+Devido à natureza das redes de datagramas cujo paradigma é o do ``melhor
+esforço'' e às limitações do H.323 e SIP, sem qualquer garantia sobre os
+requisitos de tempo de entrega, novos protocolos foram propostos para atender as
+necessidades de transmissão de dados em tempo real. O protocolo em destaque é o
+RTP (\textit{Real Time Protocol})~\cite{RFC3550}, que permite às aplicações informarem o instante exato em que um determinado conteúdo deve ser reproduzido pelo sistema final receptor. O RTP permite transportar essa marcação de tempo no cabeçalho que envolve os dados referentes a mídia sendo transmitida, e permite que às aplicações tenham controle sobre número de sequência de cada pacote. O RTP atualmente constitui a base das transmissões multimídias ao vivo na Internet, sendo o padrão adotado em praticamente todas as soluções multimídia baseadas em IP.
+
+Em paralelo ao RTP, as aplicações multimídia utilizam o \textit{Real
+Time Streaming Protocol} (RTSP)~\cite{RFC2326}. O RTSP é um protocolo a nível de
+aplicação desenvolvido pela IETF para controle na transferência de dados com
+propriedades de tempo real. Tal protocolo torna possível a transferência, sob
+demanda, de dados em tempo real como áudio e vídeo. O RTSP serve para
+estabelecer e controlar vários fluxos sincronizados de mídias contínuas
+pertencentes a um evento (como o vídeo e o áudio). Seus idealizadores propõem
+que o uso do RTSP seja feito combinando-se outros protocolos, como o UDP e o
+RTP. NO RTSP, o conjunto de fluxos a ser controlado é definido por uma descrição
+de apresentação, normalmente um arquivo, que pode ser obtido por um cliente
+usando HTTP ou outros meios, armazenado em um local diferente do servidor de
+mídia. Uma descrição de apresentação pode conter informações sobre um ou mais
+fluxos que compõe a apresentação, como endereços de rede e informações sobre o
+conteúdo da apresentação, além de parâmetros que tornam possível ao cliente
+escolher a combinação mais apropriada das mídias.
+
+O problema do H.323 foi sua grande complexidade de uso, dificultando a
+integração com às aplicações, dando brechas a outras propostas com propósitos
+similares, como foi o caso do SIP, RTP e do RTSP. Estes protocolos se limitam à
+fronteira entre a sinalização de uma sessão multimídia e todos os outros
+aspectos relacionados a efetiva disseminação de conteúdos ao vivo, que
+atualmente envolve a cooperação de nós, controle e troca de mapa de
+buffer, adaptação de fluxo e controle de congestionamento. Isto implica na
+necessidade de mais componentes que permitam a distribuição de mídias ao vivo,
+ampliando a complexidade na construção de um sistema para este fim.
+
+% \subsection{UDP, DCCP e SCTP}
+%
+% Tanto o RTP quanto o RTSP são propostas desenvolvidas para suprir as carências
+% encontradas em protocolos de transporte tradicionais da Internet, como o UDP e o
+% TCP. Apesar das propostas de novos protocolos de transporte padronizados pela
+% IETF, tais como o DCCP e o SCTP (\textit{Stream Control Transmission
+% Protocol})~\cite{Jungmaier2003,iyengar_concurrent_2006}, o uso dos protocolos
+% RTP/RTSP em conjunto com o protocolo UDP é predominante nas aplicações
+% multimídia encontradas na Internet.
+%
+% As especificações e detalhes de funcionamento dos protocolos citados nesta
+% seção estão disponíveis abertamente na literatura. Por serem documentos
+% extensos e de conhecimento já bastante difundido, neste trabalho, decidiu-se
+% omitir as discussões detalhadas sobre estes, enfatizando os
+% protocolos cujas propostas se aproximam ao \mudccp.
 
 \section{Estruturas para Distribuição de Mídia ao Vivo em P2P}
 \label{sec:arq_p2p_media_aovivo}
