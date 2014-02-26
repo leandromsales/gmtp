@@ -74,7 +74,7 @@ Streaming}, \textit{DASH -- Dynamic Adaptive Streaming over HTTP} e
 \label{subsec:http-streaming}
 
 Os protocolos HLS (\textit{HTTP Live Streaming})~\cite{Pantos2013}, HDS
-(\textit{HTTP Dynamic Streaming})~\cite{AdobeInc2014}, o MPEG-DASH \textit{Dynamic
+(\textit{HTTP Dynamic Streaming})~\cite{AdobeInc2014}, o DASH \textit{Dynamic
 Adaptive Streaming over HTTP}~\cite{6077864,5986186}, e o HSS (\textit{Smooth
 Streaming})~\cite{6583390},
 %  e o WebRTC
@@ -85,19 +85,21 @@ e Microsoft, respectivamente.
 % em seguida, em parceria com as empresas Firefox e Opera.}
 % respectivamente.
 Em geral, propõe-se que as transmissões de fluxos de mídias ao vivo sejam
-realizadas por servidores web, sendo que tais protocolos incrementam as funções
-do protocolo HTTP, oferecendo-lhe suporte a descrição de uma mídia, marcação de
-tempo, segurança e principalmente adaptação do fluxo de dados em uma sessão ao
-vivo de transmissão multimídia. Sendo assim, pode-se afirmar que os protocolos
-HLS, HDS, MPEG-DASH, têm propósitos similares aos protocolos H.323, SIP, RTP e
-RTSP, porém com base no protocolo HTTP.
+realizadas por servidores web, incrementando o protocolo HTTP com funções para descrição de uma mídia, marcação de tempo, segurança e principalmente adaptação do fluxo de dados em uma sessão ao vivo de transmissão multimídia. Sendo assim, pode-se afirmar que os protocolos HLS, HDS, HSS e DASH têm propósitos similares aos tradicionais protocolos H.323, SIP, RTP e RTSP (Seção~\ref{sec:protocolos-media-gerenciamento}), porém com base no protocolo HTTP.
 
-Uma característica comum entre os protocolos HLS, HDS, HSS e MPEG-DASH é que a
-transferência dos fluxos multimídia ocorre sem a manutenção de uma conexão, os
-nós clientes podem escolher entre diferentes modos de codificação multimídia e
-suporte à criptografia. Nessas soluções que exploram a convergência dos serviços
-multimídia com base na web, como ilustra-se na
-Figura~\ref{fig:hls_transport_stream}, especifica-se a fonte da mídia através de
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[natwidth=627,natheight=386,scale=.5]{imgs/hls_transport_stream.jpg}
+\end{center}
+\vspace{-1cm}
+\caption{Arquitetura do HLS para transmissão de conteúdos multimídia
+baseado no protocolo HTTP. Figura extraída e adaptada de~\cite{Pantos2013}.}
+\label{fig:hls_transport_stream}
+\end{figure}
+
+Uma característica comum entre os protocolos HLS, HDS, HSS e DASH é que a
+transferência dos fluxos multimídia ocorre sem a manutenção de uma conexão, já que o HTTP é um protocolo \textit{stateless}. Além disso, os nós clientes podem escolher entre diferentes modos de codificação multimídia, o que naturalmente sugere uma solução para adaptação de mídias ao vivo de acordo com as condições da rede (em geral, capacidade de recepção de pacotes de dados observado pelo cliente). Nessas soluções que exploram a convergência dos serviços multimídia com base na web (Figura~\ref{fig:hls_transport_stream}), especifica-se a fonte da mídia através de
 uma URI (\textit{Uniform Resource Identifier})~\cite{RFC3986}, que aponta para
 um arquivo contendo uma lista ordenada das URIs para as mídias a serem
 reproduzidas. Para reproduzir um determinado conteúdo, um nó cliente primeiro
@@ -127,9 +129,9 @@ arquitetura P2P para distribuição de conteúdos multimídia ao vivo.
 
 Por exemplo, na Figura~\ref{fig:MPEG-DASHScope}, ilustra-se um cenário de
 transmissão de um fluxo de dados multimídia entre um servidor e um cliente
-MPEG-DASH, proposto como padrão a ser publicado pela ISO (ISO/IEC 23009-1). O
+DASH, proposto como padrão a ser publicado pela ISO (ISO/IEC 23009-1). O
 conteúdo da mídia é capturado e armazenado no servidor web, que são transmitidos
-para os clientes via HTTP. O servidor web MPEG-DASH armazena o conteúdo em duas
+para os clientes via HTTP. O servidor web DASH armazena o conteúdo em duas
 partes. A primeira parte é um arquivo que descreve o conteúdo disponível, como
 os endereços dos servidores fontes, tempo de duração, formatos da mídia e
 resoluções, largura de banda máxima e mínima, aspectos de direitos autorais
@@ -138,22 +140,12 @@ arquivos que contém, de fato, os bits de dados da mídia.
 
 \begin{figure}[ht]
 \begin{center}
-\includegraphics[natwidth=627,natheight=386,scale=.5]{imgs/hls_transport_stream.jpg}
-\end{center}
-\vspace{-1cm}
-\caption{Arquitetura do HLS para transmissão de conteúdos multimídia
-baseado no protocolo HTTP. Figura extraída e adaptada de~\cite{Pantos2013}.}
-\label{fig:hls_transport_stream}
-\end{figure}
-
-\begin{figure}[ht]
-\begin{center}
 \includegraphics[natwidth=680,natheight=392,scale=1]{imgs/MPEG-DASHScope.png}
 \end{center}
 \vspace{-1cm}
-\caption{Arquitetura do MPEG-DASH para transmissão de conteúdos multimídia
+\caption{Arquitetura do DASH para transmissão de conteúdos multimídia
 utilizando o protocolo HTTP. Os formatos e as funcionalidades dos blocos
-vermelhos são definidos pela especificação do MPEG-DASH. Adaptado
+vermelhos são definidos pela especificação do DASH. Adaptado
 de~\cite{6077864}.}
 \label{fig:MPEG-DASHScope}
 \end{figure}
@@ -162,9 +154,9 @@ Uma aplicação baseada no protocolo HLS transmite, obrigatoriamente, fluxos de
 dados no formato MPEG2-TS (parte 1) e funciona apenas para o navegador
 Safari\texttrademark\space e os dispositivos que suportam o sistema operacional
 iOS. Já as aplicações baseadas no protocolo HDS transmite, obrigatoriamente, um
-formato específico criado pela Adobe conhecido por fMP4 que, na prática
+formato específico criado pela Adobe conhecido por fMP4 que, na prática,
 consiste em diversos fragmentos de um arquivo codificado no formato MPEG-4
-(partes 12 e 14). Os protocolos HDS, HSS e o MPEG-DASH suportam funções de
+(partes 12 e 14). Os protocolos HDS, HSS e o DASH suportam funções de
 adaptação de fluxos de dados multimídia por oferecerem suporte ao formato
 MPEG-4.
 
@@ -173,18 +165,15 @@ adaptar os fluxo de dados de acordo com diferentes taxas de transmissão e
 transcodificar o conteúdo para diferentes formatos suportados pelas
 aplicações em execução nos nós clientes. Isto permite que inúmeros clientes, que
 suportam diferentes formatos e conectados através de redes com diferentes
-capacidades de recepção, possam reproduzir o conteúdo de forma adaquada. Para
+capacidades de recepção, possam reproduzir o conteúdo de forma adequada. Para
 que isso seja possível, os nós clientes devem monitorar sua capacidade de
-recepção de dados e solicitar o conteúdo multimídia de acordo com a taxa de bit
-corresponde e anunciada pelo servidor.
+recepção de dados e selecionar o conteúdo multimídia com base em uma lista de diferentes taxas de bits anunciada pelo servidor. Por exemplo, se o cliente determinar que sua capacidade de recepção é de \ut{600}{Kbps} e o servidor anunciar a transmissão de vídeo em \ut{512}{Kbps}, \ut{720}{Kbps}, \ut{1}{Mbps} e \ut{4}{Mbps}, este deve selecionar receber o conteúdo a uma taxa de bits de \ut{512}{Kbps}.
 
-\subsubsection{Comparação entre as soluções HTTP e o GMTP para distribuição de mídias ao vivo}:
+\subsubsection{Comparação entre as soluções HTTP e o GMTP para distribuição de mídias ao vivo:}
 
-Os protocolos supracitadoss são mais um exemplo da pulverização das
-aplicações multimídia discutidas no Capítulo~\ref{cap:introducao}. Com base na
-discussão anteriormente sobre a distribuição de mídias ao vivo através de
-servidores web com suporte aos protocolos supracitados, deve-se considerar os
-seguintes pontos:
+A proposta de distribuir conteúdos multimídia ao vivo utilizando HTTP é uma estratégia interessante pelo fato de se fazer uso de um protocolo bastante difundido, que praticamente está disponível em qualquer dispositivo e não é bloqueado em quase \ut{100}{\%} das redes que constituem a Internet. Isso pode ser considerado um ponto positivo em utilizar o HTTP para o fim que se discute, principalmente devido à facilidade de implantação da solução.
+
+Com base na discussão anteriormente sobre a distribuição de mídias ao vivo através de servidores web com suporte aos protocolos supracitados, deve-se considerar os seguintes pontos:
 
 \begin{itemize}
 
@@ -192,25 +181,21 @@ seguintes pontos:
 distribuição em larga escala. Para que isto ocorra, deve-se implementar a
 distribuição do conteúdo com o uso das Redes de Distribuição de Conteúdo (CDN).
 Isto aumenta os custos de uma solução devido à necessidade de distribuir
-estrategicamente servidores ao redor do mundo e melhorar os canais de
-transmissão, pois, em essencia, trata-se de requisições HTTP. No caso do GMTP,
+estrategicamente servidores globalmente e melhorar os canais de
+transmissão, pois, em essência, trata-se de requisições HTTP. No caso do GMTP,
 a camada de aplicação o utiliza de forma similar ao TCP, mas o transporte
 dos dados entre os servidores da CDN ocorrer com o suporte de uma rede de
 favores formada pelos roteadores de rede, onde o conteúdo pode ser entregue
 pelo servidor diretamente ao roteador do nó cliente interessado em receber o
 fluxo de dados ou indiretamente, entregue por um roteador parceiro ao roteador
-do do cliente interessado pelo fluxo. O roteador parceiro por receber o fluxo
-do servidor ou por outro roteador parceiro, e assim sucessivamente. Sendo
-assim, o MPEG-DASH pode fazer uso do GMTP, em vez do TCP;
+do cliente interessado pelo fluxo e assim sucessivamente. Sendo assim, o DASH pode fazer uso do GMTP, em vez do TCP.
 
   \item Os servidores web executam o protocolo HTTP na camada
 de aplicação e, na camada de transporte, dependem do protocolo TCP. Sendo
 assim, realiza-se a transmissão das partes da mídias através de um protocolo
 orientado à conexão, com garantia de entrega e ordenação, podendo gerar
 atrasos na entrega dos segmentos devido às retransmissões quando há perda de
-segmentos devido ao congestionamento da rede. Além disso, pode ocorre o
-problema da tragédia dos bens comuns, discutido no
-Capítulo~\ref{cap:introducao};
+segmentos devido ao congestionamento da rede.
 
   \item As soluções baseadas em HTTP são baseadas no método \textit{pull}. Isto
 significa que os nós clientes que desejam reproduzir um conteúdo ao vivo devem
@@ -219,17 +204,14 @@ tratando de transmissões de mídias ao vivo em larga escala, pode-se aumentar
 sobremaneira o número de requisições dos arquivos de lista, aumentando-se
 o tráfego na rede com dados considerados de controle. Apesar dos inúmeros
 esforços para melhorar os mecanismos de escalonamento baseados em \textit{pull},
-o uso do método \textit{pull} sempre acarretará em um \textit{trade-off} entre a
-sobrecarga de controle e o atraso. Ou seja, os protocolos sempre terão uma alto
-sobrecarga na troca de pacotes de controle ou um alto atraso na recepção dos
+o uso do método \textit{pull} acarretará em maior sobrecarga de controle, e se diminuir a sobrecarga de controle, aumenta-se o tempo de atraso na recepção dos pacotes de
 dados~\cite{5061999,4395127,susu_xie_coolstreaming:_2007}. No caso do GMTP,
 utiliza o método híbrido \textit{push/pull}, onde o método \textit{push} é
 utilizado como padrão e o \textit{pull} em casos especiais, como quando um nó
 está prestes a reproduzir um determinado \textit{chunk} e este ainda não está
 disponível. Além disso, apesar do método \textit{pull} não necessitar conexão e
 o HTTP é interesse para isso, no GMTP, reduz-se o número de conexões ao permitir
-que os roteadores de rede interceptem os pedidos de múltiplas conexões para um
-mesmo conteúdo transmitidas em direção ao nó servidor;
+que os roteadores de rede interceptem os pedidos de múltiplas conexões transmitidas em direção ao nó servidor para um mesmo conteúdo.
 
   \item O TCP implementa um mecanismo tradicional de controle de
 congestionamento, adaptando sua taxa de transmissão de acordo com a perda dos
@@ -240,27 +222,13 @@ pelo cliente TCP~\cite{Akhshabi:2011:EER:1943552.1943574}. Em canais
 assimétricos de transmissão, não é simples disponibilizar soluções para medir a
 capacidade de transmissão quando se utiliza o método \textit{pull}. Isto porque
 o nó transmissor perceberá uma taxa de transmissão diferente da taxa de
-transmissão do receptor, que não envia dados com conteúdo. Além disso, de acordo
-com o estado da arte, existem soluções mais sofisticadas para fazer melhor uso
-dos canais de transmissão, expondo às aplicações informações mais precisas sobre
-o estado da rede com relação a sua capacidade de transmissão. Isto ocorre com o
-uso dos algoritmos de controle de congestionamento assistidos pela rede. Como
-consequência, tais soluções reduzem o congestionamento nos pontos de
-interconexão, melhorando a qualidade dos fluxos de dados multimídia reproduzidos
-aos usuários finais. No caso do GMTP, utiliza-se uma versão adaptada do
-RCP~\cite{Dukkipati:2008:RCP:1368746};
+transmissão do receptor, que não envia dados com conteúdo.
+% Além disso, de acordo com o estado da arte, existem soluções mais sofisticadas para fazer melhor uso dos canais de transmissão, expondo às aplicações informações mais precisas sobre o estado da rede com relação a sua capacidade de transmissão.
+No GMTP, utiliza-se um algoritmo de controle de congestionamento assistido pela rede~\cite{Dukkipati:2008:RCP:1368746} para reduzem o congestionamento nos pontos de interconexão, melhorando a qualidade dos fluxos de dados multimídia reproduzidos aos usuários finais.
 
   \item Soluções baseadas em HTTP, devem considerar aspectos relacionados à
-segurança do HTTP, descritos na Seção 15 da referência~\cite{RFC2616}. Os
-principais aspectos a serem considerados são a disponibilização de informações
-pessoais e privadas, comprometimento dos segmentos devido aos ataques de
-interceptação implementados com servidores de cache e os arquivos de lista
-contém URIs, utilizadas pelos clientes para requisitarem os segmentos a
-servidores arbitrários e que podem estar comprometimento. No GMTP, utiliza-se
-um mecanismo de segurança imbutido no próprio protocolo que permite os
-roteadores validarem o conteúdo através de assinatura digital e o conteúdo pode
-ser criptografado utilizando métodos tradicionais, como criptografias
-assimétricas, com suporte a diferentes método, como RSA e Curvas Elípticas.
+segurança, descritos na Seção 15 da referência~\cite{RFC2616}. Os
+principais são a disponibilização de informações pessoais e privadas, comprometimento dos segmentos devido aos ataques de interceptação implementados com servidores de cache e os arquivos de lista contém URIs, utilizadas pelos clientes para requisitarem os segmentos a servidores arbitrários e que podem estar comprometimento. No GMTP, utiliza-se um mecanismo de segurança que permite os roteadores validarem o conteúdo através de assinatura digital, podendo-se criptografa-lo com base em métodos tradicionais, como criptografias assimétricas, com suporte a diferentes métodos, tais como RSA e Curvas Elípticas.
 
 \end{itemize}
 
@@ -287,36 +255,22 @@ assimétricas, com suporte a diferentes método, como RSA e Curvas Elípticas.
 
 \subsection{PDTP -- \textit{Peer Distributed Transfer Protocol}}
 
-O protocolo \textit{Peer Distributed Transfer Protocol}
-(PDTP)~\cite{arcieri2004} surgiu em 2002 com a promessa de prover um método para transferência de arquivos
-e
-mídia em tempo real similar ao BitTorrent. O uso do protocolo foi perdendo força
-e
-no final de 2007 foi descontinuado. Sua implementação de referência era
-conhecida
-pelo nome de DistribuStream~\footnote{DistribuStream:
-\url{http://freecode.com/projects/distribustream}}.
+O protocolo \textit{Peer Distributed Transfer Protocol} (PDTP)~\cite{arcieri2004} surgiu com a promessa de prover um método para transferência de arquivos e mídia em tempo real similar ao BitTorrent. O uso do protocolo foi perdendo força e no final de 2007 foi descontinuado. Sua implementação de referência era conhecida pelo nome de DistribuStream\footnote{DistribuStream: \url{http://freecode.com/projects/distribustream}}. Apesar de sua descontinuidade, ressalta-se alguns aspectos importantes sobre estratégias de distribuição de mídias ao vivo.
 
 O PDTP previa o uso de servidores para gerenciamento automático de diretórios de
 conteúdo, fazendo-o similar a protocolos como o HTTP e o FTP. Além disso, na
-proposta do PDTP previa suporte a meta descrição e validação de integridade de
+proposta do PDTP previa-se suporte a meta descrição e validação de integridade de
 conteúdo através do uso de assinatura digital. A \textit{Internet Assigned
-Numbers
-Authority} (IANA) alocou a porta 6086 para o uso do protocolo em aplicações
-multimídia. Suporta um mecanismo de \textit{tracker} similar ao PPSP/Swift e
-utiliza o protocolo UDP para transmissão de dados.
+Numbers Authority} (IANA) alocou a porta 6086 para o uso do protocolo em aplicações
+multimídia. Suporta um mecanismo de \textit{tracker} similar ao PPSP/Swift (discutido a seguir) e utiliza o protocolo UDP para transmissão de dados.
 
 O PDTP especifica um conjunto de nós chamados de \textit{hubs}, que tem como
 responsabilidade prover o mapa da rede, listagem de diretórios e serviço de
 arquivos. O serviço de arquivo é similar ao esquema de \textit{seed} do
 BitTorrent, com a diferença do uso de outro conjunto de nós chamados de
-\textit{Piece Proxies} (PP). Os PPs fazem download e cache de pedaços de
-arquivos
-armazenados nos nós hubs e então servem estes pedaços na rede sob demanda,
-reduzindo o consumo de banda dos \textit{hubs}. Segundo os autores, o BitTorrent
-resolve esse problema com o uso de multiplos \textit{seeds}, porém se não
+\textit{Piece Proxies} (PP). Os PPs fazem \textit{download} e \textit{cache} de pedaços de arquivos armazenados nos nós \textit{hubs} e então servem estes pedaços na rede sob demanda, reduzindo o consumo de banda dos \textit{hubs}. Segundo os autores, o BitTorrent resolve esse problema com o uso de multiplos \textit{seeds}, porém se não
 existir nenhum \textit{seed} disponível para um \textit{torrent} o conteúdo fica
-inacessível. Na Figura~\ref{fig:arq-pdtp} ilustra-se a organização geral dos nós
+inacessível. Na Figura~\ref{fig:arq-pdtp}, ilustra-se a organização geral dos nós
 PDTP.
 
 \begin{figure}[ht]
@@ -324,11 +278,11 @@ PDTP.
 \includegraphics[natwidth=623,natheight=322,scale=0.7]{imgs/trabrel/arq-pdtp.png}
 \end{center}
 \vspace{-0.5cm}
-\caption{Organização dos Nós PDTP. Figura extraída de~\ref{arcieri2004}.}
+\caption{Organização dos nós PDTP. Adaptada de~\cite{arcieri2004}.}
 \label{fig:arq-pdtp}
 \end{figure}
 
-\subsubsection{Comparação entre o PDTP e o GMTP para distribuição de mídias ao vivo}:
+\subsubsection{Comparação entre o PDTP e o GMTP para distribuição de mídias ao vivo:}
 
 A proposta do protocolo PDTP tem um ponto positivo porque organiza os nós
 interessados por um mesmo conteúdo de forma hierárquica e o conjunto de comandos
@@ -337,32 +291,19 @@ FTP.
 
 Embora os autores mencionem a possibilidade de utilizar o PDTP em transmissões
 de mídia em tempo real, nenhum referência disponível menciona detalhes sobre tal
-capacidade. O uso do protocolo UDP caracteriza um protocolo com os problemas
-problemas já discutidos ao longo deste trabalho e presente nos outros trabalhos
-apresentados neste capítulo.
+capacidade. O uso do protocolo UDP caracteriza um protocolo com os problemas já discutidos no Capítulo~\ref{cap:introducao}. O uso de um servidor centralizador de índices pode ser um problema para distribuição de mídias ao vivo porque pode desfavorecer os nós clientes que estão mais distantes. NO GMTP, os servidores de mídia de uma rede CDN são também os indexadores de conteúdo, bem como auxiliam os nós roteadores a efetivarem as parcerias entre si.
 
 \subsection{CPM -- \textit{Cooperative Peer Assists and Multicast}}
 
-No \textit{Cooperative Peer Assists and Multicast} (CPM)~\cite{5061910}
-propõe-se
+No \textit{Cooperative Peer Assists and Multicast} (CPM)~\cite{5061910}, propõe-se
 uma abordagem unificada para prover suporte eficiente de transmissão de vídeos
-sob
-de demanda para ser utilizada por provedores de serviços. O CPM é um protocolo
-de
-aplicação que suporta transmissão em modo multicast, cache de dados nos nós
-clientes, compartilhamento de dados entre os cliente, onde o servidor utiliza
-modo
-de transmissão unicast.
+sob de demanda para ser utilizada por provedores de serviços. O CPM é um protocolo
+de aplicação que suporta transmissão em modo \textit{multicast}, \textit{cache} de dados nos nós clientes, compartilhamento de dados entre os cliente, onde o servidor utiliza
+modo de transmissão \textit{unicast}.
 
-Na Figura~\ref{fig:arq-cpm} ilustra-se a visão geral do funcionamento do CPM
-através de um diagrama de sequência. Primeiramente o cliente conecta o servidor
-para saber sobre a existência de algum grupo multicast, e então passa a
-receber o conteúdo em modo multicast. Caso não exista um grupo multicast para o
-conteúdo de interesse, o cliente solicita, através de um servidor de diretórios
-a
-lista de nós que detém o conteúdo de interesse e então inicia a transferência.
-Caso não exista nenhum nó com o conteúdo requisitado, o cliente requisita o
-conteúdo diretamente para o servidor.
+Na Figura~\ref{fig:arq-cpm}, ilustra-se a visão geral do funcionamento do CPM
+através de um diagrama de sequência. Primeiramente, o cliente conecta o servidor
+para saber sobre a existência de algum grupo \textit{multicast} relacionado ao conteúdo de interesse. Em seguida, passa a receber o conteúdo em modo multicast. Caso não exista um grupo multicast para o conteúdo de interesse, o cliente solicita, através de um servidor de diretórios a lista de nós que detém o conteúdo de interesse e então inicia a transferência. Caso não exista nenhum nó com o conteúdo requisitado, o cliente requisita o conteúdo diretamente para o servidor.
 
 \begin{figure}[ht]
 \begin{center}
@@ -370,7 +311,7 @@ conteúdo diretamente para o servidor.
 \end{center}
 \vspace{-0.5cm}
 \caption{Diagrama de sequência do CPM (\textit{Cooperative Peer Assists and
-Multicast}). Figura extraída de~\ref{5061910}.}
+Multicast}). Figura extraída de~\cite{5061910}.}
 \label{fig:arq-cpm}
 \end{figure}
 
@@ -382,49 +323,34 @@ em pedaços (\textit{chunks}) de tamanhos fixos. Cada pedaço é identificado por u
 pedaços e uma sequência de segmentos constitui um vídeo.
 
 O protocolo de transferência assume que o vídeo deve está completamente
-armazenado
-no servidor para permitir que os nós façam cache dos pedaços e redistribuí-los
-\textit{a posteriori}. Quando um cliente envia um pedido de reprodução de vídeo,
-o
-servidor mapeia o conteúdo do vídeo requisitado, que é então formatado em
+armazenado no servidor para permitir que os nós façam cache dos pedaços e redistribuí-los \textit{a posteriori}. Quando um cliente envia um pedido de reprodução de vídeo,
+o servidor mapeia o conteúdo do vídeo requisitado, que é então formatado em
 sequências de pedaços e transmitidos para o cliente. Este procedimento é
-executado em paralelo com outros nós da rede. O modo de transmissão multicast é
+executado em paralelo com outros nós da rede. O modo de transmissão \textit{multicast} é
 ativado pelo servidor e só ocorre quando múltiplos clientes tem interesse pelo
 mesmo conteúdo.
 
-\subsubsection{Comparação entre o CPM e o GMTP para distribuição de mídias ao vivo}:
+\subsubsection{Comparação entre o CPM e o GMTP para distribuição de mídias ao vivo:}
 
-A capacidade para transmitir o conteúdo em modo híbrido é um aspecto positivo
-para o CPM. A seguir enumeram-se os pontos fracos identicados.
+A capacidade para transmitir o conteúdo em modo híbrido (unicast/multicast é um aspecto positivo para o CPM. A seguir enumeram-se os pontos fracos identicados.
 
 \begin{enumerate}
 
-  \item Para utilizar o modo de transmissão multicast, o cliente tem que ter
-rota multicast diretamente para o servidor, pois apenas este pode iniciar o
-processo de transmissão utilizando este modo. No \mudccps esse mecanismo é
-segmentado e qualquer nó pode transmitir em modo multicast.
+  \item Para utilizar o modo de transmissão \textit{multicast}, o cliente tem que ter
+rota \textit{multicast} diretamente para o servidor, pois apenas este pode iniciar o
+processo de transmissão utilizando este modo. No \mudccps, esse mecanismo é
+segmentado e qualquer nó pode transmitir em modo \textit{multicast}. Além disso, o GMTP resolve a distribuição em \textit{multicast} no próprio roteador e de forma dinâmica, sem uso de um servidor à parte.
 
   \item O mecanismo de transmissão de conteúdo quebra os segmentos em pedaços, o
 que torna o gerenciamento mais complexo devido ao espalhamento dos pedaços entre
 os nós participantes da transmissão. Isto pode gerar atrasos na reprodução
 do conteúdo no cliente devido a necessidade de localizar cada pedaço
 individualmente, embora o uso dessa abordagem pode aumenta a velocidade de
-download. No \mudccps a existe a idéia de quebrar os segmentos em pedaços
-menores.
-Tal abordagem é deixada a cargo da aplicação.
+\textit{download}. No caso do GMTP, realiza-se uma duplicação controlada dos pedaços da mídia, realizada pelos próprios roteadores. Os nós clientes não têm influência sobre essa função, portanto não precisam gerenciar múltiplas fontes (outros nós clientes e servidores).
 
   \item O uso de servidor de diretórios para consultar a lista de nós que mantém
-o conteúdo multimídia desejado não faz muito sentido para sistemas de
-transmissão
-de mídia ao vivo. No \mudccps não utiliza-se este tipo de solução.
-
-  \item Como o CPM foi desenvolvido com foco em transmissão de vídeo sob
-demanda,
-os nós só podem começar a repassar o conteúdo se previamente o este já tenha
-reproduzido o vídeo no passado. No caso de sistemas transmissão de vídeo em
-tempo
-real esta abordagem é completamente inútil. No \mudccps qualquer nó é capaz de
-realizar o repasse de conteúdo, inclusive em modo multicast.
+o conteúdo multimídia desejado, não faz muito sentido para sistemas de transmissão
+de mídia ao vivo. No GMTP, não se utiliza essa abordagem.
 
 \end{enumerate}
 
@@ -443,67 +369,40 @@ pré-planejado de acordo com a demanda dos nós clientes, o que eleva o consumo de
 recursos de rede e provê uma baixa qualidade na transmissão do conteúdo
 multimídia ao usuário final.
 
-Diferente do CPM, o HySAC provê a arquitetura ilustrada na
-Figura~\ref{fig:arq-hysac}. Para evitar que a grande quantidade de usuários
-concorrentes sobrecarregue os servidores de mídia, os autores do HySAC propõem um
-sistema adaptativo de transmissão de mídia que otimiza o processo de entrega de
+Na Figura~\ref{fig:arq-hysac}, ilustra-se a arquitetura do HySAC. Para evitar que a grande quantidade de usuários concorrentes sobrecarregue os servidores de mídia, propõe-se um sistema adaptativo de transmissão de mídia que otimiza o processo de entrega de
 dados baseado na popularidade do conteúdo e nos recursos de rede disponíveis. O
 conteúdo é categorizado em diferentes classes e o modo de entrega do conteúdo é
 baseado na popularidade do mesmo. A popularidade de um conteúdo é computada
 baseando-se no interesse dos usuários e no número de requisições que chegam ao
-servidor. Os servidores HySAC categorizam os conteúdos e os servidores de
-indexação e descoberta utilizam Tabelas Dinâmicas de Hash (DHT) para encontrar
-os
-servidores que armazenam o conteúdo. Quando a localização de um conteúdo muda,
-os
-servidores de indexação são atualizados e quando um novo conteúdo é adicionado,
-os servidores cuidam da replicação do mesmo de acordo com a sua popularidade.
+servidor. Os servidores HySAC categorizam os conteúdos e utilizam Tabelas Dinâmicas de Hash (DHT) para encontrar os servidores que armazenam o conteúdo. Quando a localização de um conteúdo muda, informa-se aos servidores de indexação e quando um novo conteúdo é adicionado, os servidores replicam tal conteúdo de acordo com sua popularidade.
 
 \begin{figure}[ht]
 \begin{center}
-\includegraphics[natwidth=551,natheight=485,scale=0.7]{imgs/trabrel/arq-hysac.png}
+\includegraphics[natwidth=551,natheight=485,scale=0.5]{imgs/trabrel/arq-hysac.png}
 \end{center}
 \vspace{-0.5cm}
 \caption{Arquitetura do HySAC (\textit{Hybrid Delivery System with Adaptive
-Content Management for IPTV Networks}). Figura extraída de~\ref{5962598}.}
+Content Management for IPTV Networks}). Figura extraída de~\cite{5962598}.}
 \label{fig:arq-hysac}
 \end{figure}
 
-O HySAC utiliza três modo de transmissão: unicast, multicast e P2P. Inicialmente
-o HySAC entrega o conteúdo baseado em informações estáticas sobre a popularidade
-do conteúdo. O HySAC gerencia um \textit{rank} de pupularidade do vídeo e
-dependendo de um determinado limiar de popularidade o vídeo é selecionado para
-ser transmitido em modo multicast. Quanto mais alto for a popularidade do vídeo,
-maior é a chance dele ser transmitido em modo multicast. Se a popularidade do
-vídeo for intermediária, o vídeo será transmitido em modo P2P e se for baixa o
-vídeo será transmitido do servidor diretamente para o cliente em modo unicast.
+O HySAC utiliza três modo de transmissão: \textit{unicast}, \textit{multicast} e P2P. Inicialmente, o HySAC entrega o conteúdo baseado em informações estáticas sobre a popularidade do conteúdo. O HySAC gerencia um \textit{ranking} de pupularidade do vídeo e dependendo de um determinado limiar, o vídeo é selecionado para ser transmitido em modo \textit{multicast}. Quanto mais alto for a popularidade do vídeo, maior é a chance deste de ser transmitido em modo \textit{multicast}. Se a popularidade do vídeo for intermediária, o vídeo será transmitido em modo P2P e se for baixa, transmite-se o vídeo do servidor diretamente para o cliente em modo \textit{unicast}.
 
-\subsubsection{Comparação entre o HySAC e o GMTP para distribuição de mídias ao vivo}:
+\subsubsection{Comparação entre o HySAC e o GMTP para distribuição de mídias ao vivo:}
 
 A capacidade de transmitir o conteúdo em modo unicast, multicast e P2P é um
-aspecto positivo para o HySAC. A seguir enumeram-se os pontos fracos
-identicados.
+aspecto positivo para o HySAC. A seguir, enumeram-se os pontos fracos.
 
 \begin{enumerate}
 
   \item A decisão do modo de transmissão é baseado na popularidade do vídeo.
 Considerando-se transmissões de mídia em tempo real, a forma o como HySAC
 implementa o mecanismo de classificar o conteúdo requer um tempo de
-convergência,
-o que pode consumir recurso de rede desnecessariamente. No \mudccps utiliza-se
-multicast sempre que possível, possibilitando que outros clientes recebam o
-conteúdo até mesmo sem precisar contactar o servidor, utilizando-se o modo de
-conexão rápida.
+convergência, o que pode consumir recurso de rede desnecessariamente. No \mudccp, utiliza-se \textit{multicast} sempre que possível, possibilitando que outros clientes recebam o conteúdo até mesmo sem precisar contactar o servidor, pois armazena-se as partes da mídia em cache no roteador.
 
   \item Da mesma forma que outras soluções, o HySAC utiliza o protocolo UDP para
 transmissão de dados da aplicação multimídia. Não foi encontrado nenhuma menção
-a
-respeito do uso de algoritmos para controle de congestionamento, ao contrário do
-\mudccp.
-
-  \item Trata-se de um sistema de transmissão e não de um protocolo de rede
-propriamente dito. Isto significa que a proposta do HySAC servirá apenas para
-clientes que seguem sua especificação.
+a respeito do uso de algoritmos para controle de congestionamento. No GMTP, em vez do critério de popularidade guiar as estratégias de distribuição das parte de uma mídia, utiliza-se um mecanismo de intersecção de rotas entre os nós clientes e o servidor.
 
 \end{enumerate}
 
@@ -591,172 +490,151 @@ clientes que seguem sua especificação.
 %yaning_liu_friendly_2008
 
 
-\subsection{PPETP -- \textit{Peer-to-Peer Epi-Transport Protocol}}
-\label{subsec:ppetp}
-
-% http://corallo.sourceforge.net/index.html
-% tools.ietf.org/html/draft-bernardini-ppetp-03
-% Esse é o do chunckless
-% Se preocupar com problemas de NAT etc.
-% Pode permitir multiplas conexões
-
-O \textit{Peer-to-Peer Epi-Transport Protocol} (PPETP) é um protocolo
-distribuído que utiliza uma abordagem P2P para transmissão de mídias em tempo
-real, sendo proposto para operar em redes com nós
-heterogêneos~\cite{bernardini2011}.
-
-O PPETP é um protocolo que constrói uma rede de sobreposição com suporte a
-transmissão em modo multicast. Em tal protocolo, propõe-se uma solução de fácil
-integração às aplicações multimídia existentes por meio de uma biblioteca de
-programação similar, porém não integrada, à \textit{Socket} BSD. O PPETP
-tem como principal aplicação os sistemas de transmissão de vídeo executados por
-usuários residenciais, geralmente conectados através de uma tecnologia xDSL,
-fornecendo
-uma visão de um protocolo de transporte multicast ao desenvolvedor da aplicação,
-embora o
-PPETP é executado na camada de aplicação.
-
-O PPETP utiliza uma abordagem de transmissão do tipo \textit{push} onde os nós
-iniciam e finalizam as conexões utilizando pacotes de controle e trocam dados
-em modo unicast. Ao desejar receber um fluxo de dados, um nó B envia um pedido
-de conexão ao servidor PPETP (Figura~\ref{fig:arq-ppetp}). Em seguida, o
-servidor responde
-com uma informação que determina qual nó o cliente B deve solicitar os dados da
-transmissão, além de solicitar que o nó B obtenha um arquivo de configuração
-dos parâmetros de conexão em um servidor de configuração chamado de
-\textit{starting point}. O servidor de configuração pode ser um nó diferente do
-servidor gerador do fluxo de dados multimídia. O nó B então requisita os dados
-ao nó determinado pelo servidor. No PPETP utiliza-se o protocolo UDP para
-transmissão de dados por padrão, embora permite-se o uso de outros protocolos,
-como o TCP e possivelmente o DCCP.
-
-\begin{figure}[ht]
-\begin{center}
-\includegraphics[natwidth=628,natheight=421,scale=0.7]{imgs/trabrel/arq-ppetp.png}
-\end{center}
-\vspace{-0.5cm}
-\caption{Arquitetura e funcionamento do protocolo PPETP.}
-\label{fig:arq-ppetp}
-\end{figure}
-
-Uma característica fundamental do PPETP é conhecida pelo nome de procedimento
-de redução (\textit{reduction procedure}). Considerando-se o princípio de que
-um fluxo de dados é uma sequência de pacotes, o procedimento de redução do PPETP
-evita que todos os nós do sistema tenham sempre que repassar todos os pacotes desse fluxo
-de dados, permitindo-se que mesmos os nós conectados na Internet através de
-canais com largura de banda limitada consigam contribuir com o sistema.
-
-No PPETP utiliza-se uma função de redução do tamanho do pacote que é
-parametrizável e diversas funções podem ser utilizadas através de uma
-arquitetura de componentes. Atualmente existem duas funções, a de
-\textit{Vandermonde} e a básica (sem redução). A função de \textit{Vandermonde}
-reduzido cada pacote por um fator R e então o pacote é repassado para outros
-nós. Cada nó recebe um conjunto de pacotes reduzidos, reconstrói o conteúdo do
-pacote, entrega-o para a aplicação e repete o procedimento de redução,
-repassando-o para outros nós interessados pelo conteúdo.
-
-Um aspecto importante do PPETP é sua capacidade de tolerar perdas de pacotes.
-Como o mecanismo de redução de pacotes permite a reprodução do conteúdo sem que
-todos os pacotes reduzidos alcancem o receptor, isto torna o protocolo
-resiliente a perdas de dados. Os autores prometem que em uma rede com N nós e
-um fator de redução R, a reconstrução de um pacote pode acontecer mesmo se $N
-- R$ nós se desconectarem.
-
-\subsubsection{Comparação entre o PPETP e o GMTP para distribuição de mídias ao vivo}:
-
-O aspecto positivo do PPETP é sua capacidade de funcionar com nós heterogêneos
-no
-ponto de vista dos recursos de rede disponíveis por cada um deles. O esquema
-de \textit{procedimento de redução} dos tamanhos dos pacotes parecer ser
-bastante
-promissor, porém ao que pôde-se constatar é complexo de ser implementado e só
-funciona com a participação de muitos nós.
-
-Os pontos fracos do PPETP são vários e enumerados a seguir.
-
-\begin{enumerate}
-
-  \item O PPETP é um protocolo na camada de aplicação e considerado pelos
-autores de ser um protocolo de pseudo-transporte, pois abstrai da aplicação
-diversas
-funcionalidades dos sistemas de transmissão de mídia em tempo real que utiliza a
-abordagem
-P2P. Neste sentido, a disponibilização e a efetiva utilização do PPETP por parte
-das
-aplicações pode ser dificultada por ser um protocolo de aplicação e não
-genuinamente de
-transporte. Isto significa que o PPETP não tem uma separação explícita de
-responsabilidade no ponto de vista de transporte de dados, misturando
-responsabilidades
-da camada de aplicação e da camada de transporte. No \mudccp, essa separação é
-explícita
-por se tratar de um protocolo disponibilizado na camada de transporte sem
-qualquer
-influência da aplicação, delegando para a mesma apenas responsabilidades de
-sinalização e
-descrição do conteúdo a ser transportado.
-
-  \item O fluxo de dados de controle é centralizado no servidor. Isto significa
-que para
-que um nó A comece a receber um fluxo de dados de um outro nó, primeiro o nó A
-precisa
-solicitar ao servidor o acesso ao conteúdo para em seguida efetivamente começar
-a
-recebê-lo. No \mudccps isto não acontece, pois qualquer nó pode funcionar como
-servidor, o
-que ocorre de forma transparente para a aplicação.
-
-  \item O PPETP atualmente utiliza o protocolo UDP que, como já discutido,
-possui
-diversas desvantagens para a aplicação e para a rede, principalmente em situação
-de
-congestionamento na rede. O \mudccps é um protocolo de transporte e portanto não
-necessita
-de nenhum outro protocolo da sua própria camada. Além disso, o \mudccps possui
-um
-arcabouço para adicionar novos algoritmos de controle de congestionamento, tanto
-para as
-transmissões em modo unicast quanto para as transmissões em modo multicast.
-
-  \item O PPETP não suporte transmissão de dados em modo multicast. No PPETP os
-dados são transmitidos entre os nós em modo unicast, apesar dos autores
-mencionarem que
-o protocolo funciona em modo multicast, pelo menos no ponto de vista da
-aplicação. O
-termo multicast empregado nesse contexto é apenas para dar a idéia que poucos
-fluxos são transmitidos a partir do nó transmissão, mas que todos os nós
-receptores os recebem através da rede sobreposição criada pelo PPETP. No
-\mudccps utiliza-se um mecanismo híbrido de transmissão: sempre que possível
-usa-se o modo multicast, caso contrário usa-se o modo unicast.
-
-  \item No PPETP alguns mecanismos bastante utilizados em sistemas de
-transmissão de
-mídias em tempo real, como o de descoberta de nós, deve ser implementado na
-camada de
-aplicação. Apesar dessa abordagem do PPETP funcionar por ser flexível para a
-camada de
-aplicação, a mesma limita o uso desses mecanismos à própria aplicação, impedindo
-que
-outras aplicações façam uso dos mesmos. No \mudccps procurou-se adicionar tal
-funcionalidade dentro do próprio protocolo, permitindo-se o reúso desses
-mecanismos
-em diferentes aplicações. Desta forma, é possível que um algoritmo para
-descoberta de
-nós seja implementado no \mudccp, em forma de componente, e qualquer outra
-aplicação
-reutilizar tal mecanismo. Com isto, o \mudccps permite a interioperabilidade
-entre
-diferentes aplicações a nível de camada de transporte.
-
-  \item Para que o PPETP funcione efetivamente nas aplicações serão necessárias
-diversas
-alterações em protocolos da camada de aplicação, como no RTSP e no SDP
-(\textit{Session
-Description Protocol}). Todas as modificações necessárias estão listadas no
-documento
-disponível na referência~\cite{bernardini2011}.
-
-\end{enumerate}
+% \subsection{PPETP -- \textit{Peer-to-Peer Epi-Transport Protocol}}
+% \label{subsec:ppetp}
+% 
+% % http://corallo.sourceforge.net/index.html
+% % tools.ietf.org/html/draft-bernardini-ppetp-03
+% % Esse é o do chunckless
+% % Se preocupar com problemas de NAT etc.
+% % Pode permitir multiplas conexões
+% 
+% O \textit{Peer-to-Peer Epi-Transport Protocol} (PPETP) é um protocolo
+% distribuído que utiliza uma abordagem P2P para transmissão de mídias em tempo
+% real, sendo proposto para operar em redes com nós heterogêneos~\cite{bernardini2011}.
+% 
+% O PPETP é um protocolo que constrói uma rede de sobreposição com suporte a
+% transmissão em modo \textit{multicast}. Em tal protocolo, propõe-se uma solução proprietária de integração do protocolo às aplicações multimídia. O PPETP
+% tem como principal aplicação os sistemas de transmissão de vídeo executados por
+% usuários residenciais, geralmente conectados através de uma tecnologia xDSL,
+% fornecendo uma visão de um protocolo de transporte \textit{multicast} ao desenvolvedor da aplicação.
+% 
+% O PPETP utiliza uma abordagem de transmissão do tipo \textit{push}, onde os nós
+% iniciam e finalizam as conexões utilizando pacotes de controle e trocam dados
+% em modo \textit{unicast}. Ao desejar receber um fluxo de dados, um nó B envia um pedido
+% de conexão ao servidor PPETP (Figura~\ref{fig:arq-ppetp}). Em seguida, o
+% servidor responde
+% com uma informação que determina qual nó o cliente B deve solicitar os dados da
+% transmissão, além de solicitar que o nó B obtenha um arquivo de configuração
+% dos parâmetros de conexão em um servidor de configuração chamado de
+% \textit{starting point}. O servidor de configuração pode ser um nó diferente do
+% servidor gerador do fluxo de dados multimídia. O nó B então requisita os dados
+% ao nó determinado pelo servidor.
+% 
+% \begin{figure}[ht]
+% \begin{center}
+% \includegraphics[natwidth=628,natheight=421,scale=0.7]{imgs/trabrel/arq-ppetp.png}
+% \end{center}
+% \vspace{-0.5cm}
+% \caption{Arquitetura e funcionamento do protocolo PPETP.}
+% \label{fig:arq-ppetp}
+% \end{figure}
+% 
+% Uma característica fundamental do PPETP é conhecida pelo nome de procedimento
+% de redução (\textit{reduction procedure}). Considerando-se o princípio de que
+% um fluxo de dados é uma sequência de pacotes, o procedimento de redução do PPETP
+% evita que todos os nós do sistema tenham sempre que repassar todos os pacotes desse fluxo de dados, permitindo-se que mesmos os nós conectados à Internet através de
+% canais com largura de banda limitada consigam contribuir com o sistema. A função de redução do tamanho do pacote que é parametrizável e diversas funções podem ser utilizadas através de uma arquitetura de componentes. Atualmente, existe apenas uma funções, a de \textit{Vandermonde}. A função de \textit{Vandermonde} reduz cada pacote por um fator R e então repassa-o para outros nós interessados. Cada nó recebe um conjunto de pacotes reduzidos, reconstrói-se o conteúdo, entrega-o para a aplicação e repete-se o procedimento de redução.
+% 
+% Um aspecto importante do PPETP é sua capacidade de tolerar perdas de pacotes.
+% Como o mecanismo de redução de pacotes permite a reprodução do conteúdo sem que
+% todos os pacotes reduzidos alcancem o receptor, isto torna o protocolo resiliente a perdas de dados. Os autores prometem que em uma rede com $N$ nós e um fator de redução $R$, a reconstrução de um pacote pode acontecer mesmo se $N - R$ nós se desconectarem.
+% 
+% \subsubsection{Comparação entre o PPETP e o GMTP para distribuição de mídias ao vivo:}
+% 
+% O aspecto positivo do PPETP é sua capacidade de funcionar com nós heterogêneos
+% no
+% ponto de vista dos recursos de rede disponíveis por cada um deles. O esquema
+% de \textit{procedimento de redução} dos tamanhos dos pacotes parecer ser
+% bastante
+% promissor, porém ao que pôde-se constatar é complexo de ser implementado e só
+% funciona com a participação de muitos nós.
+% 
+% Os pontos fracos do PPETP são vários e enumerados a seguir.
+% 
+% \begin{enumerate}
+% 
+%   \item O PPETP é um protocolo na camada de aplicação e considerado pelos
+% autores de ser um protocolo de pseudo-transporte, pois abstrai da aplicação
+% diversas
+% funcionalidades dos sistemas de transmissão de mídia em tempo real que utiliza a
+% abordagem
+% P2P. Neste sentido, a disponibilização e a efetiva utilização do PPETP por parte
+% das
+% aplicações pode ser dificultada por ser um protocolo de aplicação e não
+% genuinamente de
+% transporte. Isto significa que o PPETP não tem uma separação explícita de
+% responsabilidade no ponto de vista de transporte de dados, misturando
+% responsabilidades
+% da camada de aplicação e da camada de transporte. No \mudccp, essa separação é
+% explícita
+% por se tratar de um protocolo disponibilizado na camada de transporte sem
+% qualquer
+% influência da aplicação, delegando para a mesma apenas responsabilidades de
+% sinalização e
+% descrição do conteúdo a ser transportado.
+% 
+%   \item O fluxo de dados de controle é centralizado no servidor. Isto significa
+% que para
+% que um nó A comece a receber um fluxo de dados de um outro nó, primeiro o nó A
+% precisa
+% solicitar ao servidor o acesso ao conteúdo para em seguida efetivamente começar
+% a
+% recebê-lo. No \mudccps isto não acontece, pois qualquer nó pode funcionar como
+% servidor, o
+% que ocorre de forma transparente para a aplicação.
+% 
+%   \item O PPETP atualmente utiliza o protocolo UDP que, como já discutido,
+% possui
+% diversas desvantagens para a aplicação e para a rede, principalmente em situação
+% de
+% congestionamento na rede. O \mudccps é um protocolo de transporte e portanto não
+% necessita
+% de nenhum outro protocolo da sua própria camada. Além disso, o \mudccps possui
+% um
+% arcabouço para adicionar novos algoritmos de controle de congestionamento, tanto
+% para as
+% transmissões em modo unicast quanto para as transmissões em modo multicast.
+% 
+%   \item O PPETP não suporte transmissão de dados em modo multicast. No PPETP os
+% dados são transmitidos entre os nós em modo unicast, apesar dos autores
+% mencionarem que
+% o protocolo funciona em modo multicast, pelo menos no ponto de vista da
+% aplicação. O
+% termo multicast empregado nesse contexto é apenas para dar a idéia que poucos
+% fluxos são transmitidos a partir do nó transmissão, mas que todos os nós
+% receptores os recebem através da rede sobreposição criada pelo PPETP. No
+% \mudccps utiliza-se um mecanismo híbrido de transmissão: sempre que possível
+% usa-se o modo multicast, caso contrário usa-se o modo unicast.
+% 
+%   \item No PPETP alguns mecanismos bastante utilizados em sistemas de
+% transmissão de
+% mídias em tempo real, como o de descoberta de nós, deve ser implementado na
+% camada de
+% aplicação. Apesar dessa abordagem do PPETP funcionar por ser flexível para a
+% camada de
+% aplicação, a mesma limita o uso desses mecanismos à própria aplicação, impedindo
+% que
+% outras aplicações façam uso dos mesmos. No \mudccps procurou-se adicionar tal
+% funcionalidade dentro do próprio protocolo, permitindo-se o reúso desses
+% mecanismos
+% em diferentes aplicações. Desta forma, é possível que um algoritmo para
+% descoberta de
+% nós seja implementado no \mudccp, em forma de componente, e qualquer outra
+% aplicação
+% reutilizar tal mecanismo. Com isto, o \mudccps permite a interioperabilidade
+% entre
+% diferentes aplicações a nível de camada de transporte.
+% 
+%   \item Para que o PPETP funcione efetivamente nas aplicações serão necessárias
+% diversas
+% alterações em protocolos da camada de aplicação, como no RTSP e no SDP
+% (\textit{Session
+% Description Protocol}). Todas as modificações necessárias estão listadas no
+% documento
+% disponível na referência~\cite{bernardini2011}.
+% 
+% \end{enumerate}
 
 \subsection{PPSP/Swift -- \textit{P2P Streaming Protocol} / \textit{The Generic
 Multiparty Transport Protocol}}
@@ -779,15 +657,6 @@ lista dos peers e informações sobre os conteúdos. E o protocolo dos
 \textit{peers}, que controla os anúncios e informações sobre a disponibilidade
 de dados da mídia entre os \textit{peers}.
 
-O funcionamento básico do PPSP ocorre da seguinte forma~\ref{fig:arq-ppsp}. Um
-nó
-transmissor \textit{Peer-P} notifica ao tracker a transmissão realizada por ele
-(passo 1). O \textit{tracker} então transmite uma mensagem para os
-\textit{Peer-M} e \textit{Peer-D} interessados em receber o conteúdo multimídia
-para se juntarem ao grupo (passos 2 e 4). O \textit{Peer-P} transmite o conteúdo
-para o \textit{Peer-M}, que repassa para o \textit{Peer-D}. Em seguida, outros
-\textit{peers} se registram como clientes interessado o \textit{tracker}
-
 \begin{figure}[ht]
 \begin{center}
 \includegraphics[natwidth=854,natheight=577,scale=0.6]{imgs/trabrel/arq-ppsp.png}
@@ -797,62 +666,31 @@ para o \textit{Peer-M}, que repassa para o \textit{Peer-D}. Em seguida, outros
 \label{fig:arq-ppsp}
 \end{figure}
 
+O funcionamento básico do PPSP ocorre da seguinte forma (Figura~\ref{fig:arq-ppsp}). Um
+nó transmissor \textit{Peer-P} notifica ao \textit{tracker} que está transmitindo um certo fluxo de dados de mídia ao vivo (Passo 1). Em seguida, o \textit{tracker} transmite uma mensagem para os \textit{Peer-M} e \textit{Peer-D} interessados em receber o conteúdo multimídia para se juntarem ao grupo (Passos 2 a 4). O \textit{Peer-P} transmite o conteúdo para o \textit{Peer-M}, que repassa para o \textit{Peer-D}. Em seguida, outros \textit{peers} enviam uma mensagem ao nó \textit{tracker} registrando interesse em receber o mesmo fluxo.
+
 O processo descrito anteriormente é governado pelo protocolo PPSP. Porém, como o
 PPSP não é um protocolo de transporte, seus idealizadores criaram o \textit{The
 Generic Multiparty Transport Protocol} (Swift). A responsabilidade do Swift no
-processo descrito é cuidar do transporte de dados entre os \textit{peers}
-\textit{Peer-M}, \textit{Peer-D} e quaisquer outros participantes da
-transmissão.
-O Swift especifica o conteúdo de um stream como pedaços chamados de
-\textit{chunks}. O Swift transmite os dados entre os \textit{peers} utilizando o
-protocolo de transporte UDP com suporte de controle de congestionamento chamado
-de
-LEDBAT~\cite{5560080,shalunov2011}, o mesmo adotado no BitTorrent.
+processo descrito é cuidar do transporte de dados entre os nós \textit{Peer-M}, \textit{Peer-D} e quaisquer outros nó interessado em receber um fluxo de dados multimídia. O Swift especifica o conteúdo de um \textit{stream} contendo as partes da mídia, que não necessariamente constituem um conteúdo reproduzível. As partes da mídia são combinadas quando o cliente recebe o conteúdo a partir de diferentes fontes, quando então podem ser reproduzidos pelo nó cliente final. O Swift transmite os dados entre os nós utilizando o protocolo de transporte UDP com suporte de controle de congestionamento chamado de LEDBAT~\cite{5560080,shalunov2011}, o mesmo empregado no BitTorrent.
 
-\subsubsection{Comparação entre o PPSP/Swift e o GMTP para distribuição de mídias ao vivo}:
+\subsubsection{Comparação entre o PPSP/Swift e o GMTP para distribuição de mídias ao vivo:}
 
-Os pontos positivos do PPSP/Swift são dois. O primeiro é a separação do
-mecanismo
-de sinalização e descrição da mídia da parte de transporte. O segundo ponto é
-o mecanismo do Swift de distribuição de conteúdo, baseado em enxames.
-
-Os pontos fracos do PPSP/Swift são enumerados a seguir.
+No PPSP/Swift, separa-se o mecanismo de sinalização e descrição da mídia da parte de transporte, levando-se em consideração uma proposta de distribuição de mídias através de uma abordagem de enxames. Comparado ao GMTP, os pontos fracos do PPSP/Swift são:
 
 \begin{enumerate}
 
-  \item Ausência de suporte para extensão para recursos da aplicação, como por
-exemplo, descoberta, controle de congestionamento e tolerância à falhas. O
-\mudccps é extensível nesse aspecto.
+  \item No PPSP/Swift, adota-se uma estratégia puramente P2P, onde os nós finais são responsáveis pela realização de parcerias e os servidores de mídias não realizam nenhum papel importante no processo de distribuição. No GMTP, adota-se uma abordagem híbrida P2P/CDN, onde os servidores tem a responsabilidade de instruir os roteadores de rede a realizarem parcerias entre si, ao passo que os nós clientes são coadjuvantes nesse processo, responsáveis apenas por ações simples no processo de distribuição de de uma mídia ao vivo.
 
-  \item Não suporta compartilhamento de conexão com suporte a transmissão em
-modo
-multicast.
+%   \item Ausência de suporte para extensão para recursos da aplicação, como por
+% exemplo, descoberta, controle de congestionamento e tolerância à falhas. O
+% \mudccps é extensível nesse aspecto.
 
-  \item Menciona o uso futuro do algoritmo para controle de congestionamento
-TFRC, porém não possui suporte a controle de congestionamento em grupo. No
-\mudccps isso é feito utilizando o algoritmo MCC, apresentado nas
-Seções~\ref{sec:cc} e~\ref{sec:mcc}.
+  \item No PPSP/Swift, não há suporte nativo ao compartilhamento de conexão e transmissão em modo \textit{multicast}. Se necessário, transmissões multicast devem ser disponibilizadas na camada de aplicação. No caso do GMTP, negocia-se dinamicamente os canais \textit{multicast}, de acordo com as demandas locais de cada rede. Entre o servidor e o nó cliente, transmite-se o fluxo de dados entre o servidor e o roteador do cliente em modo \textit{unicast} e, no roteador, estabelece-se um canal \textit{multicast} através do qual os nós clientes receberão as partes da mídia referentes a um evento a vivo. Nesse ínterim, roteadores intermediários entre o nó cliente e o nó servidor, podem interceptar o pacote de dados e também servir seus clientes locais (quando houver interesse), em um canal \textit{multicast} negociado independente de outras redes.
 
-  \item A transmissão de conteúdo com o transporte de \textit{chunks} é
-interessante em aplicações para compartilhamento de arquivos, onde o tempo de
-resposta não é requisito fundamental para a qualidade de serviço no ponto de
-vista do usuário que o utiliza. O uso dessa abordagem em aplicações de
-transmissão de mídia em tempo real não é uma estratégia interessante devido a
-complexidade de indexar e remontar os pacotes de dados de acordo com cada
-\textit{chunk}. Esses procedimentos podem onerar o tempo em que um pacote de
-dados é entregue para a camada de aplicação, gerando-se um atraso no fluxo
-contínuo de dados para a camada de aplicação.
+  \item A transmissão de conteúdo com o transporte de \textit{chunks} é interessante em aplicações para compartilhamento de arquivos, onde o tempo de resposta não é requisito fundamental para a qualidade de serviço no ponto de vista do usuário que o utiliza. O uso dessa abordagem em aplicações de transmissão de mídia em tempo real não é uma estratégia interessante devido a complexidade de indexar e remontar os pacotes de dados de acordo com cada \textit{chunk}. Esses procedimentos podem onerar o tempo em que um pacote de dados é entregue para a camada de aplicação, gerando-se um atraso na reprodução da mídia na camada de aplicação.
 
-  \item Uso do protocolo UDP, apesar de fornecer mecanismo para controle de
-congestionamento. Esta prática quebra a idéia da organização dos protocolos em
-camadas funcionais, onde uma camada fornece serviços para a camada superior e,
-obviamente, usufrui de serviços da camada inferior. Mecanismos para controle de
-congestionamento devem ser implementados na camada de transporte e não na camada
-de aplicação. Isso limita o uso dos recursos implementados no Swift apenas para
-aplicações que utilizam sua implementação, a \textit{libswift}, disponível em
-forma de biblioteca de software. O \mudccps é um protocolo de transporte e
-portanto independente de qualquer outro, além de implementar e suportar à adição
-de seus próprios algoritmos para controle de congestionamento.
+  \item O uso do protocolo UDP e controle de congestionamento na camada de aplicação, enfraquece a ideia da organização dos protocolos em camadas funcionais, onde uma camada fornece serviços para a camada superior e, obviamente, usufrui de serviços da camada inferior. Os mecanismos para controle de congestionamento devem ser implementados na camada de transporte e não na camada de aplicação. Isso limita o uso dos recursos implementados no Swift apenas para aplicações que utilizam sua implementação, a \textit{libswift}. No GMTP, por ser um protocolo de transporte, abstrai-se as principais funções de distribuição de mídias ao vivo e considera o uso de \textit{multicast} sempre que possível, com suporte a algoritmos de controle de congestionamento tanto no modo \textit{unicast} quando no modo \textit{multicast}. Além disso, se duas aplicações independentes, em execução em dois nós distintos, utilizarem o protocolo GMTP, poderão compartilhar o conteúdo multimídia transmitido por um nó servidor, sendo tal recurso disponibilizado de forma nativa e transparente à qualquer aplicação.
 
 \end{enumerate}
 
@@ -860,26 +698,19 @@ de seus próprios algoritmos para controle de congestionamento.
 \label{subsec:coolstreaming}
 
 O CoolStreaming é um sistema para distribuição de mídias ao vivo baseado em uma
-arquitetura P2P~\cite{4509752,susu_xie_coolstreaming:_2007,xinyan_zhang_coolstreaming/donet:_2005}. A primeira versão do Coolstreaming foi lançada em 2004 e aprimorada ao longo dos anos, tornando-se o sistema mais conhecido e robusto para transmissão de mídias ao vivo em larga escala. Atualmente (2014), o sistema CoolStreaming é uma das principais referências no contexto de distribuição de mídias ao vivo, tanto no contexto acadêmico quanto comercial. O sistema CoolStreaming está disponível para uso no mercado, servindo
-a milhares de nós ao redor do mundo e, por ter sido descrito e estudado
-exaustivamente, também está disponível na rede PlanetLab e nos principais
-simuladores de redes P2P, com o OMNet++/Oversim\footnote{OMNet++/Oversim: de
-fato, o CoolStreaming está disponível através do projeto Denacast, desenvolvido
-com base no OMNet++/Oversim. Na Seção~\ref{subsec:denacast}, detalha-se o
-Denacast.} e o OMNet++/OSSim.
+arquitetura P2P~\cite{4509752,susu_xie_coolstreaming:_2007,xinyan_zhang_coolstreaming/donet:_2005}. A primeira versão do Coolstreaming foi lançada em 2004 e aprimorada ao longo dos anos, tornando-se o sistema mais conhecido e robusto para transmissão de mídias ao vivo em larga escala. Atualmente (2014), o sistema CoolStreaming é uma das principais referências no contexto de distribuição de mídias ao vivo, tanto no contexto acadêmico quanto comercial. O sistema está disponível para uso no mercado, servindo a milhares de nós globalmente e, por ter sido descrito e estudado exaustivamente, também está disponível na rede PlanetLab e nos principais simuladores de redes P2P, com o OMNet++/Oversim\footnote{OMNet++/Oversim: de fato, o CoolStreaming está disponível através do projeto Denacast, desenvolvido com base no OMNet++/Oversim. Na Seção~\ref{subsec:denacast}, detalha-se o Denacast.} e o OMNet++/OSSim.
 
 A sigla DONet significa \textit{Data-drive Overlay Network} e CoolStreaming
 significa \textit{Cooperative Overlay Streaming}, sendo a implementação de
 referência da DONet. Desde a primeira versão, seus autores propuseram que
 partes da mídia fossem distribuídas sobre uma rede de sobreposição onde os nós
-sempre repassavam as partes de uma mídia para outros nós interessados pelo mesmo
-conteúdo, sem nenhuma regra pre-definida, como nó pai ou filho; nó interno ou
-externo; capacidade de upload e download, etc. Com essa visão centrada no dado,
-os autores decidiram que a disponibilidade do dado era o critério para guiar as
+sempre repassam as partes de uma mídia para outros nós interessados pelo mesmo
+conteúdo, sem nenhuma regra pré-definida, como nó pai ou filho; nó interno ou
+externo; capacidade de \textit{upload} e \textit{download}, etc. Com essa visão centrada no dado, os autores decidiram que a disponibilidade do dado era o critério para guiar as
 estratégias de escalonamento dos fluxos de dados transmitidos através da rede de
 sobreposição, adaptando-se melhor às dinâmicas dos nós em uma rede P2P. Cada nó
-periodicamente troca informações sobre a sua disponibilidade de \textit{chunk}
-transmitindo seu mapa de buffer com um conjunto de nós parceiros, obtendo os
+periodicamente troca informações sobre a sua disponibilidade de \textit{chunks}
+transmitindo seu mapa de \textit{buffer} com um conjunto de nós parceiros, obtendo os
 \textit{chunks} ausentes a partir dos nós que os anunciam como disponíveis.
 
 
@@ -904,27 +735,22 @@ ilustra-se o diagrama genérico do sistema para um nó na rede DONet,
 quando se utilizava apenas o método \textit{pull} para obtenção de conteúdo,
 estratégia bastante similar ao BitTorrent, com seleção aleatória de nós
 parceiros. Já na Figura\ref{fig:coolstreaming1}, ilustra-se o diagrama genérico
-da versão aprimorada do CoolStreaming, onde diversos aspectos foram aprimorados
+da versão aprimorada do CoolStreaming, onde diversas funções foram corrigidas
 e o mecanismo de obtenção das partes da mídia foi remodelado para uma abordagem
-híbrida \textit{pull/push} de obtenção dos blocos de vídeo (\textit{chunks}).
+híbrida \textit{push/pull} de obtenção dos blocos de vídeo (\textit{chunks}).
 Na versão mais atual do CoolStreaming, organiza-se um fluxo de dados multimídia
 em sub-fluxos que carregam blocos de dados contendo partes da mídia para ser
-reproduzida na aplicação em execução no nó receptor. Na primeira versão, os
+reproduzida na aplicação em execução no nó cliente. Na primeira versão, os
 blocos de dados eram obtidos sempre utilizando o método \textit{pull}, o que
 acarretava o aumento no atraso para obter o conteúdo em 1 RTT. Na segunda
-versão, a estratégia híbrida \textit{pull/push} mudou para a seguinte forma.
-Quando um nó $C_1$, interessados em obter um determinado bloco de vídeo,
-recebe de um nó parceiro $C_2$ o mapa de buffer contendo a disponibilidade dos
-blocos do vídeo, $C_1$ envia uma requisiçao à $C_2$ solicitando os blocos de
-vídeo desejados (\textit{pull}). Em seguida, o nó $C_2$ transmite os blocos de
-vídeo para $C_1$ e, a partir desse momento, todo novo bloco de vídeo que $C_2$
+versão, a estratégia híbrida \textit{push/pull} mudou o mecanismo de obtenção de \textit{chunks}  para a seguinte forma. Quando um nó $C_1$, interessados em obter um determinado bloco da mídia, recebe de um nó parceiro $C_2$ o mapa de buffer contendo a disponibilidade dos blocos do vídeo, $C_1$ envia uma requisiçao à $C_2$ solicitando os blocos desejados da mídia (ou seja, \textit{pull}). Em seguida, o nó $C_2$ transmite os blocos da mídia para $C_1$ e, a partir desse momento, todo novo bloco da mídia que $C_2$
 receber, repassa ao nó $C_1$ (\textit{push}).
 
 Os outros componentes do sistema CoolStreaming são:
 \begin{itemize}
 
   \item \textit{Membership manager}, que permitem os nós do sistema manterem uma
-visão parcial da rede de sobreposição, sendo adicionado na versão 2 um
+visão parcial da rede de sobreposição, sendo adicionado na versão 2.0 um
 componente chamado \textit{mCache}, que registra uma lista parcial dos atuais
 nós ativos na rede;
 
@@ -934,38 +760,28 @@ algoritmos padrão para seleção de nós é baseado em uma escolha aleatória entre
 os nós disponíveis na lista \textit{mCache};
 
   \item \textit{Stream Manager}, que efetivamente transmite os fluxos de dados
-representados nos blocos de vídeo. Este componente é responsável por escalonar
-o momento exato de enviar cada \textit{chunk} correspondente a um vídeo sendo
-compartilhado com outros nós do sistema;
+representados contendo os blocos da mídia. Este componente é responsável por escalonar
+o momento exato de enviar cada \textit{chunk} correspondente de uma mídia,
+compartilhado-o com outros nós do sistema;
 
-  \item \textit{Buffer Map}, que representa o estado atual do buffer para um
+  \item \textit{Buffer Map}, que representa o estado atual do \textit{buffer} para um
 determinado vídeo. Como discutido no Capítulo~\ref{cap:fundamentacao}, um nó
-pode sinalizar os blocos de vídeo que estão disponíveis ou os blocos de vídeo
+pode sinalizar os blocos de vídeo que estão disponíveis ou os blocos da mídia
 que estão ausentes e portanto necessários.
 
 \end{itemize}
 
-Além da mudança para uma abordagem híbrida \textit{pull/push}, os autores do
-CoolStreaming 2.0 propuseram o conceito de sub-fluxo. O nó transmissor divide o
-vídeo em blocos de tamanhos iguais, e a cada bloco é assinalado um número de
-sequência para permitir a reprodução do conteúdo em ordem. Dessa forma, cada nó
-pode obter diferentes blocos de vídeo a partir de diferentes nós parceiros. Com
-isto, espera-se reduzir o impacto causado na rede devido à saída ou falha de
-comunicação em um nó transmissor.
+Com relação ao conceito de sub-fluxo empregado no CoolStreaming, o nó transmissor divide o vídeo em blocos de tamanhos iguais e assinala-se um número de sequência em cada bloco, permitindo-se a reprodução do conteúdo em ordem. Dessa forma, cada nó pode obter diferentes blocos da mídia a partir de diferentes nós parceiros.
 
 
 % http://totoro.cs.nthu.edu.tw/~gdemon/download/pdf/Present-%20Coolstreaming_%20Design,%20Theory,%20and%20Practice.pdf
 % VER: http://www.docstoc.com/docs/160021567/Inside-the-New-Coolstreaming-Principles_-Measurements-and
 
-\subsubsection{Comparação entre o CoolStreaming e o GMTP para distribuição de mídias ao vivo}:
+\subsubsection{Comparação entre o CoolStreaming e o GMTP para distribuição de mídias ao vivo:}
 
-A robustez do CoolStreaming em tratar a dinâmica da rede, bem como a
-possibilidade de realizar as ações apresentadas anteriormente sem requerer
-qualquer suporte da rede física, são aspectos positivos do CoolStreaming. Suas
-características possibilitaram a aplicação do CoolStreaming em cenários reais.
+A robustez do CoolStreaming em tratar a dinâmica da rede, bem como a possibilidade de realizar as ações apresentadas anteriormente sem requerer qualquer suporte da rede física são os principais aspectos positivos.
 
-Por outro lado, os pontos negativos do sistema CoolStreaming são apresentados a
-seguir.
+Com relação aos pontos negativos do sistema CoolStreaming, destacam-se:
 
 \begin{enumerate}
 
@@ -973,18 +789,10 @@ seguir.
 necessariamente resultado em ótimos resultados. Em~\cite{4509752}, os autores
 do CoolStreaming discutem que aumentar a quantidade de número de sub-fluxos não
 melhora proporcionalmente algumas métricas, como o índice de continuidade e
-utilização da capacidade de upload dos nós transmissores (em média). Os autores
+utilização da capacidade de \textit{upload} dos nós transmissores (em média). Os autores
 executaram simulações com 40 mil nós e 24 servidores auxiliares (que
 funcionaram apenas como nós transmissores) e observaram que a partir de 8
-sub-fluxos, as duas métricas citadas anteriormente não melhora e, em alguns
-casos, até pioram (quando se utiliza nós com capacidade heterogêneas de
-transmissão). No GMTP, utiliza-se sempre o método \textit{push} após um nó
-estabelecer uma conexão e os roteadores no caminho entre o nó servidor e o nó
-cliente podem interceptar os pedidos de conexão transmitidos por outros nós
-clientes. Essa estratégia reduzir a quantidade de requisições ao servidor e o
-tempo para iniciar a reprodução de um vídeo ao usuário final (apenas o primeiro
-usuário perceberá um atraso maior do que os demais). Com isso, se no caminho
-entre o nó cliente e o nó servidor não ocorrer nenhuma interceptação, a
+sub-fluxos, as duas métricas citadas anteriormente não evoluem positivamente, piorando em alguns casos (quando se utiliza nós com capacidade heterogêneas de transmissão). No GMTP, utiliza-se sempre o método \textit{push} após um nó estabelecer uma conexão e os roteadores no caminho entre o nó servidor e o nó cliente podem interceptar os pedidos de conexão transmitidos por outros nós clientes. Essa estratégia reduzir a quantidade de requisições ao servidor e o tempo para iniciar a reprodução de um vídeo ao usuário final (apenas o primeiro usuário perceberá um atraso maior do que os demais). Com isso, se no caminho entre o nó cliente e o nó servidor não ocorrer nenhuma interceptação, a
 requisição alcançará o nó servidor, e a troca de dados ocorre. Porém, os
 próximos nós clientes que transmitirem seu pedido de conexão através de pelo
 menos parte do mesmo caminho já utilizado anteriormente, um nó servidor
@@ -993,57 +801,42 @@ em vez de responder com a aceitação do pedido de conexão.
 
   \item No sistema CoolStreaming, a rede de sobreposição é centrada no dado. Os
 nós realizam parcerias considerando quais parceiros possuem as partes da mídia
-de interesse e a troca de parcerias ocorre ao longo da transmissão. Isso gera
+de interesse e a mudança de parcerias ocorre ao longo da transmissão. Isso gera
 instabilidades na transmissão, impactando diretamente em métricas como o índice
 de continuidade. Além disso, as parcerias são efetivadas independente da posição
 lógica do nó na rede, levando-se em consideração apenas o nó que detém um
-determinado contéudo de interesse e sua capacidade de upload, o que pode gerar
+determinado contéudo de interesse e sua capacidade de \textit{upload}, o que pode gerar
 sobrecarga na troca de informações de controle. No GMTP, a rede de sobreposição
 é centrada na conexão e a constituição de tal rede ocorre de forma transparente
 à aplicação. A formação da rede acontece no processo de pedido de conexão, onde
 os nós intermediários (roteadores), localizados entre o nó interessado pela
-mídia (cliente) o nó transmissor (servidor) são autorizados a interceptar o
+mídia (cliente) o nó transmissor (servidor), são autorizados a interceptar o
 pedido de conexão e responder ao nó cliente como se fosse o servidor original.
 Somente depois dessa fase, os nós roteadores GMTP iniciam um processo de
 expansão de parcerias, onde podem realizar parcerias com outros nós que não
 estejam, necessariamente, conectados em um mesmo servidor da CDN.
 
   \item Os nós da rede de sobreposição do sistema CoolStreaming são os sistemas
-finais, que executam aplicações de rede. No GMTP, constitui-se uam rede de
-sobreposição entre os roteadores da rede e não entre os sistemas finais. Dessa
-forma, a rede se torna estável com relação a dinâmica de entradas e saídas das
-redes, sendo possível continuar utilizando os recursos de um roteador (em
-geral, o da borda de uma rede), mesmo quando seus nós clientes desistem de
-continuar obtendo a mídia de interesse, por exemplo, se o usuário fechar o
-aplicativo. Sendo assim, os nós roteadores podem continuar transmitindo o fluxo
-de vídeo para outros nós, pelo menos momentaneamente, enquanto seus parceiros
-realizam outras parcerias.
+finais, que executam aplicações de rede. No GMTP, constitui-se uma rede de
+sobreposição entre os roteadores e não entre os sistemas finais. Dessa
+forma, a rede se torna estável com relação a dinâmica de entradas e saídas de nós clientes, sendo possível continuar utilizando temporariamente os recursos de um roteador, mesmo quando seus nós clientes desistem de continuar obtendo a mídia de interesse (se o usuário fechar o aplicativo, por exemplo).
 
-  \item Um nó recém integrado à rede DONet, pode levar muito tempo (em alguns
+  \item Um nó recém integrado à rede DONet pode levar muito tempo (em alguns
 casos 20 segundos) para obter os primeiros blocos de vídeo e assim iniciar a
 reprodução do conteúdo ao usuário final. Isto porque, ao se juntar à rede, um
 nó solicita o mapa de \textit{buffer} a um conjunto de nós parceiros informados
 por um servidor de \textit{boostrap}. Porém, o desafio é definir a partir de
 qual ponto do \textit{buffer} um nó deve começar a solicitar os blocos de
-vídeo. Por exemplo, se o novo nó requisitar um bloco de vídeo muito
-antigo, este podem não mais estar disponíveis, um vez que após sua reprodução,
-tais blocos são removidos. Por outro lado, se o nó requisitar um bloco de vídeo
-muito recente, pode ser que nenhum de seus nós parceiros tenha disponível. No
-GMTP, situações como essas não ocorrem porque se utiliza, por padrão o método
-\textit{push} e o conteúdo poderá já está disponível no próprio roteador de
-borda do nó solicitante. Outras decisão nesse sentido foram tomadas no GMTP, as
-quais serão elucidadas no Capítulo~\ref{cap:mudccp}.
+vídeo. Por exemplo, se o novo nó requisitar um bloco de vídeo muito antigo, pode ser que tal bloco de vídeo não esteja mais disponíveis, já que o nó cliente o remove após sua reprodução. Por outro lado, se o nó requisitar um bloco de vídeo muito recente, pode ser que nenhum de seus nós parceiros tenha disponível. No GMTP, situações como essas não ocorrem porque se utiliza, por padrão o método \textit{push}, além do mais, as últimas partes da mídia já podem estar disponíveis no roteador, quando há outros clientes anteriores recebendo o fluxo de dados correspondente. Outras decisões nesse sentido foram tomadas no GMTP, em destaque no Capítulo~\ref{cap:mudccp}.
 
-  \item A seleção de nós sistema CoolStreaming ocorre com base na escolha
+  \item A seleção de nós no sistema CoolStreaming ocorre com base na escolha
 aleatória de um sub-conjunto de nós disponíveis em uma lista de parceiros. Após
 realizar parcerias com um sub-conjunto de nós, um nó começa a receber os blocos
 de vídeo, ao mesmo tempo que monitora o status de recepção dos sub-fluxos,
 transmitidos por diferentes nós parceiros. Quando um nó percebe que a taxa de
 recepção não está satisfatória, inicia-se um processo para selecionar novos nós
 parceiros. A grande questão é definir quando, de fato, a taxa de recepção não
-está sendo suficiente. No CoolStreaming isso é feito monitorando o
-\textit{buffer} de recepção dado um sub-fluxo $j$ transmitido por um nó $C_{1}$
-ao nó $C_{2}$ observando as inequações~\ref{eq:coolstreaming-substream-monitor1}
+está sendo suficiente. Para isso, monitora-se o \textit{buffer} de recepção dado um sub-fluxo $j$ transmitido por um nó $C_{1}$ ao nó $C_{2}$, observando as inequações~\ref{eq:coolstreaming-substream-monitor1}
 e~\ref{eq:coolstreaming-substream-monitor2}, onde:
 
 \begin{itemize}
@@ -1081,7 +874,7 @@ conteúdo de vídeo.
   \label{eq:coolstreaming-substream-monitor2}
   \end{equation}
 
-  A inequação~\ref{eq:coolstreaming-substream-monitor1} é utilizada para
+Um nó cliente utiliza a inequação~\ref{eq:coolstreaming-substream-monitor1} para
 monitorar o \textit{status} do \textit{buffer} do nó $C_{2}$. Se a
 inequação~\ref{eq:coolstreaming-substream-monitor1} for falsa, significa que
 pelo menos um sub-fluxo está atrasado com relação ao limite estabelecido
@@ -1096,25 +889,14 @@ $partners$. Se a inequação~\ref{eq:coolstreaming-substream-monitor2} for falsa
 para algum caso, implica que o nó pai $C_1$ está atrasado com relação ao número
 de blocos de vídeos comparado com pelo menos um dos nós em $partners$. Isto
 fará com que o nó $C_{2}$ finalize a comunicação com o nó $C_1$ atrasado e
-selecione um novo nó $C_1$ do cojunto $partners$.
+selecione um novo nó $C_1$ a partir do conjunto $partners$.
 
   Essa estratégia de seleção de nós aplicado no CoolStreaming é muito complexa
-porque exige o monitoramente constante dos buffers dos sub-fluxos, o que
+porque exige o monitoramento constante dos buffers dos sub-fluxos, o que
 implica em exaustivas trocas de mapa de \textit{buffer}, dependendo da
 quantidade de nós no conjunto $parents$ e $partners$ para um dado nó $C_2$. A
-consequência disso é um aumento significativo na qualidade de dados de controle
-trocados entre os nós parceiros e nós pais, além da troca de dados
-correspondentes ao vídeo. No GMTP, as parcerias são formadas de uma forma
-bastante diferente, que basicamente consiste em envolver um algoritmo de
-controle de congestionamento assistido pela rede que compartilha a sua
-capacidade de transmissão em um determinado instante \textit{t}. Dessa forma,
-tanto um nó receptor quanto o nó transmissor conhecem a capacidade máxima de
-transmissão no canal que separa ambos. Sendo assim, o nó transmissor ajusta sua
-taxa de transmissão em direção ao nó receptor de acordo com a taxa de
-transmissão disponível em qualquer pacote de dados. No caso do GMTP, os nós são
-os roteadores de rede, que simplesmente repassam para os clientes os fluxos de
-dados que contém partes da mídia, correspondentes aos blocos de vídeo do
-CoolStreaming.
+consequência disso é um aumento expressivo de pacotes de controle entre os nós parceiros e seus nós pais, além da transmissão de pacotes de dados contendo as partes da mídia. No GMTP, as parcerias são formadas de uma forma bastante diferente, que basicamente consiste em envolver um algoritmo de controle de congestionamento assistido pela rede, que compartilha a sua capacidade de transmissão em um determinado instante \textit{t}. Dessa forma, tanto um nó receptor quanto o nó transmissor conhecem a capacidade máxima de transmissão no canal que separa ambos. Sendo assim, o nó transmissor ajusta sua
+taxa de transmissão em direção ao nó receptor de acordo com a taxa de transmissão disponível em qualquer pacote de dados. Como já se sabe, no GMTP, os nós são os roteadores de rede, que simplesmente repassam para os clientes os fluxos de dados que contém partes da mídia. Esse assunto será retomado no próximo capítulo.
 
 \end{enumerate}
 
@@ -1148,12 +930,12 @@ que é considerado o \aspas{coração} do sistema.
 Como ilustra-se na Figura~\ref{fig:denacast}, no Denacast, adota-se duas
 arquiteturas CDN/P2P, que tem em comum nós servidores como nós folhas de uma
 rede CDN \textit{multicast}, os quais funcionam como nós fontes da mídia
-transmitida para a rede P2P.
+transmitida para a rede P2P. São elas:
 
 \begin{itemize}
 
   \item P2P/CDN de malhas desconectadas (Figura~\ref{fig:denacast1}):
-constitui-se diferentes redes de malhas independentes coordenadas por um
+constitui-se diferentes redes de malhas independentes, coordenadas por um
 servidor da rede CDN. Nessa arquitetura, cada servidor da CDN funciona como um
 nó \textit{tracker} da sua respectiva rede malha;
 
@@ -1166,9 +948,9 @@ desempenha o papel de \textit{tracker}. A responsabilidade do \textit{tracker}
 \end{itemize}
 
 Para a construção da rede de malha, o nó \textit{tracker} mantém uma lista dos
-nós da rede P2P que estao ativos. Um nó fonte da mídia se anuncia ao nó
+nós da rede P2P que estão ativos. Um nó fonte da mídia se anuncia ao nó
 \textit{tracker}. Cada nó da rede P2P requisita uma lista de possíveis nós
-parceiros ao nó \textit{tracker} e informando o número de parcerias que deseja
+parceiros ao nó \textit{tracker}, informando-se o número de parcerias que deseja
 efetivar. A nó fonte codifica as partes da mídia à medida que se captura o
 evento ao vivo e as coloca em um \textit{buffer} de transmissão. No mesmo
 instante, gera-se o mapa do \textit{buffer} que é anunciado para os nós
@@ -1189,44 +971,27 @@ nós em cada rede de malha antes do início da transmissão. Quando uma rede de
 malha A é unida a uma rede de malha B, o nó \textit{tracker} passa a sugerir
 nós da rede A para a rede B e vice-versa.
 
-\subsubsection{Comparação entre o Denacast e o GMTP para distribuição de mídias ao vivo}:
+\subsubsection{Comparação entre o Denacast e o GMTP para distribuição de mídias ao vivo:}
 
 No ponto de vista da rede P2P, as considerações sobre o sistema Denacast são
 similares ao caso do CoolStreaming. Com relação a arquitetura geral, o Denacast
 tem uma melhor organização da rede de sobreposição devido ao uso de servidores
 de uma rede CDN. Isto permite um melhor agrupamento dos nós em uma determinada
-região lógica da rede (delimitada pela localização do nó servidor da CDN). Nesse
+região da rede (delimitada pela localização do nó servidor da CDN). Nesse
 sentido, o Denacast escala melhor o número de nós e melhora as métricas de
 qualidade de serviço relacionadas à transmissão de uma mídia ao vivo se
-comparado ao CoolStreaming.
+comparado ao CoolStreaming~\cite{5764567}.
 
 O Denacast é o sistema que mais se aproxima ao GMTP, devido a sua estratégia de
 unir diferentes redes de malha quando a quantidade de nós em uma determinada
 rede extrapola um determinado limite. Porém, como já foi discutido na
 Seção~\ref{subsec:coolstreaming}, em discussão sobre o CoolStreaming e que se
 estende ao Denacast, o GMTP oferece funções diferenciadas e detalhadas no
-Capítulo~\ref{cap:mudccp}, ao passo que ambos os protocolos foram confrontados
-em simulações de rede e os resultados são apresentados no
-Capítulo~\ref{cap:analisedesemp}.
+Capítulo~\ref{cap:mudccp}. Por esse motivo, reserva-se um discussão mais detalhada sobre o Denacast em confronto com o GMTP para o Capítulo~\ref{cap:analisedesemp}. 
 
 \subsection{Outras propostas}
 
-A área de distribuição de mídias ao vivo tem sido explorada há pelo menos 15
-anos. Existe uma vasta quantidade de propostas que permeiam diferentes
-abordagens, das mais simples, como as baseadas em arquiteturas cliente
-servidor, às mais complexas, como as baseadas em P2P e/ou P2P/CDN. Diante desse
-cenário, realizou-se uma exaustiva pesquisa sobre os trabalhos relacionados à
-proposta apresentada nessa tese de doutorado, destacando-se os principais, tal
-como foram apresentadas ao longo dessa seção. Apesar desse filtro, pode-se
-afirmar que as soluções propostas nessa área de pesquisa são apresentadas
-considerando os aspectos discutidos no Capítulo~\ref{cap:fundamentacao}. Em
-geral, decide-se sobre se a estrutura da rede de sobreposição será em árvore
-e/ou em malha; sobre se os nós realizam periodicamente requisições das partes
-da mídia (\textit{pull-based}) e/ou se os nós transmissores enviarão as partes
-da mídia para o nó receptor após este último sinalizar interesse por tal
-conteúdo (\textit{push-based}); e, sobre a arquitetura do serviço, se será P2P
-e/ou P2P/CDN (modelos tradicionais como cliente/servidor não tem sido mais
-consideradas).
+Como discutiu-se no início deste capítulo (Seção~\ref{sec:visaogerao-propostas-dmv}), a área de distribuição de mídias ao vivo em larga escala tem sido explorada há pelo menos 10 anos. Existe uma vasta quantidade de propostas que permeiam diferentes abordagens, das mais simples, como as baseadas em arquiteturas cliente/servidor, às mais complexas, como as baseadas em P2P e/ou P2P/CDN. Diante desse cenário, realizou-se uma exaustiva pesquisa sobre os trabalhos relacionados à proposta apresentada nessa tese de doutorado, destacando-se anteriormente os principais. Em geral, decide-se sobre se a estrutura da rede de sobreposição será em árvore e/ou em malha; sobre se os nós realizam periodicamente requisições das partes da mídia (\textit{pull-based}) e/ou se os nós transmissores enviarão as partes da mídia para o nó receptor após este último sinalizar interesse por tal conteúdo (\textit{push-based}); e, sobre a arquitetura do serviço, se será P2P e/ou P2P/CDN.
 
 Durante o levantamento bibliográfico realizado no contexto deste trabalho,
 catalogou-se uma série de outras propostas que não foram aqui detalhadas, mas
@@ -1290,7 +1055,7 @@ formalmente.
 \section{Redes Centradas na Informação}
 \label{sec:trab-redes-centradas-informacao}
 
-Desde da criação da Internet, diversos módulos complementares foram disponibilizados para atender às necessidades dos usuários, como o NAT, DNS com  suporte a balanceamento de carga, etc. Entretanto, essas soluções criaram seus próprios problemas~\cite{moore2002}, que foram resolvidos por outras proposta~\cite{RFC3489} ou utilizadas de forma errada~\cite{Vixie:2009:DNS:1610252.1610269}. Em geral, essas mudanças têm levado a situações complexas de gerenciamento de rede, ao passo que tem sido disponibilizados avanços incipientes e lentos com foco no núcleo da rede. No entanto, como ilustra-se na Figura~\ref{fig:icn-abstracao}, uma nova vertente de pesquisa propõe a próxima arquitetura de serviço para a Internet considerando o princípio de que os nós da rede devem trocar dados com base no nome do conteúdo de interesse e não com base em caminhos (rede de telefonia) tampouco em sua localização (rede IP). Essa abordagem é conhecida por Redes Centradas na Informação (\textit{Information Centric Networks} -- ICN).
+Desde da criação da Internet, diversos módulos complementares foram disponibilizados para atender às necessidades dos usuários, como o NAT, DNS com  suporte a balanceamento de carga, etc. Entretanto, essas soluções criaram seus próprios problemas~\cite{moore2002}, que foram resolvidos por outras proposta~\cite{RFC3489} ou utilizadas de forma errada~\cite{Vixie:2009:DNS:1610252.1610269}. Em geral, essas mudanças têm levado a situações complexas de gerenciamento de rede, ao passo que tem sido disponibilizados avanços incipientes e lentos com foco no núcleo da rede. No entanto, como ilustra-se na Figura~\ref{fig:icn-abstracao}, uma nova vertente de pesquisa propõe a próxima arquitetura de serviço para a Internet considerando o princípio de que os nós da rede devem trocar dados com base no nome do conteúdo de interesse e não com base em caminhos (rede de telefonia), tampouco em sua localização (rede IP). Essa abordagem é conhecida por Redes Centradas na Informação (\textit{Information Centric Networks} -- ICN).
 
 \begin{figure}
   \centering
@@ -1313,12 +1078,12 @@ Desde da criação da Internet, diversos módulos complementares foram disponibiliz
 \end{figure}
 
 Nas ICNs, objetiva-se facilitar a distribuição de conteúdo definindo rotas,
-funções de transporte e decisões de repasse com base no nome do conteúdo. Isto significa que um roteador pode fazer \textit{cache} de um conteúdo bastante acessado e retorná-lo quando houver  interesse por mais de um nó da rede. Atualmente (2014), todas as propostas para uma nova arquitetura para a Internet estão em estágio inicial de desenvolvimento, de modo que seus modelos de serviço e interfaces de transporte estão longes de uma versão final. Por isso, os benefícios de utilizar tais arquiteturas para a distribuição de vídeo ao vivo são questionáveis, sem qualquer pesquisa que apresente resultados contundentes sobre seu uso em larga escala na Internet, principalmente no contexto de transmissão de mídias ao vivo~\cite{6691438}. Por exemplo, é impossível para um nó receptor adaptar o fluxo de dados de acordo com as características de uma rota de rede, pois as partes de um vídeo podem ser servidas por diferentes nós de \textit{cache}. De fato, suportar a distribuição eficiente de mídias ao vivo usando ICN ainda necessita de várias melhorias no projeto arquitetural, por exemplo, desenvolver protocolos de transporte estendendo as interfaces atuais e considerando o paradigma atual de transmissão fim-a-fim.
+funções de transporte e decisões de repasse com base no nome do conteúdo. Isto significa que um roteador pode fazer \textit{cache} de um conteúdo bastante acessado e retorná-lo quando houver  interesse por mais de um nó da rede. Atualmente (2014), todas as propostas para uma nova arquitetura para a Internet estão em estágio inicial de desenvolvimento, de modo que seus modelos de serviço e interfaces de transporte estão longes de uma versão final. Por isso, os benefícios de utilizar tais arquiteturas para a distribuição de vídeo ao vivo são questionáveis, sem qualquer pesquisa que apresente resultados contundentes sobre seu uso em larga escala na Internet, principalmente no contexto de transmissão de mídias ao vivo~\cite{6691438}. Por exemplo, é impossível para um nó receptor adaptar o fluxo de dados de acordo com as características de uma rota de rede, pois as partes de um vídeo podem ser servidas por diferentes nós de \textit{cache}. De fato, suportar a distribuição de mídias ao vivo usando ICN, fazem-se necessárias diversas melhorias no projeto arquitetural, como, desenvolver protocolos de transporte considerando o paradigma atual de transmissão fim-a-fim, tal como se propõe no GMTP.
 
 Dentre as propostas de uma nova arquitetura para a Internet com base no princípio das ICNs, destaca-se a \textit{Named-Data Networks (NDN)}~\cite{6419703,Jacobson:2012:NNC:2063176.2063204,6386696} ou Redes de Dados Nomeados,
 %  e a \textit{Publish-Subscribe Internetworking
 % (PSI)}~\cite{6231279} ou Redes de Publicação e Subscrição.
-ao passo que outras propostas ainda estão em estágio embrionário~\cite{6384450,6231279,6563278,6231276,5936152}. Como a NDN apresenta diferenças substanciais em seu modelo de serviço para prover o conteúdo de interesse e funções disponíveis no núcleo da rede, a seguir, detalhe-se seu funcionamento e suas atuais aplicações no contexto de distribuição de mídias ao vivo.
+ao passo que outras propostas ainda estão em estágio embrionário~\cite{6384450,6231279,6563278,6231276,5936152}, como discutiu-se no início deste capítulo (Seção~\ref{sec:visaogerao-propostas-dmv}). Como a NDN apresenta diferenças substanciais em seu modelo de serviço para prover o conteúdo de interesse e funções disponíveis no núcleo da rede, a seguir, detalhe-se seu funcionamento e suas atuais aplicações no contexto de distribuição de mídias ao vivo.
 
 \subsection{Redes de Dados Nomeados (NDN)}
 
@@ -1375,27 +1140,27 @@ o transmite através das interfaces correspondentes.
 % de tais funções ainda não estão bem definidas no contexto da
 % NDN~\cite{Chai:2012:CLM:2342042.2342046}.
 
-A estratégia de transmissão baseada em pacotes de interesse essencialmente constitui um modelo de comunicação do tipo pedido/resposta. O transporte de dados é orientado ao nó receptor e os nós fontes não mantém qualquer estado de conexão, simplesmente respondem pacotes de dados à medida que recebem pacotes de interesse. As principais funções de transporte são implementadas pelos nós receptores. Por exemplo, para controle de perda/erro de pacotes, o nó receptor retransmite um pacote de interesse correspondente aos pacotes de dados perdidos. As funções de controle de fluxo e controle de congestionamento são também executadas pelo nó receptor, controlando a taxa em que os pacotes de interesse são transmitidos utilizando um modelo baseado em janela deslizante, similar ao TCP~\cite{5462976}.
+Além disso, os serviços de transporte de dados é orientado ao nó receptor, ao passo que os nós fontes não mantém qualquer estado de conexão, simplesmente respondem pacotes de dados à medida que recebem pacotes de interesse. Por exemplo, quando um nó cliente não recebe um pacote de dados em um determinando instante (\textit{timeout interval}, similar ao TCP) ou se receber um pacote com erro verificado via mecanismo de \textit{checksum}, o nó receptor simplesmente retransmite um pacote de interesse correspondente aos pacotes de dados perdidos. Os nós receptores também executam as funções de controle de fluxo e controle de congestionamento. Para isso, os nós receptores controlam a taxa em que os pacotes de interesse são transmitidos, utilizando-se um modelo baseado em janela deslizante, similar ao TCP~\cite{5462976}.
 
-\subsubsection{Aplicações de transmissão de mídias ao vivo em NDN}
+\subsubsection{Aplicações de transmissão de mídias ao vivo em NDN:}
 
 O suporte de sistemas de distribuição de mídias ao vivo em NDN tem atraído o interesse da comunidade científica desde suas primeiras versões~\cite{6550523,6607500,Zhu:2011:AAC:2018584.2018601,Tsilopoulos:2011:SDT:2018584.2018588,Jacobson:2009:VVC:1658978.1658980,6666771,6386696}. Em NDN, em vez de um nó servidor transmitir os datagramas diretamente para os sistemas finais receptores (UDP/IP), o servidor anuncia os datagramas na FIB e os nós receptores interessados em obtê-los requisita cada pacote de dados separadamente.
 
-No contexto de transmissão de uma mídia ao vivo, um nó receptor inicialmente envia um pacote de interesse para o evento correspondente (nome do evento) e recebe um pacote de dados contendo metadados sobre o evento. O metadado mais importante é o esquema de nomes que o sistema utilizará para os próximos pacotes de dados correspondente à mídia transmitida, que também inclui o nome do último pacote de dados, permitindo o nó receptor construir os nomes para os próximos pacotes de dados e determinar em qual momento parar de enviar os pacotes de interesse. Após obter tais metadados, o nó interessado em obter o fluxo de dados começa a enviar pacotes de interesse e receber os pacotes de dados correspondentes.
+Um nó receptor inicialmente envia um pacote de interesse para o evento correspondente (nome do evento) e recebe um pacote de dados contendo metadados sobre o evento. O metadado mais importante é o esquema de nomes que o sistema utilizará para os próximos pacotes de dados correspondente à mídia transmitida, que também inclui o nome do último pacote de dados, permitindo o nó receptor construir os nomes para os próximos pacotes de dados e determinar em qual momento parar de enviar os pacotes de interesse. Após obter tais metadados, o nó interessado em obter o fluxo de dados começa a enviar pacotes de interesse e receber os pacotes de dados correspondentes.
 
-Os sistemas de distribuição de mídias ao vivo em NDN precisam transmitir os dados da mídia à medida que estes são gerados. Dessa forma, um nó receptor não pode transmitir um pacote de interesse para cada pacote de dado a cada instante, pois receberia os pacotes de dados com atraso em pelo menos um RTT, causando interrupções de reprodução da mídia ao usuário final. Por isso, a estratégia de transmitir mídias ao vivo consiste em permitir que o nó receptor envie pacotes de interesse para pacotes de dados que ainda não existem. Por exemplo, considere um fluxo de dados de uma mídia ao vivo com o nome /a/b/c/live. Para esse fluxo, transmite-se pacotes de dados há uma taxa de 100 pacotes por segundo (pps) e já se transmitiu 2000 pacotes de dados. Um nó receptor que desejar receber o referido fluxo de dados, estima o RTT (por exemplo, \ut{100}{ms}) e decide transmitir pacotes de interesse há cada \ut{2}{s}. Isto resulta em $2 \times (\ut{100}{pps} \times \ut{100}{ms}) = 20$ pacotes. Consequentemente, o nó receptor transmitirá $20$ pacotes de interesse começando de /a/b/c/live/2001 até /a/b/c/live/2020 e assim sucessivamente. Quando os pacotes de interesse alcançarem o nó transmissor, aguarda-se até a geração dos pacotes de dados correspondentes e, após tal procedimento, o nó transmissor os envia imediatamente em direção ao nó receptor~\cite{6691438}.
+Os sistemas de distribuição de mídias ao vivo em NDN precisam transmitir os dados da mídia à medida que estes são gerados. Porém, um nó receptor não pode transmitir um pacote de interesse para cada pacote de dado, pois receberia os pacotes de dados com atraso em pelo menos um RTT. Para minimizar essa limitação, a estratégia de transmitir mídias ao vivo em NDN consiste em permitir que o nó receptor envie pacotes de interesse para pacotes de dados que ainda não existem. Por exemplo, considere um fluxo de dados de uma mídia ao vivo com o nome /a/b/c/live e que se transmite pacotes de dados há uma taxa de 100 pacotes por segundo (pps) e já se transmitiram 2000 pacotes de dados. Um nó receptor que desejar receber o referido fluxo de dados, estima o RTT (por exemplo, \ut{100}{ms}) e decide transmitir pacotes de interesse há cada \ut{2}{s}. Isto resulta em $2 \times (\ut{100}{pps} \times \ut{100}{ms}) = 20$ pacotes. Consequentemente, o nó receptor transmitirá $20$ pacotes de interesse começando de /a/b/c/live/2001 até /a/b/c/live/2020 e assim sucessivamente. Quando os pacotes de interesse alcançarem o nó transmissor, aguarda-se até a geração dos pacotes de dados correspondentes e então os transmite imediatamente em direção ao nó receptor~\cite{6691438}.
 
-Atualmente, os trabalhos voltados para transmissão de mídias com base em NDN ainda são bastante primitivos. Nenhum trabalho existente na literatura aborda o assunto de distribuição de mídias ao vivo em larga escala, pelo contrário, os cenários considerados são bastante simples, compreendendo no máximo duas dezenas de nós clientes. O primeiro trabalho de transmissão de mídias ao vivo foi apresentado por Van Jacobson em uma aplicação chamada VoCCN~\cite{Jacobson:2009:VVC:1658978.1658980}. De fato, não se discutiu nenhum aspecto relacionado a distribuição de conteúdos multimídia em larga escala, sendo o VoCCN apresentado apenas como uma prova de conceito para demostrar a viabilidade do uso da então conhecida pela cicla CCN em transmissão de mídias ao vivo.
+Atualmente, os trabalhos voltados para transmissão de mídias com base em NDN ainda são bastante primitivos. Nenhum trabalho existente na literatura aborda o assunto de distribuição de mídias ao vivo em larga escala, pelo contrário, os cenários considerados são bastante simples, compreendendo no máximo duas dezenas de nós clientes. O primeiro trabalho de transmissão de mídias ao vivo foi apresentado por Van Jacobson em uma aplicação chamada VoCCN~\cite{Jacobson:2009:VVC:1658978.1658980}. De fato, não se discutiu nenhum aspecto relacionado a distribuição de conteúdos multimídia em larga escala, sendo o VoCCN apresentado apenas como uma prova de conceito para demostrar a viabilidade do uso da CCN, como era chamada na época.
 
 Em~\cite{6607500}, os autores apresentam uma análise de uma solução experimental para transmissão de dados multimídia com adaptação de fluxo utilizando o protocolo HTTP, com suporte a uma versão modificado do DASH, discutido na Seção~\ref{subsec:http-streaming}. Como metodologia do estudo, os autores avaliaram o desempenho e a sobrecarga de controle introduzida pela NDN em comparação do HTTP 1.0 e o 1.1 em rede TCP/IP. Com base nos resultados obtidos, concluiu-se que a NDN gera uma maior sobrecarga de dados de controle se comparado ao uso do protocolo HTTP 1.0 ou 1.1, apenas equiparando-se em alguns cenários ao protocolo HTTP 1.0, mas não ao HTTP 1.1. Em geral, observou-se que o impacto causado pelo aumento do atraso na rede no HTTP 1.1 é menor se comparado ao HTTP 1.0 e a NDN. Por exemplo, em um dos cenários experimentados, em uma rede com atraso de \ut{150}{ms}, o HTTP 1.1 atingiu uma diferença de taxa de transmissão de \ut{735}{kbps} (\ut{39}{\%} maior) se comparado ao uso de DASH em NDN.
 
-No trabalho~\cite{6655116}, os autores propõem uma solução chamada de DASC (\textit{Dynamic Adaptive Streaming over Content centric networking}), assemelhando-se ao anterior anterior pelo fato de utilizar o DASH em redes NDN, onde os nós transmitem pacotes de interesse para um determinado nível de qualidade do vídeo (\textit{bit-rate}) de acordo com diferentes condições da rede. Como principal conclusão, os autores observaram o mesmo fenômeno observado no trabalho anterior, de que o modelo de pedido/resposta adotado pela CCN gera uma grande sobrecarga de controle na rede.
+No trabalho~\cite{6655116}, os autores propõem uma solução chamada de DASC (\textit{Dynamic Adaptive Streaming over Content centric networking}), assemelhando-se ao anterior pelo fato de utilizar o DASH em redes NDN, onde os nós transmitem pacotes de interesse para um determinado nível de qualidade do vídeo (\textit{bit-rate}) de acordo com diferentes condições da rede. Como principal conclusão, os autores observaram o mesmo fenômeno observado no trabalho anterior, de que o modelo de pedido/resposta adotado pela CCN gera uma grande sobrecarga de controle na rede.
 
-O trabalho~\cite{6666771} também se assemelha ao anterior no que diz respeito ao estudo de NDN combinada com o uso de DASH, com a diferença que se propõe o uso de uma rede P2P constituída entre nós móveis conectados em duas redes, uma celular (por exemplo, 3G) e a outra de proximidade (por exemplo, Wi-Fi Direct). Nesse contexto, os nós cooperaram entre si e sincronizam quais partes da mídia cada um irá obter via a rede celular, ao passo que os nós compartilham suas respectivas partes obtidas através da rede Wi-Fi e em modo multicast, considerando a função de roteamento baseado em nome empregada pela NDN.
+O trabalho~\cite{6666771} também se assemelha ao anterior no que diz respeito ao estudo de NDN combinada com o uso de DASH, com a diferença que se propõe o uso de uma rede P2P constituída entre nós móveis conectados em duas redes, uma celular (por exemplo, 3G) e a outra de proximidade (por exemplo, Wi-Fi Direct). Nesse contexto, os nós cooperaram entre si e sincronizam quais partes da mídia cada um irá obter via a rede celular, ao passo que os nós compartilham suas respectivas partes obtidas através da rede Wi-Fi e em modo \textit{multicast}, considerando a função de roteamento baseado em nome empregada pela NDN.
 
 Já em~\cite{6386696}, os autores adotaram uma abordagem similar aos três primeiros trabalhos anteriores, porém, em vez de utilizar DASH, utilizou-se HLS, discutido também na Seção~\ref{subsec:http-streaming}.
 
-Diferentemente dos quatro trabalhos anteriores, em~\cite{6550523}, os autores propuseram o CCN-TV,  que de fato é o único sistema efetivo de mídias ao vivo com base em uma rede CCN que se tem conhecimento atualmente. Apesar de ainda incipiente, o CCN-TV foi o primeiro a sugerir o conceito de canal de transmissão, onde em cada canal se transmite um fluxo de dados de mídia ao vivo. Porém, por usar CCN, as parte da mídia continuam sendo requisitadas individualmente através do uso do pacote de interesse, como nos trabalhos anteriores. O CCN-TV identifica as partes de uma mídia por números progressivos e sua arquitetura é definida em três módulos principais: a fase inicial (boostrap), estratégia para controle de congestionamento e o gerenciamento de retransmissão de pacotes de interesse. O módulo de fase inicial consiste em iniciar as sessões de mídia (canais) e envolve operações para encontrar uma rota para o provedor de canal mais próximo ao nó interessado em acessá-lo, além de localizar o primeiro identificador válido para uma mídia (por exemplo, o quadro I ao utilizar um codec MPEG) e assim poder iniciar a reprodução do conteúdo. Já o módulo de controle de congestionamento é baseado em uma abordagem de janela deslizante. Cada nó mantém uma uma janela deslizante de tamanho W para armazenar W partes pendentes da mídia. Um algoritmo monitora a janela removendo todas as partes da mídia que já não são mais úteis, ou seja, que já foram reproduzidas; retransmite os pacotes de interesse correspondentes a todas as partes da mídia que ainda não chegaram após um dado tempo de expiração; e transmite um novo pacote de interesse para novas partes da mídia à medida que novos espaços se tornam disponíveis na janela. Por fim, o módulo de gerenciamento de pacotes de interesse permite a retransmissão de um pacote de interesse diretamente ao nó transmissor do pacote de dados, evitando que roteadores entre o nó interessado em obter o pacote de dados bloqueie o repasse do pacote de interesse por já está registrado em sua PIT.
+Diferentemente dos quatro trabalhos anteriores, em~\cite{6550523}, os autores propuseram o CCN-TV, que é o único sistema de distribuição de mídias ao vivo existe, com base em uma rede CCN. Apesar de ainda incipiente, o CCN-TV foi o primeiro a sugerir o conceito de canal de transmissão, onde em cada canal se transmite um fluxo de dados de mídia ao vivo. Porém, por usar CCN, as parte da mídia continuam sendo requisitadas individualmente através do uso do pacote de interesse, como nos trabalhos anteriores. O CCN-TV identifica as partes de uma mídia por números progressivos e sua arquitetura é definida em três módulos principais: a fase inicial (\textit{boostrap}), estratégia para controle de congestionamento e o gerenciamento de retransmissão de pacotes de interesse. O módulo de fase inicial consiste em iniciar as sessões de mídia (canais) e envolve operações para encontrar uma rota para o provedor de canal mais próximo ao nó interessado em acessá-lo, além de localizar o primeiro identificador válido para uma mídia (por exemplo, o quadro I ao utilizar um codec MPEG) e assim poder iniciar a reprodução do conteúdo. Já o módulo de controle de congestionamento é baseado em uma abordagem de janela deslizante. Cada nó mantém uma uma janela deslizante de tamanho W para armazenar W partes pendentes da mídia. Um algoritmo monitora a janela removendo todas as partes da mídia que já não são mais úteis, ou seja, que já foram reproduzidas; retransmite os pacotes de interesse correspondentes a todas as partes da mídia que ainda não chegaram após um dado tempo de expiração; e transmite um novo pacote de interesse para novas partes da mídia à medida que novos espaços se tornam disponíveis na janela. Por fim, o módulo de gerenciamento de pacotes de interesse permite a retransmissão de um pacote de interesse diretamente ao nó transmissor do pacote de dados, evitando que roteadores entre o nó interessado em obter o pacote de dados bloqueie o repasse do pacote de interesse por já está registrado em sua PIT.
 
 Após a definição da arquitetura, os autores avaliaram o CCN-TV com vistas ao desempenho do sistema levando em consideração a quantidade de largura de banda necessária para executar o serviço de transmissão de um fluxo de dados ao vivo; o tempo de expiração utilizado no mecanismo de controle de congestionamento; o atraso de inicio de reprodução e quão efetivo é a política de \textit{cache} adotada no CCN para disseminação das partes de uma mídia. Como resultado, concluiu-se que os recursos de \textit{cache} empregado pela CCN pouco contribui para uma melhor disseminação das partes de uma mídias ao vivo, pois estas são transientes. Entretanto, os autores observaram que a política de gerenciamento da PIT modificada, alinhada ao modelo de controle de congestionamento baseado em janela deslizante, pode reduzir a sobrecarga de controle gerada por excessivas transmissões de pacotes de interesse.
 
@@ -1404,7 +1169,7 @@ Após a definição da arquitetura, os autores avaliaram o CCN-TV com vistas ao des
 %
 % http://www.researchgate.net/publication/253239944_Dynamic_Adaptive_Streaming_over_CCN_A_Caching_and_Overhead_Analysis
 
-Como se pode observar, pode-se afirmar que os atuais trabalhos no contexto de NDN e distribuição de mídias ao vivo em larga escala ainda não existentes, sendo a maioria focados em aplicar o protocolo DASH ou o HLS sobre a infra-estrutura da NDN, que em sua essência utiliza um modelo de serviço de pedido/resposta, ou seja, \textit{pulling}.
+% Como se pode observar, pode-se afirmar que os atuais trabalhos no contexto de NDN e distribuição de mídias ao vivo em larga escala ainda não existentes, sendo a maioria focados em aplicar o protocolo DASH ou o HLS sobre a infra-estrutura da NDN, que em sua essência utiliza um modelo de serviço de pedido/resposta, ou seja, \textit{pulling}.
 
 \subsubsection{Comparação entre as redes ICN (em especial a NDN) e o GMTP para distribuição de mídias ao vivo:}
 
@@ -1412,19 +1177,21 @@ Com relação a arquitetura de rede ICN, em especial a NDN, e o GMTP, enumeram-se 
 
 \begin{enumerate}
 
-  \item Como discutiu-se no Capítulo~\ref{cap:introducao}, as aplicações de transmissão de mídias ao vivo possuem algumas peculiaridades que precisam ser tratadas nas camadas abaixo da aplicação, sendo praticamente impossível generalizar uma infra-estrutura que sirva para fluxos de dados elásticos e inelásticos com relação ao tempo. Em geral, as redes ICN estão tendendo a considerar sua arquitetura mais genérica possível para permitir diferentes padrões de tráfego, mas isso não é trivial. Por outro lado, no GMTP, decidiu-se partir dos requisitos específicos dos sistemas de distribuição de mídias ao vivo e questionar sobre quais funções que se utilizam nesses sistemas que podem ser generalizadas pela rede. Sendo assim, o GMTP adiciona à rede IP, originalmente proposta para transportar fluxos de dados em sua maioria elásticos, a capacidade de prover funções comuns a todas as aplicações que transmitem fluxos de dados inelásticos.
+  \item Como discutiu-se no Capítulo~\ref{cap:introducao}, as aplicações de transmissão de mídias ao vivo possuem algumas peculiaridades que precisam ser tratadas nas camadas abaixo da aplicação, sendo praticamente impossível generalizar uma infra-estrutura que sirva para fluxos de dados elásticos e inelásticos. Em geral, as redes ICN estão tendendo a considerar sua arquitetura mais genérica possível para permitir diferentes padrões de tráfego, mas isso não é trivial. Por outro lado, no GMTP, decidiu-se partir dos requisitos específicos dos sistemas de distribuição de mídias ao vivo e questionar sobre quais funções que se utilizam nesses sistemas que podem ser generalizadas pela rede. Sendo assim, o GMTP adiciona à rede IP, originalmente proposta para transportar fluxos de dados em sua maioria elásticos, a capacidade de prover funções comuns a todas as aplicações que transmitem fluxos de dados inelásticos.
 
-  \item Como consequência do item anterior, a rede NDN transmite mais pacotes de controle do que o GMTP por ter uma proposta de modelo de serviço mais genérico, baseado em \textit{pulling}. No GMTP, propõe-se um modelo de serviço híbrido \textit{push-pull}. Por ter um modelo de serviço mais específico para sistemas de distribuição de mídias ao vivo, no GMTP o mecanismo de \textit{cache} das partes de uma mídia é mais simples de se implementar, pois utiliza-se uma estrutura de \textit{buffer} circular e as partes da mídia são substituídas à medida que se recebe novas partes da mídia, sem a necessidade do roteador solicitar a todo instante pelos próximos pacotes de dados -- o conceito de pacote de interesse da NDN não existe para o GMTP. Em CCN, um dos grandes desafios é definir quanto tempo um dado devo permanecer em \textit{cache}. Um outro desafio é determinar se o dado em \textit{cache}, principalmente em aplicações elásticas, ainda é válido. Todas essa funções, aumentam a sobrecarga de controle nas redes ICN, em geral.
+  \item Como consequência do item anterior, a rede NDN transmite mais pacotes de controle do que o GMTP por ter uma proposta de modelo de serviço mais genérico, baseado em \textit{pulling}. No GMTP, propõe-se um modelo de serviço híbrido \textit{push-pull}. Por ter um modelo de serviço mais específico para sistemas de distribuição de mídias ao vivo, no GMTP o mecanismo de \textit{cache} das partes de uma mídia é mais simples de se implementar, pois utiliza-se uma estrutura de \textit{buffer} circular, substituindo-se as partes da mídia à medida que se recebe as subsequentes, sem a necessidade do roteador transmitir, a todo instante, o equivalente ao que seria um pacote de interesse -- o conceito de pacote de interesse da NDN não existe para o GMTP. Em CCN, um dos grandes desafios é definir quanto tempo um dado deve permanecer em \textit{cache}. Um outro desafio é determinar se o dado em \textit{cache}, principalmente em aplicações elásticas, ainda é válido. Todas essa funções, aumentam a sobrecarga de controle nas redes ICN e, como já se sabe, em redes IP essas questões não é um problema. O GMTP apenas instrui os roteadores a realizar uma política mais sofisticada de repasse quando um pacote de dados é alocado na fila de roteamento, aproveitando a oportunidade de repassar o mesmo pacote em rotas adicionais, de acordo com a demanda.
 
-  \item Para executar as aplicações de rede existentes atualmente na Internet sobre uma rede ICN, serão necessárias alterações mais específicas nos sistemas de transmissão de mídias ao vivo. Em ICN, faz-se necessário que todas as aplicações mudem a lógica de requisição das partes da mídia, sendo necessário também alterar o esquema de identificação do conteúdo de interesse, que passa a ser por nome. Além disso, há uma inversão na forma que uma aplicação obtém os dados quando se utiliza NDN. Em NDN, o nó cliente controla praticamente todos as funções de transporte de dados, como controle de perda/erro, controle de congestionamento e fluxo etc. Entretanto, atualmente, um nó cliente para obter um conteúdo multimídia, estabelece uma conexão informando implicitamente que deseja receber aquele fluxo, pois o endereço IP e porta já define indiretamente qual é o conteúdo. Já no caso do GMTP, praticamente não será necessário alterar a aplicação, apenas mudar o valor do parâmetro do protocolo de transporte atual (em geral, UDP), pelo valor do protocolo GMTP. No GMTP, extrapola-se os limites da constituição de uma rede P2P. Em vez das aplicações realizarem tal atividade, este procedimento é realizado internamente pelo GMTP. Com isso, no GMTP, não se delega à aplicação qualquer atividade específica sobre obtenção do conteúdo de interesse, ao passo que o esquema de requisição continua o mesmo, ou seja, solicitação por endereço IP e porta, com a diferença que o GMTP internamente gera um nome (\textit{hash}) combinando esses dois parâmetros e o utiliza para implementar funções de compartilhamento de um mesmo fluxo de dados ao vivo.
+%   \item Em ICN, especialmente em NDN, ainda não se sabe qual tratamento será feito caso nós maliciosos realizem um ataque de negação de serviço distribuída ao inundar os roteadores transmitindo demasiadamente 
 
-  \item Nas redes ICN, o conceito de comunicação fim-a-fim foi abolido e sequer utiliza-se o mecanismo de endereçamento IP. Isto pode gerar um conflito sobre até quando um pacote de interesse circulará até encontrar um roteador que possua o pacote de dados correspondente. Além disso, as ICN literalmente descarta mais 40 anos de pesquisas voltadas para redes IP. Alterar toda a camada de rede por roteadores habilitados com as novas propostas, ainda embrionárias, levará algumas décadas. No caso do GMTP, mantem-se o mesmo modelo de serviço IP e acrescenta-se melhorias focadas em distribuição de conteúdos multimídia ao vivo. Dessa forma, uma requisição feita por um nó cliente para obter um fluxo de dados ao vivo continua sendo requisitada ao servidor de origem. Se nenhum roteador interceptar o pedido, todo o processo ocorre como em uma conexão fim-a-fim tradicional. No entanto, se um roteador presente na rota entre o nó cliente e o servidor já estiver repassando o pacote de dados por aquele caminho ou para outra interface, este poderá interceptar o pedido e responder como se fosse o nó servidor.
+  \item Para executar as aplicações de rede existentes na Internet sobre uma rede ICN, serão necessárias alterações mais específicas nos sistemas de transmissão de mídias ao vivo. Em ICN, faz-se necessário que todas as aplicações mudem a lógica de requisição das partes da mídia, sendo necessário também alterar o esquema de identificação do conteúdo de interesse, que passa a ser por nome e não mais por endereço IP e número de porta. Além disso, há uma inversão na forma que uma aplicação obtém os dados quando se utiliza NDN. Em NDN, o nó cliente controla praticamente todos as funções de transporte de dados, como controle de perda/erro, controle de congestionamento e fluxo etc. Entretanto, atualmente, um nó cliente para obter um conteúdo multimídia, estabelece uma conexão informando implicitamente que deseja receber aquele fluxo, pois o endereço IP e porta já define indiretamente qual é o conteúdo. Ao perceber essa relação implícita, no GMTP, praticamente não será necessário alterar a aplicação, apenas mudar o valor do parâmetro do protocolo de transporte atual (em geral, UDP), pelo valor do protocolo GMTP. No GMTP, extrapola-se os limites da constituição de uma rede P2P na camada de aplicação. Em vez das aplicações realizarem tal função, os próprios roteadores realizam as parcerias entre si, ocorrendo no contexto de execução do GMTP. Com isso, não se delega à aplicação qualquer atividade específica sobre obtenção do conteúdo de interesse, seleção de nós, controle de congestionamento e definição de canais multicast. O esquema de requisição continua o mesmo, ou seja, os sistemas finais solicitam o conteúdo por endereço IP e porta, com a diferença que o GMTP internamente gera um nome (\textit{hash}) combinando esses dois parâmetros, utilizando-o para implementar funções de compartilhamento de um mesmo fluxo de dados ao vivo e instruir os roteadores que realizem parcerias determinadas parcerias.
 
-  \item No ICN, o mecanismo que determina a interceptação de um pacote de interesse é limitado a verificação local se o fluxo de dados já está sendo recebido ou não, sem qualquer auxílio de qualquer outro nó. Como discutiu-se, no NDN por exemplo, o nó servidor tem um papel coadjuvante, apenas respondo pacotes de dados quando recebe um pacote de interesse, sem manter estado de conexão. No GMTP, o nó servidor tem um papel importante no processo de distribuição ao auxiliar a rede a decidir qual é a melhor rota para obter um fluxo de dados com base na interceptação de duas ou mais rotas conhecidas. Isso ocorre porque no procedimento de conexão do GMTP, registra-se no pacote de pedido de conexão, os identificadores de cada roteador. Esse identificador é único em toda rede e gerado pela combinação dos endereços MAC de todas as interfaces de rede. Com isso, ao receber um pacote de pedido de conexão, o nó servidor conhece por quais roteadores o pacote passou e então sugere a intersecção de outros caminhos já conhecidos, se possível.
+  \item Nas redes ICN, o conceito de comunicação fim-a-fim foi abolido e sequer utiliza-se o mecanismo de endereçamento IP. Isto pode gerar um conflito sobre até quando um pacote de interesse circulará até encontrar um roteador que possua o pacote de dados correspondente. No caso do GMTP, uma requisição feita por um nó cliente para obter um fluxo de dados ao vivo continua sendo transmitida em direção ao servidor de origem. Se nenhum roteador interceptar o pedido, todo o processo ocorre como em uma conexão fim-a-fim tradicional. No entanto, se qualquer roteador presente na rota entre o nó cliente e o servidor já estiver repassando o pacote de dados por aquele caminho ou para outra interface, intercepta-se o pedido de conexão e responder como se fosse o nó servidor.
 
-  \item Nas redes ICN, não se tem discutido claramente sobre o uso de soluções mais avançadas de controle de congestionamento, sendo as propostas focadas em algoritmos tradicionais baseado em janelas deslizantes ou similares. Em diversas pesquisas recentes, demonstrou-se que utilizar os roteadores de rede para auxiliarem os sistemas finais no processo de controle de congestionamento, obtêm-se um melhor desempenho da rede, reduzindo-se o atraso e finalizando-se mais rapidamente os fluxos de curta duração, bem como permitindo o compartilhamento mais equânime dos recursos de rede. No GMTP, optou-se por utilizar tal abordagem, ainda estendendo-a ao permitir que o nó servidor sugira aos roteadores quais parcerias devem ser efetivadas, baseando-se na capacidade atual de transmissão dos canais conhecidos (no item anterior). Já nas ICNs, com pôde-se constatar, as pesquisas do estado da arte estão concentradas em fazer com o que o nó servidor disponibilize múltiplos fluxos de dados codificados em diferentes \textit{bit-rates}, ao passo que os nós clientes devem monitorar sua capacidade de recepção e requisitar o fluxo apropriado. Como já discutiu-se, o monitoramento lógico da capacidade de transmissão dos sistemas finais baseado apenas nas perdas de dados e atraso não é uma solução efetiva devido à dinâmica de entrada e saída dos nós da rede.
+  \item No ICN, o mecanismo que determina a interceptação de um pacote de interesse é limitado a verificação local se o fluxo de dados já está sendo recebido ou não, sem qualquer auxílio de qualquer outro nó. Por exemplo, no NDN, o nó servidor tem um papel coadjuvante, apenas respondo pacotes de dados quando recebe um pacote de interesse, sem manter estado de conexão. No GMTP, o nó servidor tem um papel importante no processo de distribuição ao auxiliar a rede a decidir qual é a melhor rota para obter um fluxo de dados com base na interceptação de duas ou mais rotas conhecidas. De fato, há uma troca de serviços, pois o roteador também auxilia o servidor informando qual deve ser sua taxa ideal de transmissão. Já o auxilio do servidor à rede ocorre porque no procedimento de conexão do GMTP, registra-se no pacote de pedido de conexão, os identificadores de cada roteador. Esse identificador é único em toda rede e gerado pela combinação dos endereços MAC de todas as interfaces de rede. Ao receber um pacote de pedido de conexão, o nó servidor conhece por quais roteadores o pacote passou e então sugere a intersecção de outros caminhos já conhecidos, se possível, caso contrário, responde normalmente ao nó cliente.
 
-  \item Em NDN, requisitar cada pacote de dados pode introduzir uma significativa sobrecarga à rede, devido ao uso de largura de banda para transmitir a quantidade de pacotes de interesse igual à quantidade de pacotes de dados, aumentando a ocupação dos \textit{buffers} dos roteadores. Como consequência, a rede NDN pode apresentar problemas de desempenho e escalabilidade, podendo apresentar significativos níveis de congestionamento. Para sistemas de distribuição de mídias ao vivo, isto pode ser ainda mais grave, pois estão sujeitos às condições de rede do canal de \textit{upload} (do nó receptor ao nó transmissor, já que o nó cliente controla os serviços de transporte). Sendo assim, em caso de congestionamento no canal de \textit{upload}, os pacotes de interesse podem sofrer atrasos ou descartes. Consequentemente, a rede não será capaz de transmitir os pacotes de dados correspondentes, em tempo hábil ou podem nunca transmitir, caso se perca o pacote de interesse. Sendo assim, mesmo em cenários onde o canal de \textit{download} esteja livre, os nós receptores podem experimentar uma baixa qualidade de serviço devido às perdas de pacotes de interesse, não necessariamente de pacotes de dados. Esses cenários são típicos em serviços de conexões residenciais à Internet, onde os \textit{enlaces} são geralmente assimétricos em termos de largura de banda, por exemplo, ADSL. Atualmente, existe um estudo sobre introduzir uma função chamada de agregação de pacotes de interesse [21]. Nesse caso, um único pacote de interesse agregaria a requisição de múltiplos pacotes de dados. Entretanto, essa proposta ainda não é oficial e acarreta em outro problema. Por exemplo, a perda de um pacote de interesse agregado resultará na perda de múltiplos pacotes de dados, impactando diretamente na qualidade de serviço de uma aplicação de transmissão de mídia ao vivo. No ponto de vista prático, o usuário experimentará uma rajada de perda de pacotes de dados e a reprodução contínua será comprometida. Além disso, os pacotes de dados em NDN tem MTU de \ut{8800}{bytes} ou de \ut{4096}{bytes}, ao passo que em redes IP utiliza MTU, em geral, de \ut{1500}{bytes}. Isso significa que uma perda de pacote em uma NDN se perde mais dados do que em uma rede IP.
+  \item Nas redes ICN, não se tem discutido claramente sobre o uso de soluções mais avançadas de controle de congestionamento, sendo as propostas focadas em algoritmos tradicionais baseado em janelas deslizantes ou similares. Em diversas pesquisas recentes, demonstrou-se que utilizar os roteadores de rede para auxiliarem os sistemas finais no processo de controle de congestionamento, obtêm-se um melhor desempenho da rede, reduzindo-se o atraso e finalizando-se mais rapidamente os fluxos de curta duração, bem como permitindo o compartilhamento mais equânime dos recursos de rede. No GMTP, optou-se por utilizar tal abordagem, ainda estendendo-a ao permitir que o nó servidor sugira aos roteadores quais parcerias devem ser efetivadas, baseando-se na capacidade atual de transmissão dos canais conhecidos. Já nas ICNs, com pôde-se constatar, as pesquisas do estado da arte estão concentradas em fazer com o que o nó servidor disponibilize múltiplos fluxos de dados codificados em diferentes \textit{bit-rates}, ao passo que os nós clientes devem monitorar sua capacidade de recepção e requisitar o fluxo apropriado. Porém, monitorar a capacidade de transmissão dos sistemas finais baseado apenas nas perdas de dados e atraso não é uma solução efetiva devido à dinâmica de entrada e saída dos nós da rede (\textit{churn}).
+
+  \item Em NDN, requisitar cada pacote de dados pode introduzir uma significativa sobrecarga à rede, devido ao uso de largura de banda para transmitir a quantidade de pacotes de interesse igual à quantidade de pacotes de dados, aumentando a ocupação dos \textit{buffers} dos roteadores. Como consequência, a rede NDN pode apresentar problemas de desempenho e escalabilidade, podendo apresentar significativos níveis de congestionamento. Para sistemas de distribuição de mídias ao vivo, isto pode ser ainda mais grave, pois estão sujeitos às condições de rede do canal de \textit{upload} (do nó receptor ao nó transmissor, já que o nó cliente controla os serviços de transporte). Sendo assim, em caso de congestionamento no canal de \textit{upload}, os pacotes de interesse podem sofrer atrasos ou descartes. Consequentemente, a rede não será capaz de transmitir os pacotes de dados correspondentes em tempo hábil ou nunca transmitir, caso o pacote de dado correspondente expire no cache de todos os roteadores, levantando questões sobre qual é o melhor momento de desistir de requisitá-lo e requisitar o próximo. Sendo assim, mesmo em cenários onde o canal de \textit{download} esteja livre, os nós receptores podem experimentar uma baixa qualidade de serviço devido às perdas de pacotes de interesse, não necessariamente de pacotes de dados. Esses cenários são típicos em serviços de conexões residenciais, onde os \textit{enlaces} são geralmente assimétricos em termos de largura de banda, por exemplo, ADSL. Atualmente, existe um estudo sobre introduzir uma função chamada de agregação de pacotes de interesse~\cite{6691438}. Nesse caso, um único pacote de interesse agregaria a requisição de múltiplos pacotes de dados. Entretanto, essa proposta ainda não é oficial e acarreta em outro problema. Por exemplo, a perda de um pacote de interesse agregado resultará na perda de múltiplos pacotes de dados, impactando diretamente na qualidade de serviço de uma aplicação de transmissão de mídia ao vivo. No ponto de vista prático, o usuário experimentará uma rajada de perda de pacotes de dados e a reprodução contínua será comprometida. Além disso, os pacotes de dados em NDN tem MTU de \ut{8800}{bytes} ou de \ut{4096}{bytes}, ao passo que em redes IP utiliza MTU, em geral, de \ut{1500}{bytes}, ou seja, uma perde de um único pacote em NDN, perde-se mais dados de aplicação se comparado às redes IP.
 
 \end{enumerate}
 
@@ -1598,6 +1365,6 @@ Com relação a arquitetura de rede ICN, em especial a NDN, e o GMTP, enumeram-se 
 \section{Sumário do Capítulo}
 \label{sec:trabrel-sumario}
 
-Neste capítulo, apresentou-se uma avaliação crítica acerca de um conjunto de protocolos e sistemas para distribuição de mídias ao vivo, considerando-se apenas os aspectos arquiteturais e de modelo de serviço de cada solução. Discutiu-se sobre as propostas julgadas como concorrentes ao \mudccp, contrapondo-se as limitações de cada solução frente ao GMTP, esclarecendo-as individualmente.
+Neste capítulo, apresentou-se uma avaliação crítica acerca de um conjunto de propostas para distribuição de mídias ao vivo, considerando-se os aspectos arquiteturais e de modelo de serviço de cada solução. Destacou-se as propostas concorrentes, contrapondo-se as limitações de cada uma frente ao GMTP, esclarecendo-as individualmente.
 
-Após o detalhamento do funcionamento do protocolo GMTP no próximo capítulo, no Capítulo~\ref{cap:resultado}, retoma-se outra discussão comparativa, porém sobre o desempenho do GMTP frente aos seus principais concorrentes: o Denacast e o CCN-TV.
+No próximo capítulo, detalha-se o funcionamento do GMTP e, no Capítulo~\ref{cap:analisedesemp}, retoma-se outra discussão comparativa, porém exclusivamente sobre o desempenho do GMTP frente aos seus principais concorrentes: o Denacast e o CCN-TV.

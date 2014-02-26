@@ -1,0 +1,795 @@
+\chapter{Considerações Finais}
+\label{cap:conclusao}
+
+ De fato, a combinação das funções do GMTP e o foco no transporte de fluxos de dados de mídias ao vivo, faz do GMTP um protocolo inédito. No ponto de vista teórico, pode-se assim afirmar que o GMTP é uma evolução significativa do estado da arte no contexto de redes IP, posicionado paralelamente às novas arquiteturas de rede para a Internet do futuro, ainda necessitando de melhorias para distribuição de mídias ao vivo, circundadas de incertezas sobre sua aplicabilidade para este fim.
+
+
+limitação de segurança: o servidor pode gerar overflow no roteador?
+
+
+A definição do protocolo \mudccp\space se baseou nos requisitos e estado da
+arte/prática dos sistemas de distribuição de conteúdos
+(Capítulo~\ref{cap:fundamentacao}), bem como no levantamento das proposta
+disponíveis no estado da arte, como as discutidas nas seções anteriores deste
+capítulo. Como complemento, quatro questionamentos foram primordiais motivadores
+para o projeto de tal protocolo, são eles:
+
+\begin{enumerate}
+
+  \item Quais as funcionalidades dos sistemas de distribuição de conteúdos ao
+vivo que poderiam que ser implementadas na camada de aplicação por falta de um
+protocolo de transporte de dados ideal para esse tipo de aplicação?
+
+  \item Quais dessas funcionalidades podem ser implementadas na camada de
+transporte a fim de torná-las padronizadas para todas as aplicações existentes,
+evitando-se o retrabalho de desenvolvimento?
+
+  \item Como se pode, de forma eficiente, distribuir um mesmo fluxo de
+dados multimídia partindo de um servidor para múltiplos nós clientes conectados
+a diferentes redes, considerando o fato de que diferentes aplicações clientes
+podem obter o mesmo fluxo de dados?
+
+  \item Seria possível utilizar informações sobre o congestionamento nas rotas entre o nó servidor e os nós clientes para sugerir parcerias entre os roteadores de rede, não mais entre os sistemas finais, como se faz atualmente?
+
+\end{enumerate}
+
+Diante dessas questões, notou-se que ao tentar resolver problemas relacionados
+a cada um desses questionamentos, os desenvolvedores desse tipo de sistema
+enfrentam situações reincidentes, já experimentadas por outras equipes de
+desenvolvimento. No \mudccp, propõe-se concentrar as principais funções dos
+sistemas de transmissão de mídias ao vivo em um único protocolo de rede. Busca-se contribuir com a evolução do estado da arte e da prática ao desacopla o processo de transporte de datagramas IP, contendo partes da mídias, da forma como estas são exibidas ao usuário final, por meio de uma aplicação cliente, que se torna coadjuvantes nesse processo.
+
+Nesse sentido, o GMTP está posicionado de tal forma que suas funções são disponibilizadas para diferentes processos de aplicação em execução em um
+sistema operacional, de modo que se torna independente de linguagem de
+programação, bibliotecas de funções e dos mais variados tipos de dispositivos
+de usuários finais (desktops, notebooks, tablets, smartphones, smartTVs, etc.). Além disso, torna-se independente da mobilidade dos usuários e pode ser embarcado no núcleo de qualquer sistema operacional moderno, promovendo-se funções para a camada de aplicação cada vez mais estáveis e eficientes, podendo ser aprimoradas com o passar do
+tempo sem causar um impacto direto à camada de aplicação, tal como tem ocorrido
+com o protocolo TCP ao longo de 33 anos de existência (1981--2014+).
+
+
+
+
+
+Com esta visão, realizou-se um estudo sobre as principais estratégias adotadas
+pelos desenvolvedores de sistemas de transmissão de conteúdos multimídia ao
+vivo e o resultado foi o seguinte:
+
+\begin{enumerate}
+
+  \item constatou-se que os sistemas mais robustos de distribuição de conteúdos
+multimídia são baseados em arquiteturas híbridas P2P/CDN. Isto ocorre porque
+se obtém escalabilidade do número de usuários e redução de custos com
+infra-estrutura de rede por meio das redes P2P; e facilidade no gerenciamento e
+maior estabilidade de disponibilização dos serviços, por meio
+das CDNs~\cite{Xu04acdn-p2p,Dongyan2006,Meskovic2012,4012578,Huang:2008:UHC:1496046.1496064,6035830,5764567,5343509,4797271};
+
+  \item observou-se que nos sistemas desse tipo não se viabiliza o acesso a um
+conteúdo ao vivo por parte de um usuário levando-se em consideração apenas
+o seu interesse em assistir a um evento ao vivo (\textit{abordagem centrada
+no conteúdo}). Nas soluções existentes, a forma de acesso ao conteúdo
+de um evento ao vivo é dependente do local físico (servidor) onde tal conteúdo
+está sendo transmitido (\textit{abordagem centrada no hospedeiro}), sendo
+cruscial saber de qual nó fonte o evento está sendo recebido;
+
+  \item dado que na maioria dos sistemas de distribuição de conteúdos ao vivo
+se transmite fluxos de dados UDP, tais sistemas não executam mecanismos para
+controle de congestionamento. Desta forma, se isto for necessário em seus
+sistemas, os desenvolvedores são forçados a executar algoritmos de controle de
+congestionamento na camada de aplicação, sem qualquer padronização na forma como
+os fluxos de dados são controlados, com diferentes equipes de desenvolvimento
+implementando, das mais variadas formas, a mesma funcionalidade presente nesse
+tipo de aplicação, sem qualquer compartilhamento desse
+esforço~\cite{REF,REF,REF,LEDBAT};
+
+  \item não há uma forma efetiva de centralizar e/ou disponibilizar as boas
+soluções e práticas (algoritmos) para as diferentes funcionalidades empregadas
+nesse tipo de sistema. De fato, existem diversos \textit{middlewares} de
+desenvolvimento de sistemas de distribuição de conteúdo que tentam suprir as
+limitações existentes dos protocolos da camada de transporte, tratando-se de
+soluções intermediárias e fragmentadas para o transporte de dados multimídia nas
+redes de computadores, salvas suas devidas contribuições científicas e
+reais~\cite{REF,REF,REF,REF}.
+% ~\cite{kohler_designing_2006,RFC4336}
+
+\end{enumerate}
+
+
+
+
+
+
+
+
+
+==============================
+
+
+
+
+Futuro:
+ - if the video is encoded with multiple bit rate (MBR) streams [8] or scalable
+stream. Citar o MDC ?? Multiple Description ????
+ - adaptação de fluxo por descarte de pacotes que carregam quadros B
+ - ConEx
+ - Analisar melhor o per-flow state para calcular o RTT
+ - Estudar uma nova equação para o GMTP-MCC (Baseada em Cubic)?
+ - Avaliar com o ConEx???
+ - Terminar a implementação no kernel do Linux
+ - RFC
+ - Estudar a possibilidade de determinar padrões de parcerias (troca de
+tráfego, disponibilidade por dia/hora, usar parceiros ociosos etc.)
+ - Distribuição de registros de participação entre os nós da rede CDN
+ - Um ataque pode gerar pacotes errados de um fluxo P e parar a recepção. Tem que
+pensar em um mecanismo de blacklist e reputação.
+Limitações:
+ - Repetição de UUID
+%  - Utilizou-se uma única taxa de transmissão (tanto de up quanto de down),
+% diferenciar isso pode fazer diferença
+ - Muitas msgs no canal de controle
+ - Dizer que os estudos realizados na formação de redes P2P podem servir para
+pesquisas/trabalhos futuros
+ - Futuro: nem sempre colocar os ids de todos os roteadores no pacote register,
+pode-se pensar em algo otimizado (apesar de que um roteador pode fazer parte de
+caminhos diferentes, portanto, pode estar sempre em posições diferentes, que
+isso a necessidade de sempre colocar sua posição no pacote register. Isso pode
+ser melhorado?).
+ - Futuro: Trabalho futuro vanets
+ - Futuro: aplicar o ALTO?
+ - Futuro: adaptação de fluxo
+
+
+% Neste capítulo apresentam-se as considerações finais deste trabalho.
+% Inicialmente será apresentado o estado de desenvolvimento deste trabalho com
+% algumas conclusões preliminares sobre a proposta do \mudccps aqui apresentada.
+% Por fim, são apresentadas as atividades futuras e o cronograma para a consecução
+% dos objetivos definidos.
+
+Os sistemas para transmissão de mídias ao vivo vêem se tornando uma importante
+solução para disseminação da informação e entretenimento pela Internet.
+Esses sistemas fazem parte de uma categoria de aplicações chamada de IPTV e têm
+atraído a atenção dos usuários porque permitem o livre acesso a conteúdos antes
+possíveis apenas através dos sistemas tradicionais de TV, que exigem altos
+custos de manutenção principalmente do usuário final.
+
+Para permitir o funcionamento desses sistemas, utilizam-se basicamente três
+métodos de transmissão. No primeiro utiliza-se o modelo tradicional
+cliente-servidor, hoje em dia escasso devido às limitações de suportar
+quantidades significativas de nós receptores em uma transmissão. No segundo
+método, utiliza-se redes de distribuição de conteúdo, que tem altos custos
+operacionais e por conseguinte apenas grandes empresas as utilizam. E o terceiro
+método e mais promissor, o uso de sistemas cooperativos P2P ou P2-IPTV.
+
+Nos sistemas P2-IPTV, os nós interessados por uma transmissão cooperam no
+esforço para disseminar o conteúdo multimídia entre si através de uma rede de
+sobreposição. Tal método tem chamado atenção dos pesquisadores e provedores de
+serviços, permitindo-se a transmissão de mídias ao vivo em larga escala sem
+sobrecarregar as fontes geradoras e seus canais de transmissão. Isto porque
+otimiza-se o uso de recursos computacionais já que não é necessário alocar
+banda de rede (primeiro método) e evita-se ter que distribuir e aumentar o
+número de nós replicadores (segundo método) proporcionalmente ao número de nós
+interessados por uma determinada transmissão.
+
+Apesar da existência de sistemas que exploram eficientemente o cooperativismo
+entre os nós participantes de uma transmissão, tais sistemas continuam à mercê
+de protocolos de transportes tradicionais (TCP, UDP, DCCP e SCTP), que não foram
+projetados para transmitir dados multimídia em larga escala.
+
+% A fim de suprir as limitações desses protocolos, os desenvolvedores implementam
+% mecanismo para utilizar os recursos de rede de forma mais eficiente.
+% Todavia, estas soluções
+% são paleativas porque são disseminadas em forma de sistemas ou protocolos de
+% aplicação, sendo impossível evitar a pulverização e fragmentação das mesmas,
+% aumentando-se a complexidade de implantação de uma solução unificada em larga
+% escala na Internet.
+
+\section{Conclusões}
+
+\section{Benefícios e Aplicabilidade}
+
+Nesta seção, apresentam-se os benefícios e justificativas para diversas tomadas
+de decisões realizadas no processo de especificação do GMTP.
+
+O uso do \mudccps nas aplicações de distribuição de mídia ao vivo fomenta
+benefícios em três vertentes: para a rede, para o desenvolvedor da aplicação
+e para os usuários interessados em reproduzir uma mídia ao vivo.
+
+Considerando-se as discussões realizadas nas Seção~\ref{sec:problematica} e
+os requisitos dos sistemas de transmissão de mídia em tempo real, o \mudccps
+atende-os na medida em que:
+
+- FALAR DA TORRE DA OPERADORA DE CELULAR E MOBILIDADE
+
+\begin{itemize}
+
+  \item possibilita que os sistemas de transmissão de mídia ao vivo obtenham
+um melhor desempenho quanto a escalabilidade do número de usuários e
+possivelmente na qualidade da experiência do usuário (\textit{Quality of
+Experience} -- QoE). Nesse aspecto, o \mudccps é capaz de identificar a melhor
+forma que o conteúdo será transportado pela rede, permitindo-se o uso do modo de
+transmissão multicast sempre que possível ou de múltiplos fluxos unicast caso
+contrário, mas não proporcional ao número de clientes interessados;
+
+  \item permite que as aplicações façam uso de soluções estáveis e largamente
+testadas, uma vez adicionadas ao protocolo em questão. Neste caso, diferentes
+equipes de desenvolvimento podem adicionar e testar suas propostas em um
+protocolo de rede que, uma vez consideradas estáveis podem ser compartilhadas
+entre os diferentes sistemas. Até mesmo soluções já implementadas nos sistemas
+existentes podem ser portadas para o \mudccp;
+
+  \item padroniza a forma como os fluxos de dados multimídia gerados pelos
+sistemas considerados são transportados na Internet, incluindo aspectos de
+controle de congestionamento e compartilhamento desses fluxos de dados entre
+os nós participantes de uma transmissão.
+% , além de um arcabouço que permite
+% estender o protocolo por meio da adição de novos algoritmos;
+
+  \item indiretamente diminui os fluxos de dados na rede sem qualquer controle
+de congestionamento, pois aplicações para distribuição de mídia ao vivo
+atualmente fazem uso do protocolo UDP ou variantes;
+
+  \item flexibilidade no acesso a rede por parte dos nós participantes, pois
+eles podem entrar e sair da rede a qualquer momento, realizando parcerias com um
+subconjunto de nós participantes a fim de receber o conteúdo multimídia
+interessado. Neste caso específico, a estratégia de distribuição empregada no
+referido protocolo naturalmente reduz o impacto do churn, uma vez que os nós
+clientes passam a ter uma participação menos importante no processo de
+distribuição de uma mídia;
+
+  \item elimina ou pelo menos inibe a presença de nós \textit{free-riders} na
+rede, uma vez que todo nó \mudccps é obrigado a compartilhar a mídia a partir
+do momento que começa recebe-la;
+
+  \item disponibiliza uma solução unificada que permite o uso da API padrão de
+\textit{sockets} BSD, o que facilita e acelera a adaptação de aplicações
+existentes para usar o GMTP. Além disso, permite-se que as aplicações continuem
+utilizando outros padrões de redes definidos pela IETF, tais como o RTP;
+
+  \item unifica as aplicações clientes no ponto de vista do processo de conexão
+e obtenção dos dados, uma vez que todo esse processo ocorre na camada de
+transporte sem qualquer influência da aplicação. Isto significa que se existir
+um nó executando um cliente do sistema PPLive e um outro cliente do sistema
+SopCast, portanto desenvolvido por equipes diferentes, ambos ainda sim serão
+compatíveis e capazes de cooperar entre si na obtenção do fluxo de mídia de
+interesse comum.
+
+\end{itemize}
+
+De uma forma geral, dentre os diversos sistemas P2P para transmissão de mídia ao
+vivo que podem se beneficiar com o uso do \mudccp, destacam-se os baseados em
+uma arquitetura em malha e sem organização rígida dos nós participantes do
+sistema. Isto também se aplica a todas as variantes dessa arquitetura como, por
+exemplo, híbrido por encaminhamento automático e pedido explícito
+(\textit{Push-Pull}) e híbrido árvore-malha (vide
+Capítulo~\ref{cap:fundamentacao}). Na perspectiva das aplicações de rede para
+distribuição de conteúdos multimídia mais conhecidas, a grande maioria pode se
+beneficiar com o uso do \mudccps, especificamente as seguintes aplicações:
+Coolstreaming~\ref{REF}, LiveSky, Sopcast~\cite{fallica_quality_2008}, o
+PPLive~\cite{hei_insights_2006} e o
+GridMedia~\cite{li_zhao_gridmedia:_2005,zhang_peer--peer_2005}.
+
+\section{Perguntas Frequentes}
+
+, principalmente no tocante aos frequentes
+questionamentos realizados
+durante as palestras sobre o GMTP ministradas pelo autor
+
+- Por que um protocolo de rede, invés de um middleware?
+1 - porque visualizei o GMTP como a forma primitiva de acesso, podendo ser
+acomplado em aplicações simples como sistemas mais avançados, que podem fazer
+uso de middlewares já existentes
+2 - a necessidade de executar algoritmos na camada de rede obriga uma interface
+de comunicação disponível na camada de transporte
+
+- Como seria a integração com o ConEx? Por que não foi utilizado?
+
+- Pode ocorrer a inundação de um roteador próximo do servidor?
+  Não, pois quanto mais conexões forem enviadas para s, mais roteadores
+distantes de s interceptará o pedido de conexão
+
+- Por que utilizar roteadores?
+
+- Qual a diferença entre NAT e o processo de conexão do GMTP?
+  Em conexões NAT, os fluxos não são compartilhados (o roteador não conhece o
+conteúdo, mas fim o host). Em NAT ocorre apenas tradução de nomes, com o GMTP é
+muito mais do que isso (controle de congestionamento e o compartilhamento do
+fluxo), além da parte que interceptação de requisições para obter P entre
+roteadores. Falar do canal multicast, o NAT não faz isso
+
+  Estou propondo o que posso chamar de um NAT distribuído pelo nome do fluxo,
+(ou seja, porém com conhecimento do conteúdo)? Distribuído porque todos os
+repassadores interceptam, pedem e repassam.
+
+  Não tem nada em todos os roteadores
+
+- Qual o impacto do desempenho em um roteador?
+  Falar do Mikrotik, 36 portas, cada uma com um processador dedicado de 1.5Ghz
+e 16GB de memória.
+
+- O mal funcionamento (intencional) de um nó repassador, pode quebrar toda a
+lógica do GMTP para formação de parceria?
+  Sim, da mesma forma que o mal funcionamento do roteador pode quebrar o
+funcionamento do TCP, UDP, HTTP etc, basta para isso, tal roteador passar a
+desencapsular os cabeçalhos de tais pacotes e alterar seus cabeçalhos.
+
+- Qual o processo ideal para o deploy do GMTP na Internet?
+
+- Por que gerar um id (Streaming Identifier) se IP e Porta já faz isso?
+
+- Qual é a complexidade para adaptar os protocolos existentes de transporte
+usarem o GMTP?
+
+- Não seria mais simples habilitar multicast ?
+As soluções de rede evoluiram muito para isto ser suficiente. Continuaria a
+pulverização de soluções etc etc.
+
+- Quais são as similares e diferenças entre o GMTP e o LibSwift?
+
+- O GMTP faz computação Per-Flow, se sim, quanto?
+
+- Por que não usar diretamente o traceroute? e o tcptraceroute?
+
+- Por que não manter um único RTT s?
+  R: porque todos os acks teriam que ser repassados para o nó originador do
+fluxo de dados, o que geraria uma explosão de acks e além disso, qual valor
+deveria ser considerado, já que um fluxo transmitido pelo servidor pode ser
+recebido indiretamente por muitos outros nós? Além disso, isto limitaria a taxa
+de transmissão R(t) entre um sub-caminho
+
+- O GMTP Inter pode ser exeutado em um cliente?
+
+- Em um mesmo domínio administrativo, contendo multiplos roteadores, sendo um
+de borda, é possível que ter apenas um nó repassador instalado em um roteador e
+os demais roteadores funcionarem como cliente/repassador?
+
+- Por que um cliente não pode ter mais de um repassador?
+R: o tráfego sempre passará pelo roteador padrão, onde tem o gmtp inter rodando
+
+- ... E considerando um rede com múltiplos roteadores?
+R: limitação do GMTP? tem que escolher um roteador como rota padrão
+
+- Por que usou a equação do reno?
+R: melhor seria usar cubic-like, interações com o pesquisador, contratado pela
+samsung, trabalhos futuros
+
+- Qual a vant de um r repassar?
+
+- tem que ler header de transporte? (pode colocar uma flag no campo opt do ip)
+
+- Por que tipos de pacotes, invez de flags
+
+- Por que não explorar o Anycast?
+  Só serve mais para protocolos não orientados à conexão.
+
+% Anycast é uma forma de encaminhamento onde os dados são distribuídos ``ao
+% destino o mais próximo'' ou ``melhores'' definido pelo routing da rede.
+% Compare com unicast, broadcast e multicast.
+%
+%     No unicast, há uma associação um-para-um entre o endereço de origem e
+% endereço destino.
+%     Na broadcast e no multicast, há uns um-a-muitos associação entre endereços
+% de rede e endpoints de rede: cada endereço de destino identifica um jogo dos
+% endpoints do receptor, a que toda a informação replicada.
+%     No anycast, há também uns um-à-muitos associação entre endereços de rede e
+% endpoints de rede: cada endereço de destino identifica um jogo de endpoints do
+% receptor, mas somente um deles é escolhido em todo o tempo dado para receber a
+% informação de qualquer remetente dado.
+%
+% Na Internet, o anycast é executado geralmente usando o BGP para anunciar
+% simultaneamente à mesma faixa de endereço IP do destino de muitos lugares
+% diferentes na Internet. Isto resulta nos pacotes dirigidos aos endereços de
+% destino nesta escala que está sendo distribuída ao ponto ``o mais próximo'' na
+% rede que anuncia o IP address dado do destino.
+%
+% O anycast serve melhor para os protocolos connectionless (construídos geralmente
+% sobre UDP), ao invés dos protocolos orientados à conexão, como o TCP ou o UDP
+% baseados em protocolos que mantêm seu próprio estado, já que o receptor
+% selecionado para toda a fonte dada pode mudar de tempo em tempo como a mudança
+% otimizada das rotas, quebrando silenciosamente quaisquer conversações que
+% puderem estar em andamento naquele momento. Para os protocolos stateful onde se
+% requer que uma sessão inteira use o mesmo usuário, sistemas como os geodns são
+% mais apropriados.
+%
+% Para esta razão, o anycast é usado geralmente como uma maneira fornecer a
+% disponibilidade elevada e balanceamento de carga para serviços sem estado, como
+% o acesso a dados replicados.
+
+% http://en.wikipedia.org/wiki/Anycast
+% http://tools.ietf.org/html/rfc3258
+% http://tools.ietf.org/html/rfc4786
+% http://ieeexplore.ieee.org/xpl/articleDetails.jsp?reload=true&arnumber=991450
+% http://tools.ietf.org/html/draft-mcpherson-anycast-arch-implications-00.html
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\section{Trabalhos Futuros}
+\label{sec:trabsfuturos}
+
+Como discutido no Capítulo~\ref{cap:introducao}, o problema central abordado
+nesse trabalho é concernente à carência de soluções para dar suporte ao
+transporte eficiente de dados em sistemas de transmissão de mídias ao vivo
+baseados em arquiteturas P2P. As soluções existentes, detalhadas e comparadas
+ao \mudccps no Capítulo~\ref{cap:trabalhosrelacionados}, são paleativas porque
+são disseminadas em forma de sistemas ou protocolos de aplicação que, embora
+possam ser executadas com sucesso na Internet, é impossível evitar a
+pulverização e fragmentação das mesmas,  aumentando-se a complexidade de
+implantação de uma solução unificada em larga escala na Internet.
+
+Neste contexto, considerou-se primordial a definição de uma solução
+padronizada e de implantação em escala global, que estabeleça uma camada de
+software para extensão e compartilhamento dos principais componentes que
+caracterizam um sistemas de transmissão de mídias em tempo real. Em busca de
+alcançar esse objetivo, apresentou-se o \textit{Global Media Transmission
+Protocol} (\mudccp). Este protocolo é baseado em uma arquitetura P2P para
+distribuição de fluxos de dados multimídia com um nó transmissor e milhares de
+nós receptores espalhados na Internet.
+
+Inicialmente, como detalhado nos Capítulos~\ref{cap:mudccp}
+e~\ref{cap:mudccp-tecnica}, apresentou-se um cenário geral de funcionamento do
+\mudccp, considerando-se uma topologia de rede híbrida \textit{mesh}-árvore.
+Ainda, apresentou-se uma visão geral do \mudccps com destaque para a sua
+arquitetura, discutindo sua flexibilidade em compartilhar as boas práticas
+(algoritmos) entre diferentes aplicações. Além disso, deve-se enfatizar a
+abstração proporcionada pelo \mudccps no que se refere a complexidade para
+construir uma infra-estrutura de comunicação entre os nós participantes de uma
+transmissão de mídias em redes P2P. Para tanto, permite-se a adição de novos
+mecanismos para descoberta e seleção de nós parceiros, tolerância à desconexão
+de nós e adaptação e controle de congestionamento.
+
+% Considerando-se as discussões realizadas nas Seção~\ref{sec:problematica} e
+% os requisitos dos sistemas de transmissão de mídia em tempo real, o protocolo
+% proposto nesse trabalho atende-os na medida em que:
+%
+% \begin{itemize}
+%
+%   \item possibilita que os sistemas de transmissão de mídia ao vivo obtenham um
+% melhor desempenho quanto a escalabilidade do número de usuários e possivelmente
+% na qualidade da experiência do usuário (\textit{Quality of Experience} -- QoE).
+% Nesse aspecto, o \mudccps é capaz de identificar a melhor forma que o conteúdo
+% será transportado pela rede, permitindo-se o uso do modo de transmissão multicast
+% sempre que possível ou de múltiplos fluxos unicast caso contrário, mas não
+% proporcional ao número de clientes interessados;
+%
+%   \item permite que as aplicações façam uso de soluções estáveis e largamente
+% testadas, uma vez adicionadas ao protocolo em questão. Neste caso, grupos
+% diferentes de desenvolvimento podem adicionar e testar suas propostas em um
+% protocolo de rede que, uma vez consideradas estáveis podem ser compartilhadas
+% entre os diferentes sistemas considerados aqui, até mesmo soluções já
+% implementadas nos sistemas existentes podem ser portadas para o \mudccp;
+%
+%   \item padroniza a forma como os fluxos de dados multimídia gerados pelos
+% sistemas P2-IPTV são transportados na Internet, considerando-se aspectos de
+% controle de congestionamento e compartilhamento desses fluxos de dados entre os
+% nós participantes de uma transmissão;
+%
+%   \item disponibiliza uma solução unificada que permite o uso da API padrão de
+% \textit{sockets} BSD, o que facilita a migração das aplicações existentes para
+% utilizam este novo protocolo. Além disso, permite-se que as aplicações continuem
+% utilizando outros padrões de redes definidos pela IETF, tais como o RTP e o RSTP;
+%
+%   \item unifica as aplicações clientes no ponto de vista do processo de conexão e
+% obtenção dos dados, uma vez que todo esse processo ocorre na camada de transporte
+% sem qualquer influência da aplicação. Isto significa que se existir um nó
+% executando um cliente do sistema PPLive e um outro cliente do sistema SopCast,
+% desenvolvido por equipes diferentes, ambos ainda sim serão compatíveis e capazes
+% de cooperar entre si na obtenção do fluxo de mídia de interesse comum.
+%
+% \end{itemize}
+
+De acordo com os resultados apresentados no Capítulo~\ref{cap:analisedesemp},
+seguindo as metodologias discutidas no Capítulo~\ref{cap:metodosexperimentos},
+constatou-se que o protocolo \mudccps apresenta um desempenho satisfatório no que
+diz respeito ao uso eficiente dos recursos de rede. Neste contexto, discutiu-se
+sobre o desempenho do \mudccps quanto às métricas de taxa de transmissão, atraso
+e escalabilidade do número de nós receptores, concluindo-se que o \mudccps é
+capaz de compartilhar o canal de transmissão com outros fluxos de dados (TCP),
+ao passo que ainda mantém taxas de transmissão em níveis aceitáveis para uma
+transmissão multimídia.
+
+Considerando-se os objetivos deste trabalho e os resultados obtidos até o
+momento, tem-se o cenário descrito a seguir. Os principais elementos que compõem o
+protocolo \mudccps estão definidos e implementados em um simulador de rede.
+A versão do \mudccps implementada no simulador de rede permitiu uma avaliação
+acerca do desempenho do protocolo. Entretanto tal versão não contempla a
+proposta do arcabouço para a extensão do \mudccp, que só será implementado na
+próxima versão a ser desenvolvida no núcleo do sistema operacional Linux.
+
+% Tal
+% atividade será o foco dos trabalhos a serem desenvolvidos para a conclusão
+% desta tese.
+% Por fim, considerando-se o exposto, entende-se que o \mudccps é uma proposta
+% original, ousada e com potencial real de ser adotada na Internet do futuro. É
+% original porque nenhuma outra proposta encontrada até o momento comtempla as
+% idéias e características previstas no \mudccp, principalmente no tocante aos
+% mecanismos de compartilhamento de conexão, modo híbrido de transmissão e no
+% arcabouço para extensão de funcionalidades do protocolo; é ousada porque em
+% virtude de se propor a centralização de boas práticas em prol de evitar o
+% retrabalho de soluções estáveis, a proposta do \mudccps enfraquece a idéia de
+% que certas funcionalidades devem ser obrigatoriamente implementadas na camada de
+% aplicação.
+
+% \section{Limitações do \mudccp}
+%
+% No \mudccps existem algumas limitações conhecidas, as quais são descritas a seguir:
+%
+% \begin{enumerate}
+%
+%   \item \textbf{suporte a NAT (Network Address Translation):} aplicações
+% baseadas no \mudccps não funcionarão em nós conectados à Internet através de
+% NAT. Esta limitação impede que clientes utilizarem se conectem a um servidor
+% \mudccps fora de sua rede local. Neste quesito, sugere-se estudos mais
+% aprofundados quanto ao suporte de NAT de acordo com o padrão descrito na RFC
+% 5245~\cite{RFC5245}. Por se tratar de um assunto mais técnico, propõe-se que
+% esta limitação seja corrigida futuramente em outro trabalho de pesquisa
+% (trabalho de mestrado);
+%
+%   \item \textbf{suporte a IPv6:} o \mudccps não suporta o uso do protocolo
+% IPv6. De fato, até o presente momento não se estudou qualquer aspecto que
+% limite o uso do \mudccps em conjunto com o IPv6. Todavia, mais pesquisas nesse
+% sentido devem ser desenvolvidas, o que deverá ocorrer fora do contexto deste
+% trabalho (trabalho de iniciação científica);
+%
+%   \item \textbf{relay com pouco recurso computacional:} no \mudccps não
+% especificou-se nenhum mecanismo para selecionar o nó relay de acordo com sua
+% capacidade computacional. Desta forma, no \mudccps não há preocupação
+% quanto a capacidade computacional do nó eleito para ser o relay de uma
+% determinada rede/sub-rede. Dependendo da capacidade computacional do nó relay,
+% pode-se obter um baixo desempenho quanto a qualidade da mídia sendo repassado
+% para os nós clientes desse relay. Outras pesquisas devem ser desenvolvidas
+% nesse sentido a fim de descrever a capacidade computacionais dos nós e
+% considerar este fator como critério para decidir qual nó deverá se tornar
+% relay (trabalho de mestrado);
+%
+%   \item \textbf{resiliencia quanto a ataques de poluição:} é possível alterar o
+% protocolo \mudccps para fazer um nó relay repassar pacotes de dados com um
+% conteúdo diferente daquele que foi transmitido pelo servidor ou por outro nó
+% relay. Este é um problema já conhecido nos sistemas baseados em arquiteturas
+% P2P e tem sido foco de estudos acadêmicos, como uma tese de doutorado disponível
+% através da referência~\cite{vieira_borges_2010} (trabalho de doutorado);
+%
+%   \item \textbf{formato do cabeçalho:} os campos do cabeçalho de pacotes do
+% \mudccps foram definidos com uma preocupação exclusiva no funcionamento básico
+% do protocolo, sem uma preocupação quanto ao arcabouço para adição de novos
+% algoritmos para as funcionalidades previstas no \mudccp. Como a definição do
+% arcabouço é uma atividade a ser feita ainda no contexto deste trabalho,
+% considera-se a inclusão deste tipo de funcionalidade ao protocolo \mudccp;
+%
+%   \item \textbf{suporte a algoritmos de reciprocidade:} em sistemas P2P um nó
+% concede recursos a outro de acordo com a reciprocidade. Existem pelo menos duas
+% abordagens conhecidas e utilizas nesses sistemas, a
+% \textit{Tit-for-Tat}~\cite{4604753} e a \textit{Give-to-Get}~\cite{5693827}. No
+% \mudccps não foi previsto mecanismos para extensão de algoritmos para este tipo
+% de função. Como dito anteriormente, considerando-se que o arcabouço é uma
+% atividade a ser feita ainda no contexto deste trabalho, considera-se a inclusão
+% desta função nas próximas versões do \mudccp.
+%
+% \end{enumerate}
+
+% \section{Resumo das Publicações}
+%
+% Com base nos resultados obtidos até o presente momento, alguns artigos foram
+% publicados em conferências sobre da área e em revista (\textit{magazine}). Além
+% dessas publicações, concluiu-se uma dissertação de mestrado relacionada ao tema
+% estudado, defendida no contexto do Programa de Pós-Graduação em Ciência da
+% Computação da Universidade Federal de Campina Grande~\cite{leandro-master-2008}.
+%
+% Nos documentos disponíveis em
+% \cite{leandro2008,ccnc-leandro2008,leandro-linuxmag2008,leandro-OLS-2008},
+% apresentam-se resultados e discussões acerca do uso do protocolo DCCP em
+% transmissões de dados multimídia. As pesquisas realizadas nesses trabalhos, como
+% também durante o mestrado, serviram como base para motivar a proposta do
+% \mudccps aqui apresentada.
+%
+% Já nos trabalhos disponíveis através das referências
+% \cite{leandro-WP2P-2011,leandro-Globecom-2011}, o autor apresenta discussões
+% sobre a problemática apresentada na Seção~\ref{sec:problematica},
+% contemplando-se parte dos resultados preliminares obtidos no contexto desta
+% pesquisa. Além destes, mais um trabalhos foi submetido o comitê de avaliação da
+% IEEE \textit{Wireless Communications and Networking Conference} - WCNC 2012.
+%
+% Uma aplicação direta dos resultados e contribuições desta tese está acontecendo
+% no contexto de desenvolvimento de aplicações multimídia para transmissão de
+% vídeos \textit{online}. Este projeto está sendo desenvolvido nas dependências do
+% Laboratório de Sistemas Embarcados e Computação Pervasiva, localizado na
+% Universidade Federal de Campina Grande (UFCG).
+
+% \section{Trabalhos Futuros e Cronograma}
+
+
+Os trabalhos futuros estão organizados de acordo com as seguintes atividades:
+
+\begin{enumerate}
+
+  \item \textbf{melhorias gerais na especificação do \mudccp:} faz-se
+necessário definir um diagrama de estados e transições de tal protocolo, assim
+como na estrutura do cabeçalho dos pacotes definidos;
+
+  \item \textbf{especificar e implementar o arcabouço de extensão:} definir os
+pontos de extensão do protocolo, bem como a forma como novos algoritmos são
+adicionados, carregados e descarregados do protocolo. Isto inclui a definição
+das mensagens que devem ser trocadas entre os nós para notificação de mudanças
+ou pedido de execução de algum algoritmo específico;
+
+  \item \textbf{desenvolvimento de um protótipo executável:} implementar o
+protocolo \mudccps no sistema operacional Linux de acordo com as especificações
+discutidas ao longo deste documento (capítulos~\ref{cap:mudccp} e
+~\ref{cap:mudccp-tecnica})
+
+  \item \textbf{aplicação modelo:} implementar uma aplicação que utilize os
+recursos disponíveis no \mudccp. Após avaliar a viabilidade, pretende-se
+também alterar uma implementação de algum sistema existente para utilizar o
+\mudccp;
+
+  \item \textbf{experimentos para validação dos protótipos desenvolvidos:}
+executar experimentos para analisar o funcionamento do \mudccps e da
+aplicação desenvolvidos;
+
+  \item \textbf{redação de \textit{Internet-Drafts}:} redigir duas propostas
+de RFC sobre o \mudccps e submetê-las para a IETF. A primeira proposta
+contemplará discussões acerca dos principais problemas encontrados em sistemas
+de transmissão multimídia em tempo real, bem como as motivações para a
+disponibilização de um protocolo de transporte com suporte aos requisitos de
+tais sistemas. Já a segunda proposta de RFC contemplará a especificação do
+\mudccps e seus detalhes de implementação, incluindo diagramas de sequência e
+pseudo-algoritmos. O título da primeira proposta será \textit{Problem Statement
+for Global Media Transmission Protocol (\mudccp)}, ao passo que o da segunda
+proposta será \textit{Global Media Transmission Protocol (\mudccp) - Protocol
+Specification};
+
+  \item \textbf{redação da tese:} finalizar a escrita do documento adicionando
+os avanços alcançados após a defesa de qualificação. No documento deverão
+constar discussões sobre a definição e formalização do arcabouço de extensão do
+\mudccp, bem como análises relacionadas à validação dos protótipos
+desenvolvidos, diagramas de sequência e pseudo-algoritmos para facilitar o
+entendimento dos procedimentos realizados no \mudccp.
+
+\end{enumerate}
+
+
+% Os trabalhos futuros estão organizados em dois grupos. No primeiro grupo há
+% uma
+% preocupação quanto a melhorias de desempenho do protocolo \mudccps e no
+% segundo grupo o foco será de implementação do protocolo e do arcabouço de
+% extensão de funcionalidades.
+%
+% Nas atividades do primeiro grupo, pretende-se avançar em análises quanto ao uso
+% do protocolo \mudccps em redes mais heterogêneas, quanto a capacidade dos canais
+% de transmissão e espalhamento dos nós receptores. Neste ponto, além das métricas
+% já estudadas, mais outras duas métricas serão avaliadas, a qualidade do conteúdo
+% multimídia observada nos nós receptores, utilizando-se PSNR (\textit{Peak
+% Signal-to-Noise Ratio}), e o tempo que um nó cliente gasta para encontrar seu nó
+% relay, tanto no estabelecimento de uma conexão quanto na falha dele após o
+% processo de conexão. Nesse contexto, pretende-se ainda estressar o uso
+% do \mudccps e avaliar seu desempenho diante de pelo menos um de seus
+% concorrentes, como o PPETP (Seção~\ref{subsec:ppetp}) ou o PPSP/Swift
+% (Seção~\ref{subsec:ppsp-swift}), variando-se o suporte ou não para o modo de
+% transmissão multicast entre diferentes redes locais.
+%
+% Nas atividades do segundo grupo, pretende-se implementar o \mudccps no núcleo do
+% Linux, incluindo a formalização do arcabouço de extensão das funções de tal
+% protocolo. Também será investigada a possibilidade de alterar algum sistema de
+% transmissão existente para utilizar o \mudccps ou desenvolver um protótipo de
+% aplicação que utilize as funções de tal protocolo. Isto permitirá avaliar o
+% grau de complexidade para migrar os sistemas existentes ou desenvolver um novo
+% sistema baseado no \mudccps. Em seguida, pretende-se estudar o comportamento do
+% \mudccps em ambientes mais robustos, como no PlanetLab\footnote{PlanetLab:
+% http://www.planet-lab.org/}. Pretende-se ainda escrever as propostas de RFC para
+% o \mudccps e submetê-las para a IETF. A primeira proposta terá o seguinte
+% título: \textit{Problem Statement for Global Media Transmission Protocol}, onde
+% serão discutidos os principais problemas encontrados em sistemas de transmissão
+% multimídia em tempo real e as motivações para um protocolo de transporte que
+% contemple os requisitos de tais sistemas. A segunda proposta de RFC terá o
+% seguinte título: \textit{Global Media Transmission Protocol (\mudccp) -
+% Specification}, onde será apresentado o protocolo \mudccps e seus detalhes de
+% implementação.
+
+% \subsection{Cronograma}
+
+Na Tabela~\ref{tab:cronograma} apresenta-se o cronograma das atividades a serem
+desenvolvidas no período de 1 ano e 2 meses.
+
+\begin{center}
+\begin{table}[ht]\footnotesize
+\caption{Cronograma de Atividades.}
+\vspace{0.2cm}
+\label{tab:cronograma}
+\begin{tabular}[c]{|p{2.3cm}|c|c|c|c|c|c|c|c|c|c|c|c|c|c|}\hline
+
+% CABECALHO
+\multicolumn{1}{|c|}{\multirow{2}{*}{\textbf{Atividades}}} &
+\multicolumn{12}{c|}{\textbf{2012}} & \multicolumn{2}{c|}{\textbf{2013}} \\
+\cline{2-15} & Jan & Fev & Mar & Abr & Mai & Jun & Jul & Ago & Set & Out & Nov &
+Dez & Jan & Fev\\ \hline
+
+% INICIO LINHA
+Melhorias gerais do \mudccps & \multirow{2}{*}{X} & \multirow{2}{*}{X} &
+\multirow{2}{*}{X} & \multirow{2}{*}{X} & \multirow{2}{*}{} & \multirow{2}{*}{}
+& \multirow{2}{*}{} & \multirow{2}{*}{} & \multirow{2}{*}{} & \multirow{2}{*}{}
+& \multirow{2}{*}{} & \multirow{2}{*}{} & \multirow{2}{*}{} & \multirow{2}{*}{}
+\\ \hline
+
+% % INICIO LINHA
+% Avaliação em & \multirow{2}{*}{} & \multirow{2}{*}{} & \multirow{2}{*}{X} &
+% \multirow{2}{*}{X} & \multirow{2}{*}{X} & \multirow{2}{*}{X} & \multirow{2}{*}{}
+% & \multirow{2}{*}{} & \multirow{2}{*}{} & \multirow{2}{*}{} & \multirow{2}{*}{}
+% & \multirow{2}{*}{} & \multirow{2}{*}{} & \multirow{2}{*}{} \\
+% redes heterogêneas &  &  &  &  &  &  &  &  &  &  &  &  &  &  \\ \hline
+
+% INICIO LINHA
+Definição do & \multirow{3}{*}{} & \multirow{3}{*}{} & \multirow{3}{*}{} &
+\multirow{3}{*}{X} & \multirow{3}{*}{X} & \multirow{3}{*}{} & \multirow{3}{*}{}
+& \multirow{3}{*}{} & \multirow{3}{*}{} & \multirow{3}{*}{} & \multirow{3}{*}{}
+& \multirow{3}{*}{} & \multirow{3}{*}{} & \multirow{3}{*}{} \\
+arcabouço de &  &  &  &  &  &  &  &  &  &  &  &  &  &  \\
+extensão &  &  &  &  &  &  &  &  &  &  &  &  &  &  \\ \hline
+
+% INICIO LINHA
+Desenvolvimento & \multirow{3}{*}{} & \multirow{3}{*}{} & \multirow{3}{*}{} &
+\multirow{3}{*}{} & \multirow{3}{*}{X} & \multirow{3}{*}{X} &
+\multirow{3}{*}{X} & \multirow{3}{*}{X} & \multirow{3}{*}{X} &
+\multirow{3}{*}{X} & \multirow{3}{*}{} & \multirow{3}{*}{} & \multirow{3}{*}{} &
+\multirow{3}{*}{}
+\\
+de protótipo executável &  &  &  &  &  &  &  &  &  &  &  &  &  &  \\ \hline
+
+% INICIO LINHA
+Desenvolvimento & \multirow{3}{*}{} & \multirow{3}{*}{} & \multirow{3}{*}{} &
+\multirow{3}{*}{} & \multirow{3}{*}{} & \multirow{3}{*}{} & \multirow{3}{*}{} &
+\multirow{3}{*}{X} & \multirow{3}{*}{X} & \multirow{3}{*}{} & \multirow{3}{*}{}
+& \multirow{3}{*}{} & \multirow{3}{*}{} & \multirow{3}{*}{} \\
+de aplicação modelo &  &  &  &  &  &  &  &  &  &  &  &  &  &  \\ \hline
+
+
+% INICIO LINHA
+Redação de & \multirow{2}{*}{} & \multirow{2}{*}{} & \multirow{2}{*}{} &
+\multirow{2}{*}{} & \multirow{2}{*}{} & \multirow{2}{*}{} & \multirow{2}{*}{X} &
+\multirow{2}{*}{X} & \multirow{2}{*}{X} & \multirow{2}{*}{X} &
+\multirow{2}{*}{X} & \multirow{2}{*}{} & \multirow{2}{*}{} & \multirow{2}{*}{}\\
+\textit{Internet Draft}  &  &  &  &  &  &  &  &  &  &  &  &  &  &  \\ \hline
+
+% INICIO LINHA
+Experimentos p/ & \multirow{3}{*}{} & \multirow{3}{*}{} & \multirow{3}{*}{} &
+\multirow{3}{*}{} & \multirow{3}{*}{} & \multirow{3}{*}{} & \multirow{3}{*}{} &
+\multirow{3}{*}{} & \multirow{3}{*}{} & \multirow{3}{*}{} & \multirow{3}{*}{X} &
+\multirow{3}{*}{X} & \multirow{3}{*}{} & \multirow{3}{*}{} \\
+validar protótipos &  &  &  &  &  &  &  &  &  &  &  &  &  &  \\ \hline
+
+% INICIO LINHA
+Redação da tese & \multirow{1}{*}{} & \multirow{1}{*}{} & \multirow{1}{*}{} &
+\multirow{1}{*}{} & \multirow{1}{*}{} & \multirow{1}{*}{} & \multirow{1}{*}{} &
+\multirow{1}{*}{} & \multirow{1}{*}{} & \multirow{1}{*}{} & \multirow{1}{*}{X} &
+\multirow{1}{*}{X} & \multirow{1}{*}{X} & \multirow{1}{*}{X} \\ \hline
+
+\end{tabular}
+\end{table}
+\end{center}
+
+
+% \begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|c|}
+%
+%
+%
+% \end{tabular}
+
+% - Outras equações para serem utilizadas no algoritmo de controle de
+% congestionamento multicast
+% - Network coding
+% - Quantos reporters por cada grupo?
+% - Rodar mais simulações
+% - comentar que os trabalhos ainda estao em desenvolvimentto
+% - Pelo menos uns 20 sistemas de transmisão e uns 50 clientes de recepção de conteúdo ao vivo
+% PPLive, SOPCast, TVAnts and TVUPlayer

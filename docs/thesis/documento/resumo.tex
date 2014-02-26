@@ -1,65 +1,67 @@
-O transporte de conteúdos multimídia em tempo real pela Internet é primordial em
-aplicações como voz sobre IP (VoIP), videoconferência, jogos e WebTV. Ao longo
-dos anos, observa-se um intenso crescimento de utilização das aplicações
-cujo cenário é caracterizado por um único nó transmissor e milhares de nós
-receptores. Por exemplo, o Youtube Live transmitiu os jogos da copa américa 2011
-para 100 milhões de usuários. Um ponto crítico nessas aplicações é a sobrecarga
-de utilização de recursos computacionais nos servidores e canais de transmissão.
-Isto tem demandado investimentos exorbitantes na construção de Redes de
-Distribuição de Conteúdos por empresas como Google, Netflix etc. Porém, as
-aplicações continuam à mercê de protocolos de transportes tradicionais (TCP,
-UDP, DCCP e SCTP), que não foram projetados para transmitir dados multimídia em
-larga escala. Para suprir as limitações desses protocolos, os desenvolvedores
-implementam mecanismo para utilizar os recursos de rede de forma mais eficiente,
-destacando-se o uso do modelo de serviço P2P (Peer-to-Peer). Todavia, estas
-soluções são paleativas porque são disseminadas em forma de sistemas ou
-protocolos de aplicação, sendo impossível evitar a pulverização e fragmentação
-das mesmas, aumentando-se a complexidade de implantação em larga escala na
-Internet. Neste trabalho propõe-se um protocolo de transporte multimídia
-denominado \textit{Global Media Transmission Protocol} (\mudccp). O \mudccps
-constrói dinamicamente uma rede de sobreposição entre os nós de uma transmissão
-(P2P), sem a influência direta da aplicação e com suporte à transmissão
-multicast e controle de congestionamento. Resultados preliminares apontam que o
-\mudccps utiliza de forma eficiente os recursos de redes e melhora a
-escalabilidade das aplicações multimídia, evitando-se o retrabalho de
-desenvolvimento ao concentrar os principais mecanismos em um único protocolo de
-transporte.
+TBD
 
 % O transporte de conteúdos multimídia em tempo real pela Internet é primordial em
 % aplicações como voz sobre IP (VoIP), videoconferência, jogos e WebTV. Ao longo
-% dos anos, tem-se observado um forte crescimento da utilização das aplicações
+% dos anos, observa-se um intenso crescimento de utilização das aplicações
 % cujo cenário é caracterizado por um único nó transmissor e milhares de nós
-% receptores. Como exemplo, destaca-se o Youtube Live, que em 2011 atingiu quase
-% 100 milhões de acessos durante as transmissões dos jogos de futebol da Copa
-% América. Um ponto crítico dessas aplicações é a grande sobrecarga de utilização
-% de recursos computacionais no sistema transmissor e nos canais de transmissão.
-% Este fato tem demandado investimentos exorbitantes na construção de Redes de
-% Distribuição de Conteúdos (\textit{Content Delivery Networks}) por parte de
-% grandes empresas, tais como Google, Netflix, Amazon etc. Apesar de investimentos
-% nesse sentido, as aplicações continuam à mercê de protocolos de transportes
-% tradicionais (TCP, UDP, DCCP e SCTP), que não foram projetados para transmitir
-% dados multimídia em larga escala. A fim de suprir as limitações desses
-% protocolos, os desenvolvedores implementam mecanismos para utilizar de forma
-% eficiente os recursos disponíveis da rede, habilitando-se uma série de serviços
-% como adaptação de fluxo, descoberta e seleção de nós parceiros e controle de
-% congestionamento, com destaque para o uso de arquiteturas baseadas no modelo de
-% serviço P2P (Peer-to-Peer). Todavia, estas soluções são paleativas porque são
-% disseminadas em forma de sistemas ou protocolos de aplicação, tornando-se
-% impossível evitar a pulverização das mesmas e a independência uma das outras, o
-% que aumenta a complexidade de implantação de uma solução efetiva para
-% distribuição de conteúdos multimídia em larga escala na Internet. Diante disto,
-% neste trabalho propõe-se um protocolo de transporte multimídia denominado
-% \textit{Global Media Transmission Protocol} (\mudccp). O \mudccps é um protocolo
-% de transporte baseado em uma arquitetura P2P para distribuição de fluxos de
-% dados multimídia em larga escala, capaz de operar em modo de transmissão
-% multicast ou múltiplos fluxos unicast. Em tal protocolo, disponibiliza-se um
-% arcabouço para o uso de algoritmos para controle de congestionamento baseado no
-% compartilhamento de fluxos de dados entre os nós participantes de uma
-% transmissão, o que ocorre através de uma rede de sobreposição constituída
-% dinamicamente sem a influência direta da aplicação. Segundo resultados
-% preliminares, constata-se que o \mudccps pode promover melhorias significativas
-% no consumo dos recursos de redes e melhorar a escalabilidade das aplicações
-% multimídia no ponto de vista da quantidade de nós interessados em um mesmo fluxo
-% de dados, ao passo que evita-se o retrabalho de desenvolvimento por parte dos
-% desenvolvedores de aplicações ao concentrar os principais serviços das
-% aplicações em um único protocolo de rede.
+% receptores. Por exemplo, o Youtube Live transmitiu os jogos da copa américa 2011
+% para 100 milhões de usuários. Um ponto crítico nessas aplicações é a sobrecarga
+% de utilização de recursos computacionais nos servidores e canais de transmissão.
+% Isto tem demandado investimentos exorbitantes na construção de Redes de
+% Distribuição de Conteúdos por empresas como Google, Netflix etc. Porém, as
+% aplicações continuam à mercê de protocolos de transportes tradicionais (TCP,
+% UDP, DCCP e SCTP), que não foram projetados para transmitir dados multimídia em
+% larga escala. Para suprir as limitações desses protocolos, os desenvolvedores
+% implementam mecanismo para utilizar os recursos de rede de forma mais eficiente,
+% destacando-se o uso do modelo de serviço P2P (Peer-to-Peer). Todavia, estas
+% soluções são paleativas porque são disseminadas em forma de sistemas ou
+% protocolos de aplicação, sendo impossível evitar a pulverização e fragmentação
+% das mesmas, aumentando-se a complexidade de implantação em larga escala na
+% Internet. Neste trabalho propõe-se um protocolo de transporte multimídia
+% denominado \textit{Global Media Transmission Protocol} (\mudccp). O \mudccps
+% constrói dinamicamente uma rede de sobreposição entre os nós de uma transmissão
+% (P2P), sem a influência direta da aplicação e com suporte à transmissão
+% multicast e controle de congestionamento. Resultados preliminares apontam que o
+% \mudccps utiliza de forma eficiente os recursos de redes e melhora a
+% escalabilidade das aplicações multimídia, evitando-se o retrabalho de
+% desenvolvimento ao concentrar os principais mecanismos em um único protocolo de
+% transporte.
+% 
+% % O transporte de conteúdos multimídia em tempo real pela Internet é primordial em
+% % aplicações como voz sobre IP (VoIP), videoconferência, jogos e WebTV. Ao longo
+% % dos anos, tem-se observado um forte crescimento da utilização das aplicações
+% % cujo cenário é caracterizado por um único nó transmissor e milhares de nós
+% % receptores. Como exemplo, destaca-se o Youtube Live, que em 2011 atingiu quase
+% % 100 milhões de acessos durante as transmissões dos jogos de futebol da Copa
+% % América. Um ponto crítico dessas aplicações é a grande sobrecarga de utilização
+% % de recursos computacionais no sistema transmissor e nos canais de transmissão.
+% % Este fato tem demandado investimentos exorbitantes na construção de Redes de
+% % Distribuição de Conteúdos (\textit{Content Delivery Networks}) por parte de
+% % grandes empresas, tais como Google, Netflix, Amazon etc. Apesar de investimentos
+% % nesse sentido, as aplicações continuam à mercê de protocolos de transportes
+% % tradicionais (TCP, UDP, DCCP e SCTP), que não foram projetados para transmitir
+% % dados multimídia em larga escala. A fim de suprir as limitações desses
+% % protocolos, os desenvolvedores implementam mecanismos para utilizar de forma
+% % eficiente os recursos disponíveis da rede, habilitando-se uma série de serviços
+% % como adaptação de fluxo, descoberta e seleção de nós parceiros e controle de
+% % congestionamento, com destaque para o uso de arquiteturas baseadas no modelo de
+% % serviço P2P (Peer-to-Peer). Todavia, estas soluções são paleativas porque são
+% % disseminadas em forma de sistemas ou protocolos de aplicação, tornando-se
+% % impossível evitar a pulverização das mesmas e a independência uma das outras, o
+% % que aumenta a complexidade de implantação de uma solução efetiva para
+% % distribuição de conteúdos multimídia em larga escala na Internet. Diante disto,
+% % neste trabalho propõe-se um protocolo de transporte multimídia denominado
+% % \textit{Global Media Transmission Protocol} (\mudccp). O \mudccps é um protocolo
+% % de transporte baseado em uma arquitetura P2P para distribuição de fluxos de
+% % dados multimídia em larga escala, capaz de operar em modo de transmissão
+% % multicast ou múltiplos fluxos unicast. Em tal protocolo, disponibiliza-se um
+% % arcabouço para o uso de algoritmos para controle de congestionamento baseado no
+% % compartilhamento de fluxos de dados entre os nós participantes de uma
+% % transmissão, o que ocorre através de uma rede de sobreposição constituída
+% % dinamicamente sem a influência direta da aplicação. Segundo resultados
+% % preliminares, constata-se que o \mudccps pode promover melhorias significativas
+% % no consumo dos recursos de redes e melhorar a escalabilidade das aplicações
+% % multimídia no ponto de vista da quantidade de nós interessados em um mesmo fluxo
+% % de dados, ao passo que evita-se o retrabalho de desenvolvimento por parte dos
+% % desenvolvedores de aplicações ao concentrar os principais serviços das
+% % aplicações em um único protocolo de rede.

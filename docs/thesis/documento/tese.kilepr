@@ -107,7 +107,7 @@ Mode=LaTeX
 ReadWrite=true
 
 [document-settings,item:fundamentacao.tex]
-Bookmarks=919
+Bookmarks=1332,913
 Encoding=ISO-8859-1
 FoldedColumns=
 FoldedLines=
@@ -157,7 +157,7 @@ Mode=LaTeX
 ReadWrite=true
 
 [document-settings,item:mudccp.tex]
-Bookmarks=4185,3889,4223,4225,4189,4226,3856,4227,4080,3895,4084,4195,4232,4233,1310,3901,4160,4235,4199,3906,4168,3873,4132,4174,4175,4140,3845,4215,4216,3810,4143
+Bookmarks=4182,3886,4220,4222,4186,4223,3853,4224,4077,3892,4081,4192,4229,4230,3898,4157,4232,4196,3903,4165,3870,4129,4171,4172,4137,3842,4212,4213,3807,4140
 Encoding=ISO-8859-1
 FoldedColumns=
 FoldedLines=
@@ -268,10 +268,10 @@ order=4
 
 [item:biblio-phd.bib]
 archive=true
-column=0
+column=22
 encoding=ISO-8859-1
 highlight=BibTeX
-line=2285
+line=2969
 mode=BibTeX
 open=true
 order=9
@@ -298,13 +298,13 @@ order=5
 
 [item:fundamentacao.tex]
 archive=true
-column=27
+column=62
 encoding=ISO-8859-1
 highlight=LaTeX
-line=1262
+line=35
 mode=LaTeX
-open=false
-order=5
+open=true
+order=11
 
 [item:impl-mudccp.tex]
 archive=true
@@ -318,10 +318,10 @@ order=14
 
 [item:introducao.tex]
 archive=true
-column=3
+column=23
 encoding=ISO-8859-1
 highlight=LaTeX
-line=569
+line=321
 mode=LaTeX
 open=true
 order=2
@@ -351,7 +351,7 @@ archive=true
 column=49
 encoding=ISO-8859-1
 highlight=LaTeX
-line=10
+line=3092
 mode=LaTeX
 open=true
 order=7
@@ -363,8 +363,8 @@ encoding=ISO-8859-1
 highlight=LaTeX
 line=16
 mode=LaTeX
-open=false
-order=5
+open=true
+order=10
 
 [item:simbolos.tex]
 archive=true
@@ -398,10 +398,10 @@ order=-1
 
 [item:trabrelacionados.tex]
 archive=true
-column=2642
+column=503
 encoding=ISO-8859-1
 highlight=LaTeX
-line=49
+line=68
 mode=LaTeX
 open=true
 order=3
@@ -443,10 +443,10 @@ JumpList=
 ViMarks=
 
 [view-settings,view=0,item:biblio-phd.bib]
-CursorColumn=0
-CursorLine=2285
+CursorColumn=22
+CursorLine=2969
 JumpList=
-ViMarks=.,2285,0,[,2285,0,],2285,0
+ViMarks=.,2977,0,[,2969,0,],2977,29
 
 [view-settings,view=0,item:biblio-zotero.bib]
 CursorColumn=95
@@ -461,10 +461,10 @@ JumpList=
 ViMarks=.,6,66,[,6,50,],6,66
 
 [view-settings,view=0,item:fundamentacao.tex]
-CursorColumn=27
-CursorLine=1262
+CursorColumn=62
+CursorLine=35
 JumpList=
-ViMarks=.,1262,26,[,1262,10,],1262,26,a,919,2
+ViMarks=.,35,62,[,35,62,],35,62,a,913,2,b,1332,0
 
 [view-settings,view=0,item:impl-mudccp.tex]
 CursorColumn=33
@@ -473,10 +473,10 @@ JumpList=
 ViMarks=
 
 [view-settings,view=0,item:introducao.tex]
-CursorColumn=3
-CursorLine=569
+CursorColumn=23
+CursorLine=321
 JumpList=
-ViMarks=.,301,0,[,301,0,],301,0
+ViMarks=.,321,22,[,321,15,],321,22
 
 [view-settings,view=0,item:metodoexperimento.tex]
 CursorColumn=37
@@ -492,9 +492,9 @@ ViMarks=
 
 [view-settings,view=0,item:mudccp.tex]
 CursorColumn=49
-CursorLine=10
+CursorLine=3092
 JumpList=
-ViMarks=.,1310,33,[,1310,33,],1310,33,a,4235,45,b,4233,50,c,4225,75,d,4227,71,e,4225,75,f,4232,0,g,4168,3,h,4175,45,i,4174,10,j,4225,75,k,4168,3,l,4235,45,m,4225,75,n,4215,0,o,4168,3,p,4168,3,q,4226,0,r,4168,3,s,4168,3,t,4216,0,u,4168,3,v,4223,0,w,4168,3,x,4189,65,y,4195,0,z,4168,3
+ViMarks=.,2761,192,[,2761,192,],2761,192,a,4232,45,b,4230,50,c,4222,75,d,4224,71,e,4222,75,f,4229,0,g,4165,3,h,4172,45,i,4171,10,j,4222,75,k,4165,3,l,4232,45,m,4222,75,n,4212,0,o,4165,3,p,4165,3,q,4223,0,r,4165,3,s,4165,3,t,4213,0,u,4165,3,v,4220,0,w,4165,3,x,4186,65,y,4192,0,z,4165,3
 
 [view-settings,view=0,item:resumo.tex]
 CursorColumn=52
@@ -515,7 +515,7 @@ JumpList=
 ViMarks=.,167,0,[,167,0,],167,1
 
 [view-settings,view=0,item:trabrelacionados.tex]
-CursorColumn=2642
-CursorLine=49
+CursorColumn=503
+CursorLine=68
 JumpList=
-ViMarks=.,49,2743,[,49,2743,],49,2743
+ViMarks=.,68,503,[,68,503,],68,503
