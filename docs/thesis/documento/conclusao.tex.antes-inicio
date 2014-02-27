@@ -6,6 +6,8 @@
 
 limitação de segurança: o servidor pode gerar overflow no roteador?
 
+desvantagem: muitos temporizadores, mas isso pode ser resolvido limitando o número máximo de fluxos? delegando pra alguém? quem?
+
 
 A definição do protocolo \mudccp\space se baseou nos requisitos e estado da
 arte/prática dos sistemas de distribuição de conteúdos
