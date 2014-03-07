@@ -158,7 +158,7 @@ repassador está autorizado a compartilhar;
   \item quantidade máxima de fluxos de dados que podem ser compartilhados;
 
   \item parâmetros avançados relacionados aos algoritmos de controle de
-congestionamento. E
+congestionamento; e
 
   \item configurações acerca dos certificados digitais, tais como
 \textit{download} automático e realização de \textit{cache}.
@@ -273,12 +273,7 @@ e \textit{relator}, respectivamente. Estes termos não serão mais formatados em i
 
 Quando um nó cliente deseja reproduzir um determinado evento, este envia uma
 requisição em direção ao nó servidor que está transmitindo o conteúdo de
-interesse, como atualmente acontece em qualquer conexão na Internet. A diferença
-é que um nó repassador pode interceptar tal requisito durante seu trajeto até o
-nó servidor, que então determina os melhores parceiros para atendê-la. Em geral,
-isto ocorre já no roteador de borda do nó cliente, que funciona como nó
-repassador de origem. Caso o nó repassador não encontre nenhum nó parceiro capaz
-repassar a mídia de interesse que já esteja recebendo o referido fluxo, encaminha-se a requisição ao nó servidor que transmite a mídia correspondente, já que o pedido de conexão é intencionalmente endereço ao nó servidor que transmite o fluxo de dados de interesse. Em todo caso, sempre o nó repassador de origem assumirá o controle de uma requisição do nó cliente, habilitando-se como candidato a parceiro para outros nós repassadores, quando motivados por requisições originadas pelos seus respectivos nós clientes.
+interesse, como atualmente acontece em qualquer conexão na Internet. A diferença é que um nó repassador pode interceptar tal requisito durante seu trajeto até o nó servidor, que então determina os melhores parceiros para atendê-la. Em geral, isto ocorre já no roteador de borda do nó cliente, que funciona como nó repassador de origem. Caso o nó repassador não encontre nenhum nó parceiro capaz repassar a mídia de interesse que já esteja recebendo o referido fluxo, encaminha-se a requisição ao nó servidor que transmite a mídia correspondente, já que o pedido de conexão é intencionalmente endereço ao nó servidor que transmite o fluxo de dados de interesse. Em todo caso, sempre o nó repassador de origem assumirá o controle de uma requisição do nó cliente, habilitando-se como candidato a parceiro para outros nós repassadores, quando motivados por requisições originadas pelos seus respectivos nós clientes.
 
 O posicionamento dos nós repassadores e suas habilidades permitem a redução do
 número de fluxos de dados na rede correspondente a um mesmo evento, ao tempo
@@ -311,7 +306,7 @@ relatórios periódicos sobre o estado da transmissão ao seu nó \textit{Repassador
 GMTP}, que os utiliza para regular a taxa de transmissão de um ou mais fluxos de
 dados, impedindo que a rede entre em congestionamento.
 
-\subsection{Tipos de Pacotes}
+\subsection{Tipos de pacotes}
 \label{subsec:tipodepacotesmudccp}
 
 Toda comunicação entre dois ou mais nós GMTP ocorre através da troca de pacotes IP, os quais carregam sinalizações de controle e/ou dados da aplicação. No mundo real (Internet), será necessário registrar na \textit{Internet Assigned Numbers Authority} -- IANA\footnote{IANA: http://www.iana.org/} o uso de um código para o campo \textit{Protocolo} do cabeçalho de um datagrama IP. Com a padronização do protocolo \mudccps e a publicação da sua RFC, provavelmente será utilizado o código 100, como já está definido no documento \textit{Protocol Numbers}\footnote{O código 100 foi
@@ -395,7 +390,7 @@ valores reservados para uso futuro e ignorado pelos nós que o processa.
 % tipos de pacotes do GMTP, sendo seu teor bastante técnico e portanto dedicado
 % aos leitores interessados em sua implementação.
 
-\subsection{Resumo das Principais Funcionalidades}
+\subsection{Resumo das principais funcionalidades}
 
 \begin{itemize}
 
@@ -427,8 +422,8 @@ da mesma rede através do uso do modo de transmissão multicast, sendo o modo de
 transmissão unicast restrito apenas para transportar os fluxos de dados entre redes distintas, evitando-se a relação de uma conexão por cliente ao nó servidor. Este assunto será retomado na Seção~\ref{sec:asptransrecep}.
 
   \item Uso de algoritmo de controle de congestionamento assistidos pela
-rede, em transmissões em modo unicast; e uso do \textit{TCP Friendly Rate
-Control} (TFRC) adaptado às transmissões de fluxos de dados em modo multicast.
+rede, em transmissões em modo unicast (GMTP-UCC); e uso do \textit{TCP Friendly Rate
+Control} (TFRC) adaptado às transmissões de fluxos de dados em modo multicast (GMTP-MCC).
 Este assunto será retomado na Seção~\ref{sec:ccgmtp}.
 
   \item Verificação de autenticidade dos dados multimídia, por meio do uso de assinaturas digitais disponibilizadas pelos nós servidores, impedindo assim ataques de poluição de conteúdo. Este assunto será retomado na Seção~\ref{sec:seguranca}.
@@ -978,7 +973,7 @@ comuns, discutida no Capítulo~\ref{cap:introducao}. Além disso, quanto mais nós
 \repasss estiverem disponíveis na rede, menor será o impacto causado pelas
 desconexões nos sistemas finais que recebem o fluxo de dados \setpk.
 
-\subsection{Registro de Participação de \repasss em \net}
+\subsection{Registro de participação de \repasss em \net}
 \label{subsec:registro-participacao}
 
 Por analogia, o registro de participação faz com que o roteador de uma rede funcione como se fosse uma antena de recepção de uma transmissora de TV, podendo-se receber um ou mais sinais de canais de TV diferentes. Em seguida, estes sinais são repassados para os clientes conectados diretamente à antena, ou melhor, ao roteador.
@@ -1185,7 +1180,7 @@ O procedimento de manutenção de um registro de participação deve ser feito usand
 podem ser adaptados para o GMTP.
 
 
-\subsection{Tabela de Recepção de Fluxos de Dados}
+\subsection{Tabela de recepção de fluxos de dados}
 \label{subsec:tabela-recepcao}
 
 Antes de seguir com a explicação sobre o processo de estabelecimento de conexão
@@ -1248,7 +1243,7 @@ Seção~\ref{subsec:registro-participacao}. Mais adiante, na
 Seção~\ref{subsec:conexao-requisicao}, discute-se em mais detalhes as ações de
 consulta e atualização da tabela de recepção de fluxos de dados.
 
-\subsection{Formação de Parcerias}
+\subsection{Formação de parcerias}
 \label{sec:descparc}
 
 Dado que as parcerias ocorrem entre os nós \repasss $\in$ \setrepasss
@@ -1653,7 +1648,7 @@ pacotes de dados \pks $\in$ \setpks e como os nós \clis recebem tal conteúdo
 para reprodução, discutindo-se aspectos sobre indexação, requisição, recepção e
 compartilhamento de um fluxo de dados \setpk.
 
-\subsection{Indexação de Conteúdo}
+\subsection{Indexação de conteúdo}
 \label{subsec:content-index}
 
 No GMTP, um fluxo de dados \setpks tem um nome único que o identifica em
@@ -1831,7 +1826,7 @@ adicionar uma nova entrada na tabela de recepção de fluxos de dados.
 % GMTP-Inter, a ser discutido em detalhes na
 % Seção~\ref{sec:ccgmtp}, a seguir.
 
-\subsection{Estabelecimento de Conexão entre \clis e \servs para Obter \setpk}
+\subsection{Estabelecimento de conexão entre \clis e \servs para obter \setpk}
 \label{subsec:conexao-requisicao}
 
 Divide-se o processo de estabelecimento de conexão em três fases. A
@@ -1864,7 +1859,7 @@ tipo \pac{GMTP-Register}, transmitido por um nó \clis $\in$
 fase de conexão para um determinado fluxo de dados \setpks solicitado, o nó
 \repasss realiza uma determinada ação de registro de participação e repasse.
 
-\subsection{Fase 1: Primeira Requisição a um Fluxo de Dados \setpk}
+\subsection{Fase 1: primeira requisição a um fluxo de dados \setpk}
 \label{subsec:conn-fase1}
 
 A Fase 1 ocorre quando nenhum nó \clis $\in$ \subsetcli$($\repass$)$ está
@@ -2013,7 +2008,7 @@ of the Algorithm~\ref{algo:onReceiveGMTPRegisterReply}.}
 \end{algorithm}
 \vspace{0.8cm}
 
-\subsection{Fase 2: Próximas Requisições para Obter \setpk}
+\subsection{Fase 2: próximas requisições para obter \setpk}
 
 A Fase $2$ de conexão ocorre quando futuras requisições para obter o
 fluxo de dados \setpks são originadas por qualquer nó \clis $\in$
@@ -2046,7 +2041,7 @@ obter \setpk.
 \label{fig:processo-conexao-2}
 \end{figure}
 
-\subsection{Fase 3: Busca por Mais Parceiros \repassu{q} para Obter \setpk}
+\subsection{Fase 3: busca por mais parceiros \repassu{q} para obter \setpk}
 \label{subsec:phase3}
 
 
@@ -2165,7 +2160,7 @@ obter \setpk.
 
 
 Na Fase $3$, o nó \repasss inicia um processo de aumentar suas parcerias a fim
-de obter mais rapidamente os pacotes \pks $\in$ \setpks através de caminhos
+de obter mais rapidamente os pacotes \pks $\in$ \setpk, através de caminhos
 \setwayis alternativos.
 % , em caso de falha e/ou desconexões de algum nó parceiro
 % \repassu{q}.
@@ -2177,15 +2172,7 @@ de obter mais rapidamente os pacotes \pks $\in$ \setpks através de caminhos
 % (Figura~\ref{fig:esquema-abstrato-formacao-parceria-combinacao}). Na fase $3$ de
 % conexão, o GMTP explora tal recurso.
 Nesse contexto, seja um nó \repassu{3} que esteja recebendo \setpks originado
-em um nó \serv. Para conseguir mais nós parceiros \repassu{q}, o nó \repassu{3}
-envia uma requisição do tipo \pac{GMTP-RelayQuery} para \servs e obtém um
-subconjunto de nós \repassu{q} candidatos a parceiro de \repassu{3}, como
-ilustra-se na Figura~\ref{fig:conn-phase3-1}. O nó \servs constrói a
-lista de nós parceiros e envia ao nó \repass, funcionando como um indexador
-(\textit{tracker}) de nós parceiros \repassu{q}, pré-selecionando parcerios para
-\repass. No caso do exemplo supracitado, essa pré-seleção ajuda o nó \repassu{3}
-a escolher os melhores parcerios disponíveis, de acordo com os seguintes
-critérios de prioridade:
+em um nó \serv. Como ilustra-se na Figura~\ref{fig:conn-phase3-1}, para conseguir mais nós parceiros \repassu{q}, o nó \repassu{3} envia uma requisição do tipo \pac{GMTP-RelayQuery} para \servs e obtém um subconjunto de nós \repassu{q} candidatos a parceiro de \repassu{3}. O nó \servs constrói a lista de nós parceiros e envia ao nó \repass, funcionando como um indexador (\textit{tracker}) de nós parceiros \repassu{q}, pré-selecionando parcerios para \repass. No caso do exemplo supracitado, essa pré-seleção ajuda o nó \repassu{3} a escolher os melhores parcerios disponíveis, de acordo com os seguintes critérios de prioridade:
 
 \begin{enumerate}
 
@@ -2283,10 +2270,7 @@ valores destes parâmetros são considerados padrões em aplicações tradicionais de
 distribuição de conteúdos multimídia ao vivo baseados em redes P2P.
 
 Com a execução da Fase 3 do processo de conexão do GMTP, pode-se expandir a
-quantidade de parcerias e essas informações são registradas na tabela de
-recepção de fluxos de dados, tal como ilustra-se
-Figura~\ref{fig:tabela-recepcao-fluxo}. Nesse exemplo, observa-se que um nó
-\repasss está recebendo e repassando aos seus nós \clis $\in$
+quantidade de parcerias e se registra tais informações na tabela de recepção de fluxos de dados, tal como ilustra-se Figura~\ref{fig:tabela-recepcao-fluxo}. Nesse exemplo, observa-se que um nó \repasss está recebendo e repassando aos seus nós \clis $\in$
 \subsetcli$($\repass$)$ quatro fluxos de dados diferentes, originados em quatro
 nós \serv, porém recebendo fluxos de dados de diferentes nós parceiros
 \repassu{q}. Por exemplo, dentre os fluxos de dados que o nó \repasss está
@@ -2328,24 +2312,11 @@ Desta forma, o processo de conexão do GMTP é fundamental para a efetiva
 distribuição de mídias ao vivo, pois permite que as aplicações compartilhem
 fluxos de dados entre si, mesmo que estas não tenham sido desenvolvidas pela
 mesma equipe. Esta unificação ajuda no processo de distribuição do fluxo de
-dados \setpk, pois, na prática, até mesmo uma aplicação \textit{standalone} e um
-objeto de vídeo imbutido em uma página Web podem obter o mesmo fluxo de dados
-sem que estas conheçam uma a outra. Consequentemente, reduz-se para 1 o número
-de transmissões para um mesmo fluxo de dados \setpks originado em \servs
-e destinados a uma mesma rede ou para um subconjuntos de redes adjacentes. Além
-dessa diferença, a forma de conexão do GMTP supre uma antiga deficiência das
-soluções tradicionais de transmissão multicast, pois as aplicações tinham que
-se adaptar às configurações estáticas dos canais multicast definidos pelo
-administrador de rede e, até os próprios administradores de rede tinham que
-fazer tal configuração de forma manual, obrigatoriamente em todos os nós
-roteadores de um determinado caminho. Isto é impraticável devido à
-independência dos diferentes domínios administrativos.
+dados \setpk, pois até mesmo uma aplicação \textit{standalone} e um objeto de vídeo imbutido em uma página Web podem obter o mesmo fluxo de dados sem que estas conheçam uma a outra. Consequentemente, reduz-se para 1 o número de transmissões para um mesmo fluxo de dados \setpks originado em \servs e destinados a uma mesma rede ou para um subconjuntos de redes adjacentes. Além dessa diferença, a forma de conexão do GMTP supre uma antiga deficiência das soluções tradicionais de transmissão multicast, pois as aplicações tinham que se adaptar às configurações estáticas dos canais multicast definidos pelo administrador de rede e, até os próprios administradores de rede tinham que fazer tal configuração de forma manual, obrigatoriamente em todos os nós roteadores de um determinado caminho. Isto é impraticável devido à independência dos diferentes domínios administrativos.
 
-Até o presente momento, não se conhece nenhuma solução que permita configuração
-dinâmica de canais multicast aliado a formação de uma rede de sobreposição
-constituída entre roteadores, com estratégia de formação de parcerias não mais considerando os sistemas finais, mas a intersecção de caminhos levando em consideração um nó \textit{pivot} servidor, compartilhando-se os fluxos de dados entre aplicações distintas, promovendo um uso mais eficaz dos recursos computacionais e de rede, como se demonstra mais adiante no Capítulo~\ref{cap:analisedesemp} (Resultados).
+Até o presente momento, não se conhece nenhuma solução que permita configuração dinâmica de canais multicast aliado a formação de uma rede de sobreposição constituída entre roteadores, com estratégia de formação de parcerias não mais considerando os sistemas finais, mas a intersecção de caminhos levando em consideração um nó \textit{pivot} servidor, compartilhando-se os fluxos de dados entre aplicações distintas, promovendo um uso mais eficaz dos recursos computacionais e de rede, como se demonstra mais adiante no Capítulo~\ref{cap:analisedesemp} (Resultados).
 
-\subsection{Envio e Recebimento de \pks $\in$ \setpks em \net}
+\subsection{Envio e recebimento de \pks $\in$ \setpks em \net}
 \label{subsec:trocdados}
 
 Após o estabelecimento de conexão, os nós \repasss trocam dados entre si em modo
@@ -2485,29 +2456,17 @@ seções, discute-se o funcionamento de cada um desses algoritmos.
 
 Em modo de transmissão unicast, utilizado na comunicação entre os nós \repass, define-se a taxa de transmissão de um nó \mudccps através de uma versão modificada do protocolo RCP~\cite{Dukkipati:2008:RCP:1368746}. Já em modo de transmissão multicast, executa-se uma versão modificado do TFRC~\cite{CONG:Floyd00:TFRC:art}, utilizando-se relatórios transmitidos por nós relatores \rels $\in$ \subsetcli(\repass), eleitos em cada rede e controlados por um nó \repass.
 
-\subsection{Controle de Congestionamento Unicast}
+\subsection{Controle de congestionamento unicast}
 \label{subsec:mudccp-ucc}
 
 O \mudccp-UCC funciona de forma similar ao protocolo RCP, porém com alguns
-diferenciais a serem discutidos a seguir. O RCP é um protocolo para controle de
-congestionamento assistido pela rede que tenta emular um Comutador
+diferenciais a serem discutidos a seguir. O RCP é um protocolo para controle de congestionamento assistido pela rede que tenta emular um Comutador
 Compartilhado (\textit{Processor Sharing} -- PS), por exemplo, um
 roteador~\cite{Dukkipati:2005:PSF:2103175.2103204}. Nesse contexto, entende-se
-que se um roteador pudesse obter a informação exata sobre o número de fluxos de
-entrada em um instante $\hat{t}$, a taxa de transmissão ideal para cada fluxo de dados
-seria $R_{ps}(\hat{t}) = \frac{C}{N(\hat{t})}$, onde $C$ corresponde à capacidade do \textit{enlace} e $N(\hat{t})$ o número de fluxos no instante $\hat{t}$.
+que se um roteador pudesse obter a informação exata sobre o número de fluxos de entrada em um instante $\hat{t}$, a taxa de transmissão ideal para cada fluxo de dados seria $R_{ps}(\hat{t}) = \frac{C}{N(\hat{t})}$, onde $C$ corresponde à capacidade do \textit{enlace} e $N(\hat{t})$ o número de fluxos no instante $\hat{t}$.
 
-Partindo desse ponto, Nandita et. al\cite{Dukkipati:2008:RCP:1368746} argumenta
-que para um roteador funcionar de forma equânime, este deve oferecer a
-mesma taxa de transmissão para todos os fluxos transmitidos através dele,
-mantendo-se o número de pacotes na fila de roteamento perto de zero, a fim de
-evitar que apenas os fluxos que tem pacotes na fila de repasse compartilhem a
-largura de banda disponível. Com base nisso, Nandita et.
-al\cite{Dukkipati:2008:RCP:1368746} determinou a Equação~\ref{eq:cc-rcp-teoria},
-onde $R(\hat{t})$ é a taxa de transmissão que deve ser oferecida para cada fluxo de
-dados que passa pelo roteador. Pela Equação~\ref{eq:cc-rcp-teoria}, estima-se a
-largura de banda disponível em um determinado canal, representada pela porção
-$\alpha(C - y(\hat{t})) - \beta \frac{q(\hat{t})}{h_0}$ (mudança agregada) e a divide por $N(\hat{t})$. Porém, como é impossível determinar o valor exato de $N(\hat{t})$, estima-se $\hat{N}(\hat{t}) = \frac{C}{R(\hat{t}-H)}$ e para atualizar $R(\hat{t})$ com mais frequência do que no tempo de um RTT, escala-se a mudança agregada por $\frac{H}{h_0}$, resultando na Equação~\ref{eq:cc-rcp}, onde:
+Partindo desse ponto, Nandita et. al~\cite{Dukkipati:2008:RCP:1368746} argumentou em sua tese de doutorado\footnote{O vídeo gravado no dia da defesa de Nandita Dukkipati, autora do RCP, está disponível através da referência~\cite{Nandita-video-defesa}.} que para um roteador funcionar de forma equânime, deve-se oferecer a mesma taxa de transmissão para todos os fluxos transmitidos através dele, mantendo-se o número de pacotes na fila de roteamento perto de zero, a fim de evitar que apenas os fluxos que tem pacotes na fila de repasse compartilhem a largura de banda disponível. Com base nisso, determinou-se a Equação~\ref{eq:cc-rcp-teoria}, onde $R(\hat{t})$ é a taxa de transmissão que deve ser oferecida para cada fluxo de dados que passa pelo roteador. Pela Equação~\ref{eq:cc-rcp-teoria}, estima-se a largura de banda disponível em um determinado canal, representada pela porção $\alpha(C - y(\hat{t})) - \beta \frac{q(\hat{t})}{h_0}$ (mudança agregada) e a divide por $N(\hat{t})$. Porém, como é impossível determinar o valor exato de $N(\hat{t})$, estima-se $\hat{N}(\hat{t}) = \frac{C}{R(\hat{t}-h_0)}$. Além disso, para atualizar $R(\hat{t})$ com mais frequência do que no intervalo de um RTT ($h_0$), definiu-se $H = min(H_{user}$, $h_0)$. No entanto, para manter a estabilidade do restante da equação se $R(\hat{t})$ fosse atualizada a cada $h_0$, escala-se $\alpha(C - y(\hat{t})) - \beta
+\frac{q(\hat{t})}{h_0}$ (mudança agregada) por $\frac{H}{h_0}$, resultando na Equação~\ref{eq:cc-rcp}, onde:
 
   \begin{equation}
   R(\hat{t}) = R(\hat{t} - h_0) + \frac{\alpha(C - y(\hat{t})) - \beta
@@ -2516,8 +2475,7 @@ $\alpha(C - y(\hat{t})) - \beta \frac{q(\hat{t})}{h_0}$ (mudança agregada) e a d
   \end{equation}
 
   \begin{equation}
-  R(\hat{t}) = R(\hat{t} - H) \left[1+\frac{\frac{H}{h_0}\left(\alpha(C - y(\hat{t})) -
-\beta \frac{q(\hat{t})}{h_0}\right)}{C}\right]
+  R(\hat{t}) = R(\hat{t} - H) \left[1+\frac{\frac{H}{h_0}\left(\alpha(\gamma C - y(\hat{t})) - \beta \frac{q(\hat{t})}{h_0}\right)}{\gamma C}\right]
   \label{eq:cc-rcp}
   \end{equation}
 
@@ -2534,9 +2492,9 @@ transmissor e o receptor.
       \label{eq:calcrtt-rcp}
       \end{equation}
 
-    \item $H = min(RTT_{user}$, $h_0)$, sendo $RTT_{user}$ um tempo definido
+    \item $H = min(H_{user}$, $h_0)$, sendo $H_{user}$ um tempo definido
 pelo usuário (administrador do roteador), caso seja necessário atualizar $R(\hat{t})$
-mais rápido do que o tempo de $h_0$;
+mais rápido do que o tempo de $h_0$. Por exemplo, se a fila estiver enchendo, é desnecessário esperar um tempo de $h_0$ para processar a fila (esvaziá-la);
 
     \item $R(\hat{t} - H)$, é a última taxa de transmissão medida;
 
@@ -2549,7 +2507,9 @@ mais rápido do que o tempo de $h_0$;
 % por exemplo, o número de fluxos enviando pacotes de dados \pk;
 
     \item $\alpha$ e $\beta$, são parâmetros pré-definidos que determinam
-a estabilidade e o desempenho;
+a estabilidade e o desempenho. Os valores padrões são $\alpha = 0.1$ e $\beta = 1.0$;
+
+    \item $\gamma$, tal que $0 < \gamma \leq 1$, controla o pico de utilização do canal. Por exemplo, se desejar utilizar no máximo \ut{95}{\%} do canal em um certo instante $\hat{t}$, basta definir $\gamma = 0.95$;
 
     \item $C$, é a capacidade do link.
 
@@ -2611,7 +2571,6 @@ O algoritmo adotado no GMTP-UCC, adaptado do RCP, funciona da seguinte forma (ac
   \label{step:rcp-gmtp-2}
 
   \item Todo nó \ways $\in$ \setwayi, ao receber qualquer pacote gerado no nó \serv, verifica se sua capacidade atual de transmissão $R(\hat{t})$ é menor do que $R_{p}$ presente no referido pacote. Em caso afirmativo, atualiza-se $R_{p} \leftarrow R(\hat{t})$, caso contrário, não se realiza nenhuma modificação nesse campo e repassa o pacote a diante. Nesse ínterim, se \transmitqu{\way} $=$ $1$, ou seja, \ways = \transs $\in$ \settrans, \transs também executa as seguintes ações:
-
   \label{step:rcp-gmtp-3}
 
   \begin{enumerate}
@@ -2620,7 +2579,7 @@ O algoritmo adotado no GMTP-UCC, adaptado do RCP, funciona da seguinte forma (ac
 
     \item cria-se um pacote \pac{GMTP-Ack} informando o valor de $R_{p}$ e o envia de volta em direção a \transu{\transi-1}, se \transs $\neq$ \serv. Ao receber esse pacote de \pac{GMTP-Ack},  \transu{\transi-1} utilizará $R_{p}$ para calcular o novo valor para $R(\hat{t})$, pois se trata da menor taxa de transmissão oferecida ao longo do sub-caminho \setwayias $\subset$ \setwayi, tal que \setwayias $=$ $\{$\trans, ..., \way, \wayu{\wayi+1}, \wayu{\wayi+2}, ..., \transu{\transi-1}$\}$. 
 
-    \textit{Observação}: Pela definição de \setwayi, \transs pode ser o nó \serv, então esse mecanismo segmenta o caminho \setwayis a cada nó \ways $\in$ \setwayis e \ways $\in$ \settrans, incluindo o nó servidor. O objetivo disso é criar sub-fluxos de transmissão dentro de um caminho \setwayi de acordo com a capacidade de transmissão e recepção a cada dois nós \transu{\transi} e \transu{\transi+1}. Trata-se de uma peculiaridade GMTP-UCC, pois se evita que um nó \transs com uma maior capacidade de recepção seja penalizado caso a capacidade de recepção $R_{p}$ do próximo nó \transu{\transi+1} seja menor do que a sua própria capacidade de transmissão. Este assunto será detalhado na próxima seção.
+    \textit{Observação}: Pela definição de \setwayi, \transs pode ser o nó \serv, então esse mecanismo segmenta o caminho \setwayis a cada nó \ways $\in$ \setwayis e \ways $\in$ \settrans, incluindo o nó servidor. O objetivo disso é criar sub-fluxos de transmissão dentro de um caminho \setwayis de acordo com a capacidade de transmissão e recepção a cada dois nós \transu{\transi} e \transu{\transi+1}. Trata-se de uma peculiaridade GMTP-UCC, pois se evita que um nó \transs com uma maior capacidade de recepção seja penalizado caso a capacidade de recepção $R_{p}$ do próximo nó \transu{\transi+1} seja menor do que a sua própria capacidade de transmissão. Este assunto será detalhado na próxima seção.
     \label{item:gmtp-ucc-bottleneck-ack}
 
   \end{enumerate}
@@ -2705,8 +2664,14 @@ os pacotes de dados \pks a uma taxa de \ut{4}{Mb/s}.
 
 \subsubsection{Ordenação dos melhores caminhos com base em $R(\hat{t})$:}
 
-Na Seção~\ref{subsec:phase3}, discutiu-se que na Fase 3 de conexão do GMTP, um nó \servs pode sugerir possíveis nós \repassu{q} como candidatos a parceiros de um nó solicitante \repass. O primeiro critério para sugerir nós parceiros \repassu{q} é priorizar aqueles que fazem parte de um caminho \setwayis com maiores capacidade de transmissão. No GMTP isto é possível porque os nós \servs conhecem a capacidade de transmissão de todo o caminho, inclusive os pontos onde se inicia um sub-caminho e inicia outro, obtidos pelo Passo~\ref{item:gmtp-ucc-bottleneck-ack} do algoritmo GMTP-UCC. Sendo assim, dependendo da posição de um nó solicitante \repasss em um caminho \setwayi, o nó \servs determina os parceiros \repassu{q} e os sugere ao nó
-\repasss através da intersecção de caminhos conhecidos, utilizando como critério de ordenação as capacidades de transmissão dos caminhos conhecidos \setway.
+Na Seção~\ref{subsec:phase3}, discutiu-se que na Fase 3 de conexão do GMTP, um nó \servs pode sugerir possíveis nós \repassu{q} como candidatos a parceiros de um nó solicitante \repass. O primeiro critério para sugerir nós parceiros \repassu{q} é priorizar os que fazem parte de um caminho \setwayis com maiores capacidade de transmissão. No GMTP, isto é possível porque os nós \servs conhecem a capacidade de transmissão de todo o caminho, inclusive os pontos onde se termina um sub-caminho e se inicia o subsequente, obtidos pelo Passo~\ref{item:gmtp-ucc-bottleneck-ack} do algoritmo GMTP-UCC.
+
+Após o nó \servs selecionar um sub-conjunto de nós candidatos \repassu{q} e sugerir ao nó \repass, \repasss envia um pedido de interesse de recepção para obter um fluxo de dados \setpks aos nós \repassu{q}. O nó \repasss escolhe o(s) nó(s) \repassu{q} com base na capacidade de transmissão percebida entre este e cada \repassu{q} (na direção inversa). Nesse caso, cada nó \repassu{q} sugere ao nó \repasss o valor de $R_{p}$ atualmente entre \servs e \repassu{q}. Porém, até o pacote alcançar \repass, os nós roteadores intermediários podem atualizar o valor de $R_{p}$ devido ao Passo~\ref{step:rcp-gmtp-3} do algoritmo GMTP-UCC.
+
+% ANTES: revisar a seção que fala sobre selecionar nós parceiros. Qd o servidor sugerir 
+% roteadores parceiros para outro, pode-se medir a capacidade de transmissão com a estratégia apresentada baseada em RCP. FAZER UM APPEND NA SUBSUBSEC DA SEÇÃO DO UCC QUE FALA SOBRE SUGESTÃO DE PARCERIAS (Quando um roteador recebe a lista de parceiros, de tempos em tempos manda ack pra eles a fim de marcar as medições dos melhores caminhos)
+% 
+% ========
 
 \subsubsection{Escolha do algoritmo RCP em detrimento ao TCP e ao XCP:}
 
@@ -2726,14 +2691,10 @@ os nós transmissores em um certo instante \textit{t}. Apesar dessa diferença
 suscinta, deve-se entender minuciosamente o que isto significa.
 
 No caso do XCP, o protocolo aumenta ou diminui a janela de congestionamento de
-um fluxo de dados de acordo com o tamanho atual da sua janela de
-congestionamento. Isto significa que o XCP reduz gradativamente os tamanhos da
+um fluxo de dados de acordo com o tamanho atual da sua janela de congestionamento. Isto significa que o XCP reduz gradativamente os tamanhos da
 janela de congestionamento dos fluxos com $R_{xcp}(t)$ maior do que o
 $R_{ps}(t)$ estimado, aumentando-se gradativamente o tamanho das janelas de
-congestionamento dos fluxos com $R_{xcp}(t)$ menor do que $R_{ps}(t)$ estimado.
-Porém, como se sabe, o tamanho da janela de congestionamento é sempre menor para os fluxos iniciados mais recente. Assim, em qualquer momento, os fluxos XCP podem ter
-diferentes tamanhos de janela de congestionamento e de RTTs, portanto diferentes
-taxas de transmissão $R_{xcp}(t)$, resultando em valores para $R_{xcp}(t)$ não
+congestionamento dos fluxos com $R_{xcp}(t)$ menor do que $R_{ps}(t)$ estimado. Porém, como se sabe, o tamanho da janela de congestionamento é sempre menor para os fluxos iniciados mais recente. Assim, em qualquer momento, os fluxos XCP podem ter diferentes tamanhos de janela de congestionamento e de RTTs, portanto diferentes taxas de transmissão $R_{xcp}(t)$, resultando em valores para $R_{xcp}(t)$ não
 equânimes para todos os fluxos de dados.
 
 Para se ter uma visão mais adequada, nos gráficos da Figura~\ref{fig:xcp-vs-tcp-vs-ps}, compara-se o TCP e o XCP com um PS ideal com base em uma rede simulada, com taxa de entrada de pacotes de dados definida em \textit{Poisson} e tamanhos dos fluxos em distribuição \textit{Pareto}, com média de 30 pacotes (\ut{1000}{bytes/pacote}), \textit{shape} igual a $1.4$, capacidade do link igual a \ut{2.4}{Gbps} e RTT igual a \ut{100}{ms}, com carga ofertada igual a $0.9$. No gráfico da esquerda, ilustra-se o tempo médio de duração de um fluxo (quanto tempo o respectivo protocolo gasta para completar o fluxo) em função do tamanho do fluxo. No gráfico da direita, ilustra-se o número de fluxos ativos em função do tempo. Os valores de PS foram calculados a partir de expressões analíticas~\cite{Wolff1989} e mostram que os fluxos poderiam ser finalizados uma ordem de magnitude mais rápida do que o TCP.
@@ -2743,45 +2704,31 @@ Para se ter uma visão mais adequada, nos gráficos da Figura~\ref{fig:xcp-vs-tcp-
 \includegraphics[scale=0.29]{imgs/xcp-vs-tcp-vs-ps.png}
 \end{center}
 \vspace{-1cm}
-\caption{No gráfico da esquerda, ilustra-se o tempo médio de duração (quanto tempo
-leva para finalizar o fluxo) de um fluxo versus o tamanho do fluxo utilizando o TCP e o XCP. No gráfico da direita, ilustra-se o número de fluxos ativos versus o tempo. Ambos os gráficos são resultados de simulações com chegada de fluxo em \textit{Poisson} e tamanhos do fluxo em distribuição \textit{Pareto} com média de 30 pacotes (\ut{1000}{bytes/pacote}), \textit{shape} igual a $1.4$, capacidade do \textit{enlace} igual a \ut{2.4}{Gbps} e RTT igual a \ut{100}{ms}, com carga ofertada igual a $0.9$. Os valores de PS foram calculados a partir de expressões analíticas. Extraído de~\cite{Dukkipati:2005:PSF:2103175.2103204}.}
+\caption{No gráfico da esquerda, ilustra-se o tempo médio de duração (quanto tempo leva para finalizar o fluxo) de um fluxo versus o tamanho do fluxo utilizando o TCP e o XCP. No gráfico da direita, ilustra-se o número de fluxos ativos versus o tempo. Ambos os gráficos são resultados de simulações com chegada de fluxo em \textit{Poisson} e tamanhos do fluxo em distribuição \textit{Pareto} com média de 30 pacotes (\ut{1000}{bytes/pacote}), \textit{shape} igual a $1.4$, capacidade do \textit{enlace} igual a \ut{2.4}{Gbps} e RTT igual a \ut{100}{ms}, com carga ofertada igual a $0.9$. Os valores de PS foram calculados a partir de expressões analíticas. Extraído de~\cite{Dukkipati:2008:RCP:1368746}.}
 \label{fig:xcp-vs-tcp-vs-ps}
 \end{figure}
 
 Com base nos gráficos da Figura~\ref{fig:xcp-vs-tcp-vs-ps}, observa-se que os
 fluxos TCP demoram para finalizar porque consome-se múltiplos RTTs na fase de
 partida lenta para encontrar uma taxa de transmissão equânime, além do
-mais, muitas vezes, o fluxo acaba antes que tal taxa seja encontrada. Em seguida,
-quando o fluxo TCP entra no modo de prevenção de congestionamento, o TCP
-adapta-se lentamente devido ao método de aumento aditivo, o que aumenta o tempo
-de finalização do fluxo. Além disso, o TCP deliberadamente preenche o buffer dos
-roteadores saturados de modo a ajustar a taxa de transmissão com base nos
-descartes de pacotes, mas buffers adicionais resulta em aumento no tempo
-(atraso) para entregar um pacote de dados, impactando no tempo total de duração
-de um fluxo. Já o XCP funciona melhor em redes com altos produtos largura de
-banda--atraso. Os roteadores disponibilizam para as fontes transmissoras
-relatórios sobre as mudanças da janela de congestionamento, enviados em
-múltiplos RTTs, que funcionam a contento quando todos os fluxos são de longa
-duração. Por isso, em um ambiente dinâmico, o XCP pode aumentar a duração de
-cada fluxo em relação ao PS ideal, resultando em mais fluxos de dados em
-trânsito na rede em qualquer instante, principalmente os fluxos de curta
-duração.
+mais, muitas vezes, o fluxo acaba antes que tal taxa seja encontrada. Em seguida, quando o fluxo TCP entra no modo de prevenção de congestionamento, o TCP adapta-se lentamente devido ao método de aumento aditivo, o que aumenta o tempo de finalização do fluxo. Além disso, o TCP deliberadamente preenche o buffer dos roteadores saturados de modo a ajustar a taxa de transmissão com base nos descartes de pacotes, mas buffers adicionais resulta em aumento no tempo (atraso) para entregar um pacote de dados, impactando no tempo total de duração de um fluxo. Já o XCP funciona melhor em redes com altos produtos largura de banda--atraso. Os roteadores disponibilizam para as fontes transmissoras relatórios sobre as mudanças da janela de congestionamento, enviados em múltiplos RTTs, que funcionam a contento quando todos os fluxos são de longa duração. Por isso, em um ambiente dinâmico, o XCP pode aumentar a duração de cada fluxo em relação ao PS ideal, resultando em mais fluxos de dados em trânsito na rede em qualquer instante, principalmente os fluxos de curta duração.
 
-Já no RCP, todos os fluxos (novos e antigos) recebem a mesma taxa de transmissão
-$R_{rcp}(t)$ baseada no estado atual do nó \repasss com menor largura de banda
-disponível em um certo instante $t$. Isto permite que um fluxo de dados de
-curta duração termine o mais rápido possível, ao passo que os fluxos de dados
-mais longos não influenciam diretamente no compartilhamento equânime do PS, sem
-permitir que parte da largura de banda disponível fique ociosa por muito tempo.
-Este procedimento ocorre em um intervalo de tempo definido por $H$ (vide
-Equação~\ref{eq:cc-rcp}).
+Um outro exemplo comparativo e importante entre o RCP, XCP e TCP se observa na Figure~\ref{fig:rcp-vs-xcp-vs-tcp-sn}. Nesses gráficos, ilustra-se dois fluxos  de tamanhos distintos, um considerado de curta duração (260 pacotes) e outro de longa duração (3600 pacotes). Note que no primeiro gráfico o fluxo do TCP finalizou primeiro (enquanto ainda estava na fase de partida lenta) do que mesmo transmitido usando o XCP. Já no segundo gráfico, observa-se o impacto causado no TCP quando houve uma perda de pacote na fase de partida lenta, forçando-o a entrar na fase de AIMD, retardando a finalização do fluxo. Em ambos os casos, o RCP obteve um melhor desempenho se comparado ao TCP e ao XCP porque o roteador oferece uma taxa de transmissão inicial muito próxima ao PS, sendo eficiente em rapidamente perceber largura de banda ociosa e que pode ser oferecida aos fluxos.
 
-Já ao observar o gráfico da Figura~\ref{fig:rcp-vs-xcp-vs-tcp}, percebe-se que a estratégia do RCP de compartilhar uma única taxa de transmissão para qualquer fluxo com base no estado atual do roteador saturado, produz um resultado satisfatório no
-que diz respeito a melhor utilizar o canal de transmissão (seja quando em altos
-níveis de utilização quanto de ociosidade). Com base no gráfico, percebe-se
-que, em comparação ao XCP e a outras soluções tradicionais como o TCP, o RCP
-emula melhor um PS e por isso acompanha o tempo médio de finalização de um fluxo
-de dados à medida que se aumenta o tamanho do fluxo. Note que, para o cenário descrito, o XCP teve um desempenho pior se comparado, inclusive, ao TCP.
+O XCP é lento em ofertar largura de banda para os fluxos, oferecendo uma baixa taxa de transmissão para os fluxos mais recentes. O XCP gradativamente reduz o tamanho da janela dos fluxos mais antigos e aumenta o tamanho da janela dos fluxos mais recentes, a fim de garantir que não ocorrerá super-utilização da largura de banda disponível. Por isso, gasta-se múltiplos RTTs para fazer com que a maioria dos fluxos alcancem uma taxa de transmissão equânime (que muda à medida que se iniciam novos fluxos na rede), mantendo-se uma baixa ocupação dos buffers dos roteadores.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=0.35]{imgs/rcp-vs-xcp-vs-tcp-sn.png}
+\end{center}
+\vspace{-1cm}
+\caption{Evolução dos números de sequência de fluxos de dados quando utilizando TCP (Reno), XCPe RCP. O tamanho do fluxo no primeiro gráfico foi de 230 pacotes, e no segundo gráfico foi de 3600 pacotes. Extraído de~\cite{Dukkipati:2008:RCP:1368746}.}
+\label{fig:rcp-vs-xcp-vs-tcp-sn}
+\end{figure}
+
+Já no RCP, todos os fluxos (novos e antigos) recebem a mesma taxa de transmissão $R_{rcp}(t)$ baseada no estado atual do nó \repasss com menor largura de banda disponível em um certo instante $t$. Isto permite que um fluxo de dados de curta duração termine o mais rápido possível, ao passo que os fluxos de dados mais longos não influenciam diretamente no compartilhamento equânime do PS, sem permitir que parte da largura de banda disponível fique ociosa por muito tempo. Este procedimento ocorre em um intervalo de tempo definido por $H$ (vide Equação~\ref{eq:cc-rcp}). Isso ocorre ao preço de ocorrer uma super-utilização temporária do canal (quando ocorrer um aumento substancial no número de fluxos no intervalo menor do que $H$ -- \textit{flash crowd}), mas para fluxos de mídias ao vivo pode-se tolerar perdas circunstanciais.
+
+Já ao observar o gráfico da Figura~\ref{fig:rcp-vs-xcp-vs-tcp}, percebe-se que a estratégia do RCP de compartilhar uma única taxa de transmissão para qualquer fluxo com base no estado atual do roteador saturado, produz um resultado satisfatório no que diz respeito a melhor utilizar o canal de transmissão (seja quando em altos níveis de utilização quanto de ociosidade). Com base no gráfico, percebe-se que, em comparação ao XCP e a outras soluções tradicionais como o TCP, o RCP emula melhor um PS e por isso acompanha o tempo médio de finalização de um fluxo de dados à medida que se aumenta o tamanho do fluxo. Note que, para o cenário descrito, o XCP teve um desempenho pior se comparado, inclusive, ao TCP.
 
 \begin{figure}[ht]
 \begin{center}
@@ -2789,8 +2736,7 @@ de dados à medida que se aumenta o tamanho do fluxo. Note que, para o cenário de
 \end{center}
 \vspace{-1cm}
 \caption{Tempo médio, em segundos, de finalização de um fluxo de dados, ao
-utilizar os protocolos XCP, TCP e RCP como resultados de simulações com taxa de
-entrada de dados em \textit{Poisson} e tamanhos do fluxo em distribuição Pareto com média de 25 pacotes (\ut{1000}{bytes/pacote}), \textit{shape} igual a $1.2$, capacidade do link igual a \ut{2.4}{Gbps} e RTT igual a \ut{100}{ms}, com carga ofertada igual a $0.9$. Os valores de PS foram calculados a partir de expressões analíticas. Extraído de~\cite{Dukkipati:2005:PSF:2103175.2103204}.}
+utilizar os protocolos XCP, TCP e RCP como resultados de simulações com taxa de entrada de dados em \textit{Poisson} e tamanhos do fluxo em distribuição Pareto com média de 25 pacotes (\ut{1000}{bytes/pacote}), \textit{shape} igual a $1.2$, capacidade do link igual a \ut{2.4}{Gbps} e RTT igual a \ut{100}{ms}, com carga ofertada igual a $0.9$. Os valores de PS foram calculados a partir de expressões analíticas. Extraído de~\cite{Dukkipati:2008:RCP:1368746}.}
 %  Os fluxos foram
 % injetados na rede com base na distribuição pareto, com E[L] = \ut{25}{pacotes} e
 % shape = 1.2.
@@ -2799,29 +2745,19 @@ entrada de dados em \textit{Poisson} e tamanhos do fluxo em distribuição Pareto 
 
 O XCP é computacionalmente mais complexo do que o RCP, uma vez que o
 XCP define diferentes valores de \textit{feedback} para cada fluxo, envolvendo
-operações matemáticas (multiplicação e soma) para cada pacote, o que torna o XCP
-mais lento que o RCP. Pela estratégia de mudança no tamanho da janela de
+operações matemáticas (multiplicação e soma) para cada pacote, o que torna o XCP mais lento que o RCP. Pela estratégia de mudança no tamanho da janela de
 congestionamento, o XCP pode leva múltiplos RTTs para a maioria dos fluxos
-alcançarem a taxa de transmissão equânime entre eles, mas que mudam com o passar
-do tempo à medida que novos fluxos são injetados na rede e outros são
+alcançarem a taxa de transmissão equânime entre eles, mas que mudam com o passar do tempo à medida que novos fluxos são injetados na rede e outros são
 finalizados, devido à natureza dinâmica das redes. No caso do RCP, essa
 complexidade é menor e há uma redução significativa na convergência entre a
 taxa de transmissão praticada $R_{rcp}(t)$ e a taxa estimada do PS
 ($R_{ps}(t)$). Isto porque se mantém uma única taxa de transmissão para todos
 os fluxos, não envolvendo qualquer computação adicional por pacote \pks que
-passa por \repass. Além disso, para determinar $R_{rcp}(t)$, utiliza-se apenas o
-tamanho da fila e a taxa agregada de entrada, sem necessitar manter estado por
-fluxo de dados e operações matemáticas por pacote de dados.
+passa por \repass. Além disso, para determinar $R_{rcp}(t)$, utiliza-se apenas o tamanho da fila e a taxa agregada de entrada, sem necessitar manter estado por fluxo de dados e operações matemáticas por pacote de dados.
 
-Desta forma, os aspectos que determinam o funcionamento do RCP são fundamentais
-quando se trata de transmissão de conteúdos multimídia ao vivo, aliado às outras
-estratégias adotadas no GMTP. O RCP define uma taxa de transmissão equânime para
-todos os fluxos, sua reação é rápida às mudanças circunstanciais na rede, tanto
-para uma super-utilização de um canal quanto para a sua sub-utilização. Como o
-RCP escala naturalmente com relação à capacidade de transmissão do canal e ao
-RTT, o seu desempenho é invariante com relação ao tamanho de um fluxo, portanto
-não importa qual tipo de fluxo as aplicações geram (se de curta ou de longa
-duração; independente de qualquer protocolo de transporte). Com isto, pode-se permitir que fluxos de dados GMTP/RCP e TCP/RCP coexistam na Internet de forma equânime, aliado às funções do GMTP de distribuição de conteúdo assistida pela rede, evitando-se sobrecarga nos nós \serv.
+Desta forma, os aspectos que determinam o funcionamento do RCP são fundamentais quando se trata de transmissão de conteúdos multimídia ao vivo, aliado às outras estratégias adotadas no GMTP. O RCP define uma taxa de transmissão equânime para todos os fluxos, sua reação é rápida às mudanças circunstanciais na rede, tanto para uma super-utilização de um canal quanto para a sua sub-utilização. Como o RCP escala naturalmente com relação à capacidade de transmissão do canal e ao RTT, o seu desempenho é invariante com relação ao tamanho de um fluxo, portanto não importa qual tipo de fluxo as aplicações geram (se de curta ou de longa duração; independente de qualquer protocolo de transporte). Com isto, pode-se permitir que fluxos de dados GMTP/RCP e TCP/RCP coexistam na Internet de forma equânime, aliado às funções do GMTP de distribuição de conteúdo assistida pela rede, evitando-se sobrecarga nos nós \serv.
+
+Apesar das observações anteriores, não é foco desse trabalho aprofundar as discussões acerca do desempenho do XCP comparado ao RCP, mas para não deixar a impressão que o XCP sempre é ruim comparado ao TCP, vale ressaltar que também há cenários onde o XCP tem um desempenho superior ao TCP, incluindo as variantes de \textit{High Speed} TCP. É possível observar um melhor desempenho do XCP quando se aumenta o tamanho médio de duração de um fluxo para se aproximar ao produto largura da banda -- atraso. Nesses casos, aproxima-se de um regime onde existem fluxos consumindo praticamente toda a largura de banda disponível de um canal, com o valor equânime da taxa de transmissão alocada individualmente para cada fluxo. Nesse tipo de cenário, o TCP-SACK apresenta vários problemas de desempenho, que foram aprimorados pelo HS-TCP~\cite{Dukkipati:2008:RCP:1368746}. Em todo caso, sabe-se que em cenários reais, o tamanho dos fluxos variam, existindo fluxos de curta e longa duração multiplexados a todo instante em um roteador. %(51:40m -> 3100s)
 
 % ~\cite{4460574}. O artigo está na area de trabalho
 % http://ieeexplore.ieee.org/xpl/login.jsp?tp=&arnumber=4460574&url=http%3A%2F%2Fi
@@ -2971,7 +2907,7 @@ duração; independente de qualquer protocolo de transporte). Com isto, pode-se pe
 % primordial para o correto funcionamento e aproveitamento dos recursos de rede,
 % em especial na Internet.
 
-\subsection{Controle de Congestionamento Multicast}
+\subsection{Controle de congestionamento multicast}
 \label{subsec:mudccp-mcc}
 
 Da mesma forma que no \mudccp-UCC, o objetivo principal do \mudccp-MCC é
@@ -3314,7 +3250,7 @@ verificar a autenticidade de um pacote \pks $\in$ \setpk, deve-se entender como
 o nó \servs deve gerar os referidos pacotes de dados para que seja possível
 verificar sua autenticidade. Este procedimento é explicado a seguir.
 
-\subsection{Transmissão e Assinatura de Autenticidade de \pks $\in$ \setpk}
+\subsection{Transmissão e assinatura de autenticidade de \pks $\in$ \setpk}
 \label{subsec:gerar-pacote-assinado}
 
 Quando o nó \servs gerar cada pacote de dados \pks $\in$ \setpk, este deve
@@ -3360,7 +3296,7 @@ authenticity executing the Algorithm~\ref{algo:verifyPacketAuthenticity}.}
 \end{algorithm}
 \vspace{0.8cm}
 
-\subsection{Verificação de Autenticidade de \pks $\in$ \setpk}
+\subsection{Verificação de autenticidade de \pks $\in$ \setpk}
 \label{subsec:verifyPacketAuthenticity}
 
 Após definir as regras para verificação de autenticidade do fluxo de dados
@@ -3425,7 +3361,7 @@ verifiedPackets \attrib \textbf{array of} boolean;
 \vspace{0.8cm}
 
 
-\subsection{Habilitar / Desabilitar a Validação de Pacotes \pks $\in$ \setpk}
+\subsection{Habilitar / desabilitar a validação de pacotes \pks $\in$ \setpk}
 
 A função de verificação de autenticidade de um fluxo de dados \setpks do GMTP é
 opcional e desabilitada por padrão. Isto porque um sistema de transmissão, em
@@ -3457,7 +3393,7 @@ como descrito anteriormente. Por fornecer essa função de verificação da porção
 de dados transportado em um pacote, no GMTP não se realiza checagem de erro por
 soma de verificação (\textit{checksum}), tal como em protocolos como TCP, UDP, DCCP e SCTP.
 
-\subsection{Obtenção da Chave Pública $K^{+}_{\servconst_{\servi}}$ de \serv}
+\subsection{Obtenção da chave pública $K^{+}_{\servconst_{\servi}}$ de \serv}
 \label{subsec:obterchavepublica}
 
 Um nó \repasss obtém a chave pública $K^{+}_{\servconst_{\servi}}$ de \servs
@@ -3533,7 +3469,7 @@ eleição de nós relatores.
 
 
 
-\subsection{Canais de Comunicação}
+\subsection{Canais de comunicação}
 \label{subsec:canaiscommudccp}
 
 No GMTP, utilizam-se três canais de comunicação para executar suas
@@ -3649,7 +3585,7 @@ do que suficiente e escalável por vários séculos.
 % =========
 
 
-\subsection{Procedimentos para Desconexão de nós \cli, \rels e \repass}
+\subsection{Procedimentos para desconexão de nós \cli, \rels e \repass}
 \label{subsec:desconexao}
 
 % \begin{figure}[ht]
@@ -3993,23 +3929,27 @@ deve ocorrer com garantia de entrega.
 
 %\section{Considerações sobre a escolha do DCCP como base para o \mudccp}
 
-% \section{Considerações sobre implementação}
+% \subsection{Considerações sobre implantação e implementação}
+% 
+% Quanto a implantação do GMTP
 
 \section{Sumário do Capítulo}
 \label{sec:sumario-gmtp}
 
-Neste capítulo, apresentou-se o \textit{Global Media Transmission Protocol} (\mudccp), um protocolo baseado em uma arquitetura híbrida P2P/CDN para distribuição de mídias ao vivo através da Internet. Para viabilizar a distribuição de um fluxo de dados referente a um evento ao vivo, uma aplicação, em execução em um servidor, obtém o conteúdo e requisita sua transmissão ao protocolo GMTP, por meio de uma API socket. Para disseminar o conteúdo da aplicação, o GMTP utiliza servidores dispostos em uma rede CDN e constitui dinamicamente uma rede P2P, formada pelos roteadores localizados entre os clientes interessados em obter o fluxo de dados multimídia e os servidores da CDN. Para isto, os roteadores expressam interesse em participar da rede ao realizarem registros de participação (previamente ou sob-demanda) em um ou mais servidores, ao passo que os servidores começam a conhecer todas as possíveis rotas para alcançar os clientes.
+Neste capítulo, apresentou-se o \textit{Global Media Transmission Protocol} (\mudccp), um protocolo baseado em uma arquitetura híbrida P2P/CDN para distribuição de mídias ao vivo através da Internet. Para viabilizar a distribuição de um fluxo de dados, uma aplicação obtém o conteúdo e requisita sua transmissão ao protocolo GMTP, por meio de uma API socket. Para disseminar o conteúdo da aplicação, o GMTP utiliza servidores dispostos em uma rede CDN e constitui dinamicamente uma rede P2P, formada pelos roteadores localizados entre os clientes interessados em obter o fluxo de dados multimídia e os servidores da CDN. Para isto, os roteadores expressam interesse em participar da rede ao realizarem registros de participação (previamente ou sob-demanda) em um ou mais servidores, ao passo que os servidores começam a conhecer todas as possíveis rotas para alcançar os clientes.
 
-Quando um cliente requisita um fluxo de dados a um servidor, seu roteador de borda, participante da rede P2P, assume a responsabilidade de obter o fluxo de dados de interesse. Nesse ínterim, o roteador do cliente transmite um pedido ao servidor e receber como resposta os pacotes de dados referentes à mídia de interesse (em modo unicast/push). À medida que transmissões diretas (servidor $\rightarrow$ cliente) ocorrem, os roteadores presentes nas rotas entre o servidor e os clientes vão sendo ``alimentados'' pelos pacotes de dados referente à mídia em questão, ao passo que os roteadores intermediários interceptam os mesmos pacotes de dados quando seus clientes locais também tem interesse pela mesma mídia. Dessa forma, os roteadores formam parcerias entre si, diretamente por interceptação de pacotes de dados ou com base em instruções obtidas através dos servidores, que executam um algoritmo para determinar a intersecção de rotas usadas por outros roteadores para obter o mesmo fluxo a partir do servidor. Isto ocorre quando o servidor percebe detecta pontos comuns nas rotas e então, em vez de aceitar um novo pedido de conexão, recusa-o e na mesma resposta sugere uma lista de roteadores candidatos a parceiros do roteador solicitante, de modo a evitar múltiplas conexões para obter um mesmo fluxo de dados em direção ao servidor. Um roteador pode também solicitar explicitamente uma lista de candidatos a parceiros a fim de aumentar a quantidade de parcerias ou pelo menos conhecer outros roteadores e contata-los em caso de desconexão com os seus parceiros atuais.
+Quando um cliente requisita um fluxo de dados a um servidor, seu roteador de borda, participante da rede P2P, assume a responsabilidade de obter o fluxo de dados de interesse. Nesse ínterim, o roteador do cliente transmite um pedido ao servidor e receber como resposta os pacotes de dados referentes à mídia de interesse (em modo unicast/push). À medida que transmissões diretas (servidor $\rightarrow$ cliente) ocorrem, os roteadores presentes nas rotas entre o servidor e os clientes vão sendo ``alimentados'' pelos pacotes de dados referentes à mídia em questão, ao passo que os roteadores intermediários interceptam os mesmos pacotes de dados quando seus clientes locais também tem interesse pela mesma mídia. Isso permite o conceito de sub-fluxo.
 
-A distribuição do conteúdo em uma rede local sempre ocorre em modo multicast. Para isto, o roteador cria dinamicamente canais multicast e os divulga na rede à medida que recebem pedidos de conexão para obter fluxos de dados que já estão sendo recebidos, Sendo assim, não se transmite mais de um pedido de conexão ao servidor para uma mesma mídia ao vivo. Além disso, nesse capítulo, detalhou-se todo esse processo de conexão, incluindo aspectos sobre controle de \textit{cache} nos roteadores e outras possíveis ações de cada tipo de nó GMTP.
+Os roteadores formam parcerias entre si, diretamente por interceptação de pacotes de dados ou com base em instruções obtidas através dos servidores, que executam um algoritmo para determinar a intersecção de rotas usadas por outros roteadores para obter o mesmo fluxo a partir do servidor. Isto ocorre quando o servidor detecta pontos comuns nas rotas e, em vez de aceitar um novo pedido de conexão de um nó solicitante em obter o fluxo de dados, recusa-o e sugere ao nó solicitante uma lista de roteadores candidatos a parceiros, de modo a evitar múltiplas conexões em direção ao servidor. Um roteador pode também solicitar explicitamente uma lista de candidatos a parceiros a fim de obter mais rapidamente os pacotes de dados e, secundariamente, conhecer outros roteadores e contata-los em caso de desconexões dos seus parceiros atuais.
 
-Em seguida, discutiu-se sobre a estratégia para realizar controle de congestionamento durante o processo de disseminação de uma mídia ao vivo. Nesse contexto, propõe-se dois algoritmos. O GMTP-UCC tem como objetivo controlar o congestionamento no núcleo da rede P2P, além de expor as informações de seu estado aos servidores. Os servidores podem utilizar tal informação para adaptar o conteúdo multimídia de acordo com a capacidade de transmissão da rede, que sempre tende a ser próxima da capacidade de um PS. Já o GMTP-MCC tem como objetivo controlar o congestionamento na rede local, em transmissões dos fluxos de dados multicast. O roteador elege um sub-conjunto de clientes (relatores) responsáveis por enviar relatórios de suas respectivas capacidade de recepção de dados, ao passo que o roteador define a próxima taxa de transmissão com base nesses relatórios. Por utilizar uma estratégia adaptada do TFRC, o GMTP-MCC emula a taxa de transmissão que seria utilizada pelo TCP caso este fosse utilizado para transmitir o fluxo de dados multimídia, tornando o GMTP um protocolo TCP-Friendly.
+A distribuição do conteúdo em uma rede local sempre ocorre em modo multicast. Para isto, o roteador cria dinamicamente canais multicast e os divulga na rede à medida que recebem pedidos de conexão para obter fluxos de dados que já estão sendo recebidos. Sendo assim, não se transmite mais de um pedido de conexão ao servidor para uma mesma mídia, partindo da mesma rede. O GMTP executa três fases de conexão. A primeira fase de conexão ocorre quando o primeiro nó em uma rede local solicita receber um determinado fluxo de dados; a segunda fase ocorre através do compartilhamento dos pacotes de dados de um fluxo em modo multicast; e a terceira fase permite que os roteadores aumentem suas parcerias.
 
-Por fim, discutiu-se aspectos sobre segurança e os métodos empregados no GMTP para evitar ataques de poluição. O mecanismo de segurança do GMTP permite que os servidores assinem digitalmente os dados transmitidos, ao passo que permite que os roteadores validem se tal conteúdo não foi alterado ao longo do caminho. Além disso, discutiu-se outros aspectos relacionados ao GMTP, como as ações realizadas na desconexão dos nós repassadores, relatores e clientes, bem como a eleição de nós relatores.
+Em seguida, discutiu-se sobre a estratégia para realizar controle de congestionamento durante o processo de disseminação de uma mídia ao vivo. Nesse contexto, propõe-se dois algoritmos. O GMTP-UCC tem como objetivo controlar o congestionamento no núcleo da rede P2P, além de expor as informações de seu estado aos servidores. Os servidores podem utilizar tal informação para adaptar o conteúdo multimídia de acordo com a capacidade de transmissão da rede, que sempre tende a ser próxima da capacidade de um PS. Além disso, o algoritmo GMTP-UCC pode auxiliar os nós receptores a selecionarem os melhores parceiros de acordo com a capacidade de transmissão do canal entre os receptores e os transmissores. Já o GMTP-MCC tem como objetivo controlar o congestionamento na rede local, em transmissões dos fluxos de dados multicast. O roteador elege um sub-conjunto de clientes (relatores) responsáveis por enviar relatórios de suas respectivas capacidade de recepção de dados, ao passo que o roteador define a próxima taxa de transmissão com base nesses relatórios. Por utilizar uma estratégia adaptada do TFRC, o GMTP-MCC emula a taxa de transmissão que seria utilizada pelo TCP caso este fosse utilizado para transmitir o fluxo de dados, tornando o GMTP um protocolo TCP-Friendly.
 
-As definições das funções do GMTP foram propostas com base em investigações dos trabalhos disponíveis no estado da arte e guiadas por questionamentos sobre quais funções se mostraram eficazes ao longo de 15 anos de pesquisa quando aplicadas em sistemas P2P e P2P/CDN, bem como aquelas que poderiam melhoras (ou ainda, aquelas de faziam sentido se manter na camada de aplicação). Com esta visão, decidiu-se reduz as responsabilidades dos nós clientes e aumentar a responsabilidade dos roteadores de rede no processo de disseminação dos pacotes de dados multimídia, fazendo uso de informações mais precisas sobre a capacidade de transmissão do núcleo da rede e abstraindo-se a complexidade desse processo da camada de aplicação. Consequentemente, padroniza-se a forma como as aplicações distribuem e recebem conteúdos multimídia, permitindo-se que aplicações desenvolvidas por diferentes fornecedores possam cooperar entre si para obter um mesmo conteúdo multimídia de interesse.
+Por fim, discutiu-se aspectos sobre segurança e os métodos empregados no GMTP para evitar ataques de poluição. O mecanismo de segurança do GMTP permite que os servidores assinem digitalmente os dados transmitidos, ao passo que se permite os roteadores validem se tal conteúdo não foi alterado ao longo do caminho entre o nó servidor e os diversos nós receptores (diretos ou indiretos). Além disso, discutiu-se outros aspectos relacionados ao GMTP, como as ações realizadas na desconexão dos nós repassadores, relatores e clientes, bem como a eleição de nós relatores.
 
-A decisão de utilizar roteadores para formar uma rede colaborativa a fim de disseminar o conteúdo multimídia pode melhorar o desempenho das transmissões de conteúdos multimídia ao vivo, pois reduz-se o impacto negativo causado por fatores que desestabilizam a rede e a qualidade de serviço, tais como a capacidade de processamento e memória dos dispositivos, mobilidade e dinâmica de entrada/saída dos nós clientes (\textit{churn}). Esses fatores são os mais críticos em se utilizar uma rede P2P para distribuição de conteúdos multimídia, principalmente com a popularização dos dispositivos móveis. Por exemplo, usar dispositivos móveis como nós contribuidores de recurso não é uma estratégia apropriada, principalmente em redes híbridas IP/celular (por exemplo, 3G). Para esse último exemplo, a partir de agora, bastará posicionar um roteador GMTP entre a rede IP e a rede celular para atender à demanda de todos os nós móveis em uma rede celular referente a um fluxo de dados multimídia.
+As definições das funções do GMTP foram propostas com base em investigações dos trabalhos disponíveis no estado da arte e guiadas por questionamentos sobre quais funções se mostraram eficazes ao longo de 15 anos de pesquisa quando aplicadas em sistemas P2P e P2P/CDN, bem como aquelas que podem ser aprimoradas (ou ainda, aquelas que fazem sentido manter na camada de aplicação). Com esta visão, decidiu-se reduz as responsabilidades dos nós clientes e aumentar a responsabilidade dos roteadores de rede no processo de disseminação dos pacotes de dados multimídia, fazendo uso de informações mais precisas sobre a capacidade de transmissão do núcleo da rede e abstraindo-se a complexidade desse processo da camada de aplicação. Consequentemente, padroniza-se a forma como as aplicações distribuem e recebem conteúdos multimídia, permitindo-se que aplicações desenvolvidas por diferentes fornecedores possam cooperar entre si para obter um mesmo conteúdo multimídia de interesse.
+
+A decisão de utilizar roteadores para formar uma rede colaborativa a fim de disseminar o conteúdo multimídia pode melhorar o desempenho das transmissões de conteúdos multimídia ao vivo, pois reduz-se o impacto negativo causado por fatores que desestabilizam a rede e a qualidade de serviço, tais como a capacidade de processamento e memória dos dispositivos, mobilidade e dinâmica de entrada/saída dos nós clientes (\textit{churn}). Esses fatores são os mais críticos em se utilizar uma rede P2P para distribuição de conteúdos multimídia, principalmente com a popularização dos dispositivos móveis. Por exemplo, usar dispositivos móveis como nós contribuidores de recurso não é uma estratégia apropriada, principalmente em redes híbridas IP/celular (por exemplo, 3G). A partir do uso do GMTP, bastará posicionar um roteador GMTP entre a rede IP e a rede celular para atender à demanda de todos os nós móveis.
 
 % No próximo capítulo, apresentam-se os resultados e discussões acerca do uso do protocolo GMTP para a distribuição de conteúdos multimídia ao vivo.

@@ -8,5 +8,29 @@ TBD
 
 \section{Conclusões}
 
+* Por que PS? é invariante a distribuição do tamanho do fluxo, ou seja, não importa ao diferentes são os tamanhos dos fluxos na rede. Mesmo com longos fluxos, o compartilhamento do canal é melhor porque estabiliza mais rápido se comparado com abordagens de monitoramento de perdas.
+   RCP: atualiza a taxa (simples e prático): aproxima a taxa de transmissão oferecida aos fluxos da taxa do PS, sem o conhecimento do número exato de fluxos; baseia-se no tamanho da fila, no tráfego agregado de entrada e no RTT médio do tráfego passando através do link
+   R(t) é atualizado de acordo com h0.
+   Cada roteador tem que fazer três coisas
+       - offer the same rate to every flow
+       - preencher a fila de saída com os pacotes que chegam na fila de entrada
+       - manter a fila de entrada e saída pequena
+   Long-flow: 100\% link utilization
+   Short-flow: reduce flow completion time,
+   Flash-crownd no RCP: pode ter perde
+   A questão é: em vez de definir aumentos ou uma diminuições incrementais na janela com base no RTT, no RCP a pergunta é: existe uma taxa de transmissão que os roteadores podem pedir aos fluxos transmitirem e emular o PS. Qual seria essa taxa? como encontrá-la de forma simples?
+   Para ter um FCT pequeno, tem que ter alta utilização do link, então precisa-se garantir  que o buffer não estoure (rever 28:30min da defesa da Nandita)
+   Nem sempre o XCP é ruim, quando só tem long-lived, mas em cenários dinâmicos (diferentes tamanhos de fluxos) it performs badly and short lived flows last almost the same time of some long lived flows. Quando aumenta o tamanho médio do fluxo para se aproximar ao Bandwidth-delay product, you approach the regime where you have a few high Bandwidth flows multiplex in a large link (51:00min)
+   Diferentes topologias: 
+     - Sem manter estado por fluxo
+     - TCP: perda de pecotes ou atraso
+     - XCP: alcança desempenho similar ou melhor do que HS-TCP para long-lived flows
+            não é 100\% fair em determinados momentos
+            em fluxos mistos (tamanho) e na dinâmica da rede não é bom
+            multiplicações e divisões é sim ruim (Nandita -> Cisco)
+            
+            
+     - CC: na literatura, em geral, só focam em usar o máximo do link
+
 
 \section{Trabalhos Futuros}
