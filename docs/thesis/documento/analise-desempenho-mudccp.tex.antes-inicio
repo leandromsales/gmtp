@@ -1,57 +1,17 @@
 \chapter{Análise de Desempenho do \mudccp}
 \label{cap:analisedesemp}
 
-% http://dl.acm.org/citation.cfm?id=2557696.2557729&coll=DL&dl=ACM&CFID=405433529&
-% CFTOKEN=59982670
-% http://www.p2p.tu-darmstadt.de/research/overlay-streaming-simulator/
-% https://github.com/ntrgiang/ossim/
 
 As different network delays influence the performance of the different protocols, we carry out these evaluations using different round trip times (RTT) ranging from 0 to 150ms~\cite{6607500}.
 
 índice de continuidade e outros aqui
 % http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4797218
 
-http://named-data.net/techreport/TR005-ndnsim.pdf
-http://pt.slideshare.net/PARCInc/ccnxcon2012-session-6-omnet-simulator
-http://www.ccn-lite.net/
-https://github.com/cn-uofbasel/ccn-lite/blob/master/README-OMNeT.txt
-https://github.com/cn-uofbasel/ccn-lite
-CCNSim:
-% http://ieeexplore.ieee.org/xpl/articleDetails.jsp?tp=&arnumber=6654874
-
-\subsection{Estudo de Caso na Rede da RNP -- Analítico}
-
-Colocar também o mapa do brasil e o backbone.
-
-\begin{figure}[ht]
-\begin{center}
-\includegraphics[natwidth=664,natheight=340,scale=.61]{imgs/rede-rnp.png}
-\end{center}
-\vspace{-1cm}
-\caption{\textit{Backbone} da Rede Nacional de Pesquisa (RNP). 28 roteadores
-espalhados em todos os estados brasileiros com 22 pontos de troca de tráfego
-(PTT).}
-\label{fig:rede-rnp}
-\end{figure}
 
 
-LINKAR TUDO APRESENTADO COMO RESULTADO À UM DESSES 3 GRUPOS:
-%  \item \textit{Qualidade da experiência do usuário:} avalia-se o tempo em
-% que os nós levam para começar a reproduzir os primeiros datagramas; o tempo que
-% os nós levam para voltar a reproduzir o conteúdo, quando seus nós parceiros se
-% desconectam da rede (índice de continuidade); e a qualidade do conteúdo recebido
-% em comparação ao conteúdo original.
-%
-%  \item \textit{Escalabilidade dos sistemas com relação a quantidade de nós
-% conectados:} avalia-se a quantidade de nós simultâneos conectados, a
-% contribuição da rede CDN e da rede P2P na transmissão de um fluxo de dados, bem
-% como o nível de duplicação desse fluxos.
-%
-%  \item \textit{Execução dos protocolos:} avalia-se a sobrecarga de controle
-% gerados pelos protocolos a fim de executar suas funções.
 
-% - http://named-data.net/wp-content/uploads/2013_Yuan_Infocom_Mini.pdf
-  Olhar os gráficos desse artigo
+
+
 
 ver ref 6386696
 

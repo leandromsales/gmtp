@@ -115,7 +115,7 @@ arquitetura P2P para distribuição de conteúdos multimídia ao vivo.
 
 % ISSO É INTERESSANTE, MAS SUPRIMIDO PARA NÃO ENCHER MUITO A BOLA AO HTTP.
 % A transmissão de fluxos de dados na web tem se tornado uma abordagem popular
-% devido a vários benefícios. Primeiro, a infra-estrutura da Internet tem
+% devido a vários benefícios. Primeiro, a infraestrutura da Internet tem
 % evoluído para suportar o protocolo HTTP. Por exemplo, as CDNs provêem cache de
 % bordas localizados, que reduzem o tempo de resposta para uma requisição. Além
 % disso, requisições HTTP praticamente não são bloqueadas pelos firewalls de
@@ -184,7 +184,7 @@ Isto aumenta os custos de uma solução devido à necessidade de distribuir
 estrategicamente servidores globalmente e melhorar os canais de
 transmissão, pois, em essência, trata-se de requisições HTTP. No caso do GMTP,
 a camada de aplicação o utiliza de forma similar ao TCP, mas o transporte
-dos dados entre os servidores da CDN ocorrer com o suporte de uma rede de
+dos dados entre os servidores da CDN ocorre com o suporte de uma rede de
 favores formada pelos roteadores de rede, onde o conteúdo pode ser entregue
 pelo servidor diretamente ao roteador do nó cliente interessado em receber o
 fluxo de dados ou indiretamente, entregue por um roteador parceiro ao roteador
@@ -209,9 +209,7 @@ dados~\cite{5061999,4395127,susu_xie_coolstreaming:_2007}. No caso do GMTP,
 utiliza o método híbrido \textit{push/pull}, onde o método \textit{push} é
 utilizado como padrão e o \textit{pull} em casos especiais, como quando um nó
 está prestes a reproduzir um determinado \textit{chunk} e este ainda não está
-disponível. Além disso, apesar do método \textit{pull} não necessitar conexão e
-o HTTP é interesse para isso, no GMTP, reduz-se o número de conexões ao permitir
-que os roteadores de rede interceptem os pedidos de múltiplas conexões transmitidas em direção ao nó servidor para um mesmo conteúdo.
+disponível. Além disso, apesar do método \textit{pull} não necessitar conexão e o HTTP é interessante para isso, no GMTP, reduz-se o número de conexões ao permitir que os roteadores de rede interceptem os pedidos de múltiplas conexões transmitidas em direção ao nó servidor para um mesmo conteúdo.
 
   \item O TCP implementa um mecanismo tradicional de controle de
 congestionamento, adaptando sua taxa de transmissão de acordo com a perda dos
@@ -224,11 +222,11 @@ capacidade de transmissão quando se utiliza o método \textit{pull}. Isto porque
 o nó transmissor perceberá uma taxa de transmissão diferente da taxa de
 transmissão do receptor, que não envia dados com conteúdo.
 % Além disso, de acordo com o estado da arte, existem soluções mais sofisticadas para fazer melhor uso dos canais de transmissão, expondo às aplicações informações mais precisas sobre o estado da rede com relação a sua capacidade de transmissão.
-No GMTP, utiliza-se um algoritmo de controle de congestionamento assistido pela rede~\cite{Dukkipati:2008:RCP:1368746} para reduzem o congestionamento nos pontos de interconexão, melhorando a qualidade dos fluxos de dados multimídia reproduzidos aos usuários finais.
+No GMTP, utiliza-se um algoritmo de controle de congestionamento assistido pela rede~\cite{Dukkipati:2008:RCP:1368746} para reduzir o congestionamento nos pontos de interconexão, melhorando o desempenho do protocolo ao utilizar os recursos de rede de forma mais eficiente, melhorando a qualidade da mídia reproduzida aos usuários finais.
 
   \item Soluções baseadas em HTTP, devem considerar aspectos relacionados à
 segurança, descritos na Seção 15 da referência~\cite{RFC2616}. Os
-principais são a disponibilização de informações pessoais e privadas, comprometimento dos segmentos devido aos ataques de interceptação implementados com servidores de cache e os arquivos de lista contém URIs, utilizadas pelos clientes para requisitarem os segmentos a servidores arbitrários e que podem estar comprometimento. No GMTP, utiliza-se um mecanismo de segurança que permite os roteadores validarem o conteúdo através de assinatura digital, podendo-se criptografa-lo com base em métodos tradicionais, como criptografias assimétricas, com suporte a diferentes métodos, tais como RSA e Curvas Elípticas.
+principais são a disponibilização de informações pessoais e privadas e possíveis ataques de interceptação dos seguimentos através do uso de servidores de \textit{cache}. No GMTP, utiliza-se um mecanismo de segurança que permite os roteadores validarem o conteúdo através de assinatura digital, podendo-se criptografa-lo com base em métodos tradicionais, como criptografias assimétricas, com suporte a diferentes métodos, tais como RSA e Curvas Elípticas.
 
 \end{itemize}
 
@@ -386,7 +384,7 @@ Content Management for IPTV Networks}). Figura extraída de~\cite{5962598}.}
 \label{fig:arq-hysac}
 \end{figure}
 
-O HySAC utiliza três modo de transmissão: \textit{unicast}, \textit{multicast} e P2P. Inicialmente, o HySAC entrega o conteúdo baseado em informações estáticas sobre a popularidade do conteúdo. O HySAC gerencia um \textit{ranking} de pupularidade do vídeo e dependendo de um determinado limiar, o vídeo é selecionado para ser transmitido em modo \textit{multicast}. Quanto mais alto for a popularidade do vídeo, maior é a chance deste de ser transmitido em modo \textit{multicast}. Se a popularidade do vídeo for intermediária, o vídeo será transmitido em modo P2P e se for baixa, transmite-se o vídeo do servidor diretamente para o cliente em modo \textit{unicast}.
+O HySAC utiliza três modo de transmissão: \textit{unicast}, \textit{multicast} e P2P. Inicialmente, o HySAC entrega o conteúdo baseado em informações estáticas sobre a popularidade do conteúdo. O HySAC gerencia um \textit{ranking} de popularidade do vídeo e dependendo de um determinado limiar, o vídeo é selecionado para ser transmitido em modo \textit{multicast}. Quanto mais alto for a popularidade do vídeo, maior é a chance deste de ser transmitido em modo \textit{multicast}. Se a popularidade do vídeo for intermediária, o vídeo será transmitido em modo P2P e se for baixa, transmite-se o vídeo do servidor diretamente para o cliente em modo \textit{unicast}.
 
 \subsubsection{Comparação entre o HySAC e o GMTP para distribuição de mídias ao vivo:}
 
@@ -624,7 +622,7 @@ a respeito do uso de algoritmos para controle de congestionamento. No GMTP, em v
 % aplicação
 % reutilizar tal mecanismo. Com isto, o \mudccps permite a interioperabilidade
 % entre
-% diferentes aplicações a nível de camada de transporte.
+% diferentes aplicações em nível de camada de transporte.
 % 
 %   \item Para que o PPETP funcione efetivamente nas aplicações serão necessárias
 % diversas
@@ -756,7 +754,7 @@ nós ativos na rede;
 
   \item \textit{Partnership manager}, que estabelece e mantém as parcerias com
 os outros nós e também é responsável por trocar o mapa de \textit{buffer}. O
-algoritmos padrão para seleção de nós é baseado em uma escolha aleatória entre
+algoritmo padrão para seleção de nós é baseado em uma escolha aleatória entre
 os nós disponíveis na lista \textit{mCache};
 
   \item \textit{Stream Manager}, que efetivamente transmite os fluxos de dados
@@ -792,7 +790,7 @@ melhora proporcionalmente algumas métricas, como o índice de continuidade e
 utilização da capacidade de \textit{upload} dos nós transmissores (em média). Os autores
 executaram simulações com 40 mil nós e 24 servidores auxiliares (que
 funcionaram apenas como nós transmissores) e observaram que a partir de 8
-sub-fluxos, as duas métricas citadas anteriormente não evoluem positivamente, piorando em alguns casos (quando se utiliza nós com capacidade heterogêneas de transmissão). No GMTP, utiliza-se sempre o método \textit{push} após um nó estabelecer uma conexão e os roteadores no caminho entre o nó servidor e o nó cliente podem interceptar os pedidos de conexão transmitidos por outros nós clientes. Essa estratégia reduzir a quantidade de requisições ao servidor e o tempo para iniciar a reprodução de um vídeo ao usuário final (apenas o primeiro usuário perceberá um atraso maior do que os demais). Com isso, se no caminho entre o nó cliente e o nó servidor não ocorrer nenhuma interceptação, a
+sub-fluxos, as duas métricas citadas anteriormente não evoluem positivamente, piorando em alguns casos (quando se utiliza nós com capacidade heterogêneas de transmissão). No GMTP, utiliza-se sempre o método \textit{push} após um nó estabelecer uma conexão e os roteadores no caminho entre o nó servidor e o nó cliente podem interceptar os pedidos de conexão transmitidos por outros nós clientes. Essa estratégia reduz a quantidade de requisições ao servidor e o tempo para iniciar a reprodução de um vídeo ao usuário final (apenas o primeiro usuário perceberá um atraso maior do que os demais). Com isso, se no caminho entre o nó cliente e o nó servidor não ocorrer nenhuma interceptação, a
 requisição alcançará o nó servidor, e a troca de dados ocorre. Porém, os
 próximos nós clientes que transmitirem seu pedido de conexão através de pelo
 menos parte do mesmo caminho já utilizado anteriormente, um nó servidor
@@ -827,7 +825,7 @@ reprodução do conteúdo ao usuário final. Isto porque, ao se juntar à rede, um
 nó solicita o mapa de \textit{buffer} a um conjunto de nós parceiros informados
 por um servidor de \textit{boostrap}. Porém, o desafio é definir a partir de
 qual ponto do \textit{buffer} um nó deve começar a solicitar os blocos de
-vídeo. Por exemplo, se o novo nó requisitar um bloco de vídeo muito antigo, pode ser que tal bloco de vídeo não esteja mais disponíveis, já que o nó cliente o remove após sua reprodução. Por outro lado, se o nó requisitar um bloco de vídeo muito recente, pode ser que nenhum de seus nós parceiros tenha disponível. No GMTP, situações como essas não ocorrem porque se utiliza, por padrão o método \textit{push}, além do mais, as últimas partes da mídia já podem estar disponíveis no roteador, quando há outros clientes anteriores recebendo o fluxo de dados correspondente. Outras decisões nesse sentido foram tomadas no GMTP, em destaque no Capítulo~\ref{cap:mudccp}.
+vídeo. Por exemplo, se o novo nó requisitar um bloco de vídeo muito antigo, pode ser que tal bloco de vídeo não esteja mais disponível, já que o nó cliente o remove após sua reprodução. Por outro lado, se o nó requisitar um bloco de vídeo muito recente, pode ser que nenhum de seus nós parceiros tenha disponível. No GMTP, situações como essas não ocorrem porque se utiliza, por padrão o método \textit{push}, além do mais, as últimas partes da mídia já podem estar disponíveis no roteador, quando há outros clientes anteriores recebendo o fluxo de dados correspondente. Outras decisões nesse sentido foram tomadas no GMTP, em destaque no Capítulo~\ref{cap:mudccp}.
 
   \item A seleção de nós no sistema CoolStreaming ocorre com base na escolha
 aleatória de um sub-conjunto de nós disponíveis em uma lista de parceiros. Após
@@ -991,7 +989,7 @@ Capítulo~\ref{cap:mudccp}. Por esse motivo, reserva-se um discussão mais detalha
 
 \subsection{Outras propostas}
 
-Como discutiu-se no início deste capítulo (Seção~\ref{sec:visaogerao-propostas-dmv}), a área de distribuição de mídias ao vivo em larga escala tem sido explorada há pelo menos 10 anos. Existe uma vasta quantidade de propostas que permeiam diferentes abordagens, das mais simples, como as baseadas em arquiteturas cliente/servidor, às mais complexas, como as baseadas em P2P e/ou P2P/CDN. Diante desse cenário, realizou-se uma exaustiva pesquisa sobre os trabalhos relacionados à proposta apresentada nessa tese de doutorado, destacando-se anteriormente os principais. Em geral, decide-se sobre se a estrutura da rede de sobreposição será em árvore e/ou em malha; sobre se os nós realizam periodicamente requisições das partes da mídia (\textit{pull-based}) e/ou se os nós transmissores enviarão as partes da mídia para o nó receptor após este último sinalizar interesse por tal conteúdo (\textit{push-based}); e, sobre a arquitetura do serviço, se será P2P e/ou P2P/CDN.
+Como discutiu-se no início deste capítulo (Seção~\ref{sec:visaogerao-propostas-dmv}), a área de distribuição de mídias ao vivo em larga escala tem sido explorada há pelo menos 10 anos. Existe uma vasta quantidade de propostas que permeiam diferentes abordagens, das mais simples, como as baseadas em arquiteturas cliente/servidor, às mais complexas, como as baseadas em P2P e/ou P2P/CDN. Diante desse cenário, realizou-se uma exaustiva pesquisa sobre os trabalhos relacionados à proposta apresentada neste trabalho, destacando-se anteriormente os principais. Em geral, decide-se sobre se a estrutura da rede de sobreposição será em árvore e/ou em malha; sobre se os nós realizam periodicamente requisições das partes da mídia (\textit{pull-based}) e/ou se os nós transmissores enviarão as partes da mídia para o nó receptor após este último sinalizar interesse por tal conteúdo (\textit{push-based}); e, sobre a arquitetura do serviço, se será P2P e/ou P2P/CDN.
 
 Durante o levantamento bibliográfico realizado no contexto deste trabalho,
 catalogou-se uma série de outras propostas que não foram aqui detalhadas, mas
@@ -1017,6 +1015,7 @@ PULSE~\cite{4146695},
 SAMP~\cite{6689688},
 SmoothCache~\cite{Roverso2012},
 Sopcast~\cite{fallica_quality_2008},
+SPPM~\cite{4284671},
 TURINstream~\cite{5580077} e
 ZIGZAG~\cite{tran_zigzag:_2003}. Além dessas, diversas outras propostas foram
 investigadas, mas não foram consideradas nessa lista porque se tratam de
@@ -1055,7 +1054,7 @@ formalmente.
 \section{Redes Centradas na Informação}
 \label{sec:trab-redes-centradas-informacao}
 
-Desde da criação da Internet, diversos módulos complementares foram disponibilizados para atender às necessidades dos usuários, como o NAT, DNS com  suporte a balanceamento de carga, etc. Entretanto, essas soluções criaram seus próprios problemas~\cite{moore2002}, que foram resolvidos por outras proposta~\cite{RFC3489} ou utilizadas de forma errada~\cite{Vixie:2009:DNS:1610252.1610269}. Em geral, essas mudanças têm levado a situações complexas de gerenciamento de rede, ao passo que tem sido disponibilizados avanços incipientes e lentos com foco no núcleo da rede. No entanto, como ilustra-se na Figura~\ref{fig:icn-abstracao}, uma nova vertente de pesquisa propõe a próxima arquitetura de serviço para a Internet considerando o princípio de que os nós da rede devem trocar dados com base no nome do conteúdo de interesse e não com base em caminhos (rede de telefonia), tampouco em sua localização (rede IP). Essa abordagem é conhecida por Redes Centradas na Informação (\textit{Information Centric Networks} -- ICN).
+Desde da criação da Internet, diversos módulos complementares foram disponibilizados para atender às necessidades dos usuários, como o NAT, DNS com  suporte a balanceamento de carga, etc. Entretanto, essas soluções criaram seus próprios problemas~\cite{moore2002}, que foram resolvidos por outras proposta~\cite{RFC3489} ou utilizadas de forma errada~\cite{Vixie:2009:DNS:1610252.1610269}. Em geral, essas mudanças têm levado a situações complexas de gerenciamento de rede, ao passo que tem sido disponibilizados avanços incipientes e lentos com foco no núcleo da rede. No entanto, como ilustra-se na Figura~\ref{fig:icn-abstracao}, uma nova vertente de pesquisa propõe a próxima arquitetura de serviço para a Internet considerando o princípio de que os nós da rede devem trocar dados com base no nome do conteúdo de interesse e não com base em caminhos (rede de telefonia), tampouco em sua localização (rede IP). Essa abordagem é conhecida por Redes Centradas na Informação (\textit{Information Centric Networks} -- ICN)~\cite{6563278}.
 
 \begin{figure}
   \centering
@@ -1083,7 +1082,7 @@ funções de transporte e decisões de repasse com base no nome do conteúdo. Isto s
 Dentre as propostas de uma nova arquitetura para a Internet com base no princípio das ICNs, destaca-se a \textit{Named-Data Networks (NDN)}~\cite{6419703,Jacobson:2012:NNC:2063176.2063204,6386696} ou Redes de Dados Nomeados,
 %  e a \textit{Publish-Subscribe Internetworking
 % (PSI)}~\cite{6231279} ou Redes de Publicação e Subscrição.
-ao passo que outras propostas ainda estão em estágio embrionário~\cite{6384450,6231279,6563278,6231276,5936152}, como discutiu-se no início deste capítulo (Seção~\ref{sec:visaogerao-propostas-dmv}). Como a NDN apresenta diferenças substanciais em seu modelo de serviço para prover o conteúdo de interesse e funções disponíveis no núcleo da rede, a seguir, detalhe-se seu funcionamento e suas atuais aplicações no contexto de distribuição de mídias ao vivo.
+ao passo que outras propostas ainda estão em estágio embrionário~\cite{6563278,6384450,6231279,6231276,5936152}, como discutiu-se no início deste capítulo (Seção~\ref{sec:visaogerao-propostas-dmv}). Como a NDN apresenta diferenças substanciais em seu modelo de serviço para prover o conteúdo de interesse e funções disponíveis no núcleo da rede, a seguir, detalhe-se seu funcionamento e suas atuais aplicações no contexto de distribuição de mídias ao vivo.
 
 \subsection{Redes de Dados Nomeados (NDN)}
 
@@ -1169,7 +1168,7 @@ Após a definição da arquitetura, os autores avaliaram o CCN-TV com vistas ao des
 %
 % http://www.researchgate.net/publication/253239944_Dynamic_Adaptive_Streaming_over_CCN_A_Caching_and_Overhead_Analysis
 
-% Como se pode observar, pode-se afirmar que os atuais trabalhos no contexto de NDN e distribuição de mídias ao vivo em larga escala ainda não existentes, sendo a maioria focados em aplicar o protocolo DASH ou o HLS sobre a infra-estrutura da NDN, que em sua essência utiliza um modelo de serviço de pedido/resposta, ou seja, \textit{pulling}.
+% Como se pode observar, pode-se afirmar que os atuais trabalhos no contexto de NDN e distribuição de mídias ao vivo em larga escala ainda não existentes, sendo a maioria focados em aplicar o protocolo DASH ou o HLS sobre a infraestrutura da NDN, que em sua essência utiliza um modelo de serviço de pedido/resposta, ou seja, \textit{pulling}.
 
 \subsubsection{Comparação entre as redes ICN (em especial a NDN) e o GMTP para distribuição de mídias ao vivo:}
 
@@ -1177,7 +1176,7 @@ Com relação a arquitetura de rede ICN, em especial a NDN, e o GMTP, enumeram-se 
 
 \begin{enumerate}
 
-  \item Como discutiu-se no Capítulo~\ref{cap:introducao}, as aplicações de transmissão de mídias ao vivo possuem algumas peculiaridades que precisam ser tratadas nas camadas abaixo da aplicação, sendo praticamente impossível generalizar uma infra-estrutura que sirva para fluxos de dados elásticos e inelásticos. Em geral, as redes ICN estão tendendo a considerar sua arquitetura mais genérica possível para permitir diferentes padrões de tráfego, mas isso não é trivial. Por outro lado, no GMTP, decidiu-se partir dos requisitos específicos dos sistemas de distribuição de mídias ao vivo e questionar sobre quais funções que se utilizam nesses sistemas que podem ser generalizadas pela rede. Sendo assim, o GMTP adiciona à rede IP, originalmente proposta para transportar fluxos de dados em sua maioria elásticos, a capacidade de prover funções comuns a todas as aplicações que transmitem fluxos de dados inelásticos.
+  \item Como discutiu-se no Capítulo~\ref{cap:introducao}, as aplicações de transmissão de mídias ao vivo possuem algumas peculiaridades que precisam ser tratadas nas camadas abaixo da aplicação, sendo praticamente impossível generalizar uma infraestrutura que sirva para fluxos de dados elásticos e inelásticos. Em geral, as redes ICN estão tendendo a considerar sua arquitetura mais genérica possível para permitir diferentes padrões de tráfego, mas isso não é trivial. Por outro lado, no GMTP, decidiu-se partir dos requisitos específicos dos sistemas de distribuição de mídias ao vivo e questionar sobre quais funções que se utilizam nesses sistemas que podem ser generalizadas pela rede. Sendo assim, o GMTP adiciona à rede IP, originalmente proposta para transportar fluxos de dados em sua maioria elásticos, a capacidade de prover funções comuns a todas as aplicações que transmitem fluxos de dados inelásticos.
 
   \item Como consequência do item anterior, a rede NDN transmite mais pacotes de controle do que o GMTP por ter uma proposta de modelo de serviço mais genérico, baseado em \textit{pulling}. No GMTP, propõe-se um modelo de serviço híbrido \textit{push-pull}. Por ter um modelo de serviço mais específico para sistemas de distribuição de mídias ao vivo, no GMTP o mecanismo de \textit{cache} das partes de uma mídia é mais simples de se implementar, pois utiliza-se uma estrutura de \textit{buffer} circular, substituindo-se as partes da mídia à medida que se recebe as subsequentes, sem a necessidade do roteador transmitir, a todo instante, o equivalente ao que seria um pacote de interesse -- o conceito de pacote de interesse da NDN não existe para o GMTP. Em CCN, um dos grandes desafios é definir quanto tempo um dado deve permanecer em \textit{cache}. Um outro desafio é determinar se o dado em \textit{cache}, principalmente em aplicações elásticas, ainda é válido. Todas essa funções, aumentam a sobrecarga de controle nas redes ICN e, como já se sabe, em redes IP essas questões não é um problema. O GMTP apenas instrui os roteadores a realizar uma política mais sofisticada de repasse quando um pacote de dados é alocado na fila de roteamento, aproveitando a oportunidade de repassar o mesmo pacote em rotas adicionais, de acordo com a demanda.
 

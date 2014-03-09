@@ -10,14 +10,14 @@ sistemas através de uma rede de favores P2P constituída por roteadores de
 rede, que cooperam entre si a fim de obterem o conteúdo multimídia de
 interesse, ao mesmo tempo que ocorrem interações entre os servidores de uma ou
 mais redes CDNs, os quais atuam como super nós para os nós da rede P2P,
-auxiliando-os no envio e recebimento dos fluxos de dados. Uma aplicação GMTP em execução nos nós clientes, reproduz o conteúdo multimídia ao usuário finai à medida que recebem
-pacotes de dados contendo partes da mídia, geradas pelos servidores da CDN, através de um processo em execução se comunicando através da rede com base no protocolo GMTP. Nesse ínterim, os roteador envolvidos na transmissão de uma mídia ao vivo, realiza parcerias com outros roteadores, os quais também possuem nós clientes interessados no mesmo conteúdo, motivados pelos seus respectivos usuários finais que o controlam.
+auxiliando-os no envio e recebimento dos fluxos de dados. Uma aplicação GMTP em execução nos nós clientes, reproduz o conteúdo multimídia ao usuário final à medida que recebem
+pacotes de dados contendo partes da mídia, geradas pelos servidores da CDN, através de um processo em execução se comunicando através da rede com base no protocolo GMTP. Nesse ínterim, os roteadores envolvidos na transmissão de uma mídia ao vivo, realizam parcerias com outros roteadores, os quais também possuem nós clientes interessados no mesmo conteúdo, motivados pelos seus respectivos usuários finais que o controlam.
 
 As trocas de dados entre nós GMTP ocorrem por meio do envio e recebimento de
 partes de uma mídia (\textit{chunks}), que são transmitidas por diferentes nós
 da rede, constituindo um fluxos de datagramas IP. Estes fluxos são
 transmitidos em modo \textit{unicast} e compartilhados (\textit{multi-unicast})
-pelos roteadores, quando são entregues aos nós clientes em modo \textit{multicast}, realizando-se controle de congestionamento sem garantia de entrega, em ambos os modos de transmissão. A escolha do modo de transmissão para disseminar um fluxo de dados ocorre sem a influência da aplicação, que precisa simplesmente ``sintoniza'' sua conexão em um determinado canal \textit{multicast} definido pelo roteador. Tal abstração para a camada de aplicação ocorre de modo que os processos em execução utilizam o GMTP através de uma API compatível com as especificações de socket BSD e POSIX, o que permite adaptações mais simples das atuais aplicações de rede de transmissão de mídias ao vivo.
+pelos roteadores, quando são entregues aos nós clientes em modo \textit{multicast}, realizando-se controle de congestionamento sem garantia de entrega, em ambos os modos de transmissão. A escolha do modo de transmissão para disseminar um fluxo de dados ocorre sem a influência da aplicação, que precisa simplesmente ``sintoniza'' sua conexão em um determinado canal \textit{multicast} definido pelo roteador. Tal abstração para a camada de aplicação ocorre de modo que os processos em execução utilizam o GMTP através de uma API compatível com as especificações de socket BSD e POSIX, o que permite adaptações mais simples dos atuais sistemas.
 
 Por conseguinte, com o uso do GMTP, permite-se o estabelecimento de conexões e a cooperação entre diferentes fornecedores de aplicações, em prol de tão logo quando possível obter as partes de uma mídia a serem reproduzidas. Isto significa que o GMTP torna as aplicações compatíveis entre si, uma vez que o protocolo desacopla a forma como os dados são transportados da forma como estes são exibidos ao usuário final, emulando
 os sistemas tradicionais de TV. Sendo assim, promove-se a integração do GMTP em aplicações já existentes, quando se considera futuras adoções de tal protocolo, ao passo que se permite a utilização dos novos recursos introduzidos no protocolo, reduzindo-se a complexidade na construção de sistemas de distribuição de mídias ao vivo, especialmente aqueles baseados em arquitetura P2P/CDN.
@@ -233,27 +233,13 @@ relatores.}
 
   \item \textbf{Cliente GMTP:} é capaz de reproduzir e gerar conteúdos
 multimídia ao vivo. Em geral, um \textit{Cliente GMTP} é um sistema final que
-executa um processo a nível de sistema operacional, representando uma aplicação
-manipulada pelo usuário final. A maioria dos \textit{Clientes GMTP} funciona
-apenas de forma passiva, recebendo o fluxo de dados de um conteúdo multimídia e
-entregando-o para um processo de aplicação em execução, sendo um sub-conjunto
-destes, contribuidores efetivos no processo de execução do algoritmo de controle
-de congestionamento em transmissões \textit{multicast}.
+executa um processo em nível de sistema operacional, representando uma aplicação manipulada pelo usuário final. A maioria dos \textit{Clientes GMTP} funciona apenas de forma passiva, recebendo o fluxo de dados de um conteúdo multimídia e entregando-o para um processo de aplicação em execução, sendo um sub-conjunto destes, contribuidores efetivos no processo de execução do algoritmo de controle de congestionamento em transmissões \textit{multicast}.
 
-  \item \textbf{Servidor GMTP:} é um sistema final que participa de uma rede CDN
-e obtém a mídia a ser transmitida através de três formas: i) diretamente a
-partir de uma unidade geradora de conteúdo (filmadora e/ou microfone); ii) a
-partir de um \textit{Cliente GMTP}; e/ou iii) a partir de outro \textit{Servidor
-GMTP} (troca de dados entre os servidores da CDN). Os \textit{Servidores GMTP}
-recebem sinalizações de controle contendo requisições dos nós
-\textit{Repassadores GMTP} que, ao receberem uma resposta correspondente a sua
-requisição, atendem à demanda de um ou mais nós \textit{Clientes GMTP}.
+  \item \textbf{Servidor GMTP:} é um sistema final que participa de uma rede CDN e obtém a mídia a ser transmitida através de três formas: i) diretamente a partir de uma unidade geradora de conteúdo (filmadora e/ou microfone); ii) a partir de um \textit{Cliente GMTP}; e/ou iii) a partir de outro \textit{Servidor GMTP} (troca de dados entre os servidores da CDN). Os \textit{Servidores GMTP} recebem sinalizações de controle contendo requisições dos nós \textit{Repassadores GMTP} que, ao receberem uma resposta correspondente a sua requisição, atendem à demanda de um ou mais nós \textit{Clientes GMTP}.
 
   \item \textbf{Repassador GMTP:} roteadores que participam efetivamente da rede de favores, com a responsabilidade de repassar os fluxos de dados originados em um ou mais \textit{Servidores GMTP} para outros nós \textit{Repassador GMTP} até que os pacotes de dados alcancem os nós \textit{Clientes GMTP}.
 
-  \item \textbf{Relator GMTP:} é um \textit{Cliente GMTP} com habilidades de
-enviar relatórios periódicos ao nó \textit{Repassador GMTP} sobre o estado da
-transmissão.
+  \item \textbf{Relator GMTP:} é um \textit{Cliente GMTP} com habilidades de enviar relatórios periódicos ao nó \textit{Repassador GMTP} sobre o estado da transmissão.
 
 \end{itemize}
 
@@ -1398,7 +1384,7 @@ importante devido aos aspectos gerenciais de uma transmissão, onde uma aplicação
 poderá contabilizar os nós \repasss que estão recebendo \setpk, mesmo que
 indiretamente, por meio da interceptação de registros de participação. A propósito, em ICN isso não é possível.
 
-Na prática, não se faz necessário que o nó \repasss envie a notificação de intercepção instantaneamente. Em vez disso, um nós \repasss pode acumular diversos registros de participação durante um determinado intervalo de tempo e, em seguida, transmiti-los para o nó \serv. Como se trata de um aspecto a nível de implementação, tal decisão está fora do escopo dessa discussão. No caso da implementação do GMTP realizada em simulador e utilizada neste trabalho, definiu-se que para todo registro de participação interceptado, gera-se e transmite-se uma notificação ao nó \serv.
+Na prática, não se faz necessário que o nó \repasss envie a notificação de intercepção instantaneamente. Em vez disso, um nós \repasss pode acumular diversos registros de participação durante um determinado intervalo de tempo e, em seguida, transmiti-los para o nó \serv. Como se trata de um aspecto em nível de implementação, tal decisão está fora do escopo dessa discussão. No caso da implementação do GMTP realizada em simulador e utilizada neste trabalho, definiu-se que para todo registro de participação interceptado, gera-se e transmite-se uma notificação ao nó \serv.
 
 No Algoritmo~\ref{algo:findPartnerIntersectPath}, resume-se os passos
 descritos anteriormente na perspectiva do nó \serv, a fim de determinar a
@@ -1686,7 +1672,7 @@ qualquer sistema final conectado à Internet pode realizar tal procedimento,
 enaltecendo-se a facilitar de adaptar aplicações multimídia existentes para
 utilizar o GMTP. Ao indexar o conteúdo através de um serviço de DNS, permite-se
 desacoplar a forma de indexar um determinado conteúdo e a forma de obtê-lo, que
-passa a ser de responsabilidade da infra-estrutura de rede e não de uma
+passa a ser de responsabilidade da infraestrutura de rede e não de uma
 ou mais aplicações isoladamente, como nas soluções apresentadas no Capítulo~\ref{cap:trabalhosrelacionados}. Isto pode permitir o aumento das aplicações
 multimídia sem se preocupar como localizar um determinado conteúdo, extrapolando-se as barreiras administrativas de cada sistema de geração de conteúdos multimídia, bastando para isso apenas todas as aplicações utilizarem o protocolo GMTP. Consequentemente, um fluxo de dados \setpk, gerado por uma aplicação qualquer APL1, em execução em um nó \serv, poderá ser reproduzido por uma aplicação APL2, em execução em um nó \cli, independentemente de seus fornecedores (implementadores). Para que essa visão seja empregada, definiu-se uma função para descrever a mídia transmitida em um fluxo de dados \setpk.
 
@@ -1731,7 +1717,7 @@ Com esta decisão, torna-se mais fácil implementar novas aplicações multimídia, a
 passar dos anos, provou-se funcionar a contento, como foi o caso do SDP. Consequentemente, caso seja necessário a atualização do referido padrão, tal
 atualização será realizada internamente no GMTP e todas as aplicações
 automaticamente já poderão usufruir dos novos recursos disponibilizados. Na
-prática, isto significa uma atualização a nível de sistema operacional. A título comparativo, considerando os protocolos baseado em HTTP e os sistemas de distribuição multimídia, descritos no Capítulo~\ref{cap:trabalhosrelacionados}, cada um possui uma proposta diferente de descrição da mídia, predominando o uso de XML, porém não se mantendo o mesmo formato. A consequência disso é que a aplicação cliente, para suportar diversos sistemas, terá que implementar cada uma dessas propostas e usar XML gasta-se mais espaço se comparado ao SDP.
+prática, isto significa uma atualização em nível de sistema operacional. A título comparativo, considerando os protocolos baseado em HTTP e os sistemas de distribuição multimídia, descritos no Capítulo~\ref{cap:trabalhosrelacionados}, cada um possui uma proposta diferente de descrição da mídia, predominando o uso de XML, porém não se mantendo o mesmo formato. A consequência disso é que a aplicação cliente, para suportar diversos sistemas, terá que implementar cada uma dessas propostas e usar XML gasta-se mais espaço se comparado ao SDP.
 
 Para uma aplicação em execução no nó \serv, faz-se necessário apenas determinar as informações da mídia e as fornece ao GMTP através de passagem de parâmetro via socket. Em seguida, o GMTP fica pronto para enviar a descrição da mídia como resposta ao pedido de conexão, dentro do campo de dados do pacote do tipo \pac{GMTP-Register-Reply} ou \pac{GMTP-MediaDesc}. Como um nó \repasss pode interceptar um pedido de conexão, \repasss também pode transmitir a descrição da mídia aos seus nós parceiros \repassu{q}. No Quadro~\ref{algo:sdp-mediadesc}, apresenta-se um exemplo de uma mensagem SDP e,
 a seguir, descreve-se cada um dos possíveis atributos de uma mensagem SDP.
@@ -2190,7 +2176,7 @@ dados \setpk;
 %   \item Menor número de nós \ways $\in$ \setwayi;
 %   \label{i:c-nnos}
 
-  \item Escolha aleatória de \setwayis entre os caminhos \setways conhecidos. Note que, por exemplo, no CoolStreaming, a escolha aleatória é feita a nível de nó cliente, ao passo que no GMTP a escolha é com base na capacidade de transmissão dos caminhos \setwayis $\in$ \setway.
+  \item Escolha aleatória de \setwayis entre os caminhos \setways conhecidos. Note que, por exemplo, no CoolStreaming, a escolha aleatória é feita em nível de nó cliente, ao passo que no GMTP a escolha é com base na capacidade de transmissão dos caminhos \setwayis $\in$ \setway.
   \label{i:c-aleat}
 
 \end{enumerate}
@@ -2465,8 +2451,9 @@ Compartilhado (\textit{Processor Sharing} -- PS), por exemplo, um
 roteador~\cite{Dukkipati:2005:PSF:2103175.2103204}. Nesse contexto, entende-se
 que se um roteador pudesse obter a informação exata sobre o número de fluxos de entrada em um instante $\hat{t}$, a taxa de transmissão ideal para cada fluxo de dados seria $R_{ps}(\hat{t}) = \frac{C}{N(\hat{t})}$, onde $C$ corresponde à capacidade do \textit{enlace} e $N(\hat{t})$ o número de fluxos no instante $\hat{t}$.
 
-Partindo desse ponto, Nandita et. al~\cite{Dukkipati:2008:RCP:1368746} argumentou em sua tese de doutorado\footnote{O vídeo gravado no dia da defesa de Nandita Dukkipati, autora do RCP, está disponível através da referência~\cite{Nandita-video-defesa}.} que para um roteador funcionar de forma equânime, deve-se oferecer a mesma taxa de transmissão para todos os fluxos transmitidos através dele, mantendo-se o número de pacotes na fila de roteamento perto de zero, a fim de evitar que apenas os fluxos que tem pacotes na fila de repasse compartilhem a largura de banda disponível. Com base nisso, determinou-se a Equação~\ref{eq:cc-rcp-teoria}, onde $R(\hat{t})$ é a taxa de transmissão que deve ser oferecida para cada fluxo de dados que passa pelo roteador. Pela Equação~\ref{eq:cc-rcp-teoria}, estima-se a largura de banda disponível em um determinado canal, representada pela porção $\alpha(C - y(\hat{t})) - \beta \frac{q(\hat{t})}{h_0}$ (mudança agregada) e a divide por $N(\hat{t})$. Porém, como é impossível determinar o valor exato de $N(\hat{t})$, estima-se $\hat{N}(\hat{t}) = \frac{C}{R(\hat{t}-h_0)}$. Além disso, para atualizar $R(\hat{t})$ com mais frequência do que no intervalo de um RTT ($h_0$), definiu-se $H = min(H_{user}$, $h_0)$. No entanto, para manter a estabilidade do restante da equação se $R(\hat{t})$ fosse atualizada a cada $h_0$, escala-se $\alpha(C - y(\hat{t})) - \beta
-\frac{q(\hat{t})}{h_0}$ (mudança agregada) por $\frac{H}{h_0}$, resultando na Equação~\ref{eq:cc-rcp}, onde:
+Partindo desse ponto, Nandita et. al~\cite{Dukkipati:2008:RCP:1368746} argumentou em sua tese de doutorado\footnote{O vídeo do dia da defesa de Nandita Dukkipati, autora do RCP, está disponível através da referência~\cite{Nandita-video-defesa}.} que para um roteador funcionar de forma equânime e reduzir o tempo de duração de um fluxo (seja de curta ou de longa duração, proporcional à capacidade e independente da topologia da rede), deve-se oferecer a mesma taxa de transmissão para todos os fluxos transmitidos através dele. Com isso, objetiva-se manter o número de pacotes na fila de roteamento perto de zero e evitar que apenas os fluxos mais antigos, ou seja, com a taxa de transmissão mais próxima da equânime, utilizem mais largura de banda se comparado aos fluxos mais recentes (discussões sobre este aspecto mais adiante, ainda nessa seção).
+
+Com base nisso, determinou-se a Equação~\ref{eq:cc-rcp-teoria}, onde $R(\hat{t})$ é a taxa de transmissão que deve ser oferecida para cada fluxo de dados que passa pelo roteador. Pela Equação~\ref{eq:cc-rcp-teoria}, estima-se a largura de banda disponível em um determinado canal, representada pela porção $\alpha(C - y(\hat{t})) - \beta \frac{q(\hat{t})}{h_0}$ (mudança agregada) e a divide por $N(\hat{t})$. Porém, como é impossível determinar o valor exato de $N(\hat{t})$, estima-se\footnote{Mais detalhes sobre a estimativa do valor de $\hat{N}(\hat{t})$ está disponível na Seção 3.2.1 da referência~\cite{Dukkipati:2008:RCP:1368746}.} $\hat{N}(\hat{t}) = \frac{C}{R(\hat{t}-h_0)}$. Além disso, para atualizar $R(\hat{t})$ com mais frequência do que no intervalo de um RTT ($h_0$), definiu-se $H = min(H_{user}$, $h_0)$ e, para manter a estabilidade do restante da equação, escala-se a mudança agregada por $\frac{H}{h_0}$, resultando na Equação~\ref{eq:cc-rcp}, onde:
 
   \begin{equation}
   R(\hat{t}) = R(\hat{t} - h_0) + \frac{\alpha(C - y(\hat{t})) - \beta
@@ -2481,37 +2468,29 @@ Partindo desse ponto, Nandita et. al~\cite{Dukkipati:2008:RCP:1368746} argumento
 
   \begin{itemize}
 
-    \item $h_0$, é a média móvel dos valores de $RTT_{s}$, calculada através da
-Equação~\ref{eq:calcrtt-rcp}, onde $\theta$ é o ganho e corresponde a $0.02$.
-Note que quanto maior o valor de $\theta$, mais rápida será a convergência de
-$h_0$ ao valor de $RTT_{s}$. $RTT_{s}$ é o tempo de ida e volta calculado entre o nó
-transmissor e o receptor.
+    \item $h_0$, é a média móvel dos valores de $RTT_{s}$, calculada através da Equação~\ref{eq:calcrtt-rcp}, onde $\theta$ é o ganho e corresponde a $0.02$. Note que quanto maior o valor de $\theta$, mais rápida será a convergência de $h_0$ ao valor de $RTT_{s}$. $RTT_{s}$ é o tempo de ida e volta calculado entre o nó transmissor e o receptor.
 
       \begin{equation}
       h_0 = \theta \times RTT_{s} + (1 - \theta) \times h_0
       \label{eq:calcrtt-rcp}
       \end{equation}
 
-    \item $H = min(H_{user}$, $h_0)$, sendo $H_{user}$ um tempo definido
-pelo usuário (administrador do roteador), caso seja necessário atualizar $R(\hat{t})$
-mais rápido do que o tempo de $h_0$. Por exemplo, se a fila estiver enchendo, é desnecessário esperar um tempo de $h_0$ para processar a fila (esvaziá-la);
+    \item $H = min(H_{user}$, $h_0)$, sendo $H_{user}$ um tempo definido pelo usuário (por exemplo, o administrador do roteador), caso seja necessário atualizar $R(\hat{t})$ em um intervalo de tempo menor que $h_0$. Por exemplo, se a fila estiver enchendo, é desnecessário esperar um tempo de $h_0$ para processar a fila. O valor para $H$ é definido em \ut{}{milissegundos};
 
-    \item $R(\hat{t} - H)$, é a última taxa de transmissão medida;
+    \item $R(\hat{t} - H)$, é a última taxa de transmissão medida, em \ut{}{bytes/milissegundos};
 
-    \item $y(\hat{t})$, é a taxa de tráfego de entrada medida no intervalo entre a
-última atualização da taxa de transmissão e $h_0$;
+    \item $y(\hat{t})$, é a taxa de tráfego de entrada medida no intervalo entre a última atualização de $R(\hat{t})$ e o instante $H$;
 
-    \item $q(\hat{t})$, é o tamanho instantâneo da fila de repasse, em bytes. No GMTP, esse valor é obtido pela soma de todos os pacotes \pks presentes no buffers circular, para todos os fluxos de dados \setpks registrado na tabela de repasse. Nesse caso, um nó \repasss mantém um buffer geral e um buffer para cada fluxo de dados \setpk, que esteja repassando aos seus nós \clis $\in$ \subsetcli$($\repass$)$. Utiliza-se o buffer geral para pacotes de dados que não precisam de tratamentos especiais, como pacotes de protocolos tradicionais, como TCP;
+    \item $q(\hat{t})$, é o tamanho instantâneo da fila de repasse, em bytes. No GMTP, esse valor é obtido pela soma de todos os pacotes \pks presentes nos buffers, para todos os fluxos de dados \setpks registrado na tabela de repasse. Nesse caso, um nó \repasss mantém um buffer geral e um buffer para cada fluxo de dados \setpk, que esteja repassando aos seus nós \clis $\in$ \subsetcli$($\repass$)$. Utiliza-se o buffer geral para pacotes de dados que não precisam de tratamentos especiais, por exemplo, pacotes TCP;
 
 %     \item $\hat{N}(t)$, é uma estimativa do número de fluxos em um tempo $t$,
 % por exemplo, o número de fluxos enviando pacotes de dados \pk;
 
-    \item $\alpha$ e $\beta$, são parâmetros pré-definidos que determinam
-a estabilidade e o desempenho. Os valores padrões são $\alpha = 0.1$ e $\beta = 1.0$;
+    \item $\alpha$ e $\beta$, tal que $0 < \alpha, \beta \leq 1$, determinam a estabilidade e o desempenho do algoritmo, respectivamente. Com base em discussões apresentadas em~\cite{Dukkipati:2008:RCP:1368746}, os valores de $\alpha$ e $\beta$ dependem do tamanho médio dos fluxos comparado com o produto largura de banda -- atraso. Quando o tamanho médio dos fluxos estão próximo do produto largura de banda -- atraso (fluxos longos), sugere-se um alto valor para $\alpha$ e um baixo valor para $\beta$ (por exemplo: $\alpha = 0.9$ e $\beta = 0.1$), uma vez para fluxos longos, prefere-se maximizar a taxa de transmissão de cada fluxo a minimizar o atraso na fila. Por outro lado, para fluxos de curta duração, recomenda-se um valor baixo de $\alpha$ e um valor alto de $\beta$ (por exemplo: $\alpha = 0.1$ e $\beta = 1$), pois esta combinação ajuda manter um baixo atraso de fila. Para um meio termo, recomenda-se valores de $\alpha \in (0.4, 0.6)$ e $\beta = (0.2, 0.6)$;
 
-    \item $\gamma$, tal que $0 < \gamma \leq 1$, controla o pico de utilização do canal. Por exemplo, se desejar utilizar no máximo \ut{95}{\%} do canal em um certo instante $\hat{t}$, basta definir $\gamma = 0.95$;
+    \item $\gamma$, tal que $0 < \gamma \leq 1$, controla o pico de utilização do canal. Por exemplo, se desejar utilizar no máximo \ut{95}{\%} do canal em um certo instante $\hat{t}$, basta definir $\gamma = 0.95$. Nesse caso, pode-se tratar cenários de reserva de banda para um ou mais fluxos de dados específicos;
 
-    \item $C$, é a capacidade do link.
+    \item $C$, é a capacidade (largura de banda) do canal.
 
   \end{itemize}
 
@@ -2524,11 +2503,7 @@ a estabilidade e o desempenho. Os valores padrões são $\alpha = 0.1$ e $\beta = 
 \label{fig:ccgmtp-interacao-1}
 \end{figure}
 
-Antes de detalhar o funcionamento do GMTP-UCC, a ideia básica é a seguinte: para quaisquer dois nós \transu{1},\transu{2} $\in$ \setwayi, a taxa de transmissão a ser utilizada por \transu{1} e \transu{2} será definida pela menor taxa de
-transmissão oferecida pelos nós \ways $\in$ \setwayis posicionados entre
-\transu{1} e \transu{2}. Isto significa que o GMTP-UCC segmenta um caminho
-\setwayis em vários sub-caminhos \setwayid. Com isto, se existir largura de
-banda disponível entre \transu{1} e \transu{2}, ou seja, $C - y(\hat{t}) > 0$, então o GMTP-UCC compartilhará igualmente o canal entre todos os fluxos, inclusive para o fluxo partindo de \transu{1} em direção a \transu{2}. Caso contrário, ou seja, se $C - y(\hat{t}) < 0$, considera-se o canal saturado e o GMTP-UCC reduzirá a taxa de transmissão igualmente para todos os fluxos, inclusive para o fluxo partindo de \transu{1} para \transu{2}. Por este motivo, o tempo $H$ é definido entre dois nós \transs e \transu{\transi+1} contidos em um caminho \setwayi. A consequência dessa estratégia de segmentar um caminho é muito importante e por esse motivo o GMTP-UCC é relativamente diferente se comparado ao RCP, como se observa na discussão a seguir.
+Antes de detalhar o funcionamento do GMTP-UCC, a ideia básica é a seguinte: para quaisquer dois nós \transu{1},\transu{2} $\in$ \setwayi, a taxa de transmissão a ser utilizada por \transu{1} e \transu{2} será definida pela menor taxa de transmissão oferecida pelos nós \ways $\in$ \setwayis posicionados entre \transu{1} e \transu{2}. Isto significa que o GMTP-UCC segmenta um caminho \setwayis em vários sub-caminhos \setwayid. Com isto, se existir largura de banda disponível entre \transu{1} e \transu{2}, ou seja, $C - y(\hat{t}) > 0$, então o GMTP-UCC compartilhará igualmente o canal entre todos os fluxos, inclusive para o fluxo partindo de \transu{1} em direção a \transu{2}. Caso contrário, ou seja, se $C - y(\hat{t}) < 0$, considera-se o canal saturado e o GMTP-UCC reduzirá a taxa de transmissão igualmente para todos os fluxos, inclusive para o fluxo partindo de \transu{1} para \transu{2}. Por este motivo, o tempo $H$ é definido entre dois nós \transs e \transu{\transi+1} contidos em um caminho \setwayi. A consequência dessa estratégia de segmentar um caminho é muito importante e por esse motivo o GMTP-UCC é relativamente diferente se comparado ao RCP, como se discute a seguir.
 
 O algoritmo adotado no GMTP-UCC, adaptado do RCP, funciona da seguinte forma (acompanhe os passos de acordo com a Figura~\ref{fig:ccgmtp-interacao-1}):
 
@@ -2542,9 +2517,9 @@ O algoritmo adotado no GMTP-UCC, adaptado do RCP, funciona da seguinte forma (ac
   \label{step:rcp-gmtp-1}
   \begin{itemize}
 
-    \item \textit{taxa de transmissão proposta} ($R_{p}$): corresponde à taxa de transmissão inicialmente desejada pelo nó \servs para transmitir os pacotes de dados \pks $\in$ \setpks ou a taxa de transmissão do nó \ways $\in$ \setwayis com menor capacidade de transmissão em um instante \textit{t};
+    \item \textit{taxa de transmissão proposta} ($R_{p}$): corresponde à taxa de transmissão inicialmente desejada pelo nó \servs para transmitir os pacotes de dados \pks $\in$ \setpk. Como o GMTP segmenta o caminho em vários sub-caminhos, o valor de $R_{p}$ pode conter a taxa de transmissão de um nó \ways $\in$ \setwayis que está posicionado entre dois nós \trans,\transu{\transi+1} $\in$ \setwayi, com a menor capacidade de transmissão em um instante $\hat{t}$;
 
-    \item \textit{RTT na fonte} ($RTT_{s}$): corresponde ao RTT estimado entre quaisquer nós \transu{\transi} e \transu{\transi+1} $\in$ \setwayi, ou seja, o RTT entre dois nós consecutivos que processam pacotes de dados \pac{GMTP-Data} de um fluxo de dados \setpk, a fim de repassar aos seus nós \clis $\in$ $($\subsetcli(\trans) $\cup$ \subsetcli(\transu{\transi+1})$)$. Essa é uma das mudança do GMTP-UCC se comparado ao RCP. No RCP, utiliza-se apenas os sistemas finais localizados nas extremidades (entre o servidor e o receptor) para determinar esse valor.
+    \item \textit{RTT na fonte} ($RTT_{s}$): corresponde ao RTT estimado entre quaisquer nós \transu{\transi},\transu{\transi+1} $\in$ \setwayi, ou seja, o RTT entre dois nós consecutivos que processam pacotes de dados \pac{GMTP-Data} de um fluxo de dados \setpk, a fim de repassar aos seus nós \clis $\in$ $($\subsetcli(\trans) $\cup$ \subsetcli(\transu{\transi+1})$)$.
 
 %     \item \textit{Diferença de RTT} (RTT$_{d}$): corresponde à diferença entre
 % RTT$_{s}$ e o RTT medido entre dois nós \way. Por exemplo, seja um
@@ -2567,24 +2542,26 @@ O algoritmo adotado no GMTP-UCC, adaptado do RCP, funciona da seguinte forma (ac
 
   \end{itemize}
 
-  \item No início da transmissão de um fluxo de dados \setpks por parte de \serv, o nó \way, motivado por um ou mais nós \clis $\in$ \subsetcli$($\way$)$, transmite um pedido de registro de participação ao nó \serv. Ao receber o pacote \pac{GMTP-Register}, o nó \servs envia um pacote \pac{GMTP-Register-Reply} com o campo $R_{p}$ contendo a taxa de transmissão necessária para transmitir o fluxo de dados \setpk, com o campo $RTT_{s}$ igual a \ut{1}{s}~\cite{RFC6298}. O valor inicial de $RTT_{s} = \ut{1}{s}$ é bastante conservador, mas se decidiu utiliza-lo por ser o valor inicial adotado no protocolo TCP. Além disso, inicia-se um temporizador para medir o próximo RTT instantâneo, que de fato será o primeiro valor correto e alimentará a média móvel $h_0$.
+  \textit{Observação:} no RCP, utiliza-se apenas os sistemas finais (transmissor e receptor) para determinar os valores de $R_{p}$ e $RTT_{s}$.
+
+  \item No início da transmissão de um fluxo de dados \setpks por parte de \serv, o nó \way, motivado por um ou mais nós \clis $\in$ \subsetcli$($\way$)$, transmite um pedido de registro de participação ao nó \servs (Seção~\ref{subsec:registro-participacao}). Ao receber o pacote \pac{GMTP-Register}, o nó \servs envia um pacote \pac{GMTP-Register-Reply} com o campo $R_{p}$ contendo a taxa de transmissão necessária para transmitir o fluxo de dados \setpk, com o campo $RTT_{s}$ igual a \ut{1}{s}~\cite{RFC6298}. O valor inicial de $RTT_{s} = \ut{1}{s}$ é bastante conservador, mas se decidiu utiliza-lo por ser o valor inicial adotado no protocolo TCP. Além disso, inicia-se um temporizador para medir o próximo RTT instantâneo, que de fato será o primeiro valor correto e alimentará a média móvel $h_0$.
   \label{step:rcp-gmtp-2}
 
-  \item Todo nó \ways $\in$ \setwayi, ao receber qualquer pacote gerado no nó \serv, verifica se sua capacidade atual de transmissão $R(\hat{t})$ é menor do que $R_{p}$ presente no referido pacote. Em caso afirmativo, atualiza-se $R_{p} \leftarrow R(\hat{t})$, caso contrário, não se realiza nenhuma modificação nesse campo e repassa o pacote a diante. Nesse ínterim, se \transmitqu{\way} $=$ $1$, ou seja, \ways = \transs $\in$ \settrans, \transs também executa as seguintes ações:
+  \item Todo nó \ways $\in$ \setwayi, ao receber qualquer pacote gerado no nó \serv, verifica se sua capacidade atual de transmissão $R(\hat{t})$ é menor do que $R_{p}$ presente no referido pacote. Em caso afirmativo, atualiza-se $R_{p} \leftarrow R(\hat{t})$, caso contrário, não se realiza nenhuma modificação e repassa o pacote a diante. Nesse ínterim, se \transmitqu{\way} $=$ $1$, ou seja, \way = \transs $\in$ \settrans, \transs também executa as seguintes ações:
   \label{step:rcp-gmtp-3}
 
   \begin{enumerate}
 
-    \item se o pacote for do tipo \pac{GMTP-Data}, repassa-se o pacote para seus nós \clis $\in$ \subsetcli(\trans) através do canal multicast, a uma taxa de transmissão definida pelo algoritmo GMTP-MCC, como se discute na próxima seção; e também em direção ao próximo nó \transu{\transi+1} $\in$ \setwayi, se houver. A transmissão dos pacotes \pac{GMTP-Data} partindo de \transs em direção ao nó \transu{\transi+1} (ou seja, \textit{down-streaming}), ocorre a uma taxa de $R(\hat{t})$ atualmente definida em \trans;
+    \item se o pacote for do tipo \pac{GMTP-Data}, repassa-se o pacote para seus nós \clis $\in$ \subsetcli(\trans) através do canal multicast, a uma taxa de transmissão definida pelo algoritmo GMTP-MCC, como se discute na próxima seção; e também repassa-o em direção ao próximo nó \transu{\transi+1} $\in$ \setwayi, se houver. A transmissão dos pacotes \pac{GMTP-Data} partindo de \transs em direção ao nó \transu{\transi+1} (ou seja, \textit{down-streaming}), ocorre a uma taxa de $R(\hat{t})$ atualmente definida em \trans;
 
-    \item cria-se um pacote \pac{GMTP-Ack} informando o valor de $R_{p}$ e o envia de volta em direção a \transu{\transi-1}, se \transs $\neq$ \serv. Ao receber esse pacote de \pac{GMTP-Ack},  \transu{\transi-1} utilizará $R_{p}$ para calcular o novo valor para $R(\hat{t})$, pois se trata da menor taxa de transmissão oferecida ao longo do sub-caminho \setwayias $\subset$ \setwayi, tal que \setwayias $=$ $\{$\trans, ..., \way, \wayu{\wayi+1}, \wayu{\wayi+2}, ..., \transu{\transi-1}$\}$. 
+    \item cria-se um pacote \pac{GMTP-Ack} informando o valor de $R_{p}$ e o envia de volta em direção a \transu{\transi-1}, se \transs $\neq$ \serv. Ao receber esse pacote de \pac{GMTP-Ack}, \transu{\transi-1} utilizará $R_{p}$ como a nova taxa para transmitir os próximos pacotes de dados \pks $\in$ \setpk, pois se trata da menor taxa de transmissão oferecida ao longo do sub-caminho \setwayias $\subset$ \setwayi, tal que \setwayias $=$ $\{$\transu{\transi-1}, ..., \way, \wayu{\wayi+1}, \wayu{\wayi+2}, ..., \trans$\}$. 
 
-    \textit{Observação}: Pela definição de \setwayi, \transs pode ser o nó \serv, então esse mecanismo segmenta o caminho \setwayis a cada nó \ways $\in$ \setwayis e \ways $\in$ \settrans, incluindo o nó servidor. O objetivo disso é criar sub-fluxos de transmissão dentro de um caminho \setwayis de acordo com a capacidade de transmissão e recepção a cada dois nós \transu{\transi} e \transu{\transi+1}. Trata-se de uma peculiaridade GMTP-UCC, pois se evita que um nó \transs com uma maior capacidade de recepção seja penalizado caso a capacidade de recepção $R_{p}$ do próximo nó \transu{\transi+1} seja menor do que a sua própria capacidade de transmissão. Este assunto será detalhado na próxima seção.
+    \textit{Observação}: Pela definição de \setwayi, \transs pode ser o nó \serv, então esse mecanismo segmenta o caminho \setwayis a cada nó \ways $\in$ (\setwayis $\cup$ \settrans), incluindo o nó servidor. O objetivo disso é criar sub-fluxos de transmissão dentro de um caminho \setwayis de acordo com a capacidade de transmissão e recepção a cada dois nós \transu{\transi} e \transu{\transi+1}. Trata-se de uma peculiaridade GMTP-UCC, pois se evita que um nó \transs com uma maior capacidade de recepção seja penalizado caso a capacidade de recepção $R_{p}$ do próximo nó \transu{\transi+1} seja menor do que a sua própria capacidade de transmissão. Este assunto será detalhado na próxima seção.
     \label{item:gmtp-ucc-bottleneck-ack}
 
   \end{enumerate}
 
-  \item A cada instante $H$, cada nó \ways atualiza $h_0$ de acordo a Equação~\ref{eq:calcrtt-rcp}), utilizando como parâmetro o valor do campo $RTT_{s}$ do último pacote recebido. Em seguida, recalcula-se a taxa de transmissão local $R(\hat{t})$ usando a Equação~\ref{eq:cc-rcp}.
+  \item A cada instante $H$, o nó \ways atualiza $h_0$ de acordo a Equação~\ref{eq:calcrtt-rcp}, utilizando como parâmetro o valor do campo $RTT_{s}$ do último pacote recebido. Em seguida, recalcula-se a taxa de transmissão local $R(\hat{t})$ usando a Equação~\ref{eq:cc-rcp}.
 
 \end{enumerate}
 
@@ -2722,7 +2699,7 @@ O XCP é lento em ofertar largura de banda para os fluxos, oferecendo uma baixa t
 \includegraphics[scale=0.35]{imgs/rcp-vs-xcp-vs-tcp-sn.png}
 \end{center}
 \vspace{-1cm}
-\caption{Evolução dos números de sequência de fluxos de dados quando utilizando TCP (Reno), XCPe RCP. O tamanho do fluxo no primeiro gráfico foi de 230 pacotes, e no segundo gráfico foi de 3600 pacotes. Extraído de~\cite{Dukkipati:2008:RCP:1368746}.}
+\caption{Evolução dos números de sequência de fluxos de dados quando utilizando TCP (Reno), XCP e RCP. O tamanho do fluxo no primeiro gráfico foi de 230 pacotes, e no segundo gráfico foi de 3600 pacotes. Extraído de~\cite{Dukkipati:2008:RCP:1368746}.}
 \label{fig:rcp-vs-xcp-vs-tcp-sn}
 \end{figure}
 
@@ -3769,7 +3746,7 @@ deve ocorrer com garantia de entrega.
 % Uma funcionalidade peculiar do \mudccps é sua capacidade de permitir a
 % realização de adaptação de fluxos multimídia de forma distribuída. A maioria
 % das soluções para transmissão de dados multimídia, além de realizar controle
-% de congestionamento no nível de aplicação, realizam adaptação de fluxo
+% de congestionamento em nível de aplicação, realizam adaptação de fluxo
 % multimídia na fonte geradora dos dados. Em diversas soluções
 % existentes, os autores consideram a transmissão de fluxos de dados multimídia
 % adaptados e transmitidos em diferentes canais, sendo que em cada canal

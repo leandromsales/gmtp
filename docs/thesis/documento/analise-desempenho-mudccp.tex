@@ -1,21 +1,103 @@
 \chapter{Análise de Desempenho do \mudccp}
 \label{cap:analisedesemp}
 
-TBD
+- FAZER A FIGURA GERAL DO CABEÇALHO DO GMTP E COLOCAR NA SEÇÃO DE TIPOS DE PACOTES
+
+Neste capítulo, apresentam-se os resultados do uso do protocolo \mudccps para distribuição de mídias ao vivo em cenários de rede com um arquitetura P2P/CDN com muitos nós receptores, comparando seu desempenho a outras duas soluções proeminentes disponíveis no estado da arte, a saber, o Denacast/CoolStreaming e o CCN-TV.
+
+ALGO AQUI
+
+Com esse norte, delimitou-se algumas métricas que determinam a qualidade de
+serviço para permitir que os usuários assistam conteúdo ao vivo na Internet
+com base na referência~\cite{5343509}. Tais métricas são divididas em três
+grupos, detalhados a seguir:
+
+\begin{enumerate}
+
+ \item \textit{Qualidade da experiência do usuário:} avalia-se o tempo em que os nós levam para começar a reproduzir os primeiros datagramas; o índice de continuidade; e a qualidade do conteúdo recebido em comparação ao conteúdo original.
+
+ \item \textit{Escalabilidade dos sistemas com relação a quantidade de nós conectados:} avalia-se a quantidade de nós simultâneos conectados, a contribuição da rede CDN e da rede P2P na transmissão de um fluxo de dados.
+
+ \item \textit{Execução dos protocolos:} avalia-se a sobrecarga de controle
+gerados pelos protocolos a fim de executar suas funções.
+
+\end{enumerate}
+
+Métricas:
+   - Atraso de inicialização do fluxo
+   - Índice do Continuidade
+   - Tempo de recuperação
+   - Distorção do conteúdo recebido em comparação ao transmitido
+   - Sobrecarga de controle
+   - Escalabilidade quanto ao número de nós clientes interessados por um mesmo fluxo
+
 
 Olhar o capítulo 4 da tese da nandita para ver os valores dos parâmetros que ela usou
 ver a página 99 para discussões sobre os valores de alfa e beta
 
-\section{Métodos e Simulações}
 
 
 \section{Estudo Analítico}
 
+\subsection{Estudo de caso: \textit{backbone} da RNP}
+
+Colocar também o mapa do brasil e o backbone.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[natwidth=664,natheight=340,scale=.61]{imgs/rede-rnp.png}
+\end{center}
+\vspace{-1cm}
+\caption{\textit{Backbone} da Rede Nacional de Pesquisa (RNP). 28 roteadores
+espalhados em todos os estados brasileiros com 22 pontos de troca de tráfego
+(PTT).}
+\label{fig:rede-rnp}
+\end{figure}
+
 
 \section{GMTP vs. CoolStreaming}
 
+\subsection{Métodos e simulações}
+
+\subsection{Parâmetros de simulação}
+
+\subsection{Resultados}
+
+\subsection{Discussões}
+
+% -----------------
+
+
+% OS PROTOCOLOS DE TRANSPORTE NAO FORAM PROJETADOS/PENSADOS/PREPARADOS PARA P2P
+% VER OUTRAS CARACTERÍSTICAS DOS SISTEMAS DE DISTRIBUIÇÃO
+
+% FAZER FIGURA DE COMO ESTES PARÂMETROS SE RELACIONAM
+% startup delay time ->
+% recovery period to restart
+% content distortion
+% vs
+% * qualidade das parcerias -> atraso -> pré-definição de rotas (tracer)
+% redução do churn (oportunismo) -> melhor startup delay time e recovery period
+% to restart -> rede p2p constituída entre os roteadores -> buffer pequeno e
+% expiram rapidamente
+%
 
 \section{GMTP vs. CCN-TV}
 
+CCN-TV 6550523
+
+% - http://named-data.net/wp-content/uploads/2013_Yuan_Infocom_Mini.pdf
+  Olhar os gráficos desse artigo
+
+cite 6607500
+cite 6386696
+
+\subsection{Métodos e simulações}
+
+\subsection{Parâmetros de simulação}
+
+\subsection{Resultados}
+
+\subsection{Discussões}
 
 \section{Sumário do Capítulo}
