@@ -30,25 +30,24 @@ A concepção de protocolos de rede para sistemas de distribuição de conteúdos
 multimídia em tempo real trás à tona uma série de conceitos necessários para o
 entendimento da solução proposta neste trabalho.
 
-Neste capítulo, apresentam-se os protocolos existentes para gerenciamento e sincronização de mídias ao vivo na Internet, bem como as principais arquiteturas e modelos de serviços empregados nos sistemas de distribuição de mídia ao vivo. Para finalizar, discute-se brevemente sobre conceitos básicos de criptografia e
-assinatura digital. Caso o leitor se considera familiarizado com esses assuntos,
-recomenda-se, pelo menos, a leitura do sumário deste capítulo, disponível na
-Seção~\ref{sec:fundamentacao-sumario}. Caso necessário, sugere-se as seguintes referências complementares:
+Neste capítulo, apresentam-se
+% os protocolos existentes para gerenciamento e sincronização de mídias ao vivo na Internet, bem como 
+as principais estruturas adotadas nos sistemas de distribuição de mídias ao vivo e as funções básicas empregadas nesses sistemas. Por fim, como complemento, discute-se brevemente sobre criptografia e assinatura digital, compreendendo alguns conceitos aplicados ao GMTP para evitar ataques de poluição. Caso o leitor se considera familiarizado com esses assuntos, recomenda-se, pelo menos, a leitura do sumário deste capítulo, disponível na Seção~\ref{sec:fundamentacao-sumario}. Caso necessário, sugere-se as seguintes referências complementares:
 
 \begin{itemize}
 
-  \item \cite{peterson2011,kurose2006,soares1995}, para conceitos
+  \item Em~\cite{peterson2011,kurose2006,soares1995}, para conceitos
 básicos sobre comunicação e redes de computadores, modos de transmissão, redes
 de distribuição de contéudo e protocolos de rede;
 
-  \item \cite{leandro-master-2008}, para funcionamento de protocolos de
+  \item Em~\cite{leandro-master-2008}, para funcionamento de protocolos de
 transporte mais modernos, como o DCCP e o SCTP. Além disso, discussões
 sobre a aplicação do DCCP em cenários reais de transmissão de mídias;
 
-  \item \cite{5936152,6419703,Eardley:2011:DAF:1983741.1983751,6384450,6386696},
+  \item Em~\cite{5936152,6419703,Eardley:2011:DAF:1983741.1983751,6384450,6386696},
 para conceitos sobre Redes Centradas no Conteúdo; e
 
-  \item \cite{vieira_borges_2010,guo_survey_2008}, para mais detalhes
+  \item Em~\cite{vieira_borges_2010,guo_survey_2008}, para mais detalhes
 sobre os conceitos apresentados neste capítulo.
 
 \end{itemize}
@@ -1221,81 +1220,81 @@ sobre os conceitos apresentados neste capítulo.
 % em uma rede sobreposta estruturada, e pelo roteamento da mensagem na rede
 % sobreposta até o participante responsável pelo conteúdo.
 
-\section{Protocolos para Gerenciamento e Sincronização de Mídias Ao Vivo}
-\label{sec:protocolos-media-gerenciamento}
-
-\subsection{H.323, SIP, RTP e RTSP}
-
-O processo de desenvolvimento de padrões abertos para distribuição de mídias ao
-vivo em larga escala teve início com um grupo de estudos da ITU-T
-(\textit{International Telecommunication Union -- Telecommunication Section}),
-em 1996. O ITU-T especificou o padrão H.323~\cite{liu2000}, que estabelece uma
-arquitetura de comunicação destinada ao controle de conferências de voz, vídeo e
-dados sobre redes TCP/IP. O H.323 se tornou largamente utilizado, uma vez que, a
-época da especificação de sua segunda versão, em 1998, não havia qualquer padrão
-aberto e aceito pelo mercado capaz de atender às aplicações multimídia. Embora
-as transmissões multimídia em tempo real por \textit{multicast} já estivessem
-sendo realizadas no Mbone~\cite{819167} há algum tempo, não havia ainda qualquer
-padrão aberto para controle de conferências multimídia e utilizar o Mbone
-exigia muita intervenção humana e empresarial~\cite{6681208}.
-
-No período equivalente a maturação do H.323, a IETF iniciou o desenvolvimento
-de uma arquitetura de comunicação mais flexível e poderosa que o H.323.
-Alicerçada sobre o protocolo SIP (\textit{Session Initiation
-Protocol})~\cite{RFC3261}, a arquitetura SIP teve logo potencial reconhecido,
-uma vez que supria todos os pontos fracos da arquitetura H.323, como a demora no
-estabelecimento de conexão (canais H.225 e H.245) e a complexidade de operação.
-Apesar do SIP ser muito utilizado atualmente, trata-se de um protocolo de
-negociação de sessões focado para chamadas telefônica sobre uma rede IP, apesar
-de também oferecer suporte para negociação de vídeo.
-
-Devido à natureza das redes de datagramas cujo paradigma é o do ``melhor
-esforço'' e às limitações do H.323 e SIP, sem qualquer garantia sobre os
-requisitos de tempo de entrega, novos protocolos foram propostos para atender as
-necessidades de transmissão de dados em tempo real. O protocolo em destaque é o
-RTP (\textit{Real Time Protocol})~\cite{RFC3550}, que permite às aplicações informarem o instante exato em que um determinado conteúdo deve ser reproduzido pelo sistema final receptor. O RTP permite transportar essa marcação de tempo no cabeçalho que envolve os dados referentes a mídia sendo transmitida, e permite que às aplicações tenham controle sobre número de sequência de cada pacote. O RTP atualmente constitui a base das transmissões multimídias ao vivo na Internet, sendo o padrão adotado em praticamente todas as soluções multimídia baseadas em IP.
-
-Em paralelo ao RTP, as aplicações multimídia utilizam o \textit{Real
-Time Streaming Protocol} (RTSP)~\cite{RFC2326}. O RTSP é um protocolo a nível de
-aplicação desenvolvido pela IETF para controle na transferência de dados com
-propriedades de tempo real. Tal protocolo torna possível a transferência, sob
-demanda, de dados em tempo real como áudio e vídeo. O RTSP serve para
-estabelecer e controlar vários fluxos sincronizados de mídias contínuas
-pertencentes a um evento (como o vídeo e o áudio). Seus idealizadores propõem
-que o uso do RTSP seja feito combinando-se outros protocolos, como o UDP e o
-RTP. NO RTSP, o conjunto de fluxos a ser controlado é definido por uma descrição
-de apresentação, normalmente um arquivo, que pode ser obtido por um cliente
-usando HTTP ou outros meios, armazenado em um local diferente do servidor de
-mídia. Uma descrição de apresentação pode conter informações sobre um ou mais
-fluxos que compõe a apresentação, como endereços de rede e informações sobre o
-conteúdo da apresentação, além de parâmetros que tornam possível ao cliente
-escolher a combinação mais apropriada das mídias.
-
-O problema do H.323 foi sua grande complexidade de uso, dificultando a
-integração com às aplicações, dando brechas a outras propostas com propósitos
-similares, como foi o caso do SIP, RTP e do RTSP. Estes protocolos se limitam à
-fronteira entre a sinalização de uma sessão multimídia e todos os outros
-aspectos relacionados a efetiva disseminação de conteúdos ao vivo, que
-atualmente envolve a cooperação de nós, controle e troca de mapa de
-buffer, adaptação de fluxo e controle de congestionamento. Isto implica na
-necessidade de mais componentes que permitam a distribuição de mídias ao vivo,
-ampliando a complexidade na construção de um sistema para este fim.
-
-% \subsection{UDP, DCCP e SCTP}
-%
-% Tanto o RTP quanto o RTSP são propostas desenvolvidas para suprir as carências
-% encontradas em protocolos de transporte tradicionais da Internet, como o UDP e o
-% TCP. Apesar das propostas de novos protocolos de transporte padronizados pela
-% IETF, tais como o DCCP e o SCTP (\textit{Stream Control Transmission
-% Protocol})~\cite{Jungmaier2003,iyengar_concurrent_2006}, o uso dos protocolos
-% RTP/RTSP em conjunto com o protocolo UDP é predominante nas aplicações
-% multimídia encontradas na Internet.
-%
-% As especificações e detalhes de funcionamento dos protocolos citados nesta
-% seção estão disponíveis abertamente na literatura. Por serem documentos
-% extensos e de conhecimento já bastante difundido, neste trabalho, decidiu-se
-% omitir as discussões detalhadas sobre estes, enfatizando os
-% protocolos cujas propostas se aproximam ao \mudccp.
+% \section{Protocolos para Gerenciamento e Sincronização de Mídias Ao Vivo}
+% \label{sec:protocolos-media-gerenciamento}
+% 
+% \subsection{H.323, SIP, RTP e RTSP}
+% 
+% O processo de desenvolvimento de padrões abertos para distribuição de mídias ao
+% vivo em larga escala teve início com um grupo de estudos da ITU-T
+% (\textit{International Telecommunication Union -- Telecommunication Section}),
+% em 1996. O ITU-T especificou o padrão H.323~\cite{liu2000}, que estabelece uma
+% arquitetura de comunicação destinada ao controle de conferências de voz, vídeo e
+% dados sobre redes TCP/IP. O H.323 se tornou largamente utilizado, uma vez que, a
+% época da especificação de sua segunda versão, em 1998, não havia qualquer padrão
+% aberto e aceito pelo mercado capaz de atender às aplicações multimídia. Embora
+% as transmissões multimídia em tempo real por \textit{multicast} já estivessem
+% sendo realizadas no Mbone~\cite{819167} há algum tempo, não havia ainda qualquer
+% padrão aberto para controle de conferências multimídia e utilizar o Mbone
+% exigia muita intervenção humana e empresarial~\cite{6681208}.
+% 
+% No período equivalente a maturação do H.323, a IETF iniciou o desenvolvimento
+% de uma arquitetura de comunicação mais flexível e poderosa que o H.323.
+% Alicerçada sobre o protocolo SIP (\textit{Session Initiation
+% Protocol})~\cite{RFC3261}, a arquitetura SIP teve logo potencial reconhecido,
+% uma vez que supria todos os pontos fracos da arquitetura H.323, como a demora no
+% estabelecimento de conexão (canais H.225 e H.245) e a complexidade de operação.
+% Apesar do SIP ser muito utilizado atualmente, trata-se de um protocolo de
+% negociação de sessões focado para chamadas telefônica sobre uma rede IP, apesar
+% de também oferecer suporte para negociação de vídeo.
+% 
+% Devido à natureza das redes de datagramas cujo paradigma é o do ``melhor
+% esforço'' e às limitações do H.323 e SIP, sem qualquer garantia sobre os
+% requisitos de tempo de entrega, novos protocolos foram propostos para atender as
+% necessidades de transmissão de dados em tempo real. O protocolo em destaque é o
+% RTP (\textit{Real Time Protocol})~\cite{RFC3550}, que permite às aplicações informarem o instante exato em que um determinado conteúdo deve ser reproduzido pelo sistema final receptor. O RTP permite transportar essa marcação de tempo no cabeçalho que envolve os dados referentes a mídia sendo transmitida, e permite que às aplicações tenham controle sobre número de sequência de cada pacote. O RTP atualmente constitui a base das transmissões multimídias ao vivo na Internet, sendo o padrão adotado em praticamente todas as soluções multimídia baseadas em IP.
+% 
+% Em paralelo ao RTP, as aplicações multimídia utilizam o \textit{Real
+% Time Streaming Protocol} (RTSP)~\cite{RFC2326}. O RTSP é um protocolo a nível de
+% aplicação desenvolvido pela IETF para controle na transferência de dados com
+% propriedades de tempo real. Tal protocolo torna possível a transferência, sob
+% demanda, de dados em tempo real como áudio e vídeo. O RTSP serve para
+% estabelecer e controlar vários fluxos sincronizados de mídias contínuas
+% pertencentes a um evento (como o vídeo e o áudio). Seus idealizadores propõem
+% que o uso do RTSP seja feito combinando-se outros protocolos, como o UDP e o
+% RTP. NO RTSP, o conjunto de fluxos a ser controlado é definido por uma descrição
+% de apresentação, normalmente um arquivo, que pode ser obtido por um cliente
+% usando HTTP ou outros meios, armazenado em um local diferente do servidor de
+% mídia. Uma descrição de apresentação pode conter informações sobre um ou mais
+% fluxos que compõe a apresentação, como endereços de rede e informações sobre o
+% conteúdo da apresentação, além de parâmetros que tornam possível ao cliente
+% escolher a combinação mais apropriada das mídias.
+% 
+% O problema do H.323 foi sua grande complexidade de uso, dificultando a
+% integração com às aplicações, dando brechas a outras propostas com propósitos
+% similares, como foi o caso do SIP, RTP e do RTSP. Estes protocolos se limitam à
+% fronteira entre a sinalização de uma sessão multimídia e todos os outros
+% aspectos relacionados a efetiva disseminação de conteúdos ao vivo, que
+% atualmente envolve a cooperação de nós, controle e troca de mapa de
+% buffer, adaptação de fluxo e controle de congestionamento. Isto implica na
+% necessidade de mais componentes que permitam a distribuição de mídias ao vivo,
+% ampliando a complexidade na construção de um sistema para este fim.
+% 
+% % \subsection{UDP, DCCP e SCTP}
+% %
+% % Tanto o RTP quanto o RTSP são propostas desenvolvidas para suprir as carências
+% % encontradas em protocolos de transporte tradicionais da Internet, como o UDP e o
+% % TCP. Apesar das propostas de novos protocolos de transporte padronizados pela
+% % IETF, tais como o DCCP e o SCTP (\textit{Stream Control Transmission
+% % Protocol})~\cite{Jungmaier2003,iyengar_concurrent_2006}, o uso dos protocolos
+% % RTP/RTSP em conjunto com o protocolo UDP é predominante nas aplicações
+% % multimídia encontradas na Internet.
+% %
+% % As especificações e detalhes de funcionamento dos protocolos citados nesta
+% % seção estão disponíveis abertamente na literatura. Por serem documentos
+% % extensos e de conhecimento já bastante difundido, neste trabalho, decidiu-se
+% % omitir as discussões detalhadas sobre estes, enfatizando os
+% % protocolos cujas propostas se aproximam ao \mudccp.
 
 \section{Estruturas para Distribuição de Mídia ao Vivo em P2P}
 \label{sec:arq_p2p_media_aovivo}
@@ -1782,19 +1781,17 @@ disponibilidade de recursos é escolhido por $p_i$ para a realização do
 pedido de \textit{chunk}. Quando $p_i$ recebe o \textit{chunk} $c_t$ de $p_j$,
 $p_i$ marca $cm_i[c_t] = disponivel$. Os processos de escolha do \textit{chunk}
 a ser requisitado e a escolha do parceiro serão detalhados nas seções seguintes.
-Na Tabela~\ref{tab:param_sis_p2p}, apresenta-se um resumo dos elementos
-utilizados para descrever um sistema P2P de transmissão ao vivo.
+Na Tabela~\ref{tab:param_sis_p2p}, apresentam-se as notações utilizadas para descrever um sistema P2P de transmissão ao vivo.
 
 \begin{table}[ht]
-        \caption{Resumo dos elementos de um sistema P2P de transmissão ao
-vivo.}
+        \caption{Notações para descrever um sistema P2P de transmissão ao vivo.}
         \label{tab:param_sis_p2p}
     \begin{center}
         \begin{tabular}{|p{1.0cm}|p{1.5cm}|}
             \hline
 
 \multicolumn{1}{|>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}{
-\textbf{Elemento}}} &
+\textbf{Notação}}} &
 
 \multicolumn{1}{>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}{\textbf{Descrição}}}
 	    \\
@@ -1869,19 +1866,17 @@ vivo a uma taxa aproximada de 6 \textit{chunks} por segundo. Normalmente, um
 vídeo é codificado a aproximadamente \ut{300}{Kbps} e assim, cada \textit{chunk}
 tem cerca de \ut{6}{KB} de dados.
 
-Na Tabela~\ref{tab:param_sis_p2p_geracao}, apresenta-se um resumo dos elementos
-utilizados para descrever a geração de conteúdo da transmissão ao vivo em P2P.
+Na Tabela~\ref{tab:param_sis_p2p_geracao}, apresentam-se as notações para descrever a função de geração das partes de uma mídia em transmissão ao vivo baseado em uma arquitetura P2P.
 
 \begin{table}[ht]
-        \caption{Resumo dos elementos utilizados na geração de conteúdo de mídia
-ao vivo em sistemas P2P.}
+        \caption{Notações utilizadas para descrever a geração de mídia ao vivo em sistemas P2P.}
         \label{tab:param_sis_p2p_geracao}
     \begin{center}
         \begin{tabular}{|p{1.0cm}|p{1.5cm}|}
             \hline
 
 \multicolumn{1}{|>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}{
-\textbf{Elemento}}} &
+\textbf{Notação}}} &
 
 \multicolumn{1}{>{\columncolor[rgb]{0.05,0.2,0.43}}c|}{\textcolor{white}{\textbf{Descrição}}}
 	    \\
@@ -3950,45 +3945,17 @@ o conceito de assinatura digital.
 \section{Sumário do Capítulo}
 \label{sec:fundamentacao-sumario}
 
-Neste capítulo, apresentou-se os principais conceitos de funcionamento dos
-sistemas de transmissão ao vivo P2P. Inicialmente, descreveu-se as estruturas de
-uma rede P2P constituídas por esses sistemas. Em seguida, apresentou-se o
-funcionamento básico de um sistema de transmissão e suas principais estratégias
-para geração e disseminação de \textit{chunks}, bem como a seleção de nós
-parceiros.
+Neste capítulo, apresentou-se os principais conceitos de funcionamento dos sistemas de transmissão ao vivo P2P. Inicialmente, descreveu-se as estruturas de uma rede P2P constituídas por esses sistemas. Em seguida, apresentou-se o funcionamento básico de um sistema de transmissão e suas principais estratégias para geração e disseminação de \textit{chunks}, bem como a seleção de nós parceiros.
 
-Os cenários de transmissão de mídia ao vivo considerados são baseados em uma
-arquitetura em malha e sem organização rígida dos nós do sistema. Os nós podem
-entrar e sair a qualquer instante e realizam parcerias com um subconjunto de
-outros nós. Os parceiros trocam informações entre si para colaborar uns com os
-outros na obtenção de uma  mídia transmitida ao vivo.
+Os cenários de transmissão de mídia ao vivo se baseiam em uma arquitetura em malha e sem organização rígida dos nós do sistema. Os nós podem entrar e sair a qualquer instante e realizam parcerias com um subconjunto de outros nós. Os parceiros trocam informações entre si para colaborar uns com os outros na obtenção de uma  mídia transmitida ao vivo.
 
-Para participar de um sistema P2P de transmissão ao vivo, a aplicação do
-usuário se registra em um servidor chamado de \textit{boostrap}. Esse
-servidor armazena as informações de todos os nós ativos do sistema. O novo nó
-recebe uma lista com outros nós do sistema e essa lista é utilizada para a
-tentativa inicial de estabelecimento de parcerias. Entre os nós do sistema há um
-especial: o servidor de mídia ao vivo. Este servidor captura o vídeo a ser
-transmitido, codifica-o em um formato apropriado e disponibiliza-o para toda a
-rede P2P.
+Para participar de um sistema P2P de transmissão ao vivo, a aplicação do usuário se registra em um servidor chamado de \textit{boostrap}. Esse servidor armazena as informações de todos os nós ativos do sistema. O novo nó recebe uma lista com outros nós do sistema e essa lista é utilizada para a tentativa inicial de estabelecimento de parcerias. Entre os nós do sistema há um especial: o servidor de mídia ao vivo. Este servidor captura o vídeo a ser transmitido, codifica-o em um formato apropriado e disponibiliza-o para toda a rede P2P.
 
-Os nós têm um armazenamento local, onde guardam os dados do vídeo para uma
-execução contínua. Estes nós devem verificar quais pedaços de dados são
-necessários, havendo maneiras apropriadas de seleciona-los e requisitá-los.
-Para isso, apresentou-se duas abordagens denominadas \aspas{Gulosa} e
-\aspas{Mais Raro Primeiro}. Essas estratégias mantém o fluxo da execução sem
-interrupções e dissemina o conteúdo rapidamente pela rede P2P, respectivamente.
+Os nós têm um armazenamento local, onde guardam os dados do vídeo para uma execução contínua. Estes nós devem verificar quais partes de dados são necessários, havendo maneiras apropriadas de seleciona-los e requisitá-los. Para isso, apresentou-se duas abordagens denominadas \aspas{Gulosa} e \aspas{Mais Raro Primeiro}. Essas estratégias mantém o fluxo da execução sem interrupções e dissemina o conteúdo rapidamente pela rede P2P, respectivamente.
 
-Caso mais de um parceiro possa contribuir com o dado necessário, um nó deve
-escolher a qual fará a solicitação. O mecanismo adotado se baseia na
-disponibilidade de recursos de cada parceiro, que será escolhido de acordo com a
-maior quantidade de recursos disponíveis, como por exemplo, banda de rede,
-processamento, memória etc.
+Caso mais de um parceiro possa contribuir com o dado necessário, um nó deve escolher a qual fará a solicitação. O mecanismo adotado se baseia na disponibilidade de recursos de cada parceiro, que será escolhido de acordo com a maior quantidade de recursos disponíveis, como por exemplo, banda de rede, processamento, memória etc.
 
-Por fim, apresentou-se alguns conceitos básicos sobre criptografia de chave
-pública e assinatura digital. Esses conceitos são aplicados nesse trabalho no
-contexto de criptografar os dados transmitidos por um sistema de transmissão ao
-vivo e assim impedir ataques de poluição.
+Por fim, apresentou-se alguns conceitos básicos sobre criptografia de chave pública e assinatura digital. No contexto deste trabalho, aplicam-se tais conceitos para criptografar e assinar digitalmente os dados transmitidos por um sistema de transmissão ao vivo a fim de impedir ataques de poluição.
 
 % Em seguida, apresentou-se uma visão geral da camada de transporte da pilha de
 % protocolos TCP/IP. Discutiu-se a importância da organização dos protocolos em

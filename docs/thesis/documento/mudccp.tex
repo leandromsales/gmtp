@@ -1,26 +1,12 @@
 \chapter{Global Media Transmission Protocol (\mudccp)}
 \label{cap:mudccp}
 
-O \textit{Global Media Transmission Protocol} (\mudccp) é um protocolo que atua
-nas camadas de transporte e de rede (\textit{cross-layer}),
-projetado para operar na Internet, a ser utilizado em sistemas de distribuição
-de fluxos dados multimídia ao vivo. Trata-se de um protocolo baseado em uma
-arquitetura híbrida P2P/CDN, transmitindo-se os dados de um ou mais
-sistemas através de uma rede de favores P2P constituída por roteadores de
-rede, que cooperam entre si a fim de obterem o conteúdo multimídia de
-interesse, ao mesmo tempo que ocorrem interações entre os servidores de uma ou
-mais redes CDNs, os quais atuam como super nós para os nós da rede P2P,
-auxiliando-os no envio e recebimento dos fluxos de dados. Uma aplicação GMTP em execução nos nós clientes, reproduz o conteúdo multimídia ao usuário final à medida que recebem
-pacotes de dados contendo partes da mídia, geradas pelos servidores da CDN, através de um processo em execução se comunicando através da rede com base no protocolo GMTP. Nesse ínterim, os roteadores envolvidos na transmissão de uma mídia ao vivo, realizam parcerias com outros roteadores, os quais também possuem nós clientes interessados no mesmo conteúdo, motivados pelos seus respectivos usuários finais que o controlam.
+O \textit{Global Media Transmission Protocol} (\mudccp) é um protocolo que atua nas camadas de transporte e de rede (\textit{cross-layer}), projetado para operar na Internet, a ser utilizado em sistemas de distribuição de fluxos dados multimídia ao vivo. Trata-se de um protocolo baseado em uma arquitetura híbrida P2P/CDN, transmitindo-se os dados de um ou mais sistemas através de uma rede de favores P2P constituída por roteadores de rede, que cooperam entre si a fim de obterem o conteúdo multimídia de
+interesse, ao mesmo tempo que ocorrem interações entre os servidores de uma ou mais redes CDNs, os quais atuam como super nós para os nós da rede P2P, auxiliando-os no envio e recebimento dos fluxos de dados. Uma aplicação GMTP em execução nos nós clientes, reproduz o conteúdo multimídia ao usuário final à medida que recebem pacotes de dados contendo partes da mídia, geradas pelos servidores da CDN, através de um processo em execução se comunicando através da rede com base no protocolo GMTP. Nesse ínterim, os roteadores envolvidos na transmissão de uma mídia ao vivo, realizam parcerias com outros roteadores, os quais também possuem nós clientes interessados no mesmo conteúdo, motivados pelos seus respectivos usuários finais que o controlam.
 
-As trocas de dados entre nós GMTP ocorrem por meio do envio e recebimento de
-partes de uma mídia (\textit{chunks}), que são transmitidas por diferentes nós
-da rede, constituindo um fluxos de datagramas IP. Estes fluxos são
-transmitidos em modo \textit{unicast} e compartilhados (\textit{multi-unicast})
-pelos roteadores, quando são entregues aos nós clientes em modo \textit{multicast}, realizando-se controle de congestionamento sem garantia de entrega, em ambos os modos de transmissão. A escolha do modo de transmissão para disseminar um fluxo de dados ocorre sem a influência da aplicação, que precisa simplesmente ``sintoniza'' sua conexão em um determinado canal \textit{multicast} definido pelo roteador. Tal abstração para a camada de aplicação ocorre de modo que os processos em execução utilizam o GMTP através de uma API compatível com as especificações de socket BSD e POSIX, o que permite adaptações mais simples dos atuais sistemas.
+As trocas de dados entre nós GMTP ocorrem por meio do envio e recebimento de partes de uma mídia (\textit{chunks}), que são transmitidas por diferentes nós da rede, constituindo um fluxos de datagramas IP. Estes fluxos são transmitidos em modo \textit{unicast} e compartilhados (\textit{multi-unicast}) pelos roteadores, quando são entregues aos nós clientes em modo \textit{multicast}, realizando-se controle de congestionamento sem garantia de entrega, em ambos os modos de transmissão. A escolha do modo de transmissão para disseminar um fluxo de dados ocorre sem a influência da aplicação, que precisa simplesmente ``sintoniza'' sua conexão em um determinado canal \textit{multicast} definido pelo roteador. Tal abstração para a camada de aplicação ocorre de modo que os processos em execução utilizam o GMTP através de uma API compatível com as especificações de socket BSD e POSIX, o que permite adaptações mais simples dos atuais sistemas.
 
-Por conseguinte, com o uso do GMTP, permite-se o estabelecimento de conexões e a cooperação entre diferentes fornecedores de aplicações, em prol de tão logo quando possível obter as partes de uma mídia a serem reproduzidas. Isto significa que o GMTP torna as aplicações compatíveis entre si, uma vez que o protocolo desacopla a forma como os dados são transportados da forma como estes são exibidos ao usuário final, emulando
-os sistemas tradicionais de TV. Sendo assim, promove-se a integração do GMTP em aplicações já existentes, quando se considera futuras adoções de tal protocolo, ao passo que se permite a utilização dos novos recursos introduzidos no protocolo, reduzindo-se a complexidade na construção de sistemas de distribuição de mídias ao vivo, especialmente aqueles baseados em arquitetura P2P/CDN.
+Por conseguinte, com o uso do GMTP, permite-se o estabelecimento de conexões e a cooperação entre diferentes fornecedores de aplicações, em prol de tão logo quando possível obter as partes de uma mídia a serem reproduzidas. Isto significa que o GMTP torna as aplicações compatíveis entre si, uma vez que o protocolo desacopla a forma como os dados são transportados da forma como estes são exibidos ao usuário final, emulando os sistemas tradicionais de TV. Sendo assim, promove-se a integração do GMTP em aplicações já existentes, quando se considera futuras adoções de tal protocolo, ao passo que se permite a utilização dos novos recursos introduzidos no protocolo, reduzindo-se a complexidade na construção de sistemas de distribuição de mídias ao vivo, especialmente aqueles baseados em arquitetura P2P/CDN.
 
 Com base na ilustração da Figura~\ref{fig:blocos-funcionais}, nas próximas seções deste capítulo, detalham-se os aspectos teóricos e computacionais empregados do GMTP, a fim de construir uma rede de sobreposição formada por roteadores, pela execução de quatro grandes passos:
 
@@ -292,15 +278,54 @@ relatórios periódicos sobre o estado da transmissão ao seu nó \textit{Repassador
 GMTP}, que os utiliza para regular a taxa de transmissão de um ou mais fluxos de
 dados, impedindo que a rede entre em congestionamento.
 
+\subsection{Resumo das principais funcionalidades}
+
+\begin{itemize}
+
+  \item Registro de participação de um nó repassador em um nó servidor. Isto
+permite que um nó repassador sinalize interesse em participar de uma rede CDN.
+Assim, pode-se pré-selecionar nós parceiros filtrados por métricas que
+influenciam na qualidade de serviço oferecido aos sistemas finais. Este assunto
+será retomado na Seção~\ref{subsec:registro-participacao}.
+
+  \item Acesso a uma transmissão de um evento ao vivo através de um processo de
+conexão em três-vias (\textit{3WHS}), com a requisição de conexão transmitida ao
+servidor e podendo ser interceptada por um nó repassador em seu trajeto ao
+servidor, com suporte automático de detecção e uso dos modos de transmissão
+suportados pelo nó repassador (unicast e/ou multicast). Este assunto será
+retomado na Seção~\ref{subsec:conexao-requisicao}.
+
+  \item Descoberta de nós parceiros entre redes distintas e negociação de
+parcerias, com suporte a formação de parcerias baseadas em métricas de rede,
+tal como a largura de banda fim-a-fim. Além disso, o GMTP é capaz de distribuir
+um fluxo de dados em múltiplas taxas de transmissão de acordo com a largura de
+banda dos nós repassadores. Para isto, o GMTP segmenta os canais de transmissão
+(rota entre um nó servidor e os nós repassadores) quando existem múltiplos nós
+repassadores em uma determinada rota e estes estão interessados em receber o
+mesmo fluxo de dados. Este assunto será retomado nas
+Seções~\ref{sec:connformnet} e~\ref{sec:ccgmtp}.
+
+  \item Envio e recebimento de fluxos de dados compartilhados entre nós
+da mesma rede através do uso do modo de transmissão multicast, sendo o modo de
+transmissão unicast restrito apenas para transportar os fluxos de dados entre redes distintas, evitando-se a relação de uma conexão por cliente ao nó servidor. Este assunto será retomado na Seção~\ref{sec:asptransrecep}.
+
+  \item Uso de algoritmo de controle de congestionamento assistidos pela
+rede, em transmissões em modo unicast (GMTP-UCC); e uso do \textit{TCP Friendly Rate
+Control} (TFRC) adaptado às transmissões de fluxos de dados em modo multicast (GMTP-MCC).
+Este assunto será retomado na Seção~\ref{sec:ccgmtp}.
+
+  \item Verificação de autenticidade dos dados multimídia, por meio do uso de assinaturas digitais disponibilizadas pelos nós servidores, impedindo assim ataques de poluição de conteúdo. Este assunto será retomado na Seção~\ref{sec:seguranca}.
+
+  \item Eleição de nós relatores com suporte a tolerância a desconexões de nós,
+com notificação e reeleição de novos nós. Este e outros assuntos relacionados serão retomados na Seção~\ref{sec:outros-aspectos}.
+
+\end{itemize}
+
+
 \subsection{Tipos de pacotes}
 \label{subsec:tipodepacotesmudccp}
 
-Toda comunicação entre dois ou mais nós GMTP ocorre através da troca de pacotes IP, os quais carregam sinalizações de controle e/ou dados da aplicação. No mundo real (Internet), será necessário registrar na \textit{Internet Assigned Numbers Authority} -- IANA\footnote{IANA: http://www.iana.org/} o uso de um código para o campo \textit{Protocolo} do cabeçalho de um datagrama IP. Com a padronização do protocolo \mudccps e a publicação da sua RFC, provavelmente será utilizado o código 100, como já está definido no documento \textit{Protocol Numbers}\footnote{O código 100 foi
-utilizado no passado por um outro protocolo de mesma sigla, mas foi
-descontinuado e se tornou obsoleto. No momento da escrita desse documento, o
-uso de tal identificador está sendo negociado junto a IETF e a IANA
-\murl{http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml}}
-da IANA.
+Toda comunicação entre dois ou mais nós GMTP ocorre através da troca de datagramas IP, os quais carregam sinalizações de controle e/ou dados da aplicação. No mundo real (Internet), será necessário registrar na \textit{Internet Assigned Numbers Authority} -- IANA\footnote{IANA: http://www.iana.org/} o uso de um código para o campo \textit{Protocolo} do cabeçalho IP. Com a padronização do protocolo \mudccps e a publicação da sua RFC, provavelmente será utilizado o código 100, como já está definido no documento \textit{Protocol Numbers}\footnote{O código 100 foi utilizado no passado por um outro protocolo de mesma sigla, mas foi descontinuado e se tornou obsoleto. No momento da escrita desse documento, o uso de tal identificador está sendo negociado junto a IETF e a IANA \murl{http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml}} da IANA.
 
 No cabeçalho dos pacotes \mudccp, existe um campo denominado \emph{tipo do
 pacote} com tamanho de \ut{5}{bits}, que são descritos a seguir. Este campo
@@ -375,49 +400,6 @@ valores reservados para uso futuro e ignorado pelos nós que o processa.
 % No Apêndice~\ref{app:mudccp-tecnica}, apresenta-se detalhes acerca do uso dos
 % tipos de pacotes do GMTP, sendo seu teor bastante técnico e portanto dedicado
 % aos leitores interessados em sua implementação.
-
-\subsection{Resumo das principais funcionalidades}
-
-\begin{itemize}
-
-  \item Registro de participação de um nó repassador em um nó servidor. Isto
-permite que um nó repassador sinalize interesse em participar de uma rede CDN.
-Assim, pode-se pré-selecionar nós parceiros filtrados por métricas que
-influenciam na qualidade de serviço oferecido aos sistemas finais. Este assunto
-será retomado na Seção~\ref{subsec:registro-participacao}.
-
-  \item Acesso a uma transmissão de um evento ao vivo através de um processo de
-conexão em três-vias (\textit{3WHS}), com a requisição de conexão transmitida ao
-servidor e podendo ser interceptada por um nó repassador em seu trajeto ao
-servidor, com suporte automático de detecção e uso dos modos de transmissão
-suportados pelo nó repassador (unicast e/ou multicast). Este assunto será
-retomado na Seção~\ref{subsec:conexao-requisicao}.
-
-  \item Descoberta de nós parceiros entre redes distintas e negociação de
-parcerias, com suporte a formação de parcerias baseadas em métricas de rede,
-tal como a largura de banda fim-a-fim. Além disso, o GMTP é capaz de distribuir
-um fluxo de dados em múltiplas taxas de transmissão de acordo com a largura de
-banda dos nós repassadores. Para isto, o GMTP segmenta os canais de transmissão
-(rota entre um nó servidor e os nós repassadores) quando existem múltiplos nós
-repassadores em uma determinada rota e estes estão interessados em receber o
-mesmo fluxo de dados. Este assunto será retomado nas
-Seções~\ref{sec:connformnet} e~\ref{sec:ccgmtp}.
-
-  \item Envio e recebimento de fluxos de dados compartilhados entre nós
-da mesma rede através do uso do modo de transmissão multicast, sendo o modo de
-transmissão unicast restrito apenas para transportar os fluxos de dados entre redes distintas, evitando-se a relação de uma conexão por cliente ao nó servidor. Este assunto será retomado na Seção~\ref{sec:asptransrecep}.
-
-  \item Uso de algoritmo de controle de congestionamento assistidos pela
-rede, em transmissões em modo unicast (GMTP-UCC); e uso do \textit{TCP Friendly Rate
-Control} (TFRC) adaptado às transmissões de fluxos de dados em modo multicast (GMTP-MCC).
-Este assunto será retomado na Seção~\ref{sec:ccgmtp}.
-
-  \item Verificação de autenticidade dos dados multimídia, por meio do uso de assinaturas digitais disponibilizadas pelos nós servidores, impedindo assim ataques de poluição de conteúdo. Este assunto será retomado na Seção~\ref{sec:seguranca}.
-
-  \item Eleição de nós relatores com suporte a tolerância a desconexões de nós,
-com notificação e reeleição de novos nós. Este e outros assuntos relacionados serão retomados na Seção~\ref{sec:outros-aspectos}.
-
-\end{itemize}
 
 
 % \begin{table}[ht]
@@ -3148,9 +3130,7 @@ RTT igual a \ut{64}{ms}, que é um valor relativamente alto se considerar apenas 
 \section{Autenticidade de \setpk}
 \label{sec:seguranca}
 
-Em uma solução baseada em um modelo de serviço P2P, é possível que nós
-mal-intencionados \repasss poluam o sistema com conteúdos que não foram
-gerados pelo nó servidor.
+Em uma solução baseada em um modelo de serviço P2P, é possível que nós mal-intencionados \repasss poluam o sistema com conteúdos que não foram gerados pelo nó servidor.
 %  (Figura~\ref{fig:bucket-brigade-principle-4}).
 %
 % \begin{figure}[ht]
@@ -3162,17 +3142,7 @@ gerados pelo nó servidor.
 % que não foram gerados pelo nó \serv.}
 % \label{fig:bucket-brigade-principle-4}
 % \end{figure}
-Para evitar esse tipo de ataque, executa-se um procedimento para verificar a
-autenticidade de um fluxo de dados \setpk. Para isto, os próprios nós \ways
-$\in$ \setwayis verificam se o conteúdo de um pacotes de dados \pks $\in$
-\setpks foi alterado por algum nó \ways anterior durante o procedimento de
-repasse. Apenas após comprovar a autenticidade de um pacote \pk, o nó \ways
-repassa tal pacote de dados \pks para o próximo nó \wayu{\wayconst+1},
-transmitindo-os também para seus nós \clis $\in$ \subsetcli$($\way$)$, se houver
-demanda. Este procedimento evita que todos os nós \clis que receberem o fluxo de
-dados \setpks tenham que verificar a autenticidade dos pacotes \pk, evitando-se
-que a rede repasse conteúdo multimídia errados, consequentemente não consumindo
-recursos computacionais desnecessários.
+Para evitar esse tipo de ataque, executa-se um procedimento para verificar a autenticidade de um fluxo de dados \setpk. Para isto, os próprios nós \ways $\in$ \setwayis verificam se o conteúdo de um pacotes de dados \pks $\in$ \setpks foi alterado por algum nó \ways anterior durante o procedimento de repasse. Apenas após comprovar a autenticidade de um pacote \pk, o nó \ways repassa tal pacote de dados \pks para o próximo nó \wayu{\wayconst+1}, transmitindo-os também para seus nós \clis $\in$ \subsetcli$($\way$)$, se houver demanda. Este procedimento evita que todos os nós \clis que receberem o fluxo de dados \setpks tenham que verificar a autenticidade dos pacotes \pk, evitando-se que a rede repasse conteúdo multimídia errados, consequentemente não consumindo recursos computacionais desnecessários.
 
 Na prática, o ideal seria que todos nós \ways verificassem a autenticidade de
 cada pacote \pk, porém, tal ação pode onerar os recursos computacionais de cada

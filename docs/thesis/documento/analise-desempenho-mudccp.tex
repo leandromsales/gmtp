@@ -1,11 +1,51 @@
 \chapter{Análise de Desempenho do \mudccp}
 \label{cap:analisedesemp}
 
-- FAZER A FIGURA GERAL DO CABEÇALHO DO GMTP E COLOCAR NA SEÇÃO DE TIPOS DE PACOTES
+% ====
+% 
+% * Qual é a diferença entre um ensaio, uma simulação e um experimento?
+% * Melhores práticas em design de experimentos sugerem 20 (ou 10 ou 5) experimentos para estimar o desvio padrão da população inicialmente.
+% 
+% * Me parece que o raciocínio na página 105 está errado. É possível construir um intervalo de confiança de 95\% para a média de uma população com qualquer quantidade de amostras. O que é o intervalo de confiança de 95\% sendo construído na equação 5.11?
+%      - Me parece que é um IC com largura igual a 10\% do valor da média. O texto estaria então conceitualmente errado.
+% 
+% * Não entendi o experimento: a impressão que dá é que ele compara a transmissão em árvore vs. uma transmissão centralizada. O DCCP tem que ser usado de maneira cliente-servidor? Se não, a comparação é absolutamente injusta. Os experimentos deveriam considerar dois sistemas P2P, um implementado com GMTP e outro com DCCP, não? Agora parece uma comparação de multicast vs. unicast, que já foi feita 20 anos atrás.
+%      - Não é bem assim! O GMTP não usa multicast exclusivamente
+%      - Dizer que o Denacast faz multicast local tb
+% 
+% * p15: Você diz que o DCCP não é escalável: o problema me parece ser na arquitetura que você usou, e não no protocolo ponto-a-ponto. Ele pode ser usado para implementar uma mesh.
+%      - Sim! Tenho que mudar essa visão. O cara pode fazer P2P com DCCP. OK! Então o foco é investir no papo de que o P2P com GMTP está na infraestrutura, escalar está na essência do protocolo, ao passo que usar outros protocolos isso deve ser feito individualmente. OK! Mas o cara pode querer ter flexibilidade na aplicação, aí faz sua própria solução e perde tudo o que o GMTP pode oferecer. Alternativamente, o cara pode fazer um novo GMTP-Intra e aproveitar tudo disponíveis no GMTP-Inter.
+% 
+% * p16 (fim): controlar o congestionamento e evitar a tragédia dos bens comuns não é a mesma coisa?
+%      - 
+% 
+% * p17: na sua tese, o que seria um resultado que a negaria? Ela não pode ser óbvia.
+%      - Um protocolo que comprovasse fazer melhor do que o GMTP considerando apenas a comunicação end-to-end, com suporte a controle de congestionamento (o que mais??)
+%      - Seleção de nós é importante
+% 
+% * Eu entendo que a implementação é meio e não fim na sua tese. Não devia ser um objetivo. O objetivo não seria obter uma solução para um problema X com propriedades Y, Z e W?
+%      - Revisar se o papo na introdução está com essa cara
+% 
+% * Não entendi o experimento: a impressão que dá é que ele compara a transmissão em árvore vs. uma transmissão centralizada. O DCCP tem que ser usado de maneira cliente-servidor? Se não, a comparação é absolutamente injusta. Os experimentos deveriam considerar dois sistemas P2P, um implementado com GMTP e outro com DCCP, não? Agora parece uma comparação de multicast vs. unicast, que já foi feita 20 anos atrás.
+%      - Concordo!
+% 
+% No planejamento:
+%      - É necessária uma fase de experimentos de simulação para explorar e justificar as decisões de design, parâmetros e permitir o estudo da contribuição do trabalho
+% 
+% ====
 
-Neste capítulo, apresentam-se os resultados do uso do protocolo \mudccps para distribuição de mídias ao vivo em cenários de rede com um arquitetura P2P/CDN com muitos nós receptores, comparando seu desempenho a outras duas soluções proeminentes disponíveis no estado da arte, a saber, o Denacast/CoolStreaming e o CCN-TV.
+
+Neste capítulo, apresentam-se os resultados do uso do protocolo \mudccps para distribuição de mídias ao vivo em cenários de rede com um arquitetura P2P/CDN com muitos nós receptores, comparando seu desempenho a um solução proeminente disponível no estado da arte, a saber, o Denacast/CoolStreaming.
+%  e o CCN-TV.
+
+TEM QUE DIZER QUE USEI O BRITE
+
+REPENSAR SE AVALIA TAMBÉM O CCN-TV OU NÃO! SE NÃO FOR FAZER ISSO, REVER AS INFORMAÇÕES NA CAP DE TR SOBRE DETALHAR A COMPARAÇÃO, CASO CONTRÁRIO, PENSAR SE DEIXA ESSE ITEM OU TIRA
+MANTER O PPSP/Swift? Se sim, rever o que o nazareno colocou sobre isso...
 
 ALGO AQUI
+
+PENSAR NAS VARIÁVEIS DEPENDENTES E INDEPENDENTES
 
 Com esse norte, delimitou-se algumas métricas que determinam a qualidade de
 serviço para permitir que os usuários assistam conteúdo ao vivo na Internet
@@ -25,11 +65,15 @@ gerados pelos protocolos a fim de executar suas funções.
 
 Métricas:
    - Atraso de inicialização do fluxo
+   - Quantidade de interrupções
    - Índice do Continuidade
    - Tempo de recuperação
    - Distorção do conteúdo recebido em comparação ao transmitido
    - Sobrecarga de controle
+   - Número de conexões no servidor / duplicações
    - Escalabilidade quanto ao número de nós clientes interessados por um mesmo fluxo
+   - Como posso medir a qualidade das parcerias? pela taxa de transmissão entre o nó que compartilha e o nó que recebe
+   - Como medir a quantidade de aplicações de distribuição de mídias ao vivo diferentes e a quantidade de eventos iguais sendo transmitidos
 
 
 Olhar o capítulo 4 da tese da nandita para ver os valores dos parâmetros que ela usou
