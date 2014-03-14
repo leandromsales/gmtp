@@ -1,11 +1,23 @@
 \chapter{Considerações Finais}
 \label{cap:conclusao}
 
+Fazer pacote geral do GMTP
+
+Conclusions are not a rambling summary of the thesis: they are short, concise statements of the inferences that you have made because of your work. It helps to organize these as short numbered paragraphs, ordered from most to least important. All conclusions should be directly related to the research question stated in Section 4. Examples:
+
+1. The problem stated in Section 4 has been solved: as shown in Sections ? to ??, an algorithm capable of handling large-scale Zylon problems in reasonable time has been developed.
+
+2. The principal mechanism needed in the improved Zylon algorithm is the Grooty mechanism.
+
+3. Etc.
+
 TBD
 
 - EVIDENCIAR OS GANHOS DE MOVER ALGUMAS QUESTÕES DE UMA CAMADA PRA OUTRA
 - REPENSAR SE COLOCO COMO CONTRIBUIÇÃO O LANCE DO SIMULADOR
-- 
+- RETOMAR:
+
+\textit{a constituição de uma rede de favores entre roteadores que interceptam, realizam cache temporário e compartilham pacotes de dados tanto em modo \textit{multicast} (em redes locais) quanto em modo unicast (entre redes distintas), com o auxílio de um algoritmo para controle de congestionamento assistido pela rede, possibilita a independência dos sistemas e o melhor uso dos recursos de rede e, consequentemente, a distribuição eficiente de fluxos de mídias ao vivo}.
 
 % \section{Perguntas Frequentes}
 
@@ -41,15 +53,69 @@ TBD
      - CC: na literatura, em geral, só focam em usar o máximo do link
 
 
+\section{Resumo das Contribuições}
+\label{sec:contribuicoes}
+
+The Summary of Contributions will be much sought and carefully read by the examiners. Here you list the contributions of new knowledge that your thesis makes. Of course, the thesis itself must substantiate any claims made here. There is often some overlap with the Conclusions, but that's okay. Concise numbered paragraphs are again best. Organize from most to least important. Examples:
+
+1. Developed a much quicker algorithm for large-scale Zylon problems.
+
+2. Demonstrated the first use of the Grooty mechanism for Zylon calculations.
+
+3. Etc.
+
+
+No contexto desta tese, resume-se as principais contribuições.
+
+\begin{enumerate}
+
+%   \item Uma revisão bibliográfica sobre o estado da arte no contexto do
+% tema que se discute. Apresenta-se a forma de com os sistemas atualmente são
+% projetados e as principais considerações sobre os mesmos, como técnicas,
+% métodos e abordagens utilizadas;
+
+  \item a concepção e descrição detalhada de um protocolo para distribuição de conteúdos multimídia ao vivo. Apresenta-se a elaboração do GMTP, que considera a comunicação mais efetiva entre as duas camadas mais importantes da pilha TCP/IP, a de transporte e a de rede.
+%   Além disso, (re)visita-se assuntos importantes na área de redes e traz-se à tona os recentes avanços da área de estudo, como os conceitos das redes centradas na informação~\cite{6563278} e os algoritmos de controle de congestionamento assistido pela rede~\cite{983548}.
+  Nesse contexto, contribui-se com uma proposta de como pode-se permitir a interoperabilidade dos atuais sistemas de distribuição multimídia, promovendo-se formas de adaptação dos sistemas existentes.
+% , bem como o reúso de algumas funções comuns a todos os sistemas.
+
+  \item discussões sobre a aplicação do \textit{Rate Control Protocol} (RCP)~\cite{Dukkipati:2008:RCP:1368746} no GMTP. O RCP é um proeminente algoritmo de controle de congestionamento assistido pela rede e foi usado no GMTP para auxiliar no processo de distribuição de mídias ao vivo. Nesse contexto, contribui-se com discussões sobre as adaptações realizadas no RCP para permitir sua aplicação ao GMTP e como se pode utilizá-lo no processo de formação de parcerias em uma rede de favores, função jamais vista em qualquer outra solução de distribuição de mídias ao vivo. Ou seja, além de utilizar o RCP para melhorar o consumo dos recursos compartilhados de rede (controle de congestionamento), propõe-se um algoritmo de seleção de nós parceiros com base na atual capacidade de transmissão dos enlaces entre os nós servidores de um fluxo de dados ao vivo e os nós clientes interessados em recebê-lo. Ademais, discute-se aspectos fundamentais sobre a escolha do RCP em detrimento a outras propostas bem conhecidas, como o XCP~\cite{Katabi2003} e o VCP~\cite{4460574}.
+
+  \item os resultados e discussões acerca do GMTP frente a uma proeminente proposta: o Denacast/CoolStreaming~\cite{5764567}.
+%  e o CCN-TV~\cite{6550523}.
+O Denacast é um sistema de distribuição de mídias ao vivo baseado no CoolStreaming com suporte a uma rede de distribuição de conteúdos (P2P/CDN). Com os resultados comparativos obtidos, contribui-se para tomada de decisões sobre futuras pesquisas no contexto de distribuição de mídias ao vivo.
+% O CCN-TV é um sistema de TV para Internet com suporte às redes centradas na informação. Com isto, contribui-se para tomada de decisões sobre futuras pesquisas no contexto de distribuição de mídias ao vivo.
+
+  \item a implementação de artefatos de software que permitem a reprodução do ambiente de estudo, tais como implementação do GMTP no simulador de rede OMNet++~\cite{XU2011,omnetpp2014}.
+%  bem como encaminhamentos iniciais de implementação no núcleo do Linux.
+
+  \item os encaminhamentos da pesquisa sobre futuros avanços do estado da arte,
+tais como as limitações do protocolo proposto e uma breve discussão de como
+essas limitações poderão ser aprimoradas.
+
+\end{enumerate}
+
+Ademais, destaca-se a importância e originalidade do presente trabalho por ser o primeiro a trazer à tona um problema e uma proposta de solução do uso de um protocolo de transporte e rede, exclusivamente projetado para a distribuição de mídias ao vivo na Internet. Até então, distribuir conteúdos multimídia na Internet se resumia em sistemas baseados em protocolos tradicionais (TCP, UDP, DCCP, SCTP) ou outros proprietários, em geral, disponíveis na camada de aplicação e independentes.
+
 \section{Limitações}
 
 - a quebra de fluxos em sub-fluxos requer maior processamento para medições de RTT
 - implantação (ver a tese da dina)
 - 
 
-
-
 \section{Trabalhos Futuros}
+
+The Future Research subsection is included so that researchers picking up this work in future have the benefit of the ideas that you generated while you were working on the project. Again, concise numbered paragraphs are usually best.
 
 - montar uma rede e colocar pra funcionar na Internet
 - otimizar a obtenção dos nós em uma rota (pensar sobre como nem sempre colocar o identificador nos pacotes de registro de participação). Que tal olhar para o endereço de destino e fazer cache, em um determinado período de cache não põe mais o identificador. Será que funcionará? como ficam as questão de um roteador colocar e outro não? ou todos colocam ou nenhuma coloca. Nesse caso, pode-se usar uma flag qd o primeiro não colocar.
+
+
+8. Appendices
+
+COLOCAR CABEÇALHO DOS PACOTES?
+
+REPRODUCIBLE RESEARCH?
+
+What goes in the appendices? Any material which impedes the smooth development of your presentation, but which is important to justify the results of a thesis. Generally it is material that is of too nitty-gritty a level of detail for inclusion in the main body of the thesis, but which should be available for perusal by the examiners to convince them sufficiently. Examples include program listings, immense tables of data, lengthy mathematical proofs or derivations, etc.
+

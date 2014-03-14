@@ -288,7 +288,7 @@ de comunicação disponível na camada de transporte
 
 - Pode ocorrer a inundação de um roteador próximo do servidor?
   Não, pois quanto mais conexões forem enviadas para s, mais roteadores
-distantes de s interceptará o pedido de conexão
+distantes de s interceptarao o pedido de conexão
 
 - Por que utilizar roteadores?
 
@@ -317,7 +317,7 @@ desencapsular os cabeçalhos de tais pacotes e alterar seus cabeçalhos.
 
 - Qual o processo ideal para o deploy do GMTP na Internet?
 
-- Por que gerar um id (Streaming Identifier) se IP e Porta já faz isso?
+- Por que gerar um id (Streaming Identifier) se IP e Porta já faz isso indiretamente?
 
 - Qual é a complexidade para adaptar os protocolos existentes de transporte
 usarem o GMTP?
@@ -325,8 +325,6 @@ usarem o GMTP?
 - Não seria mais simples habilitar multicast ?
 As soluções de rede evoluiram muito para isto ser suficiente. Continuaria a
 pulverização de soluções etc etc.
-
-- Quais são as similares e diferenças entre o GMTP e o LibSwift?
 
 - O GMTP faz computação Per-Flow, se sim, quanto?
 
@@ -359,11 +357,9 @@ samsung, trabalhos futuros
 
 - tem que ler header de transporte? (pode colocar uma flag no campo opt do ip)
 
-- Por que tipos de pacotes, em vez de flags
+- Por que tipos de pacotes, em vez de flags?
 
 - Nat?
-
-- O protocolo poderia ser apresentado em mais alto nível, e poderia haver um apêndice com as especificações detalhadas necessárias a uma implementação mas não a uma tese.
 
 - O método que você escolheu foi variar muitos aspectos da implementação em relação ao estado da arte de uma só vez. Como descobrir quais foram boas ideias e quais não foram?
 

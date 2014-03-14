@@ -151,7 +151,7 @@ os serviços mais instáveis -- há um impacto direto nos parâmetros que determinam
 a experiência do usuário ao reproduzir um conteúdo multimídia devido ao aumento
 do \textit{churn};
 
-  \item o estado do mapa de \textit{buffer} de reprodução de cada nó da rede é semelhante, pois não existe a possibilidade de um nó ter um mapa de \textit{buffer} com muito mais dados para reproduzir do que outros nós. Da mesma forma, não faz sentido manter por muito tempo dados já reproduzidos no \textit{buffer} de reprodução. Os datagramas expiram\footnote{Em aplicações de transmissão multimídia ao vivo, estima-se \textit{jitter} no máximo de \ut{180}{ms}} rapidamente e, nestes casos, devem ser descartados pelas aplicações dos nós que os recebem. Assim, o tamanho necessário para o \textit{buffer} de reprodução deve ser o suficiente para armazenar alguns segundos\footnote{Em geral, adota-se entre 5-8 segundos} da mídia e repassá-la aos seus nós parceiros, requerendo baixa\footnote{Em geral, com MPEG-4, utilizam-se alguns kilobits até algumas dezenas de megabits por segundo.} capacidade de armazenamento dos processadores de rede (roteadores, pontos de acesso etc.), incluindo dos nós finais (\textit{desktops}, celulares, \textit{tablets} etc.);
+  \item o estado do mapa de \textit{buffer} de reprodução de cada nó da rede é semelhante, pois não existe a possibilidade de um nó ter um mapa de \textit{buffer} com muito mais dados para reproduzir do que outros nós. Da mesma forma, não faz sentido manter por muito tempo dados já reproduzidos no \textit{buffer} de reprodução. Os datagramas expiram rapidamente\footnote{Em aplicações de transmissão multimídia ao vivo, estima-se \textit{jitter} no máximo de \ut{180}{ms}} e, nestes casos, as aplicações os descartam após reproduzi-los ao usuário final. Assim, o tamanho necessário para o \textit{buffer} de reprodução deve ser o suficiente para armazenar alguns segundos\footnote{Em geral, adota-se entre 5-8 segundos} da mídia e repassá-la aos seus nós parceiros, requerendo baixa\footnote{Em geral, com MPEG-4, utilizam-se alguns kilobits até algumas dezenas de megabits por segundo.} capacidade de armazenamento dos processadores de rede (roteadores, pontos de acesso etc.), incluindo dos nós finais (\textit{desktops}, celulares, \textit{tablets} etc.);
 
   \item o caminho dos fluxos de dados transmitidos por um mesmo servidor da CDN $s_{1}$ para um conjunto de nós $c_{1} .. c_{n}$, localizados em redes distintas, são mais previsíveis. Isto possibilita parcerias de melhor qualidade ao levar em consideração que é possível determinar pontos de intersecção das rotas desses fluxos de dados, uma vez que estes convergem para um mesmo servidor $s_{1}$. Nestes casos, é possível manter apenas um fluxo de dados e replicá-lo no ponto de intersecção. Além disso, conhecido os caminhos e sua capacidade de transmissão corrente (produto largura de banda -- atraso), pode-se determinar melhores parcerias, fomentando à cooperação e agrupamento de nós com interesses comuns.
 
@@ -198,9 +198,7 @@ canal e troca para outro, o receptor de sinal de TV consegue interpretar o novo
 conteúdo mesmo este sendo transmitido por outra emissora de TV. Para que isto
 funcione, existem padrões que descrevem o formato do vídeo/áudio (NTSC, PAL-M,
 TVD etc.), a forma como os sinais devem ser transmitidos, em diferentes
-frequências e como devem ser codificados/decodificados, de acordo com cada emissora de TV, dentre outros. Isto é possível porque todas as TVs funcionam simplesmente porque seguem padrões, independente da sua marca e modelo, caso contrário, somente conseguiriam
-interpretar o sinal transmitido por um conjunto restrito de emissoras de
-TV.
+frequências e como devem ser codificados/decodificados, de acordo com cada emissora de TV, dentre outros. Isto é possível porque todas as TVs funcionam simplesmente porque seguem padrões, independente da sua marca e modelo, caso contrário, somente conseguiriam interpretar o sinal transmitido por um conjunto restrito de emissoras de TV.
 
 Considerando a analogia anterior, os nós servidores dos atuais sistemas de
 distribuição multimídia na Internet são as emissoras de TV, ao
@@ -212,23 +210,18 @@ funcionasse apenas para um determinado conjunto de canais que seguem um
 determinado padrão, sendo incapaz de reproduzir o sinal de vídeo oriundo de
 outras emissoras de TV que funcionam com base em outros padrões estabelecidos, incluindo alguns proprietários.
 
-Apesar de existirem protocolos para a Internet que descrevem o conteúdo da mídia transmitida~\cite{RFC2327,RFC3550,RFC2326}, apenas esta função não é suficiente para promover a distribuição de mídias ao vivo em larga escala, pois atualmente não existe um
-protocolo que considere toda a complexidade existente em se utilizar as redes orientadas a datagramas, ponderando-se as recentes soluções empregadas nos sistemas mais modernos e estudados neste trabalho. Em vez disso, cada sistema implementa suas próprias formas de
-transporte de dados, com a execução de ações complexas e não interoperáveis entre diferentes sistemas, predominantemente baseadas nos protocolos RTP/RTSP combinado com o UDP.
+% Apesar de existirem protocolos para a Internet que descrevem o conteúdo da mídia transmitida~\cite{RFC2327,RFC3550,RFC2326}, apenas esta função não é suficiente para promover a distribuição de mídias ao vivo em larga escala, pois atualmente não existe um protocolo que considere toda a complexidade existente em se utilizar as redes orientadas a datagramas, ponderando-se as recentes soluções empregadas nos sistemas mais modernos e estudados neste trabalho. Em vez disso, cada sistema implementa suas próprias formas de transporte de dados, com a execução de ações complexas e não interoperáveis entre diferentes sistemas, predominantemente baseadas nos protocolos RTP/RTSP combinado com o UDP.
 
 A transmissão de múltiplos fluxos de dados com o mesmo conteúdo por parte de diferentes sistemas, gera um consumo desnecessário de recursos de rede e, principalmente, a impossibilidade de que dois ou mais nós conectados em sistemas distintos possam cooperar entre si, compartilhando o mesmo fluxo de dados transmitido por um servidor, quando há interesse das partes envolvidas. Por exemplo, é comum encontrar na Internet diversos sistemas de distribuição de conteúdo, cada um com milhares de usuários conectados, porém recebendo fluxos independentes do mesmo jogo de futebol, da corrida de fórmula 1,
 etc~\cite{zhao_gridmedia+:_2009,fallica_quality_2008,susu_xie_coolstreaming:_2007,hei_insights_2006,4146695,tran_zigzag:_2003,huang_anysee2:_2007,zhang_large-scale_2005}. A duplicação pode ser percebida até em cenários mais simples, quando dois ou mais nós conectados à Internet pela mesma rede estão utilizando diferentes sistemas para assistir ao mesmo evento ao vivo. Idealmente, os nós deveriam compartilhar o mesmo fluxo de dados e cada um apresentar o conteúdo da forma definida pela aplicação, desacoplando a forma de transportar os dados da forma como estes são apresentados pela aplicação aos seus respectivos usuários, como no caso do serviço Web (princípio da independência dos serviços).
 
-O grande sucesso do serviço Web, no ponto de vista de protocolo de comunicação, ocorre devido à independência da forma que se desacopla o conteúdo a ser transmitido e a comunicação entre o cliente (navegador) e o servidor. Independente do modelo e versão do navegador e do servidor web, todos transportam dados utilizando o protocolo TCP, evitando-se assim a pulverização de diferentes formas de transportar os dados de tal serviço -- fica apenas a cargo do desenvolvedor de cada aplicação decidir como exibir as
-informações recebidas. Contudo, percebe-se a inexistência de um protocolo equivalente ao TCP para os sistemas de distribuição de conteúdos multimídia, apesar da grande demanda e sucesso de utilização dos mais variados sistemas de transmissão multimídia disponíveis na Internet.
-
-Um protocolo similar ao TCP para o cenário de distribuição de mídias ao vivo poderia evitar as duplicações de transmissão por meio de estratégias colaborativas enraizadas na infraestrutura de rede e não entre os nós interessados por um mesmo conteúdo, uma vez que não há a necessidade de individualização dos dados transmitidos. Como consequência, seria possível fazer melhor uso dos canais de transmissão ao enviar fluxos de dados apenas quando necessário, restando para as aplicações a responsabilidade de apresentá-los ao seus usuários, como ocorre no serviço Web.
+O grande sucesso do serviço Web, no ponto de vista de protocolo de comunicação, ocorre devido à independência da forma que se desacopla o conteúdo a ser transmitido e a comunicação entre o cliente (navegador) e o servidor. Independente do modelo e versão do navegador e do servidor web, todos transportam dados utilizando o protocolo TCP, evitando-se assim a pulverização de diferentes formas de transportar os dados de tal serviço -- fica apenas a cargo do desenvolvedor de cada aplicação decidir como exibir as informações recebidas. Contudo, percebe-se a inexistência de um protocolo equivalente ao TCP para os sistemas de distribuição de conteúdos multimídia, apesar da grande demanda e sucesso de utilização dos mais variados sistemas de transmissão multimídia disponíveis na Internet.
 
 % Nesse contexto, a arquitetura de serviço P2P~\cite{kurose2006} combinada com o \textit{Application Layer Multicast - ALM}~\cite{ALMbook2009} é uma abordagem interessante que explora os aspectos de compartilhamento de fluxo de dados, mas os desenvolvedores ainda continuam obrigados a embutir, na implementação, diretrizes do P2P/ALM, em vez de utilizá-las como os desenvolvedores de navegadores web ou de serviços web fazem: delegar ao TCP algumas importantes responsabilidades e generalizar o processo. O TCP abstrai toda complexidade de algumas responsabilidades da camada de aplicação, tal como garantia de entrega de dados, ordenação de segmentos, controle de congestionamento etc. Algumas funções implementadas em soluções P2P/ALM estão consolidadas e bastante utilizadas nos sistemas de distribuição de conteúdos multimídia ao vivo, cada um a sua maneira e, mesmo que sejam similares, ainda são incompatíveis.
 
-Como a visão supracitada atualmente (HTTP + TCP) não é empregada na Internet para o caso de distribuição de conteúdos multimídia ao vivo, devido às limitações dos protocolos de transporte que não oferecem recursos para auxiliar a execução dos sistemas de distribuição de conteúdos multimídia ao vivo, passou-se a utilizar arquiteturas de sistemas baseadas na combinação P2P/CDN + UDP. Nesse contexto e considerando as diversas soluções disponíveis, os desenvolvedores fazem uso de \textit{middlewares} que implementam as principais funções utilizadas nos sistemas de distribuição de conteúdos
-multimídia ao vivo. Devido à existência de diferentes opções, cada sistema faz
-uso de um \textit{middleware} específico (quando o fazem), não resolvendo o problema da interoperabilidade dos sistemas devido à incompatibilidade entre as diferentes propostas de \textit{middlewares} utilizados.
+Atualmente, a visão supracitada (HTTP + TCP) não é empregada na Internet para o caso de distribuição de conteúdos multimídia ao vivo, pois a maioria dos serviços de transporte da Internet se limitam a oferecer recursos que auxiliam aplicações elásticas, não oferecendo recursos para auxiliar a execução dos sistemas de distribuição de conteúdos multimídia ao vivo. Por esse motivo, nos últimos anos, propuseram-se diversas soluções de aplicação baseadas em arquiteturas P2P e/ou CDN (P2P/CDN) para distribuição de mídias ao vivo, a fim de mitigar a falta de serviços de rede mais específicos e melhorar a qualidade das transmissões desse tipo de dados. Propuseram-se também protocolos de transporte a fim de suprir as necessidades de serviços de rede das aplicações multimídia, como o \textit{Datagram Congestion Control Protocol} (DCCP)~\cite{citeulike:943036,RFC4340}. Apesar de proporcionarem melhorias para as aplicações, as soluções existentes ainda são insuficientes para atender à demanda crescente dos serviços de distribuição de mídias ao vivo.
+
+No caso das soluções baseadas em P2P/CDN, utilizam-se \textit{middlewares} que implementam as principais funções necessárias para distribuição de conteúdos multimídia ao vivo. Devido à existência de diferentes opções, cada sistema faz uso de um \textit{middleware} específico (quando o fazem), causando um problema de interoperabilidade entre os sistemas devido à incompatibilidade entre as diferentes propostas. A questão é que os \textit{middlewares} encapsulam e compartilham recursos computacionais complexos para desenvolver aplicações de rede, mas não encapsulam e tampouco compartilham a forma que os nós deveriam se comunicar. Por exemplo, o TCP provê as necessidades primitivas ao funcionamento do serviço Web (conexão, garantia de entrega, ordenação dos pacotes de dados etc.), ao passo que as aplicações -- clientes (navegadores) e servidores (web) processam o conteúdo a fim de apresentá-lo aos usuários finais. Em essência, as minúcias de comunicar diferentes nós em uma rede (logicamente) é responsabilidade da infraestrutura de rede e não das aplicações. A falta de interoperabilidade tem importância crítica para o caso dos atuais sistemas de distribuição de mídias ao vivo: delega-se muitas responsabilidades para as aplicações, que passam a ter que tratar problemas que não existiriam se a rede oferecesse um melhor suporte para essa classe de aplicação, equivalente ao que o TCP oferece ao serviço Web.
 % Apesar de compatibilidade entre diferentes soluções ser uma decisão
 % dos provedores de serviço, neste trabalho, a incompatibilidade de tais sistemas
 % é considerada uma propriedade crítica para os casos em que o provedor deseja
@@ -238,23 +231,20 @@ uso de um \textit{middleware} específico (quando o fazem), não resolvendo o prob
 % considerado. É por questões de compatibilidade nas camadas mais abaixo que se
 % conseguiu escalar o serviço Web.
 
-Em geral, nos \textit{middlewares} para distribuição de conteúdos multimídia ao vivo,
-implementam-se funções para tratar aspectos de conexão multi-ponto e diferentes
-topologias~\cite{4404148,5158452,Wu:2008:ELP:1386109.1386112,4215750,5061910,Garroppo:2012:TCS:2160187.2160451,4251077,4644134}, seleção de
+Esse cenário tem se comprovado nos últimos anos, propondo-se demasiadamente e recorrentemente diversas soluções para os problemas causados pela falta de um protocolo que generalize os serviços comuns dos sistemas de distribuição de mídias ao vivo. Por exemplo, no caso dos \textit{middlewares}, implementam-se funções para tratar aspectos de conexão multi-ponto e diferentes topologias~\cite{4404148,5158452,Wu:2008:ELP:1386109.1386112,4215750,5061910,Garroppo:2012:TCS:2160187.2160451,4251077,4644134}, seleção de
 nós~\cite{6077007,Dai:2009:SPP:1478659.1478730,Tang:2008:EPS:1792514.1792556,6214363,5580021}, tolerância a desconexões e outros problemas causados pelo
-\textit{churn}~\cite{5502009,Vassilakis:2010:MNC:1838764.1838902,Garroppo:2012:TCS:2160187.2160451,6354810,5158452}, disponibilização de informação de contexto sobre rede para dar suporte à execução dos serviços das aplicações, como localização da rede, custos entre redes em uma granularidade configurável e outras propriedades dos sistemas
+\textit{churn}~\cite{5502009,Vassilakis:2010:MNC:1838764.1838902,cui_optimizing_2008,Garroppo:2012:TCS:2160187.2160451,6354810,5158452}, disponibilização de informação de contexto sobre rede para dar suporte à execução dos serviços das aplicações, como localização da rede, medições e custos entre redes para melhorar a qualidade de serviços dos sistemas
 finais~\cite{6115303,5284511,6077007,Madhyastha:2009:INP:1558977.1558987}, estratégias para incentivos à cooperação entre nós~\cite{Agarwal:2007:AIG:1287576.1340418,5451106,Agarwal:2006:GBS:1193215.1194219,1309377,6185363,1388342,5580021},
 algoritmos para inibir a participação de nós
 \textit{free-riders}~\cite{1309377,5161007,5421459,4608940},
 adaptação de fluxo baseado na capacidade de recepção dos
 nós~\cite{4251079,6713779,Pantos2013,6077864}
-e segurança~\cite{vieira_borges_2010,4539702,4738451,865073,1388342}. Não necessariamente se implementa todas as funções citadas em apenas um \textit{middleware}.
+e segurança~\cite{vieira_borges_2010,4539702,4738451,865073,1388342}. Sendo assim, questiona-se a necessidade de se tratar os problemas supostamente resolvidos por essas funções e, nesse ínterim, identificar quais desses serviços poderiam ser melhor aproveitados se posicionados corretamente na pilha de protocolos TCP/IP.
 
-Temas como os supracitados foram ganhando importância ao longo dos anos porque os serviços de transmissão de mídias ao vivo se popularizaram, ao passo que surgiram mais necessidades de sofisticar as aplicações a fim de melhorar seu desempenho em entregar os fluxos de dados para uma população crescente de nós clientes. Apesar da arquitetura da Internet ser modularizada em camadas funcionais, ao longo dos anos as soluções promovidas no contexto dos referidos temas não foram disponibilizadas estrategicamente nas camadas corretas, mas sim apenas na camada de aplicação. Isto se explica pelo fato de que é muito mais fácil implementar uma solução na camada de aplicação do que em outras camadas mais abaixo, não apenas por aspecto de facilidade de desenvolvimento, mas também de implantação em larga escala na Internet, pois todas as outras camadas estão implementadas do sistema operacional para baixo.
+O fato é que os temas supracitados foram ganhando importância ao longo dos anos porque os serviços de transmissão de mídias ao vivo se popularizaram, ao passo que surgiram mais necessidades de sofisticar as aplicações a fim de melhorar seu desempenho em entregar os fluxos de dados para uma população crescente de nós clientes. Apesar da arquitetura da Internet ser modularizada em camadas funcionais, ao longo dos anos as soluções promovidas no contexto dos referidos temas não foram disponibilizadas estrategicamente nas camadas corretas, mas sim apenas na camada de aplicação. Isto se explica pelo fato de que é muito mais fácil implementar uma solução na camada de aplicação do que em outras camadas mais abaixo, não apenas por aspecto de facilidade de desenvolvimento, mas também de implantação em larga escala na Internet, pois todas as outras camadas estão implementadas do sistema operacional para baixo.
 
-De forma alternativa, uma maneira eficiente de se estruturar e enviar um fluxo de vídeo a um grupo de usuários na Internet seria a utilização de \textit{multicast} em nível de IP~\cite{guo_survey_2008}. Em uma sessão de \textit{multicast} IP, uma estrutura de árvore é formada. A fonte de vídeo se torna a raiz desta árvore \textit{multicast} e os clientes recebem o fluxo de vídeo através dos vários nós desta árvore, formada pelos roteadores que suportam \textit{multicast} em nível de IP. Apesar de melhorar escalabilidade no número de receptores do mesmo conteúdo ao vivo, tal estratégia não é suficiente devido à complexidade de habilitar, principalmente em grande escala, os canais de comunicação \textit{multicast}, pois, para isso, precisa-se de intervenção humana. Para contornar a dificuldade em habilitar o modo \textit{multicast} em nível de IP, propuseram-se a arquitetura ALM (\textit{Application Layer Multicast}), equivalente ao IP \textit{multicast}, porém implementada em nível de aplicação. A diferença entre o \textit{multicast} IP e o ALM é que no primeiro os roteadores duplicam e repassam os datagramas para os próximos roteadores até alcançar os sistemas finais, ao passo que no ALM os sistemas finais executam as ações citadas anteriormente, mas ainda dependem de
-funções de rede de mais baixo nível, o que pode aumentar o tempo de processamento e a complexidade da aplicação. Existes diversos \textit{middlewares} baseados em ALM e estes implementam suas próprias interfaces e uso e funcionalidades, incompatíveis entre
-si~\cite{Yeo:2003:FMV:947820.947823,Banerjee:2002:SAL:964725.633045,Banerjee:2006:OEO:1141103.1648579,1258118,jannotti_overcast:_2000,Kwon:2005:POM:1052084.1648646,1575808,castro_splitstream:_2003}. Apesar de todos esses esforços, questão de interoperabilidade de aplicações no contexto de distribuição de mídias ao vivo vem à tona mais uma vez.
+Um exemplo do problema em discussão é a proposta ALM (\textit{Application Layer Multicast})~\cite{Banerjee:2002:SAL:964725.633045}. A princípio, uma maneira eficiente de se estruturar e enviar um fluxo de vídeo a um grupo de usuários na Internet era utilizar \textit{multicast} em nível de IP~\cite{guo_survey_2008}. Nesse caso, um nó fonte transmissor de uma mídia ao vivo se torna a raiz de uma árvore \textit{multicast} e os clientes recebem o conteúdo do vídeo através dos vários nós desta árvore, formada pelos roteadores que suportam \textit{multicast} em nível de IP. Apesar de melhorar escalabilidade no número de receptores do mesmo conteúdo ao vivo, tal estratégia foi considerada suficiente devido à complexidade de habilitá-la e mantê-la, principalmente em grande escala~\cite{castro_splitstream:_2003}. Para contornar a dificuldade em habilitar o modo \textit{multicast} em nível de IP, propuseram-se a arquitetura ALM, que é equivalente ao IP \textit{multicast}, porém implementada em nível de aplicação. A diferença entre o \textit{multicast} IP e o ALM é que no primeiro os roteadores duplicam e repassam os datagramas para os próximos roteadores até alcançar os sistemas finais, ao passo que no ALM os sistemas finais executam as ações citadas anteriormente, mas ainda dependem de funções de rede de mais baixo nível, o que pode aumentar o tempo de processamento e a complexidade da aplicação. Existes diversos \textit{middlewares} baseados em ALM e estes implementam suas próprias interfaces de uso e funcionalidades, incompatíveis entre
+si~\cite{Yeo:2003:FMV:947820.947823,Banerjee:2006:OEO:1141103.1648579,1258118,jannotti_overcast:_2000,Kwon:2005:POM:1052084.1648646,1575808,castro_splitstream:_2003}. Apesar de todos esses esforços, questão de interoperabilidade dos sistemas de distribuição de mídias ao vivo vem à tona mais uma vez.
 
 % Em tal abordagem, os algoritmos de seleção de nós utilizam informações de
 % contexto para selecionar nós parceiros de melhor qualidade e assim melhorar a
@@ -266,87 +256,62 @@ si~\cite{Yeo:2003:FMV:947820.947823,Banerjee:2002:SAL:964725.633045,Banerjee:200
 % aplicações informações de contexto e então alimentar os algoritmos de seleção
 % de nós parceiros.
 
-Um possível proposta seria se os protocolos de transporte atuais pudessem absorver parte da complexidade dos serviços de distribuição multimídia, mas não o fazem porque não foram projetados para atender às necessidades peculiares desse tipo de serviço e alterá-los requeria um grande esforço, ao ponto de culminar em um novo protocolo de rede. Este fato acontece basicamente por dois motivos. O primeiro é um motivo histórico (no caso dos protocolos mais antigos, como o TCP e o UDP), pois na época de suas propostas não se discutia sobre sistemas de distribuição de mídias ao vivo. O segundo motivo é que mesmo os protocolos mais recentes (DCCP, SCTP etc.) não acompanharam a evolução das boas práticas no processo de distribuição de mídias ao vivo, como o uso de arquiteturas P2P/CDN e as diversas funções empregadas nesse contexto.
+Um possível proposta seria se os protocolos de transporte atuais pudessem absorver parte da complexidade dos serviços de distribuição multimídia, mas não o fazem porque não foram projetados para atender às necessidades peculiares desse tipo de serviço e alterá-los requiriria um grande esforço, ao ponto de culminar em um novo protocolo de rede. Este fato acontece basicamente por dois motivos. O primeiro é um motivo histórico (no caso dos protocolos mais antigos, como o TCP e o UDP), pois na época de suas propostas não se discutia sobre sistemas de distribuição de mídias ao vivo. O segundo motivo é que mesmo os protocolos mais recentes (DCCP, SCTP etc.) não acompanharam a evolução das boas práticas no processo de distribuição de mídias ao vivo, como o uso de arquiteturas P2P/CDN e as diversas funções empregadas nesse contexto.
 
-Para instanciar a discussão anterior, considere o caso do protocolo DCCP (\textit{Datagram Congestion Control Protocol})~\cite{citeulike:943036,RFC4340}, proposto como um protocolo de transporte para transmissão de mídias ao vivo na Internet. O fato é que o DCCP é um protocolo orientado à conexão e portanto para cada novo usuário interessado em receber um fluxo multimídia transmitido, uma nova conexão se faz necessária, não havendo a possibilidade de compartilhamento entre diferentes nós interessados pelo mesmo conteúdo, pelo menos de forma automática e transparente para as aplicações. Este cenário é motivador para os desenvolvedores de aplicações proporem mais e mais suas próprias soluções para distribuição de mídias ao vivo, enquanto o foco deveria ser entregar o fluxo de dados ao nó do usuário final da forma mais eficiente possível, definitiva e para que isso seja possível, deve-se existir uma solução que promova a independência entre os sistemas.
+Para instanciar a discussão anterior, considere o caso do protocolo DCCP, proposto como um protocolo de transporte para transmissão de mídias ao vivo na Internet. O fato é que o DCCP é um protocolo orientado à conexão e portanto para cada novo usuário interessado em receber um fluxo multimídia transmitido, uma nova conexão se faz necessária, não havendo a possibilidade de compartilhamento entre diferentes nós interessados pelo mesmo conteúdo, pelo menos de forma automática e transparente para as aplicações. Este cenário é motivador para os desenvolvedores de aplicações proporem recorrentemente suas próprias soluções para distribuição de mídias ao vivo, enquanto o foco deveria ser entregar o fluxo de dados ao nó do usuário final da forma mais eficiente possível e definitiva e nesse trabalho argumenta-se que isso somente será possível se existir uma solução que promova a independência entre os sistemas. É evidente que os sistemas atuais podem passar a utilizar o DCCP para transportar os segmentos de mídias ao vivo, mas o DCCP apresenta problemas críticos quanto a escalabilidade devido ao mecanismo de conexão e proposta de controle de congestionamento fim-a-fim.
 
-% Os protocolos de transporte atuais exigem estabelecimento de conexão e realizam controle de congestionamento por fluxo de dados, resultando em dois problemas:
-% 
-% \begin{enumerate}
-% 
-% \item \textit{excessivo consumo de recursos computacionais}:
-% para cada nova conexão, o nó transmissor deve alocar recursos
-% computacionais (memória e processamento) para tratar cada nova
-% conexão. Em cenários de transmissão multimídia \mys, se muitos
-% nós estão conectados em um único servidor, então isto elevará
-% sobremaneira o consumo de recursos computacionais do nó transmissor
-% proporcionalmente à quantidade de nós receptores interessados pelo
-% fluxo multimídia transmitido. Além disso, embora o conteúdo transmitido por
-% um nó seja de interesse de muitos outros nós, os fluxos são mantidos
-% independentemente uns dos outros, o que gera duplicações desnecessárias e
-% conseqüentemente desperdício de recursos de rede. O trabalho mais notável onde
-% discute-se as consequências deste problema em aplicações de rede é o encontrado
-% na referência \cite{guo_survey_2008}.
-% 
-% \item \textit{a taxa de transmissão de fluxos DCCP individualmente tenderá a 0
-% (zero)}: no caso do DCCP, utiliza-se uma equação matemática para definir a taxa
-% de transmissão durante uma conexão. À medida que mais nós se conectam a um nó
-% transmissor, menor será a taxa de transmissão do nó transmissor para cada um dos
-% nós receptores conectados a ele. Para a rede, esta estratégia é equânime e evita
-% que a mesma entre em colapso de congestionamento, mas para cada fluxo de dados
-% isto é ruim. Este problema tem uma relação estreita com o dilema observado por
-% Garrett Hardin em 1968 e denominado de Tragédia dos Bens Comuns (\textit{Tragedy
-% of the Commons})~\cite{tragcomHardin}, presente em diferentes áreas do
-% conhecimento. No caso de protocolos como o DCCP, a tragédia dos bens comuns
-% ocorre porque, à medida que novos fluxos são transmitidos na rede, menor é a
-% taxa de transmissão alocada individual para cada fluxo, a qual pode se tornar
-% insuficiente para a recepção de um fluxo multimídia e, por consequência, nenhum
-% nó receptor reproduzirá o fluxo transmitido pelo nó transmissor, embora todos os
-% fluxos utilizarão o canal de forma equânime.
-% 
-% \end{enumerate}
-% 
-% Desta forma, apesar de os algoritmos de controle de congestionamento buscarem
-% convergir para o caso do melhor global (equidade para com todos os fluxos e
-% assim evitar congestionamento da rede), isto provoca o efeito do caso do pior
-% local (redução da taxa de recepção de cada nó da rede). Este fato pode ser
-% explicado analiticamente utilizando como base a Equação~\ref{eq:dccpeq-ccid3},
-% que define cada taxa de transmissão \textit{$X_i$} para realizar o controle de
-% congestionamento em cada fluxo~\cite{Chiu:1989:AID:70207.70208}. Para efeito de
-% estudo, escolheu-se a equação do protocolo DCCP/CCID3, mas poderia-se utilizar equações similares propostas em outros algoritmos para controle de congestionamento. Nesta equação, define-se:
-% 
-% \begin{itemize}
-%  \item \textit{$X_i$} é a taxa de transmissão em bytes/segundo;
-%  \item \textit{s} é o tamanho do pacote em bytes;
-%  \item \textit{R} é o RTT (\textit{Round Trip Time}) em segundos;
-%  \item \textit{p} é a taxa de ocorrência de perdas, entre 0 e 1;
-%  \item \textit{RTO} (\textit{Retransmission TimeOut}) é o valor do temporizador
-% de retransmissão do TCP em segundos; e
-%  \item \textit{b} é igual a 1 (no DCCP) e representa o número máximo de pacotes
-% confirmados por um único ACK.
-% 
-% \end{itemize}
-% 
-% Considerando o problema descrito anteriormente, o uso total da capacidade do
-% canal por \textit{N} fluxos DCCP pode ser definido por $C = \sum_{i=1}^{N}
-% X_i$. Em condições severas de congestionamento na rede, o valor de \textit{C} é
-% equivalente à largura de banda do canal de transmissão. Quando isto ocorre,
-% tem-se que \textit{N} atingiu um valor maior do que a rede suporta, fazendo com
-% que os \textit{buffers} de recepção dos roteadores alcancem seus limites e
-% portanto os valores de \textit{p} e \textit{R} na Equação~\ref{eq:dccpeq-ccid3}
-% também aumentam, resultando que o $\displaystyle\lim_{N\to\infty}\frac{C}{N} =
-% 0$, logo, $X_i$ se aproxima de 0 (zero).
-% 
-% \begin{equation}
-% X_i = \frac{s}{R \times \sqrt{2 \times b \times \frac{p}{3}} + (RTO \times 3
-% \sqrt{3 \times b \times \frac{p}{8}} \times p \times (1 + 32 \times p^{2})}
-% \label{eq:dccpeq-ccid3}
-% \end{equation}
-% 
-% \vspace{0.5cm}
+Os protocolos de transporte mais modernos realizam estabelecimento de conexão um-para-um e realizam controle de congestionamento por fluxo de dados, resultando em dois problemas:
 
-% Embora esta seja uma discussão teórica, simulações foram realizados em busca de evidências mais contundentes de que este fato pode ocorrer na prática. Em~\cite{6214362,leandro-Globecom-2011,leandro-WP2P-2011}, apresentam-se os 
-% resultados sobre estas simulações que, em resumo, apenas fluxos DCCP foram suficientes para causar o problema em questão, sequer utilizou-se fluxos de outros protocolos. Em situações mais realistas, o problema se agrava porque o protocolo DCCP disputará o canal de transmissão não apenas com fluxos DCCP, mas também com fluxos de outros protocolos, por exemplo TCP, UDP e SCTP~\cite{iyengar_concurrent_2006,huang_multimedia_2011}.
+\begin{enumerate}
+
+  \item \textit{excessivo consumo de recursos computacionais}: para cada nova conexão, o nó transmissor deve alocar recursos computacionais (memória e processamento) para tratar cada nova conexão. Em cenários de transmissão multimídia \mys, se muitos nós estão conectados em um único servidor, eleva-se o consumo de recursos computacionais do nó transmissor proporcionalmente à quantidade de nós receptores interessados pelo fluxo multimídia transmitido. Além disso, embora o conteúdo transmitido por um nó seja de interesse de muitos outros nós, os fluxos são mantidos independentemente uns dos outros, o que gera duplicações desnecessárias e consequentemente desperdício de recursos de rede. Em~\cite{guo_survey_2008}, apresenta-se discussões notáveis sobre as consequências desta estratégia sobre as aplicações de rede.
+
+  \item \textit{a taxa de transmissão de fluxos DCCP individualmente tenderá a 0 (zero)}: utiliza-se uma equação matemática para definir a taxa de transmissão durante uma conexão. À medida que mais nós se conectam a um nó transmissor, menor será a taxa de transmissão do nó transmissor para cada um dos nós receptores conectados a ele. Para a rede, esta estratégia é equânime e evita que a mesma entre em colapso de congestionamento, mas para cada fluxo de dados isto é ruim. O problema é que à medida que se transmitem novos fluxos de dados na rede, aloca-se uma menor a taxa de transmissão individual para cada um fluxo dos fluxos. A questão é que a taxa de transmissão pode se tornar insuficiente para a recepção de um fluxo multimídia e, por consequência, nenhum nó receptor conseguirá reproduzir a mídia ao usuário final sem interrupções ou possíveis erros, embora todos os fluxos utilizarão o canal de forma equânime.
+% Este problema tem uma relação estreita com o dilema observado por Garrett Hardin em 1968 e denominado de Tragédia dos Bens Comuns (\textit{Tragedy of the Commons})~\cite{tragcomHardin}, presente em diferentes áreas do conhecimento. No caso de protocolos como o DCCP, a tragédia dos bens comuns ocorre porque, 
+
+\end{enumerate}
+
+Desta forma, apesar de os algoritmos de controle de congestionamento buscarem
+convergir para o caso do melhor global (equidade para com todos os fluxos e
+assim evitar congestionamento da rede), isto provoca o efeito do caso do pior
+local (redução da taxa de recepção de cada nó da rede). Este fato pode ser
+explicado analiticamente utilizando como base a Equação~\ref{eq:dccpeq-ccid3},
+que define cada taxa de transmissão \textit{$X_i$} para realizar o controle de
+congestionamento em cada fluxo~\cite{Chiu:1989:AID:70207.70208}. Para efeito de
+estudo, escolheu-se a equação do protocolo DCCP/CCID3, mas poderia-se utilizar equações similares propostas em outros algoritmos para controle de congestionamento. Nesta equação, define-se:
+
+\begin{itemize}
+ \item \textit{$X_i$} é a taxa de transmissão em bytes/segundo;
+ \item \textit{s} é o tamanho do pacote em bytes;
+ \item \textit{R} é o RTT (\textit{Round Trip Time}) em segundos;
+ \item \textit{p} é a taxa de ocorrência de perdas, entre 0 e 1;
+ \item \textit{RTO} (\textit{Retransmission TimeOut}) é o valor do temporizador
+de retransmissão do TCP em segundos; e
+ \item \textit{b} é igual a 1 (no DCCP) e representa o número máximo de pacotes
+confirmados por um único ACK.
+
+\end{itemize}
+
+Considerando o problema descrito anteriormente, o uso total da capacidade do
+canal por \textit{N} fluxos DCCP pode ser definido por $C = \sum_{i=1}^{N}
+X_i$. Em condições severas de congestionamento na rede, o valor de \textit{C} é
+equivalente à largura de banda do canal de transmissão. Quando isto ocorre,
+tem-se que \textit{N} atingiu um valor maior do que a rede suporta, fazendo com
+que os \textit{buffers} de recepção dos roteadores alcancem seus limites e
+portanto os valores de \textit{p} e \textit{R} na Equação~\ref{eq:dccpeq-ccid3}
+também aumentam, resultando que o $\displaystyle\lim_{N\to\infty}\frac{C}{N} =
+0$, logo, $X_i$ se aproxima de 0 (zero).
+
+\begin{equation}
+X_i = \frac{s}{R \times \sqrt{2 \times b \times \frac{p}{3}} + (RTO \times 3
+\sqrt{3 \times b \times \frac{p}{8}} \times p \times (1 + 32 \times p^{2})}
+\label{eq:dccpeq-ccid3}
+\end{equation}
+
+\vspace{0.5cm}
+
+Embora esta seja uma discussão teórica, simulações foram realizados em busca de evidências mais contundentes de que este fato pode ocorrer na prática. Em~\cite{6214362,leandro-Globecom-2011,leandro-WP2P-2011}, apresentam-se os 
+resultados sobre estas simulações que, em resumo, apenas fluxos DCCP foram suficientes para causar o problema em questão, sequer utilizou-se fluxos de outros protocolos. Em situações mais realistas, o problema se agrava porque o protocolo DCCP disputará o canal de transmissão não apenas com fluxos DCCP, mas também com fluxos de outros protocolos, por exemplo TCP, UDP e SCTP~\cite{iyengar_concurrent_2006,huang_multimedia_2011}. Dessa forma, há um impasse em se utilizar DCCP nas aplicações multimídia porque as aplicações são forçadas a utilizar controle de congestionamento fim-a-fim e são submetidas a um mecanismo de conexão ponto-a-ponto, delegando-se a responsabilidade de conexão multi-ponto à aplicação.
 
 Apesar do protocolo DCCP ter sido utilizado para evidenciar o problema que
 acabara de ser apresentado, esta discussão pode ser generalizada para qualquer
@@ -371,14 +336,14 @@ e no Capítulo~\ref{cap:trabalhosrelacionados} deste documento.
 
 % Diante do exposto, pretende-se responder a seguinte questão de pesquisa: \textit{como distribuir conteúdos multimídia ao vivo na Internet, evitando o fenômeno da tragédia dos bens comuns dos protocolos de transporte, permitindo a interoperabilidade entre os sistemas com base no princípio da independência dos serviços de rede?} Uma pergunta secundária, mas não menos importante é: \textit{como seria o projeto de uma nova arquitetura de distribuição de mídias ao vivo na Internet?}
 
-Diante do exposto, pretende-se responder a seguinte questão de pesquisa: \textit{como distribuir conteúdos multimídia ao vivo em larga escala abstraindo-se a complexidade e permitindo-se a interoperabilidade entre os sistemas com base no princípio da independência dos serviços de rede?} Uma pergunta secundária, mas não menos importante é: \textit{quais seriam os serviços disponíveis na infraestrutura de rede a fim de dar suporte à distribuição de mídias ao vivo se a Internet fosse proposta nos dias atuais, considerando-se os importantes aprendizados obtidos com o desenvolvimento dos sistemas atualmente existentes para este fim?}
+Diante do exposto, pretende-se responder a seguinte questão de pesquisa: \textit{como distribuir conteúdos multimídia ao vivo em larga escala abstraindo-se a complexidade e a interoperabilidade entre os sistemas com base no princípio da independência dos serviços de rede?} Uma pergunta secundária, mas não menos importante é: \textit{quais e como deveriam funcionar os serviços disponíveis na infraestrutura de rede para dar suporte à distribuição de mídias ao vivo se a Internet fosse proposta nos dias atuais, mas considerando-se os conhecimentos adquiridos com a evolução desses sistemas ao longo dos últimos anos?}
 
 % % Observando esta questão que deu origem às pesquisas desenvolvidas
 % % neste trabalho, propõe-se a seguinte tese de doutorado:
 
 \section{Hipótese}
 
-Para responder as questões supracitadas, adota-se a seguinte hipótese: \textit{a constituição de uma rede de favores entre roteadores que interceptam, realizam cache temporário e compartilham pacotes de dados tanto em modo \textit{multicast} (em redes locais) quanto em modo unicast (entre redes distintas), com o auxílio de um algoritmo para controle de congestionamento assistido pela rede, possibilita a independência dos sistemas e o melhor uso dos recursos de rede e, consequentemente, a distribuição eficiente de fluxos de mídias ao vivo na Internet}.
+Para responder as questões supracitadas, adota-se a seguinte hipótese: \textit{a constituição de uma rede de favores entre roteadores que interceptam, realizam cache temporário e compartilham pacotes de dados tanto em modo \textit{multicast} (em redes locais) quanto em modo unicast (entre redes distintas), com o auxílio de um algoritmo para controle de congestionamento assistido pela rede, possibilita a independência dos sistemas e o melhor uso dos recursos de rede, consequentemente, a distribuição eficiente de fluxos de mídias ao vivo}.
 
 % Para o problema em questão é adotada a hipótese de que \textit{a constituição
 % de uma rede de favores entre roteadores que compartilham fluxos de dados
@@ -388,39 +353,13 @@ Para responder as questões supracitadas, adota-se a seguinte hipótese: \textit{a
 % de controle de congestionamento assistido pela rede, possibilita a distribuição
 % em larga escala de conteúdos multimídia ao vivo}.
 
-Diante desta hipótese, remete-se esta pesquisa ao uso de técnicas e mudanças na
-perspectiva da execução de serviços em camadas inferiores a da aplicação, visto que a infraestrutura de rede deve dar suporte mais efetivo aos sistemas para o fim que se discute.
-% Nesse processo, propõe-se mecanismos que evitem os desenvolvedores de sistemas dessa natureza a implementarem funcionalidades intrínsecas ao processo de distribuição de dados na camada de aplicação, com escalabilidade do número de nós e permitindo-se verificar a autenticidade dos dados distribuídos através da rede de favores.
-
-% Uma solução para esse problema é combinar as duas formas supracitadas em um protocolo disponível para qualquer aplicação de rede interessada em transmitir e/ou receber um fluxo de dados ao vivo. Ou seja, um protocolo que constitui uma rede de sobreposição formada por roteadores de rede, com suporte automático ao uso de \textit{multicast}, através da qual as aplicações possam trocar dados entre si de forma transparente. Isto signica mover alguns serviços consolidados na camada de aplicação para camadas mais abaixo, abstraindo-se a grande complexidade de se constituir redes P2P, principalmente compatíveis entre si.
-
-% Para realizar o projeto de um protocolo de distribuição de conteúdos
-% multimídia
-% ao vivo considerando os problemas abordados neste trabalho, é necessária a
-% aplicação de técnicas e mudanças na perspectiva da execução de serviços de
-% rede
-% para as quais não necessite que as aplicações implementem aspectos intrínsecos
-% de disseminação de conteúdos na rede, evitando-se a segmentação dos nós
-% interessados em assistir um determinado evento e garantindo-se a
-% escalabilidade
-% do número de nós.
-%
-% Observando estes requisitos que originaram às pesquisas desenvolvidas neste
-% trabalho, definiu-se a seguinte hipótese de tese de doutorado: \textit{O uso
-% de
-% redes CDN auxiliadas por uma rede P2P, constituída dinamicamente por
-% roteadores,
-% possibilita a disseminação eficiente de conteúdos multimídia das aplicação
-% através de um protocolo que unifica as estratégias de comunicação de
-% diferentes
-% sistemas e considera o uso de controle de congestionamento assistido pela
-% rede.}
+Diante desta hipótese, remete-se esta pesquisa ao estudo de técnicas e mudança na perspectiva da execução de serviços de rede em camadas inferiores a da aplicação, buscando-se melhorias substanciais na execução dos sistemas de distribuição de mídia ao vivo, permitindo-se que a rede desempenhe um papel mais efetivo nesse processo.
 
 \section{Objetivos}
 
-Neste trabalho, o objetivo é o projeto e a avaliação de um protocolo de rede denominado \textit{Global Media Transmission Protocol} (GMTP), que considera uma arquitetura híbrida P2P/CDN para distribuição de conteúdos multimídia ao vivo. Mais especificamente, propõe-se um protocolo que explora a relação entre o escalonamento de recursos computacionais em redes P2P, a estabilidade das redes CDN e estratégias (algoritmos) que possam mitigar a complexidade no processo de construção dos sistemas de distribuição de mídias ao vivo na Internet.
+Neste trabalho, o objetivo é o projeto e a avaliação de um protocolo de rede denominado \textit{Global Media Transmission Protocol} (GMTP), que considera uma arquitetura híbrida P2P/CDN para distribuição de mídias ao vivo através da Internet. Mais especificamente, propõe-se um protocolo que explora a relação entre o escalonamento de recursos computacionais em redes P2P, a estabilidade das redes CDN e estratégias (algoritmos) que possam mitigar a complexidade no processo de construção dos sistemas de distribuição de mídias ao vivo na Internet.
 
-O objetivo inicial é dar um passo atrás e repensar \textit{distribuição de mídias ao vivo na Internet}, almejando-se a interoperabilidade dos sistemas, com a premissa de que o interesse geral (e mais importante) é reproduzir o conteúdo ao usuário final. Isto significa permitir que os pacotes de dados referentes a uma mídia ao vivo alcancem os sistemas finais o mais rápido possível, sem se preocupar sobre o nó que a origina, tampouco sobre restrições comerciais para acessá-la.
+O objetivo inicial é dar um passo atrás e repensar \textit{distribuição de mídias ao vivo na Internet}, entendendo-se que a interoperabilidade dos sistemas é uma premissa e interesse geral dos sistemas para reproduzir o conteúdo ao usuário final. Isto significa permitir que os pacotes de dados referentes a uma mídia ao vivo alcancem os sistemas finais o mais rápido possível, sem se preocupar sobre restrições comerciais para acessá-la.
 
 % Com o uso de tal protocolo largamente, objetiva-se permitir que a Internet se torne uma grande e única rede de favores para o fim que se discute.
 
@@ -464,41 +403,6 @@ investimentos no protocolo teórico proposto.
 \textit{O terceiro requisito é o potencial prático}. A implementação do protocolo de rede, assim como o conjunto de ferramentas desenvolvidas e que serão mantidas, tem como objetivo demonstrar que a abordagem é viável e praticável.
 % Um protocolo de rede simplesmente especificado sem nenhuma implementação real tornaria as reais contribuições deste trabalho apenas suposições.
 O compromisso com a utilização dos conceitos para construir soluções que possam ser aplicadas na indústria, torna o trabalho relevante em termos práticos, sobretudo em escala global na Internet.
-
-\section{Resumo das Contribuições}
-\label{sec:contribuicoes}
-
-No contexto desta tese, resume-se as principais contribuições.
-
-\begin{enumerate}
-
-%   \item Uma revisão bibliográfica sobre o estado da arte no contexto do
-% tema que se discute. Apresenta-se a forma de com os sistemas atualmente são
-% projetados e as principais considerações sobre os mesmos, como técnicas,
-% métodos e abordagens utilizadas;
-
-  \item a concepção e descrição detalhada de um protocolo para distribuição de conteúdos multimídia ao vivo. Apresenta-se a elaboração do GMTP, que considera a comunicação mais efetiva entre as duas camadas mais importantes da pilha TCP/IP, a de transporte e a de rede.
-%   Além disso, (re)visita-se assuntos importantes na área de redes e traz-se à tona os recentes avanços da área de estudo, como os conceitos das redes centradas na informação~\cite{6563278} e os algoritmos de controle de congestionamento assistido pela rede~\cite{983548}.
-  Nesse contexto, contribui-se com uma proposta de como pode-se permitir a interoperabilidade dos atuais sistemas de distribuição multimídia, promovendo-se formas de adaptação dos sistemas existentes.
-% , bem como o reúso de algumas funções comuns a todos os sistemas.
-
-  \item discussões sobre a aplicação do \textit{Rate Control Protocol} (RCP)~\cite{Dukkipati:2008:RCP:1368746} no GMTP. O RCP é um proeminente algoritmo de controle de congestionamento assistido pela rede e foi usado no GMTP para auxiliar no processo de distribuição de mídias ao vivo. Nesse contexto, contribui-se com discussões sobre as adaptações realizadas no RCP para permitir sua aplicação ao GMTP e como se pode utilizá-lo no processo de formação de parcerias em uma rede de favores, função jamais vista em qualquer outra solução de distribuição de mídias ao vivo. Ou seja, além de utilizar o RCP para melhorar o consumo dos recursos compartilhados de rede (controle de congestionamento), propõe-se um algoritmo de seleção de nós parceiros com base na atual capacidade de transmissão dos enlaces entre os nós servidores de um fluxo de dados ao vivo e os nós clientes interessados em recebê-lo. Ademais, discute-se aspectos fundamentais sobre a escolha do RCP em detrimento a outras propostas bem conhecidas, como o XCP~\cite{Katabi2003} e o VCP~\cite{4460574}.
-
-  \item os resultados e discussões acerca do GMTP frente a uma proeminente proposta: o Denacast/CoolStreaming~\cite{5764567}.
-%  e o CCN-TV~\cite{6550523}.
-O Denacast é um sistema de distribuição de mídias ao vivo baseado no CoolStreaming com suporte a uma rede de distribuição de conteúdos (P2P/CDN). Com os resultados comparativos obtidos, contribui-se para tomada de decisões sobre futuras pesquisas no contexto de distribuição de mídias ao vivo.
-% O CCN-TV é um sistema de TV para Internet com suporte às redes centradas na informação. Com isto, contribui-se para tomada de decisões sobre futuras pesquisas no contexto de distribuição de mídias ao vivo.
-
-  \item a implementação de artefatos de software que permitem a reprodução do ambiente de estudo, tais como implementação do GMTP no simulador de rede OMNet++~\cite{XU2011}.
-%  bem como encaminhamentos iniciais de implementação no núcleo do Linux.
-
-  \item os encaminhamentos da pesquisa sobre futuros avanços do estado da arte,
-tais como as limitações do protocolo proposto e uma breve discussão de como
-essas limitações poderão ser aprimoradas.
-
-\end{enumerate}
-
-Ademais, destaca-se a importância e originalidade do presente trabalho por ser o primeiro a trazer à tona um problema e uma proposta de solução do uso de um protocolo de transporte e rede, exclusivamente projetado para a distribuição de mídias ao vivo na Internet. Até então, distribuir conteúdos multimídia na Internet se resumia em sistemas baseados em protocolos tradicionais (TCP, UDP, DCCP, SCTP) ou outros proprietários, em geral, disponíveis na camada de aplicação e independentes.
 
 \section{Publicações}
 \label{sec:publicacoes}

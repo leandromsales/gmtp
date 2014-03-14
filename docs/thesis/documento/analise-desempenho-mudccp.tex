@@ -1,4 +1,4 @@
-\chapter{Análise de Desempenho do \mudccp}
+\chapter{Análise de Projeto e Desempenho do \mudccp}
 \label{cap:analisedesemp}
 
 % ====
@@ -34,18 +34,130 @@
 % 
 % ====
 
+Neste capítulo, apresentam-se as análises do projeto e do desempenho do GMTP para distribuição de mídias ao vivo. Na Seção~\ref{sec:analisedeproj} (análise do projeto), generaliza-se a discussão acerca dos serviços disponibilizados no GMTP em comparação àqueles implementados nos principais sistemas. Na Seção~\ref{sec:analisedesemp} (análise de desempenho), estabelecem-se confrontos entre uma implementação de referência do GMTP, o Denacast/CoolStreaming e o CCN/TV, em um ambiente de simulação que proporcionou a obtenção de valores para as métricas avaliadas em um cenário que simula parte da Internet. Por fim, na Seção~\ref{sec:resdisc-sumario}, apresenta-se o sumário deste capítulo.
 
-Neste capítulo, apresentam-se os resultados do uso do protocolo \mudccps para distribuição de mídias ao vivo em cenários de rede com um arquitetura P2P/CDN com muitos nós receptores, comparando seu desempenho a um solução proeminente disponível no estado da arte, a saber, o Denacast/CoolStreaming.
-%  e o CCN-TV.
+Com essa estratégia, possibilita-se aprofundar o entendimento sobre o GMTP em duas vertentes (projeto e desempenho), estudando-o por meio de diferentes configurações de rede e identificando-se suas vantagens e limitações em comparação ao estado da arte e da prática.
 
-TEM QUE DIZER QUE USEI O BRITE
+\section{Análise do Projeto GMTP}
+\label{sec:analisedeproj}
 
-REPENSAR SE AVALIA TAMBÉM O CCN-TV OU NÃO! SE NÃO FOR FAZER ISSO, REVER AS INFORMAÇÕES NA CAP DE TR SOBRE DETALHAR A COMPARAÇÃO, CASO CONTRÁRIO, PENSAR SE DEIXA ESSE ITEM OU TIRA
-MANTER O PPSP/Swift? Se sim, rever o que o nazareno colocou sobre isso...
+% \subsection{GMTP na Rede Nacional de Pesquisa (RNP)}
+% \label{subsec:gmtp-rnp}
+% 
+% O \textit{backbone} da RNP é estruturado em 27 roteadores distribuídos em todos os estados brasileiros e foi projetado para garantir não só a largura de banda necessária ao tráfego de Internet usual (navegação web, correio eletrônico, transferência de arquivos), mas também o uso de serviços e aplicações avançadas e a experimentação. A rede possui ramificações para atender mais de 500 instituições de ensino e pesquisa em todo o país, beneficiando mais de 3,5 milhões de usuários.
+% 
+% A capacidade agregada da RNP é de \ut{233,2}{Gbps}, com velocidades multigigabits ($\ge$ \ut{2}{Gbps}) em 24 dos 27 roteadores (Figura~\ref{fig:rnp-mapa-br}). No contexto internacional, a RNP tem uma conexão de \ut{1,45}{Gbps} com a Cooperação Latino-Americana de Redes Avançadas (RedCLARA), que integra 15 países da América Latina e \ut{20}{Gbps} com a Academic Network at São Paulo (ANSP). Por meio da uma operação em parceria com a ANSP, a RNP se conecta a outras infraestruturas acadêmicas internacionais, como à Internet2, à europeia Géant e à Internet comercial mundial.
+% 
+% \begin{figure}
+% \begin{center}
+% \includegraphics[natwidth=1061,natheight=928,scale=.34]{imgs/rnp-mapa-br.png}
+% \end{center}
+% \vspace{-1cm}
+% \caption{Capacidade dos enlaces e pontos de presença da RNP no Brasil.}
+% \label{fig:rnp-mapa-br}
+% \end{figure}
+% 
+% Na Figura~\ref{fig:rnp-backbone}, ilustram-se detalhes do \textit{backbone} da RNP. Por exemplo, 
+% 
+% \begin{figure}
+% \begin{center}
+% \includegraphics[natwidth=664,natheight=340,scale=.61]{imgs/rnp-backbone.png}
+% \end{center}
+% \vspace{-1cm}
+% \caption{\textit{Backbone} da Rede Nacional de Pesquisa (RNP). 27 pontos de presença, um em cada estado brasileiro, com 22 pontos de troca de tráfego. Extraída de http://www.rnp.br/.}
+% \label{fig:rnp-backbone}
+% \end{figure}
 
-ALGO AQUI
+% Nesta seção,
+% % organiza-se a discussão sobre o projeto GMTP em duas partes. Na Seção~\ref{subsec:gmtp-rnp}, discute-se o funcionamento do GMTP se fosse posto em funcionamento em uma grande rede, instanciando-se a Rede Nacional de Pesquisa (RNP). E, na Seção~\ref{subsec:gmtp-servicos},
+% examinam-se os serviços do GMTP oferecidos aos sistemas de distribuição de mídias ao vivo com vistas aos atuais recursos implementados de forma paliativa nos sistemas existentes, devido à inexistência de um suporte mais efetivo das redes atuais.
 
-PENSAR NAS VARIÁVEIS DEPENDENTES E INDEPENDENTES
+No Capítulo~\ref{cap:introducao}, questionou-se sobre a real necessidade de diversos recursos implementados nos sistemas para suprir serviços de rede inexistentes nas camadas inferiores. Em seguida, no Capítulo~\ref{cap:fundamentacao}, discutiram-se as abordagens geralmente adotadas nos sistemas de distribuição de mídias ao vivo e, de forma similar, o mesmo foi feito no Capítulo~\ref{cap:trabalhosrelacionados}, instanciando-se as principais propostas do estado da arte.
+
+Neste capítulo, especificamente nesta seção, objetiva-se justificar a proposta do GMTP não apenas como um protocolo com o apelo de reduzir a complexidade dos recursos disponibilizados na camada de aplicação, mas também discutir que um conjunto mínimo de serviços, quando organizados de forma mais apropriada (nas camadas inferiores), tornam-se equivalentes aos recursos dos atuais sistemas e ainda possibilitam melhorias substanciais tanto no projeto da aplicação quanto no uso dos recursos de rede.
+
+% \begin{figure}
+% \begin{center}
+% \includegraphics[natwidth=664,natheight=340,scale=.61]{imgs/gmtp-servicos-sistemas.png}
+% \end{center}
+% \vspace{-1cm}
+% \caption{\textit{Backbone} da Rede Nacional de Pesquisa (RNP). 27 pontos de presença, um em cada estado brasileiro, com 22 pontos de troca de tráfego. Extraída de http://www.rnp.br/.}
+% \label{fig:gmtp-servicos-sistemas}
+% \end{figure}
+
+Com esse norte e organizando a discussão de acordo com a Figura~\ref{fig:gmtp-servicos-sistemas}, enumeram-se $7$ principais benefícios promovidos pelo GMTP tanto aos sistemas de distribuição de mídias ao vivo e quanto às redes, relacionando-os com os recursos atualmente empregados na camada de aplicação.
+
+\begin{itemize}
+
+  \item \textit{Conexão multi-ponto e tratamentos de diferentes topologias:} Nos sistemas existentes, tratam-se aspectos de conexão multi-ponto 
+
+  \item \textit{Seleção de nós:} 
+
+  \item \textit{tolerância a desconexões e outros problemas causados pelo \textit{churn}}: 
+
+  \item \textit{disponibilização de informação de contexto sobre rede para dar suporte à execução dos serviços das aplicações, como localização da rede, medições e custos entre redes para melhorar a qualidade de serviços dos sistemas finais:}
+
+  \item \textit{estratégias para incentivos à cooperação entre nós:}
+
+  \item \textit{algoritmos para inibir a participação de nós \textit{free-riders}:}
+
+  \item \textit{adaptação de fluxo baseado na capacidade de recepção dos nós:} 
+
+  \item \textit{segurança:}
+
+\end{itemize}
+
+across differents administratives domain
+traffic isolation
+sem precisar considerar IGP, BGP etc? ler a respeito
+diffserv? qual é o outro mesmo? mencionar na problemática?
+
+
+futuro: estudar gmtp + anycast?
+
+\begin{enumerate}
+
+  \item \textit{Otimização arquitetural:} das aplicações existentes... cliente/servidor, p2p/cdn... usar a palavra automático para criação de canais multicast, inclusive entre diferentes domínios administrativos, uso transparente de estratégias de redes de favores e cdn
+
+  \item \textit{Interoperabilidade entre sistemas:} conexão, unifica... unifica as aplicações clientes no ponto de vista do processo de conexão e obtenção dos dados, uma vez que todo esse processo ocorre na camada de transporte sem qualquer influência da aplicação. Isto significa que se existir um nó executando um cliente do sistema PPLive e um outro cliente do sistema SopCast, portanto desenvolvido por equipes diferentes, ambos ainda sim serão compatíveis e capazes de cooperar entre si na obtenção do fluxo de mídia de interesse comum.
+
+  \item \textit{Facilidade na integração:} das aplicações existentes... falar da api socket
+
+  \item \textit{Melhor utilização dos recursos de rede:} controle de congestionamento assistido pela rede, tragédia dos bens comuns...
+
+  \item \textit{Flexibilidade de uso:} gmtp-inter gmtp-intra extensibilidade
+
+  \item \textit{Eliminação de recursos paliativos e fenômenos consequentes:} das aplicações por quê? pegar a lista abaixo e meter o pau!
+
+  \item \textit{Generalização de boas práticas e abstração da complexidade:} citar o que era de aplicação e foi pra dentro do GMTP
+
+\end{enumerate}
+
+- isso é tão verdade que na próxima seção serão comparadas uma aplicação gmtp, com um sistema proeminente atualmente e um sistema que segue uma proposta de uma arquitetura futura da internet.
+
+Sendo assim, o que resta para a aplicação? replicar conteudo nos servidores da cdn e estratégias para acessa-los (load balancing etc)
+
+acho que seria muito bom colocar a QeA aqui, não desistir fácil dessa ideia, pois trará mais robustez a essa seção. Colocar aqui dentro ou lá no final desse cap? ou nas concls?
+
+- O GMTP não é um protocolo multicast fim-a-fim, mas usa multicast na rede local: evitar problemas de integração
+
+\section{Análise de Desempenho do GMTP}
+\label{sec:analisedesemp}
+
+PENSAR EM ALGUM GRÁFICO PARA COLOCAR LÁ NA PROBLEMÁTICA?
+
+\subsection{Metodologia}
+\label{subsec:metodologia}
+
+Nesta seção, apresentam-se os detalhes dos experimentos realizados. Tais experimentos consistiram de simulações realizadas no simulador OverSim~\cite{oversim2014} com base no OMNet++~\cite{XU2011,omnetpp2014}, um arcabouço para construção de simuladores de rede. O OverSim possibilita a simulação de redes e de aplicações P2P, contendo diversos modelos de protocolos de sobreposição: estruturados (por exemplo, Chord, Kademlia e Pastry) e não-estruturados (por exemplo, GIA). Sobre essa infraestrutura, utilizou-se a implementação do sistema Denacast/CoolStreaming~\cite{denacast2014} e implementou-se o protocolo GMTP e uma aplicação de referência~\cite{gmtp2014}. Considera-se uma comparação  equânime porque o Denacast estende o funcionamento do CoolStreaming para dar suporte a uma estrutura híbrida P2P/CDN no processo de distribuição de mídias ao vivo através da Internet, ao passo que o GMTP essencialmente segue o mesmo modelo arquitetura.
+
+\subsection{Objetivo}
+
+O principal objetivo desse estudo foi analisar os valores obtidos das principais métricas que determinam a qualidade de serviço em sistemas de distribuição de mídias ao vivo, confrontando-se o desempenho do Denacast/CoolStreaming e do GMTP.
+
+Quebrar a hipótese da tese em vários aspectos
+
+\subsection{Definição das Variáveis (Métricas)}
 
 Com esse norte, delimitou-se algumas métricas que determinam a qualidade de
 serviço para permitir que os usuários assistam conteúdo ao vivo na Internet
@@ -79,27 +191,122 @@ Métricas:
 Olhar o capítulo 4 da tese da nandita para ver os valores dos parâmetros que ela usou
 ver a página 99 para discussões sobre os valores de alfa e beta
 
+\subsection{Definição da população}
+
+\subsection{Definição da topologia de rede}
+
+\subsection{Definição dos experimentos e tratamentos}
+
+\subsection{Considerações sobre Implementação}
+
+Com o intuito de investigar o desempenho do GMTP, implementou-se no simulador de redes OMNet++~\cite{XU2011} suas principais funcionalidades. A versão  e sua versão atual do protocolo já permite a execução de transmissão de dados. Com o
+desenvolvimento preliminar do protocolo \mudccps no simulador NS-2, permitiu-se
+a execução de diversas simulações a fim de avaliar o comportamento do protocolo
+considerando diversas configurações.
+
+Em linhas gerais, a implementação no referido simulador de rede permite a
+comunicação entre os nós através dos modos de transmissão multicast e unicast.
+Foram implementados os tipos de pacotes do \mudccps e os processos de
+estabelecimento de conexão, incluindo o processo de uso de nós relays, troca
+de dados em modos multicast e unicast e os algoritmos para controle de
+congestionamento, incluindo o uso de nós reporters.
+
+Contudo, não foi implementado o arcabouço de extensão para permitir o
+desenvolvimento de novos algoritmos para o processo de conexão, descoberta e
+seleção de nós, adaptação de fluxo de dados e tolerância a falhas. Tal
+implementação será feita no núcleo do sistema operacional Linux, juntamente com
+todos os mecanismos básicos para o funcionamento do \mudccp.
+
+A proposta é de implementar um arcabouço de extensão para as funções previstas
+no \mudccp, permitindo-se o desenvolvimento e adição de novos algoritmos para
+as funcionalidades supracitadas, de modo que torne o \mudccps flexível para
+permitir que qualquer aplicação os utilizem.
+
+Na prática, um cenário desejado para essa proposta de implementação do \mudccps
+é que o desenvolvedor possa configurar quais algoritmos deseja utilizar em sua
+aplicação, permitindo-se que estes sejam alterados em modo de execução da
+da mesma. Neste caso, suponha um algoritmo de descoberta de nós chamado
+\textit{DN-1}, um algoritmo para controle de congestionamento chamado
+\textit{CC-2}, um algoritmo de tolerância a desconexão \textit{TD-3}; um
+algoritmo de adaptação de fluxo \textit{AF-4} e um algoritmo para reciprocidade
+% \textit{R-2}. As implementações de tais algoritmos serão feitas na camada de
+transporte, acoplando-as em forma de módulos do sistema operacional ao protocolo
+\mudccp. Em seguida, as aplicações podem selecionar quais algoritmos melhor se
+adequa as suas necessidades, com o \mudccps sendo responsável por:
+
+\begin{enumerate}
+
+  \item carregar o conjunto de algoritmos \textit{A = \{DN-1, CC-2, TD-3, AF-4,
+R-2\}};
+
+  \item definir os parâmetros iniciais para cada um dos algoritmos em A,
+definidos pela aplicação;
+
+  \item executar funções preliminares para ajustes iniciais, tais como informar
+aos nós participantes de uma transmissão quais dos algoritmos estão sendo
+utilizados (o conjunto \textit{A}) e quais outros estão disponíveis;
+
+  \item executar os algoritmos em momentos apropriados de acordo com os eventos
+de rede, notificando a aplicação caso necessário e desejável pela aplicação;
+
+  \item descarregar os algoritmos quando não forem mais necessários e informar
+aos nós parceiros.
+
+\end{enumerate}
+
+Desta forma, um nó servidor poderá solicitar que seus nós clientes carreguem um
+determinado módulo, dependendo da sua disponibilidade nos nós clientes. Neste
+caso, o \mudccps controlará todo o processo de carregamento dos mesmos.
+
+Com isso, o \mudccps se tornará um protocolo extensível que gerencia quais
+algoritmos devem ser executados em cada ponto de extensão. Esses algoritmos
+podem ser adicionados ao protocolo através de módulos do sistema operacional,
+carregáveis utilizando-se comandos como o \textit{modprobe} (no Linux, por
+exemplo) e manipulados (passagem de parâmetros) pela aplicação através de uma
+API de programação, por exemplo, utilizando-se as primitivas
+\textit{setsockopt()} e \textit{getsockopt()} da especificação \textit{BSD
+Socket API}~\cite{1197551}.
+
+Para que as aplicações possam utilizar o \mudccp, o protocolo deve ser
+compatível com todas as funções prevista na especificação \textit{BSD Socket
+API}, são elas: \textit{socket()}, \textit{bind()}, \textit{listen()},
+\textit{connect()}, \textit{accept()}, \textit{send()}, \textit{recv()},
+\textit{write()}, \textit{read()}, \textit{sendto()}, \textit{recvfrom()},
+\textit{close()}, \textit{select()}, \textit{setsockopt()},
+\textit{getsockopt()} e \textit{pull()}.
+
+Outros trabalhos podem ser desenvolvidos para tornar o \mudccps compatível com o
+padrão de \textit{sockets} do sistema operacional Windows, conhecido pelo nome
+de \textit{winsock}. Todavia, por ser um sistema operacional de código fechado,
+a implementação do \mudccps só será possível após sua padronização em forma de
+RFC.
 
 
-\section{Estudo Analítico}
 
-\subsection{Estudo de caso: \textit{backbone} da RNP}
+\section{Resultados e Discussões}
+\label{sec:resdisc}
 
-Colocar também o mapa do brasil e o backbone.
+GMTP vs. CoolStreaming
 
-\begin{figure}[ht]
-\begin{center}
-\includegraphics[natwidth=664,natheight=340,scale=.61]{imgs/rede-rnp.png}
-\end{center}
-\vspace{-1cm}
-\caption{\textit{Backbone} da Rede Nacional de Pesquisa (RNP). 28 roteadores
-espalhados em todos os estados brasileiros com 22 pontos de troca de tráfego
-(PTT).}
-\label{fig:rede-rnp}
-\end{figure}
+- Denacast com GMTP, DCCP e UDP
+     - Com e sem o RCP
+          - Com RCP sem sub-fluxo
+          - Com RCP com sub-fluxo
+- CoolStreaming com GMTP não faz sentido porque transformaria-se o GMTP em uma aplicação igual a que será utilizada para os confrontos
 
+- Lembrar de enfatizar a interoperabilidade em cenários reais que o GMTP proporciona. "Arquiteturalmente, o GMTP resolve o problema de permitir a interoperabilidade dos sistemas e otimiza o uso de recursos de rede ..."
 
-\section{GMTP vs. CoolStreaming}
+- Colocar uma curva que mostra a capacidade da rede e o quanto o GMTP consegue usar?
+
+- Pensar em colocar diversas aplicações em execução no mesmo instante. Isso poderia como um "at a glance" na seção de problemática.
+
+PENSAR NAS VARIÁVEIS DEPENDENTES E INDEPENDENTES
+
+TEM QUE DIZER QUE USEI O BRITE
+
+REPENSAR SE AVALIA TAMBÉM O CCN-TV OU NÃO! SE NÃO FOR FAZER ISSO, REVER AS INFORMAÇÕES NA CAP DE TR SOBRE DETALHAR A COMPARAÇÃO, CASO CONTRÁRIO, PENSAR SE DEIXA ESSE ITEM OU TIRA
+MANTER O PPSP/Swift? Se sim, rever o que o nazareno colocou sobre isso...
+
 
 \subsection{Métodos e simulações}
 
@@ -145,3 +352,4 @@ cite 6386696
 \subsection{Discussões}
 
 \section{Sumário do Capítulo}
+\label{sec:resdisc-sumario}
