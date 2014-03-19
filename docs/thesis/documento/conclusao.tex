@@ -97,6 +97,8 @@ essas limitações poderão ser aprimoradas.
 
 Ademais, destaca-se a importância e originalidade do presente trabalho por ser o primeiro a trazer à tona um problema e uma proposta de solução do uso de um protocolo de transporte e rede, exclusivamente projetado para a distribuição de mídias ao vivo na Internet. Até então, distribuir conteúdos multimídia na Internet se resumia em sistemas baseados em protocolos tradicionais (TCP, UDP, DCCP, SCTP) ou outros proprietários, em geral, disponíveis na camada de aplicação e independentes.
 
+PS: O GMTP vai além de uma simples solução multicast porque permite a parceria entre diferentes nós que não estão necessariamente na mesma árvore multicast.
+
 \section{Limitações}
 
 - a quebra de fluxos em sub-fluxos requer maior processamento para medições de RTT
@@ -104,6 +106,9 @@ Ademais, destaca-se a importância e originalidade do presente trabalho por ser o
 - 
 
 \section{Trabalhos Futuros}
+
+- Considerar outras topologias
+- Tráfego background + impacto no TCP
 
 The Future Research subsection is included so that researchers picking up this work in future have the benefit of the ideas that you generated while you were working on the project. Again, concise numbered paragraphs are usually best.
 
@@ -118,4 +123,109 @@ COLOCAR CABEÇALHO DOS PACOTES?
 REPRODUCIBLE RESEARCH?
 
 What goes in the appendices? Any material which impedes the smooth development of your presentation, but which is important to justify the results of a thesis. Generally it is material that is of too nitty-gritty a level of detail for inclusion in the main body of the thesis, but which should be available for perusal by the examiners to convince them sufficiently. Examples include program listings, immense tables of data, lengthy mathematical proofs or derivations, etc.
+
+
+
+\section{Análise do Projeto GMTP}
+\label{sec:analisedeproj}
+
+% \subsection{GMTP na Rede Nacional de Pesquisa (RNP)}
+% \label{subsec:gmtp-rnp}
+% 
+% O \textit{backbone} da RNP é estruturado em 27 roteadores distribuídos em todos os estados brasileiros e foi projetado para garantir não só a largura de banda necessária ao tráfego de Internet usual (navegação web, correio eletrônico, transferência de arquivos), mas também o uso de serviços e aplicações avançadas e a experimentação. A rede possui ramificações para atender mais de 500 instituições de ensino e pesquisa em todo o país, beneficiando mais de 3,5 milhões de usuários.
+% 
+% A capacidade agregada da RNP é de \ut{233,2}{Gbps}, com velocidades multigigabits ($\ge$ \ut{2}{Gbps}) em 24 dos 27 roteadores (Figura~\ref{fig:rnp-mapa-br}). No contexto internacional, a RNP tem uma conexão de \ut{1,45}{Gbps} com a Cooperação Latino-Americana de Redes Avançadas (RedCLARA), que integra 15 países da América Latina e \ut{20}{Gbps} com a Academic Network at São Paulo (ANSP). Por meio da uma operação em parceria com a ANSP, a RNP se conecta a outras infraestruturas acadêmicas internacionais, como à Internet2, à europeia Géant e à Internet comercial mundial.
+% 
+% \begin{figure}
+% \begin{center}
+% \includegraphics[natwidth=1061,natheight=928,scale=.34]{imgs/rnp-mapa-br.png}
+% \end{center}
+% \vspace{-1cm}
+% \caption{Capacidade dos enlaces e pontos de presença da RNP no Brasil.}
+% \label{fig:rnp-mapa-br}
+% \end{figure}
+% 
+% Na Figura~\ref{fig:rnp-backbone}, ilustram-se detalhes do \textit{backbone} da RNP. Por exemplo, 
+% 
+% \begin{figure}
+% \begin{center}
+% \includegraphics[natwidth=664,natheight=340,scale=.61]{imgs/rnp-backbone.png}
+% \end{center}
+% \vspace{-1cm}
+% \caption{\textit{Backbone} da Rede Nacional de Pesquisa (RNP). 27 pontos de presença, um em cada estado brasileiro, com 22 pontos de troca de tráfego. Extraída de http://www.rnp.br/.}
+% \label{fig:rnp-backbone}
+% \end{figure}
+
+% Nesta seção,
+% % organiza-se a discussão sobre o projeto GMTP em duas partes. Na Seção~\ref{subsec:gmtp-rnp}, discute-se o funcionamento do GMTP se fosse posto em funcionamento em uma grande rede, instanciando-se a Rede Nacional de Pesquisa (RNP). E, na Seção~\ref{subsec:gmtp-servicos},
+% examinam-se os serviços do GMTP oferecidos aos sistemas de distribuição de mídias ao vivo com vistas aos atuais recursos implementados de forma paliativa nos sistemas existentes, devido à inexistência de um suporte mais efetivo das redes atuais.
+
+USAR ISSO PARA RESPONDER A QUESTÃO SECUNDÁRIA DEFINIDA NA PROBLEMÁTICA
+
+Neste capítulo, especificamente nesta seção, objetiva-se justificar a proposta do GMTP não apenas como um protocolo com o apelo de reduzir a complexidade dos recursos disponibilizados na camada de aplicação, mas também discutir que um conjunto mínimo de serviços, quando organizados de forma mais apropriada (nas camadas inferiores), tornam-se equivalentes aos recursos dos atuais sistemas e ainda possibilitam melhorias substanciais tanto no projeto da aplicação quanto no uso dos recursos de rede.
+
+% \begin{figure}
+% \begin{center}
+% \includegraphics[natwidth=664,natheight=340,scale=.61]{imgs/gmtp-servicos-sistemas.png}
+% \end{center}
+% \vspace{-1cm}
+% \caption{\textit{Backbone} da Rede Nacional de Pesquisa (RNP). 27 pontos de presença, um em cada estado brasileiro, com 22 pontos de troca de tráfego. Extraída de http://www.rnp.br/.}
+% \label{fig:gmtp-servicos-sistemas}
+% \end{figure}
+
+Com esse norte e organizando a discussão de acordo com a Figura~\ref{fig:gmtp-servicos-sistemas}, enumeram-se $7$ principais benefícios promovidos pelo GMTP tanto aos sistemas de distribuição de mídias ao vivo e quanto às redes, relacionando-os com os recursos atualmente empregados na camada de aplicação.
+
+\begin{itemize}
+
+  \item \textit{Conexão multi-ponto e tratamentos de diferentes topologias:} Nos sistemas existentes, tratam-se aspectos de conexão multi-ponto 
+
+  \item \textit{Seleção de nós:} 
+
+  \item \textit{tolerância a desconexões e outros problemas causados pelo \textit{churn}}: 
+
+  \item \textit{disponibilização de informação de contexto sobre rede para dar suporte à execução dos serviços das aplicações, como localização da rede, medições e custos entre redes para melhorar a qualidade de serviços dos sistemas finais:}
+
+  \item \textit{estratégias para incentivos à cooperação entre nós:}
+
+  \item \textit{algoritmos para inibir a participação de nós \textit{free-riders}:}
+
+  \item \textit{adaptação de fluxo baseado na capacidade de recepção dos nós:} 
+
+  \item \textit{segurança:}
+
+\end{itemize}
+
+across differents administratives domain
+traffic isolation
+sem precisar considerar IGP, BGP etc? ler a respeito
+diffserv? qual é o outro mesmo? mencionar na problemática?
+
+
+futuro: estudar gmtp + anycast?
+
+\begin{enumerate}
+
+  \item \textit{Otimização arquitetural:} das aplicações existentes... cliente/servidor, p2p/cdn... usar a palavra automático para criação de canais multicast, inclusive entre diferentes domínios administrativos, uso transparente de estratégias de redes de favores e cdn
+
+  \item \textit{Interoperabilidade entre sistemas:} conexão, unifica... unifica as aplicações clientes no ponto de vista do processo de conexão e obtenção dos dados, uma vez que todo esse processo ocorre na camada de transporte sem qualquer influência da aplicação. Isto significa que se existir um nó executando um cliente do sistema PPLive e um outro cliente do sistema SopCast, portanto desenvolvido por equipes diferentes, ambos ainda sim serão compatíveis e capazes de cooperar entre si na obtenção do fluxo de mídia de interesse comum.
+
+  \item \textit{Facilidade na integração:} das aplicações existentes... falar da api socket
+
+  \item \textit{Melhor utilização dos recursos de rede:} controle de congestionamento assistido pela rede, tragédia dos bens comuns...
+
+  \item \textit{Flexibilidade de uso:} gmtp-inter gmtp-intra extensibilidade
+
+  \item \textit{Eliminação de recursos paliativos e fenômenos consequentes:} das aplicações por quê? pegar a lista abaixo e meter o pau!
+
+  \item \textit{Generalização de boas práticas e abstração da complexidade:} citar o que era de aplicação e foi pra dentro do GMTP
+
+\end{enumerate}
+
+- isso é tão verdade que na próxima seção serão comparadas uma aplicação gmtp, com um sistema proeminente atualmente e um sistema que segue uma proposta de uma arquitetura futura da internet.
+
+Sendo assim, o que resta para a aplicação? replicar conteudo nos servidores da cdn e estratégias para acessa-los (load balancing etc)
+
+acho que seria muito bom colocar a QeA aqui, não desistir fácil dessa ideia, pois trará mais robustez a essa seção. Colocar aqui dentro ou lá no final desse cap? ou nas concls?
+
+- O GMTP não é um protocolo multicast fim-a-fim, mas usa multicast na rede local: evitar problemas de integração
 

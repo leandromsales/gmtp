@@ -1,4 +1,4 @@
-\chapter{Análise de Projeto e Desempenho do \mudccp}
+\chapter{Análise de Desempenho do \mudccp}
 \label{cap:analisedesemp}
 
 % ====
@@ -34,254 +34,291 @@
 % 
 % ====
 
-Neste capítulo, apresentam-se as análises do projeto e do desempenho do GMTP para distribuição de mídias ao vivo. Na Seção~\ref{sec:analisedeproj} (análise do projeto), generaliza-se a discussão acerca dos serviços disponibilizados no GMTP em comparação àqueles implementados nos principais sistemas. Na Seção~\ref{sec:analisedesemp} (análise de desempenho), estabelecem-se confrontos entre uma implementação de referência do GMTP, o Denacast/CoolStreaming e o CCN/TV, em um ambiente de simulação que proporcionou a obtenção de valores para as métricas avaliadas em um cenário que simula parte da Internet. Por fim, na Seção~\ref{sec:resdisc-sumario}, apresenta-se o sumário deste capítulo.
-
-Com essa estratégia, possibilita-se aprofundar o entendimento sobre o GMTP em duas vertentes (projeto e desempenho), estudando-o por meio de diferentes configurações de rede e identificando-se suas vantagens e limitações em comparação ao estado da arte e da prática.
-
-\section{Análise do Projeto GMTP}
-\label{sec:analisedeproj}
-
-% \subsection{GMTP na Rede Nacional de Pesquisa (RNP)}
-% \label{subsec:gmtp-rnp}
+% Neste capítulo, apresentam-se as análises do projeto e do desempenho do GMTP para distribuição de mídias ao vivo. Na Seção~\ref{sec:analisedeproj} (análise do projeto), generaliza-se a discussão acerca dos serviços disponibilizados no GMTP em comparação àqueles implementados nos principais sistemas. Na Seção~\ref{sec:analisedesemp} (análise de desempenho), estabelecem-se confrontos entre uma implementação de referência do GMTP, o Denacast/CoolStreaming e o CCN/TV, em um ambiente de simulação que proporcionou a obtenção de valores para as métricas avaliadas em um cenário que simula parte da Internet. Por fim, na Seção~\ref{sec:resdisc-sumario}, apresenta-se o sumário deste capítulo.
 % 
-% O \textit{backbone} da RNP é estruturado em 27 roteadores distribuídos em todos os estados brasileiros e foi projetado para garantir não só a largura de banda necessária ao tráfego de Internet usual (navegação web, correio eletrônico, transferência de arquivos), mas também o uso de serviços e aplicações avançadas e a experimentação. A rede possui ramificações para atender mais de 500 instituições de ensino e pesquisa em todo o país, beneficiando mais de 3,5 milhões de usuários.
-% 
-% A capacidade agregada da RNP é de \ut{233,2}{Gbps}, com velocidades multigigabits ($\ge$ \ut{2}{Gbps}) em 24 dos 27 roteadores (Figura~\ref{fig:rnp-mapa-br}). No contexto internacional, a RNP tem uma conexão de \ut{1,45}{Gbps} com a Cooperação Latino-Americana de Redes Avançadas (RedCLARA), que integra 15 países da América Latina e \ut{20}{Gbps} com a Academic Network at São Paulo (ANSP). Por meio da uma operação em parceria com a ANSP, a RNP se conecta a outras infraestruturas acadêmicas internacionais, como à Internet2, à europeia Géant e à Internet comercial mundial.
-% 
-% \begin{figure}
-% \begin{center}
-% \includegraphics[natwidth=1061,natheight=928,scale=.34]{imgs/rnp-mapa-br.png}
-% \end{center}
-% \vspace{-1cm}
-% \caption{Capacidade dos enlaces e pontos de presença da RNP no Brasil.}
-% \label{fig:rnp-mapa-br}
-% \end{figure}
-% 
-% Na Figura~\ref{fig:rnp-backbone}, ilustram-se detalhes do \textit{backbone} da RNP. Por exemplo, 
-% 
-% \begin{figure}
-% \begin{center}
-% \includegraphics[natwidth=664,natheight=340,scale=.61]{imgs/rnp-backbone.png}
-% \end{center}
-% \vspace{-1cm}
-% \caption{\textit{Backbone} da Rede Nacional de Pesquisa (RNP). 27 pontos de presença, um em cada estado brasileiro, com 22 pontos de troca de tráfego. Extraída de http://www.rnp.br/.}
-% \label{fig:rnp-backbone}
-% \end{figure}
+% Com essa estratégia, possibilita-se aprofundar o entendimento sobre o GMTP em duas vertentes (projeto e desempenho), estudando-o por meio de diferentes configurações de rede e identificando-se suas vantagens e limitações em comparação ao estado da arte e da prática.
 
-% Nesta seção,
-% % organiza-se a discussão sobre o projeto GMTP em duas partes. Na Seção~\ref{subsec:gmtp-rnp}, discute-se o funcionamento do GMTP se fosse posto em funcionamento em uma grande rede, instanciando-se a Rede Nacional de Pesquisa (RNP). E, na Seção~\ref{subsec:gmtp-servicos},
-% examinam-se os serviços do GMTP oferecidos aos sistemas de distribuição de mídias ao vivo com vistas aos atuais recursos implementados de forma paliativa nos sistemas existentes, devido à inexistência de um suporte mais efetivo das redes atuais.
+Como apresentou-se no Capítulo~\ref{cap:introducao}, o objetivo deste trabalho compreende três grandes fases: 1) revisão das técnicas e propostas para distribuição de mídias ao vivo; 2) descrever o protocolo GMTP e suas funcionalidades; 3) a avaliação do referido protocolo para distribuição de mídias ao vivo. Nos Capítulos~\ref{cap:fundamentacao} e~\ref{trabalhosrelacionados}, apresentou-se a fase 1; no  Capítulo~\ref{cap:mudccp}, apresentou a fase 2 e, neste capítulo, concentram-se as discussões na fase 3.
 
-No Capítulo~\ref{cap:introducao}, questionou-se sobre a real necessidade de diversos recursos implementados nos sistemas para suprir serviços de rede inexistentes nas camadas inferiores. Em seguida, no Capítulo~\ref{cap:fundamentacao}, discutiram-se as abordagens geralmente adotadas nos sistemas de distribuição de mídias ao vivo e, de forma similar, o mesmo foi feito no Capítulo~\ref{cap:trabalhosrelacionados}, instanciando-se as principais propostas do estado da arte.
+O restante deste capítulo esta organizado da seguinte forma: na Seção~\ref{sec:metodologia}, apresenta-se a metodologia de avaliação. Na Seção~\ref{sec:resdisc}, discutem-se os resultados da avaliação. E, por fim, na Seção~\ref{sec:resdisc-sumario}, apresenta-se o sumário deste capítulo.
 
-Neste capítulo, especificamente nesta seção, objetiva-se justificar a proposta do GMTP não apenas como um protocolo com o apelo de reduzir a complexidade dos recursos disponibilizados na camada de aplicação, mas também discutir que um conjunto mínimo de serviços, quando organizados de forma mais apropriada (nas camadas inferiores), tornam-se equivalentes aos recursos dos atuais sistemas e ainda possibilitam melhorias substanciais tanto no projeto da aplicação quanto no uso dos recursos de rede.
+% PENSAR EM ALGUM GRÁFICO PARA COLOCAR LÁ NA PROBLEMÁTICA?
 
-% \begin{figure}
-% \begin{center}
-% \includegraphics[natwidth=664,natheight=340,scale=.61]{imgs/gmtp-servicos-sistemas.png}
-% \end{center}
-% \vspace{-1cm}
-% \caption{\textit{Backbone} da Rede Nacional de Pesquisa (RNP). 27 pontos de presença, um em cada estado brasileiro, com 22 pontos de troca de tráfego. Extraída de http://www.rnp.br/.}
-% \label{fig:gmtp-servicos-sistemas}
-% \end{figure}
+\section{Metodologia}
+\label{sec:metodologia}
 
-Com esse norte e organizando a discussão de acordo com a Figura~\ref{fig:gmtp-servicos-sistemas}, enumeram-se $7$ principais benefícios promovidos pelo GMTP tanto aos sistemas de distribuição de mídias ao vivo e quanto às redes, relacionando-os com os recursos atualmente empregados na camada de aplicação.
+Nesta seção, apresenta-se a metodologia de experimentos para avaliar o protocolo GMTP frente às propostas Denacast/CoolStreaming e o CCN-TV. Essas escolhas foram feitas com base no levantamento do estado da arte/prática em comparação ao GMTP, considerando-se dois critérios: aproximação arquitetural e os recursos disponíveis para distribuição de um fluxo de dados ao vivo. Tratam-se de duas propostas que cobrem boa parte daquelas existentes no estado da prática e da arte, uma vez que são trabalhos bastantes referenciados na literatura e um já em funcionamento na Internet. Além disso, considera-se que as avaliações são equânimes, uma vez que o Denacast/CoolStreaming estende o funcionamento do CoolStreaming para dar suporte a uma estrutura P2P/CDN, o CCN-TV faz uso mais efetivo do núcleo da rede a fim de otimizar o acesso aos dados quando muito acessados e o GMTP, que essencialmente segue uma estratégia ligeiramente híbrida entre esses dois concorrentes.
 
-\begin{itemize}
+Para realizar tal estudo comparativo, definiu-se a modalidade experimental, considerando um ambiente de simulação de rede que proporcionou a construção de um cenário de rede próximo da realidade, através da definição de variáveis independentes e da medição das variáveis dependentes que, neste estudo, tratam-se das métricas que determinam a experiência do usuário ao utilizar os sistemas de distribuição de mídias ao vivo.
 
-  \item \textit{Conexão multi-ponto e tratamentos de diferentes topologias:} Nos sistemas existentes, tratam-se aspectos de conexão multi-ponto 
+Com relação à instrumentação, utilizou-se OMNet++~\cite{XU2011,omnetpp2014}, um arcabouço para construção de simuladores de rede. Nesse contexto, utilizaram-se dois simuladores: o OverSim~\cite{oversim2014} e o CCN-Sim~\cite{ccnsim2014}. No OverSim, utilizaram-se as implementações do sistema Denacast/CoolStreaming~\cite{denacast2014} e a do GMTP~\cite{gmtp2014}, ao passo que no CCN-Sim, utilizou-se a implementação do CCN-TV~\cite{ccntv2014}.
 
-  \item \textit{Seleção de nós:} 
+Com essa estratégia, possibilitou-se aprofundar o comportamento do GMTP em relação ao estado da arte/prática, estudando-o em diferentes configurações de rede a fim de determinar suas vantagens, limites e os impactos que seus recursos podem gerar tanto sobre os nós quanto sobre a rede.
 
-  \item \textit{tolerância a desconexões e outros problemas causados pelo \textit{churn}}: 
+\subsection{Objetivo e hipótese}
 
-  \item \textit{disponibilização de informação de contexto sobre rede para dar suporte à execução dos serviços das aplicações, como localização da rede, medições e custos entre redes para melhorar a qualidade de serviços dos sistemas finais:}
+O objetivo do experimento foi avaliar o desempenho do GMTP com vistas à hipótese enunciada de que a constituição de uma rede de favores entre roteadores que interceptam, realizam cache temporário e compartilham pacotes de dados tanto em modo \textit{multicast} (em redes locais) quanto em modo unicast (entre redes distintas), auxiliados por um algoritmo para controle de congestionamento assistido pela rede, resulta em uma melhor distribuição dos fluxos de mídias ao vivo.
 
-  \item \textit{estratégias para incentivos à cooperação entre nós:}
+Para refutar ou não esta hipótese, definiram-se a topologia de rede, as variáveis independentes e dependentes, os fatores, a população, o formato da mídia e os tratamentos. A seguir, descrevem-se todos esses aspectos.
 
-  \item \textit{algoritmos para inibir a participação de nós \textit{free-riders}:}
+%  possibilitam a maximização do uso dos recursos de rede, resultando 
+% possibilita a independência dos sistemas e a
 
-  \item \textit{adaptação de fluxo baseado na capacidade de recepção dos nós:} 
-
-  \item \textit{segurança:}
-
-\end{itemize}
-
-across differents administratives domain
-traffic isolation
-sem precisar considerar IGP, BGP etc? ler a respeito
-diffserv? qual é o outro mesmo? mencionar na problemática?
-
-
-futuro: estudar gmtp + anycast?
-
-\begin{enumerate}
-
-  \item \textit{Otimização arquitetural:} das aplicações existentes... cliente/servidor, p2p/cdn... usar a palavra automático para criação de canais multicast, inclusive entre diferentes domínios administrativos, uso transparente de estratégias de redes de favores e cdn
-
-  \item \textit{Interoperabilidade entre sistemas:} conexão, unifica... unifica as aplicações clientes no ponto de vista do processo de conexão e obtenção dos dados, uma vez que todo esse processo ocorre na camada de transporte sem qualquer influência da aplicação. Isto significa que se existir um nó executando um cliente do sistema PPLive e um outro cliente do sistema SopCast, portanto desenvolvido por equipes diferentes, ambos ainda sim serão compatíveis e capazes de cooperar entre si na obtenção do fluxo de mídia de interesse comum.
-
-  \item \textit{Facilidade na integração:} das aplicações existentes... falar da api socket
-
-  \item \textit{Melhor utilização dos recursos de rede:} controle de congestionamento assistido pela rede, tragédia dos bens comuns...
-
-  \item \textit{Flexibilidade de uso:} gmtp-inter gmtp-intra extensibilidade
-
-  \item \textit{Eliminação de recursos paliativos e fenômenos consequentes:} das aplicações por quê? pegar a lista abaixo e meter o pau!
-
-  \item \textit{Generalização de boas práticas e abstração da complexidade:} citar o que era de aplicação e foi pra dentro do GMTP
-
-\end{enumerate}
-
-- isso é tão verdade que na próxima seção serão comparadas uma aplicação gmtp, com um sistema proeminente atualmente e um sistema que segue uma proposta de uma arquitetura futura da internet.
-
-Sendo assim, o que resta para a aplicação? replicar conteudo nos servidores da cdn e estratégias para acessa-los (load balancing etc)
-
-acho que seria muito bom colocar a QeA aqui, não desistir fácil dessa ideia, pois trará mais robustez a essa seção. Colocar aqui dentro ou lá no final desse cap? ou nas concls?
-
-- O GMTP não é um protocolo multicast fim-a-fim, mas usa multicast na rede local: evitar problemas de integração
-
-\section{Análise de Desempenho do GMTP}
-\label{sec:analisedesemp}
-
-PENSAR EM ALGUM GRÁFICO PARA COLOCAR LÁ NA PROBLEMÁTICA?
-
-\subsection{Metodologia}
-\label{subsec:metodologia}
-
-Nesta seção, apresentam-se os detalhes dos experimentos realizados. Tais experimentos consistiram de simulações realizadas no simulador OverSim~\cite{oversim2014} com base no OMNet++~\cite{XU2011,omnetpp2014}, um arcabouço para construção de simuladores de rede. O OverSim possibilita a simulação de redes e de aplicações P2P, contendo diversos modelos de protocolos de sobreposição: estruturados (por exemplo, Chord, Kademlia e Pastry) e não-estruturados (por exemplo, GIA). Sobre essa infraestrutura, utilizou-se a implementação do sistema Denacast/CoolStreaming~\cite{denacast2014} e implementou-se o protocolo GMTP e uma aplicação de referência~\cite{gmtp2014}. Considera-se uma comparação  equânime porque o Denacast estende o funcionamento do CoolStreaming para dar suporte a uma estrutura híbrida P2P/CDN no processo de distribuição de mídias ao vivo através da Internet, ao passo que o GMTP essencialmente segue o mesmo modelo arquitetura.
-
-\subsection{Objetivo}
-
-O principal objetivo desse estudo foi analisar os valores obtidos das principais métricas que determinam a qualidade de serviço em sistemas de distribuição de mídias ao vivo, confrontando-se o desempenho do Denacast/CoolStreaming e do GMTP.
-
-Quebrar a hipótese da tese em vários aspectos
-
-\subsection{Definição das Variáveis (Métricas)}
-
-Com esse norte, delimitou-se algumas métricas que determinam a qualidade de
-serviço para permitir que os usuários assistam conteúdo ao vivo na Internet
-com base na referência~\cite{5343509}. Tais métricas são divididas em três
-grupos, detalhados a seguir:
-
-\begin{enumerate}
-
- \item \textit{Qualidade da experiência do usuário:} avalia-se o tempo em que os nós levam para começar a reproduzir os primeiros datagramas; o índice de continuidade; e a qualidade do conteúdo recebido em comparação ao conteúdo original.
-
- \item \textit{Escalabilidade dos sistemas com relação a quantidade de nós conectados:} avalia-se a quantidade de nós simultâneos conectados, a contribuição da rede CDN e da rede P2P na transmissão de um fluxo de dados.
-
- \item \textit{Execução dos protocolos:} avalia-se a sobrecarga de controle
-gerados pelos protocolos a fim de executar suas funções.
-
-\end{enumerate}
-
-Métricas:
-   - Atraso de inicialização do fluxo
-   - Quantidade de interrupções
-   - Índice do Continuidade
-   - Tempo de recuperação
-   - Distorção do conteúdo recebido em comparação ao transmitido
-   - Sobrecarga de controle
-   - Número de conexões no servidor / duplicações
-   - Escalabilidade quanto ao número de nós clientes interessados por um mesmo fluxo
-   - Como posso medir a qualidade das parcerias? pela taxa de transmissão entre o nó que compartilha e o nó que recebe
-   - Como medir a quantidade de aplicações de distribuição de mídias ao vivo diferentes e a quantidade de eventos iguais sendo transmitidos
-
-
-Olhar o capítulo 4 da tese da nandita para ver os valores dos parâmetros que ela usou
-ver a página 99 para discussões sobre os valores de alfa e beta
-
-\subsection{Definição da população}
+% A hipótese enunciada pode ser fracionada em duas etapas: 1) avaliação da independência dos sistemas e 2) a maximização do uso dos recursos de rede, que resultam na distribuição eficiente dos fluxos de mídias a vivo. 
 
 \subsection{Definição da topologia de rede}
 
-\subsection{Definição dos experimentos e tratamentos}
+Com esse norte, primeiramente definiu-se a topologia da rede a ser simulada. Como ilustra-se na Figura~\ref{fig:rede-geant}, simulou-se o \textit{backbone} da rede GEANT\footnote{Rede GEANT: http://www.geant.net/.}. Atualmente, a GEANT interconecta 10.000 instituições europeias de pesquisa e educação e 50 milhões de usuários, composta por 41 roteadores conectados por meio de canais de transmissão com capacidades que variam entre \ut{1}{Gbps} e \ut{100}{Gbps}. No caso da simulação, utilizou-se apenas \ut{10}{\%} da capacidade de transmissão original da rede, a fim de gerar pontos de super utilização de acordo com a quantidade de nós clientes interessados em receber um fluxo de dados multimídia. A quantidade de nós clientes é variável de acordo com diferentes tratamentos, discutidos mais adiante.
 
-\subsection{Considerações sobre Implementação}
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[natwidth=1110,natheight=939,scale=.34]{imgs/rede-geant.png}
+\end{center}
+\vspace{-1cm}
+\caption{\textit{Backbone} da rede GEANT.}
+\label{fig:rede-geant}
+\end{figure}
 
-Com o intuito de investigar o desempenho do GMTP, implementou-se no simulador de redes OMNet++~\cite{XU2011} suas principais funcionalidades. A versão  e sua versão atual do protocolo já permite a execução de transmissão de dados. Com o
-desenvolvimento preliminar do protocolo \mudccps no simulador NS-2, permitiu-se
-a execução de diversas simulações a fim de avaliar o comportamento do protocolo
-considerando diversas configurações.
+Na Tabela~\ref{tb:param-base}, descrevem-se os parâmetros e valores gerais utilizados nos experimentos, com base na topologia da rede definida.
 
-Em linhas gerais, a implementação no referido simulador de rede permite a
-comunicação entre os nós através dos modos de transmissão multicast e unicast.
-Foram implementados os tipos de pacotes do \mudccps e os processos de
-estabelecimento de conexão, incluindo o processo de uso de nós relays, troca
-de dados em modos multicast e unicast e os algoritmos para controle de
-congestionamento, incluindo o uso de nós reporters.
+\begin{table}[ht]
+  \centering
+  \caption{Tabela dos parâmetros e valores gerais utilizados nos experimentos.}
+  \renewcommand{\arraystretch}{1}% Spread rows out...
+  \begin{tabular}{>{}m{2.6in} >{}m{2.6in}}
+    \toprule
+    \textbf{Parâmetros} & \textbf{Valores} \\
+    \midrule
+    Número de nós roteadores (\textit{backbone}) & 41 \\
+    Tempo de simulação de cada ensaio & \ut{900}{s} \\
+    Nível de confiança & \ut{95}{\%} \\
+    \bottomrule
+  \end{tabular}
+  \label{tb:param-base}
+\end{table}
 
-Contudo, não foi implementado o arcabouço de extensão para permitir o
-desenvolvimento de novos algoritmos para o processo de conexão, descoberta e
-seleção de nós, adaptação de fluxo de dados e tolerância a falhas. Tal
-implementação será feita no núcleo do sistema operacional Linux, juntamente com
-todos os mecanismos básicos para o funcionamento do \mudccp.
+\subsection{Definição das métricas}
 
-A proposta é de implementar um arcabouço de extensão para as funções previstas
-no \mudccp, permitindo-se o desenvolvimento e adição de novos algoritmos para
-as funcionalidades supracitadas, de modo que torne o \mudccps flexível para
-permitir que qualquer aplicação os utilizem.
-
-Na prática, um cenário desejado para essa proposta de implementação do \mudccps
-é que o desenvolvedor possa configurar quais algoritmos deseja utilizar em sua
-aplicação, permitindo-se que estes sejam alterados em modo de execução da
-da mesma. Neste caso, suponha um algoritmo de descoberta de nós chamado
-\textit{DN-1}, um algoritmo para controle de congestionamento chamado
-\textit{CC-2}, um algoritmo de tolerância a desconexão \textit{TD-3}; um
-algoritmo de adaptação de fluxo \textit{AF-4} e um algoritmo para reciprocidade
-% \textit{R-2}. As implementações de tais algoritmos serão feitas na camada de
-transporte, acoplando-as em forma de módulos do sistema operacional ao protocolo
-\mudccp. Em seguida, as aplicações podem selecionar quais algoritmos melhor se
-adequa as suas necessidades, com o \mudccps sendo responsável por:
+Definida a topologia de rede e os parâmetros gerais para executar as simulações, delimitaram-se algumas métricas com base na referência~\cite{5343509}, organizadas em três grupos:
 
 \begin{enumerate}
 
-  \item carregar o conjunto de algoritmos \textit{A = \{DN-1, CC-2, TD-3, AF-4,
-R-2\}};
+ \item \textit{Qualidade de serviço à aplicação:} avaliam-se o atraso para iniciar a reprodução de uma mídia ao vivo; o índice de continuidade, determinado pela quantidade de interrupções vezes a duração das interrupções (em segundos); e a qualidade do conteúdo recebido em comparação ao conteúdo original.
 
-  \item definir os parâmetros iniciais para cada um dos algoritmos em A,
-definidos pela aplicação;
+ EXPLICAR MELHOR CADA COISA DESSA
 
-  \item executar funções preliminares para ajustes iniciais, tais como informar
-aos nós participantes de uma transmissão quais dos algoritmos estão sendo
-utilizados (o conjunto \textit{A}) e quais outros estão disponíveis;
+Índice de Continuidade = quantidade de interrupções * (tempo * 1,5)
+Ver como se faz esse calculo: média geométrica?:
+Índice de Continuidade = quantidade de interrupções * tempo / quantidade de interrupções + tempo
+ou média ponderada? melhor:
+IC = (QI + TI) / (QI + TI*2)
 
-  \item executar os algoritmos em momentos apropriados de acordo com os eventos
-de rede, notificando a aplicação caso necessário e desejável pela aplicação;
 
-  \item descarregar os algoritmos quando não forem mais necessários e informar
-aos nós parceiros.
+
+Distorção:
+\begin{verbatim}
+Vídeo original: ======================================== 100%
+Vídeo recebido: =====    ====   =====    ===============  70%
+\end{verbatim}
+
+%   1 interrupção de 6 segundos == 2 interrupções de 3 segundos
+%   Acho que uma interrupção mais longa é mais grave do várias interrupções mais curtas: uma interrupção mais longa dificulta o usuário entender mais o contexto se comparado a várias interrupções mais curtas
+
+ \item \textit{Escalabilidade do sistema:} avalia-se a quantidade de nós simultâneos que foram capazes de receber o fluxo de dados da mídia transmitida com um nível máximo de distorção. Nesse caso, mediu-se também o nível de contribuição das redes CDN e P2P separadamente, que corresponde à quantidade de fluxos transmitidos pelos servidores da CDN e pelos nós da rede P2P.
+
+ EXPLICAR MELHOR CADA COISA DESSA
+
+ \item \textit{Sobrecarga de controle:} avalia-se a quantidade de pacotes de controle transmitidos por um protocolo durante o tempo de simulação (contagem dos pacotes que não transportam dados da mídia), mas considera-se 0,5 cada pacote de \textit{piggyback}. 
 
 \end{enumerate}
 
-Desta forma, um nó servidor poderá solicitar que seus nós clientes carreguem um
-determinado módulo, dependendo da sua disponibilidade nos nós clientes. Neste
-caso, o \mudccps controlará todo o processo de carregamento dos mesmos.
+\subsection{Definição das variáveis}
 
-Com isso, o \mudccps se tornará um protocolo extensível que gerencia quais
-algoritmos devem ser executados em cada ponto de extensão. Esses algoritmos
-podem ser adicionados ao protocolo através de módulos do sistema operacional,
-carregáveis utilizando-se comandos como o \textit{modprobe} (no Linux, por
-exemplo) e manipulados (passagem de parâmetros) pela aplicação através de uma
-API de programação, por exemplo, utilizando-se as primitivas
-\textit{setsockopt()} e \textit{getsockopt()} da especificação \textit{BSD
-Socket API}~\cite{1197551}.
+- EXPLICAR A GERAÇÃO DE TRÁFEGO BACKGROUND
 
-Para que as aplicações possam utilizar o \mudccp, o protocolo deve ser
-compatível com todas as funções prevista na especificação \textit{BSD Socket
-API}, são elas: \textit{socket()}, \textit{bind()}, \textit{listen()},
-\textit{connect()}, \textit{accept()}, \textit{send()}, \textit{recv()},
-\textit{write()}, \textit{read()}, \textit{sendto()}, \textit{recvfrom()},
-\textit{close()}, \textit{select()}, \textit{setsockopt()},
-\textit{getsockopt()} e \textit{pull()}.
+Com base nas métricas definidas, determinaram-se as variáveis independentes (Tabela~\ref{tb:variaveis-independentes}), as variáveis dependentes (Tabela~\ref{tb:variaveis-dependentes}) e os fatores (Tabela~\ref{tb:fatores}).
 
-Outros trabalhos podem ser desenvolvidos para tornar o \mudccps compatível com o
-padrão de \textit{sockets} do sistema operacional Windows, conhecido pelo nome
-de \textit{winsock}. Todavia, por ser um sistema operacional de código fechado,
-a implementação do \mudccps só será possível após sua padronização em forma de
-RFC.
+\begin{table}[b!ht]
+  \centering
+  \caption{Tabela das variáveis independentes utilizadas nos experimentos.}
+  \renewcommand{\arraystretch}{1}% Spread rows out...
+  \begin{tabular}{>{}m{2.5in} >{}m{3.2in}}
+    \toprule
+    \textbf{Variáveis independentes} & \textbf{Valores} \\
+    \midrule
+    Largura de banda das LANs & \ut{100}{Mbps} \\
+    Atraso das LANs & $\le$ \ut{1}{ms} \\
+    Largura de banda da WAN$^1$ & \ut{10}{\%} da capacidade total do canal \\
+    Número de nós roteadores & 41 \\
+    Tamanho do buffer do roteador & \ut{8}{s} (por mídia) \\
+    Tamanho máximo do datagrama & \ut{1500}{Bytes} (OverSim) e \ut{4096}{Bytes} (CCNSim) \\
+    \bottomrule
+  \end{tabular}
+  \\\scriptsize\raggedright
+  $^1$ Por exemplo, nos canais ilustrados na cor preta da Figura~\ref{fig:rede-geant}, utilizou-se \ut{10}{Gbps} em vez de \ut{100}{Gbps}.
+  \normalsize
+  \label{tb:variaveis-independentes}
+\end{table}
 
 
+\begin{table}[b!ht]
+  \centering
+  \caption{Tabela das variáveis dependentes utilizadas nos experimentos.}
+  \renewcommand{\arraystretch}{1}% Spread rows out...
+  \begin{tabular}{>{}m{2in} >{}m{3.5in}}
+    \toprule
+    \textbf{Variáveis dependentes} & \textbf{Valores} \\
+    \midrule
+    Atraso de inicialização do fluxo &  \\
+    Índice do Continuidade (\%) &  \\
+    Distorção do vídeo (\%) &  \\
+    Número de conexões no servidor &  \\
+    Número de clientes que receberam acima de 90\%, 80\% e 70\% da mídia total de nós na rede &  \\
+    Qualidade das parcerias &  \\
+    \bottomrule
+  \end{tabular}
+  \label{tb:variaveis-dependentes}
+\end{table}
+
+
+% Métricas:
+%    - Atraso de inicialização do fluxo
+%    - Índice do Continuidade / Quantidade de interrupções / tempo de recuperação (?)
+%    - Distorção do conteúdo recebido em comparação ao transmitido
+%    - Sobrecarga de controle
+%    - Número de conexões no servidor / entre nós
+%    - Número de nós clientes que receberam 90%, 80% e 70% da mídia do total de nós na rede
+%    - Qualidade das parcerias, determinada pela taxa de transmissão entre o nó que compartilha e o nó que recebe: verifica se tinha um canal melhor (maior capacidade de transmissão se comparado ao canal utilizado) entre o nó provedor e o nó receptor.
+
+
+\begin{table}[b!ht]
+  \centering
+  \caption{Tabela dos fatores considerados nos experimentos.}
+  \renewcommand{\arraystretch}{1}% Spread rows out...
+  \begin{tabular}{>{}m{2.5in} >{}m{3.0in}}
+    \toprule
+    \textbf{Fatores} & \textbf{Níveis} \\
+    \midrule
+    Taxa de upload dos nós & \ut{512}{Kbps}, \ut{1}{Mbps}, \ut{2}{Mbps} \\
+    Distribuição da Taxa de upload & Homogênea ou Heterogênea$^1$ \\
+    Número de nós clientes & 500; 1500; 15.000; 30.000; 60.000 \\
+    Número de nós servidores & 1 -- 3 \\
+    Dinâmica da rede (\textit{churn})$^2$ & Sem churn, RandomChurn \\
+    \bottomrule
+  \end{tabular}
+%   \renewcommand{\baselinestretch}{0.3}\normalsize
+% \doublespace
+  \scriptsize\raggedright
+  \begin{spacing}{0.5}
+    $^1$ Para valores heterogêneos, alocaram-se valores aleatórios em distribuição uniforme.\\
+    $^2$ \textit{Sem churn}: um nó é adicionado até atingir um número máximo definido por tratamento e, após adicionado, o nó permanece até o final da ensaio. \textit{RandomChurn}: um nó é adicionado ou removido com uma probabilidade \textit{p} a cada ensaio. O valor de \textit{p} é definido por tratamento.
+  \end{spacing}
+
+  \label{tb:fatores}
+\end{table}
+
+% RandonChurn
+% Parameters:
+% targetMobilityDelay: Timespan in seconds between two actions.
+% creationProbability, migrationProbability, removalProbability: Changes the probability of the actions taken when a number is drawn. Example: creationProbability=0.5, removalProbability=0.5, migrationProbability=0. In this case, every targetMobilityDelay seconds a node is added or removed with a probability of 50%. Other example: creationProbability=0.6, removalProbability=0.4, migrationProbability=0. In this example, nodes are created with a probability of 60% and removed with a probability of 40%. This will result in a constantly growing network.
+% Parameter restriction: The sum of all probabilities must not exceed 1.
+
+% http://www.oversim.org/wiki/OverSimChurn
+% NoChurn
+% Node behaviour: No churn. Nodes will be added until targetOverlayTerminalNum is reached; after that, the network will remain static.
+% Parameters: None
+% LifetimeChurn
+% Node behaviour: On creation of a node, his lifetime will be drawn randomly from a given probability function. When this time is reached, the node is removed. A new node will be created after a dead time drawn from the same probability function.
+% Parameters:
+% lifetimeMean: The mean lifetime (in sec).
+% lifetimeDistName: The function used for drawing the lifetimes (default: weibull)
+% ParetoChurn
+% Node behaviour: Similar to LifetimeChurn, a node's lifetime is drawn on creation. However, this is done in a two-stepped process. For details, please read Yao, Z.; Leonard, D.; Wang, X. & Loguinov, D. "Modeling Heterogeneous User Churn and Local Resilience of Unstructured P2P Networks" Proceedings of the 2006 14th IEEE International Conference on Network Protocols, 2006. ICNP '06. 2006, pp. 32--41
+% Parameters:
+% lifetimeMean: The mean lifetime (in sec).
+% deadtimeMean: The mean deadtime (in sec).
+% Notes: This churn generator results in heavy tailed session times similar to empirical results from P2P filesharing networks or MMOGs.
+% RandomChurn
+% Node behavior: In fixed intervals a random number is drawn. Depending on this number, a random node is either added, deleted or migrated.
+% Parameters:
+% targetMobilityDelay: Timespan in seconds between two actions.
+% creationProbability, migrationProbability, removalProbability: Changes the probability of the actions taken when a number is drawn. Example: creationProbability=0.5, removalProbability=0.5, migrationProbability=0. In this case, every targetMobilityDelay seconds a node is added or removed with a probability of 50%. Other example: creationProbability=0.6, removalProbability=0.4, migrationProbability=0. In this example, nodes are created with a probability of 60% and removed with a probability of 40%. This will result in a constantly growing network.
+% Parameter restriction: The sum of all probabilities must not exceed 1.
+
+\subsection{Definição do formato mídia}
+
+Na Tabela~\ref{tb:midia-props}, apresentam-se as propriedades da mídia utilizada no experimento. PEGAR A REFERÊNCIA, DETALHES DA SINTETIZAÇÃO.
+
+\begin{table}[b!ht]
+  \centering
+  \caption{Tabela das propriedades da mídia transmitida.}
+  \renewcommand{\arraystretch}{1}% Spread rows out...
+  \begin{tabular}{>{}m{2in} >{}m{2in}}
+    \toprule
+    \textbf{Propriedades} & \textbf{Valores} \\
+    \midrule
+    Tipo & MPEG4 Part I \\
+    Mídia sintetizada & Star Wars IV \\
+    Número de quadros & \ut{25}{fps} \\
+    Número de quadros em GoP & 12 \\
+    Média VBR & \ut{512}{Kbps} \\
+    \bottomrule
+  \end{tabular}
+  \label{tb:midia-props}
+\end{table}
+
+% \subsection{Definição dos parâmetros do GMTP}
+% 
+% Olhar o capítulo 4 da tese da nandita para ver os valores dos parâmetros que ela usou
+% ver a página 99 para discussões sobre os valores de alfa e beta
+% 
+% \begin{table}[b!ht]
+%   \centering
+%   \caption{Tabela dos parâmetros específicos do GMTP.}
+%   \renewcommand{\arraystretch}{1}% Spread rows out...
+%   \begin{tabular}{>{}m{2in} >{}m{2in}}
+%     \toprule
+%     \textbf{Parâmetros} & \textbf{Valores} \\
+%     \midrule
+%      &  \\
+%      &  \\
+%      &  \\
+%     \bottomrule
+%   \end{tabular}
+%   \label{tb:gmpt-params}
+% \end{table}
+
+\subsection{Definição da população}
+
+A população é constituída por dados de duas variáveis 
+dependentes do protocolo DCCP, previamente escolhidas, 
+coletados da rede de computadores real e do simulador NS-3 
+através do módulo. Cada ensaio tem 300s, para cada segundo 
+uma amostra era coletada, totalizando 300 amostras para cada 
+variável dependente em um determinado tratamento. Detalhes 
+sobre a natureza destas variáveis bem como informações mais 
+aprofundadas de como foi feito o experimento pode-se ver nas 
+seções seguintes.
+
+====
+
+A população e constituída por dados provenientes da variavel dependente vazão obtidos
+a partir da execução dos algoritmos de controle de congestionamento CCID-2 e CCID-3 
+do DCCP. Os dados foram coletados a partir de simulações realizadas pelo NS-3, onde
+cada ensaio foi executado durante o tempo de 100 segundos. Uma amostra da vazão foi
+coletada a cada segundo, totalizando 100 amostras.
+
+====
+
+A população e constituída por dados provenientes da variável dependente vazãoo obtidos
+a partir da execução do algoritmo de controle de congestionamento Cubic em confronto
+com o CCID-2 e o CCID-3, tomados independentemente. Cada ensaio foi executado com
+200 segundos de duração, sendo coletada uma amostra por segundo referente a média da
+vazão obtida pelo receptor, totalizando 200 amostras.
+
+\subsection{Definição dos tratamentos}
+
+Unidades experimentais: GMTP, Denacast/CoolStreaming e CCN-TV
 
 \section{Resultados e Discussões}
 \label{sec:resdisc}
@@ -308,14 +345,6 @@ REPENSAR SE AVALIA TAMBÉM O CCN-TV OU NÃO! SE NÃO FOR FAZER ISSO, REVER AS INFOR
 MANTER O PPSP/Swift? Se sim, rever o que o nazareno colocou sobre isso...
 
 
-\subsection{Métodos e simulações}
-
-\subsection{Parâmetros de simulação}
-
-\subsection{Resultados}
-
-\subsection{Discussões}
-
 % -----------------
 
 
@@ -333,8 +362,6 @@ MANTER O PPSP/Swift? Se sim, rever o que o nazareno colocou sobre isso...
 % expiram rapidamente
 %
 
-\section{GMTP vs. CCN-TV}
-
 CCN-TV 6550523
 
 % - http://named-data.net/wp-content/uploads/2013_Yuan_Infocom_Mini.pdf
@@ -343,13 +370,103 @@ CCN-TV 6550523
 cite 6607500
 cite 6386696
 
-\subsection{Métodos e simulações}
-
-\subsection{Parâmetros de simulação}
-
-\subsection{Resultados}
-
-\subsection{Discussões}
 
 \section{Sumário do Capítulo}
 \label{sec:resdisc-sumario}
+
+A interoperabilidade é uma medição arquitetural, explicar isso. Como medir a quantidade de aplicações de distribuição de mídias ao vivo diferentes e a quantidade de eventos iguais sendo transmitidos
+
+
+
+
+
+
+
+
+
+
+
+
+% \subsection{Considerações sobre Implementação}
+% 
+% Com o intuito de investigar o desempenho do GMTP, implementou-se no simulador de redes OMNet++~\cite{XU2011} suas principais funcionalidades. A versão  e sua versão atual do protocolo já permite a execução de transmissão de dados. Com o
+% desenvolvimento preliminar do protocolo \mudccps no simulador NS-2, permitiu-se
+% a execução de diversas simulações a fim de avaliar o comportamento do protocolo
+% considerando diversas configurações.
+% 
+% Em linhas gerais, a implementação no referido simulador de rede permite a
+% comunicação entre os nós através dos modos de transmissão multicast e unicast.
+% Foram implementados os tipos de pacotes do \mudccps e os processos de
+% estabelecimento de conexão, incluindo o processo de uso de nós relays, troca
+% de dados em modos multicast e unicast e os algoritmos para controle de
+% congestionamento, incluindo o uso de nós reporters.
+% 
+% Contudo, não foi implementado o arcabouço de extensão para permitir o
+% desenvolvimento de novos algoritmos para o processo de conexão, descoberta e
+% seleção de nós, adaptação de fluxo de dados e tolerância a falhas. Tal
+% implementação será feita no núcleo do sistema operacional Linux, juntamente com
+% todos os mecanismos básicos para o funcionamento do \mudccp.
+% 
+% A proposta é de implementar um arcabouço de extensão para as funções previstas
+% no \mudccp, permitindo-se o desenvolvimento e adição de novos algoritmos para
+% as funcionalidades supracitadas, de modo que torne o \mudccps flexível para
+% permitir que qualquer aplicação os utilizem.
+% 
+% Na prática, um cenário desejado para essa proposta de implementação do \mudccps
+% é que o desenvolvedor possa configurar quais algoritmos deseja utilizar em sua
+% aplicação, permitindo-se que estes sejam alterados em modo de execução da
+% da mesma. Neste caso, suponha um algoritmo de descoberta de nós chamado
+% \textit{DN-1}, um algoritmo para controle de congestionamento chamado
+% \textit{CC-2}, um algoritmo de tolerância a desconexão \textit{TD-3}; um
+% algoritmo de adaptação de fluxo \textit{AF-4} e um algoritmo para reciprocidade
+% % \textit{R-2}. As implementações de tais algoritmos serão feitas na camada de
+% transporte, acoplando-as em forma de módulos do sistema operacional ao protocolo
+% \mudccp. Em seguida, as aplicações podem selecionar quais algoritmos melhor se
+% adequa as suas necessidades, com o \mudccps sendo responsável por:
+% 
+% \begin{enumerate}
+% 
+%   \item carregar o conjunto de algoritmos \textit{A = \{DN-1, CC-2, TD-3, AF-4,
+% R-2\}};
+% 
+%   \item definir os parâmetros iniciais para cada um dos algoritmos em A,
+% definidos pela aplicação;
+% 
+%   \item executar funções preliminares para ajustes iniciais, tais como informar
+% aos nós participantes de uma transmissão quais dos algoritmos estão sendo
+% utilizados (o conjunto \textit{A}) e quais outros estão disponíveis;
+% 
+%   \item executar os algoritmos em momentos apropriados de acordo com os eventos
+% de rede, notificando a aplicação caso necessário e desejável pela aplicação;
+% 
+%   \item descarregar os algoritmos quando não forem mais necessários e informar
+% aos nós parceiros.
+% 
+% \end{enumerate}
+% 
+% Desta forma, um nó servidor poderá solicitar que seus nós clientes carreguem um
+% determinado módulo, dependendo da sua disponibilidade nos nós clientes. Neste
+% caso, o \mudccps controlará todo o processo de carregamento dos mesmos.
+% 
+% Com isso, o \mudccps se tornará um protocolo extensível que gerencia quais
+% algoritmos devem ser executados em cada ponto de extensão. Esses algoritmos
+% podem ser adicionados ao protocolo através de módulos do sistema operacional,
+% carregáveis utilizando-se comandos como o \textit{modprobe} (no Linux, por
+% exemplo) e manipulados (passagem de parâmetros) pela aplicação através de uma
+% API de programação, por exemplo, utilizando-se as primitivas
+% \textit{setsockopt()} e \textit{getsockopt()} da especificação \textit{BSD
+% Socket API}~\cite{1197551}.
+% 
+% Para que as aplicações possam utilizar o \mudccp, o protocolo deve ser
+% compatível com todas as funções prevista na especificação \textit{BSD Socket
+% API}, são elas: \textit{socket()}, \textit{bind()}, \textit{listen()},
+% \textit{connect()}, \textit{accept()}, \textit{send()}, \textit{recv()},
+% \textit{write()}, \textit{read()}, \textit{sendto()}, \textit{recvfrom()},
+% \textit{close()}, \textit{select()}, \textit{setsockopt()},
+% \textit{getsockopt()} e \textit{pull()}.
+% 
+% Outros trabalhos podem ser desenvolvidos para tornar o \mudccps compatível com o
+% padrão de \textit{sockets} do sistema operacional Windows, conhecido pelo nome
+% de \textit{winsock}. Todavia, por ser um sistema operacional de código fechado,
+% a implementação do \mudccps só será possível após sua padronização em forma de
+% RFC.

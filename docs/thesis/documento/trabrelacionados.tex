@@ -45,7 +45,7 @@ Diversas propostas e tecnologias destinadas à distribuição de mídias ao vivo for
 \label{fig:gmtp-posicao}
 \end{figure}
 
-Na Figura~\ref{fig:gmtp-posicao}, ilustram-se os principais representantes e marcos no contexto de distribuição de mídias ao vivo, bem como a evolução das arquiteturas e modelos de serviços adotados na Internet (incluindo o GMTP). Como pode-se observar, atualmente existem duas vertentes para transmissão de dados na Internet: as Redes IP e as Redes Centradas na Informação. Para as soluções disponíveis nas redes IP, destacam-se o sistema DONet/CoolStreaming~\cite{xinyan_zhang_coolstreaming/donet:_2005}, o Denacast~\cite{5764567} e o protocolo DASH~\cite{6077864}, detalhados na Seção~\ref{sec:proto-app-ea}. Já para as Redes ICN, destacam-se o CCN/NDN~\cite{6419703} e o sistema CCN-TV~\cite{6550523}. Apesar do foco ser nesses trabalhos, outros trabalhos relevantes serão discutidos ao longo deste capítulo.
+Na Figura~\ref{fig:gmtp-posicao}, ilustram-se os principais representantes e marcos no contexto de distribuição de mídias ao vivo, bem como a evolução das arquiteturas e modelos de serviços adotados na Internet (incluindo o GMTP). Como pode-se observar, atualmente existem duas vertentes para transmissão de dados na Internet: as Redes IP e as Redes Centradas na Informação. Para as soluções disponíveis nas redes IP, destacam-se o sistema DONet/CoolStreaming~\cite{xinyan_zhang_coolstreaming/donet:_2005}, o Denacast~\cite{Jahromi2012,5764567} e o protocolo DASH~\cite{6077864}, detalhados na Seção~\ref{sec:proto-app-ea}. Já para as Redes ICN, destacam-se o CCN/NDN~\cite{6419703} e o sistema CCN-TV~\cite{6550523}. Apesar do foco ser nesses trabalhos, outros trabalhos relevantes serão discutidos ao longo deste capítulo.
 
 Até 2004, predominaram soluções de transmissão de mídias ao vivo baseado no modelo de serviço cliente/servidor, com os sistemas sendo capazes de suportar algumas dezenas de usuários por sessão. Em seguida, com base nas pesquisas sobre compartilhamento de arquivos considerando o modelo de serviço P2P, estenderam-se tal modelo de serviço para distribuição de mídias ao vívo. Naquela época (2005), destacou-se o projeto CoolStreaming, sendo o primeiro capaz de distribuir um mesmo evento para aproximadamente 40 mil nós clientes. Em 2008, os autores do CoolStreaming propuseram melhorias arquiteturais, propondo-se a mudança do método \textit{pull} para um o método \textit{push-pull} de \textit{download} das partes de uma mídia.
 
@@ -902,10 +902,7 @@ taxa de transmissão em direção ao nó receptor de acordo com a taxa de transmissã
 \label{subsec:denacast}
 
 O Denacast é um sistema para distribuição de mídias ao vivo baseado em um
-arquitetura híbrida P2P/CDN~\cite{5764567}. A porção P2P do sistema é adaptada
-do sistema CoolStreaming de modo que suporte a porção CDN. Segundo seus autores,
-o escalonador de distribuição de mídias do Denacast é idêntico ao do CoolStreaming,
-que é considerado o \aspas{coração} do sistema.
+arquitetura híbrida P2P/CDN~\cite{Jahromi2012,5764567}. A porção P2P do sistema é adaptada do sistema CoolStreaming de modo que suporte a porção CDN. Segundo seus autores, o escalonador de distribuição de mídias do Denacast é idêntico ao do CoolStreaming, que é considerado o \aspas{coração} do sistema.
 % Sendo assim, a seguir, discute-se apenas as diferenças entre ambos, com foco em
 % aspectos relacionados às interações entre a rede P2P e a rede CDN.
 
@@ -978,7 +975,7 @@ de uma rede CDN. Isto permite um melhor agrupamento dos nós em uma determinada
 região da rede (delimitada pela localização do nó servidor da CDN). Nesse
 sentido, o Denacast escala melhor o número de nós e melhora as métricas de
 qualidade de serviço relacionadas à transmissão de uma mídia ao vivo se
-comparado ao CoolStreaming~\cite{5764567}.
+comparado ao CoolStreaming~\cite{Jahromi2012,5764567}.
 
 O Denacast é o sistema que mais se aproxima ao GMTP, devido a sua estratégia de
 unir diferentes redes de malha quando a quantidade de nós em uma determinada
@@ -1364,6 +1361,6 @@ Com relação a arquitetura de rede ICN, em especial a NDN, e o GMTP, enumeram-se 
 \section{Sumário do Capítulo}
 \label{sec:trabrel-sumario}
 
-Neste capítulo, apresentou-se uma avaliação crítica acerca de um conjunto de propostas para distribuição de mídias ao vivo, considerando-se os aspectos arquiteturais e de modelo de serviço de cada solução. Destacou-se as propostas concorrentes, contrapondo-se as limitações de cada uma frente ao GMTP, esclarecendo-as individualmente.
+Neste capítulo, apresentou-se uma avaliação crítica acerca de um conjunto de propostas para distribuição de mídias ao vivo, considerando-se os aspectos arquiteturais e de modelo de serviço de cada solução. Destacou-se as propostas concorrentes, contrapondo-se as limitações de cada uma frente ao GMTP, as quais foram individualmente discutidas.
 
-No próximo capítulo, detalha-se o funcionamento do GMTP e, no Capítulo~\ref{cap:analisedesemp}, retoma-se outra discussão comparativa, porém exclusivamente sobre o desempenho do GMTP frente aos seus principais concorrentes: o Denacast e o CCN-TV.
+Ao considerar aspectos arquiteturais e de funcionalidades, destaca-se que as propostas Denacast/CoolStreaming e a CCN-TV são as mais similares ao GMTP. Por este motivo, deve-se estudar mais detalhadamente os ganhos e limitações do GMTP frente a essas duas propostas. Sendo assim, após apresentar detalhes do protocolo GMTP no capítulo a seguir, posteriormente (Capítulo~\ref{cap:analisedesemp}), retoma-se essa discussão comparativa com foco no projeto e no desempenho do GMTP em confrontos com o Denacast/CoolStreaming e o CCN-TV.

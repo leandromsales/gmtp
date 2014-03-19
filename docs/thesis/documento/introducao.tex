@@ -343,7 +343,10 @@ Diante do exposto, pretende-se responder a seguinte questão de pesquisa: \textit
 
 \section{Hipótese}
 
-Para responder as questões supracitadas, adota-se a seguinte hipótese: \textit{a constituição de uma rede de favores entre roteadores que interceptam, realizam cache temporário e compartilham pacotes de dados tanto em modo \textit{multicast} (em redes locais) quanto em modo unicast (entre redes distintas), com o auxílio de um algoritmo para controle de congestionamento assistido pela rede, possibilita a independência dos sistemas e o melhor uso dos recursos de rede, consequentemente, a distribuição eficiente de fluxos de mídias ao vivo}.
+Para responder as questões supracitadas, adota-se a seguinte hipótese: \textit{a constituição de uma rede de favores entre roteadores que interceptam, realizam cache temporário e compartilham pacotes de dados tanto em modo \textit{multicast} (em redes locais) quanto em modo unicast (entre redes distintas), auxiliados por um algoritmo para controle de congestionamento assistido pela rede, resulta em uma melhor distribuição dos fluxos de mídias ao vivo}.
+
+% possibilita a maximização do uso dos recursos de rede,
+% a independência dos sistemas e
 
 % Para o problema em questão é adotada a hipótese de que \textit{a constituição
 % de uma rede de favores entre roteadores que compartilham fluxos de dados
@@ -357,9 +360,11 @@ Diante desta hipótese, remete-se esta pesquisa ao estudo de técnicas e mudança n
 
 \section{Objetivos}
 
-Neste trabalho, o objetivo é o projeto e a avaliação de um protocolo de rede denominado \textit{Global Media Transmission Protocol} (GMTP), que considera uma arquitetura híbrida P2P/CDN para distribuição de mídias ao vivo através da Internet. Mais especificamente, propõe-se um protocolo que explora a relação entre o escalonamento de recursos computacionais em redes P2P, a estabilidade das redes CDN e estratégias (algoritmos) que possam mitigar a complexidade no processo de construção dos sistemas de distribuição de mídias ao vivo na Internet.
+Neste trabalho, o objetivo é o projeto e a avaliação de um protocolo de rede denominado \textit{Global Media Transmission Protocol} (GMTP), que considera uma arquitetura híbrida P2P/CDN para distribuição de mídias ao vivo através da Internet. Mais especificamente, propor um protocolo que explora a relação entre o escalonamento de recursos computacionais em redes P2P, a estabilidade das redes CDN através da proposição de técnicas (algoritmos) que possam aumentar a eficiência de um sistema através da avaliação das métricas que determinam a qualidade de serviço quando usuários reproduzem uma mídia ao vivo através de uma rede. 
 
-O objetivo inicial é dar um passo atrás e repensar \textit{distribuição de mídias ao vivo na Internet}, entendendo-se que a interoperabilidade dos sistemas é uma premissa e interesse geral dos sistemas para reproduzir o conteúdo ao usuário final. Isto significa permitir que os pacotes de dados referentes a uma mídia ao vivo alcancem os sistemas finais o mais rápido possível, sem se preocupar sobre restrições comerciais para acessá-la.
+% mitigar a complexidade no processo de construção dos sistemas de distribuição de mídias ao vivo na Internet.
+
+Inicialmente, propõe-se dar um passo atrás e repensar \textit{distribuição de mídias ao vivo em uma rede de datagramas IP} com a premissa de que a interoperabilidade dos sistemas é interesse geral de seus fornecedores a fim de permitir que os datagramas referentes a uma mídia ao vivo sejam reproduzidos nas aplicações dos usuários finais o mais rápido possível e com melhor qualidade, sem preocupações com restrições comerciais.
 
 % Com o uso de tal protocolo largamente, objetiva-se permitir que a Internet se torne uma grande e única rede de favores para o fim que se discute.
 
@@ -368,20 +373,15 @@ O objetivo inicial é dar um passo atrás e repensar \textit{distribuição de mídia
 \subsection{Objetivos específicos}
 
 Pode-se dividir o objetivo principal deste trabalho nos seguintes
-objetivos específicos:
+objetivos específicos (fases):
 
 \begin{enumerate}
 
-  \item compreender os sistemas e protocolos para distribuição de conteúdos
-multimídia baseados em arquiteturas P2P/CDN, com suporte a controle de
-congestionamento e transmissão \textit{multicast} na camada de
-aplicação. Além disso, (re)visitar as propostas proeminentes nesse contexto, a fim de  entender quais outras funções estão presentes nesse tipo de sistema;
+  \item compreender os sistemas e protocolos para distribuição de conteúdos multimídia baseados em arquiteturas P2P/CDN, com suporte a controle de congestionamento e transmissão \textit{multicast} na camada de aplicação. Além disso, revisar as propostas proeminentes nesse contexto, a fim de  entender quais outras funções estão presentes nesse tipo de sistema e compará-las ao GMTP;
 
- \item descrever o GMTP e discutir as principais funcionalidades com vista à distribuição de mídias ao vivo;
+  \item projetar o GMTP e discutir as principais funcionalidades com vista à distribuição de mídias ao vivo. Além disso, implementar o GMTP em um ambiente que proporcione a obtenção de valores para as métricas que determinam a experiência de um usuário ao assistir a um evento ao vivo através de uma rede, permitindo-se estudá-lo por meio de diferentes configurações, entender suas vantagens, limites e os impactos que seus recursos podem gerar tanto sobre os nós quanto sobre a rede;
 
- \item implementar o GMTP em um ambiente que proporcione a obtenção de valores para as métricas avaliadas, permitindo-se estudá-lo por meio de diferentes configurações de rede, entender seus limites e os impactos que seus recursos podem gerar tanto sobre os nós quanto sobre a rede;
-
- \item avaliar e discutir os métodos e técnicas empregados no GMTP em comparação ao estado da arte, discutindo-se sobre suas vantagens e desvantagens.
+  \item avaliar e discutir o protocolo GMTP em comparação ao estado da arte, discutindo-se sobre suas vantagens e desvantagens.
 
 \end{enumerate}
 
