@@ -38,145 +38,177 @@
 % 
 % Com essa estratégia, possibilita-se aprofundar o entendimento sobre o GMTP em duas vertentes (projeto e desempenho), estudando-o por meio de diferentes configurações de rede e identificando-se suas vantagens e limitações em comparação ao estado da arte e da prática.
 
-Como apresentou-se no Capítulo~\ref{cap:introducao}, o objetivo deste trabalho compreende três grandes fases: 1) revisão das técnicas e propostas para distribuição de mídias ao vivo; 2) descrever o protocolo GMTP e suas funcionalidades; 3) a avaliação do referido protocolo para distribuição de mídias ao vivo. Nos Capítulos~\ref{cap:fundamentacao} e~\ref{trabalhosrelacionados}, apresentou-se a fase 1; no  Capítulo~\ref{cap:mudccp}, apresentou a fase 2 e, neste capítulo, concentram-se as discussões na fase 3.
+Como apresentou-se no Capítulo~\ref{cap:introducao}, o objetivo deste trabalho compreende três grandes fases: 1) revisão das técnicas e propostas para distribuição de mídias ao vivo; 2) descrever o protocolo GMTP e suas funcionalidades; e 3) a avaliação do referido protocolo para distribuição de mídias ao vivo. Nos Capítulos~\ref{cap:fundamentacao} e~\ref{trabalhosrelacionados}, contemplou-se a fase 1; no  Capítulo~\ref{cap:mudccp}, a fase 2 e, neste capítulo, concentram-se as discussões na fase 3.
 
-O restante deste capítulo esta organizado da seguinte forma: na Seção~\ref{sec:metodologia}, apresenta-se a metodologia de avaliação. Na Seção~\ref{sec:resdisc}, discutem-se os resultados da avaliação. E, por fim, na Seção~\ref{sec:resdisc-sumario}, apresenta-se o sumário deste capítulo.
+O cerne desta fase foi avaliar o protocolo GMTP frente às propostas Denacast/CoolStreaming~\cite{Jahromi2012,5764567} e o CCN-TV~\cite{6550523}. Considerou-se dois principais critérios de seleção dessas propostas, em comparação ao GMTP: similaridade arquitetural e os recursos disponíveis para distribuição de um fluxo de dados ao vivo. Tratam-se de duas propostas que consideram a maior parte dos recursos considerados no estado da prática e da arte para distribuição de mídias ao vivo, sendo trabalhos referenciados na literatura e acessíveis para estudos comparativos.
+
+% Nesse contexto, considera-se que as avaliações são equânimes, pois o Denacast/CoolStreaming estende o funcionamento do CoolStreaming para dar suporte a uma estrutura P2P/CDN, o CCN-TV faz uso de uma infraestrutura que considera mais efetivamente o suporte da rede para otimizar o acesso aos dados e o GMTP essencialmente explora uma estratégia híbrida se considerado seus concorrentes.
+
+O restante deste capítulo esta organizado da seguinte forma: na Seção~\ref{sec:metodologia}, apresenta-se a metodologia de avaliação. Na Seção~\ref{sec:resdisc}, discutem-se os resultados da avaliação. E, por fim, na Seção~\ref{sec:resdisc-sumario}, sumariza-se este capítulo.
 
 % PENSAR EM ALGUM GRÁFICO PARA COLOCAR LÁ NA PROBLEMÁTICA?
 
 \section{Metodologia}
 \label{sec:metodologia}
 
-Nesta seção, apresenta-se a metodologia de experimentos para avaliar o protocolo GMTP frente às propostas Denacast/CoolStreaming e o CCN-TV. Essas escolhas foram feitas com base no levantamento do estado da arte/prática em comparação ao GMTP, considerando-se dois critérios: aproximação arquitetural e os recursos disponíveis para distribuição de um fluxo de dados ao vivo. Tratam-se de duas propostas que cobrem boa parte daquelas existentes no estado da prática e da arte, uma vez que são trabalhos bastantes referenciados na literatura e um já em funcionamento na Internet. Além disso, considera-se que as avaliações são equânimes, uma vez que o Denacast/CoolStreaming estende o funcionamento do CoolStreaming para dar suporte a uma estrutura P2P/CDN, o CCN-TV faz uso mais efetivo do núcleo da rede a fim de otimizar o acesso aos dados quando muito acessados e o GMTP, que essencialmente segue uma estratégia ligeiramente híbrida entre esses dois concorrentes.
+Para realizar a comparação entre protocolos supracitados, definiu-se a modalidade de avaiação experimental em um ambiente de simulação de rede que proporcionou a construção de um cenário de rede para este fim. Através da definição de fatores (variáveis independentes), mediu-se e analisou-se as principais métricas (variáveis dependentes) que determinam a experiência do usuário ao assistir a um evento através de um sistema de distribuição de mídias ao vivo. Dessa forma, possibilitou-se aprofundar o comportamento do GMTP em relação ao estado da arte/prática, estudando-o em diferentes configurações de rede a fim de determinar suas vantagens, limites e os impactos que seus recursos podem gerar tanto sobre os nós quanto sobre a rede.
 
-Para realizar tal estudo comparativo, definiu-se a modalidade experimental, considerando um ambiente de simulação de rede que proporcionou a construção de um cenário de rede próximo da realidade, através da definição de variáveis independentes e da medição das variáveis dependentes que, neste estudo, tratam-se das métricas que determinam a experiência do usuário ao utilizar os sistemas de distribuição de mídias ao vivo.
-
-Com relação à instrumentação, utilizou-se OMNet++~\cite{XU2011,omnetpp2014}, um arcabouço para construção de simuladores de rede. Nesse contexto, utilizaram-se dois simuladores: o OverSim~\cite{oversim2014} e o CCN-Sim~\cite{ccnsim2014}. No OverSim, utilizaram-se as implementações do sistema Denacast/CoolStreaming~\cite{denacast2014} e a do GMTP~\cite{gmtp2014}, ao passo que no CCN-Sim, utilizou-se a implementação do CCN-TV~\cite{ccntv2014}.
-
-Com essa estratégia, possibilitou-se aprofundar o comportamento do GMTP em relação ao estado da arte/prática, estudando-o em diferentes configurações de rede a fim de determinar suas vantagens, limites e os impactos que seus recursos podem gerar tanto sobre os nós quanto sobre a rede.
+Sendo assim, a seguir, apresentam-se detalhes do projeto experimental executado, organizado em objetivo e hipótese, instrumentação, topologia de rede, variáveis independentes e dependentes, fatores, população e amostras, formato da mídia utilizada e os tratamentos.
 
 \subsection{Objetivo e hipótese}
 
 O objetivo do experimento foi avaliar o desempenho do GMTP com vistas à hipótese enunciada de que a constituição de uma rede de favores entre roteadores que interceptam, realizam cache temporário e compartilham pacotes de dados tanto em modo \textit{multicast} (em redes locais) quanto em modo unicast (entre redes distintas), auxiliados por um algoritmo para controle de congestionamento assistido pela rede, resulta em uma melhor distribuição dos fluxos de mídias ao vivo.
 
-Para refutar ou não esta hipótese, definiram-se a topologia de rede, as variáveis independentes e dependentes, os fatores, a população, o formato da mídia e os tratamentos. A seguir, descrevem-se todos esses aspectos.
+Para refutar ou não esta hipótese, fracionou-a em duas etapas, com os protocolos estudados sendo as unidades experimentais e aplicando-se os tratamentos ao GMTP em confronto tanto com o Denacast/CoolStreaming e quanto com o CCN-TV, isoladamente. Em cada etapa, definiu-se uma hipótese nula ($H_0$) e uma hipótese alternativa ($H_A$), da seguinte forma:
 
-%  possibilitam a maximização do uso dos recursos de rede, resultando 
-% possibilita a independência dos sistemas e a
+\begin{enumerate}
 
-% A hipótese enunciada pode ser fracionada em duas etapas: 1) avaliação da independência dos sistemas e 2) a maximização do uso dos recursos de rede, que resultam na distribuição eficiente dos fluxos de mídias a vivo. 
+  \item \textit{GMTP vs. Denacast/CoolStreaming}:
+  \begin{itemize}
 
-\subsection{Definição da topologia de rede}
+    \item $H_0$: a eficácia do GMTP e a do Denacast/CoolStreaming é igual, considerando-se as métricas que determinam a qualidade de serviço para distribuição de mídias ao vivo.
 
-Com esse norte, primeiramente definiu-se a topologia da rede a ser simulada. Como ilustra-se na Figura~\ref{fig:rede-geant}, simulou-se o \textit{backbone} da rede GEANT\footnote{Rede GEANT: http://www.geant.net/.}. Atualmente, a GEANT interconecta 10.000 instituições europeias de pesquisa e educação e 50 milhões de usuários, composta por 41 roteadores conectados por meio de canais de transmissão com capacidades que variam entre \ut{1}{Gbps} e \ut{100}{Gbps}. No caso da simulação, utilizou-se apenas \ut{10}{\%} da capacidade de transmissão original da rede, a fim de gerar pontos de super utilização de acordo com a quantidade de nós clientes interessados em receber um fluxo de dados multimídia. A quantidade de nós clientes é variável de acordo com diferentes tratamentos, discutidos mais adiante.
+    \item $H_A$: a eficácia do GMTP e do Denacast/CoolStreaming é diferente, considerando-se as métricas que determinam a qualidade de serviço para distribuição de mídias ao vivo.
 
-\begin{figure}[ht]
+  \end{itemize}
+
+  \item \textit{GMTP vs. CCN/TV}: 
+  \begin{itemize}
+
+    \item $H_0$: a eficácia do GMTP e do CCN-TV é igual, considerando-se as métricas que determinam a qualidade de serviço para distribuição de mídias ao vivo.
+
+    \item $H_A$: a eficácia do GMTP e do CCN-TV é diferente considerando-se as métricas que determinam a qualidade de serviço para distribuição de mídias ao vivo.
+
+  \end{itemize}
+
+\end{enumerate}
+
+Sendo assim, a meta do estudo foi refutar a hipótese $H_0$ nas duas etapas, obtendo assim forte evidência de que $H_1$ é verdadeira.
+
+\subsection{Topologia de rede}
+
+Com esse norte, primeiramente definiu-se a topologia da rede. Como ilustra-se na Figura~\ref{fig:rede-geant}, simulou-se o \textit{backbone} da rede GEANT\footnote{Rede GEANT: http://www.geant.net/.}. Atualmente, a GEANT interconecta 10.000 instituições europeias de pesquisa e educação e 50 milhões de usuários, composta por 41 roteadores conectados por meio de canais de transmissão com capacidades que variam entre \ut{1}{Gbps} e \ut{100}{Gbps}. No caso da simulação, utilizou-se apenas \ut{10}{\%} da capacidade de transmissão original da rede, a fim de gerar pontos de super utilização de acordo com a quantidade de nós clientes interessados em receber um fluxo de dados multimídia.
+
+\begin{figure}[b!ht]
 \begin{center}
 \includegraphics[natwidth=1110,natheight=939,scale=.34]{imgs/rede-geant.png}
 \end{center}
-\vspace{-1cm}
+\vspace{-0.8cm}
 \caption{\textit{Backbone} da rede GEANT.}
 \label{fig:rede-geant}
 \end{figure}
 
-Na Tabela~\ref{tb:param-base}, descrevem-se os parâmetros e valores gerais utilizados nos experimentos, com base na topologia da rede definida.
+\subsection{Definição de Variáveis}
 
-\begin{table}[ht]
-  \centering
-  \caption{Tabela dos parâmetros e valores gerais utilizados nos experimentos.}
-  \renewcommand{\arraystretch}{1}% Spread rows out...
-  \begin{tabular}{>{}m{2.6in} >{}m{2.6in}}
-    \toprule
-    \textbf{Parâmetros} & \textbf{Valores} \\
-    \midrule
-    Número de nós roteadores (\textit{backbone}) & 41 \\
-    Tempo de simulação de cada ensaio & \ut{900}{s} \\
-    Nível de confiança & \ut{95}{\%} \\
-    \bottomrule
-  \end{tabular}
-  \label{tb:param-base}
-\end{table}
+As variáveis foram definidas em 3 categorias: independentes, fatores e independentes.
 
-\subsection{Definição das métricas}
+\subsubsection{Variáveis independentes:}
 
-Definida a topologia de rede e os parâmetros gerais para executar as simulações, delimitaram-se algumas métricas com base na referência~\cite{5343509}, organizadas em três grupos:
-
-\begin{enumerate}
-
- \item \textit{Qualidade de serviço à aplicação:} avaliam-se o atraso para iniciar a reprodução de uma mídia ao vivo; o índice de continuidade, determinado pela quantidade de interrupções vezes a duração das interrupções (em segundos); e a qualidade do conteúdo recebido em comparação ao conteúdo original.
-
- EXPLICAR MELHOR CADA COISA DESSA
-
-Índice de Continuidade = quantidade de interrupções * (tempo * 1,5)
-Ver como se faz esse calculo: média geométrica?:
-Índice de Continuidade = quantidade de interrupções * tempo / quantidade de interrupções + tempo
-ou média ponderada? melhor:
-IC = (QI + TI) / (QI + TI*2)
-
-
-
-Distorção:
-\begin{verbatim}
-Vídeo original: ======================================== 100%
-Vídeo recebido: =====    ====   =====    ===============  70%
-\end{verbatim}
-
-%   1 interrupção de 6 segundos == 2 interrupções de 3 segundos
-%   Acho que uma interrupção mais longa é mais grave do várias interrupções mais curtas: uma interrupção mais longa dificulta o usuário entender mais o contexto se comparado a várias interrupções mais curtas
-
- \item \textit{Escalabilidade do sistema:} avalia-se a quantidade de nós simultâneos que foram capazes de receber o fluxo de dados da mídia transmitida com um nível máximo de distorção. Nesse caso, mediu-se também o nível de contribuição das redes CDN e P2P separadamente, que corresponde à quantidade de fluxos transmitidos pelos servidores da CDN e pelos nós da rede P2P.
-
- EXPLICAR MELHOR CADA COISA DESSA
-
- \item \textit{Sobrecarga de controle:} avalia-se a quantidade de pacotes de controle transmitidos por um protocolo durante o tempo de simulação (contagem dos pacotes que não transportam dados da mídia), mas considera-se 0,5 cada pacote de \textit{piggyback}. 
-
-\end{enumerate}
-
-\subsection{Definição das variáveis}
-
-- EXPLICAR A GERAÇÃO DE TRÁFEGO BACKGROUND
-
-Com base nas métricas definidas, determinaram-se as variáveis independentes (Tabela~\ref{tb:variaveis-independentes}), as variáveis dependentes (Tabela~\ref{tb:variaveis-dependentes}) e os fatores (Tabela~\ref{tb:fatores}).
+Na Tabela~\ref{tb:variaveis-independentes}, apresentam-se as variáveis independentes utilizadas nos experimentos, com base na topologia da rede apresentada anteriormente.
 
 \begin{table}[b!ht]
   \centering
-  \caption{Tabela das variáveis independentes utilizadas nos experimentos.}
+  \caption{Tabela das variáveis independentes utilizados nos experimentos.}
   \renewcommand{\arraystretch}{1}% Spread rows out...
-  \begin{tabular}{>{}m{2.5in} >{}m{3.2in}}
+  \begin{tabular}{>{}m{2.6in} >{}m{3.2in}}
     \toprule
-    \textbf{Variáveis independentes} & \textbf{Valores} \\
+    \textbf{Parâmetros} & \textbf{Valores} \\
     \midrule
+    Tipo da mídia$^1$ & MPEG4 Part I \\
+    Número de nós roteadores (\textit{backbone}) & 41 \\
+    Tempo de simulação de cada ensaio & \ut{900}{s} \\
     Largura de banda das LANs & \ut{100}{Mbps} \\
     Atraso das LANs & $\le$ \ut{1}{ms} \\
-    Largura de banda da WAN$^1$ & \ut{10}{\%} da capacidade total do canal \\
-    Número de nós roteadores & 41 \\
+    Largura de banda da WAN$^2$ & \ut{10}{\%} da capacidade total do canal \\
     Tamanho do buffer do roteador & \ut{8}{s} (por mídia) \\
-    Tamanho máximo do datagrama & \ut{1500}{Bytes} (OverSim) e \ut{4096}{Bytes} (CCNSim) \\
+    Tamanho máximo do datagrama & \ut{1500}{Bytes} (OverSim) e \ut{4096}{Bytes} (CCNSim)\\
+    Taxa de upload dos nós$^3$ & \ut{512}{Kbps}, \ut{1}{Mbps}, \ut{2}{Mbps} (Heterogênea) \\
+    Dinâmica da rede (\textit{churn})$^4$ & RandomChurn \\
     \bottomrule
   \end{tabular}
   \\\scriptsize\raggedright
-  $^1$ Por exemplo, nos canais ilustrados na cor preta da Figura~\ref{fig:rede-geant}, utilizou-se \ut{10}{Gbps} em vez de \ut{100}{Gbps}.
+  $^1$ Para mais detalhes, consultar Seção~\ref{subsec:tipomidia}.\\
+  $^2$ Por exemplo, nos canais ilustrados na cor preta da Figura~\ref{fig:rede-geant}, utilizou-se \ut{10}{Gbps} em vez de \ut{100}{Gbps}.\\
+  $^3$ Alocaram-se valores aleatórios com base em distribuição uniforme.\\
+  $^4$ \textit{RandomChurn}: a cada intervalo de \ut{3}{s}, um número \textit{n} $\in$ $[0,1]$ foi gerado. Dependendo do valor de \textit{n}, um nó foi adicionado ou removido com uma probabilidade \textit{p} a cada ensaio. Utilizou-se $p=0.6$, ou seja, os nós foram adicionados com uma probabilidade de \ut{70}{\%} e removidos com uma probabilidade de \ut{30}{\%}. \\
   \normalsize
   \label{tb:variaveis-independentes}
 \end{table}
 
+\subsubsection{Fatores:}
+
+Na Tabela~\ref{tb:fatores}, apresentam-se fatores consideradas nos experimentos, os quais seus valores foram variados de um tratamento de experimento para outro.
 
 \begin{table}[b!ht]
   \centering
-  \caption{Tabela das variáveis dependentes utilizadas nos experimentos.}
+  \caption{Tabela dos fatores consideradas nos experimentos.}
   \renewcommand{\arraystretch}{1}% Spread rows out...
-  \begin{tabular}{>{}m{2in} >{}m{3.5in}}
+  \begin{tabular}{>{}m{2.5in} >{}m{3.2in}}
     \toprule
-    \textbf{Variáveis dependentes} & \textbf{Valores} \\
+    \textbf{Fatores} & \textbf{Valores} \\
     \midrule
-    Atraso de inicialização do fluxo &  \\
-    Índice do Continuidade (\%) &  \\
-    Distorção do vídeo (\%) &  \\
-    Número de conexões no servidor &  \\
-    Número de clientes que receberam acima de 90\%, 80\% e 70\% da mídia total de nós na rede &  \\
-    Qualidade das parcerias &  \\
+    Número de nós clientes$^1$ & 500; 1500; 15.000; 30.000; 60.000; 80.000 \\
+    Número de nós servidores & 1, 3, 7 \\
+    Suporte da rede ao protocolo$^2$ & Borda, Parcial e Total \\
     \bottomrule
   \end{tabular}
+  \scriptsize\raggedright
+  \begin{spacing}{0.5}
+    $^1$ Os pedidos de conexão originados pelos nós clientes teve início nos primeiros \ut{100}{s} de cada ensaio. \\
+    $^2$ Apenas no confronto GMTP vs. CCN-TV. \textit{Borda:} suporte apenas nos roteadores conectados na borda da rede. \textit{Parcial:} suporte em \ut{50}{\%} dos roteadores da rede. \textit{Total:} suporte em todos os roteadores da rede.
+  \end{spacing}  
+  \label{tb:fatores}
+\end{table}
+
+% Total de 360
+% 
+
+\subsubsection{Variáveis dependentes:}
+
+As principais métricas para medir um sistema de distribuição de mídias ao vivo podem ser organizadas em três categorias~\cite{5343509}, apresentadas a seguir. 
+
+\begin{enumerate}
+
+ \item \textit{Qualidade de serviço à aplicação:} avaliam-se o atraso para iniciar a reprodução de uma mídia ao vivo após o primeiro pedido (ST); o índice de continuidade (IC); e o nível de distorção (qualidade) do conteúdo recebido em comparação ao conteúdo original (DI). A variável IC é determinada com base na quantidade de interrupções e o tempo de cada interrupção. Sendo assim, determinou-se que IC = (QI + TI) / (QI + TI$\times$2), onde QI é a quantidade total de interrupções e TI é o tempo total de todas as interrupções. Definiu-se um peso maior para o tempo de interrupções se comparado à quantidade de interrupções, pois uma interrupção longa na reprodução da mídia é pior do que várias interrupções curtas.
+
+% Distorção:
+% \begin{verbatim}
+% Vídeo original: ======================================== 100%
+% Vídeo recebido: =====    ====   =====    ===============  70%
+% \end{verbatim}
+
+%   1 interrupção de 6 segundos == 2 interrupções de 3 segundos
+%   Acho que uma interrupção mais longa é mais grave do várias interrupções mais curtas: uma interrupção mais longa dificulta o usuário entender mais o contexto se comparado a várias interrupções mais curtas
+
+ \item \textit{Escalabilidade do sistema:} avalia-se a quantidade de nós simultâneos que foram capazes de receber o fluxo de dados da mídia transmitida com um nível de distorção máximo (ES). Nesse caso, mediu-se o nível de contribuição das redes CDN e P2P separadamente, que corresponde à quantidade de fluxos transmitidos pelos servidores (QS) da CDN e pelos nós da rede P2P (QP).
+
+ \item \textit{Sobrecarga de controle:} avalia-se a quantidade de pacotes de controle (PC) transmitidos por um protocolo durante o tempo de simulação (contagem dos pacotes que não transportam dados da mídia), mas considera-se 0,5 cada pacote de \textit{piggyback}. 
+
+\end{enumerate}
+
+Com base nessas métricas, determinou-se as variáveis dependentes, como apresentam-se na Tabela~\ref{tb:variaveis-dependentes}.
+
+\begin{table}[b!ht]
+  \centering
+  \caption{Tabela das variáveis dependentes (respostas) consideradas nos experimentos.}
+  \renewcommand{\arraystretch}{1}% Spread rows out...
+  \begin{tabular}{>{}m{4.1in} >{}m{1.0in}}
+    \toprule
+    \textbf{Variáveis dependentes} & \textbf{Símbolo} \\
+    \midrule
+    Atraso de inicialização do fluxo & ST \\
+    Índice do continuidade (\%) & IC \\
+    Distorção do vídeo (\%) & DI \\
+    Número de clientes com recepção acima de X\%$^1$ da mídia & ES \\
+    Número de conexões ao servidor & QS \\
+    Número de conexões entre clientes & QP \\
+    Número de pacotes de controle & PC \\
+    \bottomrule
+  \end{tabular}
+  \scriptsize\raggedright
+  \begin{spacing}{0.5}
+    $^1$ As faixas dos valores de X são 0--20\%, 21--40\%, 41--60\%, 61--80\%, 91--100\%.\\
+  \end{spacing}
   \label{tb:variaveis-dependentes}
 \end{table}
 
@@ -189,83 +221,6 @@ Com base nas métricas definidas, determinaram-se as variáveis independentes (Tab
 %    - Número de conexões no servidor / entre nós
 %    - Número de nós clientes que receberam 90%, 80% e 70% da mídia do total de nós na rede
 %    - Qualidade das parcerias, determinada pela taxa de transmissão entre o nó que compartilha e o nó que recebe: verifica se tinha um canal melhor (maior capacidade de transmissão se comparado ao canal utilizado) entre o nó provedor e o nó receptor.
-
-
-\begin{table}[b!ht]
-  \centering
-  \caption{Tabela dos fatores considerados nos experimentos.}
-  \renewcommand{\arraystretch}{1}% Spread rows out...
-  \begin{tabular}{>{}m{2.5in} >{}m{3.0in}}
-    \toprule
-    \textbf{Fatores} & \textbf{Níveis} \\
-    \midrule
-    Taxa de upload dos nós & \ut{512}{Kbps}, \ut{1}{Mbps}, \ut{2}{Mbps} \\
-    Distribuição da Taxa de upload & Homogênea ou Heterogênea$^1$ \\
-    Número de nós clientes & 500; 1500; 15.000; 30.000; 60.000 \\
-    Número de nós servidores & 1 -- 3 \\
-    Dinâmica da rede (\textit{churn})$^2$ & Sem churn, RandomChurn \\
-    \bottomrule
-  \end{tabular}
-%   \renewcommand{\baselinestretch}{0.3}\normalsize
-% \doublespace
-  \scriptsize\raggedright
-  \begin{spacing}{0.5}
-    $^1$ Para valores heterogêneos, alocaram-se valores aleatórios em distribuição uniforme.\\
-    $^2$ \textit{Sem churn}: um nó é adicionado até atingir um número máximo definido por tratamento e, após adicionado, o nó permanece até o final da ensaio. \textit{RandomChurn}: um nó é adicionado ou removido com uma probabilidade \textit{p} a cada ensaio. O valor de \textit{p} é definido por tratamento.
-  \end{spacing}
-
-  \label{tb:fatores}
-\end{table}
-
-% RandonChurn
-% Parameters:
-% targetMobilityDelay: Timespan in seconds between two actions.
-% creationProbability, migrationProbability, removalProbability: Changes the probability of the actions taken when a number is drawn. Example: creationProbability=0.5, removalProbability=0.5, migrationProbability=0. In this case, every targetMobilityDelay seconds a node is added or removed with a probability of 50%. Other example: creationProbability=0.6, removalProbability=0.4, migrationProbability=0. In this example, nodes are created with a probability of 60% and removed with a probability of 40%. This will result in a constantly growing network.
-% Parameter restriction: The sum of all probabilities must not exceed 1.
-
-% http://www.oversim.org/wiki/OverSimChurn
-% NoChurn
-% Node behaviour: No churn. Nodes will be added until targetOverlayTerminalNum is reached; after that, the network will remain static.
-% Parameters: None
-% LifetimeChurn
-% Node behaviour: On creation of a node, his lifetime will be drawn randomly from a given probability function. When this time is reached, the node is removed. A new node will be created after a dead time drawn from the same probability function.
-% Parameters:
-% lifetimeMean: The mean lifetime (in sec).
-% lifetimeDistName: The function used for drawing the lifetimes (default: weibull)
-% ParetoChurn
-% Node behaviour: Similar to LifetimeChurn, a node's lifetime is drawn on creation. However, this is done in a two-stepped process. For details, please read Yao, Z.; Leonard, D.; Wang, X. & Loguinov, D. "Modeling Heterogeneous User Churn and Local Resilience of Unstructured P2P Networks" Proceedings of the 2006 14th IEEE International Conference on Network Protocols, 2006. ICNP '06. 2006, pp. 32--41
-% Parameters:
-% lifetimeMean: The mean lifetime (in sec).
-% deadtimeMean: The mean deadtime (in sec).
-% Notes: This churn generator results in heavy tailed session times similar to empirical results from P2P filesharing networks or MMOGs.
-% RandomChurn
-% Node behavior: In fixed intervals a random number is drawn. Depending on this number, a random node is either added, deleted or migrated.
-% Parameters:
-% targetMobilityDelay: Timespan in seconds between two actions.
-% creationProbability, migrationProbability, removalProbability: Changes the probability of the actions taken when a number is drawn. Example: creationProbability=0.5, removalProbability=0.5, migrationProbability=0. In this case, every targetMobilityDelay seconds a node is added or removed with a probability of 50%. Other example: creationProbability=0.6, removalProbability=0.4, migrationProbability=0. In this example, nodes are created with a probability of 60% and removed with a probability of 40%. This will result in a constantly growing network.
-% Parameter restriction: The sum of all probabilities must not exceed 1.
-
-\subsection{Definição do formato mídia}
-
-Na Tabela~\ref{tb:midia-props}, apresentam-se as propriedades da mídia utilizada no experimento. PEGAR A REFERÊNCIA, DETALHES DA SINTETIZAÇÃO.
-
-\begin{table}[b!ht]
-  \centering
-  \caption{Tabela das propriedades da mídia transmitida.}
-  \renewcommand{\arraystretch}{1}% Spread rows out...
-  \begin{tabular}{>{}m{2in} >{}m{2in}}
-    \toprule
-    \textbf{Propriedades} & \textbf{Valores} \\
-    \midrule
-    Tipo & MPEG4 Part I \\
-    Mídia sintetizada & Star Wars IV \\
-    Número de quadros & \ut{25}{fps} \\
-    Número de quadros em GoP & 12 \\
-    Média VBR & \ut{512}{Kbps} \\
-    \bottomrule
-  \end{tabular}
-  \label{tb:midia-props}
-\end{table}
 
 % \subsection{Definição dos parâmetros do GMTP}
 % 
@@ -288,60 +243,97 @@ Na Tabela~\ref{tb:midia-props}, apresentam-se as propriedades da mídia utilizada
 %   \label{tb:gmpt-params}
 % \end{table}
 
-\subsection{Definição da população}
+\subsection{População e amostras}
 
-A população é constituída por dados de duas variáveis 
-dependentes do protocolo DCCP, previamente escolhidas, 
-coletados da rede de computadores real e do simulador NS-3 
-através do módulo. Cada ensaio tem 300s, para cada segundo 
-uma amostra era coletada, totalizando 300 amostras para cada 
-variável dependente em um determinado tratamento. Detalhes 
-sobre a natureza destas variáveis bem como informações mais 
-aprofundadas de como foi feito o experimento pode-se ver nas 
-seções seguintes.
+Constituiu-se a população por dados coletados durante a execução dos ensaios referentes às variáveis dependentes apresentadas na Tabela~\ref{tb:variaveis-dependentes}, com granularidade das amostras em segundos. O tempo de duração de cada ensaio foi de \ut{900}{s}, portanto coletou-se 900 amostras para cada variável dependente em um determinado tratamento.
 
-====
+% \subsection{\textit{Design} de experimentos}
+% 
+% Como em uma rede de computadores erros frequentemente ocorrem nas transmissões, se fez necessário \textit{um design} de experimento com replicação. Assim o projeto de experimento escolhido obedece ao \textit{design} $2^k*r$, onde $k=3$ (três níveis) e $r=30$ (trinta replicações por tratamento).
 
-A população e constituída por dados provenientes da variavel dependente vazão obtidos
-a partir da execução dos algoritmos de controle de congestionamento CCID-2 e CCID-3 
-do DCCP. Os dados foram coletados a partir de simulações realizadas pelo NS-3, onde
-cada ensaio foi executado durante o tempo de 100 segundos. Uma amostra da vazão foi
-coletada a cada segundo, totalizando 100 amostras.
+\subsection{Tratamentos}
 
-====
+Como base na combinação sem repetição dos fatores definidos na Tabela~\ref{tb:fatores}, definiu-se os tratamentos, considerando-se as unidades experimentais o GMTP, o Denacast/CoolStreaming e o CCN-TV, comparados em confrontos dois-a-dois, fixando-se o GMTP, com execuções independentes (não simultâneas). Sendo assim, para o confronto GMTP vs. Denacast/CoolStreaming, definiram-se $18$ tratamentos, ao passo que para o confronto GMTP vs. CCN-TV definiram-se $54$ tratamentos.
 
-A população e constituída por dados provenientes da variável dependente vazãoo obtidos
-a partir da execução do algoritmo de controle de congestionamento Cubic em confronto
-com o CCID-2 e o CCID-3, tomados independentemente. Cada ensaio foi executado com
-200 segundos de duração, sendo coletada uma amostra por segundo referente a média da
-vazão obtida pelo receptor, totalizando 200 amostras.
+Com relação a execução de cada tratamento, estabeleceu-se a execução de $50$ ensaios iniciais e calculou-se as medianas $\mu$ das amostras correspondentes às variáveis dependentes apresentadas na Tabela~\ref{tb:variaveis-dependentes}. Em seguida, a fim de obter um nível de confiança de \ut{95}{\%} das medidas obtidas entre os confrontos considerados, calculou-se a inequação de proporcionalidade~\ref{eq:n-confianca}, com $\mu_2 > \mu_1$, utilizada para determinar o tamanho das amostras a fim de comparar duas alternativas~\cite{jain1991}. Como nesse estudo consideraram-se $7$ variáveis dependentes (Tabela~\ref{tb:variaveis-dependentes}), determinou-se $n = max(n_{ST}, n_{IC}, n_{DI}, n_{ES}, n_{QS}, n_{QP}, n_{PC})$, sendo cada tratamento repetido $n+1$ vezes.
 
-\subsection{Definição dos tratamentos}
+\begin{equation}
+\mu_1 - 1.96 \sqrt{\frac{0,995\mu_1}{n}} \le \mu_2 + 1.96 \sqrt{\frac{0,995\mu_2}{n}}, \mu_2 > \mu_1
+\label{eq:n-confianca}
+\end{equation} 
 
-Unidades experimentais: GMTP, Denacast/CoolStreaming e CCN-TV
+\subsection{Instrumentação}
+
+Com relação à instrumentação, utilizou-se OMNet++~\cite{XU2011,omnetpp2014}, um arcabouço para construção de simuladores de rede. Nesse contexto, utilizaram-se dois simuladores: o OverSim~\cite{oversim2014} e o CCN-Sim~\cite{ccnsim2014}. No OverSim, utilizaram-se as implementações do sistema Denacast/CoolStreaming~\cite{denacast2014} e a do GMTP~\cite{gmtp2014} (implementado no contexto deste trabalho), ao passo que no CCN-Sim, utilizou-se a implementação do CCN-TV~\cite{ccntv2014}.
+
+\subsection{Formato mídia}
+\label{subsec:tipomidia}
+
+Na Tabela~\ref{tb:midia-props}, apresentam-se as propriedades da mídia utilizada no experimento~\cite{967596}.
+
+% http://www-tkn.ee.tu-berlin.de/research/trace/ltvt.html
+
+\begin{table}[b!ht]
+  \centering
+  \caption{Tabela das propriedades da mídia transmitida.}
+  \renewcommand{\arraystretch}{1}% Spread rows out...
+  \begin{tabular}{>{}m{2in} >{}m{2in}}
+    \toprule
+    \textbf{Propriedades} & \textbf{Valores} \\
+    \midrule
+    \textit{Codec} do vídeo & MPEG4 Part I \\
+    Mídia sintetizada & Star Wars IV \\
+    Número de quadros & \ut{25}{fps} \\
+    Número de quadros em GoP & 12 \\
+    Média VBR & \ut{512}{Kbps} \\
+    \bottomrule
+  \end{tabular}
+  \label{tb:midia-props}
+\end{table}
+
+Dessa forma, com base na metodologia apresentada nesta seção, coletaram-se as amostras para as variáveis dependentes e realizou-se uma análise dos dados para verificar a veracidade ou não das hipóteses levantadas. A seguir, apresentam-se os resultados e discussões no tocante ao desempenho dos sistemas estudados.
 
 \section{Resultados e Discussões}
 \label{sec:resdisc}
 
-GMTP vs. CoolStreaming
+Nesta seção, apresentam-se os resultados e discussões dos confrontos GMTP vs. Denacast/CoolStreaming e GMTP vs. CCN-TV. Note que a metodologia empregada para obter as medições para as variáveis dependentes assegura uma análise e discussão dos resultados apenas sobre o desempenho do GMTP em relação aos dois sistemas oponentes considerados, porém não se assegura nenhuma análise comparativa/conclusiva entre o Denacast/CoolStreaming e o CCN-TV.
 
-- Denacast com GMTP, DCCP e UDP
-     - Com e sem o RCP
-          - Com RCP sem sub-fluxo
-          - Com RCP com sub-fluxo
-- CoolStreaming com GMTP não faz sentido porque transformaria-se o GMTP em uma aplicação igual a que será utilizada para os confrontos
+% Inicialmente foi feita uma análise estatística da normalidade dos dados com o objetivo de fundamentar a escolha do teste de hipótese adequado a ser usado na análise estatística do  comportamento do protocolo DCCP. Nas subseções seguintes serão exibidos os resultados e discussão referentes às duas análises previamente citadas. 
 
-- Lembrar de enfatizar a interoperabilidade em cenários reais que o GMTP proporciona. "Arquiteturalmente, o GMTP resolve o problema de permitir a interoperabilidade dos sistemas e otimiza o uso de recursos de rede ..."
 
-- Colocar uma curva que mostra a capacidade da rede e o quanto o GMTP consegue usar?
+\subsection{Resultados}
 
-- Pensar em colocar diversas aplicações em execução no mesmo instante. Isso poderia como um "at a glance" na seção de problemática.
+Na Tabela~\ref{tab:resultado-gmtp-denacast}
 
-PENSAR NAS VARIÁVEIS DEPENDENTES E INDEPENDENTES
+Na Tabela~\ref{tab:resultado-gmtp-ccntv}
 
-TEM QUE DIZER QUE USEI O BRITE
+Tentar usar a ideia de destacar algumas linhas e comentá-las
 
-REPENSAR SE AVALIA TAMBÉM O CCN-TV OU NÃO! SE NÃO FOR FAZER ISSO, REVER AS INFORMAÇÕES NA CAP DE TR SOBRE DETALHAR A COMPARAÇÃO, CASO CONTRÁRIO, PENSAR SE DEIXA ESSE ITEM OU TIRA
+% RESULTADO GMTP VS. DENACAST
+\input{analise-desempenho-mudccp-denacast}
+
+% RESULTADO GMTP VS. CCNTV
+\input{analise-desempenho-mudccp-ccntv}
+
+
+\subsection{Discussões}
+
+- Gráficos:
+    * Número de nós clientes x Qualidade da mídia
+    * Número de nós clientes x Atraso de inicialização
+    * Protocolo x Conexões servidor x Conexões entre clientes
+    * Número de nós clientes x Protocolo x Pacotes de controle
+    * Protocolos x Média geométrica (Pensar num gráfico que relacione a média geométrica de todos as variáveis dependentes com os fatores)
+    * Algum gráfico guarda-chuva?
+
+Em um contexto geral, comparando em um único número para cada protocolo, fazer um gráfico de barras, usar média geométrica, ou seja:
+
+Dizer que o GMTP tem um melhor desempenho porque a seleção de nós considera a capacidade do canal
+
+O GMTP borda é melhor ligeiramente melhor que o Denacast
+
+Melhorar o capítulo do GMTP em duas coisas: cabeçalho genérico e a parte de seleção dos melhores caminhos com base na capacidade atual do canal (o problema que pode ocorrer é de flash-crowd)
+
 MANTER O PPSP/Swift? Se sim, rever o que o nazareno colocou sobre isso...
 
 
@@ -350,17 +342,6 @@ MANTER O PPSP/Swift? Se sim, rever o que o nazareno colocou sobre isso...
 
 % OS PROTOCOLOS DE TRANSPORTE NAO FORAM PROJETADOS/PENSADOS/PREPARADOS PARA P2P
 % VER OUTRAS CARACTERÍSTICAS DOS SISTEMAS DE DISTRIBUIÇÃO
-
-% FAZER FIGURA DE COMO ESTES PARÂMETROS SE RELACIONAM
-% startup delay time ->
-% recovery period to restart
-% content distortion
-% vs
-% * qualidade das parcerias -> atraso -> pré-definição de rotas (tracer)
-% redução do churn (oportunismo) -> melhor startup delay time e recovery period
-% to restart -> rede p2p constituída entre os roteadores -> buffer pequeno e
-% expiram rapidamente
-%
 
 CCN-TV 6550523
 
