@@ -38,9 +38,9 @@
 % 
 % Com essa estratégia, possibilita-se aprofundar o entendimento sobre o GMTP em duas vertentes (projeto e desempenho), estudando-o por meio de diferentes configurações de rede e identificando-se suas vantagens e limitações em comparação ao estado da arte e da prática.
 
-Como apresentou-se no Capítulo~\ref{cap:introducao}, o objetivo deste trabalho compreende três grandes fases: 1) revisão das técnicas e propostas para distribuição de mídias ao vivo; 2) descrever o protocolo GMTP e suas funcionalidades; e 3) a avaliação do referido protocolo para distribuição de mídias ao vivo. Nos Capítulos~\ref{cap:fundamentacao} e~\ref{trabalhosrelacionados}, contemplou-se a fase 1; no  Capítulo~\ref{cap:mudccp}, a fase 2 e, neste capítulo, concentram-se as discussões na fase 3.
+Como apresentou-se no Capítulo~\ref{cap:introducao}, o objetivo deste trabalho compreende três grandes fases: 1) revisão das técnicas e propostas para distribuição de mídias ao vivo; 2) descrever o protocolo GMTP; e 3) a avaliação do uso do GMTP para distribuição de mídias ao vivo. Nos Capítulos~\ref{cap:fundamentacao} e~\ref{trabalhosrelacionados}, contemplou-se a Fase 1; no  Capítulo~\ref{cap:mudccp}, a Fase 2 e, neste capítulo, concentram-se as discussões na Fase 3.
 
-O cerne desta fase foi avaliar o protocolo GMTP frente às propostas Denacast/CoolStreaming~\cite{Jahromi2012,5764567} e o CCN-TV~\cite{6550523}. Considerou-se dois principais critérios de seleção dessas propostas, em comparação ao GMTP: similaridade arquitetural e os recursos disponíveis para distribuição de um fluxo de dados ao vivo. Tratam-se de duas propostas que consideram a maior parte dos recursos considerados no estado da prática e da arte para distribuição de mídias ao vivo, sendo trabalhos referenciados na literatura e acessíveis para estudos comparativos.
+O objetivo desta fase foi avaliar o protocolo GMTP frente às propostas Denacast/CoolStreaming~\cite{Jahromi2012,5764567} e o CCN-TV~\cite{6550523}. Considerou-se dois principais critérios de seleção dessas propostas, em comparação ao GMTP: similaridade arquitetural e os recursos disponíveis para distribuição de um fluxo de dados ao vivo. Tratam-se de duas propostas que consideram a maioria das estratégias adotadas no estado da prática/arte para distribuição de mídias ao vivo, sendo tais propostas referenciadas na literatura e acessíveis para estudos comparativos.
 
 % Nesse contexto, considera-se que as avaliações são equânimes, pois o Denacast/CoolStreaming estende o funcionamento do CoolStreaming para dar suporte a uma estrutura P2P/CDN, o CCN-TV faz uso de uma infraestrutura que considera mais efetivamente o suporte da rede para otimizar o acesso aos dados e o GMTP essencialmente explora uma estratégia híbrida se considerado seus concorrentes.
 
@@ -134,7 +134,7 @@ Na Tabela~\ref{tb:variaveis-independentes}, apresentam-se as variáveis independe
   $^1$ Para mais detalhes, consultar Seção~\ref{subsec:tipomidia}.\\
   $^2$ Por exemplo, nos canais ilustrados na cor preta da Figura~\ref{fig:rede-geant}, utilizou-se \ut{10}{Gbps} em vez de \ut{100}{Gbps}.\\
   $^3$ Alocaram-se valores aleatórios com base em distribuição uniforme.\\
-  $^4$ \textit{RandomChurn}: a cada intervalo de \ut{3}{s}, um número \textit{n} $\in$ $[0,1]$ foi gerado. Dependendo do valor de \textit{n}, um nó foi adicionado ou removido com uma probabilidade \textit{p} a cada ensaio. Utilizou-se $p=0.7$, ou seja, os nós foram adicionados com uma probabilidade de \ut{70}{\%} e removidos com uma probabilidade de \ut{30}{\%}. Note que essa função foi iniciada após \ut{400}{s} do início de cada ensaio. \\
+  $^4$ \textit{RandomChurn}: a cada intervalo de \ut{3}{s}, um número \textit{x} $\in$ $[0,1]$ foi gerado. Dependendo do valor de \textit{x}, nós foram mantidos ou removidos com uma probabilidade \textit{p} a cada ensaio. Utilizou-se $p=0.7$, isto é, os nós foram mantidos com uma probabilidade de \ut{70}{\%} e removidos com uma probabilidade de \ut{30}{\%}. Note que essa função foi iniciada após \ut{400}{s} do início de cada ensaio. \\
   \normalsize
   \label{tb:variaveis-independentes}
 \end{table}
@@ -159,7 +159,7 @@ Na Tabela~\ref{tb:fatores}, apresentam-se fatores consideradas no experimento, o
   \scriptsize\raggedright
   \begin{spacing}{0.5}
     $^1$ Acima de 1, os nós clientes solicitaram conexão a um sevidor escolhido aleatoriamente.\\
-    $^2$ Todos os clientes solicitaram a mídia nos primeiros \ut{150}{s} de cada ensaio.
+    $^2$ Todos os clientes solicitaram a mídia nos primeiros \ut{200}{s} de cada ensaio. Para isto, gerou-se uma quantidade igual de números inteiros entre 0-200 correspondente à quantidade de nós clientes a serem conectados.
 %     $^2$ Apenas no confronto GMTP vs. CCN-TV. \textit{Borda:} suporte apenas nos roteadores conectados na borda da rede. \textit{Total:} suporte em todos os roteadores da rede.
   \end{spacing}  
   \label{tb:fatores}
@@ -305,11 +305,21 @@ Ademais, é importante salientar as seguintes decisões na execução do experimento
 
 \begin{enumerate}
 
-  \item Todos os nós clientes, independente do tratamento, solicitaram a recepção da mídia nos primeiros \ut{150}{s} da execução do ensaio;
+  \item FALAR COMO FOI A DISTRIBUIÇÃO DOS NÓS CLIENTES
 
-  \item A função de \textit{churn} foi acionada no instante \ut{400}{s};
+  \item Todos os nós clientes, independente do tratamento, solicitaram a recepção da mídia nos primeiros \ut{200}{s} da execução do ensaio;
 
-  \item Em tratamentos com mais de um servidor da mídia transmitida, os nós clientes solicitaram conexão a um servidor escolhido aleatoriamente;
+  \item A estratégia para acionar a requisição de todos os clientes nos primeiros \ut{200}{s} foi a seguinte: gerou-se uma quantidade de números inteiros entre $0-200$ igual à quantidade de nós clientes determinado em um certo tratamento. Por exemplo, no Tratamento $1$ foram gerados $500$ números aleatórios entre $0-200$ e somou-se o número de ocorrência para cada número gerado. Em seguida, adicionou-se à rede a quantidade de nós correspondente ao número de ocorrências em cada instante da simulação. Por exemplo, se o número $199$ foi gerado $10$ vezes, no instante $199$ da simulação foram adicionados $10$ nós clientes que imediatamente solicitaram a mídia. Para essa distribuição deu-se o nome de mapa de conexão.
+
+  \item O mesmo mapa de conexão foi utilizado na execução dos outros sistemas. Isso significa que na execução dos $21$ tratamentos do GMTP, armazenaram-se os mapas de conexão de cada ensaio de todos os tratamento. Em seguida, quando executaram-se os $21$ tratamentos correspondentes ao Denacast e ao CCN-TV, utilizaram-se os mesmos mapas de conexão, em vez de gerá-los novamente. Isto garantiu que nos primeiros \ut{200}{s} os sistemas foram submetidos às mesmas condições iniciais de conectividade de nós clientes.
+
+  \item A função de \textit{churn} foi acionada no instante \ut{400}{s}. A estratégia foi a seguinte: a cada intervalo de \ut{5}{s}, um número \textit{x} $\in$ $[0,1]$ foi gerado. Dependendo do valor de \textit{x}, \ut{10}{\%} dos nós clientes foram mantidos ou removidos com uma probabilidade \textit{p}. Utilizou-se $p=0.7$, isto é, os nós foram mantidos conectados à rede com uma probabilidade de \ut{70}{\%} e removidos com uma probabilidade de \ut{30}{\%}. Para essa distribuição deu-se o nome de mapa de \textit{churn}.
+
+  \item Tal como ocorreu com os mapas de conexão, na execução do GMTP armazenou-se os mapas de \textit{churn} e os mesmos foram utilizados na execução tanto do Denacast quando para o CCN-TV. De forma similar, isto garantiu que todos os sistemas foram submetidos às mesmas condições de dinâmica da rede após os primeiros \ut{400}{s}.
+
+  \item As taxas de upload de cada nó cliente foram distribuídas aleatoriamente para todos os nós clientes, entre as seguintes alternativas: \ut{512}{Kbps}, \ut{1}{Mbps}, \ut{2}{Mbps}. Para isso, deu-se o nome de mapa de taxas de upload. Tal como no caso dos mapas de conexão e \textit{churn}, os mapas de taxas de upload foram reutilizados na execução dos sistemas Denacast e CCN-TV, assegurando-se a mesma capacidade de transmissão dos nós cliente independente dos sistemas.
+
+  \item Em tratamentos com mais de um servidor da mídia transmitida, os nós clientes solicitaram conexão a um servidor escolhido aleatoriamente.
 
 \end{enumerate}
 
@@ -362,11 +372,146 @@ Na Tabela~\ref{tab:resultado-gmtp-ccntv}
 Tentar usar a ideia de destacar algumas linhas e comentá-las
 
 % RESULTADO GMTP VS. DENACAST
+\afterpage{%
+  \clearpage%
+%   \thispagestyle{empty}% empty page style (?)
+\begin{landscape}
+\renewcommand\multirowsetup{\centering}
+\begin{center}
+\footnotesize
+\begin{longtable}[tp]{c|c|c|c|c|c|c|c}
+\caption[Sumário dos valores obtidos para as variáveis dependentes em cada tratamento do confronto GMTP vs. Denacast/CoolStreaming.]{Sumário dos valores obtidos para as variáveis dependentes em cada tratamento do confronto GMTP vs. Denacast/CoolStreaming.} \label{tab:resultado-gmtp-denacast} \\
+
+\hline\hline
+%\rowcolor[gray]{0.8}
+\multirow{2}{1.4cm}{\textcolor{black}{\bfseries Trat. \#}}
+&
+\multirow{2}{2.4cm}{\textcolor{black}{\bfseries Atraso de inicialização (s)}}
+&
+\multirow{2}{2.7cm}{\textcolor{black}{\bfseries Índice de continuidade (\%)}}
+&
+\multirow{2}{1.9cm}{\textcolor{black}{\bfseries Distorção do vídeo (\%)}}
+&
+\multirow{2}{2.5cm}{\textcolor{black}{\bfseries Conexões ao servidor}}
+&
+\multirow{2}{2.5cm}{\textcolor{black}{\bfseries Conexões entre clientes}}
+&
+\multirow{2}{2.5cm}{\textcolor{black}{\bfseries Pacotes de controle}}
+&
+\multirow{2}{0.6cm}{\textcolor{black}{\bfseries n}} \\
+%\rowcolor[gray]{0.8}
+& & & & & & & \\
+\hline \hline
+\endfirsthead
+
+\multicolumn{8}{c}%
+{{\bfseries \tablename\ \thetable{} -- continuação da página anterior}} \\
+\hline\hline
+%\rowcolor[gray]{0.8}
+\multirow{2}{1.4cm}{\textcolor{black}{\bfseries Trat. \#}}
+&
+\multirow{2}{2.4cm}{\textcolor{black}{\bfseries Atraso de inicialização (s)}}
+&
+\multirow{2}{2.7cm}{\textcolor{black}{\bfseries Índice de continuidade (\%)}}
+&
+\multirow{2}{1.9cm}{\textcolor{black}{\bfseries Distorção do vídeo (\%)}}
+&
+\multirow{2}{2.5cm}{\textcolor{black}{\bfseries Conexões ao servidor}}
+&
+\multirow{2}{2.5cm}{\textcolor{black}{\bfseries Conexões entre clientes}}
+&
+\multirow{2}{2.5cm}{\textcolor{black}{\bfseries Pacotes de controle}}
+&
+\multirow{2}{0.6cm}{\textcolor{black}{\bfseries n}} \\
+%\rowcolor[gray]{0.8}
+& & & & & & & \\
+\hline \hline
+\endhead
+
+\cline{2-7} \multicolumn{8}{c}{Continuação na próxima página} \\ \hline \hline
+\endfoot
+
+\hline \hline
+\endlastfoot
+
 \input{analise-desempenho-mudccp-denacast}
 
+\end{longtable}
+\end{center}
+\end{landscape}
+  \clearpage% Flush page
+}
 
 % RESULTADO GMTP VS. CCNTV
+\afterpage{%
+  \clearpage%
+%   \thispagestyle{empty}% empty page style (?)
+\begin{landscape}
+\renewcommand\multirowsetup{\centering}
+\begin{center}
+\footnotesize
+\begin{longtable}[tp]{c|c|c|c|c|c|c|c}
+\caption[Sumário dos valores obtidos para as variáveis dependentes em cada tratamento do confronto GMTP vs. CCN-TV.]{Sumário dos valores obtidos para as variáveis dependentes em cada tratamento do confronto GMTP vs. CCN-TV.} \label{tab:resultado-gmtp-ccntv} \\
+
+\hline\hline
+%\rowcolor[gray]{0.8}
+\multirow{2}{1.4cm}{\textcolor{black}{\bfseries Trat. \#}}
+&
+\multirow{2}{2.4cm}{\textcolor{black}{\bfseries Atraso de inicialização (s)}}
+&
+\multirow{2}{2.7cm}{\textcolor{black}{\bfseries Índice de continuidade (\%)}}
+&
+\multirow{2}{1.9cm}{\textcolor{black}{\bfseries Distorção do vídeo (\%)}}
+&
+\multirow{2}{2.5cm}{\textcolor{black}{\bfseries Conexões ao servidor}}
+&
+\multirow{2}{2.5cm}{\textcolor{black}{\bfseries Conexões entre clientes}}
+&
+\multirow{2}{2.5cm}{\textcolor{black}{\bfseries Pacotes de controle}}
+&
+\multirow{2}{0.6cm}{\textcolor{black}{\bfseries n}} \\
+%\rowcolor[gray]{0.8}
+& & & & & & & \\
+\hline \hline
+\endfirsthead
+
+\multicolumn{8}{c}%
+{{\bfseries \tablename\ \thetable{} -- continuação da página anterior}} \\
+\hline\hline
+%\rowcolor[gray]{0.8}
+\multirow{2}{1.4cm}{\textcolor{black}{\bfseries Trat. \#}}
+&
+\multirow{2}{2.4cm}{\textcolor{black}{\bfseries Atraso de inicialização (s)}}
+&
+\multirow{2}{2.7cm}{\textcolor{black}{\bfseries Índice de continuidade (\%)}}
+&
+\multirow{2}{1.9cm}{\textcolor{black}{\bfseries Distorção do vídeo (\%)}}
+&
+\multirow{2}{2.5cm}{\textcolor{black}{\bfseries Conexões ao servidor}}
+&
+\multirow{2}{2.5cm}{\textcolor{black}{\bfseries Conexões entre clientes}}
+&
+\multirow{2}{2.5cm}{\textcolor{black}{\bfseries Pacotes de controle}}
+&
+\multirow{2}{0.6cm}{\textcolor{black}{\bfseries n}} \\
+%\rowcolor[gray]{0.8}
+& & & & & & & \\
+\hline \hline
+\endhead
+
+\cline{2-7} \multicolumn{8}{c}{Continuação na próxima página} \\ \hline \hline
+\endfoot
+
+\hline \hline
+\endlastfoot
+
 \input{analise-desempenho-mudccp-ccntv}
+
+\end{longtable}
+\end{center}
+\end{landscape}
+  \clearpage% Flush page
+}
 
 
 \subsection{Discussões}
