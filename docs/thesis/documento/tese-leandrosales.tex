@@ -79,33 +79,14 @@ showstringspaces=false
 \selectlanguage{portuges}
 \sloppy
 
+\input{comandos-definicao-gmtp}
+
+\hyphenation{a-va-li-a-das con-ges-tio-na-men-to a-di-cio-na-dos
+ge-ren-cia-men-to fun-cio-na-li-da-des co-nhe-ça me-lho-ri-as}
 
 \begin{document}
 
-%\Titulo{Transporte de Datagramas Controlados e\\Não Confiáveis para
-%Distribuição de Conteúdos Multimídia entre Pares na Internet}
-
-% \Titulo{\mudccp: Um Protocolo Assistido pela Rede para Distribuição de
-% Conteúdos Multimídia Ao\\Vivo com suporte às Redes Centradas no Conteúdo}
-
-% \Titulo{GMTP: Um Protocolo para Distribuição de Mídias Ao Vivo Através do Compartilhamento de Fluxos em Redes P2P Constituída entre Roteadores}
-
 \Titulo{GMTP: Distribuição de Mídias Ao Vivo através de uma Rede de Favores Constituída entre Roteadores} % pela Intersecção e Seleção de Rotas Comuns}
-
-
-% \Titulo{Um protocolo \textit{Cross-Layer} para Distribuição de Mídias Ao Vivo
-% pelo Compartilhamento de Fluxos de Dados entre Roteadores com Suporte a Redes CDN}
-
-% \Titulo{Um Protocolo \textit{Cross-Layer} para Distribuição de Mídias Ao Vivo
-% Através de uma Rede Sobreposta Constituída por Roteadores}
-
-
-% GMTP: A Cross-Layer Optimization Protocol for Distributing Live Multimedia
-% Content based on Shared Transmission Flows through Peering Routers
-
-% \Titulo{Um protocol \textit{Cross-Layer} de Distribuição de Mídias Ao Vivo
-% Através do Compartilhamento de Fluxos em Redes Híbridas CDN e P2P
-% entre Roteadores}
 
 % \Titulo{GMTP: A Cross-Layer Optimization Protocol (Transport/Network) for
 % Distributing Live Multimedia Content over the Internet by Peering Routers for
@@ -127,22 +108,22 @@ showstringspaces=false
 \cleardoublepage
 
 \begin{resumo}
-\input{resumo.tex}
+% \input{resumo.tex}
 \end{resumo}
 
 \newpage
 \cleardoublepage
 
 \begin{summary}
-\input{abstract.tex}
+% \input{abstract.tex}
 \end{summary}
 
 \newpage
 \cleardoublepage
 
-% \begin{agradecimentos}
+\begin{agradecimentos}
 % \input{agradecimentos.tex}
-% \end{agradecimentos}
+\end{agradecimentos}
 
 \clearpage
 
@@ -155,22 +136,15 @@ showstringspaces=false
 	     {\fancyplain{}{\emph{\rightmark}}}\rhead[\fancyplain{}{\bfseries\leftmark}]%
              {\fancyplain{}{\bfseries\thepage}}\cfoot{}
 
-% \selectlanguage{portuges}
-
 \Sumario
-% \ListadeSimbolos
-% \listoffigures
-% \listoftables
-% % \lstlistoflistings
-% \listofalgorithms
+\ListadeSimbolos
+\listoffigures
+\listoftables
+\listofalgorithms
 \newpage
 \cleardoublepage
 
 \Introducao
-\hyphenation{a-va-li-a-das con-ges-tio-na-men-to a-di-cio-na-dos
-ge-ren-cia-men-to fun-cio-na-li-da-des co-nhe-ça me-lho-ri-as}
-
-\input{comandos-definicao-gmtp}
 
 % \input{introducao}
 % \input{fundamentacao}
@@ -180,11 +154,9 @@ ge-ren-cia-men-to fun-cio-na-li-da-des co-nhe-ça me-lho-ri-as}
 % \input{conclusao}
 
 \bibliographystyle{unsrt} % estilo de bibliografia   plain,unsrt,alpha,abbrv.
-%\bibliographystyle{plain}
-% \bibliographystyle{abnt}
 \bibliography{biblio-phd,biblio-master,biblio-zotero}
 
-% \appendix
-% \input{apendices}
+\appendix
+\input{apendices}
 
 \end{document}
