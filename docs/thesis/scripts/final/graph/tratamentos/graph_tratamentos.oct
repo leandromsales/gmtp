@@ -1,0 +1,371 @@
+#!/opt/local/bin/octave -q
+
+# colors: "blue", "black", "cyan", "green", "magenta", "red", "white", and "yellow"
+
+
+# Graph setup
+axissize = 20;
+ticksize = 12;
+borderlinesize = 2;
+markersize = 5;
+plotlinewidth = 4;
+legendfontsize = 16;
+
+graphdata_denacast=load("-force", "../../../parser/results/denacast-tratamento.txt");
+graphdata_ccntv=load("-force", "../../../parser/results/ccntv-tratamento.txt");
+graphdata_gmtp=load("-force", "../../../parser/results/gmtp-tratamento.txt");
+
+x = {"Denacast/CoolStreaming",
+     "CCN-TV",
+     "GMTP"};
+
+f = gcf();
+set(f,"visible","off") 
+
+function setup_axies(borderlinesize, ticksize)
+    set(gca(),
+        "xlim", [0 19],
+        "xtick", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
+        "xticklabel", {'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18'} 
+       );
+    set(gca(), "xgrid", "off", "ygrid", "on", "linewidth", borderlinesize, "fontsize", ticksize, "fontweight", "bold");
+endfunction
+
+# Startup time
+
+plot(graphdata_denacast(:, 2:2),
+	[";{\bf {\fontsize{", legendfontsize, "} Denacast/CoolStreaming}};"],
+	"marker", "s",
+	"color", "red",
+	"markerfacecolor", "red",
+	"markersize", markersize,
+	"linestyle", "-",
+	"linewidth", plotlinewidth,
+     graphdata_ccntv(:, 2:2),
+	[";{\bf {\fontsize{", legendfontsize, "} CCN-TV}};"],
+	"marker", "o",
+	"color", "black",	
+	"markerfacecolor", "black",
+	"markersize", markersize,
+	"linestyle", "-",
+	"linewidth", plotlinewidth,
+     graphdata_gmtp(:, 2:2),
+	[";{\bf {\fontsize{", legendfontsize, "} GMTP}};"],
+	"marker", "^",
+	"color", "blue",
+	"markerfacecolor", "blue",
+	"linestyle", "-",
+	"markersize", markersize,
+	"linewidth", plotlinewidth
+);
+
+#t = text(0.5, 26, "500", "fontsize", ticksize, "fontweight", "bold");
+#t = text(3.2, 26, "30000", "fontsize", ticksize, "fontweight", "bold");
+#
+
+t = title("Numero de nos clientes (x 1.000)\n", "fontsize", axissize, "fontweight", "bold");
+set(t, "color", "red");
+t = text(3.1, 13, "1 servidor", "fontsize", 12);
+t = text(8.7, 11, "3 servidores", "fontsize", 12);
+t = text(14.9, 8, "5 servidores", "fontsize", 12);
+t = text(0.68, 25.9, "0.5", "fontsize", ticksize, "fontweight", "bold");
+t = text(1.68, 25.9, "1.5", "fontsize", ticksize, "fontweight", "bold");
+t = text(2.72, 25.9, "15", "fontsize", ticksize, "fontweight", "bold");
+t = text(3.72, 25.9, "30", "fontsize", ticksize, "fontweight", "bold");
+t = text(4.72, 25.9, "60", "fontsize", ticksize, "fontweight", "bold");
+t = text(5.72, 25.9, "80", "fontsize", ticksize, "fontweight", "bold");
+t = text(6.68, 25.9, "0.5", "fontsize", ticksize, "fontweight", "bold");
+t = text(7.68, 25.9, "1.5", "fontsize", ticksize, "fontweight", "bold");
+t = text(8.72, 25.9, "15", "fontsize", ticksize, "fontweight", "bold");
+t = text(9.72, 25.9, "30", "fontsize", ticksize, "fontweight", "bold");
+t = text(10.72, 25.9, "60", "fontsize", ticksize, "fontweight", "bold");
+t = text(11.72, 25.9, "80", "fontsize", ticksize, "fontweight", "bold");
+t = text(12.68, 25.9, "0.5", "fontsize", ticksize, "fontweight", "bold");
+t = text(13.68, 25.9, "1.5", "fontsize", ticksize, "fontweight", "bold");
+t = text(14.72, 25.9, "15", "fontsize", ticksize, "fontweight", "bold");
+t = text(15.72, 25.9, "30", "fontsize", ticksize, "fontweight", "bold");
+t = text(16.72, 25.9, "60", "fontsize", ticksize, "fontweight", "bold");
+t = text(17.72, 25.9, "80", "fontsize", ticksize, "fontweight", "bold");
+
+#clabel (c, h, -4:2:6, "fontsize", 12);
+
+hold on;
+h = errorbar(graphdata_denacast(:, 2:2), graphdata_denacast(:, 4:4));
+set (h, "color", "red", "linestyle", "none");
+h = errorbar(graphdata_ccntv(:, 2:2), graphdata_ccntv(:, 4:4));
+set (h, "color", "black", "linestyle", "none");
+h = errorbar(graphdata_gmtp(:, 2:2), graphdata_gmtp(:, 4:4));
+set (h, "color", "blue", "linestyle", "none");
+hold off;
+
+set(legend(x, "location", "northeast"),
+	"fontsize", legendfontsize,
+	"fontweight", "bold");
+fmt = xlabel("Tratamentos #",
+	         "fontweight", "bold",
+	         "fontsize", axissize);
+fmt = ylabel("Atraso de Inicializacao (s)",
+             "fontweight", "bold",
+	         "fontsize", axissize);
+
+setup_axies(borderlinesize, ticksize);
+print("-color", "-deps", "../../../../documento/imgs/results/tratamentos-startup_time.eps");
+#print("-S1800,1200", "-color", "-deps", "../../../../documento/imgs/results/tratamentos-startup_time.eps");
+
+# Continuity Index
+newplot();
+
+plot(graphdata_denacast(:, 6:6),
+	[";{\bf {\fontsize{", legendfontsize, "} Denacast/CoolStreaming}};"],
+	"marker", "s",
+	"color", "red",
+	"markerfacecolor", "red",
+	"markersize", markersize,
+	"linestyle", "-",
+	"linewidth", plotlinewidth,
+     graphdata_ccntv(:, 6:6),
+	[";{\bf {\fontsize{", legendfontsize, "} CCN-TV}};"],
+	"marker", "o",
+	"color", "black",	
+	"markerfacecolor", "black",
+	"markersize", markersize,
+	"linestyle", "-",
+	"linewidth", plotlinewidth,
+     graphdata_gmtp(:, 6:6),
+	[";{\bf {\fontsize{", legendfontsize, "} GMTP}};"],
+	"marker", "^",
+	"color", "blue",
+	"markerfacecolor", "blue",
+	"linestyle", "-",
+	"markersize", markersize,
+	"linewidth", plotlinewidth
+);
+
+hold on;
+h = errorbar(graphdata_denacast(:, 6:6), graphdata_denacast(:, 8:8));
+set (h, "color", "red", "linestyle", "none");
+h = errorbar(graphdata_ccntv(:, 6:6), graphdata_ccntv(:, 8:8));
+set (h, "color", "black", "linestyle", "none");
+h = errorbar(graphdata_gmtp(:, 6:6), graphdata_gmtp(:, 8:8));
+set (h, "color", "blue", "linestyle", "none");
+hold off;
+
+set(legend(x, "location", "east"),
+	"fontsize", legendfontsize,
+	"fontweight", "bold");
+fmt = xlabel("Tratamentos #",
+	     "fontweight", "bold",
+	     "fontsize", axissize);
+fmt = ylabel("Indice de Continuidade (%)",
+             "fontweight", "bold",
+	     "fontsize", axissize);
+ylim ([0 100]);
+
+setup_axies(borderlinesize, ticksize);
+print -color -deps ../../../../documento/imgs/results/tratamentos-continuity_index.eps;
+
+# Distortion
+newplot();
+
+plot(graphdata_denacast(:, 10:10),
+	[";{\bf {\fontsize{", legendfontsize, "} Denacast/CoolStreaming}};"],
+	"marker", "s",
+	"color", "red",
+	"markerfacecolor", "red",
+	"markersize", markersize,
+	"linestyle", "-",
+	"linewidth", plotlinewidth,
+     graphdata_ccntv(:, 10:10),
+	[";{\bf {\fontsize{", legendfontsize, "} CCN-TV}};"],
+	"marker", "o",
+	"color", "black",	
+	"markerfacecolor", "black",
+	"markersize", markersize,
+	"linestyle", "-",
+	"linewidth", plotlinewidth,
+     graphdata_gmtp(:, 10:10),
+	[";{\bf {\fontsize{", legendfontsize, "} GMTP}};"],
+	"marker", "^",
+	"color", "blue",
+	"markerfacecolor", "blue",
+	"linestyle", "-",
+	"markersize", markersize,
+	"linewidth", plotlinewidth
+);
+
+hold on;
+h = errorbar(graphdata_denacast(:, 10:10), graphdata_denacast(:, 12:12));
+set (h, "color", "red", "linestyle", "none");
+h = errorbar(graphdata_ccntv(:, 10:10), graphdata_ccntv(:, 12:12));
+set (h, "color", "black", "linestyle", "none");
+h = errorbar(graphdata_gmtp(:, 10:10), graphdata_gmtp(:, 12:12));
+set (h, "color", "blue", "linestyle", "none");
+hold off;
+
+set(legend(x, "location", "northwest"),
+    "fontsize", legendfontsize,
+    "fontweight", "bold");
+fmt = xlabel("Tratamentos #",
+         "fontweight", "bold",
+         "fontsize", axissize);
+fmt = ylabel("Distorcao (%)",
+             "fontweight", "bold",
+         "fontsize", axissize);
+
+setup_axies(borderlinesize, ticksize);
+print -color -deps ../../../../documento/imgs/results/tratamentos-distortion.eps;
+
+# Server connections 
+newplot();
+
+plot(graphdata_denacast(:, 14:14),
+	[";{\bf {\fontsize{", legendfontsize, "} Denacast/CoolStreaming}};"],
+	"marker", "s",
+	"color", "red",
+	"markerfacecolor", "red",
+	"markersize", markersize,
+	"linestyle", "-",
+	"linewidth", plotlinewidth,
+     graphdata_ccntv(:, 14:14),
+	[";{\bf {\fontsize{", legendfontsize, "} CCN-TV}};"],
+	"marker", "o",
+	"color", "black",	
+	"markerfacecolor", "black",
+	"markersize", markersize,
+	"linestyle", "-",
+	"linewidth", plotlinewidth,
+     graphdata_gmtp(:, 14:14),
+	[";{\bf {\fontsize{", legendfontsize, "} GMTP}};"],
+	"marker", "^",
+	"color", "blue",
+	"markerfacecolor", "blue",
+	"linestyle", "-",
+	"markersize", markersize,
+	"linewidth", plotlinewidth
+);
+
+hold on;
+h = errorbar(graphdata_denacast(:, 14:14), graphdata_denacast(:, 16:16));
+set (h, "color", "red", "linestyle", "none");
+h = errorbar(graphdata_ccntv(:, 14:14), graphdata_ccntv(:, 16:16));
+set (h, "color", "black", "linestyle", "none");
+h = errorbar(graphdata_gmtp(:, 14:14), graphdata_gmtp(:, 16:16));
+set (h, "color", "blue", "linestyle", "none");
+hold off;
+
+set(legend(x, "location", "northwest"),
+    "fontsize", legendfontsize,
+    "fontweight", "bold");
+fmt = xlabel("Tratamentos #",
+         "fontweight", "bold",
+         "fontsize", axissize);
+fmt = ylabel("Conexoes ao servidor (%)",
+             "fontweight", "bold",
+         "fontsize", axissize);
+
+setup_axies(borderlinesize, ticksize);
+print -color -deps ../../../../documento/imgs/results/tratamentos-server_connection.eps;
+
+
+# Clients connections 
+newplot();
+
+plot(graphdata_denacast(:, 18:18),
+	[";{\bf {\fontsize{", legendfontsize, "} Denacast/CoolStreaming}};"],
+	"marker", "s",
+	"color", "red",
+	"markerfacecolor", "red",
+	"markersize", markersize,
+	"linestyle", "-",
+	"linewidth", plotlinewidth,
+     graphdata_ccntv(:, 18:18),
+	[";{\bf {\fontsize{", legendfontsize, "} CCN-TV}};"],
+	"marker", "o",
+	"color", "black",	
+	"markerfacecolor", "black",
+	"markersize", markersize,
+	"linestyle", "-",
+	"linewidth", plotlinewidth,
+     graphdata_gmtp(:, 18:18),
+	[";{\bf {\fontsize{", legendfontsize, "} GMTP}};"],
+	"marker", "^",
+	"color", "blue",
+	"markerfacecolor", "blue",
+	"linestyle", "-",
+	"markersize", markersize,
+	"linewidth", plotlinewidth
+);
+
+hold on;
+h = errorbar(graphdata_denacast(:, 18:18), graphdata_denacast(:, 20:20));
+set (h, "color", "red", "linestyle", "none");
+h = errorbar(graphdata_ccntv(:, 18:18), graphdata_ccntv(:, 20:20));
+set (h, "color", "black", "linestyle", "none");
+h = errorbar(graphdata_gmtp(:, 18:18), graphdata_gmtp(:, 20:20));
+set (h, "color", "blue", "linestyle", "none");
+hold off;
+
+set(legend(x, "location", "northwest"),
+    "fontsize", legendfontsize,
+    "fontweight", "bold");
+fmt = xlabel("Tratamentos #",
+         "fontweight", "bold",
+         "fontsize", axissize);
+fmt = ylabel("Conexoes entre clientes",
+             "fontweight", "bold",
+         "fontsize", axissize);
+
+setup_axies(borderlinesize, ticksize);
+print -color -deps ../../../../documento/imgs/results/tratamentos-clients_connection.eps;
+
+
+# Control packets 
+newplot();
+
+plot(graphdata_denacast(:, 22:22),
+	[";{\bf {\fontsize{", legendfontsize, "} Denacast/CoolStreaming}};"],
+	"marker", "s",
+	"color", "red",
+	"markerfacecolor", "red",
+	"markersize", markersize,
+	"linestyle", "-",
+	"linewidth", plotlinewidth,
+     graphdata_ccntv(:, 22:22),
+	[";{\bf {\fontsize{", legendfontsize, "} CCN-TV}};"],
+	"marker", "o",
+	"color", "black",	
+	"markerfacecolor", "black",
+	"markersize", markersize,
+	"linestyle", "-",
+	"linewidth", plotlinewidth,
+     graphdata_gmtp(:, 22:22),
+	[";{\bf {\fontsize{", legendfontsize, "} GMTP}};"],
+	"marker", "^",
+	"color", "blue",
+	"markerfacecolor", "blue",
+	"linestyle", "-",
+	"markersize", markersize,
+	"linewidth", plotlinewidth
+);
+
+hold on;
+h = errorbar(graphdata_denacast(:, 22:22), graphdata_denacast(:, 24:24));
+set (h, "color", "red", "linestyle", "none");
+h = errorbar(graphdata_ccntv(:, 22:22), graphdata_ccntv(:, 24:24));
+set (h, "color", "black", "linestyle", "none");
+h = errorbar(graphdata_gmtp(:, 22:22), graphdata_gmtp(:, 24:24));
+set (h, "color", "blue", "linestyle", "none");
+hold off;
+
+set(legend(x, "location", "northwest"),
+    "fontsize", legendfontsize,
+    "fontweight", "bold");
+fmt = xlabel("Tratamentos #",
+         "fontweight", "bold",
+         "fontsize", axissize);
+fmt = ylabel("Pacotes de controle",
+             "fontweight", "bold",
+         "fontsize", axissize);
+
+setup_axies(borderlinesize, ticksize);
+print -color -deps ../../../../documento/imgs/results/tratamentos-packet_control.eps;

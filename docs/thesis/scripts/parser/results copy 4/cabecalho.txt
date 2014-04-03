@@ -1,0 +1,1 @@
+#  ATRASO DE INCIALIZACAO  #    #  INDICE DE CONTINUIDADE  #    #         DISTORCAO        #    #      CONEXAO SERVIDOR     #   #  CONEXAO ENTRE CLIENTES   #   #    PACOTES DE CONTROLE     #  # n #

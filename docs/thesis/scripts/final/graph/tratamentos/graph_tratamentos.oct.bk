@@ -1,0 +1,233 @@
+#!/opt/local/bin/octave -q
+
+# colors: "blue", "black", "cyan", "green", "magenta", "red", "white", and "yellow"
+
+
+# Graph setup
+axissize = 20;
+ticksize = 16;
+borderlinesize = 2;
+markersize = 5;
+plotlinewidth = 4;
+legendfontsize = 16;
+
+#set (gcf(), "paperorientation", "landscape") 
+#papersize = [30, 21]/2.54; 
+#set (gcf(), "papersize", papersize) 
+#set (gcf(), "paperposition", [0.25 0.25, papersize-0.5]) 
+
+
+#set (0, "defaultaxesfontname", "Arial Bold") 
+#set (0, "defaultaxesfontsize", 12) 
+#set (0, "defaulttextfontname", "Arial Bold") 
+#set (0, "defaulttextfontsize", 12) 
+
+#set(gca(),'FontName','/Library/Fonts/Microsoft/Arial Bold.ttf');
+
+graphdata_denacast=load("-force", "../../../parser/results/denacast-tratamento.txt");
+graphdata_ccntv=load("-force", "../../../parser/results/ccntv-tratamento.txt");
+graphdata_gmtp=load("-force", "../../../parser/results/gmtp-tratamento.txt");
+
+x = {"Denacast/CoolStreaming",
+     "CCN-TV",
+     "GMTP"};
+
+function setup_axies(borderlinesize, ticksize)
+    set(gca(),
+        "xlim", [0 19],
+        "xtick", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
+        "xticklabel", {'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18'} 
+       );
+    set(gca(), "ygrid", "on", "linewidth", borderlinesize, "fontsize", ticksize, "fontweight", "bold");
+endfunction
+
+# Startup time
+
+Y = [graphdata_denacast(:, 2:2), graphdata_ccntv(:, 2:2), graphdata_gmtp(:, 2:2)];
+hArray = bar(Y, 'grouped');
+set(hArray(1), 'FaceColor', 'black');
+set(hArray(2), 'FaceColor', 'blue');
+set(hArray(3), 'FaceColor', 'red');
+
+
+set(legend(x, "location", "northwest"),
+	"fontsize", legendfontsize,
+	"fontweight", "bold");
+fmt = xlabel("Tratamentos #",
+	     "fontweight", "bold",
+	     "fontsize", axissize);
+fmt = ylabel("Atraso de Inicializacao (s)",
+             "fontweight", "bold",
+	     "fontsize", axissize);
+
+setup_axies(borderlinesize, ticksize);
+print -color -deps ../../../../documento/imgs/results/tratamentos-startup_time.eps;
+
+# Continuity Index
+
+newplot();
+
+#Y = [graphdata_denacast(:, 5:5), graphdata_ccntv(:, 5:5), graphdata_gmtp(:, 5:5)];
+#hArray = bar(Y, 'grouped');
+#set(hArray(1), 'FaceColor', 'black');
+#set(hArray(2), 'FaceColor', 'blue');
+#set(hArray(3), 'FaceColor', 'red');
+
+#legendfontsize = "32";
+
+plot(graphdata_denacast(:, 6:6),
+	[";{\bf {\fontsize{", legendfontsize, "} P2P Mesh-based (baseline)}};"],
+	"marker", "s",
+	"color", "red",
+	"markerfacecolor", "red",
+	"markersize", markersize,
+	"linestyle", "-",
+	"linewidth", plotlinewidth,
+     graphdata_ccntv(:, 6:6),
+	[";{\bf {\fontsize{", legendfontsize, "} Seyyedi et al (Unconnected Mesh)}};"],
+	"marker", "o",
+	"color", "black",	
+	"markerfacecolor", "black",
+	"markersize", markersize,
+	"linestyle", "-",
+	"linewidth", plotlinewidth,
+#     graphdata(:,1), graphdata(:,4),
+#	[";{\bf {\fontsize{", legendfontsize, "} Seyyedi et al (Connected Mesh)}};"],
+#	"marker", "s",
+#	"color", "black",
+#	"markerfacecolor", "black",
+#	"markersize", markersize,
+#	"linestyle", "-",
+#	"linewidth", plotlinewidth,
+     graphdata_gmtp(:, 6:6),
+	[";{\bf {\fontsize{", legendfontsize, "} GMTP}};"],
+	"marker", "^",
+	"color", "blue",
+	"markerfacecolor", "blue",
+	"linestyle", "-",
+	"markersize", markersize,
+	"linewidth", plotlinewidth
+);
+
+hold on;
+h = errorbar(graphdata_denacast(:, 6:6), graphdata_denacast(:, 8:8));
+set (h, "color", "red");
+h = errorbar(graphdata_ccntv(:, 6:6), graphdata_ccntv(:, 8:8));
+set (h, "color", "black");
+h = errorbar(graphdata_gmtp(:, 6:6), graphdata_gmtp(:, 8:8));
+set (h, "color", "blue");
+hold off;
+
+set(legend(x, "location", "east"),
+	"fontsize", legendfontsize,
+	"fontweight", "bold");
+fmt = xlabel("Tratamentos #",
+	     "fontweight", "bold",
+	     "fontsize", axissize);
+fmt = ylabel("Indice de Continuidade (%)",
+             "fontweight", "bold",
+	     "fontsize", axissize);
+ylim ([0 100]);
+
+setup_axies(borderlinesize, ticksize);
+print -color -deps ../../../../documento/imgs/results/tratamentos-continuity_index.eps;
+
+# Distortion
+newplot();
+
+Y = [graphdata_denacast(:, 10:10), graphdata_ccntv(:, 10:10), graphdata_gmtp(:, 10:10)];
+hArray = bar(Y, 'grouped');
+set(hArray(1), 'FaceColor', 'black');
+set(hArray(2), 'FaceColor', 'blue');
+set(hArray(3), 'FaceColor', 'red');
+
+set(legend(x, "location", "northwest"),
+    "fontsize", legendfontsize,
+    "fontweight", "bold");
+fmt = xlabel("Tratamentos #",
+         "fontweight", "bold",
+         "fontsize", axissize);
+fmt = ylabel("Distorcao (%)",
+             "fontweight", "bold",
+         "fontsize", axissize);
+
+setup_axies(borderlinesize, ticksize);
+print -color -deps ../../../../documento/imgs/results/tratamentos-distortion.eps;
+
+# Server connections 
+newplot();
+
+Y = [graphdata_denacast(:, 14:14), graphdata_ccntv(:, 14:14), graphdata_gmtp(:, 14:14)];
+hArray = bar(Y, 'grouped');
+set(hArray(1), 'FaceColor', 'black');
+set(hArray(2), 'FaceColor', 'blue');
+set(hArray(3), 'FaceColor', 'red');
+
+set(legend(x, "location", "northwest"),
+    "fontsize", legendfontsize,
+    "fontweight", "bold");
+fmt = xlabel("Tratamentos #",
+         "fontweight", "bold",
+         "fontsize", axissize);
+fmt = ylabel("Conexoes ao servidor",
+             "fontweight", "bold",
+         "fontsize", axissize);
+
+setup_axies(borderlinesize, ticksize);
+print -color -deps ../../../../documento/imgs/results/tratamentos-server_connection.eps;
+
+
+# Clients connections 
+newplot();
+
+Y = [graphdata_denacast(:, 18:18), graphdata_ccntv(:, 18:18), graphdata_gmtp(:, 18:18)];
+hArray = bar(Y, 'grouped');
+set(hArray(1), 'FaceColor', 'black');
+set(hArray(2), 'FaceColor', 'blue');
+set(hArray(3), 'FaceColor', 'red');
+
+set(legend(x, "location", "northwest"),
+    "fontsize", legendfontsize,
+    "fontweight", "bold");
+fmt = xlabel("Tratamentos #",
+         "fontweight", "bold",
+         "fontsize", axissize);
+fmt = ylabel("Conexoes entre clientes",
+             "fontweight", "bold",
+         "fontsize", axissize);
+
+setup_axies(borderlinesize, ticksize);
+print -color -deps ../../../../documento/imgs/results/tratamentos-clients_connection.eps;
+
+
+# Control packets 
+newplot();
+
+Y = [graphdata_denacast(:, 22:22), graphdata_ccntv(:, 22:22), graphdata_gmtp(:, 22:22)];
+hArray = bar(Y, 'grouped');
+set(hArray(1), 'FaceColor', 'black');
+set(hArray(2), 'FaceColor', 'blue');
+set(hArray(3), 'FaceColor', 'red');
+
+set(legend(x, "location", "northwest"),
+    "fontsize", legendfontsize,
+    "fontweight", "bold");
+fmt = xlabel("Tratamentos #",
+         "fontweight", "bold",
+         "fontsize", axissize);
+fmt = ylabel("Pacotes de controle",
+             "fontweight", "bold",
+         "fontsize", axissize);
+
+setup_axies(borderlinesize, ticksize);
+print -color -deps ../../../../documento/imgs/results/tratamentos-packet_control.eps;
+
+
+# Saving graphs
+
+#print(startup_time, "../../../../documento/imgs/results/tratamentos-startup_time.pdf", "-dpdf");
+#print(continuity_index, "../../../../documento/imgs/results/tratamentos-continuity_index.pdf", "-dpdf");
+#print(distortion, "../../../../documento/imgs/results/tratamentos-distortion.pdf", "-dpdf");
+#print(server_connection, "../../../../documento/imgs/results/tratamentos-server_connection.pdf", "-dpdf");
+#print(clients_connection, "../../../../documento/imgs/results/tratamentos-clients_connection.pdf", "-dpdf");
+#print(packet_control, "../../../../documento/imgs/results/tratamentos-packet_control.pdf", "-dpdf");
