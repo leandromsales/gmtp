@@ -1,0 +1,45 @@
+#!/opt/local/bin/octave -q
+# Graph setup
+axissize = 18;
+ticksize = 16;
+borderlinesize = 4;
+legendfontsize = 16;
+
+graphdata=load("-force", "../../../parser/node_distribution/distribution_upload_rate.txt");
+
+x = {"512 Kbps",
+     "1 Mbps",
+     "2 Mbps",
+     "5 Mbps",
+};
+#xlabels = [10, 30, 70, 150, 310, 630, 1270, 2550, 5110, 10230]; #graphdata(:, 1);
+#xlabels = graphdata(:, 1);
+
+Y = graphdata(:, 1:4);
+figure;
+hArray = bar(Y, 'grouped');
+set(hArray(1), 'FaceColor', 'red');
+set(hArray(2), 'FaceColor', 'blue');
+set(hArray(3), 'FaceColor', 'cyan');
+set(hArray(4), 'FaceColor', 'green');
+#set(hArray(3), 'FaceColor', 'blue');
+#set(hArray(3), 'LineWidth', 10, 'EdgeColor', 'black', 'FaceColor', 'blue');
+
+set(legend(x, "location", "northwest"),
+	"fontsize", legendfontsize,
+	"fontweight", "bold");
+fmt = xlabel("Numero total de nos",
+	     "fontweight", "bold",
+	     "fontsize", axissize);
+fmt = ylabel("Quantidade de nos por taxa de upload",
+             "fontweight", "bold",
+	     "fontsize", axissize);
+set(gca(),
+    "xlim", [0 7],
+    "xtick", [1, 2, 3, 4, 5, 6],
+    "xticklabel", {'500', '1.500', '15.000', '30.000', '60.000', '80.000'} 
+    #"xticklabel", graphdata(:, 1) 
+   );
+set(gca(), "ygrid", "on", "linewidth", borderlinesize, "fontsize", ticksize, "fontweight", "bold");
+
+print("-color", "-deps", "../../../../documento/imgs/results/graph_distribution_upload_rate.eps");

@@ -676,6 +676,100 @@ if opt == "1": #load means
         file_tabela_latex_gmtp_denacast.close()
         file_tabela_latex_gmtp_ccntv.close()
 
+
+elif opt == "2": #generate first 200s node distribution
+
+    import collections
+    numbers_of_clients = [500, 1500, 15000, 30000, 60000, 80000]
+    numbers_drawn = []
+    distributions = {}
+
+    filename = open("node_distribution/distribution_first_200s.txt", "w")
+    for clients_qty in numbers_of_clients:
+        for anumber in range(1, clients_qty+1):
+            numbers_drawn.append(random.randrange(1, 201))
+
+        distributions[clients_qty] = []
+        counter = collections.Counter(numbers_drawn)
+        for i in range(1, 201):
+            distributions[clients_qty].append(counter[i])
+
+    for i in range(0, 200):
+        line = "%d\t%d\t%d\t%d\t%d\t%d\t%d\n" % (i+1, distributions[500][i], distributions[1500][i], distributions[15000][i], distributions[30000][i], distributions[60000][i], distributions[80000][i])
+        filename.write(line)
+    filename.close()
+
+elif opt == "3": #generate node churn distribution
+
+    numbers_of_clients = [500, 1500, 15000, 30000, 60000, 80000]
+    numbers_drawn = []
+    distributions = {}
+
+    filename = open("node_distribution/distribution_churn.txt", "w")
+    for clients_qty in numbers_of_clients:
+        distributions[clients_qty] = []
+        counter = 400
+        curr_clients_qty = clients_qty
+        while counter < 900:
+            probability = random.random()
+            if probability <= 0.8:
+                new_clients_qty = curr_clients_qty * 1.1
+            else:
+                new_clients_qty = curr_clients_qty * 0.9
+            new_clients_qty = int(new_clients_qty)
+            if new_clients_qty <= clients_qty and new_clients_qty > 0:
+               curr_clients_qty = new_clients_qty
+            distributions[clients_qty].append(curr_clients_qty)
+            counter = counter + 5
+
+    counter = 205
+    while counter < 400:
+        line = "%d\t%d\t%d\t%d\t%d\t%d\t%d\n" % (counter, 500, 1500, 15000, 30000, 60000, 80000)
+        filename.write(line)
+        counter = counter + 5
+        
+    counter = 400
+    i = 0
+    while counter < 900:
+        line = "%d\t%d\t%d\t%d\t%d\t%d\t%d\n" % (counter, distributions[500][i], distributions[1500][i], distributions[15000][i], distributions[30000][i], distributions[60000][i], distributions[80000][i])
+        filename.write(line)
+        counter = counter + 5
+        i = i + 1
+    filename.close()
+
+elif opt == "4": #generate upload rate distribution
+    import collections
+    upload_rates = [0.5, 1, 2, 5]
+    numbers_of_clients = [500, 1500, 15000, 30000, 60000, 80000]
+    numbers_drawn = []
+    distributions = {}
+
+    filename = open("node_distribution/distribution_upload_rate.txt", "w")
+    
+    for clients_qty in numbers_of_clients:
+        numbers_drawn = []
+        for anumber in range(1, clients_qty+1):
+            numbers_drawn.append(upload_rates[random.randint(0,3)])
+
+        counter = collections.Counter(numbers_drawn)
+        distributions[clients_qty] = counter
+
+    line = "%d\t%d\t%d\t%d\n" % (distributions[500][0.5], distributions[500][1], distributions[500][2], distributions[500][5])
+    filename.write(line)
+    line = "%d\t%d\t%d\t%d\n" % (distributions[1500][0.5], distributions[1500][1], distributions[1500][2], distributions[1500][5])
+    filename.write(line)
+    line = "%d\t%d\t%d\t%d\n" % (distributions[15000][0.5], distributions[15000][1], distributions[15000][2], distributions[15000][5])
+    filename.write(line)
+    line = "%d\t%d\t%d\t%d\n" % (distributions[30000][0.5], distributions[30000][1], distributions[30000][2], distributions[30000][5])
+    filename.write(line)
+    line = "%d\t%d\t%d\t%d\n" % (distributions[60000][0.5], distributions[60000][1], distributions[60000][2], distributions[60000][5])
+    filename.write(line)
+    line = "%d\t%d\t%d\t%d\n" % (distributions[80000][0.5], distributions[80000][1], distributions[80000][2], distributions[80000][5])
+    filename.write(line)
+    filename.close()
+
 else:
     print("Opcao invalida.")
+
+
 

@@ -1,0 +1,79 @@
+#!/opt/local/bin/octave -q
+
+# colors: "blue", "black", "cyan", "green", "magenta", "red", "white", and "yellow"
+
+
+# Graph setup
+axissize = 20;
+ticksize = 12;
+borderlinesize = 2;
+markersize = 3;
+plotlinewidth = 4;
+legendfontsize = 16;
+
+graphdata = load("-force", "../../../parser/node_distribution/distribution_churn.txt");
+
+x = {"Tratamentos 1, 7, 13",
+     "Tratamentos 2, 8, 14",
+     "Tratamentos 3, 9, 15",
+     "Tratamentos 4, 10, 16",
+     "Tratamentos 5, 11, 17",
+     "Tratamentos 6, 12, 18"};
+
+f = gcf();
+set(f,"visible","off") 
+
+function setup_axies(borderlinesize, ticksize)
+    set(gca(),
+        "ylim", [1 120000],
+        "xtick", [200:50:900]
+        #"xticklabel", {'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18'} 
+       );
+    set(gca(), "xgrid", "off", "ygrid", "off", "linewidth", borderlinesize, "fontsize", ticksize, "fontweight", "bold");
+endfunction
+
+plot(graphdata(:, 1:1), graphdata(:, 2:2),
+	[";{\bf {\fontsize{", legendfontsize, "} 500 nos}};"],
+	"color", "green",	
+	"linestyle", "-",
+	"linewidth", plotlinewidth,
+    graphdata(:, 1:1), graphdata(:, 3:3),
+	[";{\bf {\fontsize{", legendfontsize, "} 1.500}};"],
+	"color", "blue",	
+	"linestyle", "-",
+	"linewidth", plotlinewidth,
+    graphdata(:, 1:1), graphdata(:, 4:4),
+	[";{\bf {\fontsize{", legendfontsize, "} 15.000}};"],
+	"color", "red",	
+	"linestyle", "-",
+	"linewidth", plotlinewidth,
+    graphdata(:, 1:1), graphdata(:, 5:5),
+	[";{\bf {\fontsize{", legendfontsize, "} 30.000}};"],
+	"color", "cyan",	
+	"linestyle", "-",
+	"linewidth", plotlinewidth,
+    graphdata(:, 1:1), graphdata(:, 6:6),
+	[";{\bf {\fontsize{", legendfontsize, "} 60.000}};"],
+	"color", "magenta",	
+	"linestyle", "-",
+	"linewidth", plotlinewidth,
+    graphdata(:, 1:1), graphdata(:, 7:7),
+	[";{\bf {\fontsize{", legendfontsize, "} 80.000}};"],
+	"color", "black",
+	"linestyle", "-",
+	"linewidth", plotlinewidth);
+
+t = title("Ensaio 1: distribuicao da quantidade de nos entre \n 200s e 900s (churn a partir de 400s)", "fontsize", axissize, "fontweight", "bold");
+
+set(legend(x, "location", "northeast"),
+	"fontsize", legendfontsize,
+	"fontweight", "bold");
+fmt = xlabel("Tempo (s)",
+	         "fontweight", "bold",
+	         "fontsize", axissize);
+fmt = ylabel("Numero de nos (s)",
+             "fontweight", "bold",
+	         "fontsize", axissize);
+
+setup_axies(borderlinesize, ticksize);
+print("-color", "-deps", "../../../../documento/imgs/results/graph_distribution_churn.eps");

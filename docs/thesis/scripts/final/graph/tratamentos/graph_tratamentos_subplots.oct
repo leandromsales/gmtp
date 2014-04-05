@@ -1,0 +1,161 @@
+#!/opt/local/bin/octave -q
+
+# colors: "blue", "black", "cyan", "green", "magenta", "red", "white", and "yellow"
+
+
+# Graph setup
+axissize = 14;
+ticksize = 10;
+borderlinesize = 1;
+markersize = 4;
+plotlinewidth = 4;
+legendfontsize = 14;
+
+graphdata_denacast=load("-force", "../../../parser/results/denacast-tratamento.txt");
+graphdata_ccntv=load("-force", "../../../parser/results/ccntv-tratamento.txt");
+graphdata_gmtp=load("-force", "../../../parser/results/gmtp-tratamento.txt");
+
+f = gcf();
+set(f,"visible","off") 
+
+function setup_axies(borderlinesize, ticksize, ylimit, xticklabel)
+    set(gca(),
+        "ylim", [0 ylimit],
+        "xlim", [0 19],
+        "xtick", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
+        "xticklabel", xticklabel 
+       );
+    set(gca(), "xgrid", "on", "ygrid", "on", "linewidth", borderlinesize, "fontsize", ticksize, "fontweight", "bold");
+endfunction
+
+# Startup time
+
+subplot(2, 1, 1);
+hold on;
+h = errorbar(graphdata_denacast(:, 2:2), graphdata_denacast(:, 4:4));
+set (h, "color", "black", "linestyle", "none");
+h = errorbar(graphdata_gmtp(:, 2:2), graphdata_gmtp(:, 4:4));
+set (h, "color", "black", "linestyle", "none");
+plot(
+    [1:6], graphdata_denacast(1:6, 2:2),
+	[";{\bf {\fontsize{", legendfontsize, "} Denacast/CoolStreaming}};"],
+	"marker", "s",
+	"color", "red",
+	"markerfacecolor", "red",
+	"markersize", markersize,
+	"linestyle", "-",
+	"linewidth", plotlinewidth,
+    [7:12], graphdata_denacast(7:12, 2:2),
+	"marker", "s",
+	"color", "red",
+	"markerfacecolor", "red",
+	"markersize", markersize,
+	"linestyle", "-",
+	"linewidth", plotlinewidth,
+    [13:18], graphdata_denacast(13:18, 2:2),
+	"marker", "s",
+	"color", "red",
+	"markerfacecolor", "red",
+	"markersize", markersize,
+	"linestyle", "-",
+	"linewidth", plotlinewidth,
+    [1:6], graphdata_gmtp(1:6, 2:2),
+	[";{\bf {\fontsize{", legendfontsize, "} GMTP}};"],
+	"marker", "d",
+	"color", "blue",
+	"markerfacecolor", "blue",
+	"linestyle", "-",
+	"markersize", markersize,
+	"linewidth", plotlinewidth,
+    [7:12], graphdata_gmtp(7:12, 2:2),
+	"marker", "d",
+	"color", "blue",
+	"markerfacecolor", "blue",
+	"linestyle", "-",
+	"markersize", markersize,
+	"linewidth", plotlinewidth,
+    [13:18], graphdata_gmtp(13:18, 2:2),
+	"marker", "d",
+	"color", "blue",
+	"markerfacecolor", "blue",
+	"linestyle", "-",
+	"markersize", markersize,
+	"linewidth", plotlinewidth
+);
+hold off;
+
+t = title("\n", "fontsize", axissize, "fontweight", "bold");
+t = text(2.5, 84.9, "1 servidor", "fontsize", ticksize, "fontweight", "bold");
+t = text(8.2, 84.9, "3 servidores", "fontsize", ticksize, "fontweight", "bold");
+t = text(14.2, 84.9, "5 servidores", "fontsize", ticksize, "fontweight", "bold");
+xticklabel = {'0.5', '1.5', '15', '30', '60', '80', '0.5', '1.5', '15', '30', '60', '80', '0.5', '1.5', '15', '30', '60', '80'}; 
+setup_axies(borderlinesize, ticksize, 80, xticklabel);
+
+
+subplot(2, 1, 2);
+hold on;
+h = errorbar(graphdata_ccntv(:, 2:2), graphdata_ccntv(:, 4:4));
+set (h, "color", "black", "linestyle", "none");
+h = errorbar(graphdata_gmtp(:, 2:2), graphdata_gmtp(:, 4:4));
+set (h, "color", "black", "linestyle", "none");
+plot(
+    [1:6], graphdata_ccntv(1:6, 2:2),
+	[";{\bf {\fontsize{", legendfontsize, "} CCN-TV}};"],
+	"marker", "o",
+	"color", "green",
+	"markerfacecolor", "green",
+	"markersize", markersize,
+	"linestyle", "-",
+	"linewidth", plotlinewidth,
+    [7:12], graphdata_ccntv(7:12, 2:2),
+	"marker", "o",
+	"color", "green",
+	"markerfacecolor", "green",
+	"markersize", markersize,
+	"linestyle", "-",
+	"linewidth", plotlinewidth,
+    [13:18], graphdata_ccntv(13:18, 2:2),
+	"marker", "o",
+	"color", "green",
+	"markerfacecolor", "green",
+	"markersize", markersize,
+	"linestyle", "-",
+	"linewidth", plotlinewidth,
+    [1:6], graphdata_gmtp(1:6, 2:2),
+	[";{\bf {\fontsize{", legendfontsize, "} GMTP}};"],
+	"marker", "d",
+	"color", "blue",
+	"markerfacecolor", "blue",
+	"linestyle", "-",
+	"markersize", markersize,
+	"linewidth", plotlinewidth,
+    [7:12], graphdata_gmtp(7:12, 2:2),
+	"marker", "d",
+	"color", "blue",
+	"markerfacecolor", "blue",
+	"linestyle", "-",
+	"markersize", markersize,
+	"linewidth", plotlinewidth,
+    [13:18], graphdata_gmtp(13:18, 2:2),
+	"marker", "d",
+	"color", "blue",
+	"markerfacecolor", "blue",
+	"linestyle", "-",
+	"markersize", markersize,
+	"linewidth", plotlinewidth
+);
+hold off;
+
+fmt = xlabel("\nNumero de nos clientes (x1000)",
+	         "fontweight", "bold",
+             "fontsize", axissize);
+fmt = text(-2, 6, "Atraso de Inicializacao (s)\n",
+             "fontweight", "bold",
+	         "fontsize", axissize, "rotation", 90);
+t = text(2.5, 10.6, "1 servidor", "fontsize", ticksize, "fontweight", "bold");
+t = text(8.2, 10.6, "3 servidores", "fontsize", ticksize, "fontweight", "bold");
+t = text(14.2, 10.6, "5 servidores", "fontsize", ticksize, "fontweight", "bold");
+setup_axies(borderlinesize, ticksize, 10, xticklabel);
+print("-color", "-deps", "../../../../documento/imgs/results/tratamentos-startup_time.eps");
+#print("-S1800,1200", "-color", "-deps", "../../../../documento/imgs/results/tratamentos-startup_time.eps");
+

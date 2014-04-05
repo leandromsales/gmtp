@@ -8,6 +8,8 @@ Neste apêndice, apresentam-se alguns detalhes relacionados aos experimentos real
 \section{Largura de Banda e Atraso de Propagação Utilizados na Rede Simulada}
 \label{sec:tabela-atrasos-propagacao-rede}
 
+Na Tabela~\ref{tab:largura-atraso}, apresenta-se a largura de banda e o atraso de propagação da rede utilizada no experimento apresentado no Capítulo~\ref{cap:analisedesemp}.
+
 \renewcommand\multirowsetup{\centering}
 \begin{center}
 \footnotesize
@@ -94,6 +96,16 @@ Neste apêndice, apresentam-se alguns detalhes relacionados aos experimentos real
 
 \end{longtable}
 \end{center}
+
+\section{Distribuição da quantidade de nós clientes nos primeiros \ut{200}{s} de simulação}
+\label{sec:distribution_first_200s}
+
+Para definir o instante de cada requisição do cliente definiu-se o seguinte: gerou-se uma quantidade de números inteiros entre $0-200$ igual à quantidade de nós clientes determinado para um certo tratamento. Por exemplo, no Tratamento $1$, sortearam-se $500$ números inteiros aleatórios entre $0-200$ e somou-se o número de ocorrências de cada número sorteado. Durante a execução dos ensaios, adicionou-se à rede a quantidade de nós correspondente ao número de ocorrências em cada instante da simulação. Por exemplo, se o número $199$ foi sorteado $10$ vezes, no instante $199$ da simulação foram adicionados $10$ nós clientes que imediatamente requisitaram a mídia ao servidor. 
+
+\section{Distribuição da quantidade de nós clientes após os \ut{400}{s} de simulação}
+\label{sec:distribution_churn}
+
+Para definir o churn da rede definiu-se a seguinte estratégia: a cada intervalo de \ut{5}{s}, um número \textit{x} $\in$ $[0,1]$ foi gerado. Dependendo do valor de \textit{x}, \ut{10}{\%} dos nós clientes foram mantidos ou removidos com uma probabilidade de $0.8$. Ou seja, os nós foram mantidos conectados à rede com uma probabilidade de \ut{80}{\%} e removidos com uma probabilidade de \ut{20}{\%}.
 
 \section{Quantidade de Ensaios}
 \label{sec:ineq-proporcional}
