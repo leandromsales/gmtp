@@ -321,15 +321,25 @@ com notificação e reeleição de novos nós. Este e outros assuntos relacionados se
 \end{itemize}
 
 
-\subsection{Tipos de pacotes}
+\subsection{Cabeçalho geral e tipos de pacotes}
 \label{subsec:tipodepacotesmudccp}
 
-Toda comunicação entre dois ou mais nós GMTP ocorre através da troca de datagramas IP, os quais carregam sinalizações de controle e/ou dados da aplicação. No mundo real (Internet), será necessário registrar na \textit{Internet Assigned Numbers Authority} -- IANA\footnote{IANA: http://www.iana.org/} o uso de um código para o campo \textit{Protocolo} do cabeçalho IP. Com a padronização do protocolo \mudccps e a publicação da sua RFC, provavelmente será utilizado o código 100, como já está definido no documento \textit{Protocol Numbers}\footnote{O código 100 foi utilizado no passado por um outro protocolo de mesma sigla, mas foi descontinuado e se tornou obsoleto. No momento da escrita desse documento, o uso de tal identificador está sendo negociado junto a IETF e a IANA \murl{http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml}} da IANA.
+Toda comunicação entre dois ou mais nós GMTP ocorre através da troca de datagramas IP, os quais carregam sinalizações de controle e/ou dados da aplicação. É muito importante entender os conceitos básicos de cada campo do cabeçalho a fim de entender os algoritmos empregados no GMTP. Para adoção na Internet, será necessário registrar junto à \textit{Internet Assigned Numbers Authority} -- IANA\footnote{IANA: http://www.iana.org/} o uso de um código para o campo \textit{Protocolo} do cabeçalho IP referente ao GMTP. Atualmente, esta sendo negociado o código 100, o que permitirá a padronização do \mudccps por meio da publicação de sua RFC. Como pode-se constatar, o referido código já é exibido no documento \textit{Protocol Numbers} da IANA, provisoriamente alocado ao GMTP, disponível através da URL \murl{http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml}.
 
-No cabeçalho dos pacotes \mudccp, existe um campo denominado \emph{tipo do
-pacote} com tamanho de \ut{5}{bits}, que são descritos a seguir. Este campo
-determina qual tipo de informação está contida em um determinado pacote \mudccps
-e, ao processá-lo, o nó \mudccps deve executar uma determinada ação.
+O cabeçalho do GMTP foi organizado estrategicamente em uma parte fixa e uma parte variável. A parte fixa é definida em \ut{52}{Bytes}, como ilustra-se na Figura~\ref{fig:gmtp-fixed-header}. A distribuição ocorre da seguinte forma: \ut{3}{bits} para a \textit{Versão do Protocolo}, \ut{5}{bits} para o \textit{Tipo de Pacote}, \ut{8}{bits} para o \textit{Tamanho do Cabeçalho}, \ut{8}{bits} para o \textit{RTT no Servidor}, \ut{32}{bits} para os \textit{Números das Portas de Origem e Destino} (\ut{16}{bits} para cada campo), \ut{32}{bits} para a \textit{Taxa Proposta de Transmissão}, \ut{64}{bits} para os \textit{Números de Sequência} e de \textit{Reconhecimento} (\ut{32}{bits} para cada campo) e \ut{256}{bits} para o \textit{Nome do Fluxo de Dados}. Além de campos tradicionalmente utilizado em outros protocolos, no GMTP, utilizam-se 3 campos diferentes e muito importantes. Os campos RTT no servidor e taxa de transmissão estão relacionados com o mecanismo de controle de congestionamento adotado no GMTP, a ser detalhados mais adiante na Seção~\ref{sec:ccgmtp}. Já o campo nome do fluxo de dados é uma forma de identificar unicamente a transmissão de um evento ao vivo com base nessa informação permitir que a rede desempenho um papel fundamental considera no GMTP, que é a formação de uma rede de favores entre nós roteadores a fim de disseminar eficientemente um fluxo de dados multimídia aos nós clientes interessados.
+
+Apesar de parecer uma divisão simples e aleatória, sem qualquer pretensão além do aspecto organizacional, a ordem e o tamanho de cada campo da porção fixa do cabeçalho GMTP foram definidos criteriosamente para i) permitir manutenção (adição, atualização e remoção) das funcionalidades existentes; ii) flexibilizar o uso do protocolo por diferentes tipos de aplicação multimídia e iii) otimizar a leitura dos campos de cada pacote, reduzindo-se o atraso nodal. Por exemplo, o campo \textit{versão} permite uma implantação gradativa do protocolo GMTP, bem como atualizações para novas versões sem impactar diretamente no funcionamento das versões existentes. Por isso, é importante que o próximo campo seja o \textit{tipo do pacote}, pois dependendo do seu valor, um nó GMTP interpretará o restante do cabeçalho (parte variável) de forma diferente. Já o campo \textit{Tamanho do Cabeçalho} ainda favorece a flexibilidade da parte variável do cabeçalho e seu espaço de \ut{8}{bits} permite informar um cabeçalho com tamanho total de \ut{255}{Bytes}. Considerando que a porção fixa corresponde à \ut{36}{Bytes}, pode-se definir um cabeçalho com porção variável de \ut{219}{Bytes}, espaço suficiente para futuras melhorias no protocolo. Especificamente, no GMTP já se faz uso da porção variável do cabeçalho com base nessa estratégia. Por exemplo, permite-se que uma aplicação GMTP injete informações na porção variável do cabeçalho para que sejam lidas pelos nós repassadores localizados entre os sistemas finais. Um caso específico para isso é que um nó servidor pode sinalizar a um nó roteador que realize parcerias com outros nós roteadores que já estejam repassando um determinado conteúdo. Um outro exemplo é que a rede incrementalmente poderá informar ao nó servidor o caminho completo utilizado para alcançar o cliente, dentre outras funções que serão discutidas mais adiante.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=.4]{imgs/gmtp-fixed-header.pdf}
+\end{center}
+\vspace{-1cm}
+\caption{Porção fixa do cabeçalho de pacotes GMTP.}
+\label{fig:gmtp-fixed-header}
+\end{figure}
+
+O campo \emph{tipo do pacote} determina quais informações serão encapsuladas em cada tipo de pacote para, posteriormente, serem consumidas pelos nós da rede (clientes, servidores, repassadores, relatores) a fim de executarem as ação definidas no protocolo GMTP disseminar os pacotes de um fluxo de dados. Essas ações foram traduzidas em algoritmos, os quais serão detalhados ao longo deste capítulo. Sendo assim, para finalizar este assunto sobre cabeçalho GMTP, a seguir, apresentam-se brevemente os tipos de pacote utilizados no GMTP.
 
 \begin{enumerate}
 \setcounter{enumi}{-1}
@@ -391,15 +401,12 @@ término de uma conexão;
   \item \pac{GMTP-Reset:} determina, incondicionalmente, a finalização de
 uma conexão;
 
-  \item \pac{Reservado:} a partir deste identificador ao 31, tratam-se de
-valores reservados para uso futuro e ignorado pelos nós que o processa.
+  \item \pac{Reservado:} a partir deste identificador ao 31, trata-se de
+valores reservados para uso futuro e pacotes com esses valores devem ser descartados pelos nós que o processa.
 
 \end{enumerate}
 
-% No Apêndice~\ref{app:mudccp-tecnica}, apresenta-se detalhes acerca do uso dos
-% tipos de pacotes do GMTP, sendo seu teor bastante técnico e portanto dedicado
-% aos leitores interessados em sua implementação.
-
+% No Apêndice~\ref{app:mudccp-tecnica}, apresenta-se detalhes acerca do uso dos tipos de pacotes do GMTP, sendo seu teor bastante técnico e portanto dedicado aos leitores interessados em sua implementação.
 
 % \begin{table}[ht]
 %         \caption{Tipos de Pacotes do protocolo \mudccp.}
@@ -804,7 +811,7 @@ Assim, os nós \repasss passam a funcionar como se fossem servidores de uma rede
 CDN, que podem ser acionados dinamicamente, quando conveniente. Em geral, os nós \repasss controlados por usuários finais (redes residenciais e empresariais) realizam o registro de participação prévio.
 
 Para realizar um registro de participação, um nó \repasss envia uma mensagem
-para um nó \servs utilizando o pacote \pac{GMTP-Register} que, como resposta, envia um pacote do tipo \pac{GMTP-Register-Reply}. O uso do pacote do tipo \pac{GMTP-Register-Reply} permite a descoberta de um caminho \setwayi. Isto porque todos os nós \repasss existentes no caminho entre \servs e \repasss devem adicionar seu identificador no pacote \pac{GMTP-Register-Reply} antes de rotea-lo para o próximo salto da rota em direção ao nó \serv. Para definir um identificador de um nó \repass, gera-se um código \textit{hash} da soma dos endereços MAC (\textit{Media Access Control}) de todas as interfaces de rede do roteador. Quando o pacote \pac{GMTP-Register-Reply} alcançar o nó \repass, este envia o caminho \setwayis contido no pacote \pac{GMTP-Register-Reply} de volta ao nó \servs utilizando o pacote do tipo \pac{GMTP-Route-Notify}. A partir desse ponto, o nó \servs conhece a caminho \setwayis que utilizará para enviar qualquer fluxo de dados \setpks até alcançar \repass, armazenando-o em uma estrutura de dados do tipo grafo. Esse procedimento em três vias confirma o registro de participação de \repasss em \serv, ao passo que \servs poderá utilizar \setwayis para instruir os nós \repasss a realizarem parcerias a fim de distribuir um fluxo de dados \setpk, como se discute na Seção~\ref{sec:descparc}.
+para um nó \servs utilizando o pacote \pac{GMTP-Register} que, como resposta, envia um pacote do tipo \pac{GMTP-Register-Reply}. O uso do pacote do tipo \pac{GMTP-Register-Reply} permite a descoberta de um caminho \setwayi. Isto porque todos os nós \repasss existentes no caminho entre \servs e \repasss devem adicionar seu identificador no pacote \pac{GMTP-Register-Reply} antes de rotea-lo para o próximo salto da rota em direção ao nó \serv. Quando o pacote \pac{GMTP-Register-Reply} alcançar o nó \repass, este envia o caminho \setwayis contido no pacote \pac{GMTP-Register-Reply} de volta ao nó \servs utilizando o pacote do tipo \pac{GMTP-Route-Notify}. A partir desse ponto, o nó \servs conhece o caminho \setwayis que utilizará para enviar qualquer fluxo de dados até alcançar \repass, organizando-o em uma estrutura de dados do tipo grafo. Esse procedimento em três vias confirma o registro de participação de \repasss em \serv, ao passo que \servs poderá utilizar \setwayis para instruir os nós \repasss a realizarem parcerias a fim de distribuir um fluxo de dados \setpk, como se discute na Seção~\ref{sec:descparc}.
 
 % Pelas conjecturas~\ref{item:conjecture1} e~\ref{item:conjecture2}, apresentadas
 % na Seção~\ref{sec:defsrests}, o nó \servs pode utilizar os caminhos conhecidos
@@ -817,7 +824,6 @@ para um nó \servs utilizando o pacote \pac{GMTP-Register} que, como resposta, en
 
 % Um registro de participação também pode ocorre no mesmo instante
 % que um nó \repasss desejar receber um fluxo de dados \setpk.
-
 
 Dessa forma, se um nó \repasss for um nó comum entre dois caminhos, será
 necessário apenas enviar um fluxo de dados \setpks até \repasss e este replicará
@@ -978,6 +984,15 @@ em momentos ociosos de recepção e transmissão de dados através da Internet. Como
 consequência, relações comerciais podem ser construídas entre o usuário e os
 provedores de rede, mas essa discussão está fora do escopo deste trabalho.
 
+\subsubsection{Algoritmo para gerar o identificador de um nó \repass}
+
+É muito importante entender a motivação e como se define um identificador de um nó \repass. Como discutiu-se anteriormente, um nó \servs passa a conhecer um caminho até o nó cliente porque cada nó \repasss deve informar seu identificador no pacote do tipo \pac{GMTP-Request-Reply}. Esse identificador deve ser único em toda a rede, pois o que se deseja a identificar nós repassadores sendo utilizados para transportar os pacotes de dados da mídia a sendo distribuída, pois ao conhecê-los pode-se sugerir parcerias entre nós repassadores comuns. Sendo assim, a questão é qual poderia ser o identificador único de um nó repassador. A primeira opção e a mais simples é utilizar o endereço IP do roteador. Porém, um roteador possui múltiplas interfaces de rede e dependendo da interface de saída, um endereço IP específico será utilizado. Ou seja, o endereço IP identificará a interface de rede daquele roteador e não o nó \repass. Sendo assim, não se pode utilizar o endereço IP como identificador único, caso contrário o nó \servs poderia interpretar um mesmo nó \repasss como se fosse dois nós repassadores distintos.
+
+Por este motivo, tomou-se a seguinte decisão: o identificador de um nó \repasss adotada no GMTP e uma chave \textit{hash} do tipo SHA-256 da concatenação dos endereços MAC (\textit{Media Access Control}) de todas as interfaces de rede do roteador agregado ao endereço da interface de saída. Sendo assim, o identificador de um nó \repasss terá o tamanho de \ut{288}{bits}. Como resultado, considerando o cabeçalho fixo do GMTP e do IP, em um pacote de c\ut{1.500}{Bytes}, será possível descobrir caminhos de até 40 saltos entre o nó cliente e o nó servidor no procedimento de registro de participação, restando ainda \ut{32}{bits} livres que podem ser utilizados para transportar outros tipos de dados de controle ou até mesmo dados de aplicação.
+
+% Note que para evitar sobrecarga de processamento nos roteadores, pode-se evitar
+% falar aqui que nem todo pacote de reply precisa ser preenchido com o identificador, basta o roteador fazer isso uma vez em um certo período de tempo, voltando a fazer novamente quando este período expirar. Para detectar se deve ou não colocar o identificador no pacote de reply, basta fazer cache do endereço de origem/destino (a princípio não precisa cachear o nome da mídia).
+
 \subsubsection{Manutenção do registro de participação:}
 \label{subsec:manutencao-conexao}
 
@@ -1009,28 +1024,28 @@ registrar todos os fluxos de dados que estão sendo repassados para seus nós
 
 \begin{itemize}
 
-  \item \textbf{Nome do Fluxo de Dados \setpk:} é uma sequência de
-\ut{128}{bits} que determina o nome de um fluxo de dados, como se descreve na
+  \item \textit{Nome do Fluxo de Dados \setpk:} é uma sequência de
+\ut{128}{bits} que determina o nome de um fluxo de dados, como descreve-se na
 Seção~\ref{subsec:content-index};
 
-  \item \textbf{Servidores \serv:} o endereço IP do nó \servs que gera o fluxo
+  \item \textit{Servidores \serv:} o endereço IP do nó \servs que gera o fluxo
 de dados \setpk;
 
-  \item \textbf{Repassadores \repassu{q}:} o endereço IP do nó \repassu{q},
+  \item \textit{Repassadores \repassu{q}:} o endereço IP do nó \repassu{q},
 parceiro de \repass, que está transmitindo o fluxo de dados \setpks para
 \repass. Se nulo, significa que o fluxo de dados \setpks está sendo recebido
 diretamente do nó \serv;
 
-  \item \textbf{Porta de Recepção de \setpk:} o número da porta do nó remoto
+  \item \textit{Porta de Recepção de \setpk:} o número da porta do nó remoto
 que está transmitindo o fluxo de dados \setpks para \repass. Nesse caso, o nó
 remoto pode ser o nó \serv, em caso de conexão direta com o servidor, ou um nó
 \repassu{q}, parceiro de \repass;
 
-  \item \textbf{Endereço do Canal Multicast:} o endereço IP multicast utilizado
+  \item \textit{Endereço do Canal Multicast:} o endereço IP multicast utilizado
 pelo nó \repasss para repassar o fluxo de dados \setpks para os nós clientes
 \clis $\in$ \subsetcli$($\repass$)$; e
 
-  \item \textbf{Porta do Canal Multicast:} o número da porta multicast utilizada
+  \item \textit{Porta do Canal Multicast:} o número da porta multicast utilizada
 pelo nó \repasss para repassar o fluxo de dados \setpks para os nós clientes
 \clis $\in$ \subsetcli$($\repass$)$.
 
@@ -1640,7 +1655,7 @@ recebendo \setpk. Já a Fase 2 acontece quando um outro nó \cliu{2} $\in$
 previamente pelo nó \cliu{1}. E, por fim, a Fase 3 acontece quando o nó
 \repasss começa a buscar novos nós parceiros \repassu{q} a fim de obter
 \setpk. Na Figura~\ref{fig:processo-conexao}, ilustram-se um nó \serv, que gera
-um fluxo de dados \setpks e 12 nós \repass, que constituem uma rede de
+um fluxo de dados \setpks, e 12 nós \repass, que constituem uma rede de
 diferentes domínios administrativos, sendo o nó \repassu{1} o repassador de um
 desses domínios, composto por 6 nós \clis $\in$ \subsetcli$($\repassu{1}$)$ (Rede
 Local).

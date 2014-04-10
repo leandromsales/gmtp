@@ -10,7 +10,7 @@ graphdata=load("-force", "../../../parser/node_distribution/distribution_upload_
 x = {"512 Kbps",
      "1 Mbps",
      "2 Mbps",
-     "5 Mbps",
+     "3 Mbps",
 };
 #xlabels = [10, 30, 70, 150, 310, 630, 1270, 2550, 5110, 10230]; #graphdata(:, 1);
 #xlabels = graphdata(:, 1);
@@ -31,7 +31,7 @@ set(legend(x, "location", "northwest"),
 fmt = xlabel("Numero total de nos",
 	     "fontweight", "bold",
 	     "fontsize", axissize);
-fmt = ylabel("Quantidade de nos por taxa de upload",
+fmt = ylabel("Quantidade de nos por capacidade de upload",
              "fontweight", "bold",
 	     "fontsize", axissize);
 set(gca(),

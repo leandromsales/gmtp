@@ -39,8 +39,8 @@ tratamentos_array = [
                    [88, 3, 30000],
                    [95, 3, 60000],
                    [86, 3, 80000],
-                   [77, 5, 500],
-                   [94, 5, 1500],
+                   [96, 5, 500],
+                   [107, 5, 1500],
                    [53, 5, 15000],
                    [56, 5, 30000],
                    [62, 5, 60000],
@@ -68,9 +68,20 @@ if opt == "1": #load means
                     else:
                         print "Tratamento %d OK: [%.2f, %.2f]" % (i, lower_error, upper_error)
                     middle_index = middle_index + 3
-            else:
+            elif len(line_splitted) == 25:
                 middle_index = 1
                 while middle_index <= 23:
+                    lower_error = float(line_splitted[middle_index]) - float(line_splitted[middle_index-1])
+                    upper_error = float(line_splitted[middle_index+1]) - float(line_splitted[middle_index])
+                    if abs(abs(lower_error) - abs(upper_error)) > 0.1:
+                        print "Erro no tratamento %d, coluna %d: [%.2f, %.2f]: [%.2f -- %.2f -- %.2f]" % (i, middle_index, lower_error, upper_error, float(line_splitted[middle_index-1]), float(line_splitted[middle_index]), float(line_splitted[middle_index+1]))
+                        status = False
+                    else:
+                        print "Tratamento %d OK: [%.2f, %.2f]" % (i, lower_error, upper_error)
+                    middle_index = middle_index + 4
+            else:
+                middle_index = 1
+                while middle_index <= 2:
                     lower_error = float(line_splitted[middle_index]) - float(line_splitted[middle_index-1])
                     upper_error = float(line_splitted[middle_index+1]) - float(line_splitted[middle_index])
                     if abs(abs(lower_error) - abs(upper_error)) > 0.1:
@@ -96,11 +107,11 @@ if opt == "1": #load means
             if len(line_splitted) == 19:
                 # coloca coluna com erros
                 middle_index = 1
-                while middle_index <= 23:
+                while middle_index <= 17:
                     error = float(line_splitted[middle_index]) - float(line_splitted[middle_index-1])
                     line_splitted.insert(middle_index+2, "%.2f" % error)
                     middle_index = middle_index + 4
-            else:
+            elif len(line_splitted) == 25:
                 # atualiza coluna de erros
                 middle_index = 1
                 while middle_index <= 23:
@@ -108,6 +119,14 @@ if opt == "1": #load means
                     line_splitted[middle_index-1] = "%.2f" % (float(line_splitted[middle_index]) - error)
                     line_splitted[middle_index+1] = "%.2f" % (float(line_splitted[middle_index]) + error)
                     middle_index = middle_index + 4
+            else:
+                middle_index = 1
+                while middle_index <= 2:
+                    error = float(line_splitted[middle_index+2])
+                    line_splitted[middle_index-1] = "%.2f" % (float(line_splitted[middle_index]) - error)
+                    line_splitted[middle_index+1] = "%.2f" % (float(line_splitted[middle_index]) + error)
+                    middle_index = middle_index + 4
+
             newlines.append('\t'.join(line_splitted))
             i = i + 1
         filename = fd.name
@@ -130,18 +149,33 @@ if opt == "1": #load means
         calculate_error(file_tratamentos_denacast)
         file_tratamentos_denacast = open("results/denacast-tratamento.txt", 'r+')
         check_confidence_interval(file_tratamentos_denacast)
+        file_tratamento_packet_controls_denacast = open("results/denacast-tratamento-packet-control.txt", 'r+')
+        calculate_error(file_tratamento_packet_controls_denacast)
+        file_tratamento_packet_controls_denacast = open("results/denacast-tratamento-packet-control.txt", 'r+')
+        check_confidence_interval(file_tratamento_packet_controls_denacast)
         file_tratamentos_ccntv = open("results/ccntv-tratamento.txt", 'r+')
         calculate_error(file_tratamentos_ccntv)
         file_tratamentos_ccntv = open("results/ccntv-tratamento.txt", 'r+')
         check_confidence_interval(file_tratamentos_ccntv)
+        file_tratamento_packet_controls_ccntv = open("results/ccntv-tratamento-packet-control.txt", 'r+')
+        calculate_error(file_tratamento_packet_controls_ccntv)
+        file_tratamento_packet_controls_ccntv = open("results/ccntv-tratamento-packet-control.txt", 'r+')
+        check_confidence_interval(file_tratamento_packet_controls_ccntv)
         file_tratamentos_gmtp = open("results/gmtp-tratamento.txt", 'r+')
         calculate_error(file_tratamentos_gmtp)
         file_tratamentos_gmtp = open("results/gmtp-tratamento.txt", 'r+')
         check_confidence_interval(file_tratamentos_gmtp)
+        file_tratamento_packet_controls_gmtp = open("results/gmtp-tratamento-packet-control.txt", 'r+')
+        calculate_error(file_tratamento_packet_controls_gmtp)
+        file_tratamento_packet_controls_gmtp = open("results/gmtp-tratamento-packet-control.txt", 'r+')
+        check_confidence_interval(file_tratamento_packet_controls_gmtp)
 
         file_tratamentos_denacast.close()
+        file_tratamento_packet_controls_denacast.close()
         file_tratamentos_ccntv.close()
+        file_tratamento_packet_controls_ccntv.close()
         file_tratamentos_gmtp.close()
+        file_tratamento_packet_controls_gmtp.close()
         exit()
     # ===========================================================================
 
@@ -165,7 +199,7 @@ if opt == "1": #load means
 
     # gerar novamente o arquivo final de tratamentos
     # ./parse-means.py 1 2
-    if subopt == "2":
+    if subopt == "2222222":
         fd1 = open("results/denacast-tratamento-ci.txt", 'r')
         file_tratamentos_denacast = fd1.readlines()
         fd1.close()
@@ -767,6 +801,94 @@ elif opt == "4": #generate upload rate distribution
     line = "%d\t%d\t%d\t%d\n" % (distributions[80000][0.5], distributions[80000][1], distributions[80000][2], distributions[80000][5])
     filename.write(line)
     filename.close()
+
+
+elif opt == "5": #calculate final mean of the metrics
+    fd1 = open("results/denacast-tratamento.txt", 'r')
+    file_tratamentos_denacast = fd1.readlines()
+    fd1.close()
+
+    fd2 = open("results/ccntv-tratamento.txt", 'r')
+    file_tratamentos_ccntv = fd2.readlines()
+    fd2.close()
+
+    fd3 = open("results/gmtp-tratamento.txt", 'r')
+    file_tratamentos_gmtp = fd3.readlines()
+    fd3.close()
+
+    #weight = [0.625, 1.875, 18.75, 37.5, 75, 100, 0.625, 1.875, 18.75, 37.5, 75, 100, 0.625, 1.875, 18.75, 37.5, 75, 100]
+    weight = [0.625, 1.875, 18.75, 37.5, 75, 100, 0.208, 0.625, 6.25, 12.5, 25, 33.33, 0.125, 0.375, 3.75, 7.5, 15, 20]
+
+    startup_time_gd_numerator = 0
+    startup_time_gd_denominator = 0
+    startup_time_gc_numerator = 0
+    startup_time_gc_denominator = 0
+    continuity_index_gd_numerator = 0
+    continuity_index_gd_denominator = 0
+    continuity_index_gc_numerator = 0
+    continuity_index_gc_denominator = 0
+    distortion_gd_numerator = 0
+    distortion_gd_denominator = 0
+    distortion_gc_numerator = 0
+    distortion_gc_denominator = 0
+    for tratamento_i in range(0, len(tratamentos_array)):
+
+        line_tratamento_denacast = file_tratamentos_denacast[tratamento_i]
+        line_tratamento_ccntv = file_tratamentos_ccntv[tratamento_i]
+        line_tratamento_gmtp = file_tratamentos_gmtp[tratamento_i]
+
+        line_tratamento_denacast_splitted = line_tratamento_denacast.split("\t")
+        line_tratamento_ccntv_splitted = line_tratamento_ccntv.split("\t")
+        line_tratamento_gmtp_splitted = line_tratamento_gmtp.split("\t")
+
+        startup_time_gd_lower = float(line_tratamento_denacast_splitted[1]) - float(line_tratamento_denacast_splitted[3])
+        startup_time_gd_upper = float(line_tratamento_gmtp_splitted[1]) + float(line_tratamento_gmtp_splitted[3])
+        startup_time_gd_upper_perc = 100 - startup_time_gd_upper * 100 / startup_time_gd_lower
+        startup_time_gd_numerator = startup_time_gd_numerator + (startup_time_gd_upper_perc * weight[tratamento_i]);
+        startup_time_gd_denominator = startup_time_gd_denominator + weight[tratamento_i]
+
+        startup_time_gc_lower = float(line_tratamento_ccntv_splitted[1]) - float(line_tratamento_ccntv_splitted[3])
+        startup_time_gc_upper = float(line_tratamento_gmtp_splitted[1]) + float(line_tratamento_gmtp_splitted[3])
+        startup_time_gc_upper_perc = 100 - startup_time_gc_upper * 100 / startup_time_gc_lower
+        startup_time_gc_numerator = startup_time_gc_numerator + (startup_time_gc_upper_perc * weight[tratamento_i]);
+        startup_time_gc_denominator = startup_time_gc_denominator + weight[tratamento_i]
+
+
+        continuity_index_gd_lower = float(line_tratamento_gmtp_splitted[5]) - float(line_tratamento_gmtp_splitted[7])
+        continuity_index_gd_upper = float(line_tratamento_denacast_splitted[5]) + float(line_tratamento_denacast_splitted[7])
+        continuity_index_gd_upper_perc = 100 - continuity_index_gd_upper * 100 / continuity_index_gd_lower
+        continuity_index_gd_numerator = continuity_index_gd_numerator + (continuity_index_gd_upper_perc * weight[tratamento_i]);
+        continuity_index_gd_denominator = continuity_index_gd_denominator + weight[tratamento_i]
+
+        continuity_index_gc_lower = float(line_tratamento_gmtp_splitted[5]) - float(line_tratamento_gmtp_splitted[7])
+        continuity_index_gc_upper = float(line_tratamento_ccntv_splitted[5]) + float(line_tratamento_ccntv_splitted[7])
+        continuity_index_gc_upper_perc = 100 - continuity_index_gc_upper * 100 / continuity_index_gc_lower
+        continuity_index_gc_numerator = continuity_index_gc_numerator + (continuity_index_gc_upper_perc * weight[tratamento_i]);
+        continuity_index_gc_denominator = continuity_index_gc_denominator + weight[tratamento_i]
+
+
+        distortion_gd_lower = float(line_tratamento_denacast_splitted[9]) - float(line_tratamento_denacast_splitted[11])
+        distortion_gd_upper = float(line_tratamento_gmtp_splitted[9]) + float(line_tratamento_gmtp_splitted[11])
+        distortion_gd_numerator = distortion_gd_numerator + ((distortion_gd_lower - distortion_gd_upper) * weight[tratamento_i]);
+        distortion_gd_denominator = distortion_gd_denominator + weight[tratamento_i]
+
+        distortion_gc_lower = float(line_tratamento_ccntv_splitted[9]) - float(line_tratamento_ccntv_splitted[11])
+        distortion_gc_upper = float(line_tratamento_gmtp_splitted[9]) + float(line_tratamento_gmtp_splitted[11])
+        distortion_gc_numerator = distortion_gc_numerator + ((distortion_gc_lower - distortion_gc_upper) * weight[tratamento_i]);
+        distortion_gc_denominator = distortion_gc_denominator + weight[tratamento_i]
+
+    startup_time_gd_mean = startup_time_gd_numerator / startup_time_gd_denominator
+    startup_time_gc_mean = startup_time_gc_numerator / startup_time_gc_denominator
+    print "Startup delay GMTP vs DENACAST: ", startup_time_gd_mean
+    print "Startup delay GMTP vs CCN-TV: ", startup_time_gc_mean
+    continuity_index_gd_mean = continuity_index_gd_numerator / continuity_index_gd_denominator
+    continuity_index_gc_mean = continuity_index_gc_numerator / continuity_index_gc_denominator
+    print "Continuity index GMTP vs DENACAST: ", continuity_index_gd_mean
+    print "Continuity index GMTP vs CCN-TV: ", continuity_index_gc_mean
+    distortion_gd_mean = distortion_gd_numerator / distortion_gd_denominator
+    distortion_gc_mean = distortion_gc_numerator / distortion_gc_denominator
+    print "Distortion GMTP vs DENACAST: ", distortion_gd_mean
+    print "Distortion GMTP vs CCN-TV: ", distortion_gc_mean
 
 else:
     print("Opcao invalida.")

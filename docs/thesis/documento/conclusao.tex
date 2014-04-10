@@ -159,3 +159,278 @@ What goes in the appendices? Any material which impedes the smooth development o
 % Nesta seção,
 % % organiza-se a discussão sobre o projeto GMTP em duas partes. Na Seção~\ref{subsec:gmtp-rnp}, discute-se o funcionamento do GMTP se fosse posto em funcionamento em uma grande rede, instanciando-se a Rede Nacional de Pesquisa (RNP). E, na Seção~\ref{subsec:gmtp-servicos},
 % examinam-se os serviços do GMTP oferecidos aos sistemas de distribuição de mídias ao vivo com vistas aos atuais recursos implementados de forma paliativa nos sistemas existentes, devido à inexistência de um suporte mais efetivo das redes atuais.
+
+1 General questions
+1.1 What is Information-Centric Networking (ICN)?
+1.2 What is the motivation behind the NDN project?
+1.3 What is Named-Data Networking (NDN)?
+1.4 What is the motivation behind the NDN project?
+1.5 Is NDN the same as ICN?
+1.6 What will the role of ICN be on the Internet in 20 years? Will it be the dominant paradigm of communications?
+1.7 How does NDN differ from Content-Centric Networking (CCN)?
+1.8 Is NDN a clean-slate design?
+1.9 Can you concisely list the fundamental principles of NDN?
+1.10 How does NDN differ from CDNs?
+1.11 What is the NDN team currently working on now?
+1.12 Where can I find more information about the ongoing NDN efforts?
+1.13 If I have suggestions on the NDN design, where to send my input?
+1.14 Are there any commonalities between IP and NDN architectures?
+1.15 What are the basic differences between IP and NDN?
+1.16 What factors are driving R&D investment in this area?
+1.17 What are the most important research challenges in NDN?
+2 Naming in NDN Networks
+2.1 How does NDN plan to manage the global name space used to name all the data?
+2.2 How are names assigned in NDN?
+2.3 How are names assured to be unique?
+2.4 How does NDN deal with multiple alternate versions of the same content?
+2.5 If NDN uses DNS names directly for routing, is DNS still needed in NDN networks?
+2.6 Can NDN names refer to locations?
+3 NDN Applications and Application Development
+3.1 What kinds of applications can benefit most from NDN?
+3.2 Are there applications that NDN cannot support? Or cannot support as well as IP does?
+3.3 What sort of applications are enabled by NDN that IP does not support very well?
+3.4 How can PUSH-type applications be supported in an NDN network?
+4 Network Routing and Forwarding
+4.1 How does an NDN router differ from an IP router?
+4.2 Do NDN routers need a huge amount of storage?
+4.3 How does routing work in an NDN network?
+4.4 How can NDN routing possibly scale, given the number of URLs we have today?
+4.5 What support does NDN provide for securing network routing to prevent hijacks?
+4.6 Is ?identifier-locator separation? applicable to NDN networks?
+4.7 I have seen ?Hyperbolic Routing? mentioned for NDN networks. How does that work?
+4.8 How does an NDN FIB differ structurally from an IP FIB?
+4.9 How does an NDN network control traffic congestion?
+4.10 How does NDN handle content that should not be cached?
+5 Security and Privacy
+5.1 Are verifiable signatures REQUIRED or PREFERRED by the architecture?
+5.2 How will security at such a fine grain not impose significant overhead and performance penalties?
+5.3 How does NDN prevent unauthorized access to sensitive data?
+5.4 Does NDN rely on PKI? If not how can one verify the crypto keys?
+5.5 How does NDN?s ?trust management? work?
+5.6 What solutions does NDN have to mitigate DDOS attacks?
+5.7 How does NDN mitigate caching poisoning attack?
+5.8 Who should verify the signature carried in NDN packets, routers or end nodes?
+5.9 What other new attacks are made possible by NDN?
+5.10 How does anonymous and pseudonymous communication work in the NDN world?
+5.11 What about browser SSL / TLS certificates? What would be the equivalent in NDN?
+General questions
+
+What is Information-Centric Networking (ICN)?
+
+The term ?Information-Centric Networking? (ICN) appeared around 2010, likely inspired by Van Jacobson?s 2006 Google Tech Talk ?A New Way to look at Networking?. This talk points out a new direction of moving the Internet toward a content distribution architecture. Under this common ICN direction, several different architecture designs have emerged in recent years. The IRTF recently launched an ICN research working group.
+
+What is the motivation behind the NDN project?
+
+Our motivation is the architectural mis-match of today?s Internet architecture and its usage.  Specifically: today we build, support, and use Internet applications and services on top of an extremely capable architecture not designed to support them.  What if we had an architecture designed to support them?
+
+What is Named-Data Networking (NDN)?
+
+Named Data Networking (NDN) is one of five research projects funded by the U.S. National Science Foundation under its Future Internet Architecture Program. NDN has its roots in an earlier project, Content-Centric Networking (CCN), which Van Jacobson started at Xerox PARC around the time of his Google talk, to turn his architecture vision into a running prototype (see also his CoNEXT 2009 paper and especially Jacobson?s ACM Queue interview).
+
+What is the motivation behind the NDN project?
+
+Our motivation is the architectural mis-match of today?s Internet architecture and its usage.  Today we build, support, and use Internet applications and services on top of an extremely capable architecture not designed to support them.  What if we had an architecture designed to support them?
+
+Specifically, today?s IP packets can name only endpoints of conversations (IP addresses) at the network layer. What if we generalize this layer to name any information (or content), not just endpoints? Can we make it easier to develop, manage, secure, and use our networks?
+
+Is NDN the same as ICN?
+
+ICN represents a broad research direction of content/information/data centric approach to network architecture. NDN is a specific architecture design under the broad ICN umbrella.
+
+What will the role of ICN be on the Internet in 20 years? Will it be the dominant paradigm of communications?
+
+It?s the dominant paradigm now. YouTube, Netflix, Amazon, iTunes, ?, are pure ICN and account for more than half of the world?s internet traffic. But today?s ICN-over-IP is inefficient and unsecure because the information-centric overlay is a poor match to the Internet?s conversationally-oriented underlay. The Internet is also already mostly mobile devices (whose users are also content-focused), which the IP architecture does not support well.  Finally, the IP architecture was not designed to naturally support secure communication or secure data distribution. Rather than ignore the growing incongruity between the architecture and global use of the Internet, we are inspired to design, develop, and incrementally deploy an architecture that `catches up? with the dominant paradigm of communications today.
+
+This architectural incongruity is analogous to the one between packet-oriented IP overlay and circuit-oriented telephony underlay during the Internet?s first 20 years. Imagine the 1990 question ?What will be the role of the internet in the global telephony system 20 years from now??  We now know the answer was ?the global telephony system became just one of many applications running over IP internet,? i.e., the overlay became the underlay because it did more, better. We predict we could substitute `Internet? for `telephony system? and `NDN/ICN? for `IP internet? to move the clock forward 20 years.
+
+How does NDN differ from Content-Centric Networking (CCN)?
+
+CCN refers to the architecture project Van started at PARC, which included leading the development of a software codebase that represents a baseline implementation of this architecture. Named Data Networking (NDN) refers to the NSF-funded Future Internet Architecture project, a 12-campus collaboration that began in 2010 and included PARC. The NDN project originally used CCNx as its codebase, but as of 2013 has forked a version to support the needs specifically related to the NSF-funded architecture research and development (and not necessarily of interest to PARC).
+
+Is NDN a clean-slate design?
+
+NDN is a clean-slate design in that it is a completely new architecture and has no dependency on IP. As stated in our first proposal to NSF, ?NDN is an entirely new architecture, but one whose operations can be grounded in current practice. Its design reflects our understanding of the strengths and limitations of the current Internet architecture.?
+
+Can you concisely list the fundamental principles of NDN?
+
+First, we leverage successful TCP/IP principles, including the ?thin waist? at the network layer, to promote independent innovation, and end-to-end control where appropriate. Second, we take into consideration the evolution network usage for the last thirty years, specifically the dominant and still relentlessly growing emphasis on content. We generalize the thin waist to accommodate this evolution, by allow packets to name (and request) content.  Finally, we integrate fundamental architectural primtives based on what we have learned from TCP/IP?s shortcomings: cryptographic authentication of every single packet; inherent traffic flow control (flow balance); and adaptive routing and forwarding capabilities.
+
+How does NDN differ from CDNs?
+
+A content distribution network (CDN) is a good example of service that is implemented as an overlay on today?s TCP/IP architecture to meet the demand for scalable content distribution, when the same content is requested by many users. CDN customers tend to be relatively large content owners who are willing to pay for higher performance delivery of their content. Content producers without CDN services would face load and performance challenges if/once their content becomes popular.
+
+CDNs operate at the application layer, which gives rise to two issues: how to get customer content requests into the CDN system (a common solution is for the CDN provider to host DNS service for the domain name of the content it serves); and mapping each request to the nearest CDN node serving the content. NDN works directly at network layer and naturally forwards Interest packets along the best paths to the desired data.
+
+What is the NDN team currently working on now?
+
+Please see the NDN project website, our annual reports, technical reports, and our other publications.
+
+Where can I find more information about the ongoing NDN efforts?
+
+Please see the NDN project website.
+
+If I have suggestions on the NDN design, where to send my input?
+
+For now you may email individual NDN participants. By November 2013, we will establish a mailing list for users interested in NDN discussions.
+
+Are there any commonalities between IP and NDN architectures?
+
+Both architectures share the same hourglass shape, with the IP/NDN layer as the narrow waist.
+Both send datagrams.
+Both follow end-to-end principle.
+Both use their own namespace for data delivery (i.e. IP uses IP addresses to deliver datagrams between IP nodes; NDN uses the application name space to deliver datagrams between NDN nodes).
+
+What are the basic differences between IP and NDN?
+
+They use a different name space: IP address vs name.
+NDN includes a security primitive directly at the narrow waist (every Data packet is signed).
+IP sends packets to destination addresses; NDN uses Interest packets to fetch Data packets.
+IP (by definition) has a stateless data plane. NDN has a stateful data plane. Together with the forwarding strategy, this stateful data plane offers NDN networks a variety of desired functions (see ?A Case for Stateful Forwarding Plane?).
+
+What factors are driving R&D investment in this area?
+
+1.  Researchers are not the only ones who know how the network is being used.
+2. Persistently unsolved, or ungracefully solved, problems deserve another way of looking at them.
+3. Some are just worried about being left behind.
+
+What are the most important research challenges in NDN?
+
+There are plenty, including shifting how we think about (and implement and manage) naming, routing, security and trust, and application development.  We need new information theory to support reasoning about ICN networks. Perhaps most importantly, we need code base platforms that do things enough people want to do that we can experiment at scale.
+
+Naming in NDN Networks
+
+How does NDN plan to manage the global name space used to name all the data?
+
+Today?s Internet already has an application name space, the DNS, together with well established name space allocation procedures and governance bodies. NDN can use this existing application name space for data delivery.
+
+How are names assigned in NDN?
+
+How applications name their data is up to individual application designs; names are opaque to the network.
+
+How are names assured to be unique?
+
+Only names used to retrieve data globally require globally uniqueness. Individual data names can be meaningful in various specific scopes and contexts, ranging from ?the light switch in this room? to ?all country names in the world?. Efficient strategies to fetch data within the intended scope is a new research area.
+
+How does NDN deal with multiple alternate versions of the same content?
+
+See the discussions under Names in the NDN architecture description.
+
+If NDN uses DNS names directly for routing, is DNS still needed in NDN networks?
+
+NDN networks no longer need the ?DNS name to IP address? look up service. However as a globally deployed distributed database, today?s DNS has been used for a variety of other purposes besides mapping domain names to IP addresses. We are currently exploring the potential to use a distributed database system similar to DNS to address routing scalability and other issues.
+
+Can NDN names refer to locations?
+
+As stated in the NDN Project?s Executive Summary: ?NDN retains the Internet?s hourglass architecture but evolves the thin waist to allow the creation of completely general distribution networks. The core element of this evolution is removing the restriction that packets can only name communication endpoints. As far as the network is concerned, the name in an NDN packet can be anything: an endpoint, a chunk of movie or book, a command to turn on some lights, etc.?
+
+NDN Applications and Application Development
+
+What kinds of applications can benefit most from NDN?
+
+We believe all applications can benefit from running over NDN networks. As one example, NDN has a security primitive built into data delivery layer, and ?supports fine-grained trust, allowing consumers to reason about whether a public key owner is an acceptable publisher for a particular piece of data in a specific context.? (quoted from the NDN architecture description). NDN names data instead of locations, removing a major obstacle in supporting mobility in TCP/IP networks. NDN enables in-network storage because data can stand alone, enabling scalable and robust data dissemination.
+
+Are there applications that NDN cannot support? Or cannot support as well as IP does?
+
+Because NDN is designed to remove restrictions in today?s TCP/IP architecture, without introducing new ones, NDN should be able to support all applications that IP can support.
+
+What sort of applications are enabled by NDN that IP does not support very well?
+
+Large scale data dissemination serves as simplest example. In general, due to its (fixed) point-to-point data delivery model, IP is likely to face challenges with any application that communicates to/from many entities, or communicate with mobile entities.
+
+How can PUSH-type applications be supported in an NDN network?
+
+(Examples of such applications include sending an emergency alarm across a big campus, or broadcasting an alarm nationwide.)
+
+Keep in mind that NDN is a network layer protocol. NDN can support applications with push-type information dissemination in a variety of ways. One could use Interest packets to inform potential data consumers, or look into the feasibility of the ?long-lived Interest? concept, or explore a number of other ways including the use of Sync. Different applications may choose to implement push functionality differently.
+
+Network Routing and Forwarding
+
+How does an NDN router differ from an IP router?
+
+An IP router, by the original design (RFC 791), has a stateless data plane. It keeps a FIB and forwards all packets following the FIB. (Routers in today?s operational networks are typically significantly more complicated).
+
+An NDN router maintains three data structures: FIB, PIT (Pending Interest Table), and ContentStore (data cache). The PIT holds every Interest that has been forwarded but still waiting for Data to come back in response.
+
+Do NDN routers need a huge amount of storage?
+
+NDN routers do not necessarily need a huge amount of storage, since the ContentStore provides opportunistic caching. Any amount of caching can help save bandwidth and shorten data retrieval time. It is an engineering decision how much storage to put into a router.
+
+How does routing work in an NDN network?
+
+An NDN network can use existing routing protocols, propagating name prefixes rather than IP prefixes. We are implementing some traditional routing protocols using NDN?s Interest-Data packet exchanges; the NLSR paper describes an example.
+
+How can NDN routing possibly scale, given the number of URLs we have today?
+
+Map-n-cap has long been recognized as a basic solution to routing scalability problem and can be applied directly to address NDN routing scalability concern. When a data producer?s name is infeasible to be announced globally, one can attach to the Interest packet the name of the ISP who hosts the data producer. We call this ISP name a Forwarding Hint. When a router does not find a matching prefix of the name in an Interest packet, it forwards the Interest according to the forwarding hint carried in the Interest.
+
+What support does NDN provide for securing network routing to prevent hijacks?
+
+When routing updates are exchanged by NDN packets, they are automatically secured because all NDN data packets are signed.
+
+Is ?identifier-locator separation? applicable to NDN networks?
+
+The existing work on ?identifier-locator separation? is concerned only with nodes (separating the ID of the node from its addresses, in particular interface specific addresses). NDN names data.
+
+I have seen ?Hyperbolic Routing? mentioned for NDN networks. How does that work?
+
+It turns out that the hyperbolic metric spaces underlying complex networks enables efficient greedy forwarding (GF) without any global knowledge of the network topology. Since each node in the network has coordinates in this hidden metric space, a node can compute the distance between each of its neighbors in the network and destinations whose coordinates are carried in packets. GF then amounts to forwarding the packet to the neighbor node closest to the destination in the hyperbolic space. In the experiments using the NDN testbed, we tested the modified greedy forwarding (MGF) algorithm that excludes the current node from any distance comparisons and finds the neighbor closest to the destination. The packet is dropped if this neighbor is the same as the packet?s previously visited node. See the Routing Section of our recent annual reports for details.
+
+How does an NDN FIB differ structurally from an IP FIB?
+
+An IP FIB contains only a single next hop information for each destination prefix. An NDN router FIB contains multiple next hops for each name prefix, together with measured status and performance information.
+
+How does an NDN network control traffic congestion?
+
+Quoted from the NDN architecture description: ?NDN routers manage traffic load through managing the Interest forwarding rate on a hop-by-hop basis; when a router is overloaded by incoming data traffic from any specific neighbor, it simply slows down or stop sending Interest packets to that neighbor. This also means that NDN eliminates the dependency on end hosts to perform congestion control. Once congestion occurs, data retransmission is aided by caching since the retransmitted Interest will meet the Data right above the link the packet was lost, not the original sender. Thus NDN avoids congestion collapse that can occur in today?s Internet when a packet is lost at the last hop and bandwidth is mostly consumed by repeated retransmissions from the original source host.?
+
+How does NDN handle content that should not be cached?
+
+One can mark an NDN Data packet with a desired ?FreshnessSecond? value.
+
+Security and Privacy
+
+Are verifiable signatures REQUIRED or PREFERRED by the architecture?
+
+The required signature in an NDN data packet serves two purposes: integrity and provenance verification.
+
+How will security at such a fine grain not impose significant overhead and performance penalties?
+
+Efficient signature algorithms and caching both help. Ideally, a piece of data is signed once, when it is published. In contrast, a Data packet may be fetched and verified for many times. One can use verification-efficient signature algorithms, such as RSA, to reduce the overhead of verification. If one also wants to reduce the overhead of signing, symmetric key authentication can be used. Signature verification may involve multiple rounds of certificate fetching and verification. Caching validated certificates can help to reduce this overhead. These validated certificates can be re-used before expiration or revocation.
+
+How does NDN prevent unauthorized access to sensitive data?
+
+In NDN, sensitive data are protected via encryption. Only consumers with appropriate decryption keys can access sensitive data. Both asymmetric encryption and symmetric encryption work in NDN. If data are encrypted with one?s public key, then only the private key holders can decrypt the data. If data are encrypted with symmetric keys, then one can request the secret key by sending a signed interest. A Data producer can authenticate a requester by verifying the signature and decide whether to return the secret key. The returned secrect key is encrypted using the requester?s public key and is visible only to the requester.
+
+Does NDN rely on PKI? If not how can one verify the crypto keys?
+
+NDN does not rely on PKI. NDN allows distributed trust management. Consumers can specify their own trust anchors and policies. Crypto keys are verified against consumers? own policies instead of the policies of centralized certificate agents.
+
+How does NDN?s ?trust management? work?
+
+Trust management in NDN is flexible. Applications can specify their own verification policies, and data consumers can specify their own trust anchors. Trust policies specify how NDN packets should be verified, i.e. how to construct a chain of trust from trust anchors to the original packets. Different policy settings reflect different trust models. Even in the same trust model, consumers using different trust anchors may not derive the same trust result.
+
+What solutions does NDN have to mitigate DDOS attacks?
+
+The pull-model of NDN effectively eliminates many existing DDoS attacks. End users request desired data by sending Interest packets, and the network delivers Data packets upon request only. NDN routers maintain outstanding Interests in their Pending Interest Table (PIT). Interests for the same data are merged into one Interest packet. In addition, network caching is pervasive in NDN and can further mitigate the impact of DDOS attacks. Moreover, as stated in the NDN architecture description, ?The PIT state can also be used to effectively mitigate DDoS attacks. Because the number of PIT entries is an explicit indicator on the router load, an upper bound on this number sets the ceiling on the effect of a DDoS attack. PIT entry timeouts offer relatively cheap attack detection (see LADS); and the arrival interface information in each PIT entry gives information to implement a push-back scheme.?
+
+How does NDN mitigate caching poisoning attack?
+
+This topic is one of our ongoing efforts.
+A basic idea is to utilize NDN?s smart forwarding to mitigate caching poisoning attack. When receiving a bad Data packet, an end node can notify its upstream router by sending an Interest that excludes the bad packet. The forwarding plane of the router with appropriate strategies can select other available outgoing interfaces to forward the Interest, effectively ?routing around? the cached bad packets.
+
+Who should verify the signature carried in NDN packets, routers or end nodes?
+
+Routers may, but are not required to, perform signature verification. End nodes should do it.
+
+What other new attacks are made possible by NDN?
+
+Malicious uses may launch Interest Flooding attacks or content poisoning attacks. One can send Interest packets with different names under the same prefix, causing network congestion and exhaust resources on routers. We have proposed several countermeasures to Interest Flooding attacks. For mitigating content poisoning attacks please see the previous answer.
+
+How does anonymous and pseudonymous communication work in the NDN world?
+
+NDN communication is achieved by exchanging Interest and Data packets. Interest packets carry no inforamtion about who sent them; they are inherently anonymous. Data packets may be signed using public key cryptography, and the signing key may reveal the identity of data producer. Where anonymity is required, it can be achieved by either replacing public key based authentication by symmetric key based authentication, or through a level of indirection. One of our earlier papers addressed this problem.
+
+What about browser SSL / TLS certificates? What would be the equivalent in NDN?
+
+SSL / TLS certificates secure the communication channel between two endpoints, users may decide to accept data received from a trusted endpoints; the channel is transient, once the communication phase is over, data itself is not directly secured.
+In contrast, NDN certificates secure data directly. One can accept a Data packet as long as its signature is valid, no matter where and how the packet is received.
