@@ -118,7 +118,7 @@ No experimento realizado para comparar o GMTP com o Denacast/CoolStreaming e o C
 \end{equation} 
 
 
-\section{Resultados Compilados}
+\section{Compilação dos Resultados}
 \label{sec:tabela-compilacao-resultados}
 
 Na Tabela~\ref{tab:resultado-gmtp-denacast}, apresentam-se os resultados do confronto GMTP vs. Denacast/CoolStreaming e na Tabela~\ref{tab:resultado-gmtp-ccntv} os resultados do confronto GMTP vs. CCN-TV.
@@ -256,3 +256,88 @@ Na Tabela~\ref{tab:resultado-gmtp-denacast}, apresentam-se os resultados do conf
 \end{landscape}
   \clearpage% Flush page
 }
+
+
+% \subsection{Considerações sobre Implementação}
+% 
+% Com o intuito de investigar o desempenho do GMTP, implementou-se no simulador de redes OMNet++~\cite{XU2011} suas principais funcionalidades. A versão  e sua versão atual do protocolo já permite a execução de transmissão de dados. Com o
+% desenvolvimento preliminar do protocolo \mudccps no simulador NS-2, permitiu-se
+% a execução de diversas simulações a fim de avaliar o comportamento do protocolo
+% considerando diversas configurações.
+% 
+% Em linhas gerais, a implementação no referido simulador de rede permite a
+% comunicação entre os nós através dos modos de transmissão multicast e unicast.
+% Foram implementados os tipos de pacotes do \mudccps e os processos de
+% estabelecimento de conexão, incluindo o processo de uso de nós relays, troca
+% de dados em modos multicast e unicast e os algoritmos para controle de
+% congestionamento, incluindo o uso de nós reporters.
+% 
+% Contudo, não foi implementado o arcabouço de extensão para permitir o
+% desenvolvimento de novos algoritmos para o processo de conexão, descoberta e
+% seleção de nós, adaptação de fluxo de dados e tolerância a falhas. Tal
+% implementação será feita no núcleo do sistema operacional Linux, juntamente com
+% todos os mecanismos básicos para o funcionamento do \mudccp.
+% 
+% A proposta é de implementar um arcabouço de extensão para as funções previstas
+% no \mudccp, permitindo-se o desenvolvimento e adição de novos algoritmos para
+% as funcionalidades supracitadas, de modo que torne o \mudccps flexível para
+% permitir que qualquer aplicação os utilizem.
+% 
+% Na prática, um cenário desejado para essa proposta de implementação do \mudccps
+% é que o desenvolvedor possa configurar quais algoritmos deseja utilizar em sua
+% aplicação, permitindo-se que estes sejam alterados em modo de execução da
+% da mesma. Neste caso, suponha um algoritmo de descoberta de nós chamado
+% \textit{DN-1}, um algoritmo para controle de congestionamento chamado
+% \textit{CC-2}, um algoritmo de tolerância a desconexão \textit{TD-3}; um
+% algoritmo de adaptação de fluxo \textit{AF-4} e um algoritmo para reciprocidade
+% % \textit{R-2}. As implementações de tais algoritmos serão feitas na camada de
+% transporte, acoplando-as em forma de módulos do sistema operacional ao protocolo
+% \mudccp. Em seguida, as aplicações podem selecionar quais algoritmos melhor se
+% adequa as suas necessidades, com o \mudccps sendo responsável por:
+% 
+% \begin{enumerate}
+% 
+%   \item carregar o conjunto de algoritmos \textit{A = \{DN-1, CC-2, TD-3, AF-4,
+% R-2\}};
+% 
+%   \item definir os parâmetros iniciais para cada um dos algoritmos em A,
+% definidos pela aplicação;
+% 
+%   \item executar funções preliminares para ajustes iniciais, tais como informar
+% aos nós participantes de uma transmissão quais dos algoritmos estão sendo
+% utilizados (o conjunto \textit{A}) e quais outros estão disponíveis;
+% 
+%   \item executar os algoritmos em momentos apropriados de acordo com os eventos
+% de rede, notificando a aplicação caso necessário e desejável pela aplicação;
+% 
+%   \item descarregar os algoritmos quando não forem mais necessários e informar
+% aos nós parceiros.
+% 
+% \end{enumerate}
+% 
+% Desta forma, um nó servidor poderá solicitar que seus nós clientes carreguem um
+% determinado módulo, dependendo da sua disponibilidade nos nós clientes. Neste
+% caso, o \mudccps controlará todo o processo de carregamento dos mesmos.
+% 
+% Com isso, o \mudccps se tornará um protocolo extensível que gerencia quais
+% algoritmos devem ser executados em cada ponto de extensão. Esses algoritmos
+% podem ser adicionados ao protocolo através de módulos do sistema operacional,
+% carregáveis utilizando-se comandos como o \textit{modprobe} (no Linux, por
+% exemplo) e manipulados (passagem de parâmetros) pela aplicação através de uma
+% API de programação, por exemplo, utilizando-se as primitivas
+% \textit{setsockopt()} e \textit{getsockopt()} da especificação \textit{BSD
+% Socket API}~\cite{1197551}.
+% 
+% Para que as aplicações possam utilizar o \mudccp, o protocolo deve ser
+% compatível com todas as funções prevista na especificação \textit{BSD Socket
+% API}, são elas: \textit{socket()}, \textit{bind()}, \textit{listen()},
+% \textit{connect()}, \textit{accept()}, \textit{send()}, \textit{recv()},
+% \textit{write()}, \textit{read()}, \textit{sendto()}, \textit{recvfrom()},
+% \textit{close()}, \textit{select()}, \textit{setsockopt()},
+% \textit{getsockopt()} e \textit{pull()}.
+% 
+% Outros trabalhos podem ser desenvolvidos para tornar o \mudccps compatível com o
+% padrão de \textit{sockets} do sistema operacional Windows, conhecido pelo nome
+% de \textit{winsock}. Todavia, por ser um sistema operacional de código fechado,
+% a implementação do \mudccps só será possível após sua padronização em forma de
+% RFC.

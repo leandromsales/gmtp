@@ -23,7 +23,7 @@ Nesse contexto, inclui-se também os trabalhos que, apesar de não apresentarem
 uma proposta completa para distribuição de mídias ao vivo, apresentam-se como
 parte de um todo, com similaridades relevantes se comparado ao \mudccp. A compilação dos trabalhos a seguir foi realizada com base em informações obtidas e adaptadas de publicações encontradas em diversas fontes disponíveis na literatura (revistas, conferências, livros, teses e dissertações).
 
-Para uma leitura linear deste capítulo, na próxima seção, apresenta-se uma breve discussão sobre os principais marcos na área de distribuição de mídias ao vivo, posicionando o GMTP em um cenário macro do estado da arte. Em seguida, na Seção~\ref{sec:proto-app-ea}, apresentam-se detalhes dos principais sistemas e protocolos de distribuição de mídias ao vivo, enfatizando suas respectivas arquiteturas e modelos de serviço. Já na Seção~\ref{sec:trab-redes-centradas-informacao}, apresenta-se uma nova vertente de pesquisa sobre distribuição de dados na Internet, conhecida por Redes Centradas na Informação, enfatizando suas principais características e os trabalhos relacionados à distribuição de mídias ao vivo. E, por fim, na Seção~\ref{sec:trabrel-sumario}, apresenta-se um breve resumo sobre este capítulo. Caso o leitor deseje realizar uma leitura com foco nos trabalhos mais relevantes e fortemente relacionados ao GMTP, recomenda-se a leitura da próxima seção, bem como da Seção~\ref{subsec:coolstreaming}, onde se discute sobre o projeto CoolStreaming; da Seção~\ref{subsec:denacast}, onde se discute sobre o projeto Denacast e, por fim, de toda a Seção~\ref{sec:trab-redes-centradas-informacao}.
+Para uma leitura linear deste capítulo, na próxima seção, apresenta-se uma breve discussão sobre os principais marcos na área de distribuição de mídias ao vivo, posicionando o GMTP em um cenário macro do estado da arte. Em seguida, na Seção~\ref{sec:proto-app-ea}, apresentam-se detalhes dos principais sistemas e protocolos de distribuição de mídias ao vivo, enfatizando suas respectivas arquiteturas e modelos de serviço. Já na Seção~\ref{subsec:ndn}, apresenta-se uma nova vertente de pesquisa sobre distribuição de dados na Internet, conhecida por Redes Centradas na Informação, enfatizando suas principais características e os trabalhos relacionados à distribuição de mídias ao vivo. E, por fim, na Seção~\ref{sec:trabrel-sumario}, apresenta-se um breve resumo sobre este capítulo. Caso o leitor deseje realizar uma leitura com foco nos trabalhos mais relevantes e fortemente relacionados ao GMTP, recomenda-se a leitura da próxima seção, das Seções~\ref{subsec:coolstreaming} e~\ref{subsec:denacast}, onde discutem-se os projeto CoolStreaming e Denacast, bem como da Seção~\ref{sec:trab-redes-centradas-informacao}.
 
 % Uma vez que a lista apresentada não é exustiva e considerando a potencial
 % evolução destes trabalhos, à ausência de uma característica citada sobre um
@@ -971,7 +971,7 @@ formalmente.
 
 
 \section{Redes Centradas na Informação}
-\label{sec:trab-redes-centradas-informacao}
+\label{subsec:ndn}
 
 Desde da criação da Internet, diversos módulos complementares foram disponibilizados para atender às necessidades dos usuários, como o NAT, DNS com  suporte a balanceamento de carga, etc. Entretanto, essas soluções criaram seus próprios problemas~\cite{moore2002}, que foram resolvidos por outras proposta~\cite{RFC3489} ou utilizadas de forma errada~\cite{Vixie:2009:DNS:1610252.1610269}. Em geral, essas mudanças têm levado a situações complexas de gerenciamento de rede, ao passo que tem sido disponibilizados avanços incipientes e lentos com foco no núcleo da rede. No entanto, como ilustra-se na Figura~\ref{fig:icn-abstracao}, uma nova vertente de pesquisa propõe a próxima arquitetura de serviço para a Internet considerando o princípio de que os nós da rede devem trocar dados com base no nome do conteúdo de interesse e não com base em caminhos (rede de telefonia), tampouco em sua localização (rede IP). Essa abordagem é conhecida por Redes Centradas na Informação (\textit{Information Centric Networks} -- ICN)~\cite{6563278}.
 
@@ -1003,9 +1003,6 @@ Dentre as propostas de uma nova arquitetura para a Internet com base no princípi
 % (PSI)}~\cite{6231279} ou Redes de Publicação e Subscrição.
 ao passo que outras propostas ainda estão em estágio embrionário~\cite{6563278,6384450,6231279,6231276,5936152}, como discutiu-se no início deste capítulo (Seção~\ref{sec:visaogerao-propostas-dmv}). Como a CCN apresenta diferenças substanciais em seu modelo de serviço para prover o conteúdo de interesse e funções disponíveis no núcleo da rede, a seguir, detalhe-se seu funcionamento e suas atuais aplicações no contexto de distribuição de mídias ao vivo.
 
-\subsection{Redes de Centradas no Conteúdo (CCN)}
-\label{subsec:ndn}
-
 Na arquitetura CCN, nomeiam-se os pacotes de conteúdos e defini-se um modelo de serviço orientado a pedido e resposta, onde os nós obtêm os pacotes de dados a partir da rede, não necessariamente a partir dos nós finais. Como ilustra-se na Figura~\ref{fig:ccn-fib-pit}, os nós requisitam os pacotes de dados enviando uma requisição com o nome do conteúdo de interesse, que é único na rede. A definição dos nomes dos conteúdos seguem uma estrutura similar às URIs: os nomes são definidos em hierarquias, com componentes de tamanhos variados, por exemplo, \textit{/a/b/c.mp4}. Um nó cliente transmite tal requisição para obter um determinado conteúdo ao transmitir um pacote especial chamado de Pacotes de Interesse (\textit{Interest Packets}). Em resposta ao pacote de interesse do cliente, algum nó da rede, em geral um roteador, transmite ao nó requisitante os pacotes de dados com o conteúdo requisitado (se o conteúdo estiver em \textit{cache}). Toda interação ocorre sem o uso de endereçamento de origem/destino e, para cada envio de pacote de interesse, o nó requisitante recebe um pacote de dados, caracterizando uma relação estrita um-para-um entre os pacotes de interesse e os pacotes de dados.
 
 \begin{figure}
@@ -1035,12 +1032,6 @@ Isto acontece com o auxílio de três estruturas da dados, definidas por:
   \item \textit{Forwarding Information Base (FIB):} é uma tabela que associa os prefixos dos nomes de um conteúdo a uma ou mais interfaces de saída. Ao receber um pacote de interesse, o roteador realiza uma verificação de correspondência mais longa (\textit{Longest Prefix Match}) na FIB e então encaminha o pacote de interesse em direção os roteadores correspondentes com essa verificação.
 
 \end{enumerate}
-
-Hence, in CCN, CS acts as a cache, while interests are
-forwarded according to FIB information and data is forwarded
-according to PIT information. As interest packets and data
-chunks travel across CCN nodes, multiple lookups in several
-data structures have to be performed.
 
 Sendo assim, o CS funciona como um \textit{cache}, enquanto que os pacotes de interesse são repassados de acordo com informações na FIB e os pacotes de dados de acordo com as informações da PIT. Os pacotes de interesse e de dados trafegam através dos nós da rede, portanto múltiplas avaliações em estruturas de dados são realizadas. Além disso, os serviços de transporte de dados é orientado ao nó receptor, ao passo que os nós fontes não mantém qualquer estado de conexão, simplesmente respondem pacotes de dados à medida que recebem pacotes de interesse. Por exemplo, quando um nó cliente não recebe um pacote de dados em um determinando instante (\textit{timeout interval}, similar ao TCP) ou se receber um pacote com erro verificado via um método de \textit{checksum}, o nó receptor deve retransmitir um pacote de interesse correspondente aos pacotes de dados perdidos. Os nós receptores também executam as funções de controle de fluxo e controle de congestionamento. Para isso, controlam-se as taxas em que os pacotes de interesse são transmitidos, utilizando-se um modelo baseado em janela deslizante, similar ao utilizado no TCP~\cite{5462976}.
 

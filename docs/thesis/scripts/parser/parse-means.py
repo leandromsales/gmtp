@@ -816,6 +816,19 @@ elif opt == "5": #calculate final mean of the metrics
     file_tratamentos_gmtp = fd3.readlines()
     fd3.close()
 
+
+    fd4 = open("results/denacast-tratamento-packet-control.txt", 'r')
+    file_tratamentos_denacast_pc = fd4.readlines()
+    fd4.close()
+
+    fd5 = open("results/ccntv-tratamento-packet-control.txt", 'r')
+    file_tratamentos_ccntv_pc = fd5.readlines()
+    fd5.close()
+
+    fd6 = open("results/gmtp-tratamento-packet-control.txt", 'r')
+    file_tratamentos_gmtp_pc = fd6.readlines()
+    fd6.close()
+
     #weight = [0.625, 1.875, 18.75, 37.5, 75, 100, 0.625, 1.875, 18.75, 37.5, 75, 100, 0.625, 1.875, 18.75, 37.5, 75, 100]
     weight = [0.625, 1.875, 18.75, 37.5, 75, 100, 0.208, 0.625, 6.25, 12.5, 25, 33.33, 0.125, 0.375, 3.75, 7.5, 15, 20]
 
@@ -831,15 +844,25 @@ elif opt == "5": #calculate final mean of the metrics
     distortion_gd_denominator = 0
     distortion_gc_numerator = 0
     distortion_gc_denominator = 0
+    packet_control_gd_numerator = 0
+    packet_control_gd_denominator = 0
+    packet_control_gc_numerator = 0
+    packet_control_gc_denominator = 0
     for tratamento_i in range(0, len(tratamentos_array)):
 
         line_tratamento_denacast = file_tratamentos_denacast[tratamento_i]
         line_tratamento_ccntv = file_tratamentos_ccntv[tratamento_i]
         line_tratamento_gmtp = file_tratamentos_gmtp[tratamento_i]
+        line_tratamento_denacast_pc = file_tratamentos_denacast_pc[tratamento_i]
+        line_tratamento_ccntv_pc = file_tratamentos_ccntv_pc[tratamento_i]
+        line_tratamento_gmtp_pc = file_tratamentos_gmtp_pc[tratamento_i]
 
         line_tratamento_denacast_splitted = line_tratamento_denacast.split("\t")
         line_tratamento_ccntv_splitted = line_tratamento_ccntv.split("\t")
         line_tratamento_gmtp_splitted = line_tratamento_gmtp.split("\t")
+        line_tratamento_denacast_pc_splitted = line_tratamento_denacast_pc.split("\t")
+        line_tratamento_ccntv_pc_splitted = line_tratamento_ccntv_pc.split("\t")
+        line_tratamento_gmtp_pc_splitted = line_tratamento_gmtp_pc.split("\t")
 
         startup_time_gd_lower = float(line_tratamento_denacast_splitted[1]) - float(line_tratamento_denacast_splitted[3])
         startup_time_gd_upper = float(line_tratamento_gmtp_splitted[1]) + float(line_tratamento_gmtp_splitted[3])
@@ -877,6 +900,17 @@ elif opt == "5": #calculate final mean of the metrics
         distortion_gc_numerator = distortion_gc_numerator + ((distortion_gc_lower - distortion_gc_upper) * weight[tratamento_i]);
         distortion_gc_denominator = distortion_gc_denominator + weight[tratamento_i]
 
+
+        packet_control_gd_lower = float(line_tratamento_denacast_pc_splitted[1]) - float(line_tratamento_denacast_pc_splitted[3])
+        packet_control_gd_upper = float(line_tratamento_gmtp_pc_splitted[1]) + float(line_tratamento_gmtp_pc_splitted[3])
+        packet_control_gd_numerator = packet_control_gd_numerator + ((packet_control_gd_lower - packet_control_gd_upper) * weight[tratamento_i]);
+        packet_control_gd_denominator = packet_control_gd_denominator + weight[tratamento_i]
+
+        packet_control_gc_lower = float(line_tratamento_ccntv_pc_splitted[1]) - float(line_tratamento_ccntv_pc_splitted[3])
+        packet_control_gc_upper = float(line_tratamento_gmtp_pc_splitted[1]) + float(line_tratamento_gmtp_pc_splitted[3])
+        packet_control_gc_numerator = packet_control_gc_numerator + ((packet_control_gc_lower - packet_control_gc_upper) * weight[tratamento_i]);
+        packet_control_gc_denominator = packet_control_gc_denominator + weight[tratamento_i]
+
     startup_time_gd_mean = startup_time_gd_numerator / startup_time_gd_denominator
     startup_time_gc_mean = startup_time_gc_numerator / startup_time_gc_denominator
     print "Startup delay GMTP vs DENACAST: ", startup_time_gd_mean
@@ -889,6 +923,30 @@ elif opt == "5": #calculate final mean of the metrics
     distortion_gc_mean = distortion_gc_numerator / distortion_gc_denominator
     print "Distortion GMTP vs DENACAST: ", distortion_gd_mean
     print "Distortion GMTP vs CCN-TV: ", distortion_gc_mean
+    packet_control_gd_mean = packet_control_gd_numerator / packet_control_gd_denominator
+    packet_control_gc_mean = packet_control_gc_numerator / packet_control_gc_denominator
+    print "Packet control GMTP vs DENACAST: ", packet_control_gd_mean
+    print "Packet control GMTP vs CCN-TV: ", packet_control_gc_mean
+
+
+	# MEDIAS GERAIS
+    print ""
+
+    gd_aritm_mean = (startup_time_gd_mean + continuity_index_gd_mean + distortion_gd_mean + packet_control_gd_mean) / 4.0
+    gc_aritm_mean = (startup_time_gc_mean + continuity_index_gc_mean + distortion_gc_mean + packet_control_gc_mean) / 4.0
+    print "MEDIA ARITMETICA GMTP vs DENACAST: %.2f " % gd_aritm_mean
+    print "MEDIA ARITMETICA GMTP vs CCN-TV: %.2f " % gc_aritm_mean
+
+
+    gd_weight_mean = (startup_time_gd_mean*2 + continuity_index_gd_mean*3 + distortion_gd_mean*3 + packet_control_gd_mean*1) / 9.0
+    gc_weight_mean = (startup_time_gc_mean*2 + continuity_index_gc_mean*3 + distortion_gc_mean*3 + packet_control_gc_mean*1) / 9.0
+    print "MEDIA PONDERADA GMTP vs DENACAST: %.2f " % gd_weight_mean
+    print "MEDIA PONDERADA GMTP vs CCN-TV: %.2f " % gc_weight_mean
+
+#    gd_harmonic_mean = 4.0 / (1/startup_time_gd_mean + 1/continuity_index_gd_mean + 1/distortion_gd_mean + 1/packet_control_gd_mean)
+#    gc_harmonic_mean = 4.0 / (1/startup_time_gc_mean + 1/continuity_index_gc_mean + 1/distortion_gc_mean + 1/packet_control_gc_mean)
+#    print "MEDIA HARMONICA GMTP vs DENACAST: %.2f " % gd_harmonic_mean
+#    print "MEDIA HARMONICA GMTP vs CCN-TV: %.2f " % gc_harmonic_mean
 
 else:
     print("Opcao invalida.")

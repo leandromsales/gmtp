@@ -1,16 +1,16 @@
 \chapter{Análise do Projeto e do Desempenho do GMTP}
 \label{cap:analisedesemp}
 
-Neste capítulo apresentam-se a análise de projeto e a avaliação de desempenho do protocolo GMTP. Considerou-se as propostas Denacast/CoolStreaming~\cite{Jahromi2012,5764567} e o CCN-TV~\cite{6550523} a título de confronto devido à similaridade arquitetural e as estratégias para distribuição de mídias ao vivo. Tratam-se de propostas que adotam a maioria das estratégias disponíveis no estado da prática/arte para o fim que se discute, referenciadas na literatura e acessíveis para estudos comparativos. Nesse contexto, considera-se que as avaliações são equânimes, pois o Denacast/CoolStreaming estende o funcionamento do CoolStreaming para dar suporte a uma estrutura P2P/CDN, o CCN-TV faz uso de uma infraestrutura que considera mais efetivamente o suporte da rede para otimizar o acesso aos dados e o GMTP, que essencialmente explora uma estratégia híbrida em consideração a esses concorrentes.
+Neste capítulo apresentam-se a análise de projeto e a avaliação de desempenho do protocolo GMTP. Considerou-se as propostas Denacast~\cite{Jahromi2012,5764567} e o CCN-TV~\cite{6550523} a título de confronto devido à similaridade arquitetural e as estratégias para distribuição de mídias ao vivo. Tratam-se de propostas que adotam a maioria das estratégias disponíveis no estado da prática/arte para o fim que se discute, referenciadas na literatura e acessíveis para estudos comparativos. Nesse contexto, considera-se que as avaliações são equânimes, pois o Denacast estende o funcionamento do CoolStreaming para dar suporte a uma estrutura P2P/CDN, o CCN-TV faz uso de uma infraestrutura que considera mais efetivamente o suporte da rede para otimizar o acesso aos dados e o GMTP, que essencialmente explora uma estratégia híbrida em consideração a esses concorrentes.
 
-Inicialmente, na Seção~\ref{sec:projeto-gmtp}, analisa-se o projeto GMTP no tocante aos seus benefícios e funcionalidades, bem como uma comparação de projeto (arquitetura e modelo de serviço) frente ao Denacast/CoolStreaming e o CCN-TV. Em seguida, inicia-se a fase de avaliação do GMTP. Primeiramente, na Seção~\ref{sec:metodologia}, apresenta-se a metodologia de avaliação de desempenho do GMTP. Em seguida, na Seção~\ref{sec:resdisc}, estabelecem-se confrontos entre o GMTP e os sistemas supracitados, apresentando-se os resultados e discussões mais relevantes. Por fim, na Seção~\ref{sec:resdisc-sumario}, apresenta-se o sumário deste capítulo.
+Inicialmente, na Seção~\ref{sec:projeto-gmtp}, analisa-se o projeto GMTP no tocante aos seus benefícios e funcionalidades, bem como uma comparação de projeto (arquitetura e modelo de serviço) frente ao Denacast (a partir deste ponto chamado apenas de Denacast) e o CCN-TV. Em seguida, inicia-se a fase de avaliação do GMTP. Primeiramente, na Seção~\ref{sec:metodologia}, apresenta-se a metodologia de avaliação de desempenho do GMTP. Em seguida, na Seção~\ref{sec:resdisc}, estabelecem-se confrontos entre o GMTP e os sistemas supracitados, apresentando-se os resultados e discussões mais relevantes. Por fim, na Seção~\ref{sec:resdisc-sumario}, apresenta-se o sumário deste capítulo.
 
 \section{Análise do Projeto}
 \label{sec:projeto-gmtp}
 
 Após o detalhamento do GMTP no Capítulo~\ref{cap:mudccp}, nesta seção, objetiva-se justificar a proposta do GMTP não apenas como um protocolo com o apelo de reduzir a complexidade dos recursos disponibilizados na camada de aplicação e interoperabilidade, mas também apresentar que um conjunto mínimo de serviços, quando organizados de forma mais apropriada (nas camadas inferiores), que se tornam equivalentes aos recursos empregados na camada de aplicação por falta de uma melhor opção, promovendo-se melhorias substanciais no projeto das aplicações e principalmente no uso dos recursos de rede.
 
-Nesse contexto, organizou-se esta seção em duas partes. Primeiramente, analisa-se as funções do GMTP e os consequentes benefícios e, em seguida, apresenta-se uma comparação de projeto entre o GMTP, o Denacast/CoolStreaming e o CCN-TV.
+Nesse contexto, organizou-se esta seção em duas partes. Primeiramente, analisa-se as funções do GMTP e os consequentes benefícios e, em seguida, apresenta-se uma comparação de projeto entre o GMTP, o Denacast e o CCN-TV.
 
 \subsection{Projeto e benefícios do GMTP para as aplicações e para a rede}
 
@@ -41,12 +41,12 @@ Ao observar esses requisitos, cada um com seus desafios, enumeram-se $5$ princip
 
 \end{enumerate}
 
-\subsection{Comparativo: GMTP, Denacast/CoolStreaming e CCN}
+\subsection{Comparativo: GMTP, Denacast e CCN}
 \label{subsec:comparativo-gmtp-dena-ccn}
 
-A seguir, apresentam-se detalhes de comparação entre o GMTP e os seus dois principais concorrentes: Denacast/CoolStreaming e CCN. O Denacast/CoolStreaming pode ser considerado o estado da prática, o principal representante dos sistemas para distribuição de mídias ao vivo e que consideram uma arquitetura P2P/CDN. Já o cado do CCN pode ser considerada uma proposta de estado da arte, onde o foco da discussão passa a ser mais arquitetural, com aspectos significativos de melhoras que leva a discussão a um patamar comparativo menos relacionado com a camada de aplicação e mais relacionado com a infraestrutura de rede (da camada de transporte para baixo).
+A seguir, apresentam-se detalhes de comparação entre o GMTP e os seus dois principais concorrentes: Denacast e CCN. O Denacast pode ser considerado o estado da prática, o principal representante dos sistemas para distribuição de mídias ao vivo e que consideram uma arquitetura P2P/CDN. Já o cado do CCN pode ser considerada uma proposta de estado da arte, onde o foco da discussão passa a ser mais arquitetural, com aspectos significativos de melhoras que leva a discussão a um patamar comparativo menos relacionado com a camada de aplicação e mais relacionado com a infraestrutura de rede (da camada de transporte para baixo).
 
-\subsubsection{GMTP vs. Denacast/CoolStreaming:}
+\subsubsection{GMTP vs. Denacast:}
 
 \begin{enumerate}
 
@@ -87,7 +87,7 @@ A seguir, apresentam-se detalhes de comparação entre o GMTP e os seus dois princ
 \end{enumerate}
 
 
-Como base no resumo comparativo apresentado nesta seção entre os projetos GMTP, Denacast/CoolStreaming e CCN, a seguir, concentram-se as discussões em uma avaliação de desempenho do GMTP em um cenário de transmissão de uma mídia ao vivo.
+Como base no resumo comparativo apresentado nesta seção entre os projetos GMTP, Denacast e CCN, a seguir, concentram-se as discussões em uma avaliação de desempenho do GMTP em um cenário de transmissão de uma mídia ao vivo.
 
 
 \section{Avaliação de Desempenho}
@@ -100,20 +100,20 @@ A seguir, apresentam-se detalhes do projeto experimental executado, organizado e
 \subsection{Objetivo e hipótese}
 \label{subsec:objetivo-hipotese}
 
-O objetivo do experimento foi avaliar o desempenho do GMTP com vista à hipótese enunciada de que a constituição de uma rede de favores entre roteadores que interceptam, realizam \textit{cache} temporário e compartilham pacotes de dados tanto em modo \textit{multicast} (em redes locais) quanto em modo unicast (entre redes distintas), auxiliados por um algoritmo para controle de congestionamento assistido pela rede, resulta em uma melhor distribuição dos fluxos de mídias ao vivo.
+O objetivo do experimento foi avaliar o desempenho do GMTP com vista à hipótese enunciada de que a constituição de uma rede de favores entre roteadores que interceptam, realizam \textit{cache} temporário e compartilham pacotes de dados tanto em modo \textit{multicast} quanto em modo \textit{unicast}, auxiliados por nós servidores para determinar as parcerias com base em um algoritmo para controle de congestionamento assistido pela rede, resulta na distribuição mais eficiente de mídias ao vivo.
 
-Para provar esta hipótese, organizou-se a avaliação experimental em duas etapas. Na primeira etapa, confrontou-se o GMTP com o Denacast/CoolStreaming e, na segunda, confrontou-se o GMTP com o CCN-TV. Em ambas as etapas, analisaram-se os valores obtidos referentes às métricas que determinam a qualidade de serviço dos sistemas de distribuição de mídias ao vivo, comparando-se o desempenho dos sistemas estudados.
+Como apresentou-se no Capítulo~\ref{cap:mudccp}, o GMTP é uma instância dessa hipótese e para avaliá-la confrontou-se o GMTP com o Denacast e com o CCN-TV, através da aferição de métricas que determinam a qualidade de serviço dos sistemas de distribuição de mídias ao vivo.
 
 % Em cada etapa, definiu-se uma hipótese nula ($H_0$) e uma hipótese alternativa ($H_A$), da seguinte forma:
 % 
 % \begin{enumerate}
 % 
-%   \item \textit{GMTP vs. Denacast/CoolStreaming}:
+%   \item \textit{GMTP vs. Denacast}:
 %   \begin{itemize}
 % 
-%     \item $H_0$: a eficácia do GMTP e a do Denacast/CoolStreaming é igual, considerando-se as métricas que determinam a qualidade de serviço para distribuição de mídias ao vivo.
+%     \item $H_0$: a eficácia do GMTP e a do Denacast é igual, considerando-se as métricas que determinam a qualidade de serviço para distribuição de mídias ao vivo.
 % 
-%     \item $H_A$: a eficácia do GMTP e do Denacast/CoolStreaming é diferente, considerando-se as métricas que determinam a qualidade de serviço para distribuição de mídias ao vivo.
+%     \item $H_A$: a eficácia do GMTP e do Denacast é diferente, considerando-se as métricas que determinam a qualidade de serviço para distribuição de mídias ao vivo.
 % 
 %   \end{itemize}
 % 
@@ -128,27 +128,25 @@ Para provar esta hipótese, organizou-se a avaliação experimental em duas etapas.
 % 
 % \end{enumerate}
 
-
-
 \subsection{Topologia de rede}
 \label{subsec:topologia}
 
-Com esse norte, definiu-se a topologia da rede, como ilustra-se na Figura~\ref{fig:rede-geant}. Simulou-se uma versão resumida da rede GÉANT\footnote{Rede GÉANT é a rede de pesquisa e educação pan-europeia, que interliga as Redes Nacionais de Pesquisa e Educação da Europa (NRENs) atualmente com 41 roteadores: http://www.geant.net/.}, composta por 27 roteadores. No Apêndice~\ref{app:detalhes-experimentos}, Seção~\ref{sec:tabela-atrasos-propagacao-rede}, apresentam-se as configurações de cada roteador e seus enlaces no tocante à largura de banda e atraso de propagação, com base na legenda da Figura~\ref{fig:rede-geant}.
+Com esse norte, primeiramente definiu-se a topologia da rede, como ilustra-se na Figura~\ref{fig:rede-geant}. Simulou-se uma versão adaptada da atual rede GÉANT\footnote{Rede GÉANT é a rede de pesquisa e educação pan-europeia, que interliga as Redes Nacionais de Pesquisa e Educação da Europa (NRENs) atualmente com 41 roteadores. Para mais informações, acesse: http://www.geant.net/.}, composta por 27 roteadores. Na Seção~\ref{sec:tabela-atrasos-propagacao-rede}, apresentam-se as configurações de cada roteador e seus enlaces no tocante à largura de banda e atraso de propagação, com base na legenda da Figura~\ref{fig:rede-geant}.
 
 \begin{figure}[b!ht]
 \begin{center}
-\includegraphics[natwidth=1729,natheight=1190,scale=.51]{imgs/rede-geant1.png}
+\includegraphics[scale=.49]{imgs/rede-geant.pdf}
 \end{center}
 \vspace{-0.8cm}
-\caption{Versão resumida do \textit{backbone} da rede GÉANT com larguras de banda modificadas e utilizadas no experimento.}
+\caption{Versão adaptada do \textit{backbone} da rede GÉANT, com larguras de banda modificadas para ser utilizada no experimento.}
 \label{fig:rede-geant}
 \end{figure}
 
-Com relação à conectividade dos nós clientes à rede, simulou-se redes locais através das quais os nós clientes estabeleceram conexões com os servidores. Para isto, gerou-se $27$ sub-grafos aleatórios de um grafo completo, com $12$ vértices (nós roteadores, residenciais, por exemplo) e estabeleceu-se uma aresta entre dois vértices (enlace entre roteadores) da seguinte forma: iterou-se os $12$ roteadores dois-a-dois, sorteando-se um número \textit{x} $\in$ $[0,1]$. Com base no valor de \textit{x}, decidiu-se com probabilidade de \ut{60}{\%} estabelecer um enlace entre os dois roteadores correspondentes à cada iteração. Além disso, assegurou-se o estabelecimento de pelo menos um enlace para cada roteador e determinou-se uma largura de banda de \textit{download} de \ut{1}{Mbps} e atraso de propagação de \ut{1}{ms} entre todos os enlaces da rede local. Em seguida, para cada roteador do \textit{backbone} ilustrado na Figura~\ref{fig:rede-geant}, estabeleceu-se um enlace de \textit{download} de \ut{1}{Mbps} com um dos roteadores de uma das redes locais geradas (escolhida aleatoriamente dentre as $27$).
+Com relação à conectividade dos nós clientes à rede, simulou-se redes locais através das quais os nós clientes estabeleceram conexões com os servidores. Para isto, gerou-se $27$ sub-grafos aleatórios de um grafo completo, com $12$ vértices (nós roteadores residenciais, por exemplo) e estabeleceu-se uma aresta entre dois vértices (enlace entre roteadores) da seguinte forma: iterou-se os $12$ roteadores dois-a-dois, sorteando-se um número \textit{x} $\in$ $[0,1]$. Com base no valor de \textit{x}, decidiu-se com probabilidade de \ut{60}{\%} estabelecer um enlace entre os dois roteadores correspondentes à cada iteração. Neste contexto, assegurou-se o estabelecimento de pelo menos um enlace para cada roteador e determinou-se uma largura de banda de \textit{download} de \ut{1}{Mbps} e atraso de propagação de \ut{1}{ms} entre todos os enlaces dessas redes locais geradas. Em seguida, para cada roteador do \textit{backbone} ilustrado na Figura~\ref{fig:rede-geant}, estabeleceu-se um enlace de \textit{download} de \ut{1}{Mbps} com um dos roteadores de uma das redes locais geradas (escolhida aleatoriamente dentre as $27$).
 
-Por fim, os nós clientes foram distribuídos nas redes locais de forma sequencial, um para cada roteador até distribuir todos os clientes nas redes locais. Por exemplo, supondo-se um tratamento com $500$ nós clientes, o nó cliente $1$ foi conectado ao nó roteador $1$, o nó cliente $2$ foi conectado ao nó roteador $2$ e assim sucessivamente até atingir o $27^o$ roteador (conectando-se o nó cliente $27$), recomeçando-se a contagem do número de roteadores até atingir o número máximo de nós clientes determinado no respectivo tratamento. Desta forma, todos os sistemas foram submetidos às mesmas condições de distribuição dos nós cliente.
+Por fim, os nós clientes foram distribuídos nas redes locais de forma sequencial, um para cada roteador até distribuir todos os clientes nas redes locais. Por exemplo, supondo-se um tratamento com $500$ nós clientes, o nó cliente $1$ foi conectado ao nó roteador $2$, o nó cliente $2$ foi conectado ao nó roteador $2$ e assim sucessivamente até atingir o $27^o$ roteador (conectando-se o nó cliente $27$), recomeçando-se a contagem do número de roteadores até atingir o número máximo de nós clientes determinado no respectivo tratamento. Desta forma, todos os sistemas foram submetidos às mesmas condições de distribuição dos nós cliente.
 
-Como resultado dessa estratégia, simulou-se uma rede constituída por $324$ roteadores, utilizada na execução de todos os tratamentos do experimento. Com isto, garantiu-se que todos os sistemas avaliados fossem submetidos à mesma topologia de rede e distribuiçãod os nós clientes.
+Como resultado dessa estratégia, simulou-se uma rede constituída por $324$ roteadores, utilizada na execução de todos os tratamentos do experimento. Com isto, garantiu-se que todos os sistemas avaliados fossem submetidos à mesma topologia de rede e alocação dos nós clientes.
 
 \subsection{Definição das variáveis e parâmetros dos sistemas estudados}
 \label{subsec:variaveis}
@@ -161,7 +159,7 @@ Na Tabela~\ref{tb:variaveis-independentes}, apresentam-se as variáveis independe
 
 \begin{table}[b!ht]
   \centering
-  \caption{Tabela das variáveis independentes utilizados no experimento.}
+  \caption{Variáveis independentes utilizados no experimento.}
   \renewcommand{\arraystretch}{1}% Spread rows out...
   \begin{tabular}{>{}m{2.8in} >{}m{3.1in}}
     \toprule
@@ -171,22 +169,26 @@ Na Tabela~\ref{tb:variaveis-independentes}, apresentam-se as variáveis independe
     Número total de roteadores & 324 \\
     Número de nós roteadores (\textit{backbone}) & 27 \\
     Número de nós roteadores nas LANs & 12 \\
-    Largura de banda entre LANs & \ut{1}{Mbps} \\
+    Largura de banda entre LANs & \ut{2}{Mbps} \\
     Atraso de propagação das redes locais & \ut{1}{s} \\
+    Atraso máximo aceitável para reprodução & \ut{5}{s} \\
     Tempo de simulação de cada ensaio & \ut{900}{s} \\
-    Tamanho do buffer (roteadores) & Suficiente para manter \ut{5}{s} da mídia \\
-    Tamanho máximo do datagrama & \ut{1500}{Bytes} (OverSim) e \ut{4096}{Bytes} (CCNSim)\\
+    Tamanho do \textit{buffer} (roteadores) & 100 pacotes (em média, 7s da mídia) \\
+    Tamanho máximo do pacote de dados & \ut{1500}{Bytes}\\
     Taxa de upload dos roteadores das LANs & \ut{512}{Kbps}, \ut{1}{Mbps}, \ut{2}{Mbps}, \ut{3}{Mbps} \\
-    Probabilidade de perda por roteador & \ut{5}{\%} \\
-    Tipo da mídia$^2$ & MPEG4 Part I \\
+    Perda de pacote nos roteadores$^2$ & \ut{3}{\%} de probabilidade de perder \ut{5}{\%} da fila \\
+    Tipo da mídia$^3$ & MPEG-4 Part II \\
     \bottomrule
   \end{tabular}
   \\\scriptsize\raggedright
   $^1$ Para mais detalhes, consultar Seção~\ref{subsec:tratamento}. \\
-  $^2$ Para mais detalhes, consultar Seção~\ref{subsec:tipomidia}.\\
+  $^2$ Em caso de perda dos \ut{5}{\%} dos pacotes na fila do roteador, os pacotes são escolhidos aleatoriamente, função acionada com o \textit{churn}. \\
+  $^3$ Para mais detalhes, consultar Seção~\ref{subsec:tipomidia}.\\
   \normalsize
   \label{tb:variaveis-independentes}
 \end{table}
+
+Note que alocou-se uma baixa capacidade de \textit{upload} e heterogêneas para os nós clientes. Isto significa que todos tem uma baixa capacidade de compartilhar conteúdos com outros nós clientes parceiros, portanto transmitir pacotes de dados na direção \textit{upstream}, ou seja, ao nó servidor, pode tornar o desempenho da aplicação bastante reduzido. Cenários como estes são típicos na Internet.
 
 \subsubsection{Fatores:}
 
@@ -194,7 +196,7 @@ Na Tabela~\ref{tb:fatores}, apresentam-se os fatores considerados no experimento
 
 \begin{table}[b!ht]
   \centering
-  \caption{Tabela dos fatores consideradas no experimento.}
+  \caption{Fatores consideradas no experimento.}
   \renewcommand{\arraystretch}{1}% Spread rows out...
   \begin{tabular}{>{}m{2.2in} >{}m{3.6in}}
     \toprule
@@ -229,7 +231,7 @@ As principais métricas para medir um sistema de distribuição de mídias ao vivo p
 
   \end{enumerate}
 
-  Sendo assim, pode-se afirmar que a métrica de distorção está intimamente relacionada à métrica Índice de Continuidade. A distorção representa a qualidade da mídia reproduzida ao usuário final, avaliando-se falhas nos quadros do vídeo recebido em relação ao original. Já o índice de continuidade é uma métrica mais crítica, pois contabiliza o tempo em que os nós clientes não conseguiram sequer receber pacotes de dados da mídia, ou seja, interrupção completa da reprodução do conteúdo multimídia. Portanto, a interrupção na reprodução do vídeo resulta em \ut{100}{\%} de distorção dos quadros durante o referido período.
+  Sendo assim, pode-se afirmar que a métrica de distorção está intimamente relacionada à métrica Índice de Continuidade. A distorção representa a qualidade da mídia reproduzida ao usuário final, avaliando-se falhas nos quadros do vídeo recebido em relação ao original. Já o índice de continuidade é uma métrica que contabiliza o tempo em que os nós clientes não conseguiram sequer receber pacotes de dados da mídia, ou seja, interrupção completa da reprodução do conteúdo multimídia. Portanto, a interrupção na reprodução do vídeo resulta em \ut{100}{\%} de distorção dos quadros durante o referido período. A computação da distorção foi simples: todo pacote de dados contém o instante, duração e a quantidade de dados que devem ser reproduzidos, calculando-se a distorção com base na quantidade de dados que deveriam ter sido reproduzidos e o instante em que o pacote de dados alcançou o nó cliente. Por exemplo, se um pacote de dados que contém \ut{1000}{Bytes} a ser reproduzido entre o instante \ut{10}{s} e o instante \ut{15}{s} alcançou o nó cliente no instante \ut{12}{s}, considerou-se uma distorção de \ut{40}{\%}, pois teoricamente a cada segundo \ut{200}{Bytes} de dados deveriam ter sido reproduzidos, porém \ut{400}{Bytes} chegaram expirados.
 
   \begin{figure}[b!ht]
   \begin{center}
@@ -242,7 +244,7 @@ As principais métricas para medir um sistema de distribuição de mídias ao vivo p
 
 %   \item \textit{Escalabilidade do sistema:} avalia-se o nível de contribuição das redes CDN e P2P, que corresponde à quantidade de dados entregues aos nós clientes transmitidos diretamente pelos nós servidores (QS) da CDN e a quantidade de dados transmitidos entre parcerias de nós clientes da rede P2P (QP).
 
-  \item \textit{Sobrecarga de controle:} avalia-se a quantidade de pacotes de controle (PC) transmitidos por um protocolo durante o tempo de simulação (contagem dos pacotes que não transportam dados da mídia), considerando-se $0,5$ cada pacote de \textit{piggyback}. 
+  \item \textit{Sobrecarga de controle:} avalia-se a quantidade de pacotes de controle (PC) transmitidos por um protocolo durante o tempo de simulação (contagem dos pacotes que não transportam dados da mídia), considerando-se 0,5 cada pacote de \textit{piggyback}. 
 
 \end{enumerate}
 
@@ -250,7 +252,7 @@ Com base nessas métricas, determinou-se as variáveis dependentes, apresentadas n
 
 \begin{table}[b!ht]
   \centering
-  \caption{Tabela das variáveis dependentes (respostas) consideradas no experimento.}
+  \caption{Variáveis dependentes (respostas) consideradas no experimento.}
   \renewcommand{\arraystretch}{1}% Spread rows out...
   \begin{tabular}{>{}m{4.1in} >{}m{1.0in}}
     \toprule
@@ -305,7 +307,7 @@ Com base nessas métricas, determinou-se as variáveis dependentes, apresentadas n
 
 % % \subsubsection{Parâmetros dos sistemas estudados:}
 % % 
-% % Denacast/CoolStreaming
+% % Denacast
 % % 
 % % GMTP
 % % 
@@ -323,29 +325,29 @@ Constituiu-se a população por dados coletados durante a execução dos ensaios de 
 \subsection{Tratamentos}
 \label{subsec:tratamento}
 
-Na Tabela~\ref{tb:tratamentos}, apresentam-se os tratamentos considerados no experimento, definidos com base na combinação dos fatores apresentados na Tabela~\ref{tb:fatores}. Definiu-se como  as unidades experimentais o GMTP, o Denacast/CoolStreaming e o CCN-TV, comparados em confrontos dois-a-dois, fixando-se o GMTP, em execuções não simultâneas. Nesse contexto, executaram-se $3792$ ensaios distribuídos em $18$ tratamentos, $1264$ ensaios para cada sistema estudado. Na coluna $n_t$, apresenta-se a quantidade de repetições de cada tratamento.
+Na Tabela~\ref{tb:tratamentos}, apresentam-se os tratamentos considerados no experimento, definidos com base na combinação dos fatores apresentados na Tabela~\ref{tb:fatores}. Definiu-se como as unidades experimentais o GMTP, o Denacast e o CCN-TV, comparados em confrontos dois-a-dois, fixando-se o GMTP, em execuções não simultâneas. Nesse contexto, executaram-se $3963$ ensaios distribuídos em $18$ tratamentos, $1321$ ensaios para cada sistema estudado. Na coluna $n_t$, apresenta-se a quantidade de repetições de cada tratamento. Além disso, os nós servidores foram dispostos nas redes com menor taxa de transmissão e/ou maior atraso de programação, que correspondem aos roteadores IL, LV e CY, ilustrados na Figura~\ref{fig:rede-geant}. Para consultar valores exatos de largura de banda e atraso de propagação, consulte a Tabela~\ref{tab:largura-atraso}.
 
 \begin{table}[b!ht]
   \centering
-  \caption{Tabela dos tratamentos executados no experimento.}
+  \caption{Tratamentos executados no experimento.}
   \renewcommand{\arraystretch}{1}% Spread rows out...
   \begin{tabular}{cccc}
     \toprule
     \textbf{Trat. \#} & \textbf{Número de nós servidores (conectado(s) a)} & \textbf{Número de nós clientes} & $\boldsymbol{n_t}$\\
     \midrule
-    1  & \multirow{6}{*} {1 (DE)} & 500 & 58 \\
+    1  & \multirow{6}{*} {1 (IL)} & 500 & 58 \\
     2  &  & 1.500 & 61 \\
     3  &  & 15.000 & 56 \\
     4  &  & 30.000 & 51 \\
     5  &  & 60.000 & 84 \\
     6  &  & 80.000 & 51 \\ \hline
-    7  & \multirow{6}{*} {3 (DE, EE, PT)} & 500 & 87 \\
+    7  & \multirow{6}{*} {2 (IL, LV)} & 500 & 112 \\
     8  &  & 1.500 & 79 \\
     9  &  & 15.000 & 73 \\
     10 &  & 30.000 & 88 \\
     11 &  & 60.000 & 95 \\
     12 &  & 80.000 & 86 \\  \hline
-    13 & \multirow{6}{*} {5 (DE, EE, PT, NL, HU)} & 500 & 96 \\
+    13 & \multirow{6}{*} {3 (IL, LV, CY)} & 500 & 96 \\
     14 &  & 1.500 & 107 \\
     15 &  & 15.000 & 53 \\
     16 &  & 30.000 & 56 \\
@@ -356,7 +358,7 @@ Na Tabela~\ref{tb:tratamentos}, apresentam-se os tratamentos considerados no exp
   \label{tb:tratamentos}
 \end{table}
 
-Com relação a execução de cada tratamento, executaram-se $50$ ensaios iniciais de cada sistema estudado, obtendo-se assim $50$ amostras para cada variável dependente. Em seguida, calculou-se a média dessas amostras e, para realizar comparações com \ut{95}{\%} de certeza, calculou-se a quantidade total de ensaios ($n_t$) de cada tratamento a fim de atingir este nível de confiança. Para isto, calculou-se a quantidade de ensaios necessários para obter \ut{95}{\%} de nível de confiança com base em duas médias (das amostras iniciais) $\mu_1,\mu_2$ de cada variável dependente, fixando-se $\mu_1$ como a média das variáveis dependentes do GMTP e $\mu_2$ a média ou do Denacast/CoolStreaming ou do CCN-TV. Sendo assim, a quantidade total de ensaios de cada tratamento foi determinado por $n_t = max(n_{ST}, n_{IC}, n_{DI}, n_{PC}) + 1$, onde os valores $n_{ST}, n_{IC}, n_{DI}, n_{PC}$ foram obtidos através da inequação de proporcionalidade para comparar duas alternativas~\cite{jain1991}. Por exemplo, se para o confronto GMTP vs. Denacast/CoolStreaming obteve-se $n_t = max(52, 67, \textbf{93}, 64) + 1$ e no confronto GMTP vs. CCN-TV obteve-se $n_t = max(55, 71, 75, 56) + 1$, assumiu-se $n_t = 94$. Ou seja, repetiu-se $94$ vezes o mesmo tratamento para todos os sistemas estudados. No Apêndice~\ref{app:detalhes-experimentos}, Seção~\ref{sec:ineq-proporcional}, apresentam-se mais detalhes sobre o cálculo de $n_t$.
+Com relação a execução de cada tratamento, executaram-se $50$ ensaios iniciais de cada sistema estudado, obtendo-se assim $50$ amostras para cada variável dependente. Em seguida, calculou-se a média dessas amostras e, para realizar comparações com \ut{95}{\%} de certeza, calculou-se a quantidade total de ensaios ($n_t$) de cada tratamento a fim de atingir este nível de confiança. Para isto, calculou-se a quantidade de ensaios necessários para obter \ut{95}{\%} de nível de confiança com base em duas médias (das amostras iniciais) $\mu_1,\mu_2$ de cada variável dependente, fixando-se $\mu_1$ como a média das variáveis dependentes do GMTP e $\mu_2$ a média ou do Denacast ou do CCN-TV. Sendo assim, a quantidade total de ensaios de cada tratamento foi determinado por $n_t = max(n_{ST}, n_{IC}, n_{DI}, n_{PC}) + 1$, onde os valores $n_{ST}, n_{IC}, n_{DI}, n_{PC}$ foram obtidos através da inequação de proporcionalidade para comparar duas alternativas~\cite{jain1991}. Por exemplo, se para o confronto GMTP vs. Denacast obteve-se $n_t = max(52, 67, \textbf{93}, 64) + 1$ e no confronto GMTP vs. CCN-TV obteve-se $n_t = max(55, 71, 75, 56) + 1$, assumiu-se $n_t = 94$. Ou seja, repetiu-se $94$ vezes o mesmo tratamento para todos os sistemas estudados. Na Seção~\ref{sec:ineq-proporcional}, apresentam-se mais detalhes sobre o cálculo de $n_t$.
 
 Por fim, para a execução de cada ensaio para todos os tratamentos, independente do sistema a ser executado, determinou-se o seguinte:
 
@@ -376,7 +378,7 @@ Por fim, para a execução de cada ensaio para todos os tratamentos, independente 
   \end{figure}
 
 
-  \item Todos os nós clientes requisitaram a mídia nos primeiros \ut{200}{s}. Por exemplo, no gráfico da Figura~\ref{fig:distribution_first_200s}, representa-se a distribuição de conexão à rede para o ensaio 1 de todos os tratamentos representada. Cada ensaio teve uma distribuição diferente, mas igual para a execução de cada sistema. Dessa forma, garantiu-se que os sistemas foram submetidos às mesmas condições iniciais de conexão. No Apêndice~\ref{app:detalhes-experimentos}, Seção~\ref{sec:distribution_first_200s}, discute-se mais detalhes sobre essa distribuição.
+  \item Todos os nós clientes requisitaram a mídia nos primeiros \ut{200}{s}. Por exemplo, no gráfico da Figura~\ref{fig:distribution_first_200s}, representa-se a distribuição de conexão à rede para o ensaio 1 de todos os tratamentos representada. Cada ensaio teve uma distribuição diferente, mas igual para a execução de cada sistema. Dessa forma, garantiu-se que os sistemas foram submetidos às mesmas condições iniciais de conexão. Na Seção~\ref{sec:distribution_first_200s}, discute-se mais detalhes sobre essa distribuição.
 
   \begin{figure}[b!ht]
   \begin{center}
@@ -387,7 +389,7 @@ Por fim, para a execução de cada ensaio para todos os tratamentos, independente 
   \label{fig:distribution_first_200s}
   \end{figure}
 
-  \item A função de \textit{churn} foi acionada no instante \ut{400}{s}. Por exemplo, no gráfico da Figura~\ref{fig:graph_distribution_churn}, representa-se a distribuição de conexões e desconexões para o ensaio 1 de todos os tratamentos. Cada ensaio teve uma distribuição diferente, mas igual para a execução de cada sistema. Com isto, garantiu-se que todas os sistemas avaliados foram submetidos às mesmas condições de dinâmica da rede. No Apêndice~\ref{app:detalhes-experimentos}, Seção~\ref{sec:distribution_churn}, discute-se mais detalhes sobre essa distribuição. 
+  \item A função de \textit{churn} foi acionada no instante \ut{400}{s}. Por exemplo, no gráfico da Figura~\ref{fig:graph_distribution_churn}, representa-se a distribuição de conexões e desconexões para o ensaio 1 de todos os tratamentos. Cada ensaio teve uma distribuição diferente, mas igual para a execução de cada sistema. Com isto, garantiu-se que todas os sistemas avaliados foram submetidos às mesmas condições de dinâmica da rede. Na Seção~\ref{sec:distribution_churn}, discute-se mais detalhes sobre essa distribuição. 
 
   \begin{figure}[b!ht]
   \begin{center}
@@ -403,7 +405,7 @@ Por fim, para a execução de cada ensaio para todos os tratamentos, independente 
 
 \subsection{Instrumentação}
 
-Com relação à instrumentação, utilizou-se OMNet++~\cite{XU2011,omnetpp2014}, um arcabouço para construção de simuladores de rede. Nesse contexto, utilizaram-se dois simuladores: o OverSim~\cite{oversim2014} e o CCN-Sim~\cite{ccnsim2014}. No OverSim, utilizaram-se as implementações do sistema Denacast/CoolStreaming~\cite{denacast2014} e a do GMTP~\cite{gmtp2014} (implementado no contexto deste trabalho), ao passo que no CCN-Sim, utilizou-se a implementação do CCN-TV~\cite{ccntv2014}.
+Com relação à instrumentação, utilizou-se OMNet++~\cite{XU2011,omnetpp2014}, um arcabouço para construção de simuladores de rede. Nesse contexto, utilizaram-se dois simuladores: o OverSim~\cite{oversim2014} e o CCN-Sim~\cite{ccnsim2014}. No OverSim, utilizaram-se as implementações do sistema Denacast~\cite{denacast2014} e a do GMTP~\cite{gmtp2014} (implementado no contexto deste trabalho), ao passo que no CCN-Sim, utilizou-se a implementação do CCN-TV~\cite{ccntv2014}.
 
 \subsection{Formato da mídia}
 \label{subsec:tipomidia}
@@ -419,17 +421,18 @@ Na Tabela~\ref{tb:midia-props}, apresentam-se as propriedades da mídia utilizada
 
 \begin{table}[b!ht]
   \centering
-  \caption{Tabela das propriedades da mídia transmitida.}
+  \caption{Propriedades da mídia transmitida.}
   \renewcommand{\arraystretch}{1}% Spread rows out...
   \begin{tabular}{>{}m{2in} >{}m{2in}}
     \toprule
     \textbf{Propriedades} & \textbf{Valores} \\
     \midrule
     Mídia sintetizada & \textit{Star Wars IV} \\
-    \textit{Codec} do vídeo & MPEG4 Part I \\
+    \textit{Codec} do vídeo & MPEG-4 Part II \\
     Número de quadros & \ut{25}{fps} \\
     Número de quadros em GoP & 12 \\
-    Média VBR & \ut{1}{Mbps} \\
+    Média VBR & \ut{2}{Mbps} \\
+    Tamanho total da mídia & \ut{122,61}{MB} (1-\ut{900}{s}) \\
     \bottomrule
   \end{tabular}
   \label{tb:midia-props}
@@ -449,13 +452,14 @@ Com base na metodologia apresentada nesta seção, coletaram-se as amostras para a
 \section{Resultados e Discussões}
 \label{sec:resdisc}
 
-Nesta seção, apresentam-se os resultados e discussões dos confrontos GMTP vs. Denacast/CoolStreaming e GMTP vs. CCN-TV. Apresentam-se os resultados de acordo as métricas apresentadas na Seção~\ref{subsec:variaveis}, ou seja, atraso de inicialização, índice de continuidade, distorção da mídia recebida por cada nó cliente e sobrecarga de controle. Em todas as figuras apresentadas a seguir, ilustram-se gráficos onde se observam as evoluções dos sistemas estudados para $1$, $3$ e $5$ nós servidores e $500$, $1.500$, $15.000$, $30.000$, $60.000$ e $80.000$ nós clientes.
+Nesta seção, apresentam-se os resultados e discussões dos confrontos GMTP vs. Denacast e GMTP vs. CCN-TV. A discussão foi organizada de acordo com as métricas apresentadas na Seção~\ref{subsec:variaveis}, ou seja, atraso de inicialização, índice de continuidade, distorção da mídia recebida por cada nó cliente e sobrecarga de controle. Em todas as figuras apresentadas a seguir, ilustram-se gráficos onde se observam as evoluções dos sistemas estudados para 1, 2 e 3 nós servidores pela quantidade total de nós clientes, a saber, 500, 1.500, 15.000, 30.000, 60.000 e 80.000. As medições exatas para as métricas estudadas e os intervalos de confiança ilustrados nos gráficos estão disponíveis na Seção~\ref{sec:tabela-compilacao-resultados}.
 
-% A metodologia apresentada assegura uma análise dos resultados obtidos e discussões comparativas/conclusivas sobre o desempenho do GMTP em relação aos dois sistemas oponentes considerados, mas não garante estatisticamente comparações e portanto conclusões entre o Denacast/CoolStreaming e o CCN-TV.
+% A metodologia apresentada assegura uma análise dos resultados obtidos e discussões comparativas/conclusivas sobre o desempenho do GMTP em relação aos dois sistemas oponentes considerados, mas não garante estatisticamente comparações e portanto conclusões entre o Denacast e o CCN-TV.
 
-Em geral, observa-se superioridade de desempenho do GMTP frente aos outros sistemas estudados, apesar de empates técnicos entre o GMTP e o CCN-TV em alguns tratamentos, como discute-se a seguir, especialmente até $30.000$ nós clientes e $1$ e $3$ nós servidores. No caso do Denacast/CoolStreaming, observa-se claramente que as métricas estudadas foram muito ruins em comparação ao GMTP e ao CCN-TV. Nesse contexto, constatou-se que o Denacast/CoolStreaming se apresentou como linha base no experimento executado, servindo-se para entender os limites do estado da prática em distribuição de mídias ao vivo, uma vez que se trata de uma proposta significativamente difundida na Internet. De fato, parte dos resultados apresentados sobre o Denacast/CoolStreaming confirmam os resultados disponíveis em~\cite{5764567}, com a diferença de que aqui se trabalhou com uma quantidade quase 60 vezes maior de nós clientes se comparado a referência citada. Enfim, as disputas mais acirradas ocorreram no confronto GMTP vs. CCN-TV, exceto com relação a sobrecarga de controle, onde o CCN-TV obteve um desempenho inferior ao Denacast/CoolStreaming.
+Em geral, observa-se superioridade de desempenho do GMTP frente aos outros sistemas estudados, apesar de empates técnicos entre o GMTP e o CCN-TV em alguns tratamentos, como discute-se a seguir, especialmente até 30.000 nós clientes e 1 e 3 nós servidores. No caso do Denacast, observa-se claramente que as métricas estudadas foram muito ruins em comparação ao GMTP e ao CCN-TV. Nesse contexto, constatou-se que o Denacast se apresentou como linha base no experimento executado, servindo-se para entender os limites do estado da prática em distribuição de mídias ao vivo, uma vez que se trata de uma proposta significativamente difundida na Internet. De fato, parte dos resultados apresentados sobre o Denacast confirmam os resultados disponíveis em~\cite{5764567}, com a diferença de que aqui se trabalhou com uma quantidade de nós clientes quase 60 vezes mais se comparado a referência citada. Enfim, as disputas mais acirradas ocorreram no confronto GMTP vs. CCN-TV, exceto com relação a sobrecarga de controle, onde o CCN-TV obteve um desempenho inferior ao Denacast.
 
 \subsection{Atraso de inicialização}
+\label{subsec:result-startup_time}
 
 \begin{figure}[b!ht]
 \begin{center}
@@ -466,15 +470,16 @@ Em geral, observa-se superioridade de desempenho do GMTP frente aos outros siste
 \label{fig:tratamentos-startup_time}
 \end{figure}
 
-Na Figura~\ref{fig:tratamentos-startup_time}, observa-se uma tendência de crescimento linear com relação ao atraso de inicialização em todos os tratamentos executados com o GMTP, à medida em que se aumenta o número de nós clientes, com a curva mais acentuada nos tratamentos com apenas $1$ nó servidor (tratamentos $1-6$), sendo suavizada com a evolução dos tratamentos. Com o aumento do número de nós servidores, observa-se melhorias no desempenho dos três sistemas estudados, constatando-se também uma maior dependência de nós servidores por parte do Denacast/CoolStreaming. No caso do GMTP e do CCN-TV, constata-se também melhorias à medida em que se adicionam dois nós servidores consecutivamente (1--3--5), porém com uma menor variação proporcional ao número de nós clientes. Por exemplo, no tratamento com $5$ nós servidores, dobrando-se o número de nós clientes de $30.000$ para $60.000$, o desempenho do GMTP foi praticamente invariável. O que contribui para este fato é que quando há mais nós clientes requisitando a mesma mídia, aumentam-se as chances de um nó cliente obter os pacotes de dados a partir dos \textit{caches} dos nós repassadores, reduzindo-se substancialmente a média para o atraso de inicialização.
+Na Figura~\ref{fig:tratamentos-startup_time}, observa-se uma tendência de crescimento linear com relação ao atraso de inicialização em todos os tratamentos executados com o GMTP, à medida em que se aumenta o número de nós clientes, com a curva mais acentuada nos tratamentos com apenas 1 nó servidor (tratamentos 1-6), sendo suavizada com a evolução dos tratamentos. Com o aumento do número de nós servidores, observa-se melhorias no desempenho dos três sistemas estudados, constatando-se também uma maior dependência de nós servidores por parte do Denacast. No caso do GMTP e do CCN-TV, constata-se também melhorias à medida em que se adicionam dois nós servidores consecutivamente (1--2--3), porém com uma menor variação proporcional ao número de nós clientes. Por exemplo, no tratamento com 3 nós servidores, dobrando-se o número de nós clientes de 30.000 para 60.000, o desempenho do GMTP foi praticamente invariável. O que contribui para este fato é que quando há mais nós clientes requisitando a mesma mídia, aumentam-se as chances de um nó cliente obter os pacotes de dados a partir dos \textit{caches} dos nós repassadores, reduzindo-se substancialmente a média para o atraso de inicialização.
 
-Para o caso do CCN-TV, apesar de ser possível constatar um comportamento similar, o CCN-TV teve um desempenho pior se comparado ao GMTP, especialmente a partir de $15.000$ nós clientes. A razão para essa redução do desempenho por parte do CCN-TV com relação ao GMTP é que as redes CCNs utilizam uma estratégia de acesso ao conteúdo exclusivamente através do seu nome, indexado em uma tabela chamada FIB e compartilhada entre os roteadores da rede, como discutiu-se na Seção~\ref{subsec:ndn}. Como não há um nó servidor de referência no processo de requisição de um conteúdo, não tem como garantir que uma requisição rapidamente alcançará o nó servidor~\cite{6691438}. No caso do GMTP, transmitem-se as requisições para os nós servidores e se houver um nó roteador já repassando o conteúdo de interesse para outros nós clientes, tal roteador intercepta a requisição e responde ao nó cliente requisitante, o que reduz os pedidos de conexão ao nó servidor e reduz a média do atraso de inicialização. Caso a interceptação não ocorra, o processo de registro de participação ocorre, mapeando-se as rotas até os nós servidores a fim de executar a função de seleção de nós parceiros baseada nas intersecções de rotas, tal como explicado na Seção~\ref{sec:descparc}. Obviamente que para as primeira requisições transmitidas pelos nós clientes aos servidores GMTP tem um custo de atraso de inicialização maior, porém a média do atraso de inicialização reduz drasticamente devido ao aumento das possibilidades de intersecções de rotas e portanto o aumento das parcerias entre nós roteadores nas próximas requisições para obter a mesma mídia.
+Para o caso do CCN-TV, apesar de ser possível constatar um comportamento similar, o CCN-TV teve um desempenho pior se comparado ao GMTP, especialmente a partir de 15.000 nós clientes. A razão para essa redução do desempenho por parte do CCN-TV com relação ao GMTP é que as redes CCNs utilizam uma estratégia de acesso ao conteúdo exclusivamente através do seu nome, indexado em uma tabela chamada FIB e compartilhada entre os roteadores da rede, como discutiu-se na Seção~\ref{subsec:ndn}. Como não há um nó servidor de referência no processo de requisição de um conteúdo, não tem como garantir que uma requisição rapidamente alcançará o nó servidor~\cite{6691438}. No caso do GMTP, transmitem-se as requisições para os nós servidores e se houver um nó roteador já repassando o conteúdo de interesse para outros nós clientes, tal roteador intercepta a requisição e responde ao nó cliente requisitante, o que reduz os pedidos de conexão ao nó servidor e reduz a média do atraso de inicialização. Caso a interceptação não ocorra, o processo de registro de participação ocorre, mapeando-se as rotas até os nós servidores a fim de executar a função de seleção de nós parceiros baseada nas intersecções de rotas, tal como explicado na Seção~\ref{sec:descparc}. Obviamente que para as primeira requisições transmitidas pelos nós clientes aos servidores GMTP tem um custo de atraso de inicialização maior, porém a média do atraso de inicialização reduz drasticamente devido ao aumento das possibilidades de intersecções de rotas e portanto o aumento das parcerias entre nós roteadores nas próximas requisições para obter a mesma mídia.
 
-Para o caso do Denacast/CoolStreaming, um nó recém integrado à rede DONet pode levar muito tempo para obter os primeiros blocos de vídeo e assim iniciar a reprodução do conteúdo ao usuário final. Como pode-se observar através do gráfico ilustrado na Figura~\ref{fig:tratamentos-startup_time}, para obter os primeiros pacotes de dados multimídia, no tratamento 1, um nó cliente Denacast/CoolStreaming gastou, em média, \ut{23,51}{s}, \ut{23,51}{s} no tratamento 13 (melhor caso) e \ut{74,89}{s} no tratamento 6 (pior caso). Isto acontece porque, ao se juntar à rede, um nó solicita o mapa de \textit{buffer} a um conjunto de nós parceiros informados por um servidor de \textit{boostrap}. Porém, o desafio é definir a partir de qual ponto do \textit{buffer} um nó deve começar a solicitar os blocos de vídeo. Por exemplo, se o novo nó requisitar um bloco de vídeo muito antigo, pode ser que tal bloco de vídeo não esteja mais disponível, já que o nó cliente o remove após sua reprodução. Por outro lado, se o nó requisitar um bloco de vídeo muito recente, pode ser que nenhum de seus nós parceiros tenha disponível. No GMTP, situações como essas não ocorrem porque se utiliza, por padrão o método \textit{push}, então há um estabelecimento de conexão (registro de participação) para em seguida receber os pacotes de dados. Como dito, um registro de participação pode ser interceptado e portanto reduz-se o métrica atraso de inicialização.
+Para o caso do Denacast, um nó recém integrado à rede DONet pode levar muito tempo para obter os primeiros blocos de vídeo e assim iniciar a reprodução do conteúdo ao usuário final. Como pode-se observar através do gráfico ilustrado na Figura~\ref{fig:tratamentos-startup_time}, para obter os primeiros pacotes de dados multimídia, no tratamento 1, um nó cliente Denacast gastou, em média, \ut{23,51}{s}, \ut{23,51}{s} no tratamento 13 (melhor caso) e \ut{74,89}{s} no tratamento 6 (pior caso). Isto acontece porque, ao se juntar à rede, um nó solicita o mapa de \textit{buffer} a um conjunto de nós parceiros informados por um servidor de \textit{boostrap}. Porém, o desafio é definir a partir de qual ponto do \textit{buffer} um nó deve começar a solicitar os blocos de vídeo. Por exemplo, se o novo nó requisitar um bloco de vídeo muito antigo, pode ser que tal bloco de vídeo não esteja mais disponível, já que o nó cliente o remove após sua reprodução. Por outro lado, se o nó requisitar um bloco de vídeo muito recente, pode ser que nenhum de seus nós parceiros tenha disponível. No GMTP, situações como essas não ocorrem porque se utiliza, por padrão o método \textit{push}, então há um estabelecimento de conexão (registro de participação) para em seguida receber os pacotes de dados. Como dito, um registro de participação pode ser interceptado e portanto reduz-se o métrica atraso de inicialização.
 
-Para sumarizar os resultados apresentados com relação à métrica atraso de inicialização, o GMTP obteve um desempenho de \ut{93,23}{\%} melhor que o Denacast/CoolStreaming e \ut{46,79}{\%} melhor que o CCN-TV. Para obter este valor, calculou-se a média ponderada das diferenças dos intervalos de confiança para cada tratamento (considerando-se o limite superior do GMTP e o limite inferior dos outros sistemas confrontados). Atribuíram-se pesos entre 100 e 0,125, de acordo com a dificuldade do tratamento com relação aos fatores considerados no experimento. Por exemplo, atribuiu-se peso 100 ao tratamento 6 por se apresentar com a maior quantidade de nós clientes (80.000) e com a menor quantidade de nós servidores (apenas 1); o tratamento 5 recebeu peso 75 porque tem a mesma quantidade de nós servidores, mas \ut{75}{\%} da quantidade total de nós clientes com relação ao tratamento 6 (60.000). Considerando esse raciocínio, o tratamento 12 recebeu peso 33,33, pois apesar de também se apresentar com 80.000 nós clientes, utilizaram-se 3 nós servidores; e assim sucessivamente até o tratamento 18, que recebeu peso 0,125, por ser o mais simples, com apenas 500 nós clientes e 5 nós servidores. Este mesmo procedimento foi utilizado para sumarizar das demais métricas apresentadas a seguir.
+Para sumarizar os resultados apresentados com relação à métrica atraso de inicialização, o GMTP obteve um desempenho de \ut{93,23}{\%} melhor que o Denacast e \ut{46,79}{\%} melhor que o CCN-TV. Para obter este valor, calculou-se a média ponderada das diferenças dos intervalos de confiança para cada tratamento (considerando-se o limite superior do GMTP e o limite inferior dos outros sistemas confrontados). Atribuíram-se pesos entre 100 e 0,125, de acordo com a dificuldade do tratamento com relação aos fatores considerados no experimento. Por exemplo, atribuiu-se peso 100 ao tratamento 6 por se apresentar com a maior quantidade de nós clientes (80.000) e com a menor quantidade de nós servidores (apenas 1); o tratamento 5 recebeu peso 75 porque tem a mesma quantidade de nós servidores, mas \ut{75}{\%} da quantidade total de nós clientes com relação ao tratamento 6 (60.000). Considerando esse raciocínio, o tratamento 12 recebeu peso 33,33, pois apesar de também se apresentar com 80.000 nós clientes, utilizaram-se 3 nós servidores; e assim sucessivamente até o tratamento 18, que recebeu peso 0,125, por ser o mais simples, com apenas 500 nós clientes e 3 nós servidores. Este mesmo procedimento foi utilizado para sumarizar das demais métricas apresentadas a seguir.
 
 \subsection{Índice de continuidade}
+\label{subsec:result-continuity_index}
 
 \begin{figure}[b!ht]
 \begin{center}
@@ -487,7 +492,7 @@ Para sumarizar os resultados apresentados com relação à métrica atraso de inicia
 
 Apesar de importante, a métrica atraso de inicialização cobre apenas os instantes iniciais dos ensaios. Diferentemente disso, a métrica índice de continuidade é ainda mais importante e reveladora, pois mapeia o desempenho dos sistemas estudados durante todo o ensaio, a partir do instante em que os nós clientes começam a receber o primeiro pacote de dados, além de contabilizar as variações das métricas devido à dinâmica da rede, acionada no instante \ut{400}{s}. Sendo assim, avaliar a métrica índice de continuidade permite entender o impacto na qualidade de experiência do usuário final com relação à quantidade e duração das interrupções nas reproduções da mídia em cada nó cliente. Especificamente, os tratamentos 13 e 14 foi uma disputa bastante acirrada entre o GMTP vs. CCN-TV, sendo necessárias mais repetições dos respectivos tratamentos (consultar Tabela~\ref{tb:tratamentos} para maiores detalhes).
 
-Na Figura~\ref{fig:tratamentos-continuity_index}, apresenta-se a evolução da métrica índice de continuidade dos sistemas estudados para cada tratamento executado. Observa-se novamente melhor desempenho do GMTP frente ao Denacast/CoolStreaming e o CCN-TV, com a iminência de empates técnicos no confronto GMTP vs. CCN-TV quando se utilizaram até $30.000$ nós clientes. 
+Na Figura~\ref{fig:tratamentos-continuity_index}, apresenta-se a evolução da métrica índice de continuidade dos sistemas estudados para cada tratamento executado. Observa-se novamente melhor desempenho do GMTP frente ao Denacast e o CCN-TV, com a iminência de empates técnicos no confronto GMTP vs. CCN-TV quando se utilizaram até 30.000 nós clientes. 
 
 No caso do GMTP, o desempenho é mais favorável porque com o aumento do número de nós clientes requisitando a mesma mídia, aumentam-se também as chances de outros nós clientes obterem as partes da mídia a partir de um \textit{cache} de roteador e não diretamente do servidor. Este fenômeno também ocorrer com CCN-TV devido a estratégia de cache de conteúdo nos roteadores, porém não supera o GMTP por dois motivos.
 
@@ -503,13 +508,14 @@ Dessa forma, observa-se uma vantagem do GMTP em se utilizar o modelo de serviço 
 
 Outra observação importante é que a adição de mais nós servidores aumenta o número de rotas com roteadores realizando \textit{cache} dos pacotes de dados da mídia e, nesse caso, o GMTP tem uma forma mais simples e eficiente de se aproveitar desse fato. Como discutiu-se na Seção~\ref{sec:ccgmtp}, no GMTP se utiliza uma estratégia de seleção de nós parceiros baseada na capacidade do canal de transmissão entre os nós roteadores conhecidos, resultando no escalonamento de melhores parcerias entre os nós roteadores, reduzindo-se o tempo de entrega dos pacotes de dados e consequentemente melhorando-se a métrica índice de continuidade.
 
-De forma similar para a métrica atraso de inicialização, o Denacast/CoolStreaming obteve o pior resultado se comparados aos outros dois sistemas para a métrica índice de continuidade. Nesse caso, observam-se curvas acentuadas de redução dessa métrica, apesar de leves melhoras (se considerar a proporcionalidade do número de nós clientes) quando se aumentou o número de nós servidores e também quando se dobrou o número de nós clientes de $15.000$ para $30.000$. Observa-se que quando se aumentou o número de nós clientes de $1.500$ para $15.000$, ou seja, dez vezes mais, houve uma redução considerável no desempenho do Denacast/CoolStreaming para a métrica índice de continuidade. Apesar das melhorias observados entre os tratamentos 9 e 10 e os tratamentos 15 e 16, mesmo aumentando-se a quantidade de nós servidores o Denacast/CoolStreaming não obteve um desempenho satisfatório. Com isto, pode-se concluir que o Denacast/CoolStreaming pode apresentar problemas de escalabilidade a partir de uma certa quantidade de nós clientes e com a dinâmica da rede.
+De forma similar para a métrica atraso de inicialização, o Denacast obteve o pior resultado se comparados aos outros dois sistemas para a métrica índice de continuidade. Nesse caso, observam-se curvas acentuadas de redução dessa métrica, apesar de leves melhoras (se considerar a proporcionalidade do número de nós clientes) quando se aumentou o número de nós servidores e também quando se dobrou o número de nós clientes de 15.000 para 30.000. Observa-se que quando se aumentou o número de nós clientes de 1.500 para 15.000, ou seja, dez vezes mais, houve uma redução considerável no desempenho do Denacast para a métrica índice de continuidade. Apesar das melhorias observados entre os tratamentos 9 e 10 e os tratamentos 15 e 16, mesmo aumentando-se a quantidade de nós servidores o Denacast não obteve um desempenho satisfatório. Com isto, pode-se concluir que o Denacast pode apresentar problemas de escalabilidade a partir de uma certa quantidade de nós clientes e com a dinâmica da rede.
 
-Ainda no contexto do Denacast/CoolStreaming, seu principal limitante é a estratégia de sub-fluxos, pois se adiciona complexidade à solução sem necessariamente resultar em melhor desempenho quanto à escala de distribuição da mídia. Em~\cite{4509752}, os autores do CoolStreaming discutem que aumentar a quantidade de número de sub-fluxos não necessariamente melhoram algumas métricas, como o índice de continuidade. Em um experimento em larga escala em uma rede real, com pico de $40.000$ nós clientes e utilizando-se 24 servidores auxiliares (que funcionaram apenas como nós transmissores), os autores observaram que a partir de 12 sub-fluxos, a métrica índice de continuidade não evolui positivamente.
+Ainda no contexto do Denacast, seu principal limitante é a estratégia de sub-fluxos, pois se adiciona complexidade à solução sem necessariamente resultar em melhor desempenho quanto à escala de distribuição da mídia. Em~\cite{4509752}, os autores do CoolStreaming discutem que aumentar a quantidade de número de sub-fluxos não necessariamente melhoram algumas métricas, como o índice de continuidade. Em um experimento em larga escala em uma rede real, com pico de 40.000 nós clientes e utilizando-se 24 servidores auxiliares (que funcionaram apenas como nós transmissores), os autores observaram que a partir de 12 sub-fluxos, a métrica índice de continuidade não evolui positivamente.
 
-Para sumarizar os resultados apresentados com relação à métrica índice de continuidade, o GMTP obteve um desempenho de \ut{37,88}{\%} melhor que o Denacast/CoolStreaming e \ut{9,14}{\%} melhor que o CCN-TV, considerando-se os limites mínimos e máximo do GMTP e dos seus oponentes, respectivamente.
+Para sumarizar os resultados apresentados com relação à métrica índice de continuidade, o GMTP obteve um desempenho de \ut{37,88}{\%} melhor que o Denacast e \ut{9,14}{\%} melhor que o CCN-TV.
 
 \subsection{Distorção}
+\label{subsec:result-distortion}
 
 \begin{figure}[b!ht]
 \begin{center}
@@ -520,15 +526,23 @@ Para sumarizar os resultados apresentados com relação à métrica índice de contin
 \label{fig:tratamentos-distortion}
 \end{figure}
 
-Uma outra métrica fundamental para medir a qualidade de experiência dos usuários finais é chamada de distorção, ou seja, uma comparação da mídia recebida pelos nós clientes com relação à mídia original transmitida pelo nó servidor, quadro-a-quadro. Basicamente, as distorções podem ocorrer devido à chegada atrasada dos pacotes de dados ou por perdas de dependência, como discutiu-se na Seção~\ref{subsec:variaveis}. Apesar das perdas de pacotes de dados (por exemplo, perdas de quadros MPEG do tipo P ou B), ainda sim pode ser possível reproduzir certas partes do vídeo, porém  com possíveis defeitos visuais. Sendo assim, a métrica distorção mapeia o desempenho dos sistemas estudados com relação a estes casos.
+Uma outra métrica fundamental para medir a qualidade de experiência dos usuários finais é chamada de distorção, ou seja, uma comparação da mídia recebida pelos nós clientes com relação à mídia original transmitida pelo nó servidor. Basicamente, as distorções podem ocorrer devido à chegada atrasada dos pacotes de dados ou por perdas de dependência, como discutiu-se na Seção~\ref{subsec:variaveis}. Apesar das perdas de pacotes de dados (por exemplo, perdas de quadros MPEG do tipo P ou B), ainda sim pode ser possível reproduzir certas partes do vídeo, porém com possíveis defeitos visuais. Sendo assim, se um ou mais pacotes de dados contiverem quadros do vídeo do tipo I, isto implica em interrupção da produção da mídia, impactando negativamente no índice de continuidade. Mas se pacotes de dados contendo quadros do vídeo do tipo P e/ou B, o impacto é na qualidade visual da mídia.
 
-Na Figura~\ref{fig:tratamentos-distortion}, apresenta-se a evolução dos sistemas estudados para a métrica distorção. É claramente perceptível que o GMTP também obteve melhor desempenho se comparado ao Denacast/CoolStreaming e ao CCN-TV.
+Na Figura~\ref{fig:tratamentos-distortion}, apresenta-se a evolução dos sistemas estudados para a métrica distorção. Evidencia-se que o GMTP obteve melhor desempenho se comparado ao Denacast e ao CCN-TV. A seguir, apresentam-se as principais justificativas desse resultado.
 
-Os principais motivos que fizeram o GMTP obter melhor desempenho frente ao CCN-TV para a métrica índice de continuidade se estende ao caso da distorção da mídia. O modelo de serviço \textit{push/pull}, a estratégia de escalonamento de parcerias baseada na capacidade atual de transmissão dos canais e baixa necessidade de troca de pacotes de controle influenciam diretamente na qualidade da mídia recebida pelos nós clientes. Pode-se afirmar então que o CCN-TV perdeu mais pacotes de dados se comparado ao GMTP também devido às estratégias de controle de congestionamento ainda baseadas em janela deslizantes, impactando diretamente em uma métrica de distorção. Com relação ao Denacast/CoolStreaming, mais uma vez, os resultados obtidos confirmam os apresentados em~\ref{5764567}.
+Os principais motivos que fizeram o GMTP obter melhor desempenho frente ao CCN-TV para a métrica índice de continuidade se estende ao caso da distorção da mídia, com a diferença de que ainda foi possível reproduzir parte de um pacote em atraso. O modelo de serviço \textit{push/pull}, a estratégia de escalonamento de parcerias baseada na capacidade atual de transmissão dos canais e a baixa necessidade de troca de pacotes de controle influenciam diretamente na qualidade da mídia recebida pelos nós clientes. Pode-se afirmar que o CCN-TV perdeu mais pacotes de dados se comparado ao GMTP também devido às estratégias de controle de congestionamento baseadas em janela deslizantes -- o controle ocorre não somente no envio dos pacotes dos dados por parte dos nós servidores, mas no envio dos pacotes de interesse por parte dos nós clientes.
 
-Com relação ao Denacast/CoolStreaming, um fator limitante para o aumento na distorção da mídia está relacionado com a estratégia de escalonamento de nós clientes parceiros. Nesse contexto, considera-se apenas o nó que detém um determinado conteúdo de interesse e sua capacidade de \textit{upload} para escalonar os nós clientes parceiros, o que ocorre com base em uma escolha aleatória. O problema é que devido à dinâmica da rede, a capacidade de \textit{upload} dos nós podem mudar com frequência, resultando em seleção de nós parceiros de baixa qualidade, o que impacta diretamente na qualidade da mídia recebida pelos nós clientes.
+Ainda no contexto do desempenho das CCNs, note pelo gráfico da Figura~\ref{fig:tratamentos-distortion} que a curva correspondente ao CCN-TV evidencia um desempenho similar ao GMTP nos tratamentos com poucos nós clientes, degradando-se a medida que o número de nós clientes aumenta. Um dos motivos para esse desempenho é que o algoritmo de controle de congestionamento empregado nas CCNs limita a quota de transmissão de pacotes de interesse de acordo com a largura de banda disponível, impedindo o aumento da janela e portanto a capacidade que o nó cliente tem de transmitir múltiplos pacotes de interesse. No contexto das redes CCN, transmitir múltiplos pacotes de interesse não significa que os pacotes de dados correspondentes chegaram mais rapidamente. O motivo do baixo desempenho do CCN-TV no contexto da distorção da mídia é porque quando um pacote de dados a ser reproduzido não chega devido a perda, a única forma de tentar obtê-lo é retransmitindo um pacote de interesse. O problema é decidir em que instante deve-se retransmitir um pacote de interesse para que seja suficiente tentar receber os pacotes de dados correspondentes. Além disso, as operações de \textit{cache} do CCN-TV não oferecem benefícios significativo se houver os nós clientes aumentarem um número de pacotes de interesse. A principal razão para isso é que as partes da mídia armazenada nos \textit{caches} dos roteadores perdem sua efetividade depois que expiram, então com diversas tentativas de envio de pacotes de interesse a resposta contendo um pacote de dados pode até alcançar o nó cliente interessado, porém com o risco de não ser possível reproduzi-lo.
 
-Para sumarizar os resultados apresentados com relação à métrica distorção, o GMTP obteve um desempenho de \ut{25,27}{\%} melhor que o Denacast/CoolStreaming e \ut{13,34}{\%} melhor que o CCN-TV, considerando-se os limites mínimos e máximo do GMTP e dos seus oponentes, respectivamente.
+% Ainda no contexto do CCN-TV, quando um pacote de dados é perdido, faz-se necessário retransmitir um novo pacote de interesse a fim de obtê-lo novamente, porém os referidos pacotes de dados podem alcançar o nó cliente em um instante após o instante que deveriam ter sido reproduzidos, ou pode ocorrer a situação de um pacote de dados chegar, mas apenas parte dele poder ser reproduzido. A questão é que quando um nó cliente transmite um pacote de interesse não necessariamente este será prontamente transmitido na rede, pois o algoritmo de controle de congestionamento pode impedir seu imediato envio. Em outras palavras, quanto mais se demora transmitir um pacote de interesse, maior será o impacto na reprodução da mídia (interrupção ou distorção).
+
+É muito importante salientar que o uso de \textit{cache} em CCN para o caso de distribuição de mídias ao vivo podem garantir apenas uma pequena redução na taxa de perda de pacotes. De fato, pelos estudos apresentados em~\cite{6550523}, os autores constaram que a função de \textit{cache} das CCNs na presença de fluxos de dados de aplicações de tempo real não representa uma função importante da tal tipo de rede. Argumenta-se que o uso da PIT apenas ajuda a reduzir uma rajada de de requisições ao nó servidor para obter um determinado contéudo de interesse comum. Sendo assim, o que mais influencia para o melhor desempenho de uma rede CCN para reduzir as distorções da mídia é a capacidade de transmissão e recepção dos nós clientes. Note que os dados apresentados aqui foram obtidos sem o uso de qualquer tráfego de segundo plano, portanto o desempenho das redes CCNs para distribuição de mídias ao vivo pode ser ainda pior em um cenário real de acesso aos serviços de rede por parte dos usuários finais que, em geral, costumam realizar acesso a diferentes serviços simultaneamente e, portanto, reduzindo-se a capacidade de transmissão de cada fluxo de dados partindo de um mesmo sistema final.
+
+Enfim, com relação ao CCN-TV, suas funções de controle de congestionamento e \textit{cache} são limitadas se comparara a forma como estas duas funções são executadas pelo GMTP. Desta forma, aumenta-se significativamente a distorção do conteúdo recebido pelos nós clientes, pois apesar do pacote de interesse alcançar o nó roteador que mantém os dados de interesse, as respostas contendo pacotes de dados solicitados não alcançam os nós servidores em tempo hábil. Considerando-se as devidas proporções de cenário adotado, os resultados apresentados sobre a distorção da mídia confirmam os apresentados em~\cite{6550523}.
+
+Com relação ao Denacast, um fator limitante para o aumento na distorção da mídia está relacionado com a estratégia de escalonamento de nós clientes parceiros. Nesse contexto, considera-se apenas o nó que detém um determinado conteúdo de interesse e sua capacidade de \textit{upload} para escalonar os nós clientes parceiros, o que ocorre com base em uma escolha aleatória. O problema é que devido à dinâmica da rede, a capacidade de \textit{upload} dos nós podem mudar com frequência, resultando em seleção de nós parceiros de baixa qualidade, o que impacta diretamente na qualidade da mídia recebida pelos nós clientes. Da mesma forma do caso do CCN-TV, considerando-se as devidas proporções de cenário adotado, os resultados obtidos no contexto deste trabalho confirmam os apresentados em~\ref{5764567}.
+
+Para sumarizar os resultados apresentados com relação à métrica distorção, o GMTP obteve um desempenho de \ut{25,26}{\%} melhor que o Denacast e \ut{13,03}{\%} melhor que o CCN-TV, considerando-se os limites mínimos e máximo do GMTP e dos seus oponentes, respectivamente.
 
 % \subsection{Escalabilidade dos sistemas}
 % 
@@ -554,30 +568,6 @@ Para sumarizar os resultados apresentados com relação à métrica distorção, o GMT
 
 \subsection{Sobrecarga de controle}
 
-Diferentemente das seções anteriores, onde discutiram-se métricas relacionadas à qualidade de serviço oferecida à aplicação, nesta seção discute-se a sobrecarga de controle gerada por cada um dos sistemas estudados. Para isto, deve-se relembrar que um pacote de controle do GMTP tem \ut{36}{Bytes} (Seção~\ref{subsec:tipodepacotesmudccp}); do CCN \ut{40}{Bytes}~\cite{Perino:2011:RCC:2018584.2018596} e do Denacast/CoolStreaming \ut{46}{Bytes}, considerando-se os cabeçalhos da aplicação e do TCP~\cite{4509752}. Como no GMTP se emprega um método de cabeçalho variável, os resultados apresentados a seguir foram baseados em um tamanho de cabeçalho de \ut{72}{Bytes}.
-
-- Pacotes de controle do GMTP: 
-
-- Cool: alta sobrecarga de controle devido à manutenção da rede mesh e para a distribuição dos dados, uma solução baseada em um algoritmo do tipo \textit{gossip}. Os nós clientes no CoolStreaming tem que frequentemente se comunicar com seus pares atuais e candidatos, a fim de manter a rede de sobreposição atualizada. Caso contrário, os nós clientes não poderão encontrar rapidamente novos nós parceiros no caso de finalização de uma das suas parcerias atuais. Além disso, os nós devem periodicamente trocar os \textit{mapas de buffer} entre si, o que também aumenta o tráfego de controle~\cite{Shen:2009:HPN:1734068}. No contexto do experimento realizado neste trabalho, utilizou-se o Denacast, observando-se um melhor desempenho com relação à métrica sobrecarga de controle, porém uma melhoria relativamente aquém do GMTP.
-
-- a variação mínima do CCN-TV ocorreu pelas perdas de pacotes de interesse, causados pela dinâmica da rede
-
-- para se manter recebendo um fluxo multimídia, faz-se necessário transmitir pacotes de interesse periodicamente
-
-- pacotes de interesse mais vulneráveis a perdas, mais transmissões são necessárias
-
-- uma rede CCN deve-se propagar e/ou atualizar a FIB através de toda a rede, à medida em que novos pacotes de dados multimídia se tornam disponíveis nos nós servidores.
-
-Atualmente, existem pesquisas relacionadas à reduzir a quantidade de pacotes de interesse em transmissões de dados através das redes CCNs. A questão primordial em se tratando de mídias ao vivo é que os nomes dos conteúdos são gerados instantes antes de sua transmissão, então mesmo que se utilize uma estratégia de indexação sequencial dos próximos pacotes de dados, ainda sim se faz necessário que os nós clientes continuem periodicamente transmitindo os pacotes de interesse.
-
-
-- os do GMTP: registro, seleção e controle de congestionamento. Na fase 3 do GMTP os nós podem solicitar candidatos a parceiros, medir a capacidade dos canais correspondentes e efetivar ou não tais parcerias, isso também é pacote de controle
-
-
-O problema é que isto aumenta significativamente a sobrecarga de controle, pois é necessário executar algoritmos para verificar a expiração do \textit{cache}. Na prática, o ideal é uma estratégia para não precisar verificar a expiração do conteúdo e assumir um tempo razoavelmente curto para expiração. No caso do GMTP se considerou \ut{20}{s} ou se o \textit{buffer} não tem mais espaço de armazenamento quando um novo pacote de dados chega e precisa ser alocado, uma vez que o conteúdo é transiente.
-
-% PACOTES DE CONTROLE
-
 \begin{figure}[b!ht]
 \begin{center}
 \includegraphics[scale=.8]{imgs/results/tratamentos-packet_control}
@@ -587,135 +577,50 @@ O problema é que isto aumenta significativamente a sobrecarga de controle, pois 
 \label{fig:tratamentos-packet_control}
 \end{figure}
 
-\subsection{Sumarização dos resultados}
+Diferentemente das métricas anteriores, que são relacionadas à qualidade de serviço oferecida à aplicação, a sobrecarga de controle é uma relação de proporção entre a quantidade de pacotes de controle (sem dados de aplicação) e a quantidade de dados da aplicação que precisam ser transmitidos. Nesse contexto, um sistema $A$ é melhor que um sistema $B$ se $A$ transmite menos pacotes de controle que $B$ para disseminar a mesma quantidade de dados da aplicação. Dessa forma, mede-se a quantidade de pacotes de controle transmitido e contabiliza-se a quantidade de dados de controle transmitidos através da rede, com base no tamanho do cabeçalho de cada tipo de pacote. Como discutiu-se na Seção~\ref{subsec:tipodepacotesmudccp}, o pacote de controle do GMTP tem tamanho de \ut{32}{Bytes} (Seção~\ref{subsec:tipodepacotesmudccp}); o da CCN \ut{40}{Bytes}~\cite{Perino:2011:RCC:2018584.2018596} e do Denacast \ut{36}{Bytes}, considerando-se os cabeçalhos da aplicação e do TCP~\cite{4509752} para esse último caso. Como no GMTP emprega-se um método de cabeçalho variável, seu valor para a métrica sobrecarga de controle foi obtido com base nos tipos dos pacotes transmitidos ao longo do ensaio, os quais estão detalhados no Apêndice~\ref{app:gmtp-cabecalhos}.
 
-Pensar num gráfico que relacione a média geométrica de todos as variáveis dependentes com os fatores. Em um contexto geral, comparando em um único número para cada protocolo, fazer um gráfico de barras, usar média geométrica, ou seja:
+Neste contexto, na Figura~\ref{fig:tratamentos-packet_control}, apresenta-se a evolução dos sistemas estudados para a métrica sobrecarga de controle. Observam-se empates técnicos entre o CCN-TV e o Denacast em alguns tratamentos, como o tratamento 5 e o 18, com apenas um tratamento onde o CCN-TV foi melhor que o Denacast, ao passo que o GMTP obteve o melhor desempenho entre os três sistemas estudados. 
 
-% * p17: na sua tese, o que seria um resultado que a negaria? Ela não pode ser óbvia.
-%      - Um protocolo que comprovasse fazer melhor do que o GMTP considerando apenas a comunicação end-to-end, com suporte a controle de congestionamento (o que mais??)
-%      - Seleção de nós é importante
+O GMTP transmite uma menor quantidade de dados de controle porque além de possuir um cabeçalho fixo menor do que os seus concorrentes, somente aumenta a quantidade de dados de controle quando necessário. Por exemplo, o processo de estabelecimento de conexão (registro de participação) é o instante em que se transmite mais dados de controle, porém apenas no início das transmissões. Além disso, alguns pacotes transmitidos para registro de participação são interceptados pelos nós roteadores, reduzindo-se antecipadamente o tráfego de controle. Para a topologia de rede utilizada no experimento, o tamanho máximo que um pacote GMTP atingiu foi de \ut{240}{Bytes}\footnote{Para os pacotes dos tipos \pac{GMTP-Request-Reply} e \pac{GMTP-Route-Notify}.}, porém somente 27 pacotes de controle desse tipo foram transmitidos em cada ensaio, dos quais 12 foram interceptados antes de atingir o tamanho de \ut{240}{Bytes}. Sendo assim, considerando o GMTP, quando se utilizam pacotes de controle maiores do que tamanho fixo, a quantidade é bastante reduzida (algumas dezenas). Outros motivos para o melhor desempenho do GMTP frente a seus concorrentes estão relacionados com os métodos empregados para distribuir o conteúdo multimídia, discutidos a seguir.
 
-COMENTAR O QUE NEGARIA A MINHA TESE, TANTO NO CONTEXTO DE UM SISTEMA (EX. DENACAST) QUANTO NO CONTEXTO DE INFRA (EX. CCN)
+No caso do CCN-TV, seu pior desempenho se deve à muitas retransmissões de pacotes de controle devido às perdas no canal de \textit{upstream}. Como em redes CCN os nós clientes precisam periodicamente transmitir pacotes de interesse, aumenta-se as chances de perdê-los, principalmente em condições de congestionamento severo na rede. Por exemplo, no tratamento 6, considerando-se os valores das métricas anteriores, para alcançar tal desempenho, os nós dos clientes CCN-TV tiveram que transmitir \ut{19,8}{\%} da quantidade total de dados da aplicação, ou seja, foram necessários transmitir \ut{24,28}{MB} de pacotes de interesse para um total de \ut{122,61}{MB} da mídia. Considerando-se os resultados de todos os tratamentos apresentados em~\ref{fig:tratamentos-packet_control} e as devidas proporções de cenário, os resultados apresentados aqui confirmam os resultados apresentados em~\cite{6550523}.
 
-MENCIONAR AS TABELAS NO APÊNDICE (pode ser no começo da seção de resultados, na hora que fala sobre os gráficos)
+Além dos motivos apresentados anteriormente, na prática, uma rede CCN pode aumentar significativamente a sobrecarga de controle porque precisa verificar a expiração do \textit{cache}. No caso do GMTP, o \textit{cache} dos roteadores são substituídos à medida em que novos dados chega ao nó roteador. Além disso, no GMTP, propõe-se que seja possível uma aplicação informar quanto de espaço em \textit{buffer} é necessário para transmitir a mídia, ao passo que cada roteadores no caminho aloca o tamanho solicitado, desde que não ultrapasse um valor limite determinado pelo usuário administrador do roteador.
 
-\section{Sumário do Capítulo}
+No caso do Denacast, apesar de seu desempenho ter sido melhor que o CCN-TV, observa-se uma maior dependência com relação à quantidade de nós servidores disponíveis e o número de nós cliente interessados pela mídia. Quanto maior é o número de nós clientes, trocam-se mais dados de controle, apesar de uma discreta redução da curva à medida em que se adicionaram mais nós servidores na rede. Esse desempenho do Denacast é em virtude de algumas estratégias adotadas em seu protocolo. A primeira é o mecanismo de sub-fluxo, exigindo-se que os nós clientes precisem trocar mais pacotes de controle para transmitir os mapas de \textit{buffer}. A segunda, os mapas de buffer apesar de poderem ser compartilhados entre os nós clientes, cada compartilhamento requer uma conexão TCP, o que eleva sobremaneira a quantidade de dados de controle à medida em que se aumenta o número de nós clientes. E, a terceira, está relacionada com a manutenção da rede \textit{mesh} constituída pela CoolStreaming para distribuir os dados multimídia, uma solução baseada em um algoritmo do tipo \textit{gossip}. Os nós clientes no CoolStreaming tem que frequentemente se comunicar com seus pares atuais e candidatos, a fim de manter a rede de sobreposição atualizada. Caso contrário, os nós clientes não poderão encontrar rapidamente novos nós clientes parceiros no caso de finalização de uma das suas parcerias atuais~\cite{Shen:2009:HPN:1734068}.
+
+Atualmente, existem pesquisas relacionadas à reduzir a quantidade de pacotes de interesse em transmissões de dados através das redes CCNs. A questão primordial em se tratando de mídias ao vivo é que os nomes dos conteúdos são gerados instantes antes de sua transmissão, então mesmo que se utilize uma estratégia de indexação sequencial dos próximos pacotes de dados, ainda sim se faz necessário que os nós clientes continuem periodicamente transmitindo os pacotes de interesse.
+
+Para sumarizar os resultados apresentados com relação à métrica sobrecarga de controle, o GMTP obteve um desempenho de \ut{177,05}{\%} melhor que o Denacast e \ut{163,86}{\%} melhor que o CCN-TV. Esses valores expressivos também evidenciam a importância de que propor uma solução nas camadas inferiores da pilha TCP/IP podem melhorar sobremaneira o consumo da rede com demasiados dados de controle, muitas vezes transmitidos pelas aplicações para suprir limitações de serviços que deveriam estar disponíveis nas camadas corretas. Além disso, o valor bastante expressivo de ganho obtido pelo GMTP frente ao CCN-TV demonstra a importância de se propor um protocolo exclusivo para distribuição de fluxos de dados multimídia, devido à peculiaridade de requisitos.
+
+\section{Sumário do Capítulo e dos Resultados}
 \label{sec:resdisc-sumario}
 
-A interoperabilidade é uma medição arquitetural, explicar isso. Como medir a quantidade de aplicações de distribuição de mídias ao vivo diferentes e a quantidade de eventos iguais sendo transmitidos
+Neste capítulo, apresentou-se os resultados obtidos neste trabalho com base em confrontos do GMTP frente ao Denacast (estado da prática) e o CCN-TV (estado da arte), seguindo duas vertentes: projeto e desempenho. Na análise de projeto, discutiu-se brevemente sobre o projeto GMTP, contrapondo-se suas funcionalidades com as das respectivas propostas citadas. Já na análise de desempenho, estudaram-se as referidas propostas sobre a perspectiva da qualidade de serviço (atraso de inicialização, índice de continuidade e distorção) oferecida à aplicação e a sobrecarga de controle necessária para distribuir um conteúdo multimídia com requisitos de tempo real. Neste caso, apresentou-se a metodologia empregada no experimento realizado e em seguida analisou-se o desempenho dos sistemas estudados com base nos valores aferidos para as métricas estudadas.
+
+\begin{table}[b!ht]
+  \centering
+  \caption{Sumário dos ganhos do GMTP sobre o Denacast e o CCN-TV.}
+  \renewcommand{\arraystretch}{1}% Spread rows out...
+  \begin{tabular}{ccccccccc}
+    \toprule
+    \multirow{2}{*}{\textbf{Métricas}} & \multicolumn{8}{c}{\textbf{Ganhos do GMTP por Confrontos}}\\
+    & \multicolumn{4}{c}{GMTP vs. Denacast} & \multicolumn{4}{c}{GMTP vs. CCN-TV} \\
+    \midrule
+    Atraso de Inicialização & \multicolumn{4}{c}{\ut{93,22}{\%}} & \multicolumn{4}{c}{\ut{46,79}{\%}} \\
+    Índice de Continuidade & \multicolumn{4}{c}{\ut{37,88}{\%}} & \multicolumn{4}{c}{\ut{9,14}{\%}} \\
+    Distorção & \multicolumn{4}{c}{\ut{25,26}{\%}} & \multicolumn{4}{c}{\ut{13,03}{\%}} \\
+    Sobrecarga de Controle & \multicolumn{4}{c}{\ut{177,05}{\%}} & \multicolumn{4}{c}{\ut{163,86}{\%}} \\
+    \midrule
+%     \textbf{Média aritmética} & \multicolumn{4}{c}{\ut{83,36}{\%}} & \multicolumn{4}{c}{\ut{58,17}{\%}} \\
+    \textbf{Média ponderada (Pesos: 2, 3, 3, 1)} & \multicolumn{4}{c}{\ut{61,44}{\%}} & \multicolumn{4}{c}{\ut{35,95}{\%}} \\
+    \bottomrule
+  \end{tabular}
+  \label{tb:sumario-resultados}
+\end{table}
 
 
-Sendo assim, o que resta para a aplicação? replicar conteudo nos servidores da cdn e estratégias para acessa-los (load balancing etc)
-
-
-
-
-
-
-
-
-
-
-% \subsection{Considerações sobre Implementação}
-% 
-% Com o intuito de investigar o desempenho do GMTP, implementou-se no simulador de redes OMNet++~\cite{XU2011} suas principais funcionalidades. A versão  e sua versão atual do protocolo já permite a execução de transmissão de dados. Com o
-% desenvolvimento preliminar do protocolo \mudccps no simulador NS-2, permitiu-se
-% a execução de diversas simulações a fim de avaliar o comportamento do protocolo
-% considerando diversas configurações.
-% 
-% Em linhas gerais, a implementação no referido simulador de rede permite a
-% comunicação entre os nós através dos modos de transmissão multicast e unicast.
-% Foram implementados os tipos de pacotes do \mudccps e os processos de
-% estabelecimento de conexão, incluindo o processo de uso de nós relays, troca
-% de dados em modos multicast e unicast e os algoritmos para controle de
-% congestionamento, incluindo o uso de nós reporters.
-% 
-% Contudo, não foi implementado o arcabouço de extensão para permitir o
-% desenvolvimento de novos algoritmos para o processo de conexão, descoberta e
-% seleção de nós, adaptação de fluxo de dados e tolerância a falhas. Tal
-% implementação será feita no núcleo do sistema operacional Linux, juntamente com
-% todos os mecanismos básicos para o funcionamento do \mudccp.
-% 
-% A proposta é de implementar um arcabouço de extensão para as funções previstas
-% no \mudccp, permitindo-se o desenvolvimento e adição de novos algoritmos para
-% as funcionalidades supracitadas, de modo que torne o \mudccps flexível para
-% permitir que qualquer aplicação os utilizem.
-% 
-% Na prática, um cenário desejado para essa proposta de implementação do \mudccps
-% é que o desenvolvedor possa configurar quais algoritmos deseja utilizar em sua
-% aplicação, permitindo-se que estes sejam alterados em modo de execução da
-% da mesma. Neste caso, suponha um algoritmo de descoberta de nós chamado
-% \textit{DN-1}, um algoritmo para controle de congestionamento chamado
-% \textit{CC-2}, um algoritmo de tolerância a desconexão \textit{TD-3}; um
-% algoritmo de adaptação de fluxo \textit{AF-4} e um algoritmo para reciprocidade
-% % \textit{R-2}. As implementações de tais algoritmos serão feitas na camada de
-% transporte, acoplando-as em forma de módulos do sistema operacional ao protocolo
-% \mudccp. Em seguida, as aplicações podem selecionar quais algoritmos melhor se
-% adequa as suas necessidades, com o \mudccps sendo responsável por:
-% 
-% \begin{enumerate}
-% 
-%   \item carregar o conjunto de algoritmos \textit{A = \{DN-1, CC-2, TD-3, AF-4,
-% R-2\}};
-% 
-%   \item definir os parâmetros iniciais para cada um dos algoritmos em A,
-% definidos pela aplicação;
-% 
-%   \item executar funções preliminares para ajustes iniciais, tais como informar
-% aos nós participantes de uma transmissão quais dos algoritmos estão sendo
-% utilizados (o conjunto \textit{A}) e quais outros estão disponíveis;
-% 
-%   \item executar os algoritmos em momentos apropriados de acordo com os eventos
-% de rede, notificando a aplicação caso necessário e desejável pela aplicação;
-% 
-%   \item descarregar os algoritmos quando não forem mais necessários e informar
-% aos nós parceiros.
-% 
-% \end{enumerate}
-% 
-% Desta forma, um nó servidor poderá solicitar que seus nós clientes carreguem um
-% determinado módulo, dependendo da sua disponibilidade nos nós clientes. Neste
-% caso, o \mudccps controlará todo o processo de carregamento dos mesmos.
-% 
-% Com isso, o \mudccps se tornará um protocolo extensível que gerencia quais
-% algoritmos devem ser executados em cada ponto de extensão. Esses algoritmos
-% podem ser adicionados ao protocolo através de módulos do sistema operacional,
-% carregáveis utilizando-se comandos como o \textit{modprobe} (no Linux, por
-% exemplo) e manipulados (passagem de parâmetros) pela aplicação através de uma
-% API de programação, por exemplo, utilizando-se as primitivas
-% \textit{setsockopt()} e \textit{getsockopt()} da especificação \textit{BSD
-% Socket API}~\cite{1197551}.
-% 
-% Para que as aplicações possam utilizar o \mudccp, o protocolo deve ser
-% compatível com todas as funções prevista na especificação \textit{BSD Socket
-% API}, são elas: \textit{socket()}, \textit{bind()}, \textit{listen()},
-% \textit{connect()}, \textit{accept()}, \textit{send()}, \textit{recv()},
-% \textit{write()}, \textit{read()}, \textit{sendto()}, \textit{recvfrom()},
-% \textit{close()}, \textit{select()}, \textit{setsockopt()},
-% \textit{getsockopt()} e \textit{pull()}.
-% 
-% Outros trabalhos podem ser desenvolvidos para tornar o \mudccps compatível com o
-% padrão de \textit{sockets} do sistema operacional Windows, conhecido pelo nome
-% de \textit{winsock}. Todavia, por ser um sistema operacional de código fechado,
-% a implementação do \mudccps só será possível após sua padronização em forma de
-% RFC.
-
-- COLOCAR ALGUM GRÁFICO NA PROBLEMÁTICA ENTRE O DENACAST/CoolStreaming e o NDN (provavelmente o gráfico de distorção)
-- Melhorar o capítulo do GMTP em duas coisas: cabeçalho genérico e a parte de seleção dos melhores caminhos com base na capacidade atual do canal (o problema que pode ocorrer é de flash-crowd)
-
-- CCN: pacotes de dados independentes são obtidos com base em pacotes de interesse.
-- GMTP: pacotes de dados de um mesmo fluxo são obtidos permitindo que o nó servidor, que conhece os caminhos dos nós interessados pelo fluxo, instruam os nós intermediários que realizem parcerias entre si
-
-No GMTP isto não é necessário devido à estratégia de registro de participação (Seção~\ref{subsec:registro-participacao}) e portanto poucos recursos relacionados à taxa de \textit{upload} são necessários para começar a receber os pacotes de dados multimídia.
-
-
-The CCN (r)evolution requires severe changes to today's routers.
-For example, high speed hardware and software are required to support
-name-based data forwarding and packet-level caching. Moreover,
-shifting the address space from one billion IPs to at least one
-trillion content names [7] causes a neat increase of the routing state
-to be stored at content routers. However, allowing routers to serve
-content from a local cache can potentially alleviate the frequency of
-forwarding operations. Generally, the interaction between caching
-and forwarding is still poorly understood, and it is not clear whether
-today's technology can sustain the described additional operations
+Neste contexto, na Tabela~\ref{tb:sumario-resultados}, sumarizam-se os ganhos do GMTP sobre o Denacast e o CCN-TV, discutidos ao longo deste capítulo. Considerando-se as discussões apresentadas para cada uma das métricas estudadas, com base em simulação de um cenário real de rede, pode-se afirmar que ao utilizar o GMTP é possível melhorar o desempenho dos sistemas baseados nas principais técnicas de distribuição de mídias ao vivo adotadas no estado da prática em \ut{61,44}{\%}, ao passo que melhora-se em \ut{35,95}{\%} se comparado a proposta mais importante disponível no estado da arte para distribuição de conteúdos através da Internet. Para obter os referidos valores, calculou-se a média ponderada com pesos (2, 3, 3, 1) para as métricas atraso de inicialização, índice de continuidade, distorção e sobrecarga de controle, respectivamente.
+ 
+% - COLOCAR ALGUM (2 NA VERDADE) GRÁFICO NA PROBLEMÁTICA ENTRE O DENACAST/CoolStreaming e o NDN (provavelmente o gráfico de distorção). O PRIMEIRO SERIA O GRÁFICO DA DISTORÇÃO E O SEGUNDO DA SOBRECARGA DE CONTROLE, DIZENDO QUE O CCN PERDE PARA ALGUMAS SOLUÇÕES DO ESTADO DA PRÁTICA.
+% - Melhorar o capítulo do GMTP em uma coisas: seleção dos melhores caminhos com base na capacidade atual do canal (o problema que pode ocorrer é de flash-crowd)

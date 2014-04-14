@@ -241,7 +241,7 @@ adaptação de fluxo baseado na capacidade de recepção dos
 nós~\cite{4251079,6713779,Pantos2013,6077864}
 e segurança~\cite{vieira_borges_2010,4539702,4738451,865073,1388342}. Sendo assim, questiona-se a necessidade de se tratar os problemas supostamente resolvidos por essas funções e, nesse ínterim, identificar quais desses serviços poderiam ser melhor aproveitados se posicionados corretamente na pilha de protocolos TCP/IP.
 
-O fato é que os temas supracitados foram ganhando importância ao longo dos anos porque os serviços de transmissão de mídias ao vivo se popularizaram, ao passo que surgiram mais necessidades de sofisticar as aplicações a fim de melhorar seu desempenho em entregar os fluxos de dados para uma população crescente de nós clientes. Apesar da arquitetura da Internet ser modularizada em camadas funcionais, ao longo dos anos as soluções promovidas no contexto dos referidos temas não foram disponibilizadas estrategicamente nas camadas corretas, mas sim apenas na camada de aplicação. Isto se explica pelo fato de que é muito mais fácil implementar uma solução na camada de aplicação do que em outras camadas mais abaixo, não apenas por aspecto de facilidade de desenvolvimento, mas também de implantação em larga escala na Internet, pois todas as outras camadas estão implementadas do sistema operacional para baixo.
+O fato é que os temas supracitados foram ganhando importância ao longo dos anos porque os serviços de transmissão de mídias ao vivo se popularizaram, ao passo que surgiram mais necessidades de sofisticar as aplicações a fim de melhorar seu desempenho em entregar os fluxos de dados para uma população crescente de sistemas finais, com diferentes tipos de conexão e mobilidade. Apesar da arquitetura da Internet ser modularizada em camadas funcionais, ao longo dos anos as soluções promovidas no contexto dos referidos temas não foram disponibilizadas estrategicamente nas camadas corretas, mas sim apenas na camada de aplicação. Isto se explica pelo fato de que é muito mais fácil implementar uma solução na camada de aplicação do que em outras camadas mais abaixo, não apenas por aspecto de facilidade de desenvolvimento, mas também de implantação em larga escala na Internet, pois todas as outras camadas estão implementadas do sistema operacional para baixo.
 
 Um exemplo do problema em discussão é a proposta ALM (\textit{Application Layer Multicast})~\cite{Banerjee:2002:SAL:964725.633045}. A princípio, uma maneira eficiente de se estruturar e enviar um fluxo de vídeo a um grupo de usuários na Internet era utilizar \textit{multicast} em nível de IP~\cite{guo_survey_2008}. Nesse caso, um nó fonte transmissor de uma mídia ao vivo se torna a raiz de uma árvore \textit{multicast} e os clientes recebem o conteúdo do vídeo através dos vários nós desta árvore, formada pelos roteadores que suportam \textit{multicast} em nível de IP. Apesar de melhorar escalabilidade no número de receptores do mesmo conteúdo ao vivo, tal estratégia foi considerada suficiente devido à complexidade de habilitá-la e mantê-la, principalmente em grande escala~\cite{castro_splitstream:_2003}. Para contornar a dificuldade em habilitar o modo \textit{multicast} em nível de IP, propuseram-se a arquitetura ALM, que é equivalente ao IP \textit{multicast}, porém implementada em nível de aplicação. A diferença entre o \textit{multicast} IP e o ALM é que no primeiro os roteadores duplicam e repassam os datagramas para os próximos roteadores até alcançar os sistemas finais, ao passo que no ALM os sistemas finais executam as ações citadas anteriormente, mas ainda dependem de funções de rede de mais baixo nível, o que pode aumentar o tempo de processamento e a complexidade da aplicação. Existes diversos \textit{middlewares} baseados em ALM e estes implementam suas próprias interfaces de uso e funcionalidades, incompatíveis entre
 si~\cite{Yeo:2003:FMV:947820.947823,Banerjee:2006:OEO:1141103.1648579,1258118,jannotti_overcast:_2000,Kwon:2005:POM:1052084.1648646,1575808,castro_splitstream:_2003}. Apesar de todos esses esforços, questão de interoperabilidade dos sistemas de distribuição de mídias ao vivo vem à tona mais uma vez.
@@ -310,16 +310,32 @@ X_i = \frac{s}{R \times \sqrt{2 \times b \times \frac{p}{3}} + (RTO \times 3
 
 \vspace{0.5cm}
 
-Embora esta seja uma discussão teórica, simulações foram realizados em busca de evidências mais contundentes de que este fato pode ocorrer na prática. Em~\cite{6214362,leandro-Globecom-2011,leandro-WP2P-2011}, apresentam-se os 
-resultados sobre estas simulações que, em resumo, apenas fluxos DCCP foram suficientes para causar o problema em questão, sequer utilizou-se fluxos de outros protocolos. Em situações mais realistas, o problema se agrava porque o protocolo DCCP disputará o canal de transmissão não apenas com fluxos DCCP, mas também com fluxos de outros protocolos, por exemplo TCP, UDP e SCTP~\cite{iyengar_concurrent_2006,huang_multimedia_2011}. Dessa forma, há um impasse em se utilizar DCCP nas aplicações multimídia porque as aplicações são forçadas a utilizar controle de congestionamento fim-a-fim e são submetidas a um mecanismo de conexão ponto-a-ponto, delegando-se a responsabilidade de conexão multi-ponto à aplicação.
+Embora esta seja uma discussão teórica, simulações foram realizados em busca de evidências mais contundentes de que este fato pode ocorrer na prática. Em~\cite{6214362,leandro-Globecom-2011,leandro-WP2P-2011}, apresentam-se os  resultados sobre estas simulações que, em resumo, apenas fluxos DCCP foram suficientes para causar o problema em questão, sequer utilizou-se fluxos de outros protocolos. Em situações mais realistas, o problema se agrava porque o protocolo DCCP disputará o canal de transmissão não apenas com fluxos DCCP, mas também com fluxos de outros protocolos, por exemplo TCP, UDP e SCTP~\cite{iyengar_concurrent_2006,huang_multimedia_2011}. Dessa forma, há um impasse em se utilizar DCCP nas aplicações multimídia porque as aplicações são forçadas a utilizar controle de congestionamento fim-a-fim e são submetidas a um mecanismo de conexão ponto-a-ponto, delegando-se a responsabilidade de conexão multi-ponto à aplicação.
 
-Apesar do protocolo DCCP ter sido utilizado para evidenciar o problema que
-acabara de ser apresentado, esta discussão pode ser generalizada para qualquer
-outro protocolo de rede que seja orientado à conexão e que realize controle de
-congestionamento de fluxos individualmente. A fim de aumentar a
+Apesar do protocolo DCCP ter sido utilizado para evidenciar o problema que acabara de ser apresentado, esta discussão pode ser generalizada para qualquer outro protocolo de rede que seja orientado à conexão e que realize controle de congestionamento de fluxos individualmente. A fim de aumentar a
 representatividade de protocolos nesse contexto, o leitor pode consultar outros
-trabalhos~\cite{4146841,goutelle2004,CONG:Floyd00:TFRC:art,Sangtae2008,RFC3649,5472999,veno2003,464716,5735831,5560080,4579599,brosh_delay-friendliness_2010,lucas_fair_2009,ju-won_park_tcp-rome:_2008,elaarag_tcp_2008,RFC4960,lin_ma_congestion_2007,yongxiang_liu_tcp-cm:_2002,brassil_structuring_2002,banerjea_tenet_1996}
-e no Capítulo~\ref{cap:trabalhosrelacionados} deste documento.
+trabalhos~\cite{4146841,goutelle2004,CONG:Floyd00:TFRC:art,Sangtae2008,RFC3649,5472999,veno2003,464716,5735831,5560080,4579599,brosh_delay-friendliness_2010,lucas_fair_2009,ju-won_park_tcp-rome:_2008,elaarag_tcp_2008,RFC4960,lin_ma_congestion_2007,yongxiang_liu_tcp-cm:_2002,brassil_structuring_2002,banerjea_tenet_1996} e no Capítulo~\ref{cap:trabalhosrelacionados} deste documento.
+
+% \begin{figure}[b!ht]
+%   \centering
+%   \subfigure[Número de nós clientes x Distorção]{% 
+%     \includegraphics[width=.53\textwidth]{imgs/results/problematica-distortion} \label{fig:1} 
+%   } 
+%   \quad 
+%   \subfigure[Número de nós clientes x Sobrecarga de controle]{% 
+%     \includegraphics[width=.53\textwidth]{imgs/results/problematica-packet_control} \label{fig:2}
+%   } 
+%   \caption{Confronto entre os sistemas Denacast/CoolStreaming e CCN-TV para as métricas distorção e sobrecarga de controle.} 
+% \end{figure}
+
+% \begin{figure}[h]
+% \begin{center}
+% \includegraphics[scale=0.4]{imgs/results/problematica-distortion}
+% \end{center}
+% \vspace{-0.8cm}
+% \caption{...}
+% \label{fig:problematica-distortion}
+% \end{figure}
 
 
 % Como consequência, toda transmissão na
@@ -343,7 +359,7 @@ Diante do exposto, pretende-se responder a seguinte questão de pesquisa: \textit
 
 \section{Hipótese}
 
-Para responder as questões supracitadas, adota-se a seguinte hipótese: \textit{a constituição de uma rede de favores entre roteadores que interceptam, realizam cache temporário e compartilham pacotes de dados tanto em modo \textit{multicast} (em redes locais) quanto em modo unicast (entre redes distintas), auxiliados por um algoritmo para controle de congestionamento assistido pela rede, resulta em uma melhor distribuição dos fluxos de mídias ao vivo}.
+Para responder as questões supracitadas, adota-se a seguinte hipótese: \textit{a constituição de uma rede de favores entre roteadores que interceptam, realizam \textit{cache} temporário e compartilham pacotes de dados tanto em modo \textit{multicast} quanto em modo \textit{unicast}, auxiliados por nós servidores para determinar as parcerias com base em um algoritmo para controle de congestionamento assistido pela rede, resulta na distribuição mais eficiente de mídias ao vivo}.
 
 % possibilita a maximização do uso dos recursos de rede,
 % a independência dos sistemas e
@@ -370,10 +386,7 @@ Inicialmente, propõe-se dar um passo atrás e repensar \textit{distribuição de mí
 
 %  ao mover diversas funções atualmente implementadas nesses sistemas para as camadas de transporte e rede, a fim de utilizar eficientemente os recursos de rede e consequentemente melhorar a qualidade da experiência do usuário ao reproduzir um conteúdo ao vivo na Internet.
 
-\subsection{Objetivos específicos}
-
-Pode-se dividir o objetivo principal deste trabalho nos seguintes
-objetivos específicos (fases):
+Pode-se dividir o objetivo principal deste trabalho nos seguintes objetivos específicos (fases):
 
 \begin{enumerate}
 
