@@ -964,9 +964,6 @@ provedores de rede, mas essa discussão está fora do escopo deste trabalho.
 
 Por este motivo, tomou-se a seguinte decisão: o identificador de um nó \repasss é um código \textit{hash} MD5 da concatenação dos endereços MAC (\textit{Media Access Control}) de todas as interfaces de rede do roteador, seguido do endereço IP da Internet de saída. Sendo assim, o identificador de um nó \repasss terá o tamanho de \ut{160}{bits} para IPv4 e \ut{256}{bits} para IPv6. Como resultado, considerando os cabeçalhos do GMTP\footnote{Menos \ut{16}{Bytes}, pois os pacotes do tipos \pac{GMTP-Request-Reply} e \pac{GMTP-Route-Notify} não transportam o nome da mídia.}, do IPv4 e da camada de enlace\footnote{Considerou-se cabeçalho Ethernet de \ut{48}{bits}.}, em um datagrama de \ut{1.500}{Bytes}, é possível descobrir caminhos IPv4 de até 72 saltos entre o nó cliente e o nó servidor no procedimento de registro de participação, restando \ut{18}{Bytes} ou, no caso de IPv6, é possível descobrir caminhos de até 44 saltos, restando \ut{30}{Bytes}. Os espaços restantes nos pacotes dos tipos \pac{GMTP-Request-Reply} e \pac{GMTP-Route-Notify} podem ser úteis para transportar outros tipos de dados de controle ou até mesmo dados de aplicação.
 
-% Note que para evitar sobrecarga de processamento nos roteadores, pode-se evitar
-% falar aqui que nem todo pacote de reply precisa ser preenchido com o identificador, basta o roteador fazer isso uma vez em um certo período de tempo, voltando a fazer novamente quando este período expirar. Para detectar se deve ou não colocar o identificador no pacote de reply, basta fazer cache do endereço de origem/destino (a princípio não precisa cachear o nome da mídia).
-
 \subsubsection{Manutenção do registro de participação:}
 \label{subsec:manutencao-conexao}
 
@@ -2446,7 +2443,7 @@ taxa de transmissão para um ponto de equilíbrio onde todos os transmissores
 transmitirão pacotes de dados a uma taxa de transmissão $R_{xcp}(t)$, ao passo
 que o RCP calcula uma única taxa de transmissão que deve ser utilizada por todos
 os nós transmissores em um certo instante \textit{t}. Apesar dessa diferença
-suscinta, deve-se entender minuciosamente o que isto significa.
+sucinta, deve-se entender o que isto significa.
 
 No caso do XCP, o protocolo aumenta ou diminui a janela de congestionamento de
 um fluxo de dados de acordo com o tamanho atual da sua janela de congestionamento. Isto significa que o XCP reduz gradativamente os tamanhos da

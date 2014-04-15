@@ -100,7 +100,7 @@ A seguir, apresentam-se detalhes do projeto experimental executado, organizado e
 \subsection{Objetivo e hipótese}
 \label{subsec:objetivo-hipotese}
 
-O objetivo do experimento foi avaliar o desempenho do GMTP com vista à hipótese enunciada de que a constituição de uma rede de favores entre roteadores que interceptam, realizam \textit{cache} temporário e compartilham pacotes de dados tanto em modo \textit{multicast} quanto em modo \textit{unicast}, auxiliados por nós servidores para determinar as parcerias com base em um algoritmo para controle de congestionamento assistido pela rede, resulta na distribuição mais eficiente de mídias ao vivo.
+O objetivo do experimento foi avaliar o desempenho do GMTP com vista à hipótese enunciada de que a constituição de uma rede de favores entre roteadores que interceptam, realizam \textit{cache} temporário e compartilham pacotes de dados tanto em modo \textit{multicast} quanto em modo \textit{unicast}, auxiliados por nós servidores para determinar as parcerias com base em um algoritmo para controle de congestionamento assistido pela rede, resulta na distribuição mais eficiente (escala e qualidade) de mídias ao vivo.
 
 Como apresentou-se no Capítulo~\ref{cap:mudccp}, o GMTP é uma instância dessa hipótese e para avaliá-la confrontou-se o GMTP com o Denacast e com o CCN-TV, através da aferição de métricas que determinam a qualidade de serviço dos sistemas de distribuição de mídias ao vivo.
 
@@ -596,7 +596,9 @@ Para sumarizar os resultados apresentados com relação à métrica sobrecarga de co
 \section{Sumário do Capítulo e dos Resultados}
 \label{sec:resdisc-sumario}
 
-Neste capítulo, apresentou-se os resultados obtidos neste trabalho com base em confrontos do GMTP frente ao Denacast (estado da prática) e o CCN-TV (estado da arte), seguindo duas vertentes: projeto e desempenho. Na análise de projeto, discutiu-se brevemente sobre o projeto GMTP, contrapondo-se suas funcionalidades com as das respectivas propostas citadas. Já na análise de desempenho, estudaram-se as referidas propostas sobre a perspectiva da qualidade de serviço (atraso de inicialização, índice de continuidade e distorção) oferecida à aplicação e a sobrecarga de controle necessária para distribuir um conteúdo multimídia com requisitos de tempo real. Neste caso, apresentou-se a metodologia empregada no experimento realizado e em seguida analisou-se o desempenho dos sistemas estudados com base nos valores aferidos para as métricas estudadas.
+Neste capítulo, apresentou-se os resultados obtidos neste trabalho com base em confrontos do GMTP frente ao Denacast (estado da prática) e o CCN-TV (estado da arte), seguindo duas perspectivas: projeto e desempenho.
+
+Na análise de projeto, discutiu-se brevemente sobre o projeto GMTP, contrapondo-se suas funcionalidades com as das respectivas propostas citadas. Já na análise de desempenho, estudaram-se as referidas propostas sobre a perspectiva da qualidade de serviço (atraso de inicialização, índice de continuidade e distorção) oferecida à aplicação e a sobrecarga de controle necessária para distribuir um conteúdo multimídia com requisitos de tempo real. Neste caso, apresentou-se a metodologia empregada no experimento realizado e em seguida estudou-se o desempenho dos sistemas com base nos valores aferidos para principais métricas. A topologia de rede e os parâmetros determinados condizem com cenários da realidade, o que culminou em testes mais reais para entender os limites dos sistemas estudados, constatando-se que em níveis severos de congestionamento da rede e com um número elevado de nós clientes, as soluções disponibilizadas na camada de aplicação, como o Denacast/CoolStreaming, tem um desempenho significativamente inferior àquelas baseadas no núcleo da rede, como é o caso da CCN e do próprio GMTP.
 
 \begin{table}[b!ht]
   \centering
@@ -613,14 +615,18 @@ Neste capítulo, apresentou-se os resultados obtidos neste trabalho com base em c
     Sobrecarga de Controle & \multicolumn{4}{c}{\ut{177,05}{\%}} & \multicolumn{4}{c}{\ut{163,86}{\%}} \\
     \midrule
 %     \textbf{Média aritmética} & \multicolumn{4}{c}{\ut{83,36}{\%}} & \multicolumn{4}{c}{\ut{58,17}{\%}} \\
-    \textbf{Média ponderada (Pesos: 2, 3, 3, 1)} & \multicolumn{4}{c}{\ut{61,44}{\%}} & \multicolumn{4}{c}{\ut{35,95}{\%}} \\
+    \textbf{Média ponderada (Pesos$^1$: 2, 3, 3, 1)} & \multicolumn{4}{c}{\ut{61,44}{\%}} & \multicolumn{4}{c}{\ut{35,95}{\%}} \\
     \bottomrule
   \end{tabular}
+  \\\scriptsize\raggedright
+  $^1$ Para obter os referidos valores, calculou-se a média ponderada com pesos (2, 3, 3, 1) para as métricas atraso de inicialização, índice de continuidade, distorção e sobrecarga de controle, respectivamente. Esses pesos foram definidos com base na importância de cada métrica no processo de distribuição de mídias ao vivo. \\
+  \normalsize
   \label{tb:sumario-resultados}
 \end{table}
 
+De fato, as disputas mais acirradas ocorreram entre o GMTP e o CCN-TV, evidenciando-se que a arquitetura e decisões de projeto, como o modelo de serviço utilizado, são aspectos que podem fazer diferenças significativas no desempenho dos sistemas para distribuir mídias ao vivo. Neste contexto, sumarizam-se na Tabela~\ref{tb:sumario-resultados}, os ganhos do GMTP sobre o Denacast e o CCN-TV, discutidos ao longo deste capítulo. Considerando-se os resultados para cada uma das métricas, com base em simulação de um cenário real de rede, reservando-se suas devidas proporções, pode-se afirmar que o GMTP apresenta um melhor desempenho se comparado a uma soluções tanto do estado da prática quanto a uma proposta do estado da arte.
 
-Neste contexto, na Tabela~\ref{tb:sumario-resultados}, sumarizam-se os ganhos do GMTP sobre o Denacast e o CCN-TV, discutidos ao longo deste capítulo. Considerando-se as discussões apresentadas para cada uma das métricas estudadas, com base em simulação de um cenário real de rede, pode-se afirmar que ao utilizar o GMTP é possível melhorar o desempenho dos sistemas baseados nas principais técnicas de distribuição de mídias ao vivo adotadas no estado da prática em \ut{61,44}{\%}, ao passo que melhora-se em \ut{35,95}{\%} se comparado a proposta mais importante disponível no estado da arte para distribuição de conteúdos através da Internet. Para obter os referidos valores, calculou-se a média ponderada com pesos (2, 3, 3, 1) para as métricas atraso de inicialização, índice de continuidade, distorção e sobrecarga de controle, respectivamente.
+Sendo assim, como o GMTP é uma instância da hipótese enunciada e perseguida neste trabalho, pode-se afirmar com \ut{95}{\%} de nível de confiança que seu uso resulta na distribuição mais eficiente de mídias ao vivo. Especificamente, melhora-se o desempenho na distribuição de mídias ao vivo em \ut{61,44}{\%}, comparando-se aos sistemas baseados em técnicas de distribuição de mídias ao vivo adotadas no estado da prática, ao passo que melhora-se em \ut{35,95}{\%} o desempenho dos sistemas em comparação às técnicas de distribuição de conteúdo com suporte da rede, instanciada com base nos conceitos da rede CCN, uma das propostas mais importante disponível no estado da arte para distribuição de conteúdos através da Internet.
  
 % - COLOCAR ALGUM (2 NA VERDADE) GRÁFICO NA PROBLEMÁTICA ENTRE O DENACAST/CoolStreaming e o NDN (provavelmente o gráfico de distorção). O PRIMEIRO SERIA O GRÁFICO DA DISTORÇÃO E O SEGUNDO DA SOBRECARGA DE CONTROLE, DIZENDO QUE O CCN PERDE PARA ALGUMAS SOLUÇÕES DO ESTADO DA PRÁTICA.
 % - Melhorar o capítulo do GMTP em uma coisas: seleção dos melhores caminhos com base na capacidade atual do canal (o problema que pode ocorrer é de flash-crowd)
