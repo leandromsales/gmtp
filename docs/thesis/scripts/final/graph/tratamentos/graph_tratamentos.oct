@@ -632,38 +632,38 @@ print("-color", "-deps", "../../../../documento/imgs/results/tratamentos-packet_
 clf("reset");
 
 hold on;
-h = errorbar(graphdata_denacast(13:18, 10:10), graphdata_denacast(13:18, 12:12));
+h = errorbar(graphdata_denacast(1:6, 10:10), graphdata_denacast(1:6, 12:12));
 set (h, "color", "red", "linestyle", "none");
-h = errorbar(graphdata_ccntv(13:18, 10:10), graphdata_ccntv(13:18, 12:12));
+h = errorbar(graphdata_ccntv(1:6, 10:10), graphdata_ccntv(1:6, 12:12));
 set (h, "color", "black", "linestyle", "none");
 plot(
-    [1:6], graphdata_denacast(13:18, 10:10),
-	[";{\bf {\fontsize{24} Denacast/CoolStreaming}};"],
+    [1:6], graphdata_denacast(1:6, 10:10),
+	[";{\bf {\fontsize{30} Denacast/CoolStreaming}};"],
 	"marker", "s",
 	"color", "red",
 	"markerfacecolor", "red",
-	"markersize", markersize,
+	"markersize", markersize+2,
 	"linestyle", ":",
-	"linewidth", plotlinewidth,
-    [1:6], graphdata_ccntv(13:18, 10:10),
-	[";{\bf {\fontsize{24} CCN-TV}};"],
+	"linewidth", plotlinewidth+1,
+    [1:6], graphdata_ccntv(1:6, 10:10),
+	[";{\bf {\fontsize{30} CCN-TV}};"],
 	"marker", "o",
 	"color", "black",
 	"markerfacecolor", "black",
-	"markersize", markersize,
+	"markersize", markersize+2,
 	"linestyle", ":",
-	"linewidth", plotlinewidth
+	"linewidth", plotlinewidth+1
 );
 hold off;
 
 fmt = xlabel("Numero de nos clientes (10^3)",
 	         "fontweight", "bold",
-             "fontsize", axissize);
+             "fontsize", axissize+3);
 fmt = ylabel("Distorcao (%)\n",
              "fontweight", "bold",
-	         "fontsize", axissize);
-legend("location", "northwest");
-setup_axies_prob(borderlinesize, ticksize, 0, 30, xticklabel_prob);
+	         "fontsize", axissize+3);
+legend("location", "southeast");
+setup_axies_prob(borderlinesize, ticksize+3, 0, 40, xticklabel_prob);
 print("-color", "-deps", "../../../../documento/imgs/results/problematica-distortion.eps");
 
 
@@ -673,37 +673,37 @@ print("-color", "-deps", "../../../../documento/imgs/results/problematica-distor
 clf("reset");
 
 hold on;
-h = errorbar(36*graphdata_denacast_pc(13:18, 2:2)/1024, 36*graphdata_denacast_pc(13:18, 4:4)/1024);
+h = errorbar(36*graphdata_denacast_pc(1:6, 2:2)/1024, 36*graphdata_denacast_pc(1:6, 4:4)/1024);
 set (h, "color", "red", "linestyle", "none");
-h = errorbar(40*graphdata_ccntv_pc(13:18, 2:2)/1024, 40*graphdata_ccntv_pc(13:18, 4:4)/1024);
+h = errorbar(40*graphdata_ccntv_pc(1:6, 2:2)/1024, 40*graphdata_ccntv_pc(1:6, 4:4)/1024);
 set (h, "color", "black", "linestyle", "none");
 plot(
-    [1:6], 36*graphdata_denacast_pc(13:18, 2:2)/1024,
-	[";{\bf {\fontsize{22} Denacast/CoolStreaming}};"],
+    [1:6], 36*graphdata_denacast_pc(1:6, 2:2)/1024,
+	[";{\bf {\fontsize{30} Denacast/CoolStreaming}};"],
 	"marker", "s",
 	"color", "red",
 	"markerfacecolor", "red",
-	"markersize", markersize,
+	"markersize", markersize+2,
 	"linestyle", ":",
-	"linewidth", plotlinewidth,
-    [1:6], 40*graphdata_ccntv_pc(13:18, 2:2)/1024,
-	[";{\bf {\fontsize{22} CCN-TV}};"],
+	"linewidth", plotlinewidth+1,
+    [1:6], 40*graphdata_ccntv_pc(1:6, 2:2)/1024,
+	[";{\bf {\fontsize{30} CCN-TV}};"],
 	"marker", "o",
 	"color", "black",
 	"markerfacecolor", "black",
-	"markersize", markersize,
+	"markersize", markersize+2,
 	"linestyle", ":",
-	"linewidth", plotlinewidth
+	"linewidth", plotlinewidth+1
 );
 hold off;
 
 fmt = xlabel("Numero de nos clientes (10^3)",
 	         "fontweight", "bold",
-             "fontsize", axissize);
+             "fontsize", axissize+3);
 fmt = ylabel("Quantidade de dados de controle (MBytes)\n",
              "fontweight", "bold",
-	         "fontsize", axissize);
-legend("location", "northwest");
-setup_axies_prob(borderlinesize, ticksize, 0, 9, xticklabel_prob);
+	         "fontsize", axissize+3);
+legend("location", "southeast");
+setup_axies_prob(borderlinesize, ticksize+3, 0, 12, xticklabel_prob);
 print("-color", "-deps", "../../../../documento/imgs/results/problematica-packet_control.eps");
 

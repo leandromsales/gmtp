@@ -1,34 +1,25 @@
 \chapter{Considerações Finais}
 \label{cap:conclusao}
 
-A convergência de serviços tecnológicos disponibilizados através da Internet tem impulsionado o uso dos sistemas para distribuição de mídias ao vivo por parte dos usuários, tornando-se uma importante ferramenta para acesso rápido à informação e entretenimento. O aumento significativo da demanda por este tipo de serviço aumenta também a exigência dos serviços de rede, os quais precisam ser disponibilizados de forma apropriada a fim de otimizar a entrega dos pacotes de dados, que tem requisitos peculiares como o baixo tempo de entrega se comparado às aplicações elásticas.
+% A convergência de serviços tecnológicos disponibilizados através da Internet tem impulsionado o uso dos sistemas para distribuição de mídias ao vivo por parte dos usuários, tornando-se uma importante ferramenta para acesso rápido à informação e entretenimento. O aumento significativo da demanda por este tipo de serviço aumenta também a exigência dos serviços de rede, os quais precisam ser disponibilizados de forma apropriada a fim de otimizar a entrega dos pacotes de dados.
 
 % Esses sistemas fazem parte tem atraído a atenção dos usuários porque se permite o livre acesso a conteúdos antes possíveis apenas através dos sistemas tradicionais de TV, os quais exigem altos custos de instalação e manutenção, inclusive para o usuário final.
 
-Neste contexto, apresentou-se um novo protocolo de distribuição de mídias ao vivo chamado \textit{Global Media Transmission Protocol} (GMTP). O GMTP atua nas camadas de transporte e de rede (\textit{cross-layer}) da pilha TCP/IP, seguindo uma arquitetura de rede híbrida P2P/CDN, através da qual transmitem-se pacotes de dados de um ou mais sistemas. Para isto, constitui-se uma rede de favores formada por roteadores de rede, que cooperam entre si a fim de entregarem o conteúdo multimídia de interesse aos seus nós clientes, ao mesmo tempo em que ocorrem interações entre os servidores de uma ou mais redes CDNs. Para projetar o GMTP, consideraram-se os principais requisitos de aplicação e as técnicas de distribuição de mídias ao vivo utilizadas no estado da prática e da arte. Considerou-se também o uso de técnicas para otimizar o consumo de recursos computacionais, ao passo que instrumentou-se os servidores para serem capazes de instruir os roteadores a formarem parcerias com base na capacidade de transmissão dos canais em uso durante o processo de distribuição da mídia.
+Neste trabalho, apresentou-se um novo protocolo de distribuição de mídias ao vivo chamado \textit{Global Media Transmission Protocol} (GMTP). O GMTP atua nas camadas de transporte e de rede (\textit{cross-layer}) da pilha TCP/IP, seguindo uma arquitetura de rede híbrida P2P/CDN, através da qual transmitem-se pacotes de dados de um ou mais sistemas. Para isto, constitui-se uma rede de favores formada por roteadores de rede, que cooperam entre si a fim de entregarem o conteúdo multimídia de interesse aos seus nós clientes, ao mesmo tempo em que ocorrem interações dos roteadores com os servidores de uma ou mais redes CDNs. As parcerias entre os roteadores são determinadas pelos nós servidores, com base na capacidade dos canais já em uso para disseminar o conteúdo, obtidas e atualizadas periodicamente por meio de um algoritmo de controle de congestionamento assistido pela rede. Nesse contexto, apresentou-se o GMTP em duas perspectivas: projeto e desempenho.
+
+Na perspectiva do projeto, para propor o GMTP, avaliaram-se os principais requisitos de aplicação e as técnicas de distribuição de mídias ao vivo utilizadas no estado da prática e da arte, ajustando-as de forma a permitir a interoperabilidade dos sistemas de distribuição de mídias ao vivo. Aliado aos ajustes realizados, definiram-se estratégias mais otimizadas, como o registro de participação, o compartilhamento de conteúdo por meio da intersecção de rotas, generalização da descrição da mídia, definição das parcerias entre os roteadores com base na capacidade dos canais de transmissão, eleição de nós para auxiliar no controle de congestionamento e aspectos sobre segurança, garantindo-se a validade dos dados transmitidos na rede. Com essas estratégias, sustenta-se a proposta de que o uso do GMTP mitigará a construção de sistemas interoperáveis, delegando-se à aplicação a responsabilidade de reproduzir o conteúdo aos usuários finais. Além disso, a forma de expor os serviços do GMTP à aplicação possibilita a fácil migração das aplicações existentes.
+
+Na perspectiva do desempenho, estudou-se o GMTP em confrontos com as propostas Denacast/CoolStreaming e CCN-TV, avaliando-se as principais métricas de qualidade de serviço: atraso de inicialização, índice de continuidade, qualidade da mídia recebida pelos nós clientes e sobrecarga de controle. Com base nos resultados obtidos por meio da simulação de um cenário real, demonstrou-se que o GMTP obteve um desempenho de \ut{61,44}{\%} melhor que o Denacast/CoolStreaming e de \ut{35,95}{\%} melhor que o CCN-TV. 
 
 \section{Conclusões}
-
-% Conclusions are not a rambling summary of the thesis: they are short, concise statements of the inferences that you have made because of your work. It helps to organize these as short numbered paragraphs, ordered from most to least important. All conclusions should be directly related to the research question stated in Section 4. Examples:
-% 
-% 1. The problem stated in Section 4 has been solved: as shown in Sections ? to ??, an algorithm capable of handling large-scale Zylon problems in reasonable time has been developed.
-% 
-% 2. The principal mechanism needed in the improved Zylon algorithm is the Grooty mechanism.
 
 Com base nas limitações das propostas para distribuição de mídias ao vivo e seus problemas apresentados na Seção~\ref{sec:problematica} e em todo o Capítulo~\ref{cap:trabalhosrelacionados}, as principais conclusões obtidas neste trabalho são enumeradas a seguir.
 
 \begin{enumerate}
 
-  \item A estratégia de descobrir e expor as rotas utilizadas na distribuição de um fluxo de dados...
+  \item O problema da interoperabilidade entre os sistemas foi resolvido pelo GMTP através da abstração e da otimização das principais técnicas para distribuição de mídias ao vivo, propondo-se novos métodos de conectividade multi-ponto e compartilhamento de conteúdo, tudo disponibilizado na camada de transporte e rede, sem sofrer a influência da camada de aplicação.
 
-  \item O problema da interoperabilidade entre os sistemas foi resolvido pelo GMTP através da abstração e da otimização das principais técnicas para distribuição de mídias ao vivo, propondo-se um novo método de conectividade multi-ponto que também permite obter conhecimento sobre as rotas de rede sendo utilizadas para transmitir os fluxos de dados dos nós servidores aos nós clientes.
-
-  \item Apesar do custo computacional de fazer com que todos os roteadores alterem a requisição para adicionar se identificador, conclui-se que os benefícios dessa ação fundamentais para permitir a entrega mais eficiente dos pacote de dados da mídia.
-  \label{item:interoperabilidade}
-
-% Por exemplo, o método tradicional de conectividade multi-ponto utilizado em muitos sistemas foi completamente remodelado se comparado aos utilizados em outros sistemas. No GMTP, permite-se o acesso mais eficiente a um determinado conteúdo e, nesse ínterim, conhece-se as rotas através das quais o servidor transmite os fluxos de dados multimídia. Para isto, propõe-se o mecanismo de registro de participação, enfraquecendo-se a relação explícita de conectividade um-para-um, fortemente difundida em redes TCP/IP, ao permitir que os nós roteadores interceptem as requisições de um determinado conteúdo e os nós requisitantes aceitam receber respostas dos roteadores como se fossem o próprio servidor informado da requisição original. Como consequência, conclui-se também que o custo computacional para conhecer um determinado caminho é baixo se comparado aos benefícios que tal conhecimento pode trazer. Nesse contexto, o custo computacional é fazer com que todos os roteadores alterem a requisição para adicionar seu identificador, porém isto é feito apenas quando um cliente requisita uma mídia. Por outro lado, o 
-
-  \item Com base no item~\ref{item:interoperabilidade}, conclui-se que permitir que os servidores conheçam os caminhos (rotas) através dos quais os fluxos de dados são transmitidos até alcançarem os clientes, consegue-se:
+  \item Apesar do custo computacional de fazer com que todos os roteadores alterem a requisição para adicionar se identificador a fim de conhecer as rotas de rede utilizadas para disseminar um determinado conteúdo, consegue-se:
 
   \begin{enumerate}
 
@@ -36,27 +27,29 @@ Com base nas limitações das propostas para distribuição de mídias ao vivo e seus
 
     \item entregar os pacotes de dados mais rapidamente aos sistemas finais por meio da formação de parcerias por intersecção;
 
-    \item aferir informações sobre a capacidade de transmissão do canal e definir parcerias de melhor qualidade.
+    \item melhorar a toma de decisão para propor parcerias entre os roteadores, com base em informações mais precisas sobre a capacidade de transmissão do canal.
 
   \end{enumerate}
- 
-  \item Com base nos resultados apresentados no Capítulo~\ref{cap:analisedesemp}, evidenciou-se que o GMTP apresenta um desempenho satisfatório no que diz respeito à qualidade de serviços oferecida aos sistemas de distribuição de mídias ao vivo, ao tempo em que faz uso eficiente dos recursos de rede.
 
   \item Pela constatação que soluções de aplicação são incomparáveis com soluções baseadas no núcleo da rede para distribuição de mídias ao vivo, observou-se um confronto mais acentuado entre o GMTP e o CCN-TV. Neste contexto, conclui-se que o GMTP obteve um desempenho superior a CCN pelos seguintes motivos:
 
   \begin{enumerate}
 
-    \item O modelo de serviço \textit{push/pull} empregado no GMTP é mais apropriado para distribuir conteúdos ao vivo, ou seja, para sistemas que tenham como um dos principais requisitos a entrega do conteúdo em um curto espaço de tempo. A principal consequência positiva desse modelo de serviço é que os sistemas finais interessados em obter um determinado conteúdo não precisam transmitir periodicamente requisições para continuar recebendo um determinado conteúdo, como é no caso da rede CCN.
+    \item O modelo de serviço \textit{push/pull} empregado no GMTP é mais apropriado para distribuir conteúdos ao vivo, ou seja, para sistemas que tenham como um dos principais requisitos a entrega do conteúdo em um curto espaço de tempo, desde que não necessite de entrega confiável. A principal consequência positiva desse modelo de serviço é que os sistemas finais interessados em obter um determinado conteúdo não precisam transmitir periodicamente requisições para continuar recebendo um determinado conteúdo, como ocorre na rede CCN.
 
-    \item Apesar dos pesquisadores que propuseram o CCN alegar que não é preciso um sistema final conhecer a localização de onde se encontra um determinado conteúdo de interesse (endereço IP do servidor, por exemplo), neste trabalho conclui-se que há uma importância significativa a manutenção de tal conhecimento, visto que comprovadamente reduz-se algumas métricas importantes, como o atraso de inicialização.
+    \item Apesar dos pesquisadores que propuseram o CCN alegar que não é preciso um sistema final conhecer a localização de um determinado conteúdo de interesse (endereço IP do servidor, por exemplo), neste trabalho, conclui-se o contrário, ou seja, é importância e significativa a manutenção de tal conhecimento, visto que comprovou-se que é possível otimizar métricas importantes, como o atraso de inicialização.
+
+    \item Devido ao modelo de serviço empregado na rede CCN, os nós clientes não conseguem saber se ainda é possível recuperar um determinado conteúdo ou não. Isto impacta diretamente na decisão se ainda faz sentido retransmitir um pacote de interesse correspondente a um pacote de dados a ser reproduzido ou se não faz mais sentido aguardar sua chegada. Além disso, os pacotes de interesse são dependentes da capacidade de \textit{upload} do cliente, o que pode restringir a taxa de \textit{download}.
 
   \end{enumerate}
 
-  \item Apesar de constatações de trabalhos anteriores de que o uso de algoritmos de controle de congestionamento assistidos pela rede melhoram sobremaneira o desempenho das transmissões de dados através da rede, neste trabalho reforça-se não somente este fato, mas conclui-se e demonstrou-se que a aplicabilidade desse tipo de algoritmo trás benefícios aos distribuição de mídias ao vivo. Isto porque permitir um sistema transmissor conhecer a capacidade de transmissão dos canais sendo utilizados para disseminar um determinar conteúdo multimídia pode melhorar sobremaneira algumas métricas importantes, como o índice de continuidade e a qualidade do conteúdo entregue aos sistemas finais.
+  \item Apesar de constatações em trabalhos anteriores de que o uso de algoritmos de controle de congestionamento assistidos pela rede melhoram o desempenho das transmissões de dados através da rede, neste trabalho, reforça-se não somente este fato, mas também demonstrou-se e conclui-se que a aplicabilidade desse tipo de algoritmo é possível em distribuição de mídias ao vivo e melhora o desempenho dos sistemas. Isto porque permitir um sistema transmissor conhecer a capacidade de transmissão dos canais sendo utilizados para disseminar um determinar conteúdo multimídia, pode melhorar métricas importantes, como o índice de continuidade e a qualidade do conteúdo entregue aos sistemas finais. Nesse contexto, utilizar o RCP e adaptá-lo para o cenário de distribuição de mídias ao vivo foi uma escolha adequada. Nesse contexto, emular um PS torna o controle de congestionamento invariante à distribuição do tamanho do fluxo, ou seja, mesmo com fluxos de curta ou de longa duração, o compartilhamento do canal é melhor porque estabiliza-se a taxa de transmissão mais rápido, de acordo com a demanda real em um determinado instante, funcionado de forma mais apropriada se comparado às abordagens de monitoramento de perdas e atrasos. Além disso, o RCP é simples e praticável, pois a taxa de transmissão ofertada é definida sem o conhecimento do número exato de fluxos, baseando-se somente no tamanho da fila, no tráfego agregado de entrada e no RTT médio do tráfego passando através do roteador.
 
-  \item Com base em revisões da literatura, conclui-se que as propostas existentes relacionadas às redes centradas na informação não são apropriadas para realizar distribuição de mídias ao vivo. De fato, observou-se um grau de imaturidade tecnológica devido à muitas incertezas, mas efetivamente pode-se afirmar que mudar de um espaço de endereçamento de um bilhão de endereços IPs para pelo menos um trilhão de nomes de conteúdos pode causar problemas críticos de desempenho para processar tamanha quantidade de dados. No caso do GMTP, apesar de fazer uso de recursos computacionais dos roteadores, buscou-se dividir a carga da atividade de distribuir um determinado conteúdo com os servidores, portanto pode-se concluir que o GMTP faz uso moderado do poder computacional dos roteadores em comparação a rede CCN.
+  \item Com base em revisões da literatura, conclui-se que as propostas existentes relacionadas às CCNs não são apropriadas para realizar distribuição de mídias ao vivo. Pode-se concluir que as propostas existentes tem alto grau de imaturidade, devido à muitas incertezas. Especificamente, mudar de um espaço de endereçamento de um bilhão de endereços IPs para pelo menos um trilhão de nomes de conteúdos pode causar problemas críticos de desempenho devido a necessidade de ter que processar tamanha quantidade de dados. No caso do GMTP, apesar de fazer uso de recursos computacionais dos roteadores, buscou-se dividir a carga da atividade de distribuir um determinado conteúdo com os servidores, portanto pode-se concluir que o GMTP faz uso moderado do poder computacional dos roteadores em comparação à rede CCN.
 
 \end{enumerate}
+
+% Enfim, com base em tudo que foi exposto,  o GMTP apresenta um desempenho satisfatório no que diz respeito à qualidade de serviços oferecida aos sistemas de distribuição de mídias ao vivo, ao tempo em que faz uso eficiente dos recursos de rede.
 
 
 % * p17: na sua tese, o que seria um resultado que a negaria? Ela não pode ser óbvia.
@@ -67,40 +60,13 @@ Com base nas limitações das propostas para distribuição de mídias ao vivo e seus
 
 % * Colocar no último slide da apresentação: os direcionamentos sugeridos na qualificação foram fundamentais para...
 
-% * Falar que o GMTP-Intra pode ser alterado sem impactar no GMTP-Inter e vice-versa. É uma ``falsa'' mistura entre as duas camadas (cross-layer).
-
-% * Por que PS? é invariante a distribuição do tamanho do fluxo, ou seja, não importa ao diferentes são os tamanhos dos fluxos na rede. Mesmo com longos fluxos, o compartilhamento do canal é melhor porque estabiliza mais rápido se comparado com abordagens de monitoramento de perdas.
-%    RCP: atualiza a taxa (simples e prático): aproxima a taxa de transmissão oferecida aos fluxos da taxa do PS, sem o conhecimento do número exato de fluxos; baseia-se no tamanho da fila, no tráfego agregado de entrada e no RTT médio do tráfego passando através do link
-%    R(t) é atualizado de acordo com h0.
-%    Cada roteador tem que fazer três coisas
-%        - offer the same rate to every flow
-%        - preencher a fila de saída com os pacotes que chegam na fila de entrada
-%        - manter a fila de entrada e saída pequena
-%    Long-flow: 100\% link utilization
-%    Short-flow: reduce flow completion time,
-%    Flash-crownd no RCP: pode ter perde
-%    A questão é: em vez de definir aumentos ou uma diminuições incrementais na janela com base no RTT, no RCP a pergunta é: existe uma taxa de transmissão que os roteadores podem pedir aos fluxos transmitirem e emular o PS. Qual seria essa taxa? como encontrá-la de forma simples?
-%    Para ter um FCT pequeno, tem que ter alta utilização do link, então precisa-se garantir  que o buffer não estoure (rever 28:30min da defesa da Nandita)
-%    Nem sempre o XCP é ruim, quando só tem long-lived, mas em cenários dinâmicos (diferentes tamanhos de fluxos) it performs badly and short lived flows last almost the same time of some long lived flows. Quando aumenta o tamanho médio do fluxo para se aproximar ao Bandwidth-delay product, you approach the regime where you have a few high Bandwidth flows multiplex in a large link (51:00min)
-%    Diferentes topologias: 
-%      - Sem manter estado por fluxo
-%      - TCP: perda de pecotes ou atraso
-%      - XCP: alcança desempenho similar ou melhor do que HS-TCP para long-lived flows
-%             não é 100\% fair em determinados momentos
-%             em fluxos mistos (tamanho) e na dinâmica da rede não é bom
-%             multiplicações e divisões é sim ruim (Nandita -> Cisco)
-%             
-            
-%      - CC: na literatura, em geral, só focam em usar o máximo do link
-
-
 \section{Limitações e Trabalhos Futuros}
 
 Nessa seção, apresentam-se as limitações e os trabalhos futuros relacionados ao GMTP.
 
 \begin{enumerate}
-
-  \item Em estudos anteriores~\cite{1019258}, estima-se que a distância máxima entre dois sistemas finais quaisquer conectados à Internet é de 16 saltos. Por outro lado, devido à limitação do tamanho dos datagramas IP em \ut{1500}{Bytes}, o funcionamento correto do GMTP é limitado em topologias de rede em que a distância entre dois sistemas finais não pode ultrapassar 72 saltos para IPv4 e 45 saltos para IPv6. Nesse contexto, pode-se investigar alternativas para melhorar esses limites do GMTP, avaliando-se o ganho ou não de desempenho em comparação com a versão atual.
+%   ~\cite{1019258}
+  \item Devido à limitação do tamanho dos datagramas IP em \ut{1500}{Bytes}, o funcionamento correto do GMTP é limitado em topologias de rede em que a distância entre dois sistemas finais não pode ultrapassar 72 saltos para IPv4 e 45 saltos para IPv6. Por outro lado, estudos anteriores estimam que a distância máxima entre dois sistemas finais quaisquer conectados à Internet é de 19 saltos, então apesar da limitação do GMTP, existe uma folga significativa com relação ao número de saltos possíveis. Mesmo assim, sugere-se a investigação de alternativas para melhorar esses limites do GMTP, avaliando-se o ganho ou não de desempenho em comparação com a versão atual.
 
   \item A estratégia de descobrir e expor aos servidores as rotas utilizadas na distribuição de um fluxo de dados oferece ganhos comprovados e discutidos no Capítulo~\ref{cap:analisedesemp}. Porém, deve-se investigar a possibilidade de reduzir a frequência em que um roteador deve adicionar seu identificador no pacote de requisição da mídia. Esta ação pode aumentar o atraso de processamento nodal e impactar negativamente na qualidade de serviço. Como linha de investigação, sugere-se estudar a possibilidade de reduzir a frequência de escrita nos pacotes de requisição com base em um \textit{cache} dos últimos destinos registrados. Por exemplo, quando um pacote de requisição for transmitido pela primeira vez a partir de uma origem a um determinado destino, o roteador normalmente adiciona seu identificador no pacote, armazena a origem e o destino do pacote e determina um período em que não adicionará mais seu identificador para este caso.
 
@@ -108,7 +74,13 @@ Nessa seção, apresentam-se as limitações e os trabalhos futuros relacionados ao 
 
   \item A função de sub-fluxo empregado no GMTP-UCC (Seção~\ref{subsec:mudccp-ucc}) permite que roteadores com maior capacidade de recepção continuem recebendo um fluxo multimídia em uma taxa possível, mesmo que outros roteadores no caminho até um determinado cliente possua uma capacidade inferior de recepção em um determinado instante. Para permitir esse conceito de sub-fluxo, necessita-se medir o RTT entre dois roteadores que estão repassando um determinado fluxo de dados multimídia. Dessa forma, deve-se aumentar a capacidade de processamentos dos roteadores para que possam controlar múltiplos relógios. Como trabalho futuro nesse contexto, pode-se investigar se o desempenho do GMTP pode reduzir à medida em que múltiplos fluxos de dados são transmitidos na rede.
 
+%   \item Conduzir estudos relacionados a contabilização de tráfego entre dois ou mais sistemas de distribuição de mídias ao vivo que utilizem
+
   \item Conduzir estudos que explorem outras topologias de rede, incluindo redes móveis, bem como o uso de tráfego de segundo plano pode revelar outros benefícios do uso do GMTP, bem como outras limitações. Portanto, testar o GMTP em outros cenários pode permitir a identificação de outros aspectos que podem servir como tema de pesquisa.
+
+  \item Implementar o protocolo GMTP e uma aplicação de referencia em um sistema operacional e em um roteador. Nesse caso, pode-se também avaliar o grau de complexidade de adaptar um sistema existente para fazê-lo utilizar o GMTP.
+
+  \item Submeter à IETF um documento de RFC sobre o GMTP.
 
 \end{enumerate}
 
@@ -131,12 +103,12 @@ Nessa seção, apresentam-se as limitações e os trabalhos futuros relacionados ao 
 %   Nesse contexto, contribui-se com uma proposta de como pode-se permitir a interoperabilidade dos atuais sistemas de distribuição multimídia, promovendo-se formas de adaptação dos sistemas existentes.
 % , bem como o reúso de algumas funções comuns a todos os sistemas.
 
-  \item discussões sobre a escolha do \textit{Rate Control Protocol} (RCP)~\cite{Dukkipati:2008:RCP:1368746} no GMTP em detrimento à outras opções, como o XCP~\cite{Katabi2003}.
+  \item discussões sobre a escolha do \textit{Rate Control Protocol} (RCP)~\cite{Dukkipati:2008:RCP:1368746} no GMTP em detrimento às outras opções, como o XCP~\cite{Katabi2003}.
 % O RCP é um proeminente algoritmo de controle de congestionamento assistido pela rede e foi usado no GMTP para auxiliar no processo de distribuição de mídias ao vivo. Nesse contexto, contribui-se com discussões sobre as adaptações realizadas no RCP para permitir sua aplicação ao GMTP e como se pode utilizá-lo no processo de formação de parcerias em uma rede de favores, função jamais vista em qualquer outra solução de distribuição de mídias ao vivo.
 
 % Ou seja, além de utilizar o RCP para melhorar o consumo dos recursos compartilhados de rede (controle de congestionamento), propõe-se um algoritmo de seleção de nós parceiros com base na atual capacidade de transmissão dos enlaces entre os nós servidores de um fluxo de dados ao vivo e os nós clientes interessados em recebê-lo. Ademais, discute-se aspectos fundamentais sobre a escolha do RCP em detrimento a outras propostas bem conhecidas, como o XCP~\cite{Katabi2003} e o VCP~\cite{4460574}.
 
-  \item os resultados e discussões acerca do GMTP frente a duas uma proeminente proposta: o Denacast/CoolStreaming~\cite{5764567} e o CCN-TV~\cite{6550523}.
+  \item os resultados e discussões acerca do GMTP frente a duas proeminentes propostas: o Denacast/CoolStreaming~\cite{5764567} e o CCN-TV~\cite{6550523}.
 
 % O Denacast é um sistema de distribuição de mídias ao vivo baseado no CoolStreaming com suporte a uma rede de distribuição de conteúdos (P2P/CDN). Com os resultados comparativos obtidos, contribui-se para tomada de decisões sobre futuras pesquisas no contexto de distribuição de mídias ao vivo. O CCN-TV é um sistema de TV para Internet com suporte às redes centradas na informação. Com isto, contribui-se para tomada de decisões sobre futuras pesquisas no contexto de distribuição de mídias ao vivo.
 
@@ -147,4 +119,7 @@ Nessa seção, apresentam-se as limitações e os trabalhos futuros relacionados ao 
 
 \end{enumerate}
 
-Ademais, destaca-se a importância e originalidade do presente trabalho por ser o primeiro a trazer à tona um problema e uma proposta de solução do uso de um protocolo de transporte e rede, exclusivamente projetado para a distribuição de mídias ao vivo na Internet. Até então, distribuir conteúdos multimídia na Internet se resumia em sistemas baseados em protocolos tradicionais (TCP, UDP, DCCP, SCTP) ou outros proprietários, em geral, disponíveis na camada de aplicação e independentes.
+Ademais, destaca-se a importância e originalidade do presente trabalho por ser o primeiro a trazer à tona um problema e uma proposta de solução do uso de um protocolo de transporte e rede, exclusivamente projetado para a distribuição de mídias ao vivo na Internet. Até então, distribuir conteúdos multimídia na Internet se resumia em sistemas baseados em protocolos tradicionais (TCP, UDP, DCCP, SCTP) ou outros proprietários, em geral, disponíveis na camada de aplicação.
+
+
+% Por exemplo, o método tradicional de conectividade multi-ponto utilizado em muitos sistemas foi completamente remodelado se comparado aos utilizados em outros sistemas. No GMTP, permite-se o acesso mais eficiente a um determinado conteúdo e, nesse ínterim, conhece-se as rotas através das quais o servidor transmite os fluxos de dados multimídia. Para isto, propõe-se o mecanismo de registro de participação, enfraquecendo-se a relação explícita de conectividade um-para-um, fortemente difundida em redes TCP/IP, ao permitir que os nós roteadores interceptem as requisições de um determinado conteúdo e os nós requisitantes aceitam receber respostas dos roteadores como se fossem o próprio servidor informado da requisição original. Como consequência, conclui-se também que o custo computacional para conhecer um determinado caminho é baixo se comparado aos benefícios que tal conhecimento pode trazer. Nesse contexto, o custo computacional é fazer com que todos os roteadores alterem a requisição para adicionar seu identificador, porém isto é feito apenas quando um cliente requisita uma mídia. Por outro lado, o 

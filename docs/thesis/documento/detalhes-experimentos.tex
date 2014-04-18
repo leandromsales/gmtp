@@ -33,6 +33,7 @@ Na Tabela~\ref{tab:largura-atraso}, apresenta-se a largura de banda e o atraso d
 \endfirsthead
 
 \multicolumn{5}{c}%
+% \multicolumn{7}{c}%
 {{\bfseries \tablename\ \thetable{} -- continuação da página anterior}} \\
 \hline\hline
 %\rowcolor[gray]{0.8}
@@ -123,15 +124,16 @@ No experimento realizado para comparar o GMTP com o Denacast/CoolStreaming e o C
 
 Na Tabela~\ref{tab:resultado-gmtp-denacast}, apresentam-se os resultados do confronto GMTP vs. Denacast/CoolStreaming e na Tabela~\ref{tab:resultado-gmtp-ccntv} os resultados do confronto GMTP vs. CCN-TV.
 
-% RESULTADO GMTP VS. DENACAST
-\afterpage{%
-  \clearpage%
-%   \thispagestyle{empty}% empty page style (?)
-\begin{landscape}
+% % RESULTADO GMTP VS. DENACAST
+% \afterpage{%
+%   \clearpage%
+% %   \thispagestyle{empty}% empty page style (?)
+% \begin{landscape}
 \renewcommand\multirowsetup{\centering}
 \begin{center}
 \footnotesize
-\begin{longtable}[tp]{c|c|c|c|c|c|c}
+\begin{longtable}[tp]{c|c|c|c|c}
+% \begin{longtable}[tp]{c|c|c|c|c|c|c}
 \caption[Sumário dos valores obtidos para as variáveis dependentes em cada tratamento do confronto GMTP vs. Denacast/CoolStreaming.]{Sumário dos valores obtidos para as variáveis dependentes em cada tratamento do confronto GMTP vs. Denacast/CoolStreaming.} \label{tab:resultado-gmtp-denacast} \\
 
 \hline\hline
@@ -144,17 +146,19 @@ Na Tabela~\ref{tab:resultado-gmtp-denacast}, apresentam-se os resultados do conf
 &
 \multirow{2}{1.9cm}{\textcolor{black}{\bfseries Distorção do vídeo (\%)}}
 &
-\multirow{2}{2.5cm}{\textcolor{black}{\bfseries Conexões ao servidor}}
-&
-\multirow{2}{2.5cm}{\textcolor{black}{\bfseries Conexões entre clientes}}
-&
+% \multirow{2}{2.5cm}{\textcolor{black}{\bfseries Conexões ao servidor}}
+% &
+% \multirow{2}{2.5cm}{\textcolor{black}{\bfseries Conexões entre clientes}}
+% &
 \multirow{2}{2.5cm}{\textcolor{black}{\bfseries Pacotes de controle}} \\
 %\rowcolor[gray]{0.8}
-& & & & & & \\
+& & & & \\
+% & & & & & & \\
 \hline \hline
 \endfirsthead
 
-\multicolumn{7}{c}%
+\multicolumn{5}{c}%
+% \multicolumn{7}{c}%
 {{\bfseries \tablename\ \thetable{} -- continuação da página anterior}} \\
 \hline\hline
 %\rowcolor[gray]{0.8}
@@ -166,17 +170,19 @@ Na Tabela~\ref{tab:resultado-gmtp-denacast}, apresentam-se os resultados do conf
 &
 \multirow{2}{1.9cm}{\textcolor{black}{\bfseries Distorção do vídeo (\%)}}
 &
-\multirow{2}{2.5cm}{\textcolor{black}{\bfseries Conexões ao servidor}}
-&
-\multirow{2}{2.5cm}{\textcolor{black}{\bfseries Conexões entre clientes}}
-&
+% \multirow{2}{2.5cm}{\textcolor{black}{\bfseries Conexões ao servidor}}
+% &
+% \multirow{2}{2.5cm}{\textcolor{black}{\bfseries Conexões entre clientes}}
+% &
 \multirow{2}{2.5cm}{\textcolor{black}{\bfseries Pacotes de controle}} \\
 %\rowcolor[gray]{0.8}
-& & & & & & \\
+& & & & \\
+% & & & & & & \\
 \hline \hline
 \endhead
 
-\cline{2-7} \multicolumn{7}{c}{Continuação na próxima página} \\ \hline \hline
+\cline{2-5} \multicolumn{5}{c}{Continuação na próxima página} \\ \hline \hline
+% \cline{2-7} \multicolumn{7}{c}{Continuação na próxima página} \\ \hline \hline
 \endfoot
 
 \hline \hline
@@ -186,19 +192,20 @@ Na Tabela~\ref{tab:resultado-gmtp-denacast}, apresentam-se os resultados do conf
 
 \end{longtable}
 \end{center}
-\end{landscape}
-  \clearpage% Flush page
-}
+% \end{landscape}
+%   \clearpage% Flush page
+% }
 
 % RESULTADO GMTP VS. CCNTV
-\afterpage{%
-  \clearpage%
-%   \thispagestyle{empty}% empty page style (?)
-\begin{landscape}
+% \afterpage{%
+%   \clearpage%
+% %   \thispagestyle{empty}% empty page style (?)
+% \begin{landscape}
 \renewcommand\multirowsetup{\centering}
 \begin{center}
 \footnotesize
-\begin{longtable}[tp]{c|c|c|c|c|c|c}
+\begin{longtable}[tp]{c|c|c|c|c}
+% \begin{longtable}[tp]{c|c|c|c|c|c|c}
 \caption[Sumário dos valores obtidos para as variáveis dependentes em cada tratamento do confronto GMTP vs. CCN-TV.]{Sumário dos valores obtidos para as variáveis dependentes em cada tratamento do confronto GMTP vs. CCN-TV.} \label{tab:resultado-gmtp-ccntv} \\
 
 \hline\hline
@@ -211,17 +218,19 @@ Na Tabela~\ref{tab:resultado-gmtp-denacast}, apresentam-se os resultados do conf
 &
 \multirow{2}{1.9cm}{\textcolor{black}{\bfseries Distorção do vídeo (\%)}}
 &
-\multirow{2}{2.5cm}{\textcolor{black}{\bfseries Conexões ao servidor}}
-&
-\multirow{2}{2.5cm}{\textcolor{black}{\bfseries Conexões entre clientes}}
-&
+% \multirow{2}{2.5cm}{\textcolor{black}{\bfseries Conexões ao servidor}}
+% &
+% \multirow{2}{2.5cm}{\textcolor{black}{\bfseries Conexões entre clientes}}
+% &
 \multirow{2}{2.5cm}{\textcolor{black}{\bfseries Pacotes de controle}} \\
 %\rowcolor[gray]{0.8}
-& & & & & & \\
+& & & & \\
+% & & & & & & \\
 \hline \hline
 \endfirsthead
 
-\multicolumn{7}{c}%
+\multicolumn{5}{c}%
+% \multicolumn{7}{c}%
 {{\bfseries \tablename\ \thetable{} -- continuação da página anterior}} \\
 \hline\hline
 %\rowcolor[gray]{0.8}
@@ -233,17 +242,19 @@ Na Tabela~\ref{tab:resultado-gmtp-denacast}, apresentam-se os resultados do conf
 &
 \multirow{2}{1.9cm}{\textcolor{black}{\bfseries Distorção do vídeo (\%)}}
 &
-\multirow{2}{2.5cm}{\textcolor{black}{\bfseries Conexões ao servidor}}
-&
-\multirow{2}{2.5cm}{\textcolor{black}{\bfseries Conexões entre clientes}}
-&
+% \multirow{2}{2.5cm}{\textcolor{black}{\bfseries Conexões ao servidor}}
+% &
+% \multirow{2}{2.5cm}{\textcolor{black}{\bfseries Conexões entre clientes}}
+% &
 \multirow{2}{2.5cm}{\textcolor{black}{\bfseries Pacotes de controle}} \\
 %\rowcolor[gray]{0.8}
-& & & & & & \\
+& & & & \\
+% & & & & & & \\
 \hline \hline
 \endhead
 
-\cline{2-7} \multicolumn{7}{c}{Continuação na próxima página} \\ \hline \hline
+\cline{2-5} \multicolumn{5}{c}{Continuação na próxima página} \\ \hline \hline
+% \cline{2-7} \multicolumn{5}{7}{Continuação na próxima página} \\ \hline \hline
 \endfoot
 
 \hline \hline
@@ -253,9 +264,9 @@ Na Tabela~\ref{tab:resultado-gmtp-denacast}, apresentam-se os resultados do conf
 
 \end{longtable}
 \end{center}
-\end{landscape}
-  \clearpage% Flush page
-}
+% \end{landscape}
+%   \clearpage% Flush page
+% }
 
 
 % \subsection{Considerações sobre Implementação}

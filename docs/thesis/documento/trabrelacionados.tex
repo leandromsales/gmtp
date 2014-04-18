@@ -23,7 +23,7 @@ Nesse contexto, inclui-se também os trabalhos que, apesar de não apresentarem
 uma proposta completa para distribuição de mídias ao vivo, apresentam-se como
 parte de um todo, com similaridades relevantes se comparado ao \mudccp. A compilação dos trabalhos a seguir foi realizada com base em informações obtidas e adaptadas de publicações encontradas em diversas fontes disponíveis na literatura (revistas, conferências, livros, teses e dissertações).
 
-Para uma leitura linear deste capítulo, na próxima seção, apresenta-se uma breve discussão sobre os principais marcos na área de distribuição de mídias ao vivo, posicionando o GMTP em um cenário macro do estado da arte. Em seguida, na Seção~\ref{sec:proto-app-ea}, apresentam-se detalhes dos principais sistemas e protocolos de distribuição de mídias ao vivo, enfatizando suas respectivas arquiteturas e modelos de serviço. Já na Seção~\ref{subsec:ndn}, apresenta-se uma nova vertente de pesquisa sobre distribuição de dados na Internet, conhecida por Redes Centradas na Informação, enfatizando suas principais características e os trabalhos relacionados à distribuição de mídias ao vivo. E, por fim, na Seção~\ref{sec:trabrel-sumario}, apresenta-se um breve resumo sobre este capítulo. Caso o leitor deseje realizar uma leitura com foco nos trabalhos mais relevantes e fortemente relacionados ao GMTP, recomenda-se a leitura da próxima seção, das Seções~\ref{subsec:coolstreaming} e~\ref{subsec:denacast}, onde discutem-se os projeto CoolStreaming e Denacast, bem como da Seção~\ref{sec:trab-redes-centradas-informacao}.
+Para uma leitura linear deste capítulo, na próxima seção, apresenta-se uma breve discussão sobre os principais marcos na área de distribuição de mídias ao vivo, posicionando o GMTP em um cenário macro do estado da arte. Em seguida, na Seção~\ref{sec:proto-app-ea}, apresentam-se detalhes dos principais sistemas e protocolos de distribuição de mídias ao vivo, enfatizando suas respectivas arquiteturas e modelos de serviço. Já na Seção~\ref{subsec:ndn}, apresenta-se uma nova vertente de pesquisa sobre distribuição de dados na Internet, conhecida por Redes Centradas na Informação, enfatizando suas principais características e os trabalhos relacionados à distribuição de mídias ao vivo. E, por fim, na Seção~\ref{sec:trabrel-sumario}, apresenta-se um breve resumo sobre este capítulo. Caso o leitor deseje realizar uma leitura com foco nos trabalhos mais relevantes e fortemente relacionados ao GMTP, recomenda-se a leitura da próxima seção, das Seções~\ref{subsec:coolstreaming} e~\ref{subsec:denacast}, onde discutem-se os projeto CoolStreaming e Denacast, bem como da Seção~\ref{subsec:ndn}.
 
 % Uma vez que a lista apresentada não é exustiva e considerando a potencial
 % evolução destes trabalhos, à ausência de uma característica citada sobre um
@@ -53,7 +53,7 @@ Em paralelo, entre 2002 e 2005, publicaram-se as primeiras soluções de um protoc
 
 Em 2011-2012, dentre as várias soluções para distribuição de mídias ao vivo (novas ou aprimoradas), várias se destacaram, como a Denacast, propondo-se um modelo híbrido P2P/CDN para distribuição de mídias ao vivo com base no CoolStreaming~\cite{5764567,4146695,Alhaisoni2009,4575245,Yin:2010:LEC:1823746.1823750,4498187}. Nos dias atuais, existem diversas pesquisas para distribuição de mídias ao vivo através do uso do protocolo HTTP, permitindo-se que os nós clientes obtenham as partes da mídia que mais se adequar com a sua capacidade de recepção (adaptação dinâmica de fluxos de dados no lado do cliente). Nesse último caso, destacam-se o uso de CDNs comerciais em escala global, bem como soluções híbridas P2P/CDN. Até o presente momento, o esforço têm sido completamente em soluções na camada de aplicação.
 
-Considerando a vertente das Redes Centradas na Informação o \textit{Information Centric Networks} (ICN), em 2006, Van Jacobson introduziu o assunto em uma palestra proferida para um grupo de pesquisadores de várias partes do mundo, no GooglePlex, Montain View, Califórnia, EUA~\cite{VanJ2006}. Esta palestra marcou o (re)início das pesquisas nesse área. Argumentou-se que o modelo de requisição origem/destino empregado na Internet não mais se sustenta, considerando o aumento significativo do tráfego de dados atual. A verdade é que alguns pesquisadores argumentam que essa vertente de pesquisa já existia desde os anos 1970, mas sem evolução até 2006~\cite{5936152}. A partir de 2006, surgiram as seguintes propostas: DONA (\textit{Data Oriented Network Architecture}), PSI (\textit{Publish-Subscribe Internet Routing}), NetInf (\textit{Network of Information}) e o CCN (\textit{Content-Centric Networks})~\cite{6384450}. Em 2013, propuseram-se o CCN-TV, o primeiro sistema para distribuição de mídias ao vivo em CCN. Na Seção~\ref{sec:trab-redes-centradas-informacao}, discute-se mais detalhes sobre as ICN, em especial a CCN, bem como sobre as propostas para distribuição de mídias ao vivo, como a CCN-TV.
+Considerando a vertente das Redes Centradas na Informação o \textit{Information Centric Networks} (ICN), em 2006, Van Jacobson introduziu o assunto em uma palestra proferida para um grupo de pesquisadores de várias partes do mundo, no GooglePlex, Montain View, Califórnia, EUA~\cite{VanJ2006}. Esta palestra marcou o (re)início das pesquisas nesse área. Argumentou-se que o modelo de requisição origem/destino empregado na Internet não mais se sustenta, considerando o aumento significativo do tráfego de dados atual. A verdade é que alguns pesquisadores argumentam que essa vertente de pesquisa já existia desde os anos 1970, mas sem evolução até 2006~\cite{5936152}. A partir de 2006, surgiram as seguintes propostas: DONA (\textit{Data Oriented Network Architecture}), PSI (\textit{Publish-Subscribe Internet Routing}), NetInf (\textit{Network of Information}) e o CCN (\textit{Content-Centric Networks})~\cite{6384450}. Em 2013, propuseram-se o CCN-TV, o primeiro sistema para distribuição de mídias ao vivo em CCN. Na Seção~\ref{subsec:ndn}, discute-se mais detalhes sobre CCN, bem como sobre as propostas para distribuição de mídias ao vivo, como a CCN-TV.
 
 Não obstante, neste trabalho, propõe-se o GMTP, apresentado em versão incipiente no final de 2011 e neste trabalho em sua versão aprimorada. No restante deste capítulo, confronta-se diversas propostas para distribuição de mídias ao vivo com o GMTP, ao passo que no Capítulo~\ref{cap:mudccp}, detalha-se seu funcionamento. Dentre todas as soluções discutidas, considera-se o CoolStreaming/Denacast e o CCN-TV as propostas fundamentalmente mais próximas ao GMTP. Por esse motivo, no Capítulo~\ref{cap:analisedesemp}, compara-se o desempenho do GMTP, do CoolStreaming/Denacast e do CCN-TV em mais detalhes.
 
@@ -85,7 +85,7 @@ e Microsoft, respectivamente.
 % em seguida, em parceria com as empresas Firefox e Opera.}
 % respectivamente.
 Em geral, propõe-se que as transmissões de fluxos de mídias ao vivo sejam
-realizadas por servidores web, incrementando o protocolo HTTP com funções para descrição de uma mídia, marcação de tempo, segurança e principalmente adaptação do fluxo de dados em uma sessão ao vivo de transmissão multimídia. Sendo assim, pode-se afirmar que os protocolos HLS, HDS, HSS e DASH têm propósitos similares aos tradicionais protocolos H.323, SIP, RTP e RTSP (Seção~\ref{sec:protocolos-media-gerenciamento}), porém com base no protocolo HTTP.
+realizadas por servidores web, incrementando o protocolo HTTP com funções para descrição de uma mídia, marcação de tempo, segurança e principalmente adaptação do fluxo de dados em uma sessão ao vivo de transmissão multimídia. Sendo assim, pode-se afirmar que os protocolos HLS, HDS, HSS e DASH têm propósitos similares aos tradicionais protocolos H.323, SIP, RTP e RTSP, porém com base no protocolo HTTP.
 
 
 \begin{figure}[ht]
@@ -197,19 +197,7 @@ orientado à conexão, com garantia de entrega e ordenação, podendo gerar
 atrasos na entrega dos segmentos devido às retransmissões quando há perda de
 segmentos devido ao congestionamento da rede.
 
-  \item As soluções baseadas em HTTP são baseadas no método \textit{pull}. Isto
-significa que os nós clientes que desejam reproduzir um conteúdo ao vivo devem
-solicitar periodicamente os próximos segmentos que devem ser reproduzidos. Em se
-tratando de transmissões de mídias ao vivo em larga escala, pode-se aumentar
-sobremaneira o número de requisições dos arquivos de lista, aumentando-se
-o tráfego na rede com dados considerados de controle. Apesar dos inúmeros
-esforços para melhorar os mecanismos de escalonamento baseados em \textit{pull},
-o uso do método \textit{pull} acarretará em maior sobrecarga de controle, e se diminuir a sobrecarga de controle, aumenta-se o tempo de atraso na recepção dos pacotes de
-dados~\cite{5061999,4395127,susu_xie_coolstreaming:_2007}. No caso do GMTP,
-utiliza o método híbrido \textit{push/pull}, onde o método \textit{push} é
-utilizado como padrão e o \textit{pull} em casos especiais, como quando um nó
-está prestes a reproduzir um determinado \textit{chunk} e este ainda não está
-disponível. Além disso, apesar do método \textit{pull} não necessitar conexão e o HTTP é interessante para isso, no GMTP, reduz-se o número de conexões ao permitir que os roteadores de rede interceptem os pedidos de múltiplas conexões transmitidas em direção ao nó servidor para um mesmo conteúdo.
+  \item As soluções baseadas em HTTP são baseadas no método \textit{pull}. Isto significa que os nós clientes que desejam reproduzir um conteúdo ao vivo devem solicitar periodicamente os próximos segmentos que devem ser reproduzidos. Em se tratando de transmissões de mídias ao vivo em larga escala, pode-se aumentar sobremaneira o número de requisições dos arquivos de lista, aumentando-se o tráfego na rede com dados considerados de controle. Apesar dos inúmeros esforços para melhorar os mecanismos de escalonamento baseados em \textit{pull}, o uso do método \textit{pull} acarretará em maior sobrecarga de controle, e se diminuir a sobrecarga de controle, aumenta-se o tempo de atraso na recepção dos pacotes de dados~\cite{5061999,meng_zhang_understanding_2007,susu_xie_coolstreaming:_2007}. No caso do GMTP, utiliza o método híbrido \textit{push/pull}, onde o método \textit{push} é utilizado como padrão e o \textit{pull} em casos especiais, como quando um nó está prestes a reproduzir um determinado \textit{chunk} e este ainda não está disponível. Além disso, apesar do método \textit{pull} não necessitar conexão e o HTTP é interessante para isso, no GMTP, reduz-se o número de conexões ao permitir que os roteadores de rede interceptem os pedidos de múltiplas conexões transmitidas em direção ao nó servidor para um mesmo conteúdo.
 
   \item O TCP implementa um mecanismo tradicional de controle de
 congestionamento, adaptando sua taxa de transmissão de acordo com a perda dos
@@ -918,7 +906,7 @@ AnySee~\cite{huang_anysee2:_2007},
 BEAM/Alliances~\cite{4378429},
 BitTorrentLIVE~\cite{4797218},
 DLNA-P2P~\cite{5456206},
-GridMedia~\cite{zhao_gridmedia+:_2009,li_towards_2008,4395127},
+GridMedia~\cite{zhao_gridmedia+:_2009,li_towards_2008,meng_zhang_understanding_2007},
 IV5S~\cite{5373760},
 Joost~\cite{Alhaisoni2009,4575245},
 LayeredCast~\cite{5734106},
@@ -996,7 +984,7 @@ Desde da criação da Internet, diversos módulos complementares foram disponibiliz
 \end{figure}
 
 Nas ICNs, objetiva-se facilitar a distribuição de conteúdo definindo rotas,
-funções de transporte e decisões de repasse com base no nome do conteúdo. Isto significa que um roteador pode fazer \textit{cache} de um conteúdo bastante acessado e retorná-lo quando houver interesse por mais de um nó da rede. Atualmente (2014), todas as propostas para uma nova arquitetura para a Internet estão em estágio inicial de desenvolvimento, de modo que seus modelos de serviço e interfaces de transporte estão longes de uma versão final. Por isso, os benefícios de utilizar tais arquiteturas para a distribuição de vídeo ao vivo são questionáveis, sem qualquer pesquisa que apresente resultados contundentes sobre seu uso em larga escala na Internet, principalmente no contexto de transmissão de mídias ao vivo~\cite{6691438}. Por exemplo, é impossível para um nó receptor adaptar o fluxo de dados de acordo com as características de uma rota de rede, pois as partes de um vídeo podem ser servidas por diferentes nós de \textit{cache}. De fato, suportar a distribuição de mídias ao vivo usando ICN, fazem-se necessárias diversas melhorias no projeto arquitetural, como, desenvolver protocolos de transporte considerando o paradigma atual de transmissão fim-a-fim, tal como se propõe no GMTP.
+funções de transporte e decisões de repasse com base no nome do conteúdo. Isto significa que um roteador pode fazer \textit{cache} de um conteúdo bastante acessado e retorná-lo quando houver interesse por mais de um nó da rede. Atualmente (2014), todas as propostas para uma nova arquitetura para a Internet estão em estágio inicial de desenvolvimento, de modo que seus modelos de serviço e interfaces de transporte estão longes de uma versão final. Por isso, os benefícios de utilizar tais arquiteturas para a distribuição de vídeo ao vivo são questionáveis, sem qualquer pesquisa que apresente resultados contundentes sobre seu uso em larga escala na Internet, principalmente no contexto de transmissão de mídias ao vivo~\cite{6691438}. Por exemplo, é impossível para um nó receptor adaptar o fluxo de dados de acordo com as características de uma rota de rede, pois as partes de um vídeo podem ser servidas por diferentes nós de \textit{cache}. De fato, suportar a distribuição de mídias ao vivo usando ICN, necessitam-se de diversas melhorias no projeto arquitetural, como, desenvolver protocolos de transporte considerando o paradigma atual de transmissão fim-a-fim, tal como se propõe no GMTP.
 
 Dentre as propostas de uma nova arquitetura para a Internet com base no princípio das ICNs, destaca-se a \textit{Content-Centric Networks) (CCN)}~\cite{6419703,Jacobson:2012:NNC:2063176.2063204,6386696} ou Redes de Dados Nomeados,
 %  e a \textit{Publish-Subscribe Internetworking
@@ -1020,8 +1008,7 @@ tabelas FIB e PIT para o roteador $R_3$. Figura extraída de~\cite{6691438}.}
 \end{figure}
 
 Os roteadores propagam os pacotes de interesse e retornam os pacotes de dados
-utilizando o caminho inverso através do qual o pacote de interesse foi roteado.
-Isto acontece com o auxílio de três estruturas da dados, definidas por:
+utilizando o caminho inverso através do qual o pacote de interesse foi roteado. Isto acontece com o auxílio de três estruturas da dados, definidas por:
 
 \begin{enumerate}
 
@@ -1042,6 +1029,8 @@ Sendo assim, o CS funciona como um \textit{cache}, enquanto que os pacotes de in
 % de relatar o suporte às funcionalidades mencionadas anteriormente, a execução
 % de tais funções ainda não estão bem definidas no contexto da
 % NDN~\cite{Chai:2012:CLM:2342042.2342046}.
+
+Portanto, oo princípio da CCN é que uma rede de comunicação deve viabilizar o acesso ao conteúdo de interesse de um usuário (\textit{content-centric approach}), independente da localização física do conteúdo, enfraquecendo a abordagem restrita de organização dos protocolos em camadas funcionais (\textit{host-centric approach}). Sendo assim, substitui-se o esquema de acesso a um conteúdo por meio de endereço IP/porta pelo seu nome, pois se considera que entregar o conteúdo é mais importante do que a forma de obtê-lo~\cite{6419703}.
 
 \subsubsection{Aplicações de transmissão de mídias ao vivo em CCN:}
 
