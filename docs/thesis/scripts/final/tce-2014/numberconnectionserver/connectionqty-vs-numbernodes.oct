@@ -1,4 +1,5 @@
-#!/usr/bin/octave -q
+#!/opt/local/bin/octave -q
+#
 # Graph setup
 axissize = 18;
 ticksize = 16;
@@ -7,16 +8,18 @@ legendfontsize = 16;
 
 graphdata=load("-force", "connectionqty");
 
-x = {"Seyyedi et al (Unconnected Mesh)",
+x = {"Denacast (Unconnected Mesh)",
+	 "Denacast (Connected Mesh)",
      "GMTP"};
 #xlabels = [10, 30, 70, 150, 310, 630, 1270, 2550, 5110, 10230]; #graphdata(:, 1);
 #xlabels = graphdata(:, 1);
 
-Y = graphdata(:, 3:4);
+Y = graphdata(:, 3:5);
 figure;
 hArray = bar(Y, 'grouped');
 set(hArray(1), 'FaceColor', 'red');
-set(hArray(2), 'FaceColor', 'blue');
+set(hArray(2), 'FaceColor', 'green');
+set(hArray(3), 'FaceColor', 'blue');
 #set(hArray(3), 'FaceColor', 'blue');
 #set(hArray(3), 'LineWidth', 10, 'EdgeColor', 'black', 'FaceColor', 'blue');
 

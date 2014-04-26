@@ -1,45 +1,45 @@
-#!/usr/bin/octave -q
+#!/opt/local/bin/octave -q
 
 # Graph setup
 axissize = 20;
 ticksize = 16;
-borderlinesize = 4;
+borderlinesize = 3;
 markersize = 8;
-plotlinewidth = 4;
-legendfontsize = "32";
+plotlinewidth = 6;
+legendfontsize = "30";
 
 graphdata=load("-force", "startupdelays");
 
 plot(graphdata(:,1), graphdata(:,2),
 	[";{\bf {\fontsize{", legendfontsize, "} P2P Mesh-based (baseline)}};"],
 	"marker", "s",
-	"color", "red",
-	"markerfacecolor", "red",
-	"markersize", markersize,
-	"linestyle", "-",
-	"linewidth", plotlinewidth,
-     graphdata(:,1), graphdata(:,3),
-	[";{\bf {\fontsize{", legendfontsize, "} Seyyedi et al (Unconnected Mesh)}};"],
-	"marker", "o",
-	"color", "black",	
+	"color", "black",
 	"markerfacecolor", "black",
 	"markersize", markersize,
-	"linestyle", "-",
+	"linestyle", ":",
 	"linewidth", plotlinewidth,
-#     graphdata(:,1), graphdata(:,4),
-#	[";{\bf {\fontsize{", legendfontsize, "} Seyyedi et al (Connected Mesh)}};"],
-#	"marker", "s",
-#	"color", "black",
-#	"markerfacecolor", "black",
-#	"markersize", markersize,
-#	"linestyle", "-",
-#	"linewidth", plotlinewidth,
+     graphdata(:,1), graphdata(:,3),
+	[";{\bf {\fontsize{", legendfontsize, "} Denacast (Unconnected Mesh)}};"],
+	"marker", "o",
+	"color", "red",	
+	"markerfacecolor", "red",
+	"markersize", markersize,
+	"linestyle", ":",
+	"linewidth", plotlinewidth,
      graphdata(:,1), graphdata(:,4),
+	[";{\bf {\fontsize{", legendfontsize, "} Denacast (Connected Mesh)}};"],
+	"marker", "d",
+	"color", "green",
+	"markerfacecolor", "green",
+	"markersize", markersize,
+	"linestyle", ":",
+	"linewidth", plotlinewidth,
+     graphdata(:,1), graphdata(:,5),
 	[";{\bf {\fontsize{", legendfontsize, "} GMTP}};"],
 	"marker", "^",
 	"color", "blue",
 	"markerfacecolor", "blue",
-	"linestyle", "-",
+	"linestyle", ":",
 	"markersize", markersize,
 	"linewidth", plotlinewidth
 );
@@ -58,10 +58,10 @@ plot(graphdata(:,1), graphdata(:,2),
 
 legend("left", "location", "northwest");
 axis([0, 10230]);
-grid on;
-fmt = xlabel("Number of Peers", "fontweight", "bold", "fontsize", axissize);
+grid off;
+fmt = xlabel("Total number of nodes", "fontweight", "bold", "fontsize", axissize);
 fmt = ylabel("Startup Delay (s)", "fontweight", "bold", "fontsize", axissize);
-set(gca(), "xminorgrid", "on", "linewidth", borderlinesize, "fontsize", ticksize, "fontweight", "bold");
+set(gca(), "xminorgrid", "off", "linewidth", borderlinesize, "fontsize", ticksize, "fontweight", "bold");
 
 print("startupdelays-graph.png", "-dpng");
 
