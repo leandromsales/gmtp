@@ -157,7 +157,7 @@ do \textit{churn};
 
 \end{enumerate}
 
-Estas peculiaridades viabilizam uma abordagem muito importante adotada neste trabalho: a participação mais efetiva dos roteadores no processo de distribuição de mídias ao vivo. Isto ocorre ao permitir que os roteadores: (i) constituam uma rede de favores com seleção de nós parceiros (outros roteadores) baseados na capacidade de transmissão dos canais entre os nós clientes e os nós servidores; (ii) sirvam como pontes de acesso aos servidores da CDN; e (iii) ajudem na execução do serviço de controle de congestionamento. A principal justificativa para constituir redes de favores entre roteadores é baseada na conjectura de que os roteadores são elementos de rede estáveis com relação a sua disponibilidade se comparados aos sistemas finais, atenuando-se o \textit{churn} das redes em comparação àquelas formadas unicamente por sistemas finais. Como consequência, deve-se permitir que as aplicações forneçam serviços mais estáveis aos usuários. Esta decisão também se baseia no fato de que se existir um nó $c$ interessado por um fluxo de dados $P$, transmitido por um servidor $s$ através de um roteador $r$, os pacotes de dados de $P$ que deverão ser entregues a $c$ passarão obrigatoriamente por $r$.
+Estas peculiaridades viabilizam uma abordagem muito importante adotada neste trabalho: a participação mais efetiva dos roteadores no processo de distribuição de mídias ao vivo. Isto ocorre ao permitir que os roteadores: (i) constituam uma rede de favores com seleção de nós parceiros (outros roteadores) baseados na capacidade de transmissão dos canais entre os clientes e os servidores; (ii) sirvam como pontes de acesso aos servidores da CDN; e (iii) ajudem na execução do serviço de controle de congestionamento. A principal justificativa para constituir redes de favores entre roteadores é baseada na conjectura de que os roteadores são elementos de rede estáveis com relação a sua disponibilidade se comparados aos sistemas finais, atenuando-se o \textit{churn} das redes em comparação àquelas formadas unicamente por sistemas finais. Como consequência, deve-se permitir que as aplicações forneçam serviços mais estáveis aos usuários. Esta decisão também se baseia no fato de que se existir um nó $c$ interessado por um fluxo de dados $P$, transmitido por um servidor $s$ através de um roteador $r$, os pacotes de dados de $P$ que deverão ser entregues a $c$ passarão obrigatoriamente por $r$.
 % Os resultados de medições realizadas no contexto de trabalhos anteriores, como as apresentadas em~\cite{5332297}, corroboram com tal abordagem ao discutir questões relacionadas à localidade de tréfego e o conhecimento que a rede possui sobre os fluxos de dados transmitidos.
 
 De modo a generalizar essa discussão, pode-se afirmar que o uso da abordagem supracitada é justificado por uma tendência em utilizar os roteadores para auxiliar e otimizar os serviços das camadas TCP/IP mais acima, como o NAT dinâmico (\textit{Dynamic Network Address Translation}) através de UPnP (\textit{Universal Plug and Play})~\cite{968819}, DNS dinâmico~\cite{1203676}, controle de congestionamento, dentre outros. Essa tendência é também sustentada pelas Redes Centradas no Conteúdo (\textit{Content-Centric Networks} -- CCN)~\cite{6563278,6231276,5936152,Ghodsi:2011:INS:2070562.2070563}.
@@ -198,8 +198,7 @@ funcione, existem padrões que descrevem o formato do vídeo/áudio (NTSC, PAL-M,
 TVD etc.), a forma como os sinais devem ser transmitidos, em diferentes
 frequências e como devem ser codificados/decodificados, de acordo com cada emissora de TV, dentre outros. Isto é possível porque todas as TVs simplesmente seguem padrões, independente da sua marca e modelo, caso contrário, somente conseguiriam interpretar o sinal transmitido por um conjunto restrito de emissoras de TV.
 
-Considerando a analogia anterior, os nós servidores dos atuais sistemas de
-distribuição multimídia na Internet são as emissoras de TV, ao passo que as aplicações clientes são os aparelhos de TV. A diferença para a analogia supracitada é que na Internet os sistemas não seguem um padrão para transmitir e receber os dados multimídia e consequentemente uma aplicação cliente de um sistema não consegue reproduzir o conteúdo transmitido pelo servidor de outro sistema. É como se cada TV funcionasse apenas para um determinado conjunto de canais que seguem um determinado padrão, sendo incapaz de reproduzir o sinal de vídeo oriundo de outras emissoras de TV que funcionam com base em outros padrões estabelecidos, incluindo alguns proprietários.
+Considerando a analogia anterior, os servidores dos atuais sistemas de distribuição multimídia na Internet são as emissoras de TV, ao passo que as aplicações clientes são os aparelhos de TV. A diferença para a analogia supracitada é que na Internet os sistemas não seguem um padrão para transmitir e receber os dados multimídia e consequentemente uma aplicação cliente de um sistema não consegue reproduzir o conteúdo transmitido pelo servidor de outro sistema. É como se cada TV funcionasse apenas para um determinado conjunto de canais que seguem um determinado padrão, sendo incapaz de reproduzir o sinal de vídeo oriundo de outras emissoras de TV que funcionam com base em outros padrões estabelecidos, incluindo alguns proprietários.
 
 % Apesar de existirem protocolos para a Internet que descrevem o conteúdo da mídia transmitida~\cite{RFC2327,RFC3550,RFC2326}, apenas esta função não é suficiente para promover a distribuição de mídias ao vivo em larga escala, pois atualmente não existe um protocolo que considere toda a complexidade existente em se utilizar as redes orientadas a datagramas, ponderando-se as recentes soluções empregadas nos sistemas mais modernos e estudados neste trabalho. Em vez disso, cada sistema implementa suas próprias formas de transporte de dados, com a execução de ações complexas e não interoperáveis entre diferentes sistemas, predominantemente baseadas nos protocolos RTP/RTSP combinado com o UDP.
 
@@ -237,7 +236,7 @@ No caso das soluções baseadas em P2P/CDN, utilizam-se \textit{middlewares} que i
   \label{fig:problematica-dena-ccn}
 \end{figure}
 
-Para instanciar um cenário de desempenho do estado da prática e do estado da arte nesse contexto, observe a Figura~\ref{fig:problematica-dena-ccn}, a respeito de duas proeminentes propostas estudadas no contexto deste trabalho: o Denacast/CoolStreaming~\cite{Jahromi2012} e o CCN-TV~\cite{6550523}. Com relação à métrica qualidade da mídia transmitida, ilustrada na Figura \ref{fig:problematica-distorcao}, o Denacast/CoolStreaming obtém um desempenho degradante à medida em que aumenta-se o número de nós clientes interessados pela mesma mídia. Apesar de obter um melhor desempenho se comparado ao Denacast/CoolStreaming, observa-se também um comportamento similar no caso da CCN-TV. Por outro lado, com relação à métrica sobrecarga de controle, ilustrada na Figura~\ref{fig:problematica-sobrecarga}, observa-se uma inversão no desempenho dos sistemas estudados, constatando-se que o Denacast/CoolStreaming obtém melhor desempenho com relação ao CCN-TV. O Denacast/CoolStreaming pertence à categoria das soluções disponíveis na camada de aplicação, ao passo que o CCN-TV pertence à categoria das redes que oferecem serviços de distribuição de conteúdo, no caso a CCN. Enquanto a primeira executa suas próprias estratégias de distribuição de mídia, a segunda utiliza um modelo de serviço não apropriado para este tipo de tráfego de dados, evidenciando-se lacunas para avançar o estado da arte e propor soluções mais otimizadas.
+Para instanciar um cenário de desempenho do estado da prática e do estado da arte nesse contexto, observe a Figura~\ref{fig:problematica-dena-ccn}, a respeito de duas proeminentes propostas estudadas no contexto deste trabalho: o Denacast/CoolStreaming~\cite{Jahromi2012} e o CCN-TV~\cite{6550523}. Com relação à métrica qualidade da mídia transmitida, ilustrada na Figura \ref{fig:problematica-distorcao}, o Denacast/CoolStreaming obtém um desempenho degradante à medida em que aumenta-se o número de clientes interessados pela mesma mídia. Apesar de obter um melhor desempenho se comparado ao Denacast/CoolStreaming, observa-se também um comportamento similar no caso da CCN-TV. Por outro lado, com relação à métrica sobrecarga de controle, ilustrada na Figura~\ref{fig:problematica-sobrecarga}, observa-se uma inversão no desempenho dos sistemas estudados, constatando-se que o Denacast/CoolStreaming obtém melhor desempenho com relação ao CCN-TV. O Denacast/CoolStreaming pertence à categoria das soluções disponíveis na camada de aplicação, ao passo que o CCN-TV pertence à categoria das redes que oferecem serviços de distribuição de conteúdo, no caso a CCN. Enquanto a primeira executa suas próprias estratégias de distribuição de mídia, a segunda utiliza um modelo de serviço não apropriado para este tipo de tráfego de dados, evidenciando-se lacunas para avançar o estado da arte e propor soluções mais otimizadas.
 
 Cenários como estes têm sido observado nos últimos anos, onde os pesquisadores têm apresentado diversas técnicas para otimizar a distribuição de mídias ao vivo na camada de aplicação, quando na verdade o problema é de infraestrutura, não se disponibilizando um protocolo que generalize os serviços comuns dos sistemas de distribuição de mídias ao vivo. Por exemplo, no caso dos \textit{middlewares}, implementam-se funções para tratar aspectos de conexão multi-ponto e diferentes topologias~\cite{4404148,5158452,Wu:2008:ELP:1386109.1386112,4215750,5061910,Garroppo:2012:TCS:2160187.2160451,4251077,4644134}; seleção de
 nós~\cite{6077007,Dai:2009:SPP:1478659.1478730,Tang:2008:EPS:1792514.1792556,6214363,5580021}; tolerância a desconexões e outros problemas causados pelo
@@ -347,7 +346,7 @@ Diante do exposto, remete-se esta pesquisa ao estudo de técnicas e mudança na pe
 
 % \section{Hipótese}
 
-Para responder a questão supracitada, adota-se a seguinte hipótese: \textit{a constituição de uma rede de favores entre roteadores que interceptam, realizam \textit{cache} temporário e compartilham pacotes de dados tanto em modo \textit{multicast} quanto em modo \textit{unicast}, auxiliados por nós servidores para determinar as parcerias com base em um algoritmo para controle de congestionamento assistido pela rede, resulta na distribuição mais eficiente (escala e qualidade) de mídias ao vivo}.
+Para responder a questão supracitada, adota-se a seguinte hipótese: \textit{a constituição de uma rede de favores entre roteadores que interceptam, realizam \textit{cache} temporário e compartilham pacotes de dados tanto em modo \textit{multicast} quanto em modo \textit{unicast}, auxiliados por servidores para determinar as parcerias com base em um algoritmo para controle de congestionamento assistido pela rede, resulta na distribuição mais eficiente (escala e qualidade) de mídias ao vivo}.
 
 % possibilita a maximização do uso dos recursos de rede,
 % a independência dos sistemas e
@@ -402,43 +401,6 @@ investimentos no protocolo teórico proposto.
 \textit{O terceiro requisito é o potencial prático}. A implementação do protocolo de rede, assim como o conjunto de ferramentas desenvolvidas e que serão mantidas, tem como objetivo demonstrar que a abordagem é viável e praticável.
 % Um protocolo de rede simplesmente especificado sem nenhuma implementação real tornaria as reais contribuições deste trabalho apenas suposições.
 O compromisso com a utilização dos conceitos para construir soluções que possam ser aplicadas na indústria, torna o trabalho relevante em termos práticos, sobretudo em escala global na Internet.
-
-\section{Publicações}
-\label{sec:publicacoes}
-
-\begin{enumerate}
-
-  \item \textit{GMTP: A Crossing-layer Optimized Protocol for Large Scale Distribution of Live Multimedia Content over the Internet.} Referência:\cite{gmtp-techrep1}\bibentry{gmtp-techrep1}\footnote{A ser submetido para o IEEE/ACM Transactions on Networking (JCR 2.014).}
-%  ou IEEE Network (JCR 2.853)
-
-%   \item \textit{Designing GMTP: The Global Media Transmission Protocol for Massive Multimedia Distribution over the Internet.} Referência:\cite{gmtp-techrep2}\bibentry{gmtp-techrep2}\footnote{A ser submetido para o IEEE Transactions on Multimedia (JCR 1.754).}
-%  ou IEEE Software.}
-
-  \item \textit{Generalized Connection and Incentives for Supporting CE Devices in P2P/CDN Live Streaming Systems.} Referência:\cite{gmtp-techrep3}\bibentry{gmtp-techrep3}\footnote{Em processo de revisão para o IEEE Transaction on Consumers Electronics (JCR 1.087).}
-
-% Sharing Resources with Live Streaming Systems to Improve Users' QoE on Consumer Electronic Devices.
-
-  \item \textit{About Encouraging Residential Users to Share Upload Bandwidth with CDN/P2P Live Streaming Systems.} 31st IEEE International Conference on Consumer Electronics 2013. Qualis A-2 (Computação). 2013. Referência: \cite{leandro-icce2013}.
-
-  \item \textit{Multi(Uni)cast DCCP for Live Content Distribution with P2P Support.} 9th IEEE Wireless Communications and Networking Conference (WCNC 2012). Qualis A-1 (Computação). 2012. Referência: \cite{6214362}.
-
-  \item \textit{Multimedia Content Distribution of Real Time Controlled and Non-reliable Datagrams Between Peers.} 29th IEEE Globecom 2011. 2nd IEEE Workshop on Multimedia Communications \& Services. Qualis A-1 (Computação). 2011. Referência: \cite{leandro-Globecom-2011}.
-
-  \item \textit{Distribuição de Conteúdo Multimídia em Tempo Real com Transporte de Fluxos Controlados e Não Confiáveis entre Pares.} Simpósio Brasileiro de Redes de Computadores 2011. VII Workshop de Redes Dinâmicas e Sistemas P2P. 2011. Qualis A-N (Computação). Referência: \cite{leandro-WP2P-2011}.
-
-% \item \textbf{An Experimental Evaluation of DCCP Transport Protocol:
-% A Focus on the Fairness and Hand-off over 802.11g Networks.} 5th IEEE Consumer
-% Communications and Networking Conference (CCNC). 2008. Referência
-% \cite{ccnc-leandro2008}.
-
-  \item \textit{On the Performance of TCP, UDP and DCCP over 802.11g Networks.} 23rd ACM Symposium on Applied Computing. Qualis A-1 (Computação). 2008. Referência: \cite{leandro2008}.
-
-% \item \textit{Avaliação Experimental do Protocolo DCCP para Transmissão de
-% Conteúdos Multimídia em Redes Sem Fio 802.11g e na Internet.} Dissertação de
-% mestrado. Universidade Federal de Campina Grande. Programa de Pós Graduação em
-% Ciência da Computação. 2008. Referência \cite{leandro-master-2008}.
-
-\end{enumerate}
 
 \section{Estrutura do Documento}
 
