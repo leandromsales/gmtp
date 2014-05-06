@@ -443,7 +443,7 @@
       \else
         \small
         \begin{center}%
-          {\bfseries \abstractname\vspace{-.5em}\vspace{\z@}}%
+          {\bfseries \abstractname\vspace{-.5em}\vspace{\z@}s}%
         \end{center}%
         \quotation
       \fi}

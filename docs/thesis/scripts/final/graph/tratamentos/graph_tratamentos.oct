@@ -520,7 +520,7 @@ h = errorbar(36*graphdata_denacast_pc(:, 2:2)/1024, 36*graphdata_denacast_pc(:, 
 set (h, "color", "red", "linestyle", "none");
 h = errorbar(40*graphdata_ccntv_pc(:, 2:2)/1024, 40*graphdata_ccntv_pc(:, 4:4)/1024);
 set (h, "color", "black", "linestyle", "none");
-h = errorbar(32*graphdata_gmtp_pc(:, 2:2)/1024, 32*graphdata_gmtp_pc(:, 4:4)/1024);
+h = errorbar(52*graphdata_gmtp_pc(:, 2:2)/1024, 52*graphdata_gmtp_pc(:, 4:4)/1024);
 set (h, "color", "blue", "linestyle", "none");
 plot(
     [1:6], 36*graphdata_denacast_pc(1:6, 2:2)/1024,
@@ -567,7 +567,7 @@ plot(
 	"markersize", markersize,
 	"linestyle", ":",
 	"linewidth", plotlinewidth,
-    [1:6], 32*graphdata_gmtp_pc(1:6, 2:2)/1024,
+    [1:6], 52*graphdata_gmtp_pc(1:6, 2:2)/1024,
 	[";{\bf {\fontsize{22} GMTP}};"],
 	"marker", "d",
 	"color", "blue",
@@ -575,14 +575,14 @@ plot(
 	"linestyle", ":",
 	"markersize", markersize,
 	"linewidth", plotlinewidth,
-    [7:12], 32*graphdata_gmtp_pc(7:12, 2:2)/1024,
+    [7:12], 52*graphdata_gmtp_pc(7:12, 2:2)/1024,
 	"marker", "d",
 	"color", "blue",
 	"markerfacecolor", "blue",
 	"linestyle", ":",
 	"markersize", markersize,
 	"linewidth", plotlinewidth,
-    [13:18], 32*graphdata_gmtp_pc(13:18, 2:2)/1024,
+    [13:18], 52*graphdata_gmtp_pc(13:18, 2:2)/1024,
 	"marker", "d",
 	"color", "blue",
 	"markerfacecolor", "blue",
@@ -591,6 +591,8 @@ plot(
 	"linewidth", plotlinewidth
 );
 hold off;
+
+xxx = 40*graphdata_gmtp_pc(13:18, 2:2)/1024
 
 t = title("Tratamentos #\n", "fontsize", axissize, "fontweight", "bold");
 t = text(0.90, 12.3, "1", "fontsize", ticksize, "fontweight", "bold");

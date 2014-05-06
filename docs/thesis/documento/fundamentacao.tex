@@ -1371,7 +1371,7 @@ de árvore é formada. A fonte de vídeo se torna a raiz desta árvore
 nós desta árvore, formado pelos roteadores que suportam o \textit{multicast} em
 nível de IP. Para contornar a falta de suporte de \textit{multicast} em nível de
 IP, a função equivalente tem sido implementada no nível da camada de aplicação.
-Os servidores de vídeo e os usuários formam uma rede sobreposta à rede real e,
+Os servidores de vídeo e os clientes formam uma rede sobreposta à rede real e,
 assim, organizam-se para distribuir o fluxo de vídeo. De maneira similar ao
 \textit{multicast} IP, formado por uma árvore de roteadores no nível de rede, os
 nós participantes da sessão de vídeo formam uma árvore na camada de aplicação,
@@ -1622,7 +1622,7 @@ otimizar o agendamento de entrega de dados. Alguns dos critérios utilizados para
 alocar os nós participantes na árvore são estabilidade do nó participante na
 rede e a proximidade entre os nós participantes na rede física.
 
-Mais precisamente, no Anysee2, estrutura-se os nós participantes em uma rede de
+Mais precisamente, no Anysee2, estruturam-se os nós participantes em uma rede de
 controle e em uma rede de troca de dados. A rede de controle é baseada em uma
 árvore, enquanto a rede de troca de dados é baseado em uma malha.
 
@@ -3945,17 +3945,17 @@ o conceito de assinatura digital.
 \section{Sumário do Capítulo}
 \label{sec:fundamentacao-sumario}
 
-Neste capítulo, apresentou-se os principais conceitos de funcionamento dos sistemas de transmissão ao vivo P2P. Inicialmente, descreveu-se as estruturas de uma rede P2P constituídas por esses sistemas. Em seguida, apresentou-se o funcionamento básico de um sistema de transmissão e suas principais estratégias para geração e disseminação de \textit{chunks}, bem como a seleção de nós parceiros.
+Neste capítulo, apresentaram-se os principais conceitos de funcionamento dos sistemas de transmissão ao vivo P2P. Inicialmente, descreveram-se as estruturas de uma rede P2P constituídas por esses sistemas. Em seguida, apresentou-se o funcionamento básico de um sistema de transmissão e suas principais estratégias para geração e disseminação de \textit{chunks}, bem como a seleção de nós parceiros.
 
 Os cenários de transmissão de mídia ao vivo se baseiam em uma arquitetura em malha e sem organização rígida dos nós do sistema. Os nós podem entrar e sair a qualquer instante e realizam parcerias com um subconjunto de outros nós. Os parceiros trocam informações entre si para colaborar uns com os outros na obtenção de uma  mídia transmitida ao vivo.
 
 Para participar de um sistema P2P de transmissão ao vivo, a aplicação do usuário se registra em um servidor chamado de \textit{boostrap}. Esse servidor armazena as informações de todos os nós ativos do sistema. O novo nó recebe uma lista com outros nós do sistema e essa lista é utilizada para a tentativa inicial de estabelecimento de parcerias. Entre os nós do sistema há um especial: o servidor de mídia ao vivo. Este servidor captura o vídeo a ser transmitido, codifica-o em um formato apropriado e disponibiliza-o para toda a rede P2P.
 
-Os nós têm um armazenamento local, onde guardam os dados do vídeo para uma execução contínua. Estes nós devem verificar quais partes de dados são necessários, havendo maneiras apropriadas de seleciona-los e requisitá-los. Para isso, apresentou-se duas abordagens denominadas \aspas{Gulosa} e \aspas{Mais Raro Primeiro}. Essas estratégias mantém o fluxo da execução sem interrupções e dissemina o conteúdo rapidamente pela rede P2P, respectivamente.
+Os nós têm um armazenamento local, onde guardam os dados do vídeo para uma execução contínua. Estes nós devem verificar quais partes de dados são necessários, havendo maneiras apropriadas de seleciona-los e requisitá-los. Para isso, apresentaram-se duas abordagens denominadas \aspas{Gulosa} e \aspas{Mais Raro Primeiro}. Essas estratégias mantém o fluxo da execução sem interrupções e dissemina o conteúdo rapidamente pela rede P2P, respectivamente.
 
 Caso mais de um parceiro possa contribuir com o dado necessário, um nó deve escolher a qual fará a solicitação. O mecanismo adotado se baseia na disponibilidade de recursos de cada parceiro, que será escolhido de acordo com a maior quantidade de recursos disponíveis, como por exemplo, banda de rede, processamento, memória etc.
 
-Por fim, apresentou-se alguns conceitos básicos sobre criptografia de chave pública e assinatura digital. No contexto deste trabalho, aplicam-se tais conceitos para criptografar e assinar digitalmente os dados transmitidos por um sistema de transmissão ao vivo a fim de impedir ataques de poluição.
+Por fim, apresentaram-se alguns conceitos básicos sobre criptografia de chave pública e assinatura digital. No contexto deste trabalho, aplicam-se tais conceitos para criptografar e assinar digitalmente os dados transmitidos por um sistema de transmissão ao vivo a fim de impedir ataques de poluição.
 
 % Em seguida, apresentou-se uma visão geral da camada de transporte da pilha de
 % protocolos TCP/IP. Discutiu-se a importância da organização dos protocolos em
