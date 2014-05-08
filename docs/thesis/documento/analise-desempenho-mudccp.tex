@@ -31,6 +31,17 @@ Como consequência das ações anteriores, demanda-se a obtenção de informação de c
 
 Ao observar os problemas resultantes da tentativa suprir as limitações da rede, a seguir, enumeram-se cinco principais benefícios que podem ser constatados ao utilizar o GMTP, tanto no contexto dos sistemas de distribuição de mídias ao vivo quanto no contexto do consumo dos recursos de rede, relacionando-os com os recursos atualmente empregados nos sistemas de distribuição de mídias ao vivo.
 
+
+\begin{figure}[b!ht]
+\begin{center}
+\includegraphics[scale=.78]{imgs/protocolo-remodelagem-p2p.pdf}
+\end{center}
+\vspace{-1cm}
+\caption{Estado das funções de aplicação após o uso do protocolo GMTP.}
+\label{fig:protocolo-remodelagem-p2p}
+\end{figure}
+
+
 \begin{enumerate}
 
   \item \textit{Otimização arquitetural:} antes do GMTP, os desenvolvedores de sistemas multimídia eram obrigados a considerar limitações de arquitetura de rede em seus projetos de software. Por exemplo, a lógica para distribuição da mídia era toda embutida na aplicação, aumentando sua complexidade de manutenção. O GMTP abstrai a complexidade de distribuir mídias ao vivo com base, por exemplo, no gerenciamento transparente de canais \textit{multicast} (adicionar e remover) sem a influência da aplicação, inclusive entre diferentes domínios administrativos. Além disso, abstraem-se outros aspectos importantes para a aplicação, como o controle de congestionamento, antes embutidos na aplicação por falta de uma proposta mais adequada.
