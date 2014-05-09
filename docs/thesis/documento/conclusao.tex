@@ -59,7 +59,7 @@ Com base nas limitações das propostas para distribuição de mídias ao vivo e seus
 
   \item Com base em revisões da literatura e nos resultados apresentados, não convém utilizar CCN para distribuição de mídias ao vivo. Nesse contexto, as propostas existentes ainda são imaturas devido às incertezas do projeto arquitetural e remoção de informações importantes, como os endereços dos sistemas finais. Especificamente, mudar de um espaço de endereçamento de um bilhão de endereços IPs para pelo menos um trilhão de nomes de conteúdos pode causar problemas críticos de desempenho devido à necessidade de ter que processar tamanha quantidade de dados~\cite{6691438}. No caso do GMTP, buscou-se dividir com os servidores a sobrecarga de processamento nodal relacionada às atividades de distribuição de conteúdo, sendo portanto uma abordagem híbrida rede/hospedeiro. Isto ocorre quando a rede gera informações sobre o tráfego de dados e os hospedeiros as utilizam para tomar decisões no processo de constituir e manter a rede de favores, enfraquecendo a relação um-para-um de conectividade ao permitir que os roteadores realizem \textit{cache} dos pacotes de dados para agirem como se fossem os próprios hospedeiros.
 
-  \item Apesar do GMTP não ser um protocolo com suporte a garantia de entrega, demonstrou-se e conclui-se que, ao fazer melhor uso dos recursos de rede, é possível transmitir pacotes de dados e oferecer uma boa qualidade de serviço às aplicações, mesmo em redes com altos níveis de congestionamento da rede e uma certa taxa de perda de dados, como foi o caso do cenário adotado nos experimentos realizados no contexto deste trabalho.
+  \item Apesar do GMTP não ser um protocolo com suporte a garantia de entrega, demonstrou-se e conclui-se que é possível transmitir pacotes de dados e oferecer uma boa qualidade de serviço às aplicações, ao combinar os métodos \textit{push/pull}, permitindo-se a obtenção de pacotes de dados, provavelmente perdidos, através do método \textit{pull}. Com isto, utiliza-se melhor os recursos de rede ao evitar super utilização dos canais com transmissão de fluxos de dados duplicados, mesmo em redes com altos níveis de congestionamento e uma certa taxa de perda de dados, como foi o caso do cenário adotado no experimento realizado e apresentado no Capítulo~\ref{cap:analisedesemp}.
 
 \end{enumerate}
 
@@ -145,7 +145,7 @@ Nessa seção, apresentam-se as limitações e os trabalhos futuros relacionados ao 
 
 \begin{enumerate}
 
-  \item O projeto e a avaliação de um protocolo para distribuição de conteúdos multimídia ao vivo baseado em uma rede de favores constituída entre roteadores.
+  \item O projeto de um protocolo para distribuição de conteúdos multimídia ao vivo, baseado em uma rede de favores constituída entre roteadores, com suporte à interoperabilidade entre aplicações e a definição de parcerias e a seleção de fluxos codificados com base na capacidade de transmissão dos canais em uso para distribuir uma mídia.
 
 %   Apresenta-se a elaboração do GMTP, que considera a comunicação mais efetiva entre as duas camadas mais importantes da pilha TCP/IP, a de transporte e a de rede.
 %   
@@ -157,20 +157,20 @@ Nessa seção, apresentam-se as limitações e os trabalhos futuros relacionados ao 
 
 % Ou seja, além de utilizar o RCP para melhorar o consumo dos recursos compartilhados de rede (controle de congestionamento), propõe-se um algoritmo de seleção de nós parceiros com base na atual capacidade de transmissão dos enlaces entre os nós servidores de um fluxo de dados ao vivo e os nós clientes interessados em recebê-lo. Ademais, discute-se aspectos fundamentais sobre a escolha do RCP em detrimento a outras propostas bem conhecidas, como o XCP~\cite{Katabi2003} e o VCP~\cite{4460574}.
 
-  \item Os resultados e discussões acerca do GMTP frente a duas proeminentes propostas: o Denacast/CoolStreaming~\cite{5764567} e o CCN-TV~\cite{6550523}.
+  \item A análise de projeto, o experimento e as discussões dos resultados obtidos sobre do GMTP frente a duas proeminentes propostas: o Denacast/CoolStreaming~\cite{5764567} e o CCN-TV~\cite{6550523}.
 
 % O Denacast é um sistema de distribuição de mídias ao vivo baseado no CoolStreaming com suporte a uma rede de distribuição de conteúdos (P2P/CDN). Com os resultados comparativos obtidos, contribui-se para tomada de decisões sobre futuras pesquisas no contexto de distribuição de mídias ao vivo. O CCN-TV é um sistema de TV para Internet com suporte às redes centradas na informação. Com isto, contribui-se para tomada de decisões sobre futuras pesquisas no contexto de distribuição de mídias ao vivo.
 
-  \item A revisão da literatura sobre as principais técnicas para distribuição de mídias ao vivo, bem como as propostas para este fim, trazendo-se à tona os recentes avanços da área de estudo, como os conceitos das redes centradas na informação~\cite{6563278} e os algoritmos de controle de congestionamento assistido pela rede~\cite{983548}.
+  \item A revisão da literatura sobre as principais técnicas para distribuição de mídias ao vivo, bem como as propostas existentes para este fim, trazendo-se à tona os recentes avanços da área de estudo, como os conceitos das Redes Centradas na Informação~\cite{6563278} e os algoritmos de controle de congestionamento assistido pela rede~\cite{983548}.
 
-  \item A implementação de artefatos de software que permitem a reprodução do ambiente de estudo, tais como implementação do GMTP no simulador de rede OMNet++~\cite{XU2011,omnetpp2014} e a metodologia detalhada do experimento.
+  \item A descrição detalhada do GMTP e a implementação de artefatos de software que permitem a reprodução do ambiente de estudo em um simulador de rede OMNet++~\cite{XU2011,omnetpp2014}, bem como a metodologia adotada para executar o experimento.
 %  bem como encaminhamentos iniciais de implementação no núcleo do Linux.
 
-  \item As limitações do GMTP e os encaminhamentos da pesquisa sobre futuros avanços do estado da arte.
+  \item As limitações do GMTP e os encaminhamentos da pesquisa sobre os futuros avanços do estado da arte.
 
 \end{enumerate}
 
-Ademais, destaca-se a importância e originalidade do presente trabalho por trazer à tona um problema recorrente e uma proposta de solução do uso de um protocolo de transporte e rede, exclusivamente projetado para a distribuição de mídias ao vivo na Internet. Até então, distribuir conteúdos multimídia na Internet se resumia em sistemas baseados em protocolos tradicionais (TCP, UDP, DCCP, SCTP) ou outros proprietários, em geral, disponíveis na camada de aplicação.
+Ademais, destaca-se a importância e a originalidade do presente trabalho por trazer à tona um problema recorrente e uma proposta de solução do uso de um protocolo de transporte e rede, exclusivamente projetado para a distribuição de mídias ao vivo na Internet. Até então, distribuir conteúdos multimídia na Internet se resumia em sistemas baseados em protocolos tradicionais (TCP, UDP, DCCP, SCTP) ou outros proprietários, em geral, disponíveis na camada de aplicação.
 
 
 % Por exemplo, o método tradicional de conectividade multi-ponto utilizado em muitos sistemas foi completamente remodelado se comparado aos utilizados em outros sistemas. No GMTP, permite-se o acesso mais eficiente a um determinado conteúdo e, nesse ínterim, conhece-se as rotas através das quais o servidor transmite os fluxos de dados multimídia. Para isto, propõe-se o mecanismo de registro de participação, enfraquecendo-se a relação explícita de conectividade um-para-um, fortemente difundida em redes TCP/IP, ao permitir que os nós roteadores interceptem as requisições de um determinado conteúdo e os nós requisitantes aceitam receber respostas dos roteadores como se fossem o próprio servidor informado da requisição original. Como consequência, conclui-se também que o custo computacional para conhecer um determinado caminho é baixo se comparado aos benefícios que tal conhecimento pode trazer. Nesse contexto, o custo computacional é fazer com que todos os roteadores alterem a requisição para adicionar seu identificador, porém isto é feito apenas quando um cliente requisita uma mídia. Por outro lado, o 

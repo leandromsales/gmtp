@@ -26,9 +26,7 @@
 % de transporte TCP/IP; e na Seção~\ref{sec:conceitos_dccp} sobre o
 % funcionamento do protocolo DCCP.
 
-A concepção de protocolos de rede para sistemas de distribuição de conteúdos
-multimídia em tempo real trás à tona uma série de conceitos necessários para o
-entendimento da solução proposta neste trabalho.
+A concepção de protocolos de rede para sistemas de distribuição de conteúdos multimídia ao vivo, trás à tona uma série de conceitos necessários para o entendimento da solução proposta neste trabalho.
 
 Neste capítulo, apresentam-se
 % os protocolos existentes para gerenciamento e sincronização de mídias ao vivo na Internet, bem como 
@@ -36,19 +34,13 @@ as principais estruturas adotadas nos sistemas de distribuição de mídias ao vivo
 
 \begin{itemize}
 
-  \item Em~\cite{peterson2011,kurose2006,soares1995}, para conceitos
-básicos sobre comunicação e redes de computadores, modos de transmissão, redes
-de distribuição de contéudo e protocolos de rede;
+  \item Em~\cite{peterson2011,kurose2006,soares1995}, para conceitos básicos sobre comunicação e redes de computadores, modos de transmissão, redes de distribuição de contéudo e protocolos de rede;
 
-  \item Em~\cite{leandro-master-2008}, para funcionamento de protocolos de
-transporte mais modernos, como o DCCP e o SCTP. Além disso, discussões
-sobre a aplicação do DCCP em cenários reais de transmissão de mídias;
+  \item Em~\cite{leandro-master-2008}, para funcionamento de protocolos de transporte mais modernos, como o DCCP e o SCTP. Além disso, discussões sobre a aplicação do DCCP em cenários reais de transmissão de mídias;
 
-  \item Em~\cite{5936152,6419703,Eardley:2011:DAF:1983741.1983751,6384450,6386696},
-para conceitos sobre Redes Centradas no Conteúdo; e
+  \item Em~\cite{5936152,6419703,Eardley:2011:DAF:1983741.1983751,6384450,6386696}, para conceitos sobre Redes Centradas no Conteúdo; e
 
-  \item Em~\cite{vieira_borges_2010,guo_survey_2008}, para mais detalhes
-sobre os conceitos apresentados neste capítulo.
+  \item Em~\cite{vieira_borges_2010,guo_survey_2008}, para mais detalhes sobre distribuição de mídias ao vivo com base em redes P2P, as quais foram utilizadas para escrever a maior parte deste capítulo.
 
 \end{itemize}
 
@@ -1296,7 +1288,7 @@ sobre os conceitos apresentados neste capítulo.
 % % omitir as discussões detalhadas sobre estes, enfatizando os
 % % protocolos cujas propostas se aproximam ao \mudccp.
 
-\section{Estruturas para Distribuição de Mídia ao Vivo em P2P}
+\section{Estruturas para Distribuição de Mídia ao Vivo}
 \label{sec:arq_p2p_media_aovivo}
 
 Nesta seção, apresenta-se uma revisão dos esforços prévios no sentido de
@@ -1318,64 +1310,56 @@ estruturar e organizar os sistemas de transmissão ao vivo em arquiteturas P2P.
 % do Norte e o site de disponibilização de conteúdo multimídia mais acessado no
 % mundo.
 
-A transmissão de vídeos na Internet pode se classificar em duas grandes
-categorias: vídeos pré-armazenados, enviados sob demanda (\textit{on-demand}) e
-vídeos ao vivo (\textit{live}). Os usuários de vídeos assistidos sob demanda têm
-a flexibilidade de assistir um conteúdo previamente armazenado, a qualquer
-momento. Por outro lado, um conteúdo ao vivo é transmitido no mesmo momento
-em que o fluxo é gerado. Logo, todos os usuários devem estar sincronizados e
-devem assistir o fluxo de vídeo ao mesmo tempo. Isto significa que esses 
-sistemas têm requisitos críticos de tempo e a retransmissão baseada no controle 
-de erro não é adequado em cenários de altos atrasos. Por isso, tais sistemas 
-utilizam suas próprias funções para tolerar perda de pacotes, como mascarar 
-erros e adaptação de conteúdo, em transmissões de fluxos de dados sem garantia 
-de entrega, utilizando UDP.
+A transmissão de vídeos na Internet pode se classificar em duas grandes categorias: vídeos pré-armazenados, enviados sob demanda (\textit{on-demand}) e vídeos ao vivo (\textit{live}). Os usuários de vídeos assistidos sob demanda têm a flexibilidade de reproduzi-los no momento que for conveniente. Por outro lado, um conteúdo ao vivo é transmitido no mesmo momento em que o fluxo é gerado. Logo, todos os usuários devem estar sincronizados e devem assistir o fluxo de vídeo ao mesmo tempo. Isto significa que esses  sistemas têm requisitos críticos de tempo e a retransmissão baseada no controle  de erro não é adequado em cenários de altos atrasos. Por isso, tais sistemas  utilizam suas próprias funções para tolerar perda de pacotes, como mascarar  erros e adaptação de conteúdo, em transmissões de fluxos de dados sem garantia de entrega, em geral utilizando UDP.
 
 A solução básica para o envio do fluxo de vídeo na Internet é a utilização
 do modelo cliente-servidor. Nesse modelo, um cliente cria uma conexão com um
-servidor de vídeo e o conteúdo é enviado para o cliente diretamente do servidor.
+servidor de vídeo e o conteúdo é enviado a partir do servidor diretamente ao cliente.
 Existem algumas variantes deste modelo, mas as soluções baseadas em
 cliente-servidor demandam uma larga capacidade de transmissão nos canais de
 comunicação utilizados pelo servidor, o que gera um alto custo
 operacional~\cite{guo_survey_2008}.
 
+Uma maneira eficiente de se estruturar e enviar um fluxo de vídeo a um grupo de
+usuários na Internet seria a utilização de \textit{multicast} no nível de
+IP~\cite{guo_survey_2008}. Em uma sessão de \textit{multicast} IP, uma estrutura
+de árvore é formada. A fonte de vídeo se torna a raiz desta árvore
+\textit{multicast}, e os clientes recebem o fluxo de vídeo através dos vários
+nós desta árvore, formado pelos roteadores que suportam o \textit{multicast} em
+nível de IP. O problema é que manter uma estrutura de IP multicast requer configurações específicas da rede, o que exige intervenção humana e combinação de diferentes domínios administrativos. 
+
+Para contornar a falta de suporte de \textit{multicast} em nível de
+IP, a função equivalente tem sido implementada no nível da camada de aplicação.
+Os servidores de vídeo e os clientes formam uma rede sobreposta à rede real e,
+assim, organizam-se para distribuir o fluxo de vídeo. De maneira similar ao
+\textit{multicast} IP, formado por uma árvore de roteadores no nível de rede, os
+nós participantes da sessão de vídeo formam uma árvore na camada de aplicação,
+cuja origem é o nó servidor de vídeo. Para essa estratégia dar-se o nome de redes P2P para distribuição de conteúdos multimídia.
+
 Recentemente, vários sistemas P2P foram desenvolvidos para prover conteúdo de
-vídeo ao vivo e sob-demanda na Internet, com baixo custo operacional~\cite{vu_understanding_2010,purandare_alliance_2007,castro_splitstream:_2003,xiaojun_hei_measurement_2007,bonald_epidemic_2008,susu_xie_coolstreaming:_2007,fallica_quality_2008,zhang_peer--peer_2005,zhang_large-scale_2005}.
-As redes entre pares (P2P) emergiram como um novo
+vídeo ao vivo e sob-demanda na Internet, com baixo custo operacional~\cite{vu_understanding_2010,purandare_alliance_2007,castro_splitstream:_2003,xiaojun_hei_measurement_2007,bonald_epidemic_2008,susu_xie_coolstreaming:_2007,fallica_quality_2008,zhang_peer--peer_2005,zhang_large-scale_2005}. As redes entre pares (P2P) emergiram como um novo
 paradigma para construir aplicações distribuídas. Neste tipo de aplicação, os
 usuários são encorajados a atuarem como clientes e servidores. Em uma rede P2P,
 os nós participantes, além de obterem serviços da rede, também os provêem.
 Assim, a banda de rede dos usuários finais é utilizada para reduzir a grande
 demanda por banda de rede, outrora necessária aos servidores.
 
-Os sistemas de envio de vídeo que utilizam arquitetura P2P podem ser
-classificados em duas categorias quanto a sua estrutura: os baseados em
-uma estrutura de árvore ou em malha. As seções a seguir são dedicadas a
-descrever funcionamento de cada uma dessas estruturas.
+Por fim, existem vários casos de sucesso nas áreas de Voz sobre IP, Videoconferência e WebTV que utilizam
+uma arquitetura híbrida P2P/CDN. Nestes casos, um servidor gerador de datagramas multimídia transmite-os para um conjunto de servidores espalhados geograficamente em diferentes \textit{backbones} que formam a CDN. Com o
+suporte dos nós constituindo uma rede P2P, os servidores da CDN enviam os datagramas para os nós da rede P2P, que os disseminam para outros nós interessados pelo mesmo conteúdo à medida que novas partes (\textit{chunks})
+do conteúdo são geradas e obtidas. No ponto de vista da rede P2P, os serviços da aplicação são oportunistas, onde os nós dependem uns dos outros para receberem o conteúdo desejado, ao passo que a dinâmica da rede pode gerar instabilidades na qualidade de serviço. Por outro lado, a implementação de uma rede CDN é, em geral, uma estrutura de servidores que se comunicam com um servidor gerador do conteúdo multimídia a ser distribuídos. Sendo assim, o maior desafio termina sendo de constituir e manter a rede P2P. Por este motivo, a partir deste ponto em diante o foco da discussão será nas redes P2P e nas estratégias para disseminar uma mídia ao vivo.
+
+Os sistemas de envio de vídeo que utilizam arquitetura P2P podem ser classificados em duas categorias, quanto a sua estrutura: os baseados em uma estrutura de árvore e os baseados em uma estrutura em malha. As seções subsequentes são dedicadas a descrever o funcionamento de cada uma dessas estruturas.
 
 \subsection{Estrutura baseada em árvore}
 
 Os sistemas baseados em árvore têm uma estrutura sobreposta bem organizada e,
-tipicamente, distribuem o fluxo de vídeo enviando dos nós para seus filhos.
-Um dos maiores problemas desta abordagem é que são vulneráveis à entrada e
+tipicamente, distribuem o fluxo de vídeo enviando dos nós pais para seus nós filhos.
+Um dos maiores problemas desta abordagem é que os nós são vulneráveis à entrada e
 abandono dos nós participantes da rede
 (\textit{churns})~\cite{cui_optimizing_2008,magharei_mesh_2007}. Assim, quando
-um participante deixa a rede, a estrutura de árvore se rompe, e parte do sistema
-sofre, temporariamente, uma ruptura no fluxo do vídeo.
-
-Uma maneira eficiente de se estruturar e enviar um fluxo de vídeo a um grupo de
-usuários na Internet seria a utilização de \textit{multicast} no nível de
-IP~\cite{guo_survey_2008}. Em uma sessão de \textit{multicast} IP uma estrutura
-de árvore é formada. A fonte de vídeo se torna a raiz desta árvore
-\textit{multicast}, e os clientes recebem o fluxo de vídeo através dos vários
-nós desta árvore, formado pelos roteadores que suportam o \textit{multicast} em
-nível de IP. Para contornar a falta de suporte de \textit{multicast} em nível de
-IP, a função equivalente tem sido implementada no nível da camada de aplicação.
-Os servidores de vídeo e os clientes formam uma rede sobreposta à rede real e,
-assim, organizam-se para distribuir o fluxo de vídeo. De maneira similar ao
-\textit{multicast} IP, formado por uma árvore de roteadores no nível de rede, os
-nós participantes da sessão de vídeo formam uma árvore na camada de aplicação,
-cuja origem é o servidor de vídeo.
+um participante deixa a rede, a estrutura de árvore se rompe e parte do sistema
+sofre, temporariamente, uma suspensão no fluxo do vídeo, o que impacta diretamente no usuário final por ter a reprodução da mídia interrompida.
 
 Cada nó do sistema se conecta à árvore em um certo nível. Em seguida, cada nó
 recebe o vídeo de seus pais, no nível superior, e reenvia o conteúdo aos seus
@@ -1488,7 +1472,7 @@ mostram que uma estrutura baseada em malha tem um desempenho superior a uma
 estrutura baseada em árvores.
 
 De maneira similar ao que acontece a um dos sistemas de compartilhamento de
-arquivos mais populares, o BitTorrent\texttrademark\space, uma estrutura em
+arquivos mais populares, o BitTorrent\texttrademark, uma estrutura em
 malha, tem um servidor centralizado. Esse servidor mantém uma lista dos nós
 participantes ativos na sessão de vídeo. Quando um usuário utiliza o sistema
 cliente de distribuição de mídia contínua ao vivo pela primeira vez, tal
