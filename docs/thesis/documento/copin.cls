@@ -143,7 +143,7 @@
     % Modificado por Isaac Maia Pessoa, 01/06/2007
     {\LARGE Universidade Federal de Campina Grande \par}
     {\LARGE Centro de Engenharia El\'{e}trica e Inform\'{a}tica \par}
-    {\Large Coordena\c{c}\~{a}o de P\'{o}s-Gradua\c{c}\~{a}o em Ci\^{e}ncia da Computa\c{c}\~{a}o\par}
+    {\Large Coordena\c{c}\~{a}o de P\'{o}s-Gradua\c{c}\~{a}o em Inform\'{a}tica\par}
     \vskip 3em%
     {\LARGE \@Titulo \par}%
     {\LARGE
@@ -156,7 +156,7 @@
    \if@rpd
    \else
 \selectlanguage{portuges}
-   \parbox[t]{122mm}{ \manuscrito\hspace{1pt} submetida \`{a} Coordena\c{c}\~{a}o do Curso de P\'{o}s-Gradua\c{c}\~{a}o em Ci\^{e}ncia da Computa\c{c}\~{a}o da Universidade Federal de Campina Grande - Campus I como parte dos requisitos necess\'{a}rios para obten\c{c}\~{a}o do grau de \Grau.
+   \parbox[t]{122mm}{ \manuscrito\hspace{1pt} submetida \`{a} Coordena\c{c}\~{a}o do Curso de P\'{o}s-Gradua\c{c}\~{a}o em Inform\'{a}tica da Universidade Federal de Campina Grande - Campus I como parte dos requisitos necess\'{a}rios para obten\c{c}\~{a}o do grau de \Grau.
 \ \vskip 3em \begin{center} \'Area de
    Concentra\c{c}\~{a}o: \@Area \\
    Linha de Pesquisa: \@Pesquisa

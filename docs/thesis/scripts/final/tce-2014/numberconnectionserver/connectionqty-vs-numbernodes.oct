@@ -8,8 +8,8 @@ legendfontsize = 16;
 
 graphdata=load("-force", "connectionqty");
 
-x = {"Denacast (Unconnected Mesh)",
-	 "Denacast (Connected Mesh)",
+x = {"Connected Mesh",
+	 "Unconnected Mesh",
      "GMTP"};
 #xlabels = [10, 30, 70, 150, 310, 630, 1270, 2550, 5110, 10230]; #graphdata(:, 1);
 #xlabels = graphdata(:, 1);
