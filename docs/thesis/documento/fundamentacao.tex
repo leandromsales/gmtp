@@ -1,4 +1,4 @@
-\chapter{Fundamentação}
+\chapter{Fundamentação Teórica}
 \label{cap:fundamentacao}
 
 % \begin{center}
@@ -30,7 +30,9 @@ A concepção de protocolos de rede para sistemas de distribuição de conteúdos mul
 
 Neste capítulo, apresentam-se
 % os protocolos existentes para gerenciamento e sincronização de mídias ao vivo na Internet, bem como 
-as principais estruturas adotadas nos sistemas de distribuição de mídias ao vivo e as funções básicas empregadas nesses sistemas. Por fim, como complemento, discute-se brevemente sobre criptografia e assinatura digital, compreendendo alguns conceitos aplicados ao GMTP para evitar ataques de poluição. Caso o leitor se considera familiarizado com esses assuntos, recomenda-se, pelo menos, a leitura do sumário deste capítulo, disponível na Seção~\ref{sec:fundamentacao-sumario}. Caso necessário, sugere-se as seguintes referências complementares:
+as principais estruturas adotadas nos sistemas de distribuição de mídias ao vivo e as funções básicas empregadas nesses sistemas.
+% Por fim, como complemento, discute-se brevemente sobre criptografia e assinatura digital, compreendendo alguns conceitos aplicados ao GMTP para evitar ataques de poluição.
+Caso o leitor se considera familiarizado com esses assuntos, recomenda-se, pelo menos, a leitura do sumário deste capítulo, disponível na Seção~\ref{sec:fundamentacao-sumario}. Caso necessário, sugere-se as seguintes referências complementares:
 
 \begin{itemize}
 
@@ -1357,14 +1359,14 @@ Os sistemas baseados em árvore têm uma estrutura sobreposta bem organizada e,
 tipicamente, distribuem o fluxo de vídeo enviando dos nós pais para seus nós filhos.
 Um dos maiores problemas desta abordagem é que os nós são vulneráveis à entrada e
 abandono dos nós participantes da rede
-(\textit{churns})~\cite{cui_optimizing_2008,magharei_mesh_2007}. Assim, quando
+(\textit{churns})~\cite{cui_optimizing_2008,magharei_mesh_2007-1}. Assim, quando
 um participante deixa a rede, a estrutura de árvore se rompe e parte do sistema
 sofre, temporariamente, uma suspensão no fluxo do vídeo, o que impacta diretamente no usuário final por ter a reprodução da mídia interrompida.
 
 Cada nó do sistema se conecta à árvore em um certo nível. Em seguida, cada nó
 recebe o vídeo de seus pais, no nível superior, e reenvia o conteúdo aos seus
 filhos, no nível mais baixo. Algumas aplicações, como
-Overcast~\cite{jannotti_overcast:_2000}, utilizam esta abordagem. Na
+Overcast~\cite{Jannotti:2000:ORM:1251229.1251243}, utilizam esta abordagem. Na
 Figura~\ref{fig:mod_sis_p2p_aovivo_arvore}, ilustra-se um sistema com quinze nós
 participantes.
 
@@ -1417,7 +1419,7 @@ distribuída~\cite{tran_zigzag:_2003}. Mesmo assim, uma abordagem baseada em
 dinâmica dos nós participantes, pois a constante interrupção do fluxo e a
 reconstrução da árvore de envio de fluxo contínuo podem causar uma sensação de
 baixa qualidade no serviço
-oferecido~\cite{cui_optimizing_2008,guo_survey_2008,magharei_mesh_2007}.
+oferecido~\cite{cui_optimizing_2008,guo_survey_2008,magharei_mesh_2007-1}.
 
 Outro problema encontrado ao se usar uma árvore simples é que os nós, que
 estão na folha da árvore, acabam por não contribuir com o sistema. Assim a
@@ -1467,7 +1469,7 @@ demais nós parceiros, com os quais eles mantêm contato. Caso seja do interesse
 de um nó participante, este pode encontrar novos nós parceiros para manter um
 nível de conectividade alto. Um alto grau de conectividade faz com que a
 estrutura em malha se torne robusta à dinâmica dos nós participantes do sistema.
-Trabalhos recentes, como o disponível na referência~\cite{magharei_mesh_2007},
+Trabalhos recentes, como o disponível na referência~\cite{magharei_mesh_2007-1},
 mostram que uma estrutura baseada em malha tem um desempenho superior a uma
 estrutura baseada em árvores.
 
@@ -1702,9 +1704,9 @@ sistema recebem a mídia gerada em $S$, dividida em diversas partes, conhecidos
 por \textit{chunks}, reproduzindo-as e repassando-as para seus nós parceiros.
 
 Mais detalhadamente, os sistemas P2P para envio de mídia contínua ao vivo usam
-recursos do conjunto $P = p_1, p_2, ..., p_n$ de seus nós participantes para
+recursos do conjunto $C = c_1, c_2, ..., c_n$ de seus nós participantes para
 repassar o conteúdo que é transmitido pelo servidor $S$. Cada nó participante
-$p_i$ é livre para entrar e sair do sistema a qualquer momento. Tal
+$c_i$ é livre para entrar e sair do sistema a qualquer momento. Tal
 comportamento diferencia a aplicação de transmissão ao vivo em P2P de aplicações
 baseadas em IP \textit{multicast}, pois, em IP \textit{multicast} a estrutura
 formada é pouco dinâmica.
@@ -1712,58 +1714,58 @@ formada é pouco dinâmica.
 Os sistemas mais populares de envio de mídia ao vivo em P2P utilizam uma rede
 sobreposta baseada em malha. Mais ainda, no modelo de malha, a rede não é
 estruturada de forma rígida e as parcerias no sistema são formadas
-aleatoriamente. As interações e trocas de dados entre os nós participantes $p_i$
-e $p_j$, com $i \neq j$, são normalmente orientadas pelos pedidos de dados e
-informações entre $p_i$ e $p_j$. Assim, esse tipo de rede sobreposta do tipo
+aleatoriamente. As interações e trocas de dados entre os nós participantes $c_i$
+e $C_j$, com $i \neq j$, são normalmente orientadas pelos pedidos de dados e
+informações entre $c_i$ e $c_j$. Assim, esse tipo de rede sobreposta do tipo
 malha é utilizada para aliviar os efeitos de entrada e saída dos nós
 participantes na rede~\cite{li_zhao_gridmedia:_2005,zhao_gridmedia+:_2009}.
 
 O funcionamento desse tipo de sistema acontece da seguinte forma: inicialmente,
-um nó $p_i$ conecta-se a um servidor centralizado de inicialização, denominado
-de \textit{bootstrap} $B$ ou rastreador. Na inicialização de $p_i$, o servidor
-$B$ envia um subconjunto, dos nós do sistema para o nó $p_i$. Esse
+um nó $c_i$ conecta-se a um servidor centralizado de inicialização, denominado
+de \textit{bootstrap} $B$ ou rastreador. Na inicialização de $c_i$, o servidor
+$B$ envia um subconjunto, dos nós do sistema para o nó $c_i$. Esse
 subconjunto é definido por $LPC_i$ ($LPC_i \subseteq P$ e $LPC_i \neq
-\emptyset$) e é a lista inicial dos nós candidatos a parceiros do nó $p_i$.
+\emptyset$) e é a lista inicial dos nós candidatos a parceiros do nó $c_i$.
 Além de se registrar e obter uma lista de candidatos a parceiros, o novo nó
 sincroniza a posição atual da mídia ao vivo com a posição informada pelo
-servidor $B$~\cite{zhao_gridmedia+:_2009}. Assim, $p_i$ tem uma referência do
+servidor $B$~\cite{zhao_gridmedia+:_2009}. Assim, $c_i$ tem uma referência do
 ponto da mídia ao vivo que está sendo gerada pelo servidor $S$ e saberá a partir
 de qual ponto deverá solicitar os dados para reproduzir a mídia ao vivo.
 
-O novo nó $p_i$ seleciona, aleatoriamente, uma quantidade $n$ de nós de $LPC_i$
+O novo nó $c_i$ seleciona, aleatoriamente, uma quantidade $n$ de nós de $LPC_i$
 como parceiros candidatos. Estes nós candidatos formarão o conjunto de parceiros
-de $p_i$, denominado $LP_i$ ($LP_i \subseteq LPC_i$). Os conjuntos $LPC_i$ e
-$LP_i$ são dinâmicos, pois cada nó $p_j$ está livre para abandonar o sistema.
-Quando $p_j \in LP_i$ e o nó $p_i$ detecta a inatividade deste parceiro, $p_i$
-remove $p_j$ de $LPC_i$ e $LP_i$ e seleciona um novo elemento de $LPC_i$ para
+de $c_i$, denominado $LP_i$ ($LP_i \subseteq LPC_i$). Os conjuntos $LPC_i$ e
+$LP_i$ são dinâmicos, pois cada nó $c_j$ está livre para abandonar o sistema.
+Quando $c_j \in LP_i$ e o nó $c_i$ detecta a inatividade deste parceiro, $c_i$
+remove $c_j$ de $LPC_i$ e $LP_i$ e seleciona um novo elemento de $LPC_i$ para
 criar uma nova parceria.
 
-O nó $p_i$ sempre tenta manter sua $LPC_i$ com um número de candidatos acima de
+O nó $c_i$ sempre tenta manter sua $LPC_i$ com um número de candidatos acima de
 um limiar $L_i$. O valor de $L_i$ pode ser dado pela capacidade de recurso de
 cada nó, como banda de rede ou número de conexões disponível. Assim, quando
-$|LPC_i| < L_i$, então $p_i$ recorre ao servidor $B$ para obter novos elementos
+$|LPC_i| < L_i$, então $c_i$ recorre ao servidor $B$ para obter novos elementos
 para $LPC_i$.
 
-Cada nó $p_i$ também contém um mapa de partes da mídia de tamanho \textit{m},
+Cada nó $c_i$ também contém um mapa de partes da mídia de tamanho \textit{m},
 representado por $cm_i$. Esse mapa sinaliza os \textit{chunks}
-da mídia que o nó $p_i$ contém ou necessita. Ou seja, o mapa $cm_i$
+da mídia que o nó $c_i$ contém ou necessita. Ou seja, o mapa $cm_i$
 representa um trecho contínuo da mídia transmitida ao vivo pelo sistema P2P que
-será reproduzida pelo nó $p_i$.
+será reproduzida pelo nó $c_i$.
 
 Inicialmente, cada posição do mapa é marcada como \aspas{desejada}, ou seja,
-$cm_i[x] = desejada$, onde $x = [0..m]$. Periodicamente, $p_i$ requisita
-$cm_j$ a cada um de seus parceiros $p_j$, com ($p_j \in LPi$). Dessa forma,
-$p_i$ verifica quais parceiros podem satisfazer a sua necessidade por
-determinado \textit{chunk} $c_t$. Quando $p_i$ recebe um \textit{chunk}
-\textit{x} qualquer, $p_i$ marca $cm_i[x] = disponivel$.
+$cm_i[x] = desejada$, onde $x = [0..m]$. Periodicamente, $c_i$ requisita
+$cm_j$ a cada um de seus parceiros $c_j$, com ($c_j \in LPi$). Dessa forma,
+$c_i$ verifica quais parceiros podem satisfazer a sua necessidade por
+determinado \textit{chunk} $c_t$. Quando $c_i$ recebe um \textit{chunk}
+$x$ qualquer, $c_i$ marca $cm_i[x] = disponivel$.
 
-Periodicamente, $p_i$ verifica quais \textit{chunks} $c_t$ são necessários
-($cm_i[c_t] = desejada$) e verifica entre seus parceiros $p_j$, com $p_j \in
-LP_i$, quais possuem o \textit{chunk} $c_t$ com $cm_j [c_t] = disponivel$. O
-parceiro $p_j$ que contém o \textit{chunk} $c_t$ e que possui maior
-disponibilidade de recursos é escolhido por $p_i$ para a realização do
-pedido de \textit{chunk}. Quando $p_i$ recebe o \textit{chunk} $c_t$ de $p_j$,
-$p_i$ marca $cm_i[c_t] = disponivel$. Os processos de escolha do \textit{chunk}
+Periodicamente, $c_i$ verifica quais \textit{chunks} $x$ são necessários
+($cm_i[x] = desejada$) e verifica entre seus parceiros $c_j$, com $c_j \in
+LP_i$, quais possuem o \textit{chunk} $x$ com $cm_j[x] = disponivel$. O
+parceiro $c_j$ que contém o \textit{chunk} $c_t$ e que possui maior
+disponibilidade de recursos é escolhido por $c_i$ para a realização do
+pedido de \textit{chunk}. Quando $c_i$ recebe o \textit{chunk} $x$ de $c_j$,
+$c_i$ marca $cm_i[x] = disponivel$. Os processos de escolha do \textit{chunk}
 a ser requisitado e a escolha do parceiro serão detalhados nas seções seguintes.
 Na Tabela~\ref{tab:param_sis_p2p}, apresentam-se as notações utilizadas para descrever um sistema P2P de transmissão ao vivo.
 
@@ -1790,12 +1792,12 @@ Na Tabela~\ref{tab:param_sis_p2p}, apresentam-se as notações utilizadas para des
 \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{\textit{Bootstrap} ou rastreador do sistema.}
 	    \\
 
-\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{$P = p_1, p_2,..., p_n$} &
+\multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{$C = c_1, c_2,..., c_n$} &
 \multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Conjunto dos nós
 participantes do sistema.}
 	    \\
 
-\multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{$p_i$} &
+\multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{$c_i$} &
 \multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Nó participante $i$
 do sistema}
 	    \\
@@ -1810,15 +1812,15 @@ nós parceiros candidatos de $i$.}
 	    \\
 
 \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{$L_i$} &
-\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Número mínimo de nós candidatos $p_i$.}
+\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Número mínimo de nós candidatos $c_i$.}
 	    \\
 
 \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{$cm_i$} &
-\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Mapa de \textit{chunks} de $p_i$.}
+\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Mapa de \textit{chunks} de $c_i$.}
 	    \\
 
 \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{$cm_i[x] = desejada$, onde $x = [0..m]$} &
-\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Conteúdo inicial do mapa de \textit{chunks} de $p_i$.}
+\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Conteúdo inicial do mapa de \textit{chunks} de $c_i$.}
 	    \\
 
             \hline
@@ -1872,11 +1874,11 @@ Na Tabela~\ref{tab:param_sis_p2p_geracao}, apresentam-se as notações para descre
 	    \\
 
 \multicolumn{1}{|>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{$cm_i$} &
-\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Mapa de \textit{chunks} de $p_i$.}
+\multicolumn{1}{>{\columncolor[rgb]{0.913,0.929,0.957}}l|}{Mapa de \textit{chunks} de $c_i$.}
 	    \\
 
 \multicolumn{1}{|>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{$cm_i[x] = desejada$, onde $x = [0..m]$} &
-\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Conteúdo inicial do mapa de \textit{chunks} de $p_i$.}
+\multicolumn{1}{>{\columncolor[rgb]{0.66,0.7,0.759}}l|}{Conteúdo inicial do mapa de \textit{chunks} de $c_i$.}
 	    \\
             \hline
 
@@ -1906,9 +1908,9 @@ Cada nó do sistema apresenta uma área de armazenamento temporário $B_i$
 (\textit{Buffer}), onde são armazenados os dados da mídia recebidos da rede P2P.
 Esse \textit{buffer} pode guardar uma quantidade pré-determinada de
 \textit{chunks}. Inicialmente, cada posição \textit{j} de $B_i$ ($B_i[j]$) é
-inicializada com conteúdo vazio e, à medida que $p_i$ recebe os \textit{chunks}
+inicializada com conteúdo vazio e, à medida que $c_i$ recebe os \textit{chunks}
 de seus parceiros, cada posição vai sendo preenchida. Nesse esquema de
-armazenamento temporário, o nó $p_i$ tem por objetivo manter o \textit{buffer}
+armazenamento temporário, o nó $c_i$ tem por objetivo manter o \textit{buffer}
 $B_i$ preenchido de forma que se garanta uma contínua exibição da mídia ao vivo,
 mesmo se este perder conexão temporariamente com seus parceiros.
 
@@ -1922,9 +1924,9 @@ a posição mais recentemente a ser preenchida será $B_i[b]$ (\textit{b} é a
 Para manter uma visualização constante e sem interrupções, a aplicação deve
 obter alguns dados à frente do momento de exibição. Então, caso ocorra um
 problema temporário na rede P2P, há alguns dados armazenados no \textit{buffer}.
-A cada intervalo de tempo, o nó $p_i$ verifica quais \textit{chunks} devem ser
+A cada intervalo de tempo, o nó $c_i$ verifica quais \textit{chunks} devem ser
 consumidos em uma janela de tempo futura. Os \textit{chunks} pertencentes a
-essa janela de interesse deverão ser recolhidos da rede enquanto $p_i$ executa
+essa janela de interesse deverão ser recolhidos da rede enquanto $c_i$ executa
 os dados relativos aos \textit{chunks} anteriores a essa janela.
 
 O tamanho da janela de interesse deve ser pequeno para não possibilitar a
@@ -1977,11 +1979,11 @@ CoolStreaming~\cite{susu_xie_coolstreaming:_2007}. A segunda estratégia
 
 \subsubsection{Estratégia \aspas{Mais Raro Primeiro}:}
 
-Na estratégia \aspas{Mais Raro Primeiro}, um nó $p_i$ irá requisitar o
+Na estratégia \aspas{Mais Raro Primeiro}, um nó $c_i$ irá requisitar o
 \textit{chunk} que está menos replicado pelo sistema de transmissão.
 
 Para exemplificar essa estratégia, considere o \textit{buffer} $B_i$ do nó
-participante $p_i$. A posição $B_i[0]$ será a mais rara e está vazia, pois
+participante $c_i$. A posição $B_i[0]$ será a mais rara e está vazia, pois
 acabara de ser criada pelo servidor $S$. A probabilidade de encontrar um
 parceiro que tenha esse dado disponível cresce com o tempo. Assim, no próximo
 intervalo de tempo, o \textit{chunk} da posição $B_i[0]$ irá para a posição
@@ -1995,59 +1997,59 @@ em ordem crescente.
 
 Por outro lado, a estratégia \aspas{Gulosa} tem como objetivo preencher os
 espaços do \textit{buffer} que estão próximos de seu prazo final de
-visualização. Assim, um nó $p_i$ selecionará o \textit{chunk} mais próximo à
+visualização. Assim, um nó $c_i$ selecionará o \textit{chunk} mais próximo à
 posição de visualização no seu \textit{buffer} $B_i$. Por motivos de
 simplificação, pode-se considerar o \textit{chunk} final do \textit{buffer}
 ($B_i[b]$) como sendo o elemento de próximo prazo final para visualização.
-Sendo assim, o nó $p_i$ selecionará o \textit{chunk} $B_i[b]$ caso este não
+Sendo assim, o nó $c_i$ selecionará o \textit{chunk} $B_i[b]$ caso este não
 esteja preenchido em seu \textit{buffer}, depois o \textit{chunk} $B_i[n-1]$ e
 assim por diante. Desse modo, os nós do sistema tendem a ter armazenado em seus
 \textit{buffers} os dados mais antigos produzidos pelo servidor $S$.
 
 \subsection{Realização de parcerias e obtenção de \textit{chunks}}
 
-Um nó $p_i$ realiza parcerias logo após seu primeiro contato com o servidor de
+Um nó $c_i$ realiza parcerias logo após seu primeiro contato com o servidor de
 \textit{boostrap} $B$. A partir do estabelecimento das parcerias iniciais, o nó
 efetivamente começa a participar do sistema de envio de mídia contínua ao vivo
 em P2P. Além deste momento inicial de estabelecimento de parcerias, um nó pode
-ser contatado por um outro nó participante $p_j$, requisitando sua parceria ou
-$p_i$ pode tentar novas parcerias para aumentar sua conectividade.
+ser contatado por um outro nó participante $c_j$, requisitando sua parceria ou
+$c_i$ pode tentar novas parcerias para aumentar sua conectividade.
 
 Tanto no estabelecimento inicial de parcerias, quanto na descoberta de novos nós
-parceiros para aumento da conectividade, o nó $p_i$ recorre à lista de nós
+parceiros para aumento da conectividade, o nó $c_i$ recorre à lista de nós
 parceiros candidatos $LPC_i$ para selecionar um nó, ao qual envia uma requisição
 de parceria. Vários critérios podem ser utilizados para a escolha do candidato
-$p_k$, como uma escolha aleatória entre os nós pertencentes a $LPC_i$, com base
-nos recursos disponíveis em $p_k$, proximidade temporal ou até mesmo proximidade
+$c_k$, como uma escolha aleatória entre os nós pertencentes a $LPC_i$, com base
+nos recursos disponíveis em $c_k$, proximidade temporal ou até mesmo proximidade
 geográfica, informados por $B$ ou por comunicação direta entre os parceiros.
 
-Uma vez selecionado o nó candidato, $p_i$ envia uma mensagem de pedido de
-parceria ao nó candidato $p_k$, selecionado de $LPC_i$. Caso $p_k$ tenha
+Uma vez selecionado o nó candidato, $c_i$ envia uma mensagem de pedido de
+parceria ao nó candidato $c_k$, selecionado de $LPC_i$. Caso $c_k$ tenha
 recursos disponíveis (por exemplo, banda de rede, conexões disponíveis na
-aplicação etc.), este adiciona $p_i$ à $LP_k$ e responde a solicitação de $p_i$.
-Quando $p_i$ recebe a resposta de $p_k$, este adiciona $p_k$ à $LPC_i$ e a nova
-parceria é de fato estabelecida. No momento que um nó $p_i$ adiciona um novo nó
-parceiro $p_k$ à $LPC_i$, este inicia um temporizador $t_{ik}$, o qual é
+aplicação etc.), este adiciona $c_i$ à $LP_k$ e responde a solicitação de $c_i$.
+Quando $c_i$ recebe a resposta de $c_k$, este adiciona $c_k$ à $LPC_i$ e a nova
+parceria é de fato estabelecida. No momento que um nó $c_i$ adiciona um novo nó
+parceiro $c_k$ à $LPC_i$, este inicia um temporizador $t_{ik}$, o qual é
 acionado em intervalos de tempo $tp_i$. A cada expiração do temporizador
-$t_{ik}$, o nó $p_i$ envia uma mensagem ao nó parceiro $p_k$ para verificar seu
+$t_{ik}$, o nó $c_i$ envia uma mensagem ao nó parceiro $c_k$ para verificar seu
 estado na aplicação. O objetivo desta mensagem é verificar se a parceria está
 ativa, além de haver troca de informações, como os mapas de \textit{chunks} de
 ambos os nós.
 
-A partir da seleção de $p_k$, o nó $p_i$ envia uma requisição pelo
-\textit{chunk} de interesse $c_j$. Quando $p_k$ recebe um pedido por dados vindo
-de um parceiro ativo $p_i \in LP_k$, este cria uma mensagem de resposta contendo
-o \textit{chunk} $c_j$ requisitado e o envia ao nó $p_i$. Caso o pedido seja
-enviado por um nó não parceiro, ou seja, $pi \notin LP_k$, $p_k$ ignora o pedido
-por $c_j$, mas adiciona $p_i$ à lista de nós parceiros candidatos $LPC_k$. O nó
-$p_i$ espera a resposta de $p_k$ acerca do pedido de parceria por um
-intervalo de tempo $tp_i$. Caso $p_k$ não responda no intervalo de tempo $tp_i$,
-$p_i$ remove $p_k$ de sua $LP_i$. Caso $p_i$ receba a resposta de $p_k$, $p_i$
-atualiza os dados relativos a $p_k$, como por exemplo, o mapa de \textit{chunks}
+A partir da seleção de $c_k$, o nó $c_i$ envia uma requisição pelo
+\textit{chunk} de interesse $c_j$. Quando $c_k$ recebe um pedido por dados vindo
+de um parceiro ativo $c_i \in LP_k$, este cria uma mensagem de resposta contendo
+o \textit{chunk} $c_j$ requisitado e o envia ao nó $c_i$. Caso o pedido seja
+enviado por um nó não parceiro, ou seja, $pi \notin LP_k$, $c_k$ ignora o pedido
+por $c_j$, mas adiciona $c_i$ à lista de nós parceiros candidatos $LPC_k$. O nó
+$c_i$ espera a resposta de $c_k$ acerca do pedido de parceria por um
+intervalo de tempo $tp_i$. Caso $c_k$ não responda no intervalo de tempo $tp_i$,
+$c_i$ remove $c_k$ de sua $LP_i$. Caso $c_i$ receba a resposta de $c_k$, $c_i$
+atualiza os dados relativos a $c_k$, como por exemplo, o mapa de \textit{chunks}
 $cm_k$. Se o pedido pelo \textit{chunk} $c_j$ for respondido durante o intervalo
-de tempo esperado, $p_i$ coloca o novo dado em seu \textit{buffer} de reprodução
+de tempo esperado, $c_i$ coloca o novo dado em seu \textit{buffer} de reprodução
 e o assinala como disponível em seu mapa de \textit{chunks}, ou seja, $cm_i[c_j]
-= disponivel$. Fazendo-se dessa forma, $p_i$ passa a ter a capacidade de
+= disponivel$. Fazendo-se dessa forma, $c_i$ passa a ter a capacidade de
 compartilhar o \textit{chunk} recebido com seus nós parceiros. Esse processo
 pode ser repetido até que o \textit{chunk} $c_i$ seja recebido corretamente, ou
 que não faça mais sentido obter aquele determinado \textit{chunk}, por exemplo,
@@ -2087,146 +2089,146 @@ por já ter passado o seu tempo de visualização.
 % \end{table}
 
 
-\section{Criptografia de Hash e Assinatura Digital}
-\label{sec:crypthashdigitalsign}
-
-Mudando de assunto, nesta seção, discute-se sobre os aspectos de criptografia
-baseada em chaves assimétricas, funções de \textit{hash} e assinatura digital.
-Os conceitos apresentados aqui, adaptado de~\cite{upnp-up-dissertacao}, são
-base para o entendimento de como, no protocolo proposta neste trabalho,
-verifica-se a autenticidade de um conjunto de pacotes de dados, que corresponde
-a um fluxo de dados multimídia de um evento ao vivo, transmitido por um servidor
-para um ou mais clientes. Com relação a certificação digital, seu uso permite
-que os nós clientes em uma transmissão possam confiar no conteúdo recebido de
-outros sistemas remotos, através da validação do conteúdo transportado dentro de
-um pacote de dados, ou seja, se tal conteúdo foi realmente emitido pelo nó
-gerador do fluxo de dados de interesse do nó cliente.
-
-Especificamente, os conceitos apresentados a seguir são base para o
-entendimento do mecanismo de verificação de autenticidade de um
-fluxo de dados multimídia transmitido por um sistema final servidor e recebido
-por um sistema final cliente, através da utilização do protocolo GMTP.
-Este assunto é discutido no Capítulo~\ref{cap:mudccp},
-Seção~\ref{sec:seguranca}.
-
-\subsection{Criptografia de hash}
-
-Uma função de \textit{hash}~\cite{efficiente-hash-chain} $H(m)$ permite
-transformar uma mensagem \textit{m} de qualquer tamanho em um identificador
-digital \textit{m'} de tamanho fixo, chamado de valor de \textit{hash}. Uma vez
-obtido \textit{m'} para uma mensagem \textit{m}, é computacionalmente impossível
-fazer o processo inverso, ou seja, encontrar o valor \textit{m} tal que $H(m) =
-m'$. Desta forma, uma função de \textit{hash} tem a propriedade de ser uma
-função ``\textit{one way'}'. Além disso, este tipo de função deve oferecer as
-seguintes características:
-
-\begin{itemize}
- \item $H(m)$ é relativamente fácil de ser computado, para qualquer valor de
-\textit{m};
- \item $H(m)$ é livre de colisão. Ou seja, para quaisquer duas mensagens
-\textit{$m_{1}$} e \textit{$m_{2}$}, com $m_{1} \neq m_{2}$, deve-se sempre
-obter $H(m_{1}) \neq H(m_{2})$.
-\end{itemize}
-
-Algoritmos de \textit{hash} são amplamente utilizados em diversos contextos dos
-sistemas de informação, tais como em indexação em tabelas de
-\textit{hash}, detecção de dados duplicados, arquivos corrompidos etc. Os
-algoritmos de \textit{hash} também podem ser utilizados em processos de
-autenticação, tais como assinatudas digitais, verificações de senhas e cadeias
-de \textit{hash} (\textit{One-Way chains})~\cite{lamport}.
-
-\subsection{Criptografia assimétrica}
-
-Como ilustra-se na Figura~\ref{fig:criptografia}, em criptografia assimétrica
-um sistema final transmissor de uma mensagem criptografa o conteúdo a ser
-transmitido utizando a chave pública do sistema final receptor. Por sua vez, o
-sistema final receptor, ao receber a mensagem criptografada, utiliza sua chave
-privada, combinada com sua chave pública, para decifrar o conteúdo. Sendo
-assim, apenas o sistema final receptor pode decifrar o conteúdo da mensagem,
-uma vez que apenas tal sistema conhece a chave privada. Nesse contexto, a chave
-privada é representada por $K^{-}_{A}$, ao passo que a chave pública é
-representada por $K^{+}_{A}$.
-
-\begin{figure}[ht]
- \centering
- \includegraphics[scale=0.5]{imagens/CriptoAsym.pdf}
- \caption{Modelo de criptografia assimétrica, chave pública representada por
-$K^{+}$ e chave privada presentada por $K^{-}$.}
- \label{fig:criptografia}
-\end{figure}
-
-\subsection{Assinatura e certificação digital}
-\label{subsec:sign-digital-certificate}
-
-Uma assinatura digital~\cite{802657} é um modelo de autenticação de informações
-digitais tipicamente análoga à assinatura física em papel. Através de uma
-assinatura digital, pode-se provar que uma mensagem foi realmente enviada pelo
-emissor, o receptor pode confirmar que a assinatura foi feita pelo emissor
-(autenticidade) e que qualquer alteração da mensagem faz com que a assinatura
-digital não corresponda mais à mensagem (integridade). Basicamente, uma
-assinatura digital é construída a partir da combinação das funções de
-\textit{hash} e dos algoritmos de criptografia assimétrica.
-
-Como ilustra-se na Figura~\ref{fig:digital-sign}, para que um sistema final
-\textit{A} envie uma mensagem \textit{m} assinada digitalmente ao sistema
-final \textit{B}, o sistema final \textit{A} aplica uma função de \textit{hash}
-à mensagem original \textit{m}, gerando \textit{m'} e, em seguida, cifra
-\textit{m'} utilizando sua chave privada, resultando na assinatura digital. A
-mensagem e a assinatura digital são enviadas ao receptor através de um canal de
-comunicação.
-
-\begin{figure}[ht]
- \centering
- \includegraphics[scale=0.5]{imagens/DigitalSign.pdf}
- \caption{Geração de Assinaturas Digitais.}
- \label{fig:digital-sign}
-\end{figure}
-
-Quando o sistema final \textit{B} recebe a mensagem \textit{m} transmitida pelo
-sistema final \textit{A}, o sistema final \textit{B} comprova a autenticidade da
-mensagem realizando dois procedimentos:
-
-\begin{itemize}
-
-  \item calcula-se o valor de \textit{hash} da mensagem \textit{m},
-resultando em \textit{$m'_{recebida}$}); e
-
-  \item decifra-se a assinatura digital com a chave pública do sistema final
-\textit{A}, que deve resultar em \textit{$m'_{enviada}$}. Em seguida,
-conclui-se o seguinte:
-
-  \begin{itemize}
-
-    \item Se \textit{$m'_{recebida}$} $=$ \textit{$m'_{enviada}$}, a mensagem
-\textit{m} está íntegra, ou seja, a mensagem \textit{m} não sofreu qualquer
-alteração. Sendo assim, a assinatura está correta, pois foi gerada pela chave
-privada corresponde à chave pública utilizada na verificação; ou
-
-    \item Se \textit{$m'_{recebida}$} $\neq$ \textit{$m'_{enviada}$}, a
-a mensagem \textit{m} foi alterada, ou seja, a assinatura digital emitida pelo
-sistema final \textit{A} não corresponde à mensagem \textit{m}.
-
-  \end{itemize}
-
-\end{itemize}
-
-O uso das funções de \textit{hash} pode contribuir para que o processamento da
-assinatura digital não seja comprometido devido à lentidão dos algoritmos de
-criptografia assimétrica, com rápida execução e uniforme, ou seja, independente
-do tamanho da mensagem a ser assinada. Ademais, as funções \textit{hash}
-garantem a integridade da mensagem, visto que a alteração em um bit da mensagem
-irá gerar outro valor de \textit{hash}. A criptografia assimétrica garante
-também a autenticidade e a não-repudiação do emissor, pois apenas tal emissor é
-capaz de cifrar a mensagem com a chave privada correspondente à chave pública
-utilizada pelo receptor para checar a autenticidade da mensagem.
-
-Os mecanismos oferecidos pela assinatura digital é uma forma eficaz de garantir
-a autoria de documentos eletrônicos. Em agosto de 2001, a Medida Provisória da
-República do Brasil, número 2.200~\cite{icp-brasil} (\textit{Infra-Estrutura de
-Chaves Públicas Brasileira - ICP-Brasil}), foi publicada para garantir a
-validade jurídica de documentos eletrônicos e a utilização de certificados
-digitais para atribuir autenticidade e integridade aos documentos, formalizando
-o conceito de assinatura digital.
+% \section{Criptografia de Hash e Assinatura Digital}
+% \label{sec:crypthashdigitalsign}
+% 
+% Mudando de assunto, nesta seção, discute-se sobre os aspectos de criptografia
+% baseada em chaves assimétricas, funções de \textit{hash} e assinatura digital.
+% Os conceitos apresentados aqui, adaptado de~\cite{upnp-up-dissertacao}, são
+% base para o entendimento de como, no protocolo proposta neste trabalho,
+% verifica-se a autenticidade de um conjunto de pacotes de dados, que corresponde
+% a um fluxo de dados multimídia de um evento ao vivo, transmitido por um servidor
+% para um ou mais clientes. Com relação a certificação digital, seu uso permite
+% que os nós clientes em uma transmissão possam confiar no conteúdo recebido de
+% outros sistemas remotos, através da validação do conteúdo transportado dentro de
+% um pacote de dados, ou seja, se tal conteúdo foi realmente emitido pelo nó
+% gerador do fluxo de dados de interesse do nó cliente.
+% 
+% Especificamente, os conceitos apresentados a seguir são base para o
+% entendimento do mecanismo de verificação de autenticidade de um
+% fluxo de dados multimídia transmitido por um sistema final servidor e recebido
+% por um sistema final cliente, através da utilização do protocolo GMTP.
+% Este assunto é discutido no Capítulo~\ref{cap:mudccp},
+% Seção~\ref{sec:seguranca}.
+% 
+% \subsection{Criptografia de hash}
+% 
+% Uma função de \textit{hash}~\cite{efficiente-hash-chain} $H(m)$ permite
+% transformar uma mensagem \textit{m} de qualquer tamanho em um identificador
+% digital \textit{m'} de tamanho fixo, chamado de valor de \textit{hash}. Uma vez
+% obtido \textit{m'} para uma mensagem \textit{m}, é computacionalmente impossível
+% fazer o processo inverso, ou seja, encontrar o valor \textit{m} tal que $H(m) =
+% m'$. Desta forma, uma função de \textit{hash} tem a propriedade de ser uma
+% função ``\textit{one way'}'. Além disso, este tipo de função deve oferecer as
+% seguintes características:
+% 
+% \begin{itemize}
+%  \item $H(m)$ é relativamente fácil de ser computado, para qualquer valor de
+% \textit{m};
+%  \item $H(m)$ é livre de colisão. Ou seja, para quaisquer duas mensagens
+% \textit{$m_{1}$} e \textit{$m_{2}$}, com $m_{1} \neq m_{2}$, deve-se sempre
+% obter $H(m_{1}) \neq H(m_{2})$.
+% \end{itemize}
+% 
+% Algoritmos de \textit{hash} são amplamente utilizados em diversos contextos dos
+% sistemas de informação, tais como em indexação em tabelas de
+% \textit{hash}, detecção de dados duplicados, arquivos corrompidos etc. Os
+% algoritmos de \textit{hash} também podem ser utilizados em processos de
+% autenticação, tais como assinatudas digitais, verificações de senhas e cadeias
+% de \textit{hash} (\textit{One-Way chains})~\cite{lamport}.
+% 
+% \subsection{Criptografia assimétrica}
+% 
+% Como ilustra-se na Figura~\ref{fig:criptografia}, em criptografia assimétrica
+% um sistema final transmissor de uma mensagem criptografa o conteúdo a ser
+% transmitido utizando a chave pública do sistema final receptor. Por sua vez, o
+% sistema final receptor, ao receber a mensagem criptografada, utiliza sua chave
+% privada, combinada com sua chave pública, para decifrar o conteúdo. Sendo
+% assim, apenas o sistema final receptor pode decifrar o conteúdo da mensagem,
+% uma vez que apenas tal sistema conhece a chave privada. Nesse contexto, a chave
+% privada é representada por $K^{-}_{A}$, ao passo que a chave pública é
+% representada por $K^{+}_{A}$.
+% 
+% \begin{figure}[ht]
+%  \centering
+%  \includegraphics[scale=0.5]{imagens/CriptoAsym.pdf}
+%  \caption{Modelo de criptografia assimétrica, chave pública representada por
+% $K^{+}$ e chave privada presentada por $K^{-}$.}
+%  \label{fig:criptografia}
+% \end{figure}
+% 
+% \subsection{Assinatura e certificação digital}
+% \label{subsec:sign-digital-certificate}
+% 
+% Uma assinatura digital~\cite{802657} é um modelo de autenticação de informações
+% digitais tipicamente análoga à assinatura física em papel. Através de uma
+% assinatura digital, pode-se provar que uma mensagem foi realmente enviada pelo
+% emissor, o receptor pode confirmar que a assinatura foi feita pelo emissor
+% (autenticidade) e que qualquer alteração da mensagem faz com que a assinatura
+% digital não corresponda mais à mensagem (integridade). Basicamente, uma
+% assinatura digital é construída a partir da combinação das funções de
+% \textit{hash} e dos algoritmos de criptografia assimétrica.
+% 
+% Como ilustra-se na Figura~\ref{fig:digital-sign}, para que um sistema final
+% \textit{A} envie uma mensagem \textit{m} assinada digitalmente ao sistema
+% final \textit{B}, o sistema final \textit{A} aplica uma função de \textit{hash}
+% à mensagem original \textit{m}, gerando \textit{m'} e, em seguida, cifra
+% \textit{m'} utilizando sua chave privada, resultando na assinatura digital. A
+% mensagem e a assinatura digital são enviadas ao receptor através de um canal de
+% comunicação.
+% 
+% \begin{figure}[ht]
+%  \centering
+%  \includegraphics[scale=0.5]{imagens/DigitalSign.pdf}
+%  \caption{Geração de Assinaturas Digitais.}
+%  \label{fig:digital-sign}
+% \end{figure}
+% 
+% Quando o sistema final \textit{B} recebe a mensagem \textit{m} transmitida pelo
+% sistema final \textit{A}, o sistema final \textit{B} comprova a autenticidade da
+% mensagem realizando dois procedimentos:
+% 
+% \begin{itemize}
+% 
+%   \item calcula-se o valor de \textit{hash} da mensagem \textit{m},
+% resultando em \textit{$m'_{recebida}$}); e
+% 
+%   \item decifra-se a assinatura digital com a chave pública do sistema final
+% \textit{A}, que deve resultar em \textit{$m'_{enviada}$}. Em seguida,
+% conclui-se o seguinte:
+% 
+%   \begin{itemize}
+% 
+%     \item Se \textit{$m'_{recebida}$} $=$ \textit{$m'_{enviada}$}, a mensagem
+% \textit{m} está íntegra, ou seja, a mensagem \textit{m} não sofreu qualquer
+% alteração. Sendo assim, a assinatura está correta, pois foi gerada pela chave
+% privada corresponde à chave pública utilizada na verificação; ou
+% 
+%     \item Se \textit{$m'_{recebida}$} $\neq$ \textit{$m'_{enviada}$}, a
+% a mensagem \textit{m} foi alterada, ou seja, a assinatura digital emitida pelo
+% sistema final \textit{A} não corresponde à mensagem \textit{m}.
+% 
+%   \end{itemize}
+% 
+% \end{itemize}
+% 
+% O uso das funções de \textit{hash} pode contribuir para que o processamento da
+% assinatura digital não seja comprometido devido à lentidão dos algoritmos de
+% criptografia assimétrica, com rápida execução e uniforme, ou seja, independente
+% do tamanho da mensagem a ser assinada. Ademais, as funções \textit{hash}
+% garantem a integridade da mensagem, visto que a alteração em um bit da mensagem
+% irá gerar outro valor de \textit{hash}. A criptografia assimétrica garante
+% também a autenticidade e a não-repudiação do emissor, pois apenas tal emissor é
+% capaz de cifrar a mensagem com a chave privada correspondente à chave pública
+% utilizada pelo receptor para checar a autenticidade da mensagem.
+% 
+% Os mecanismos oferecidos pela assinatura digital é uma forma eficaz de garantir
+% a autoria de documentos eletrônicos. Em agosto de 2001, a Medida Provisória da
+% República do Brasil, número 2.200~\cite{icp-brasil} (\textit{Infra-Estrutura de
+% Chaves Públicas Brasileira - ICP-Brasil}), foi publicada para garantir a
+% validade jurídica de documentos eletrônicos e a utilização de certificados
+% digitais para atribuir autenticidade e integridade aos documentos, formalizando
+% o conceito de assinatura digital.
 
 % \subsubsection{Certificado Digital e Autoridades Certificadoras}
 % \label{subsubsec:digital-sign-and-certificate-authorities}
@@ -3939,7 +3941,7 @@ Os nós têm um armazenamento local, onde guardam os dados do vídeo para uma execu
 
 Caso mais de um parceiro possa contribuir com o dado necessário, um nó deve escolher a qual fará a solicitação. O mecanismo adotado se baseia na disponibilidade de recursos de cada parceiro, que será escolhido de acordo com a maior quantidade de recursos disponíveis, como por exemplo, banda de rede, processamento, memória etc.
 
-Por fim, apresentaram-se alguns conceitos básicos sobre criptografia de chave pública e assinatura digital. No contexto deste trabalho, aplicam-se tais conceitos para criptografar e assinar digitalmente os dados transmitidos por um sistema de transmissão ao vivo a fim de impedir ataques de poluição.
+% Por fim, apresentaram-se alguns conceitos básicos sobre criptografia de chave pública e assinatura digital. No contexto deste trabalho, aplicam-se tais conceitos para criptografar e assinar digitalmente os dados transmitidos por um sistema de transmissão ao vivo a fim de impedir ataques de poluição.
 
 % Em seguida, apresentou-se uma visão geral da camada de transporte da pilha de
 % protocolos TCP/IP. Discutiu-se a importância da organização dos protocolos em

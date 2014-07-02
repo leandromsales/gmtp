@@ -39,7 +39,7 @@ Diversas propostas e tecnologias destinadas à distribuição de mídias ao vivo for
 \includegraphics[scale=0.55]{imgs/gmtp-posicao.pdf}
 \end{center}
 \vspace{-0.5cm}
-\caption{Representantes e marcos importantes no contexto de distribuição de mídias ao vivo. Evolução das arquiteturas e modelos de serviços adotados na Internet (incluindo o GMTP). Antes do GMTP, todas as soluções têm uma forte dependência dos sistemas finais para executar suas funções. No GMTP, os sistemas finais têm um papel coadjuvante na execução das funções, realizando-se parcerias entre os roteadores da rede.}
+\caption[Representantes e marcos importantes no contexto de distribuição de mídias ao vivo]{Representantes e marcos importantes no contexto de distribuição de mídias ao vivo. Evolução das arquiteturas e modelos de serviços adotados na Internet (incluindo o GMTP). Antes do GMTP, todas as soluções têm uma forte dependência dos sistemas finais para executar suas funções. No GMTP, os sistemas finais têm um papel coadjuvante na execução das funções, realizando-se parcerias entre os roteadores da rede.}
 \label{fig:gmtp-posicao}
 \end{figure}
 
@@ -86,7 +86,8 @@ realizadas por servidores web, incrementando o protocolo HTTP com funções para d
 \includegraphics[natwidth=627,natheight=386,scale=.5]{imgs/hls_transport_stream.jpg}
 \end{center}
 \vspace{-1cm}
-\caption{Arquitetura do HLS para transmissão de conteúdos multimídia
+\caption[Arquitetura do HLS para transmissão de conteúdos multimídia
+baseado no protocolo HTTP]{Arquitetura do HLS para transmissão de conteúdos multimídia
 baseado no protocolo HTTP. Figura extraída e adaptada de~\cite{Pantos2013}.}
 \label{fig:hls_transport_stream}
 \end{figure}
@@ -127,7 +128,8 @@ Por exemplo, na Figura~\ref{fig:MPEG-DASHScope}, ilustra-se um cenário de transm
 \includegraphics[natwidth=680,natheight=392,scale=1]{imgs/MPEG-DASHScope.png}
 \end{center}
 \vspace{-1cm}
-\caption{Arquitetura do DASH para transmissão de conteúdos multimídia
+\caption[Arquitetura do DASH para transmissão de conteúdos multimídia
+utilizando o protocolo HTTP]{Arquitetura do DASH para transmissão de conteúdos multimídia
 utilizando o protocolo HTTP. Os formatos e as funcionalidades dos blocos
 vermelhos são definidos pela especificação do DASH. Adaptado
 de~\cite{6077864}.}
@@ -234,7 +236,7 @@ PDTP.
 \includegraphics[natwidth=623,natheight=322,scale=0.7]{imgs/trabrel/arq-pdtp.png}
 \end{center}
 \vspace{-0.5cm}
-\caption{Organização dos nós PDTP. Adaptada de~\cite{arcieri2004}.}
+\caption[Organização dos nós PDTP (\textit{Peer Distributed Transfer Protocol})]{Organização dos nós PDTP. Adaptada de~\cite{arcieri2004}.}
 \label{fig:arq-pdtp}
 \end{figure}
 
@@ -262,8 +264,7 @@ para saber sobre a existência de algum grupo \textit{multicast} relacionado ao c
 \includegraphics[natwidth=913,natheight=522,scale=0.6]{imgs/trabrel/arq-cpm.png}
 \end{center}
 \vspace{-0.5cm}
-\caption{Diagrama de sequência do CPM (\textit{Cooperative Peer Assists and
-Multicast}). Figura extraída de~\cite{5061910}.}
+\caption[Diagrama de sequência do CPM (\textit{Cooperative Peer Assists and Multicast})]{Diagrama de sequência do CPM (\textit{Cooperative Peer Assists and Multicast}). Figura extraída de~\cite{5061910}.}
 \label{fig:arq-cpm}
 \end{figure}
 
@@ -310,7 +311,8 @@ baseado na popularidade do mesmo. Os servidores HySAC categorizam os conteúdos e
 \includegraphics[natwidth=551,natheight=485,scale=0.5]{imgs/trabrel/arq-hysac.png}
 \end{center}
 \vspace{-0.5cm}
-\caption{Arquitetura do HySAC (\textit{Hybrid Delivery System with Adaptive
+\caption[Arquitetura do HySAC (\textit{Hybrid Delivery System with Adaptive
+Content Management for IPTV Networks})]{Arquitetura do HySAC (\textit{Hybrid Delivery System with Adaptive
 Content Management for IPTV Networks}). Figura extraída de~\cite{5962598}.}
 \label{fig:arq-hysac}
 \end{figure}
@@ -618,7 +620,7 @@ Em comparado ao GMTP, os pontos fracos do PPSP/Swift são:
 O CoolStreaming é um sistema para distribuição de mídias ao vivo baseado em uma
 arquitetura P2P~\cite{4509752,susu_xie_coolstreaming:_2007,xinyan_zhang_coolstreaming/donet:_2005}. A primeira versão do Coolstreaming foi lançada em 2004 e aprimorada ao longo dos anos, tornando-se o sistema mais conhecido e robusto para transmissão de mídias ao vivo em larga escala. Atualmente, o sistema CoolStreaming é uma das principais referências no contexto de distribuição de mídias ao vivo, tanto no contexto acadêmico quanto comercial. O sistema está disponível para uso no mercado, servindo a milhares de nós globalmente e, por ter sido descrito e estudado exaustivamente, também está disponível na rede PlanetLab e nos principais simuladores de redes P2P, com o OMNet++/Oversim\footnote{OMNet++/Oversim: de fato, o CoolStreaming está disponível através do projeto Denacast, desenvolvido com base no OMNet++/Oversim. Na Seção~\ref{subsec:denacast}, detalha-se o Denacast.} e o OMNet++/OSSim.
 
-A sigla DONet significa \textit{Data-drive Overlay Network} e CoolStreaming
+A sigla DONet significa \textit{Data-driven Overlay Network} e CoolStreaming
 significa \textit{Cooperative Overlay Streaming}, sendo a implementação de
 referência da DONet. Desde a primeira versão, seus autores propuseram que
 partes da mídia fossem distribuídas sobre uma rede de sobreposição, onde os nós
@@ -643,7 +645,7 @@ externo; capacidade de \textit{upload} e \textit{download}, etc. Com essa visão 
 \end{figure}
 
 O sistema CoolStreaming tem versões similares (Figura~\ref{fig:coolstreaming}). Na Figura\ref{fig:coolstreaming1}, ilustra-se o diagrama genérico do sistema para um nó na rede DONet, quando se utilizava apenas o método \textit{pull} para obtenção de conteúdo, estratégia bastante similar ao BitTorrent, com seleção aleatória de nós
-parceiros. Já na Figura\ref{fig:coolstreaming1}, ilustra-se o diagrama genérico
+parceiros. Já na Figura\ref{fig:coolstreaming2}, ilustra-se o diagrama genérico
 da versão aprimorada do CoolStreaming, onde diversas funções foram corrigidas
 e o mecanismo de obtenção das partes da mídia foi remodelado para uma abordagem
 híbrida \textit{push/pull} de obtenção dos blocos de vídeo (\textit{chunks}).
@@ -766,8 +768,8 @@ Para a construção da rede de malha, o nó \textit{tracker} mantém uma lista dos
 nós da rede P2P que estão ativos. Um nó fonte da mídia se anuncia ao nó
 \textit{tracker}. Cada nó da rede P2P requisita uma lista de possíveis nós
 parceiros ao nó \textit{tracker}, informando-se o número de parcerias que deseja
-efetivar. A nó fonte codifica as partes da mídia à medida que se captura o
-evento ao vivo e as coloca em um \textit{buffer} de transmissão, ao passo que gera-se o mapa do \textit{buffer} que é anunciado para os nós parceiros do nó fonte. Os nós parceiros do nó fonte solicita as partes da mídia de acordo com o mapa de \textit{buffer} e, em seguida, a transmissão entre eles ocorre de forma similar ao CoolStreaming. Quando um novo nó receptor deseja se conectar à rede, este se conecta ao nó \textit{tracker}, que seleciona a rede de malha com menos clientes e retorna a lista de candidatos a nós parceiros.
+efetivar. O nó fonte codifica as partes da mídia à medida que se captura o
+evento ao vivo e as coloca em um \textit{buffer} de transmissão, ao passo que gera-se o mapa do \textit{buffer} que é anunciado para os nós parceiros do nó fonte. Os nós parceiros do nó fonte solicitam as partes da mídia de acordo com o mapa de \textit{buffer} e, em seguida, a transmissão entre eles ocorre de forma similar ao CoolStreaming. Quando um novo nó receptor deseja se conectar à rede, este se conecta ao nó \textit{tracker}, que seleciona a rede de malha com menos clientes e retorna a lista de candidatos a nós parceiros.
 
 O diferencial do Denacast comparado ao CoolStreaming é seu mecanismo de conectar duas ou mais redes de malhas. A regra geral considerada pelo nó \textit{tracker} é a seguinte: duas redes de malha se unirão através de dois nós receptores conectados em cada uma das redes de malha. Isto ocorre quanto a quantidade de nós ativos nas duas redes ultrapassa o valor do número de servidores da CDN disponíveis no sistema, vezes o número limite de nós em cada rede de malha antes do início da transmissão. Quando uma rede de malha A é unida a uma rede de malha B, o nó \textit{tracker} passa a sugerir nós da rede A para a rede B e vice-versa.
 
@@ -777,7 +779,7 @@ O Denacast/CoolStreaming foi um dos projetos escolhidos para um estudo comparati
 
 \subsection{Outras propostas}
 
-Como discutiu-se no início deste capítulo (Seção~\ref{sec:visaogerao-propostas-dmv}), a área de distribuição de mídias ao vivo em larga escala tem sido explorada há pelo menos 10 anos. Existe uma vasta quantidade de propostas que permeiam diferentes abordagens, das mais simples, como as baseadas em arquiteturas cliente/servidor, às mais complexas, como as baseadas em P2P e/ou P2P/CDN. Diante desse cenário, realizou-se uma exaustiva pesquisa sobre os trabalhos relacionados à proposta apresentada neste trabalho, destacando-se anteriormente os principais. Em geral, decide-se sobre se a estrutura da rede de sobreposição será em árvore e/ou em malha; sobre se os nós realizam periodicamente requisições das partes da mídia (\textit{pull-based}) e/ou se os nós transmissores enviarão as partes da mídia para o nó receptor após este último sinalizar interesse por tal conteúdo (\textit{push-based}); e, sobre a arquitetura do serviço, se será P2P e/ou P2P/CDN.
+Como discutiu-se no início deste capítulo (Seção~\ref{sec:visaogerao-propostas-dmv}), a área de distribuição de mídias ao vivo em larga escala tem sido explorada há pelo menos 10 anos. Existe uma vasta quantidade de propostas que permeiam diferentes abordagens, das mais simples, como as baseadas em arquiteturas cliente/servidor, às mais complexas, como as baseadas em P2P e/ou P2P/CDN. Diante desse cenário, realizou-se uma profunda pesquisa sobre os trabalhos relacionados à proposta apresentada neste trabalho, destacando-se anteriormente os principais. Em geral, decide-se sobre se a estrutura da rede de sobreposição será em árvore e/ou em malha; sobre se os nós realizam periodicamente requisições das partes da mídia (\textit{pull-based}) e/ou se os nós transmissores enviarão as partes da mídia para o nó receptor após este último sinalizar interesse por tal conteúdo (\textit{push-based}); e, sobre a arquitetura do serviço, se será P2P e/ou P2P/CDN.
 
 Durante o levantamento bibliográfico realizado no contexto deste trabalho,
 catalogaram-se outras propostas que não foram aqui detalhadas, mas
@@ -871,7 +873,7 @@ Dentre as propostas de uma nova arquitetura para a Internet com base no princípi
 % (PSI)}~\cite{6231279} ou Redes de Publicação e Subscrição.
 ao passo que outras propostas ainda estão em estágio embrionário~\cite{6563278,6384450,6231279,6231276,5936152}, como discutiu-se no início deste capítulo (Seção~\ref{sec:visaogerao-propostas-dmv}). Como a CCN apresenta diferenças substanciais em seu modelo de serviço para distribuir o conteúdo de interesse, com base em funções disponíveis no núcleo da rede, a seguir, detalham-se as atuais aplicações no contexto de distribuição de mídias ao vivo.
 
-Na arquitetura CCN, nomeiam-se os pacotes de conteúdos e defini-se um modelo de serviço orientado a pedido e resposta, onde os nós obtêm os pacotes de dados a partir da rede, não necessariamente a partir dos nós finais. Como ilustra-se na Figura~\ref{fig:ccn-fib-pit}, os nós requisitam os pacotes de dados enviando uma requisição com o nome do conteúdo de interesse, que é único na rede. A definição dos nomes dos conteúdos seguem uma estrutura similar às URIs: os nomes são definidos em hierarquias, com componentes de tamanhos variados, por exemplo, \textit{/a/b/c.mp4}. Um cliente transmite tal requisição para obter um determinado conteúdo ao transmitir um pacote especial chamado de Pacotes de Interesse (\textit{Interest Packets}). Em resposta ao pacote de interesse do cliente, algum nó da rede, em geral um roteador, transmite os pacotes de dados com o conteúdo requisitado ao nó requisitante (se o conteúdo estiver em \textit{cache}). Toda interação ocorre sem o uso de endereçamento de origem/destino e, para cada envio de pacote de interesse, o nó requisitante recebe um pacote de dados, caracterizando uma relação estrita um-para-um entre os pacotes de interesse e os pacotes de dados.
+Na arquitetura CCN, nomeiam-se os pacotes de conteúdos e defini-se um modelo de serviço orientado a pedido e resposta, onde os nós obtêm os pacotes de dados a partir da rede, não necessariamente a partir dos nós finais. Como ilustra-se na Figura~\ref{fig:ccn-fib-pit}, os nós requisitam os pacotes de dados enviando uma requisição com o nome do conteúdo de interesse, que é único na rede. A definição dos nomes dos conteúdos segue uma estrutura similar às URIs: os nomes são definidos em hierarquias, com componentes de tamanhos variados, por exemplo, \textit{/a/b/c.mp4}. De posse desse nome, um cliente transmite uma requisição para obter um determinado conteúdo utilizando um pacote especial chamado de Pacotes de Interesse (\textit{Interest Packets}). Em resposta ao pacote de interesse do cliente, algum nó da rede, em geral um roteador, transmite os pacotes de dados com o conteúdo requisitado ao nó requisitante (se o conteúdo estiver em \textit{cache}). Toda interação ocorre sem o uso de endereçamento de origem/destino e, para cada envio de pacote de interesse, o nó requisitante recebe um pacote de dados, caracterizando uma relação estrita um-para-um entre os pacotes de interesse e os pacotes de dados.
 
 \begin{figure}
 \begin{center}
@@ -925,7 +927,7 @@ O trabalho~\cite{6666771} também se assemelha ao anterior no que diz respeito ao
 
 Já em~\cite{6386696}, os autores adotaram uma abordagem similar aos três primeiros trabalhos anteriores, porém, em vez de utilizar DASH, utilizou-se HLS, discutido também na Seção~\ref{subsec:http-streaming}.
 
-Diferentemente dos quatro trabalhos anteriores, em~\cite{6550523}, os autores propuseram o CCN-TV, que é o único sistema de distribuição de mídias ao vivo existe, com base em uma rede CCN. Apesar de ainda incipiente, o CCN-TV foi o primeiro a sugerir o conceito de canal de transmissão, onde em cada canal se transmite um fluxo de dados de mídia ao vivo. Porém, por usar CCN, as parte da mídia continuam sendo requisitadas individualmente através do uso do pacote de interesse, como nos trabalhos anteriores. O CCN-TV identifica as partes de uma mídia por números progressivos e sua arquitetura é definida em três módulos principais: a fase inicial (\textit{boostrap}), estratégia para controle de congestionamento e o gerenciamento de retransmissão de pacotes de interesse. O módulo de fase inicial consiste em iniciar as sessões de mídia (canais) e envolve operações para encontrar uma rota até o provedor de canal mais próximo ao nó interessado em acessá-lo, além de localizar o primeiro identificador válido para uma mídia (por exemplo, o quadro I ao utilizar um codec MPEG) e assim poder iniciar a reprodução do conteúdo. Já o módulo de controle de congestionamento é baseado em uma abordagem de janela deslizante. Cada nó mantém uma uma janela deslizante de tamanho W para armazenar W partes pendentes da mídia. Um algoritmo monitora a janela removendo todas as partes da mídia que já não são mais úteis, ou seja, que já foram reproduzidas; retransmite os pacotes de interesse correspondentes a todas as partes da mídia que ainda não chegaram após um dado tempo de expiração; e transmite um novo pacote de interesse para novas partes da mídia à medida que novos espaços se tornam disponíveis na janela. Por fim, o módulo de gerenciamento de pacotes de interesse permite a retransmissão de um pacote de interesse diretamente ao nó transmissor do pacote de dados, evitando que roteadores entre o nó interessado em obter o pacote de dados bloqueie o repasse do pacote de interesse por já está registrado em sua PIT.
+Diferentemente dos quatro trabalhos anteriores, em~\cite{6550523}, os autores propuseram o CCN-TV, que é o único sistema de distribuição de mídias ao vivo existente, com base em uma rede CCN. Apesar de ainda incipiente, o CCN-TV foi o primeiro a sugerir o conceito de canal de transmissão, onde em cada canal se transmite um fluxo de dados de mídia ao vivo. Porém, por usar CCN, as parte da mídia continuam sendo requisitadas individualmente através do uso do pacote de interesse, como nos trabalhos anteriores. O CCN-TV identifica as partes de uma mídia por números progressivos e sua arquitetura é definida em três módulos principais: a fase inicial (\textit{boostrap}), estratégia para controle de congestionamento e o gerenciamento de retransmissão de pacotes de interesse. O módulo de fase inicial consiste em iniciar as sessões de mídia (canais) e envolve operações para encontrar uma rota até o provedor de canal mais próximo ao nó interessado em acessá-lo, além de localizar o primeiro identificador válido para uma mídia (por exemplo, o quadro I ao utilizar um codec MPEG) e assim poder iniciar a reprodução do conteúdo. Já o módulo de controle de congestionamento é baseado em uma abordagem de janela deslizante. Cada nó mantém uma uma janela deslizante de tamanho $W$ para armazenar $W$ partes pendentes da mídia. Um algoritmo monitora a janela removendo todas as partes da mídia que já não são mais úteis, ou seja, que já foram reproduzidas; retransmite os pacotes de interesse correspondentes a todas as partes da mídia que ainda não chegaram após um dado tempo de expiração; e transmite um novo pacote de interesse para novas partes da mídia à medida que novos espaços se tornam disponíveis na janela. Por fim, o módulo de gerenciamento de pacotes de interesse permite a retransmissão de um pacote de interesse diretamente ao nó transmissor do pacote de dados, evitando que roteadores entre o nó interessado em obter o pacote de dados bloqueie o repasse do pacote de interesse por já está registrado em sua PIT.
 
 Após a definição da arquitetura, os autores avaliaram o CCN-TV com vistas ao desempenho do sistema levando em consideração a quantidade de largura de banda necessária para executar o serviço de transmissão de um fluxo de dados ao vivo; o tempo de expiração utilizado no mecanismo de controle de congestionamento; o atraso de inicio de reprodução e quão efetivo é a política de \textit{cache} adotada no CCN para disseminação das partes de uma mídia. Como resultado, concluiu-se que os recursos de \textit{cache} empregado pela CCN pouco contribui para uma melhor disseminação das partes de uma mídias ao vivo, pois estas são transientes. Entretanto, os autores observaram que a política de gerenciamento da PIT modificada, alinhada ao modelo de controle de congestionamento baseado em janela deslizante, pode reduzir a sobrecarga de controle gerada por excessivas transmissões de pacotes de interesse.
 
@@ -1110,4 +1112,4 @@ O CCN-TV, atualmente o principal representante para distribuição de mídias ao vi
 \section{Sumário do Capítulo}
 \label{sec:trabrel-sumario}
 
-Neste capítulo, apresentou-se uma avaliação crítica acerca de um conjunto de propostas para distribuição de mídias ao vivo, considerando-se os aspectos arquiteturais e de modelo de serviço de cada solução. Destacaram-se as propostas concorrentes, contrapondo-se as limitações de cada uma frente ao GMTP, as quais foram individualmente discutidas. Por apresentarem mais semelhança quanto aos aspectos arquiteturais e modelo de serviço para distribuição de mídias ao vivo, reservou-se o Capítulo~\ref{cap:analisedesemp} para uma discussão mais acentuada sobre as limitações do Denacast/CoolStreaming e do CCN-TV, considerando-se um foco comparativo no projeto e no desempenho do GMTP. A seguir, descreve-se o protocolo GMTP.
+Neste capítulo, apresentou-se uma avaliação crítica acerca de um conjunto de propostas para distribuição de mídias ao vivo, considerando-se os aspectos arquiteturais e de modelo de serviço de cada solução. Destacaram-se diversas propostas existentes, contrapondo-se as limitações de cada uma frente ao GMTP, as quais foram individualmente discutidas. Por apresentarem mais semelhança quanto aos aspectos arquiteturais e modelo de serviço para distribuição de mídias ao vivo, reservou-se o Capítulo~\ref{cap:analisedesemp} para uma discussão mais acentuada sobre as limitações do Denacast/CoolStreaming e do CCN-TV, considerando-se um foco comparativo no projeto e no desempenho do GMTP. A seguir, descreve-se o protocolo GMTP.

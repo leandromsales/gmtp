@@ -51,7 +51,7 @@ Com base nas limitações das propostas para distribuição de mídias ao vivo e seus
 
     \item entregar os pacotes de dados mais rapidamente aos sistemas finais por meio da formação de parcerias por intersecção;
 
-    \item melhorar a toma de decisão para propor parcerias entre os roteadores, com base em informações explícitas e estimadas acerca das capacidades de transmissão dos canais entre dois ou mais nós transmissões.
+    \item melhorar a tomada de decisão para propor parcerias entre os roteadores, com base em informações explícitas e estimadas acerca das capacidades de transmissão dos canais entre dois ou mais nós transmissões.
 
   \end{enumerate}
 
@@ -98,7 +98,7 @@ Nessa seção, apresentam-se as limitações e os trabalhos futuros relacionados ao 
 %   ~\cite{1019258}
   \item Devido à limitação do tamanho dos datagramas IP em \ut{1500}{Bytes}, o funcionamento correto do GMTP é limitado em topologias de rede em que a distância entre dois sistemas finais não pode ultrapassar 73 saltos para IPv4 e 45 saltos para IPv6. Apesar dessa limitação, estudos anteriores podem ser úteis para estimar a distância máxima entre dois sistemas finais quaisquer conectados à Internet~\cite{958323,1019258}, aliado à investigação  de alternativas para superar essa limitação do GMTP. Nesse contexto, pode-se fazer uso de fragmentação na camada IP.
 
-  \item Requerer que o roteador adiciona seu identificador em cada pacote referente ao registro de participação pode aumentar o atraso de processamento nodal e impactar negativamente na qualidade de serviço oferecida às aplicações. Sugere-se investigar a possibilidade de reduzir a frequência em que um roteador adiciona seu identificador no pacote de requisição de uma mídia. Como linha de investigação nesse contexto, pode-se estudar a possibilidade de reduzir a frequência de escrita nos pacotes de requisição com base em um \textit{cache} dos últimos destinos registrados. Por exemplo, quando um pacote de requisição for transmitido pela primeira vez a partir de uma origem a um determinado destino, o roteador adiciona seu identificador no pacote, armazena a identificação da origem e do destino e determina um período em que não adicionará seu identificador para este caso.
+  \item Requerer que o roteador adicione seu identificador em cada pacote referente ao registro de participação pode aumentar o atraso de processamento nodal e impactar negativamente na qualidade de serviço oferecida às aplicações. Sugere-se investigar a possibilidade de reduzir a frequência em que um roteador adiciona seu identificador no pacote de requisição de uma mídia. Como linha de investigação nesse contexto, pode-se estudar a possibilidade de reduzir a frequência de escrita nos pacotes de requisição com base em um \textit{cache} dos últimos destinos registrados. Por exemplo, quando um pacote de requisição for transmitido pela primeira vez a partir de uma origem a um determinado destino, o roteador adiciona seu identificador no pacote, armazena a identificação da origem e do destino e determina um período em que não adicionará seu identificador para este caso.
 
   \item A decisão de utilizar tamanho de cabeçalho variável no GMTP reduz a sobrecarga de controle. Porém, sugere-se investigação sobre o uso de tal abordagem e o aumento do processamento nodal. Nesse contexto, pode-se propor algoritmos mais eficientes para um processamento mais rápido apenas rearranjando os campos de cada tipo de pacote atualmente definido no GMTP ou mesmo melhorando as funções existentes, buscando-se reduzir a sobrecarga de controle por pacote.
 
@@ -127,17 +127,18 @@ Nessa seção, apresentam-se as limitações e os trabalhos futuros relacionados ao 
 
 \begin{enumerate}
 
-  \item \textit{GMTP: A Cross-layer Optimized Protocol for Large Scale Distribution of Live Multimedia Content over the Internet.} Referência:\cite{gmtp-techrep1}\bibentry{gmtp-techrep1}\footnote{A ser submetido para o IEEE/ACM Transactions on Networking (JCR 2.014).}
+%   \item \textit{GMTP: A Cross-layer Optimized Protocol for Large Scale Distribution of Live Multimedia Content over the Internet.} Referência:\cite{gmtp-techrep1}\bibentry{gmtp-techrep1}\footnote{A ser submetido para o IEEE/ACM Transactions on Networking (JCR 2.014).}
 %  ou IEEE Network (JCR 2.853)
 
 %   \item \textit{Designing GMTP: The Global Media Transmission Protocol for Massive Multimedia Distribution over the Internet.} Referência:\cite{gmtp-techrep2}\bibentry{gmtp-techrep2}\footnote{A ser submetido para o IEEE Transactions on Multimedia (JCR 1.754).}
 %  ou IEEE Software.}
 
-  \item \textit{Generalized Connection and Incentives for Supporting CE Devices in P2P/CDN Live Streaming Systems.} Referência:\cite{gmtp-techrep3}\bibentry{gmtp-techrep3}\footnote{Em processo de revisão para o IEEE Transaction on Consumers Electronics (JCR 1.087).}
+  \item \textit{Generalized Connection and Incentives for Supporting CE Devices in P2P/CDN Live Streaming Systems.} IEEE Transaction on Consumer Electronics, 2014. Referência:\cite{gmtp-techrep3}\bibentry{gmtp-techrep3}\footnote{Em processo de revisão.}
+% \footnote{Em processo de revisão para o IEEE Transaction on Consumers Electronics (JCR 1.087).}
 
 % Sharing Resources with Live Streaming Systems to Improve Users' QoE on Consumer Electronic Devices.
 
-  \item \textit{Global Media Transmission Protocol (GMTP).} I Workshop Pré-IETF do XXXIV Congresso da Sociedade Brasileira de Computação. Referência:\cite{gmtp-techrep4}\bibentry{gmtp-techrep4}\footnote{Em processo de revisão.}
+  \item \textit{Global Media Transmission Protocol (GMTP).} I Workshop Pré-IETF do XXXIV Congresso da Sociedade Brasileira de Computação. 2014. Referência:\cite{gmtp-techrep4}\bibentry{gmtp-techrep4}\footnote{Em processo de revisão.}
 
   \item \textit{About Encouraging Residential Users to Share Upload Bandwidth with CDN/P2P Live Streaming Systems.} 31st IEEE International Conference on Consumer Electronics 2013. Qualis A-2 (Computação). 2013. Referência: \cite{leandro-icce2013}.
 
@@ -145,7 +146,8 @@ Nessa seção, apresentam-se as limitações e os trabalhos futuros relacionados ao 
 
   \item \textit{Multimedia Content Distribution of Real Time Controlled and Non-reliable Datagrams Between Peers.} 29th IEEE Globecom 2011. 2nd IEEE Workshop on Multimedia Communications \& Services. Qualis A-1 (Computação). 2011. Referência: \cite{leandro-Globecom-2011}.
 
-  \item \textit{Distribuição de Conteúdo Multimídia em Tempo Real com Transporte de Fluxos Controlados e Não Confiáveis entre Pares.} Simpósio Brasileiro de Redes de Computadores 2011. VII Workshop de Redes Dinâmicas e Sistemas P2P. 2011. Qualis A-N (Computação). Referência: \cite{leandro-WP2P-2011}.
+  \item \textit{Distribuição de Conteúdo Multimídia em Tempo Real com Transporte de Fluxos Controlados e Não Confiáveis entre Pares.} Simpósio Brasileiro de Redes de Computadores 2011. VII Workshop de Redes Dinâmicas e Sistemas P2P. 2011. Referência: \cite{leandro-WP2P-2011}.
+%  Qualis A-N (Computação).
 
 % \item \textbf{An Experimental Evaluation of DCCP Transport Protocol:
 % A Focus on the Fairness and Hand-off over 802.11g Networks.} 5th IEEE Consumer
