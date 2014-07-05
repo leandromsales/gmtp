@@ -1,7 +1,8 @@
 # Ignored files
 
 # GitEye
-/.project
+*.project
+*.cproject
 /.settings/
 
 # Kernel Module compilation

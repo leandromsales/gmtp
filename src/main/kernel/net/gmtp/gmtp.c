@@ -90,8 +90,8 @@ static const struct proto_ops inet_gmtp_ops = {
 };
 
 static struct inet_protosw gmtp_protosw = {
-	.type		= SOCK_DGRAM, //SOCK_STREAM	= 1; SOCK_DGRAM	= 2, SOCK_DCCP, etc ???
-	.protocol	= IPPROTO_GMTP, //100
+	.type		= SOCK_GMTP,
+	.protocol	= IPPROTO_GMTP,
 	.prot		= &gmtp_prot,
 	.ops		= &inet_gmtp_ops,
 	.no_check	= 0,
@@ -135,6 +135,9 @@ static int __init gmtp_init(void)
 	printk(KERN_INFO "GMTP inet_register_protosw\n");
 	inet_register_protosw(&gmtp_protosw);
 
+	/* FIXME: When this function is called, the module depends of itself...
+	 * Then, it is no possible make 'sudo rmmod gmtp'.
+	 */
 //	err = register_pernet_subsys(&gmtp_ops);
 	if (err)
 		goto out_destroy_ctl_sock;
@@ -143,12 +146,12 @@ out:
 	return err;
 
 out_destroy_ctl_sock:
-	printk(KERN_INFO "GMTP Error: inet_unregister_protosw\n");
+	printk(KERN_ERR "GMTP Error: inet_unregister_protosw\n");
 	inet_unregister_protosw(&gmtp_protosw);
-	printk(KERN_INFO "\tinet_del_protocol\n");
+	printk(KERN_ERR "\tinet_del_protocol\n");
 	inet_del_protocol(&gmtp_protocol, IPPROTO_GMTP);
 out_proto_unregister:
-	printk(KERN_INFO "GMTP Error: proto_unregister\n");
+	printk(KERN_ERR "GMTP Error: proto_unregister\n");
 	proto_unregister(&gmtp_prot);
 	goto out;
 }
@@ -164,6 +167,9 @@ static void __exit gmtp_exit(void)
 
 module_init(gmtp_init);
 module_exit(gmtp_exit);
+
+MODULE_ALIAS_NET_PF_PROTO_TYPE(PF_INET, IPPROTO_GMTP, SOCK_GMTP);
+MODULE_ALIAS_NET_PF_PROTO_TYPE(PF_INET, 0, SOCK_GMTP);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Wendell Silva Soares <wendell@compelab.org>");
