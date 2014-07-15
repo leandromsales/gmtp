@@ -24,6 +24,27 @@ static struct request_sock_ops gmtp_request_sock_ops __read_mostly = {
 //	.syn_ack_timeout = dccp_syn_ack_timeout,
 };
 
+/**
+ * We define the gmtp_protocol object (net_protocol object) and add it with the
+ * inet_add_protocol() method.
+ * This sets the gmtp_protocol object to be an element in the global
+ * protocols array (inet_protos).
+ */
+static const struct net_protocol gmtp_protocol = {
+//	.handler	= dccp_v4_rcv,
+//	.err_handler	= dccp_v4_err,
+	.no_policy	= 1,
+	.netns_ok	= 1,
+	.icmp_strict_tag_validation = 1,
+};
+
+/**
+ * We further define a gmtp_prot object and register it by calling the
+ * proto_register() method. This object contains mostly callbacks.
+ * These callbacks are invoked when opening a GMTP socket in userspace and using
+ * the socket API. For example, calling the setsockopt() system call on a GMTP
+ * socket will invoke the gmtp_setsockopt() callback.
+ */
 static struct proto gmtp_prot = {
 	.name			= "GMTP",
 	.owner			= THIS_MODULE,
@@ -50,20 +71,14 @@ static struct proto gmtp_prot = {
 	.rsk_prot		= &gmtp_request_sock_ops,
 //	.twsk_prot		= &dccp_timewait_sock_ops,
 //	.h.hashinfo		= &dccp_hashinfo,
-//#ifdef CONFIG_COMPAT
-//	.compat_setsockopt	= compat_dccp_setsockopt,
-//	.compat_getsockopt	= compat_dccp_getsockopt,
-//#endif
 };
 
-static const struct net_protocol gmtp_protocol = {
-//	.handler	= dccp_v4_rcv,
-//	.err_handler	= dccp_v4_err,
-	.no_policy	= 1,
-	.netns_ok	= 1,
-	.icmp_strict_tag_validation = 1,
-};
-
+/**
+ * In the socket creation routine, protocol implementer specifies a
+ * “struct proto_ops” (/include/linux/net.h) instance.
+ * The socket layer calls function members of this proto_ops instance before the
+ * protocol specific functions are called.
+ */
 static const struct proto_ops inet_gmtp_ops = {
 	.family		   = PF_INET,
 	.owner		   = THIS_MODULE,
@@ -83,12 +98,21 @@ static const struct proto_ops inet_gmtp_ops = {
 	.recvmsg	   = sock_common_recvmsg,
 	.mmap		   = sock_no_mmap,
 	.sendpage	   = sock_no_sendpage,
-//#ifdef CONFIG_COMPAT
-//	.compat_setsockopt = compat_sock_common_setsockopt,
-//	.compat_getsockopt = compat_sock_common_getsockopt,
-//#endif
 };
 
+/**
+ * inet_register_protosw() is the function called to register inet sockets.
+ * There is a static array of type inet_protosw inetsw_array[] which contains
+ * information about all the inet socket types.
+ *
+ * @list: This is a pointer to the next node in the list.
+ * @type: This is the socket type and is a key to search entry for a given
+ * socket and type in inetsw[] array.
+ * @protocol: This is again a key to find an entry for the socket type in the
+ * inetsw[] array. This is an L4 protocol number (L4→Transport layer protocol).
+ * @prot: This is a pointer to struct proto.
+ * ops: This is a pointer to the structure of type ‘proto_ops’.
+ */
 static struct inet_protosw gmtp_protosw = {
 	.type		= SOCK_GMTP,
 	.protocol	= IPPROTO_GMTP,
@@ -98,25 +122,7 @@ static struct inet_protosw gmtp_protosw = {
 	.flags		= INET_PROTOSW_ICSK,
 };
 
-/*static int __net_init dccp_v4_init_net(struct net *net)
-{
-	if (dccp_hashinfo.bhash == NULL)
-		return -ESOCKTNOSUPPORT;
-
-	return inet_ctl_sock_create(&net->dccp.v4_ctl_sk, PF_INET,
-				    SOCK_DCCP, IPPROTO_DCCP, net);
-}*/
-
-/*static void __net_exit dccp_v4_exit_net(struct net *net)
-{
-	inet_ctl_sock_destroy(net->dccp.v4_ctl_sk);
-}*/
-
-/*static struct pernet_operations dccp_v4_ops = {
-	.init	= dccp_v4_init_net,
-	.exit	= dccp_v4_exit_net,
-};*/
-
+//////////////////////////////////////////////////////////
 static int __init gmtp_init(void)
 {
 	int err = 0;
@@ -135,10 +141,6 @@ static int __init gmtp_init(void)
 	printk(KERN_INFO "GMTP inet_register_protosw\n");
 	inet_register_protosw(&gmtp_protosw);
 
-	/* FIXME: When this function is called, the module depends of itself...
-	 * Then, it is no possible make 'sudo rmmod gmtp'.
-	 */
-//	err = register_pernet_subsys(&gmtp_ops);
 	if (err)
 		goto out_destroy_ctl_sock;
 
