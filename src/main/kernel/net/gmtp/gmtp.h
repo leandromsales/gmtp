@@ -10,4 +10,6 @@
 
 #include "include/linux/gmtp.h"
 
+void gmtp_close(struct sock *sk, long timeout);
+
 #endif /* GMTP_H_ */

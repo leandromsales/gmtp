@@ -2,6 +2,7 @@
 #define LINUX_GMTP_H_
 
 #include <net/inet_sock.h>
+#include <net/inet_connection_sock.h>
 
 #include "../uapi/linux/gmtp.h"
 

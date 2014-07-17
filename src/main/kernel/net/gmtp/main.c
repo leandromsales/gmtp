@@ -49,6 +49,7 @@ static struct proto gmtp_prot = {
 	.name			= "GMTP",
 	.owner			= THIS_MODULE,
 //	.close			= dccp_close,
+	.close			= gmtp_close,
 //	.connect		= dccp_v4_connect,
 //	.disconnect		= dccp_disconnect,
 //	.ioctl			= dccp_ioctl,
