@@ -45,6 +45,7 @@ struct gmtp_hdr {
 	__be32 seq;
 	__be32 transm_r;
 	__be32 flowname[4]; //128
+	//Variable part MAX = (2^11 - 1) bytes (2047)
 };
 
 /**

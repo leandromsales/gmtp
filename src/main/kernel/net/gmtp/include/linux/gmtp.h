@@ -3,11 +3,26 @@
 
 #include <net/inet_sock.h>
 #include <net/inet_connection_sock.h>
+#include <net/tcp_states.h>
+
 
 #include "../uapi/linux/gmtp.h"
 
 #define IPPROTO_GMTP 254
 #define SOCK_GMTP 7
+
+//TODO Study states
+enum gmtp_state {
+	GMTP_OPEN	     = TCP_ESTABLISHED,
+	GMTP_REQUESTING	     = TCP_SYN_SENT,
+	GMTP_LISTEN	     = TCP_LISTEN,
+	GMTP_RESPOND	     = TCP_SYN_RECV,
+	GMTP_ACTIVE_CLOSEREQ = TCP_FIN_WAIT1,
+	GMTP_PASSIVE_CLOSE   = TCP_CLOSE_WAIT,
+	GMTP_CLOSING	     = TCP_CLOSING,
+	GMTP_TIME_WAIT	     = TCP_TIME_WAIT,
+	GMTP_CLOSED	     = TCP_CLOSE
+};
 
 /**
  * struct gmtp_request_sock  -  represent GMTP-specific connection request

@@ -7,13 +7,11 @@
 #include <net/inet_hashtables.h>
 #include <net/inet_common.h>
 
-
 #include "gmtp.h"
 
 /**
  * BASED ON IPV4 DCCP
  */
-
 static struct request_sock_ops gmtp_request_sock_ops __read_mostly = {
 	.family		= PF_INET,
 	.obj_size	= sizeof(struct gmtp_request_sock)
@@ -38,6 +36,12 @@ static const struct net_protocol gmtp_protocol = {
 	.icmp_strict_tag_validation = 1,
 };
 
+static int gmtp_init_sock(struct sock *sk)
+{
+	return 0;
+}
+EXPORT_SYMBOL_GPL(gmtp_init_sock);
+
 /**
  * We further define a gmtp_prot object and register it by calling the
  * proto_register() method. This object contains mostly callbacks.
@@ -48,25 +52,24 @@ static const struct net_protocol gmtp_protocol = {
 static struct proto gmtp_prot = {
 	.name			= "GMTP",
 	.owner			= THIS_MODULE,
-//	.close			= dccp_close,
-	.close			= gmtp_close,
-//	.connect		= dccp_v4_connect,
-//	.disconnect		= dccp_disconnect,
-//	.ioctl			= dccp_ioctl,
-//	.init			= dccp_v4_init_sock,
-//	.setsockopt		= dccp_setsockopt,
-//	.getsockopt		= dccp_getsockopt,
-//	.sendmsg		= dccp_sendmsg,
-//	.recvmsg		= dccp_recvmsg,
+	.close			= gmtp_close, //dccp_close
+	.connect		= gmtp_connect, //dccp_v4_connect
+	.disconnect		= gmtp_disconnect, //dccp_disconnect
+	.ioctl			= gmtp_ioctl, //dccp_ioctl
+	.init			= gmtp_init_sock,  //dccp_v4_init_sock
+	.setsockopt		= gmtp_setsockopt, //dccp_setsockopt
+	.getsockopt		= gmtp_getsockopt, //dccp_getsockopt
+	.sendmsg		= gmtp_sendmsg, //dccp_sendmsg
+	.recvmsg		= gmtp_recvmsg, //dccp_recvmsg
 //	.backlog_rcv		= dccp_v4_do_rcv,
 	.hash			= inet_hash,
 	.unhash			= inet_unhash,
 	.accept			= inet_csk_accept,
 	.get_port		= inet_csk_get_port,
-//	.shutdown		= dccp_shutdown,
-//	.destroy		= dccp_destroy_sock,
+	.shutdown		= gmtp_shutdown,  //dccp_shutdown
+	.destroy		= gmtp_destroy_sock, //dccp_destroy_sock
 //	.orphan_count		= &dccp_orphan_count,
-//	.max_header		= MAX_DCCP_HEADER,
+	.max_header		= MAX_GMTP_HEADER,
 	.obj_size		= sizeof(struct gmtp_sock),
 	.slab_flags		= SLAB_DESTROY_BY_RCU,
 	.rsk_prot		= &gmtp_request_sock_ops,
@@ -91,7 +94,7 @@ static const struct proto_ops inet_gmtp_ops = {
 	.getname	   = inet_getname,
 //	.poll		   = dccp_poll,
 	.ioctl		   = inet_ioctl,
-//	.listen		   = inet_dccp_listen,
+	.listen		   = inet_gmtp_listen, //inet_dccp_listen
 	.shutdown	   = inet_shutdown,
 	.setsockopt	   = sock_common_setsockopt,
 	.getsockopt	   = sock_common_getsockopt,
