@@ -1,4 +1,5 @@
 #include <linux/types.h>
+#include <net/inet_hashtables.h>
 
 #include "gmtp.h"
 
@@ -6,9 +7,11 @@ void gmtp_set_state(struct sock *sk, const int state)
 {
 //	const int oldstate = sk->sk_state;
 
-	switch (state) {
+//	switch (state) {
+//	default:
+//		break;
 	//TODO make treatment on set new state
-	}
+//	}
 
 	/* Change state AFTER socket is unhashed to avoid closed
 	 * socket sitting in hash tables.
@@ -16,107 +19,145 @@ void gmtp_set_state(struct sock *sk, const int state)
 	sk->sk_state = state;
 }
 
+/* this is called when real data arrives */
+int gmtp_rcv(struct sk_buff *skb)
+{
+	return 0;
+}
+EXPORT_SYMBOL_GPL(gmtp_rcv);
+
+void gmtp_err(struct sk_buff *skb, u32 info)
+{
+
+}
+EXPORT_SYMBOL_GPL(gmtp_err);
+
+int gmtp_init_sock(struct sock *sk)
+{
+//	struct gmtp_sock *gs = gmtp_sk(sk);
+//	struct inet_connection_sock *icsk = inet_csk(sk);
+
+	sk->sk_state		= GMTP_CLOSED;
+
+	/* Specific GMTP initialization
+	 * (...)
+	 */
+	//init timers
+	//init structures INIT_LIST_HEAD
+
+	return 0;
+}
+EXPORT_SYMBOL_GPL(gmtp_init_sock);
 
 //TODO Implement gmtp callbacks
 void gmtp_close(struct sock *sk, long timeout)
 {
-	struct gmtp_sock *dp = gmtp_sk(sk);
-	struct sk_buff *skb;
-	u32 data_was_unread = 0;
-	int state;
 
-	lock_sock(sk);
-
-	sk->sk_shutdown = SHUTDOWN_MASK;
-
-	if (sk->sk_state == GMTP_LISTEN) {
-		gmtp_set_state(sk, GMTP_CLOSED);
-//
-//		/* Special case. */
-		inet_csk_listen_stop(sk);
-//
-		goto adjudge_to_death;
-	}
-
-	/*
-	 * We need to flush the recv. buffs.  We do this only on the
-	 * descriptor close, not protocol-sourced closes, because the
-	 * reader process may not have drained the data yet!
-	 */
-	while ((skb = __skb_dequeue(&sk->sk_receive_queue)) != NULL) {
-		data_was_unread += skb->len;
-		__kfree_skb(skb);
-	}
-
-	if (data_was_unread) {
-		/* Unread data was tossed, send an appropriate Reset Code */
-		printk(KERN_WARNING "ABORT with %u bytes unread\n", data_was_unread);
-//		dccp_send_reset(sk, DCCP_RESET_CODE_ABORTED);
-		gmtp_set_state(sk, GMTP_CLOSED);
-	} else if (sock_flag(sk, SOCK_LINGER) && !sk->sk_lingertime) {
-		/* Check zero linger _after_ checking for unread data. */
-		sk->sk_prot->disconnect(sk, 0);
-	} else if (sk->sk_state != GMTP_CLOSED) {
-		/*
-		 * Normal connection termination. May need to wait if there are
-		 * still packets in the TX queue that are delayed by the CCID.
-		 */
-		//TODO Verify if this is necessary
-//		dccp_flush_write_queue(sk, &timeout);
-//		dccp_terminate_connection(sk);
-	}
-
-	/*
-	 * Flush write queue. This may be necessary in several cases:
-	 * - we have been closed by the peer but still have application data;
-	 * - abortive termination (unread data or zero linger time),
-	 * - normal termination but queue could not be flushed within time limit
-	 */
-	__skb_queue_purge(&sk->sk_write_queue);
-
-	sk_stream_wait_close(sk, timeout);
-
-adjudge_to_death:
-	state = sk->sk_state;
-	sock_hold(sk);
-	sock_orphan(sk);
-
-	/*
-	 * It is the last release_sock in its life. It will remove backlog.
-	 */
-	release_sock(sk);
-	/*
-	 * Now socket is owned by kernel and we acquire BH lock
-	 * to finish close. No need to check for user refs.
-	 */
-	local_bh_disable();
-	bh_lock_sock(sk);
-	WARN_ON(sock_owned_by_user(sk));
-
-	percpu_counter_inc(sk->sk_prot->orphan_count);
-
-	/* Have we already been destroyed by a softirq or backlog? */
-	if (state != GMTP_CLOSED && sk->sk_state == GMTP_CLOSED)
-		goto out;
-
-	if (sk->sk_state == GMTP_CLOSED)
-		inet_csk_destroy_sock(sk);
-
-	/* Otherwise, socket is reprieved until protocol close. */
-
-	out:
-	bh_unlock_sock(sk);
-	local_bh_enable();
-	sock_put(sk);
 }
 EXPORT_SYMBOL_GPL(gmtp_close);
 
 
-int gmtp_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
+int gmtp_proto_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 {
-	return 0;
+
+	const struct sockaddr_in *usin = (struct sockaddr_in *)uaddr;
+	struct inet_sock *inet = inet_sk(sk);
+	struct gmtp_sock *gs = gmtp_sk(sk);
+	__be16 orig_sport, orig_dport;
+	__be32 daddr, nexthop;
+	struct flowi4 *fl4;
+	struct rtable *rt;
+	int err;
+	struct ip_options_rcu *inet_opt;
+
+	gs->gmtps_role = GMTP_ROLE_CLIENT;
+
+	if (addr_len < sizeof(struct sockaddr_in))
+		return -EINVAL;
+
+	if (usin->sin_family != AF_INET)
+		return -EAFNOSUPPORT;
+
+	nexthop = daddr = usin->sin_addr.s_addr;
+
+	inet_opt = rcu_dereference_protected(inet->inet_opt,
+					     sock_owned_by_user(sk));
+	if (inet_opt != NULL && inet_opt->opt.srr) {
+		if (daddr == 0)
+			return -EINVAL;
+		nexthop = inet_opt->opt.faddr;
+	}
+
+	orig_sport = inet->inet_sport;
+	orig_dport = usin->sin_port;
+	fl4 = &inet->cork.fl.u.ip4;
+	rt = ip_route_connect(fl4, nexthop, inet->inet_saddr,
+			      RT_CONN_FLAGS(sk), sk->sk_bound_dev_if,
+			      IPPROTO_GMTP,
+			      orig_sport, orig_dport, sk);
+	if (IS_ERR(rt))
+		return PTR_ERR(rt);
+
+//	if (rt->rt_flags & (RTCF_MULTICAST | RTCF_BROADCAST)) {
+//		ip_rt_put(rt);
+//		return -ENETUNREACH;
+//	}
+
+	if (inet_opt == NULL || !inet_opt->opt.srr)
+		daddr = fl4->daddr;
+
+	if (inet->inet_saddr == 0)
+		inet->inet_saddr = fl4->saddr;
+	inet->inet_rcv_saddr = inet->inet_saddr;
+
+	inet->inet_dport = usin->sin_port;
+	inet->inet_daddr = daddr;
+
+	inet_csk(sk)->icsk_ext_hdr_len = 0;
+	if (inet_opt)
+		inet_csk(sk)->icsk_ext_hdr_len = inet_opt->opt.optlen;
+	/*
+	 * Socket identity is still unknown (sport may be zero).
+	 * However we set state to GMTP_REQUESTING and not releasing socket
+	 * lock select source port, enter ourselves into the hash tables and
+	 * complete initialization after this.
+	 */
+	gmtp_set_state(sk, GMTP_REQUESTING);
+
+	rt = ip_route_newports(fl4, rt, orig_sport, orig_dport,
+			       inet->inet_sport, inet->inet_dport, sk);
+	if (IS_ERR(rt)) {
+		err = PTR_ERR(rt);
+		rt = NULL;
+		goto failure;
+	}
+	/* OK, now commit destination to socket.  */
+	sk_setup_caps(sk, &rt->dst);
+
+//	gs->dccps_iss = secure_dccp_sequence_number(inet->inet_saddr,
+//						    inet->inet_daddr,
+//						    inet->inet_sport,
+//						    inet->inet_dport);
+//	inet->inet_id = gs->dccps_iss ^ jiffies;
+
+	err = gmtp_connect(sk);
+	rt = NULL;
+	if (err != 0)
+		goto failure;
+out:
+	return err;
+failure:
+	/*
+	 * This unhashes the socket and releases the local port, if necessary.
+	 */
+	gmtp_set_state(sk, GMTP_CLOSED);
+	ip_rt_put(rt);
+	sk->sk_route_caps = 0;
+	inet->inet_dport = 0;
+	goto out;
+
 }
-EXPORT_SYMBOL_GPL(gmtp_connect);
+EXPORT_SYMBOL_GPL(gmtp_proto_connect);
 
 int gmtp_disconnect(struct sock *sk, int flags)
 {
@@ -167,12 +208,31 @@ EXPORT_SYMBOL_GPL(gmtp_do_rcv);
 
 void gmtp_shutdown(struct sock *sk, int how)
 {
+	printk(KERN_INFO "called shutdown(%x)\n", how);
 }
 EXPORT_SYMBOL_GPL(gmtp_shutdown);
 
 void gmtp_destroy_sock(struct sock *sk)
 {
+//	struct gmtp_sock *gs = gmtp_sk(sk);
 
+	/*
+	 * DCCP doesn't use sk_write_queue, just sk_send_head
+	 * for retransmissions
+	 * GMTP: ???
+	 */
+	if (sk->sk_send_head != NULL) {
+		kfree_skb(sk->sk_send_head);
+		sk->sk_send_head = NULL;
+	}
+
+	/* Clean up a referenced gmtp bind bucket. */
+	if (inet_csk(sk)->icsk_bind_hash != NULL)
+		inet_put_port(sk);
+
+
+	/* clean up feature negotiation state */
+//	dccp_feat_list_purge(&gs->dccps_featneg);
 }
 EXPORT_SYMBOL_GPL(gmtp_destroy_sock);
 

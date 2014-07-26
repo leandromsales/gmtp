@@ -24,6 +24,13 @@ enum gmtp_state {
 	GMTP_CLOSED	     = TCP_CLOSE
 };
 
+enum gmtp_role {
+	GMTP_ROLE_UNDEFINED,
+	GMTP_ROLE_LISTEN,
+	GMTP_ROLE_CLIENT,
+	GMTP_ROLE_SERVER,
+};
+
 /**
  * struct gmtp_request_sock  -  represent GMTP-specific connection request
  */
@@ -38,11 +45,20 @@ struct gmtp_request_sock {
 struct gmtp_sock {
 	/* inet_connection_sock has to be the first member of gmtp_sock */
 	struct inet_connection_sock gmtp_inet_connection;
+
+	enum gmtp_role	gmtps_role:2;
 };
 
 static inline struct gmtp_sock *gmtp_sk(const struct sock *sk)
 {
 	return (struct gmtp_sock *)sk;
+}
+
+static inline struct dccp_hdr *gmtp_zeroed_hdr(struct sk_buff *skb, int headlen)
+{
+	skb_push(skb, headlen);
+	skb_reset_transport_header(skb);
+	return memset(skb_transport_header(skb), 0, headlen);
 }
 
 #endif /* LINUX_GMTP_H_ */

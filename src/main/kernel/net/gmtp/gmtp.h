@@ -14,8 +14,14 @@
 #define MAX_GMTP_VARIABLE_HEADER (2047 * sizeof(uint32_t))
 #define MAX_GMTP_HEADER (MAX_GMTP_SPECIFIC_HEADER + MAX_GMTP_VARIABLE_HEADER)
 
+int gmtp_rcv(struct sk_buff *skb);  //TODO should be static
+void gmtp_err(struct sk_buff *skb, u32 info);  //TODO should be static
+
+int gmtp_init_sock(struct sock *sk);  //TODO should be static
+
 void gmtp_close(struct sock *sk, long timeout);
-int gmtp_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len);
+int gmtp_proto_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len);
+int gmtp_connect(struct sock *sk);
 int gmtp_disconnect(struct sock *sk, int flags);
 int gmtp_ioctl(struct sock *sk, int cmd, unsigned long arg);
 int gmtp_getsockopt(struct sock *sk, int level, int optname,
@@ -27,7 +33,6 @@ int gmtp_sendmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 int gmtp_recvmsg(struct kiocb *iocb, struct sock *sk,
 		 struct msghdr *msg, size_t len, int nonblock, int flags,
 		 int *addr_len);
-int gmtp_do_rcv(struct sock *sk, struct sk_buff *skb);
 void gmtp_shutdown(struct sock *sk, int how);
 void gmtp_destroy_sock(struct sock *sk);
 

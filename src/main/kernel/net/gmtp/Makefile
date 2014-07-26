@@ -1,10 +1,12 @@
 PWD := $(shell pwd)
-#KERNEL:= $(shell uname -r)
 KERNEL := /usr/src/linux
+#KERNEL:= $(shell uname -r)
+
+KBUILD_EXTRA_SYMBOLS := $(PWD)/Module.symvers
 
 MOD := gmtp
 obj-m += $(MOD).o  
-$(MOD)-objs += main.o proto.o
+$(MOD)-objs += main.o proto.o output.o
 
 all:
 	make -C $(KERNEL) M=$(PWD) modules

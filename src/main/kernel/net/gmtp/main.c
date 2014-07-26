@@ -27,22 +27,23 @@ static struct request_sock_ops gmtp_request_sock_ops __read_mostly = {
  * inet_add_protocol() method.
  * This sets the gmtp_protocol object to be an element in the global
  * protocols array (inet_protos).
+ *
+ * @handler is called when real data arrives
+ *
  */
 static const struct net_protocol gmtp_protocol = {
-//	.handler	= dccp_v4_rcv,
-//	.err_handler	= dccp_v4_err,
+	.handler	= gmtp_rcv,  //dccp_v4_rcv
+	.err_handler	= gmtp_err, //dccp_v4_err
 	.no_policy	= 1,
 	.netns_ok	= 1,
 	.icmp_strict_tag_validation = 1,
 };
 
-static int gmtp_init_sock(struct sock *sk)
-{
-	return 0;
-}
-EXPORT_SYMBOL_GPL(gmtp_init_sock);
-
 /**
+ * The 'struct proto' defines interface for individual protocols (TCP, UDP, etc)
+ * Is the downcall binding for AF_INET to transport
+ * Transport-specific functions for socket API
+ *
  * We further define a gmtp_prot object and register it by calling the
  * proto_register() method. This object contains mostly callbacks.
  * These callbacks are invoked when opening a GMTP socket in userspace and using
@@ -53,7 +54,7 @@ static struct proto gmtp_prot = {
 	.name			= "GMTP",
 	.owner			= THIS_MODULE,
 	.close			= gmtp_close, //dccp_close
-	.connect		= gmtp_connect, //dccp_v4_connect
+	.connect		= gmtp_proto_connect, //dccp_v4_connect
 	.disconnect		= gmtp_disconnect, //dccp_disconnect
 	.ioctl			= gmtp_ioctl, //dccp_ioctl
 	.init			= gmtp_init_sock,  //dccp_v4_init_sock
@@ -105,6 +106,10 @@ static const struct proto_ops inet_gmtp_ops = {
 };
 
 /**
+ * Describes the PF_INET protocols
+ * Defines the different SOCK types for PF_INET
+ * Ex: SOCK_STREAM (TCP), SOCK_DGRAM (UDP), SOCK_RAW
+ *
  * inet_register_protosw() is the function called to register inet sockets.
  * There is a static array of type inet_protosw inetsw_array[] which contains
  * information about all the inet socket types.
