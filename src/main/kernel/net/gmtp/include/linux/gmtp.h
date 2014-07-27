@@ -54,7 +54,7 @@ static inline struct gmtp_sock *gmtp_sk(const struct sock *sk)
 	return (struct gmtp_sock *)sk;
 }
 
-static inline struct dccp_hdr *gmtp_zeroed_hdr(struct sk_buff *skb, int headlen)
+static inline struct gmtp_hdr *gmtp_zeroed_hdr(struct sk_buff *skb, int headlen)
 {
 	skb_push(skb, headlen);
 	skb_reset_transport_header(skb);

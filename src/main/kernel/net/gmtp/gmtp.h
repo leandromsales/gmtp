@@ -10,6 +10,14 @@
 
 #include "include/linux/gmtp.h"
 
+#define GMTP_INFO "GMTP_INFO: "
+#define GMTP_WARNING "GMTP_WARNING: "
+#define GMTP_ERROR "GMTP_ERROR: "
+
+#define gmtp_print_debug(fmt, args...) printk(KERN_INFO GMTP_INFO fmt, ##args)
+#define gmtp_print_warning(fmt, args...) printk(KERN_WARNING GMTP_WARNING fmt, ##args)
+#define gmtp_print_error(fmt, args...) printk(KERN_ERR GMTP_ERROR fmt, ##args)
+
 #define MAX_GMTP_SPECIFIC_HEADER (8 * sizeof(uint32_t))
 #define MAX_GMTP_VARIABLE_HEADER (2047 * sizeof(uint32_t))
 #define MAX_GMTP_HEADER (MAX_GMTP_SPECIFIC_HEADER + MAX_GMTP_VARIABLE_HEADER)
@@ -40,5 +48,33 @@ void gmtp_destroy_sock(struct sock *sk);
 //		       poll_table *wait);
 int inet_gmtp_listen(struct socket *sock, int backlog);
 
+
+int gmtp_insert_options(struct sock *sk, struct sk_buff *skb);
+
+
+/**
+ * This is the control buffer. It is free to use by any layer.
+ * This is an opaque area used to store private information.
+ *
+ * struct sk_buff {
+ * (...)
+ * 		char cb[48]
+ * }
+ *
+ * gmtp_skb_cb  -  GMTP per-packet control information
+ *
+ * @gmtpd_type: one of %dccp_pkt_type (or unknown)
+ * @gmtpd_opt_len: total length of all options (5.8) in the packet
+ * @gmtpd_seq: sequence number
+ *
+ * This is used for transmission as well as for reception.
+ */
+struct gmtp_skb_cb {
+	__u8  gmtpd_type:5;
+	__u16 gmtpd_opt_len;
+	__u64 gmtpd_seq;
+};
+
+#define GMTP_SKB_CB(__skb) ((struct gmtp_skb_cb *)&((__skb)->cb[0]))
 
 #endif /* GMTP_H_ */

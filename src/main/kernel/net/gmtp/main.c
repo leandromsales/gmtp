@@ -35,7 +35,7 @@ static const struct net_protocol gmtp_protocol = {
 	.handler	= gmtp_rcv,  //dccp_v4_rcv
 	.err_handler	= gmtp_err, //dccp_v4_err
 	.no_policy	= 1,
-	.netns_ok	= 1,
+	.netns_ok	= 1, //mandatory
 	.icmp_strict_tag_validation = 1,
 };
 
@@ -136,18 +136,18 @@ static int __init gmtp_init(void)
 {
 	int err = 0;
 
-	printk(KERN_INFO "GMTP Init!\n");
-	printk(KERN_INFO "GMTP proto_register\n");
+	gmtp_print_debug("GMTP Init!\n");
+	gmtp_print_debug("GMTP proto_register\n");
 	err = proto_register(&gmtp_prot, 1);
 	if (err != 0)
 		goto out;
 
-	printk(KERN_INFO "GMTP inet_add_protocol\n");
+	gmtp_print_debug("GMTP inet_add_protocol\n");
 	err = inet_add_protocol(&gmtp_protocol, IPPROTO_GMTP);
 	if (err != 0)
 		goto out_proto_unregister;
 
-	printk(KERN_INFO "GMTP inet_register_protosw\n");
+	gmtp_print_debug("GMTP inet_register_protosw\n");
 	inet_register_protosw(&gmtp_protosw);
 
 	if (err)
@@ -157,19 +157,19 @@ out:
 	return err;
 
 out_destroy_ctl_sock:
-	printk(KERN_ERR "GMTP Error: inet_unregister_protosw\n");
+	gmtp_print_error("inet_unregister_protosw\n");
 	inet_unregister_protosw(&gmtp_protosw);
-	printk(KERN_ERR "\tinet_del_protocol\n");
+	gmtp_print_error("inet_del_protocol\n");
 	inet_del_protocol(&gmtp_protocol, IPPROTO_GMTP);
 out_proto_unregister:
-	printk(KERN_ERR "GMTP Error: proto_unregister\n");
+	gmtp_print_error("proto_unregister\n");
 	proto_unregister(&gmtp_prot);
 	goto out;
 }
 
 static void __exit gmtp_exit(void)
 {
-	printk(KERN_INFO "GMTP Exit!\n");
+	gmtp_print_debug("GMTP Exit!\n");
 //	unregister_pernet_subsys(&gmtp_ops);
 	inet_unregister_protosw(&gmtp_protosw);
 	inet_del_protocol(&gmtp_protocol, IPPROTO_GMTP);

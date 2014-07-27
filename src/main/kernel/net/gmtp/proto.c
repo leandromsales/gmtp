@@ -5,40 +5,40 @@
 
 void gmtp_set_state(struct sock *sk, const int state)
 {
-//	const int oldstate = sk->sk_state;
+	gmtp_print_debug("gmtp_set_state");
 
-//	switch (state) {
-//	default:
-//		break;
-	//TODO make treatment on set new state
-//	}
+	if(!sk)
+		gmtp_print_warning("sk is NULL!");
+	else
+		/* Change state AFTER socket is unhashed to avoid closed
+		 * socket sitting in hash tables.
+		 */
+		sk->sk_state = state;
 
-	/* Change state AFTER socket is unhashed to avoid closed
-	 * socket sitting in hash tables.
-	 */
-	sk->sk_state = state;
 }
 
 /* this is called when real data arrives */
 int gmtp_rcv(struct sk_buff *skb)
 {
+	gmtp_print_debug("gmtp_rcv");
 	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_rcv);
 
 void gmtp_err(struct sk_buff *skb, u32 info)
 {
-
+	gmtp_print_debug("gmtp_err");
 }
 EXPORT_SYMBOL_GPL(gmtp_err);
 
 int gmtp_init_sock(struct sock *sk)
 {
+	gmtp_print_debug("gmtp_init_sock");
 //	struct gmtp_sock *gs = gmtp_sk(sk);
 //	struct inet_connection_sock *icsk = inet_csk(sk);
 
 	sk->sk_state		= GMTP_CLOSED;
-
+	gmtp_print_debug("gmtp_connect");
 	/* Specific GMTP initialization
 	 * (...)
 	 */
@@ -52,14 +52,13 @@ EXPORT_SYMBOL_GPL(gmtp_init_sock);
 //TODO Implement gmtp callbacks
 void gmtp_close(struct sock *sk, long timeout)
 {
-
+	gmtp_print_debug("gmtp_close");
 }
 EXPORT_SYMBOL_GPL(gmtp_close);
 
 
 int gmtp_proto_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 {
-
 	const struct sockaddr_in *usin = (struct sockaddr_in *)uaddr;
 	struct inet_sock *inet = inet_sk(sk);
 	struct gmtp_sock *gs = gmtp_sk(sk);
@@ -70,6 +69,7 @@ int gmtp_proto_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 	int err;
 	struct ip_options_rcu *inet_opt;
 
+	gmtp_print_debug("gmtp_proto_connect");
 	gs->gmtps_role = GMTP_ROLE_CLIENT;
 
 	if (addr_len < sizeof(struct sockaddr_in))
@@ -124,22 +124,12 @@ int gmtp_proto_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 	 */
 	gmtp_set_state(sk, GMTP_REQUESTING);
 
-	rt = ip_route_newports(fl4, rt, orig_sport, orig_dport,
-			       inet->inet_sport, inet->inet_dport, sk);
-	if (IS_ERR(rt)) {
-		err = PTR_ERR(rt);
-		rt = NULL;
-		goto failure;
-	}
-	/* OK, now commit destination to socket.  */
-	sk_setup_caps(sk, &rt->dst);
+	//TODO Implement behavior
+	/* GMTP behavior
+	 * (...)
+	 * */
 
-//	gs->dccps_iss = secure_dccp_sequence_number(inet->inet_saddr,
-//						    inet->inet_daddr,
-//						    inet->inet_sport,
-//						    inet->inet_dport);
-//	inet->inet_id = gs->dccps_iss ^ jiffies;
-
+	//Protocol independent connect
 	err = gmtp_connect(sk);
 	rt = NULL;
 	if (err != 0)
@@ -161,12 +151,14 @@ EXPORT_SYMBOL_GPL(gmtp_proto_connect);
 
 int gmtp_disconnect(struct sock *sk, int flags)
 {
+	gmtp_print_debug("gmtp_disconnect");
 	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_disconnect);
 
 int gmtp_ioctl(struct sock *sk, int cmd, unsigned long arg)
 {
+	gmtp_print_debug("gmtp_ioctl");
 	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_ioctl);
@@ -174,6 +166,7 @@ EXPORT_SYMBOL_GPL(gmtp_ioctl);
 int gmtp_getsockopt(struct sock *sk, int level, int optname,
 		    char __user *optval, int __user *optlen)
 {
+	gmtp_print_debug("gmtp_getsockopt");
 	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_getsockopt);
@@ -181,6 +174,7 @@ EXPORT_SYMBOL_GPL(gmtp_getsockopt);
 int gmtp_sendmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 		 size_t size)
 {
+	gmtp_print_debug("gmtp_sendmsg");
 	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_sendmsg);
@@ -188,6 +182,7 @@ EXPORT_SYMBOL_GPL(gmtp_sendmsg);
 int gmtp_setsockopt(struct sock *sk, int level, int optname,
 		    char __user *optval, unsigned int optlen)
 {
+	gmtp_print_debug("gmtp_setsockopt");
 	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_setsockopt);
@@ -196,24 +191,28 @@ int gmtp_recvmsg(struct kiocb *iocb, struct sock *sk,
 		 struct msghdr *msg, size_t len, int nonblock, int flags,
 		 int *addr_len)
 {
+	gmtp_print_debug("gmtp_recvmsg");
 	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_recvmsg);
 
 int gmtp_do_rcv(struct sock *sk, struct sk_buff *skb)
 {
+	gmtp_print_debug("gmtp_do_rcv");
 	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_do_rcv);
 
 void gmtp_shutdown(struct sock *sk, int how)
 {
+	gmtp_print_debug("gmtp_shutdown");
 	printk(KERN_INFO "called shutdown(%x)\n", how);
 }
 EXPORT_SYMBOL_GPL(gmtp_shutdown);
 
 void gmtp_destroy_sock(struct sock *sk)
 {
+	gmtp_print_debug("gmtp_destroy_sock");
 //	struct gmtp_sock *gs = gmtp_sk(sk);
 
 	/*
@@ -238,6 +237,7 @@ EXPORT_SYMBOL_GPL(gmtp_destroy_sock);
 
 int inet_gmtp_listen(struct socket *sock, int backlog)
 {
+	gmtp_print_debug("inet_gmtp_listen");
 	return 0;
 }
 EXPORT_SYMBOL_GPL(inet_gmtp_listen);
