@@ -1,15 +1,37 @@
-*~
-*.backup
-Thumbs.db:encryptable
+# Ignored files
+
+# GitEye
+/.project
+/.settings/
+
+# Kernel Module compilation
+*.ko
+*.o
+*.mod
+*.mod.c
+*.ko.cmd
+*.o.cmd
+*.symvers
+*.order
+*.save
+
+# Latex
 *.aux
 *.bbl
 *.blg
-*.lof
-*.log
-*.lot
-*.toc
-*.~vsd
-*.loa
-*.lol
 *.dvi
-*.DS_Store
+*.log
+*.pdf
+*.ps
+*.toc
+*~
+*.lof 
+*.glo
+*.gls
+*.ilg
+*.ist
+*.glg
+*.synctex.gz
+*.brf
+*.idx
+
