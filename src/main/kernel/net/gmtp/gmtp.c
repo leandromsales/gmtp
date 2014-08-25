@@ -10,55 +10,51 @@
 
 #include "gmtp.h"
 
-/**
- * BASED ON IPV4 DCCP
- */
-
 static struct request_sock_ops gmtp_request_sock_ops __read_mostly = {
 	.family		= PF_INET,
 	.obj_size	= sizeof(struct gmtp_request_sock)
-//	.rtx_syn_ack	= dccp_v4_send_response,
-//	.send_ack	= dccp_reqsk_send_ack,
-//	.destructor	= dccp_v4_reqsk_destructor,
-//	.send_reset	= dccp_v4_ctl_send_reset,
-//	.syn_ack_timeout = dccp_syn_ack_timeout,
+//	.rtx_syn_ack	= gmtp_v4_send_response,
+//	.send_ack	= gmtp_reqsk_send_ack,
+//	.destructor	= gmtp_v4_reqsk_destructor,
+//	.send_reset	= gmtp_v4_ctl_send_reset,
+//	.syn_ack_timeout = gmtp_syn_ack_timeout,
 };
 
 static struct proto gmtp_prot = {
 	.name			= "GMTP",
 	.owner			= THIS_MODULE,
-//	.close			= dccp_close,
-//	.connect		= dccp_v4_connect,
-//	.disconnect		= dccp_disconnect,
-//	.ioctl			= dccp_ioctl,
-//	.init			= dccp_v4_init_sock,
-//	.setsockopt		= dccp_setsockopt,
-//	.getsockopt		= dccp_getsockopt,
-//	.sendmsg		= dccp_sendmsg,
-//	.recvmsg		= dccp_recvmsg,
-//	.backlog_rcv		= dccp_v4_do_rcv,
+//	.close			= gmtp_close,
+//	.connect		= gmtp_v4_connect,
+//	.disconnect		= gmtp_disconnect,
+//	.ioctl			= gmtp_ioctl,
+//	.init			= gmtp_v4_init_sock,
+//	.setsockopt		= gmtp_setsockopt,
+//	.getsockopt		= gmtp_getsockopt,
+//	.sendmsg		= gmtp_sendmsg,
+//	.recvmsg		= gmtp_recvmsg,
+//	.backlog_rcv		= gmtp_v4_do_rcv,
 	.hash			= inet_hash,
 	.unhash			= inet_unhash,
 	.accept			= inet_csk_accept,
 	.get_port		= inet_csk_get_port,
-//	.shutdown		= dccp_shutdown,
-//	.destroy		= dccp_destroy_sock,
-//	.orphan_count		= &dccp_orphan_count,
+//	.shutdown		= gmtp_shutdown,
+//	.destroy		= gmtp_destroy_sock,
+//	.orphan_count		= &gmtp_orphan_count,
 //	.max_header		= MAX_DCCP_HEADER,
 	.obj_size		= sizeof(struct gmtp_sock),
 	.slab_flags		= SLAB_DESTROY_BY_RCU,
 	.rsk_prot		= &gmtp_request_sock_ops,
-//	.twsk_prot		= &dccp_timewait_sock_ops,
-//	.h.hashinfo		= &dccp_hashinfo,
+//	.twsk_prot		= &gmtp_timewait_sock_ops,
+//	.h.hashinfo		= &gmtp_hashinfo,
 //#ifdef CONFIG_COMPAT
-//	.compat_setsockopt	= compat_dccp_setsockopt,
-//	.compat_getsockopt	= compat_dccp_getsockopt,
+//	.compat_setsockopt	= compat_gmtp_setsockopt,
+//	.compat_getsockopt	= compat_gmtp_getsockopt,
 //#endif
 };
 
 static const struct net_protocol gmtp_protocol = {
-//	.handler	= dccp_v4_rcv,
-//	.err_handler	= dccp_v4_err,
+//	.handler	= gmtp_v4_rcv,
+//	.err_handler	= gmtp_v4_err,
 	.no_policy	= 1,
 	.netns_ok	= 1,
 	.icmp_strict_tag_validation = 1,
@@ -73,9 +69,9 @@ static const struct proto_ops inet_gmtp_ops = {
 	.socketpair	   = sock_no_socketpair,
 	.accept		   = inet_accept,
 	.getname	   = inet_getname,
-//	.poll		   = dccp_poll,
+//	.poll		   = gmtp_poll,
 	.ioctl		   = inet_ioctl,
-//	.listen		   = inet_dccp_listen,
+//	.listen		   = inet_gmtp_listen,
 	.shutdown	   = inet_shutdown,
 	.setsockopt	   = sock_common_setsockopt,
 	.getsockopt	   = sock_common_getsockopt,
@@ -98,23 +94,23 @@ static struct inet_protosw gmtp_protosw = {
 	.flags		= INET_PROTOSW_ICSK,
 };
 
-/*static int __net_init dccp_v4_init_net(struct net *net)
+/*static int __net_init gmtp_v4_init_net(struct net *net)
 {
-	if (dccp_hashinfo.bhash == NULL)
+	if (gmtp_hashinfo.bhash == NULL)
 		return -ESOCKTNOSUPPORT;
 
-	return inet_ctl_sock_create(&net->dccp.v4_ctl_sk, PF_INET,
+	return inet_ctl_sock_create(&net->gmtp.v4_ctl_sk, PF_INET,
 				    SOCK_DCCP, IPPROTO_DCCP, net);
 }*/
 
-/*static void __net_exit dccp_v4_exit_net(struct net *net)
+/*static void __net_exit gmtp_v4_exit_net(struct net *net)
 {
-	inet_ctl_sock_destroy(net->dccp.v4_ctl_sk);
+	inet_ctl_sock_destroy(net->gmtp.v4_ctl_sk);
 }*/
 
-/*static struct pernet_operations dccp_v4_ops = {
-	.init	= dccp_v4_init_net,
-	.exit	= dccp_v4_exit_net,
+/*static struct pernet_operations gmtp_v4_ops = {
+	.init	= gmtp_v4_init_net,
+	.exit	= gmtp_v4_exit_net,
 };*/
 
 static int __init gmtp_init(void)
@@ -166,5 +162,6 @@ module_init(gmtp_init);
 module_exit(gmtp_exit);
 
 MODULE_LICENSE("GPL");
+MODULE_AUTHOR("Leandro Melo de Sales <leandro@ic.ufal.br>");
 MODULE_AUTHOR("Wendell Silva Soares <wendell@compelab.org>");
-MODULE_DESCRIPTION("GMTP - Global Media Transmission Protocol");
+MODULE_DESCRIPTION("Global Media Transmission Protocol (GMTP)");
