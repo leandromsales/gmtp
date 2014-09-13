@@ -34,7 +34,7 @@ EXPORT_SYMBOL_GPL(gmtp_err);
 int gmtp_init_sock(struct sock *sk)
 {
 	gmtp_print_debug("gmtp_init_sock");
-//	struct gmtp_sock *gs = gmtp_sk(sk);
+	struct gmtp_sock *gs = gmtp_sk(sk);
 //	struct inet_connection_sock *icsk = inet_csk(sk);
 
 	sk->sk_state		= GMTP_CLOSED;

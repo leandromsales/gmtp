@@ -1,5 +1,5 @@
 PWD := $(shell pwd)
-# KERNEL := /usr/src/linux
+#KERNEL := /usr/src/linux
 KERNEL:= /lib/modules/`uname -r`/build
 
 KBUILD_EXTRA_SYMBOLS := $(PWD)/Module.symvers
@@ -13,5 +13,5 @@ all:
 	modinfo $(MOD).ko
 
 clean:
-	# make -C $(KERNEL) M=$(PWD) clean
-	rm -rf *.o *.ko
+	make -C $(KERNEL) M=$(PWD) clean
+	#rm -rf *.o *.ko
