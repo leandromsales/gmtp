@@ -26,6 +26,7 @@ int gmtp_rcv(struct sk_buff *skb);  //TODO should be static
 void gmtp_err(struct sk_buff *skb, u32 info);  //TODO should be static
 
 int gmtp_init_sock(struct sock *sk);  //TODO should be static
+//int gmtp_inet_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len);
 
 void gmtp_close(struct sock *sk, long timeout);
 int gmtp_proto_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len);

@@ -5,6 +5,9 @@
 *.cproject
 /.settings/
 
+# Nano temporary files
+*.save
+
 # Kernel Module compilation
 *.ko
 *.o
