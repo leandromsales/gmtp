@@ -41,12 +41,16 @@ struct gmtp_request_sock {
 
 /**
  * struct gmtp_sock - GMTP socket state
+ *
+ * @dccps_role - role of this sock, one of %gmtp_role
+ * @gmtps_service - first (passive sock) or unique (active sock) service code
  */
 struct gmtp_sock {
 	/* inet_connection_sock has to be the first member of gmtp_sock */
 	struct inet_connection_sock gmtp_inet_connection;
 
-	enum gmtp_role	gmtps_role:2;
+	enum gmtp_role		gmtps_role:2;
+	__be32				gmtps_service;
 };
 
 static inline struct gmtp_sock *gmtp_sk(const struct sock *sk)

@@ -1,7 +1,21 @@
+#include <linux/init.h>
+#include <linux/module.h>
+
 #include <linux/types.h>
 #include <net/inet_hashtables.h>
+#include <asm/ioctls.h>
 
 #include "gmtp.h"
+
+struct percpu_counter gmtp_orphan_count;
+EXPORT_SYMBOL_GPL(gmtp_orphan_count);
+
+struct inet_hashinfo gmtp_hashinfo;
+EXPORT_SYMBOL_GPL(gmtp_hashinfo);
+
+static int thash_entries;
+module_param(thash_entries, int, 0444);
+MODULE_PARM_DESC(thash_entries, "Number of ehash buckets");
 
 void gmtp_set_state(struct sock *sk, const int state)
 {
@@ -13,23 +27,36 @@ void gmtp_set_state(struct sock *sk, const int state)
 		sk->sk_state = state;
 }
 
+int gmtp_init_sock(struct sock *sk, const __u8 ctl_sock_initialized)
+{
+	gmtp_print_debug("gmtp_init_sock");
+
+	struct gmtp_sock *gs = gmtp_sk(sk);
+	struct inet_connection_sock *icsk = inet_csk(sk);
+
+	sk->sk_state		= GMTP_CLOSED;
+
+	//TODO Study those:
+	gs->gmtps_role		= GMTP_ROLE_UNDEFINED;
+	gs->gmtps_service	= 0;
+
+	return 0;
+}
+EXPORT_SYMBOL_GPL(gmtp_init_sock);
+
+void gmtp_destroy_sock(struct sock *sk)
+{
+	//TODO Implement gmtp_destroy_sock
+	gmtp_print_debug("gmtp_destroy_sock");
+}
+EXPORT_SYMBOL_GPL(gmtp_destroy_sock);
+
 int inet_gmtp_listen(struct socket *sock, int backlog)
 {
-	int err = 0;
-	if(!sock)
-	{
-		err = -1;
-		gmtp_print_debug("sock is NULL!");
-		return err;
-	}
+	gmtp_print_debug("inet_gmtp_listen");
 
 	struct sock *sk = sock->sk;
-//	unsigned char old_state;
 
-
-//	old_state = sk->sk_state;
-
-	gmtp_print_debug("inet_gmtp_listen");
 	return 0;
 }
 EXPORT_SYMBOL_GPL(inet_gmtp_listen);
@@ -48,13 +75,6 @@ void gmtp_err(struct sk_buff *skb, u32 info)
 }
 EXPORT_SYMBOL_GPL(gmtp_err);
 
-int gmtp_init_sock(struct sock *sk)
-{
-	gmtp_print_debug("gmtp_init_sock");
-	return 0;
-}
-EXPORT_SYMBOL_GPL(gmtp_init_sock);
-
 //TODO Implement gmtp callbacks
 void gmtp_close(struct sock *sk, long timeout)
 {
@@ -62,13 +82,6 @@ void gmtp_close(struct sock *sk, long timeout)
 }
 EXPORT_SYMBOL_GPL(gmtp_close);
 
-
-int gmtp_proto_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
-{
-	gmtp_print_debug("gmtp_proto_connect");
-	return 0;
-}
-EXPORT_SYMBOL_GPL(gmtp_proto_connect);
 
 int gmtp_disconnect(struct sock *sk, int flags)
 {
@@ -85,7 +98,7 @@ int gmtp_ioctl(struct sock *sk, int cmd, unsigned long arg)
 EXPORT_SYMBOL_GPL(gmtp_ioctl);
 
 int gmtp_getsockopt(struct sock *sk, int level, int optname,
-		    char __user *optval, int __user *optlen)
+		char __user *optval, int __user *optlen)
 {
 	gmtp_print_debug("gmtp_getsockopt");
 	return 0;
@@ -93,7 +106,7 @@ int gmtp_getsockopt(struct sock *sk, int level, int optname,
 EXPORT_SYMBOL_GPL(gmtp_getsockopt);
 
 int gmtp_sendmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
-		 size_t size)
+		size_t size)
 {
 	gmtp_print_debug("gmtp_sendmsg");
 	return 0;
@@ -101,7 +114,7 @@ int gmtp_sendmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 EXPORT_SYMBOL_GPL(gmtp_sendmsg);
 
 int gmtp_setsockopt(struct sock *sk, int level, int optname,
-		    char __user *optval, unsigned int optlen)
+		char __user *optval, unsigned int optlen)
 {
 	gmtp_print_debug("gmtp_setsockopt");
 	return 0;
@@ -109,8 +122,8 @@ int gmtp_setsockopt(struct sock *sk, int level, int optname,
 EXPORT_SYMBOL_GPL(gmtp_setsockopt);
 
 int gmtp_recvmsg(struct kiocb *iocb, struct sock *sk,
-		 struct msghdr *msg, size_t len, int nonblock, int flags,
-		 int *addr_len)
+		struct msghdr *msg, size_t len, int nonblock, int flags,
+		int *addr_len)
 {
 	gmtp_print_debug("gmtp_recvmsg");
 	return 0;
@@ -131,10 +144,161 @@ void gmtp_shutdown(struct sock *sk, int how)
 }
 EXPORT_SYMBOL_GPL(gmtp_shutdown);
 
-void gmtp_destroy_sock(struct sock *sk)
+/**
+ * TODO re-write
+ * This method is a copy from dccp hashinfo initialization from
+ * net/dccp/proto.c
+ */
+static int gmtp_init_hashinfo(void)
 {
-	gmtp_print_debug("gmtp_destroy_sock");
+	gmtp_print_debug("gmtp_init_hashinfo");
+	unsigned long goal;
+	int ehash_order, bhash_order, i;
+	int rc;
+
+	gmtp_print_debug("BUILD_BUG_ON");
+	BUILD_BUG_ON(sizeof(struct gmtp_skb_cb) >
+	FIELD_SIZEOF(struct sk_buff, cb));
+
+	gmtp_print_debug("percpu_counter_init");
+	rc = percpu_counter_init(&gmtp_orphan_count, 0);
+	if (rc)
+		goto out_fail;
+	rc = -ENOBUFS;
+
+	gmtp_print_debug("inet_hashinfo_init");
+	inet_hashinfo_init(&gmtp_hashinfo);
+	gmtp_hashinfo.bind_bucket_cachep =
+			kmem_cache_create("gmtp_bind_bucket",
+					sizeof(struct inet_bind_bucket), 0,
+					SLAB_HWCACHE_ALIGN, NULL);
+	if (!gmtp_hashinfo.bind_bucket_cachep)
+		goto out_free_percpu;
+
+
+	/*
+	 * Size and allocate the main established and bind bucket
+	 * hash tables.
+	 *
+	 * The methodology is similar to that of the buffer cache.
+	 */
+	gmtp_print_debug("totalram_pages");
+	if (totalram_pages >= (128 * 1024))
+		goal = totalram_pages >> (21 - PAGE_SHIFT);
+	else
+		goal = totalram_pages >> (23 - PAGE_SHIFT);
+
+	gmtp_print_debug("thash_entries");
+	if (thash_entries)
+		goal = (thash_entries *
+				sizeof(struct inet_ehash_bucket)) >> PAGE_SHIFT;
+	for (ehash_order = 0; (1UL << ehash_order) < goal; ehash_order++)
+		;
+
+	gmtp_print_debug("do...");
+	do {
+		unsigned long hash_size = (1UL << ehash_order) * PAGE_SIZE /
+				sizeof(struct inet_ehash_bucket);
+
+		while (hash_size & (hash_size - 1))
+			hash_size--;
+		gmtp_hashinfo.ehash_mask = hash_size - 1;
+		gmtp_hashinfo.ehash = (struct inet_ehash_bucket *)
+						__get_free_pages(GFP_ATOMIC|__GFP_NOWARN, ehash_order);
+	} while (!gmtp_hashinfo.ehash && --ehash_order > 0);
+	gmtp_print_debug("while");
+
+	gmtp_print_debug("if(!gmtp_hashinfo.ehash)");
+	if (!gmtp_hashinfo.ehash) {
+		gmtp_print_error("Failed to allocate GMTP established hash table");
+		goto out_free_bind_bucket_cachep;
+	}
+
+	gmtp_print_debug("for...");
+	for (i = 0; i <= gmtp_hashinfo.ehash_mask; i++)
+		INIT_HLIST_NULLS_HEAD(&gmtp_hashinfo.ehash[i].chain, i);
+
+	gmtp_print_debug("if (inet_ehash_locks_alloc(&gmtp_hashinfo))");
+	if (inet_ehash_locks_alloc(&gmtp_hashinfo))
+		goto out_free_gmtp_ehash;
+
+	bhash_order = ehash_order;
+
+	gmtp_print_debug("do...(2)");
+	do {
+		gmtp_hashinfo.bhash_size = (1UL << bhash_order) * PAGE_SIZE /
+				sizeof(struct inet_bind_hashbucket);
+		if ((gmtp_hashinfo.bhash_size > (64 * 1024)) &&
+				bhash_order > 0)
+			continue;
+		gmtp_hashinfo.bhash = (struct inet_bind_hashbucket *)
+						__get_free_pages(GFP_ATOMIC|__GFP_NOWARN, bhash_order);
+	} while (!gmtp_hashinfo.bhash && --bhash_order >= 0);
+	gmtp_print_debug("while(2)");
+
+	gmtp_print_debug("if (!gmtp_hashinfo.bhash)");
+	if (!gmtp_hashinfo.bhash) {
+		gmtp_print_error("Failed to allocate GMTP bind hash table");
+		goto out_free_gmtp_locks;
+	}
+
+	gmtp_print_debug("last for");
+	for (i = 0; i < gmtp_hashinfo.bhash_size; i++) {
+		spin_lock_init(&gmtp_hashinfo.bhash[i].lock);
+		INIT_HLIST_HEAD(&gmtp_hashinfo.bhash[i].chain);
+	}
+
+	gmtp_print_debug("return 0");
+	return 0;
+
+out_free_gmtp_locks:
+	gmtp_print_debug("out_free_gmtp_locks");
+	inet_ehash_locks_free(&gmtp_hashinfo);
+out_free_gmtp_ehash:
+	gmtp_print_debug("out_free_gmtp_ehash");
+	free_pages((unsigned long)gmtp_hashinfo.ehash, ehash_order);
+out_free_bind_bucket_cachep:
+	gmtp_print_debug("out_free_bind_bucket_cachep");
+	kmem_cache_destroy(gmtp_hashinfo.bind_bucket_cachep);
+out_free_percpu:
+	gmtp_print_debug("out_free_percpu");
+	percpu_counter_destroy(&gmtp_orphan_count);
+out_fail:
+	gmtp_print_debug("out_fail");
+	gmtp_hashinfo.bhash = NULL;
+	gmtp_hashinfo.ehash = NULL;
+	gmtp_hashinfo.bind_bucket_cachep = NULL;
+
+	gmtp_print_debug("gmtp_init_hashinfo - end");
+	return rc;
 }
-EXPORT_SYMBOL_GPL(gmtp_destroy_sock);
 
+static int __init gmtp_init(void)
+{
+	gmtp_print_debug("GMTP init!\n");
+	int rc;
+	rc = gmtp_init_hashinfo();
+	return rc;
+}
 
+static void __exit gmtp_exit(void)
+{
+	gmtp_print_debug("GMTP exit!\n");
+	free_pages((unsigned long)gmtp_hashinfo.bhash,
+			get_order(gmtp_hashinfo.bhash_size *
+					sizeof(struct inet_bind_hashbucket)));
+	free_pages((unsigned long)gmtp_hashinfo.ehash,
+			get_order((gmtp_hashinfo.ehash_mask + 1) *
+					sizeof(struct inet_ehash_bucket)));
+	inet_ehash_locks_free(&gmtp_hashinfo);
+	kmem_cache_destroy(gmtp_hashinfo.bind_bucket_cachep);
+
+	percpu_counter_destroy(&gmtp_orphan_count);
+}
+
+module_init(gmtp_init);
+module_exit(gmtp_exit);
+
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("Wendell Silva Soares <wendell@compelab.org>");
+MODULE_DESCRIPTION("GMTP - Global Media Transmission Protocol");

@@ -25,8 +25,6 @@ server_socket.bind(address)
 print("Fiz o bind. Agora vou fazer o listen")
 time.sleep(1)
 server_socket.listen(1)
-
-print("Pronto. Aguardando os clientes")
 server_input, address = server_socket.accept()
 
 # Print

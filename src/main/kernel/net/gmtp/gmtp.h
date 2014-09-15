@@ -10,6 +10,8 @@
 
 #include "include/linux/gmtp.h"
 
+extern struct inet_hashinfo gmtp_hashinfo;
+
 #define GMTP_INFO "GMTP_INFO: "
 #define GMTP_WARNING "GMTP_WARNING: "
 #define GMTP_ERROR "GMTP_ERROR: "
@@ -22,14 +24,17 @@
 #define MAX_GMTP_VARIABLE_HEADER (2047 * sizeof(uint32_t))
 #define MAX_GMTP_HEADER (MAX_GMTP_SPECIFIC_HEADER + MAX_GMTP_VARIABLE_HEADER)
 
-int gmtp_rcv(struct sk_buff *skb);  //TODO should be static
-void gmtp_err(struct sk_buff *skb, u32 info);  //TODO should be static
+extern struct percpu_counter gmtp_orphan_count;
 
-int gmtp_init_sock(struct sock *sk);  //TODO should be static
+int gmtp_rcv(struct sk_buff *skb);
+void gmtp_err(struct sk_buff *skb, u32 info);
+
+int gmtp_init_sock(struct sock *sk, const __u8 ctl_sock_initialized);
+
 //int gmtp_inet_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len);
 
 void gmtp_close(struct sock *sk, long timeout);
-int gmtp_proto_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len);
+int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len);
 int gmtp_connect(struct sock *sk);
 int gmtp_disconnect(struct sock *sk, int flags);
 int gmtp_ioctl(struct sock *sk, int cmd, unsigned long arg);

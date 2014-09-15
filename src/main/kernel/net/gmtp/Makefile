@@ -4,13 +4,16 @@ KERNEL:= /lib/modules/`uname -r`/build
 
 KBUILD_EXTRA_SYMBOLS := $(PWD)/Module.symvers
 
-MOD := gmtp
-obj-m += $(MOD).o  
-$(MOD)-objs += main.o proto.o
+obj-m += gmtp.o gmtp_ipv4.o
+
+gmtp-y = output.o proto.o
+gmtp_ipv4-y := ipv4.o
 
 all:
 	make -C $(KERNEL) M=$(PWD) modules
-	modinfo $(MOD).ko
+	modinfo gmtp.ko
+	echo '-------------------------------' >> /dev/null
+	modinfo gmtp_ipv4.ko
 
 clean:
 	make -C $(KERNEL) M=$(PWD) clean
