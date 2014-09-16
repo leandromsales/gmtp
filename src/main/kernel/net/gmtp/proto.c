@@ -198,7 +198,6 @@ static int gmtp_init_hashinfo(void)
 									__get_free_pages(GFP_ATOMIC|__GFP_NOWARN, ehash_order);
 	} while (!gmtp_hashinfo.ehash && --ehash_order > 0);
 
-	gmtp_print_debug("if(!gmtp_hashinfo.ehash)");
 	if (!gmtp_hashinfo.ehash) {
 		gmtp_print_error("Failed to allocate GMTP established hash table");
 		goto out_free_bind_bucket_cachep;
