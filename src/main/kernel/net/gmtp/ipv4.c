@@ -135,7 +135,6 @@ static struct inet_protosw gmtp_protosw = {
 	.protocol	= IPPROTO_GMTP,
 	.prot		= &gmtp_prot,
 	.ops		= &inet_gmtp_ops,
-	.no_check	= 0,
 	.flags		= INET_PROTOSW_ICSK,
 };
 

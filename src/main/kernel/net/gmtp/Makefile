@@ -11,9 +11,9 @@ gmtp_ipv4-y := ipv4.o
 
 all:
 	make -C $(KERNEL) M=$(PWD) modules
-	modinfo gmtp.ko
+	/sbin/modinfo gmtp.ko
 	echo '-------------------------------' >> /dev/null
-	modinfo gmtp_ipv4.ko
+	/sbin/modinfo gmtp_ipv4.ko
 
 clean:
 	make -C $(KERNEL) M=$(PWD) clean
