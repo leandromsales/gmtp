@@ -1,21 +1,34 @@
 #include <linux/init.h>
 #include <linux/module.h>
-
+#include <linux/swap.h>
 #include <linux/types.h>
+
 #include <net/inet_hashtables.h>
-#include <asm/ioctls.h>
+#include <net/sock.h>
+
+#include <linux/bootmem.h>
+#include <linux/mm.h>
+//#include <../mm/page_alloc.c>
 
 #include "gmtp.h"
-
-struct percpu_counter gmtp_orphan_count;
-EXPORT_SYMBOL_GPL(gmtp_orphan_count);
 
 struct inet_hashinfo gmtp_hashinfo;
 EXPORT_SYMBOL_GPL(gmtp_hashinfo);
 
+//TODO Study thash_entries... This is from DCCP thash_entries
 static int thash_entries;
 module_param(thash_entries, int, 0444);
 MODULE_PARM_DESC(thash_entries, "Number of ehash buckets");
+
+long sysctl_gmtp_mem[3] __read_mostly;
+int sysctl_gmtp_wmem[3] __read_mostly;
+int sysctl_gmtp_rmem[3] __read_mostly;
+EXPORT_SYMBOL(sysctl_gmtp_mem);
+EXPORT_SYMBOL(sysctl_gmtp_wmem);
+EXPORT_SYMBOL(sysctl_gmtp_rmem);
+
+//atomic_long_t tcp_memory_allocated;	/* Current allocated memory. */
+//EXPORT_SYMBOL(tcp_memory_allocated);
 
 void gmtp_set_state(struct sock *sk, const int state)
 {
@@ -144,132 +157,119 @@ void gmtp_shutdown(struct sock *sk, int how)
 }
 EXPORT_SYMBOL_GPL(gmtp_shutdown);
 
+static void gmtp_init_mem(void)
+{
+	unsigned long limit = nr_free_buffer_pages() / 8;
+	limit = max(limit, 128UL);
+	sysctl_gmtp_mem[0] = limit / 4 * 3;
+	sysctl_gmtp_mem[1] = limit;
+	sysctl_gmtp_mem[2] = sysctl_gmtp_mem[0] * 2;
+}
+
 /**
- * TODO re-write
- * This method is a copy from dccp hashinfo initialization from
- * net/dccp/proto.c
+ * This method is a copy from tcp hashinfo initialization
+ * with some dccp hash verifications
  */
 static int gmtp_init_hashinfo(void)
 {
 	gmtp_print_debug("gmtp_init_hashinfo");
-	unsigned long goal;
-	int ehash_order, bhash_order, i;
+
+	struct sk_buff *skb = NULL;
+	unsigned long limit;
+	int max_rshare, max_wshare, cnt;
+	unsigned int i;
 	int rc;
 
-	gmtp_print_debug("BUILD_BUG_ON");
 	BUILD_BUG_ON(sizeof(struct gmtp_skb_cb) >
 	FIELD_SIZEOF(struct sk_buff, cb));
 
-	gmtp_print_debug("percpu_counter_init");
-	rc = percpu_counter_init(&gmtp_orphan_count, 0);
-	if (rc)
-		goto out_fail;
 	rc = -ENOBUFS;
 
-	gmtp_print_debug("inet_hashinfo_init");
-	inet_hashinfo_init(&gmtp_hashinfo);
 	gmtp_hashinfo.bind_bucket_cachep =
 			kmem_cache_create("gmtp_bind_bucket",
 					sizeof(struct inet_bind_bucket), 0,
-					SLAB_HWCACHE_ALIGN, NULL);
+					SLAB_HWCACHE_ALIGN|SLAB_PANIC, NULL);
 	if (!gmtp_hashinfo.bind_bucket_cachep)
-		goto out_free_percpu;
+			goto out_fail;
 
 
-	/*
-	 * Size and allocate the main established and bind bucket
+	/* Size and allocate the main established and bind bucket
 	 * hash tables.
 	 *
 	 * The methodology is similar to that of the buffer cache.
 	 */
-	gmtp_print_debug("totalram_pages");
-	if (totalram_pages >= (128 * 1024))
-		goal = totalram_pages >> (21 - PAGE_SHIFT);
-	else
-		goal = totalram_pages >> (23 - PAGE_SHIFT);
-
-	gmtp_print_debug("thash_entries");
-	if (thash_entries)
-		goal = (thash_entries *
-				sizeof(struct inet_ehash_bucket)) >> PAGE_SHIFT;
-	for (ehash_order = 0; (1UL << ehash_order) < goal; ehash_order++)
-		;
-
-	gmtp_print_debug("do...");
-	do {
-		unsigned long hash_size = (1UL << ehash_order) * PAGE_SIZE /
-				sizeof(struct inet_ehash_bucket);
-
-		while (hash_size & (hash_size - 1))
-			hash_size--;
-		gmtp_hashinfo.ehash_mask = hash_size - 1;
-		gmtp_hashinfo.ehash = (struct inet_ehash_bucket *)
-						__get_free_pages(GFP_ATOMIC|__GFP_NOWARN, ehash_order);
-	} while (!gmtp_hashinfo.ehash && --ehash_order > 0);
-	gmtp_print_debug("while");
-
-	gmtp_print_debug("if(!gmtp_hashinfo.ehash)");
+	gmtp_hashinfo.ehash =
+			alloc_large_system_hash("GMTP established",
+					sizeof(struct inet_ehash_bucket),
+					thash_entries,
+					17, /* one slot per 128 KB of memory */
+					0,
+					NULL,
+					&gmtp_hashinfo.ehash_mask,
+					0,
+					thash_entries ? 0 : 512 * 1024);
 	if (!gmtp_hashinfo.ehash) {
 		gmtp_print_error("Failed to allocate GMTP established hash table");
 		goto out_free_bind_bucket_cachep;
 	}
-
-	gmtp_print_debug("for...");
 	for (i = 0; i <= gmtp_hashinfo.ehash_mask; i++)
 		INIT_HLIST_NULLS_HEAD(&gmtp_hashinfo.ehash[i].chain, i);
 
-	gmtp_print_debug("if (inet_ehash_locks_alloc(&gmtp_hashinfo))");
 	if (inet_ehash_locks_alloc(&gmtp_hashinfo))
-		goto out_free_gmtp_ehash;
+		panic("GMTP: failed to alloc ehash_locks");
 
-	bhash_order = ehash_order;
-
-	gmtp_print_debug("do...(2)");
-	do {
-		gmtp_hashinfo.bhash_size = (1UL << bhash_order) * PAGE_SIZE /
-				sizeof(struct inet_bind_hashbucket);
-		if ((gmtp_hashinfo.bhash_size > (64 * 1024)) &&
-				bhash_order > 0)
-			continue;
-		gmtp_hashinfo.bhash = (struct inet_bind_hashbucket *)
-						__get_free_pages(GFP_ATOMIC|__GFP_NOWARN, bhash_order);
-	} while (!gmtp_hashinfo.bhash && --bhash_order >= 0);
-	gmtp_print_debug("while(2)");
-
-	gmtp_print_debug("if (!gmtp_hashinfo.bhash)");
+	gmtp_hashinfo.bhash =
+			alloc_large_system_hash("GMTP bind",
+					sizeof(struct inet_bind_hashbucket),
+					gmtp_hashinfo.ehash_mask + 1,
+					17, /* one slot per 128 KB of memory */
+					0,
+					&gmtp_hashinfo.bhash_size,
+					NULL,
+					0,
+					64 * 1024);
 	if (!gmtp_hashinfo.bhash) {
 		gmtp_print_error("Failed to allocate GMTP bind hash table");
 		goto out_free_gmtp_locks;
 	}
 
-	gmtp_print_debug("last for");
+	gmtp_hashinfo.bhash_size = 1U << gmtp_hashinfo.bhash_size;
 	for (i = 0; i < gmtp_hashinfo.bhash_size; i++) {
 		spin_lock_init(&gmtp_hashinfo.bhash[i].lock);
 		INIT_HLIST_HEAD(&gmtp_hashinfo.bhash[i].chain);
 	}
 
-	gmtp_print_debug("return 0");
+	cnt = gmtp_hashinfo.ehash_mask + 1;
+
+	gmtp_init_mem();
+	/* Set per-socket limits to no more than 1/128 the pressure threshold */
+	limit = nr_free_buffer_pages() << (PAGE_SHIFT - 7);
+	max_wshare = min(4UL*1024*1024, limit);
+	max_rshare = min(6UL*1024*1024, limit);
+
+	sysctl_gmtp_wmem[0] = SK_MEM_QUANTUM;
+	sysctl_gmtp_wmem[1] = 16*1024;
+	sysctl_gmtp_wmem[2] = max(64*1024, max_wshare);
+
+	sysctl_gmtp_rmem[0] = SK_MEM_QUANTUM;
+	sysctl_gmtp_rmem[1] = 87380;
+	sysctl_gmtp_rmem[2] = max(87380, max_rshare);
+
+	gmtp_print_debug("Hash tables configured (established %u bind %u)\n",
+			gmtp_hashinfo.ehash_mask + 1, gmtp_hashinfo.bhash_size);
+
 	return 0;
 
 out_free_gmtp_locks:
-	gmtp_print_debug("out_free_gmtp_locks");
 	inet_ehash_locks_free(&gmtp_hashinfo);
-out_free_gmtp_ehash:
-	gmtp_print_debug("out_free_gmtp_ehash");
-	free_pages((unsigned long)gmtp_hashinfo.ehash, ehash_order);
 out_free_bind_bucket_cachep:
-	gmtp_print_debug("out_free_bind_bucket_cachep");
 	kmem_cache_destroy(gmtp_hashinfo.bind_bucket_cachep);
-out_free_percpu:
-	gmtp_print_debug("out_free_percpu");
-	percpu_counter_destroy(&gmtp_orphan_count);
 out_fail:
-	gmtp_print_debug("out_fail");
+	gmtp_print_error("gmtp_init_hashinfo - ERROR");
 	gmtp_hashinfo.bhash = NULL;
 	gmtp_hashinfo.ehash = NULL;
 	gmtp_hashinfo.bind_bucket_cachep = NULL;
 
-	gmtp_print_debug("gmtp_init_hashinfo - end");
 	return rc;
 }
 
@@ -292,8 +292,6 @@ static void __exit gmtp_exit(void)
 					sizeof(struct inet_ehash_bucket)));
 	inet_ehash_locks_free(&gmtp_hashinfo);
 	kmem_cache_destroy(gmtp_hashinfo.bind_bucket_cachep);
-
-	percpu_counter_destroy(&gmtp_orphan_count);
 }
 
 module_init(gmtp_init);

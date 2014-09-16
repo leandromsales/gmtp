@@ -8,6 +8,8 @@
 #ifndef GMTP_H_
 #define GMTP_H_
 
+#include <uapi/asm-generic/errno.h>
+
 #include "include/linux/gmtp.h"
 
 extern struct inet_hashinfo gmtp_hashinfo;
