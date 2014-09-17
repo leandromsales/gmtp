@@ -165,19 +165,20 @@ static int __init gmtp_v4_init(void)
 	if (err)
 		goto out_destroy_ctl_sock;
 
-out:
-	return err;
-
 out_destroy_ctl_sock:
 	gmtp_print_error("inet_unregister_protosw GMTP IPv4\n");
 	inet_unregister_protosw(&gmtp_protosw);
 	gmtp_print_error("inet_del_protocol GMTP IPv4\n");
 	inet_del_protocol(&gmtp_protocol, IPPROTO_GMTP);
+    return err;
 
 out_proto_unregister:
 	gmtp_print_error("proto_unregister GMTP IPv4\n");
 	proto_unregister(&gmtp_prot);
-	goto out;
+    return err;
+
+out:
+	return err;
 }
 
 static void __exit gmtp_v4_exit(void)
