@@ -59,6 +59,14 @@ int inet_gmtp_listen(struct socket *sock, int backlog)
 
 	struct sock *sk = sock->sk;
 
+	lock_sock(sk);
+
+	if (sock->state != SS_UNCONNECTED || sock->type != SOCK_GMTP)
+		goto out;
+
+out:
+	release_sock(sk);
+
 	return 0;
 }
 EXPORT_SYMBOL_GPL(inet_gmtp_listen);

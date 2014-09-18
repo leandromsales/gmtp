@@ -88,7 +88,7 @@ static struct proto gmtp_prot = {
 
 /**
  * In the socket creation routine, protocol implementer specifies a
- * “struct proto_ops” (/include/linux/net.h) instance.
+ * â€œstruct proto_opsâ€� (/include/linux/net.h) instance.
  * The socket layer calls function members of this proto_ops instance before the
  * protocol specific functions are called.
  */
@@ -126,9 +126,9 @@ static const struct proto_ops inet_gmtp_ops = {
  * @type: This is the socket type and is a key to search entry for a given
  * socket and type in inetsw[] array.
  * @protocol: This is again a key to find an entry for the socket type in the
- * inetsw[] array. This is an L4 protocol number (L4→Transport layer protocol).
+ * inetsw[] array. This is an L4 protocol number (L4â†’Transport layer protocol).
  * @prot: This is a pointer to struct proto.
- * ops: This is a pointer to the structure of type ‘proto_ops’.
+ * ops: This is a pointer to the structure of type â€˜proto_opsâ€™.
  */
 static struct inet_protosw gmtp_protosw = {
 	.type		= SOCK_GMTP,
