@@ -53,21 +53,50 @@ void gmtp_destroy_sock(struct sock *sk)
 }
 EXPORT_SYMBOL_GPL(gmtp_destroy_sock);
 
+static inline int gmtp_listen_start(struct sock *sk, int backlog)
+{
+	struct gmtp_sock *gs = gmtp_sk(sk);
+
+	//TODO Verificar se precisa
+	gs->gmtps_role = GMTP_ROLE_LISTEN;
+	return inet_csk_listen_start(sk, backlog);
+}
+
 int inet_gmtp_listen(struct socket *sock, int backlog)
 {
-	gmtp_print_debug("inet_gmtp_listen");
 
+	gmtp_print_debug("gmtp_listen");
 	struct sock *sk = sock->sk;
+	unsigned char old_state;
+	int err;
 
 	lock_sock(sk);
 
+	err = -EINVAL;
 	if (sock->state != SS_UNCONNECTED || sock->type != SOCK_GMTP)
 		goto out;
 
+	old_state = sk->sk_state;
+	if (!((1 << old_state) & (GMTPF_CLOSED | GMTPF_LISTEN)))
+		goto out;
+
+	/* Really, if the socket is already in listen state
+	 * we can only allow the backlog to be adjusted.
+	 */
+	if (old_state != GMTP_LISTEN) {
+		/*
+		 * FIXME: here it probably should be sk->sk_prot->listen_start
+		 * see tcp_listen_start
+		 */
+		err = gmtp_listen_start(sk, backlog);
+		if (err)
+			goto out;
+	}
+	err = 0;
+
 out:
 	release_sock(sk);
-
-	return 0;
+	return err;
 }
 EXPORT_SYMBOL_GPL(inet_gmtp_listen);
 
@@ -203,7 +232,7 @@ static int gmtp_init_hashinfo(void)
 			hash_size--;
 		gmtp_hashinfo.ehash_mask = hash_size - 1;
 		gmtp_hashinfo.ehash = (struct inet_ehash_bucket *)
-									__get_free_pages(GFP_ATOMIC|__GFP_NOWARN, ehash_order);
+											__get_free_pages(GFP_ATOMIC|__GFP_NOWARN, ehash_order);
 	} while (!gmtp_hashinfo.ehash && --ehash_order > 0);
 
 	if (!gmtp_hashinfo.ehash) {
@@ -226,7 +255,7 @@ static int gmtp_init_hashinfo(void)
 				bhash_order > 0)
 			continue;
 		gmtp_hashinfo.bhash = (struct inet_bind_hashbucket *)
-									__get_free_pages(GFP_ATOMIC|__GFP_NOWARN, bhash_order);
+											__get_free_pages(GFP_ATOMIC|__GFP_NOWARN, bhash_order);
 	} while (!gmtp_hashinfo.bhash && --bhash_order >= 0);
 
 	if (!gmtp_hashinfo.bhash) {
@@ -241,13 +270,13 @@ static int gmtp_init_hashinfo(void)
 
 	return 0;
 
-out_free_gmtp_locks:
+	out_free_gmtp_locks:
 	inet_ehash_locks_free(&gmtp_hashinfo);
-out_free_gmtp_ehash:
+	out_free_gmtp_ehash:
 	free_pages((unsigned long)gmtp_hashinfo.ehash, ehash_order);
-out_free_bind_bucket_cachep:
+	out_free_bind_bucket_cachep:
 	kmem_cache_destroy(gmtp_hashinfo.bind_bucket_cachep);
-out_fail:
+	out_fail:
 	gmtp_print_error("gmtp_init_hashinfo: FAIL");
 	gmtp_hashinfo.bhash = NULL;
 	gmtp_hashinfo.ehash = NULL;

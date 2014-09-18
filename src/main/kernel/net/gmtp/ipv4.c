@@ -165,6 +165,8 @@ static int __init gmtp_v4_init(void)
 	if (err)
 		goto out_destroy_ctl_sock;
 
+	return err;
+
 out_destroy_ctl_sock:
 	gmtp_print_error("inet_unregister_protosw GMTP IPv4\n");
 	inet_unregister_protosw(&gmtp_protosw);
