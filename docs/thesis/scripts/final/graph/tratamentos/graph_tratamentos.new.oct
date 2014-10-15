@@ -1,0 +1,709 @@
+#!/opt/local/bin/octave -q
+
+# colors: "blue", "black", "cyan", "green", "magenta", "red", "white", and "yellow"
+
+
+# Graph setup
+axissize = 14;
+ticksize = 10;
+borderlinesize = 1;
+markersize = 5;
+plotlinewidth = 2;
+legendfontsize = 24;
+
+graphdata_denacast=load("-force", "../../../parser/results/denacast-tratamento.txt");
+graphdata_denacast_pc=load("-force", "../../../parser/results/denacast-tratamento-packet-control.txt");
+graphdata_ccntv=load("-force", "../../../parser/results/ccntv-tratamento.txt");
+graphdata_ccntv_pc=load("-force", "../../../parser/results/ccntv-tratamento-packet-control.txt");
+graphdata_gmtp=load("-force", "../../../parser/results/gmtp-tratamento.txt");
+graphdata_gmtp_pc=load("-force", "../../../parser/results/gmtp-tratamento-packet-control.txt");
+
+f = figure();
+set(f,"visible","off") 
+
+function setup_axies(borderlinesize, ticksize, ylimit_min, ylimit_max, xticklabel)
+    set(gca(),
+        "ylim", [ylimit_min ylimit_max],
+        "xlim", [0 19],
+        "xtick", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
+        "xticklabel", xticklabel 
+       );
+    set(gca(), "xgrid", "off", "ygrid", "off", "fontsize", ticksize, "fontweight", "bold");
+    #set(gca(), "defaultaxesfontname", "Helvetica,Bold")
+    #set(gca(),'FontName','/Library/Fonts/HelveticaCY.dfont')
+endfunction
+
+xticklabel = {'0.5', '1.5', '15', '30', '60', '80', '0.5', '1.5', '15', '30', '60', '80', '0.5', '1.5', '15', '30', '60', '80'}; 
+
+
+function setup_axies_prob(borderlinesize, ticksize, ylimit_min, ylimit_max, xticklabel)
+    set(gca(),
+        "ylim", [ylimit_min ylimit_max],
+        "xlim", [0 7],
+        "xtick", [1, 2, 3, 4, 5, 6],
+        "xticklabel", xticklabel 
+       );
+    set(gca(), "xgrid", "off", "ygrid", "off", "linewidth", borderlinesize, "fontsize", ticksize, "fontweight", "bold");
+    #set(gca(), "defaultaxesfontname", "Helvetica,Bold")
+    #set(gca(),'FontName','/Library/Fonts/HelveticaCY.dfont')
+endfunction
+
+xticklabel_prob = {'0.5', '1.5', '15', '30', '60', '80'}; 
+
+# Startup time
+
+hold on;
+h = errorbar(graphdata_denacast(:, 2:2), graphdata_denacast(:, 4:4));
+set (h, "color", "red", "linestyle", "none");
+h = errorbar(graphdata_ccntv(:, 2:2), graphdata_ccntv(:, 4:4));
+set (h, "color", "black", "linestyle", "none");
+h = errorbar(graphdata_gmtp(:, 2:2), graphdata_gmtp(:, 4:4));
+set (h, "color", "blue", "linestyle", "none");
+plot(
+    [1:6], graphdata_denacast(1:6, 2:2),
+	[";{\bf {\fontsize{22} Denacast}};"],
+	"marker", "s",
+	"color", "red",
+	"markerfacecolor", "red",
+	"markersize", markersize,
+	"linestyle", ":",
+	"linewidth", plotlinewidth,
+    [7:12], graphdata_denacast(7:12, 2:2),
+	"marker", "s",
+	"color", "red",
+	"markerfacecolor", "red",
+	"markersize", markersize,
+	"linestyle", ":",
+	"linewidth", plotlinewidth,
+    [13:18], graphdata_denacast(13:18, 2:2),
+	"marker", "s",
+	"color", "red",
+	"markerfacecolor", "red",
+	"markersize", markersize,
+	"linestyle", ":",
+	"linewidth", plotlinewidth,
+    [1:6], graphdata_ccntv(1:6, 2:2),
+	[";{\bf {\fontsize{22} CCN-TV}};"],
+	"marker", "o",
+	"color", "black",
+	"markerfacecolor", "black",
+	"markersize", markersize,
+	"linestyle", ":",
+	"linewidth", plotlinewidth,
+    [7:12], graphdata_ccntv(7:12, 2:2),
+	"marker", "o",
+	"color", "black",
+	"markerfacecolor", "black",
+	"markersize", markersize,
+	"linestyle", ":",
+	"linewidth", plotlinewidth,
+    [13:18], graphdata_ccntv(13:18, 2:2),
+	"marker", "o",
+	"color", "black",
+	"markerfacecolor", "black",
+	"markersize", markersize,
+	"linestyle", ":",
+	"linewidth", plotlinewidth,
+    [1:6], graphdata_gmtp(1:6, 2:2),
+	[";{\bf {\fontsize{22} GMTP}};"],
+	"marker", "d",
+	"color", "blue",
+	"markerfacecolor", "blue",
+	"linestyle", ":",
+	"markersize", markersize,
+	"linewidth", plotlinewidth,
+    [7:12], graphdata_gmtp(7:12, 2:2),
+	"marker", "d",
+	"color", "blue",
+	"markerfacecolor", "blue",
+	"linestyle", ":",
+	"markersize", markersize,
+	"linewidth", plotlinewidth,
+    [13:18], graphdata_gmtp(13:18, 2:2),
+	"marker", "d",
+	"color", "blue",
+	"markerfacecolor", "blue",
+	"linestyle", ":",
+	"markersize", markersize,
+	"linewidth", plotlinewidth
+);
+hold off;
+
+t = title("Tratamentos #\n", "fontsize", axissize, "fontweight", "bold");
+#t = text(2.5, 92.0, "1 servidor", "fontsize", ticksize, "fontweight", "bold");
+#t = text(8.2, 92.0, "2 servidores", "fontsize", ticksize, "fontweight", "bold");
+#t = text(14.2, 92.0, "3 servidores", "fontsize", ticksize, "fontweight", "bold");
+t = text(0.90, 82.3, "1", "fontsize", ticksize, "fontweight", "bold");
+t = text(1.90, 82.3, "2", "fontsize", ticksize, "fontweight", "bold");
+t = text(2.90, 82.3, "3", "fontsize", ticksize, "fontweight", "bold");
+t = text(3.90, 82.3, "4", "fontsize", ticksize, "fontweight", "bold");
+t = text(4.90, 82.3, "5", "fontsize", ticksize, "fontweight", "bold");
+t = text(5.90, 82.3, "6", "fontsize", ticksize, "fontweight", "bold");
+t = text(6.90, 82.3, "7", "fontsize", ticksize, "fontweight", "bold");
+t = text(7.90, 82.3, "8", "fontsize", ticksize, "fontweight", "bold");
+t = text(8.90, 82.3, "9", "fontsize", ticksize, "fontweight", "bold");
+t = text(9.77, 82.3, "10", "fontsize", ticksize, "fontweight", "bold");
+t = text(10.77, 82.3, "11", "fontsize", ticksize, "fontweight", "bold");
+t = text(11.77, 82.3, "12", "fontsize", ticksize, "fontweight", "bold");
+t = text(12.77, 82.3, "13", "fontsize", ticksize, "fontweight", "bold");
+t = text(13.77, 82.3, "14", "fontsize", ticksize, "fontweight", "bold");
+t = text(14.77, 82.3, "15", "fontsize", ticksize, "fontweight", "bold");
+t = text(15.77, 82.3, "16", "fontsize", ticksize, "fontweight", "bold");
+t = text(16.77, 82.3, "17", "fontsize", ticksize, "fontweight", "bold");
+t = text(17.77, 82.3, "18", "fontsize", ticksize, "fontweight", "bold");
+
+fmt = xlabel("Numero de nos clientes (10^3)",
+	         "fontweight", "bold",
+             "fontsize", axissize);
+fmt = ylabel("Atraso de Inicializacao (s)\n",
+             "fontweight", "bold",
+	         "fontsize", axissize);
+t = text(2.5, 13.0, "1 servidor", "fontsize", ticksize, "fontweight", "bold");
+t = text(8.4, 13.0, "2 servidores", "fontsize", ticksize, "fontweight", "bold");
+t = text(14.4, 13.0, "3 servidores", "fontsize", ticksize, "fontweight", "bold");
+setup_axies(borderlinesize, ticksize, 0, 80, xticklabel);
+print("-color", "-deps", "../../../../documento/imgs/results/tratamentos-startup_time.eps");
+#print("-S1800,1200", "-color", "-deps", "../../../../documento/imgs/results/tratamentos-startup_time.eps");
+
+
+# INDICE DE CONTINUIDADE
+clf("reset");
+
+hold on;
+h = errorbar(graphdata_denacast(:, 6:6), graphdata_denacast(:, 8:8));
+set (h, "color", "red", "linestyle", "none");
+h = errorbar(graphdata_ccntv(:, 6:6), graphdata_ccntv(:, 8:8));
+set (h, "color", "black", "linestyle", "none");
+h = errorbar(graphdata_gmtp(:, 6:6), graphdata_gmtp(:, 8:8));
+set (h, "color", "blue", "linestyle", "none");
+plot(
+    [1:6], graphdata_denacast(1:6, 6:6),
+	[";{\bf {\fontsize{22} Denacast}};"],
+	"marker", "s",
+	"color", "red",
+	"markerfacecolor", "red",
+	"markersize", markersize,
+	"linestyle", ":",
+	"linewidth", plotlinewidth,
+    [7:12], graphdata_denacast(7:12, 6:6),
+	"marker", "s",
+	"color", "red",
+	"markerfacecolor", "red",
+	"markersize", markersize,
+	"linestyle", ":",
+	"linewidth", plotlinewidth,
+    [13:18], graphdata_denacast(13:18, 6:6),
+	"marker", "s",
+	"color", "red",
+	"markerfacecolor", "red",
+	"markersize", markersize,
+	"linestyle", ":",
+	"linewidth", plotlinewidth,
+    [1:6], graphdata_ccntv(1:6, 6:6),
+	[";{\bf {\fontsize{22} CCN-TV}};"],
+	"marker", "o",
+	"color", "black",
+	"markerfacecolor", "black",
+	"markersize", markersize,
+	"linestyle", ":",
+	"linewidth", plotlinewidth,
+    [7:12], graphdata_ccntv(7:12, 6:6),
+	"marker", "o",
+	"color", "black",
+	"markerfacecolor", "black",
+	"markersize", markersize,
+	"linestyle", ":",
+	"linewidth", plotlinewidth,
+    [13:18], graphdata_ccntv(13:18, 6:6),
+	"marker", "o",
+	"color", "black",
+	"markerfacecolor", "black",
+	"markersize", markersize,
+	"linestyle", ":",
+	"linewidth", plotlinewidth,
+    [1:6], graphdata_gmtp(1:6, 6:6),
+	[";{\bf {\fontsize{22} GMTP}};"],
+	"marker", "d",
+	"color", "blue",
+	"markerfacecolor", "blue",
+	"linestyle", ":",
+	"markersize", markersize,
+	"linewidth", plotlinewidth,
+    [7:12], graphdata_gmtp(7:12, 6:6),
+	"marker", "d",
+	"color", "blue",
+	"markerfacecolor", "blue",
+	"linestyle", ":",
+	"markersize", markersize,
+	"linewidth", plotlinewidth,
+    [13:18], graphdata_gmtp(13:18, 6:6),
+	"marker", "d",
+	"color", "blue",
+	"markerfacecolor", "blue",
+	"linestyle", ":",
+	"markersize", markersize,
+	"linewidth", plotlinewidth
+);
+hold off;
+
+t = title("Tratamentos #\n", "fontsize", axissize, "fontweight", "bold");
+#t = text(2.5, 92.0, "1 servidor", "fontsize", ticksize, "fontweight", "bold");
+#t = text(8.2, 92.0, "2 servidores", "fontsize", ticksize, "fontweight", "bold");
+#t = text(14.2, 92.0, "3 servidores", "fontsize", ticksize, "fontweight", "bold");
+t = text(0.90, 101.7, "1", "fontsize", ticksize, "fontweight", "bold");
+t = text(1.90, 101.7, "2", "fontsize", ticksize, "fontweight", "bold");
+t = text(2.90, 101.7, "3", "fontsize", ticksize, "fontweight", "bold");
+t = text(3.90, 101.7, "4", "fontsize", ticksize, "fontweight", "bold");
+t = text(4.90, 101.7, "5", "fontsize", ticksize, "fontweight", "bold");
+t = text(5.90, 101.7, "6", "fontsize", ticksize, "fontweight", "bold");
+t = text(6.90, 101.7, "7", "fontsize", ticksize, "fontweight", "bold");
+t = text(7.90, 101.7, "8", "fontsize", ticksize, "fontweight", "bold");
+t = text(8.90, 101.7, "9", "fontsize", ticksize, "fontweight", "bold");
+t = text(9.77, 101.7, "10", "fontsize", ticksize, "fontweight", "bold");
+t = text(10.77, 101.7, "11", "fontsize", ticksize, "fontweight", "bold");
+t = text(11.77, 101.7, "12", "fontsize", ticksize, "fontweight", "bold");
+t = text(12.77, 101.7, "13", "fontsize", ticksize, "fontweight", "bold");
+t = text(13.77, 101.7, "14", "fontsize", ticksize, "fontweight", "bold");
+t = text(14.77, 101.7, "15", "fontsize", ticksize, "fontweight", "bold");
+t = text(15.77, 101.7, "16", "fontsize", ticksize, "fontweight", "bold");
+t = text(16.77, 101.7, "17", "fontsize", ticksize, "fontweight", "bold");
+t = text(17.77, 101.7, "18", "fontsize", ticksize, "fontweight", "bold");
+
+fmt = xlabel("Numero de nos clientes (10^3)",
+	         "fontweight", "bold",
+             "fontsize", axissize);
+fmt = ylabel("Indice de continuidade (%)\n",
+             "fontweight", "bold",
+	         "fontsize", axissize);
+legend("location", "southeast");
+t = text(2.5, 50.0, "1 servidor", "fontsize", ticksize, "fontweight", "bold");
+t = text(8.4, 50.0, "2 servidores", "fontsize", ticksize, "fontweight", "bold");
+t = text(14.4, 50.0, "3 servidores", "fontsize", ticksize, "fontweight", "bold");
+setup_axies(borderlinesize, ticksize, 35, 100, xticklabel);
+print("-color", "-deps", "../../../../documento/imgs/results/tratamentos-continuity_index.eps");
+
+
+# DISTORCAO 
+clf("reset");
+
+hold on;
+h = errorbar(graphdata_denacast(:, 10:10), graphdata_denacast(:, 12:12));
+set (h, "color", "red", "linestyle", "none");
+h = errorbar(graphdata_ccntv(:, 10:10), graphdata_ccntv(:, 12:12));
+set (h, "color", "black", "linestyle", "none");
+h = errorbar(graphdata_gmtp(:, 10:10), graphdata_gmtp(:, 12:12));
+set (h, "color", "blue", "linestyle", "none");
+plot(
+    [1:6], graphdata_denacast(1:6, 10:10),
+	[";{\bf {\fontsize{22} Denacast}};"],
+	"marker", "s",
+	"color", "red",
+	"markerfacecolor", "red",
+	"markersize", markersize,
+	"linestyle", ":",
+	"linewidth", plotlinewidth,
+    [7:12], graphdata_denacast(7:12, 10:10),
+	"marker", "s",
+	"color", "red",
+	"markerfacecolor", "red",
+	"markersize", markersize,
+	"linestyle", ":",
+	"linewidth", plotlinewidth,
+    [13:18], graphdata_denacast(13:18, 10:10),
+	"marker", "s",
+	"color", "red",
+	"markerfacecolor", "red",
+	"markersize", markersize,
+	"linestyle", ":",
+	"linewidth", plotlinewidth,
+    [1:6], graphdata_ccntv(1:6, 10:10),
+	[";{\bf {\fontsize{22} CCN-TV}};"],
+	"marker", "o",
+	"color", "black",
+	"markerfacecolor", "black",
+	"markersize", markersize,
+	"linestyle", ":",
+	"linewidth", plotlinewidth,
+    [7:12], graphdata_ccntv(7:12, 10:10),
+	"marker", "o",
+	"color", "black",
+	"markerfacecolor", "black",
+	"markersize", markersize,
+	"linestyle", ":",
+	"linewidth", plotlinewidth,
+    [13:18], graphdata_ccntv(13:18, 10:10),
+	"marker", "o",
+	"color", "black",
+	"markerfacecolor", "black",
+	"markersize", markersize,
+	"linestyle", ":",
+	"linewidth", plotlinewidth,
+    [1:6], graphdata_gmtp(1:6, 10:10),
+	[";{\bf {\fontsize{22} GMTP}};"],
+	"marker", "d",
+	"color", "blue",
+	"markerfacecolor", "blue",
+	"linestyle", ":",
+	"markersize", markersize,
+	"linewidth", plotlinewidth,
+    [7:12], graphdata_gmtp(7:12, 10:10),
+	"marker", "d",
+	"color", "blue",
+	"markerfacecolor", "blue",
+	"linestyle", ":",
+	"markersize", markersize,
+	"linewidth", plotlinewidth,
+    [13:18], graphdata_gmtp(13:18, 10:10),
+	"marker", "d",
+	"color", "blue",
+	"markerfacecolor", "blue",
+	"linestyle", ":",
+	"markersize", markersize,
+	"linewidth", plotlinewidth
+);
+hold off;
+
+t = title("Tratamentos #\n", "fontsize", axissize, "fontweight", "bold");
+#t = text(2.5, 92.0, "1 servidor", "fontsize", ticksize, "fontweight", "bold");
+#t = text(8.2, 92.0, "2 servidores", "fontsize", ticksize, "fontweight", "bold");
+#t = text(14.2, 92.0, "3 servidores", "fontsize", ticksize, "fontweight", "bold");
+t = text(0.90, 51.2, "1", "fontsize", ticksize, "fontweight", "bold");
+t = text(1.90, 51.2, "2", "fontsize", ticksize, "fontweight", "bold");
+t = text(2.90, 51.2, "3", "fontsize", ticksize, "fontweight", "bold");
+t = text(3.90, 51.2, "4", "fontsize", ticksize, "fontweight", "bold");
+t = text(4.90, 51.2, "5", "fontsize", ticksize, "fontweight", "bold");
+t = text(5.90, 51.2, "6", "fontsize", ticksize, "fontweight", "bold");
+t = text(6.90, 51.2, "7", "fontsize", ticksize, "fontweight", "bold");
+t = text(7.90, 51.2, "8", "fontsize", ticksize, "fontweight", "bold");
+t = text(8.90, 51.2, "9", "fontsize", ticksize, "fontweight", "bold");
+t = text(9.77, 51.2, "10", "fontsize", ticksize, "fontweight", "bold");
+t = text(10.77, 51.2, "11", "fontsize", ticksize, "fontweight", "bold");
+t = text(11.77, 51.2, "12", "fontsize", ticksize, "fontweight", "bold");
+t = text(12.77, 51.2, "13", "fontsize", ticksize, "fontweight", "bold");
+t = text(13.77, 51.2, "14", "fontsize", ticksize, "fontweight", "bold");
+t = text(14.77, 51.2, "15", "fontsize", ticksize, "fontweight", "bold");
+t = text(15.77, 51.2, "16", "fontsize", ticksize, "fontweight", "bold");
+t = text(16.77, 51.2, "17", "fontsize", ticksize, "fontweight", "bold");
+t = text(17.77, 51.2, "18", "fontsize", ticksize, "fontweight", "bold");
+
+fmt = xlabel("Numero de nos clientes (10^3)",
+	         "fontweight", "bold",
+             "fontsize", axissize);
+fmt = ylabel("Distorcao (%)\n",
+             "fontweight", "bold",
+	         "fontsize", axissize);
+t = text(2.5, 43.0, "1 servidor", "fontsize", ticksize, "fontweight", "bold");
+t = text(8.4, 43.0, "2 servidores", "fontsize", ticksize, "fontweight", "bold");
+t = text(14.4, 43.0, "3 servidores", "fontsize", ticksize, "fontweight", "bold");
+setup_axies(borderlinesize, ticksize, 0, 50, xticklabel);
+print("-color", "-deps", "../../../../documento/imgs/results/tratamentos-distortion.eps");
+
+
+## NUMERO DE CONEXOES SERVIDORES 
+#clf("reset");
+#
+#hold on;
+#h = errorbar(graphdata_denacast(:, 14:14), graphdata_denacast(:, 16:16));
+#set (h, "color", "red", "linestyle", "none");
+#h = errorbar(graphdata_ccntv(:, 14:14), graphdata_ccntv(:, 16:16));
+#set (h, "color", "black", "linestyle", "none");
+#h = errorbar(graphdata_gmtp(:, 14:14), graphdata_gmtp(:, 16:16));
+#set (h, "color", "blue", "linestyle", "none");
+#plot(
+#    [1:6], graphdata_denacast(1:6, 14:14),
+#	[";{\bf {\fontsize{22} Denacast}};"],
+#	"marker", "s",
+#	"color", "red",
+#	"markerfacecolor", "red",
+#	"markersize", markersize,
+#	"linestyle", ":",
+#	"linewidth", plotlinewidth,
+#    [7:12], graphdata_denacast(7:12, 14:14),
+#	"marker", "s",
+#	"color", "red",
+#	"markerfacecolor", "red",
+#	"markersize", markersize,
+#	"linestyle", ":",
+#	"linewidth", plotlinewidth,
+#    [13:18], graphdata_denacast(13:18, 14:14),
+#	"marker", "s",
+#	"color", "red",
+#	"markerfacecolor", "red",
+#	"markersize", markersize,
+#	"linestyle", ":",
+#	"linewidth", plotlinewidth,
+#    [1:6], graphdata_ccntv(1:6, 14:14),
+#	[";{\bf {\fontsize{22} CCN-TV}};"],
+#	"marker", "o",
+#	"color", "black",
+#	"markerfacecolor", "black",
+#	"markersize", markersize,
+#	"linestyle", ":",
+#	"linewidth", plotlinewidth,
+#    [7:12], graphdata_ccntv(7:12, 14:14),
+#	"marker", "o",
+#	"color", "black",
+#	"markerfacecolor", "black",
+#	"markersize", markersize,
+#	"linestyle", ":",
+#	"linewidth", plotlinewidth,
+#    [13:18], graphdata_ccntv(13:18, 14:14),
+#	"marker", "o",
+#	"color", "black",
+#	"markerfacecolor", "black",
+#	"markersize", markersize,
+#	"linestyle", ":",
+#	"linewidth", plotlinewidth,
+#    [1:6], graphdata_gmtp(1:6, 14:14),
+#	[";{\bf {\fontsize{22} GMTP}};"],
+#	"marker", "d",
+#	"color", "blue",
+#	"markerfacecolor", "blue",
+#	"linestyle", ":",
+#	"markersize", markersize,
+#	"linewidth", plotlinewidth,
+#    [7:12], graphdata_gmtp(7:12, 14:14),
+#	"marker", "d",
+#	"color", "blue",
+#	"markerfacecolor", "blue",
+#	"linestyle", ":",
+#	"markersize", markersize,
+#	"linewidth", plotlinewidth,
+#    [13:18], graphdata_gmtp(13:18, 14:14),
+#	"marker", "d",
+#	"color", "blue",
+#	"markerfacecolor", "blue",
+#	"linestyle", ":",
+#	"markersize", markersize,
+#	"linewidth", plotlinewidth
+#);
+#hold off;
+#
+#t = title("Tratamentos #\n", "fontsize", axissize, "fontweight", "bold");
+##t = text(0.90, 45200.2, "1", "fontsize", ticksize, "fontweight", "bold");
+##t = text(1.90, 45200.2, "2", "fontsize", ticksize, "fontweight", "bold");
+##t = text(2.90, 45200.2, "3", "fontsize", ticksize, "fontweight", "bold");
+##t = text(3.90, 45200.2, "4", "fontsize", ticksize, "fontweight", "bold");
+##t = text(4.90, 45200.2, "5", "fontsize", ticksize, "fontweight", "bold");
+##t = text(5.90, 45200.2, "6", "fontsize", ticksize, "fontweight", "bold");
+##t = text(6.90, 45200.2, "7", "fontsize", ticksize, "fontweight", "bold");
+##t = text(7.90, 45200.2, "8", "fontsize", ticksize, "fontweight", "bold");
+##t = text(8.90, 45200.2, "9", "fontsize", ticksize, "fontweight", "bold");
+##t = text(9.77, 45200.2, "10", "fontsize", ticksize, "fontweight", "bold");
+##t = text(10.77, 45200.2, "11", "fontsize", ticksize, "fontweight", "bold");
+##t = text(11.77, 45200.2, "12", "fontsize", ticksize, "fontweight", "bold");
+##t = text(12.77, 45200.2, "13", "fontsize", ticksize, "fontweight", "bold");
+##t = text(13.77, 45200.2, "14", "fontsize", ticksize, "fontweight", "bold");
+##t = text(14.77, 45200.2, "15", "fontsize", ticksize, "fontweight", "bold");
+##t = text(15.77, 45200.2, "16", "fontsize", ticksize, "fontweight", "bold");
+##t = text(16.77, 45200.2, "17", "fontsize", ticksize, "fontweight", "bold");
+##t = text(17.77, 45200.2, "18", "fontsize", ticksize, "fontweight", "bold");
+#
+#fmt = xlabel("Numero de nos clientes (10^3)",
+#	         "fontweight", "bold",
+#             "fontsize", axissize);
+#fmt = ylabel("Numero de requisicoes aos servidores\n",
+#             "fontweight", "bold",
+#	         "fontsize", axissize);
+##t = text(2.5, 43.0, "1 servidor", "fontsize", ticksize, "fontweight", "bold");
+##t = text(8.4, 43.0, "2 servidores", "fontsize", ticksize, "fontweight", "bold");
+##t = text(14.4, 43.0, "3 servidores", "fontsize", ticksize, "fontweight", "bold");
+#setup_axies(borderlinesize, ticksize, 0, 45000, xticklabel);
+#print("-color", "-deps", "../../../../documento/imgs/results/tratamentos-server_connection.eps");
+
+
+# PACOTES DE CONTROLE 
+clf("reset");
+
+hold on;
+h = errorbar(36*graphdata_denacast_pc(:, 2:2)/1024, 36*graphdata_denacast_pc(:, 4:4)/1024);
+set (h, "color", "red", "linestyle", "none");
+h = errorbar(40*graphdata_ccntv_pc(:, 2:2)/1024, 40*graphdata_ccntv_pc(:, 4:4)/1024);
+set (h, "color", "black", "linestyle", "none");
+h = errorbar(52*graphdata_gmtp_pc(:, 2:2)/1024, 52*graphdata_gmtp_pc(:, 4:4)/1024);
+set (h, "color", "blue", "linestyle", "none");
+plot(
+    [1:6], 36*graphdata_denacast_pc(1:6, 2:2)/1024,
+	[";{\bf {\fontsize{22} Denacast}};"],
+	"marker", "s",
+	"color", "red",
+	"markerfacecolor", "red",
+	"markersize", markersize,
+	"linestyle", ":",
+	"linewidth", plotlinewidth,
+    [7:12], 36*graphdata_denacast_pc(7:12, 2:2)/1024,
+	"marker", "s",
+	"color", "red",
+	"markerfacecolor", "red",
+	"markersize", markersize,
+	"linestyle", ":",
+	"linewidth", plotlinewidth,
+    [13:18], 36*graphdata_denacast_pc(13:18, 2:2)/1024,
+	"marker", "s",
+	"color", "red",
+	"markerfacecolor", "red",
+	"markersize", markersize,
+	"linestyle", ":",
+	"linewidth", plotlinewidth,
+    [1:6], 40*graphdata_ccntv_pc(1:6, 2:2)/1024,
+	[";{\bf {\fontsize{22} CCN-TV}};"],
+	"marker", "o",
+	"color", "black",
+	"markerfacecolor", "black",
+	"markersize", markersize,
+	"linestyle", ":",
+	"linewidth", plotlinewidth,
+    [7:12], 40*graphdata_ccntv_pc(7:12, 2:2)/1024,
+	"marker", "o",
+	"color", "black",
+	"markerfacecolor", "black",
+	"markersize", markersize,
+	"linestyle", ":",
+	"linewidth", plotlinewidth,
+    [13:18], 40*graphdata_ccntv_pc(13:18, 2:2)/1024,
+	"marker", "o",
+	"color", "black",
+	"markerfacecolor", "black",
+	"markersize", markersize,
+	"linestyle", ":",
+	"linewidth", plotlinewidth,
+    [1:6], 52*graphdata_gmtp_pc(1:6, 2:2)/1024,
+	[";{\bf {\fontsize{22} GMTP}};"],
+	"marker", "d",
+	"color", "blue",
+	"markerfacecolor", "blue",
+	"linestyle", ":",
+	"markersize", markersize,
+	"linewidth", plotlinewidth,
+    [7:12], 52*graphdata_gmtp_pc(7:12, 2:2)/1024,
+	"marker", "d",
+	"color", "blue",
+	"markerfacecolor", "blue",
+	"linestyle", ":",
+	"markersize", markersize,
+	"linewidth", plotlinewidth,
+    [13:18], 52*graphdata_gmtp_pc(13:18, 2:2)/1024,
+	"marker", "d",
+	"color", "blue",
+	"markerfacecolor", "blue",
+	"linestyle", ":",
+	"markersize", markersize,
+	"linewidth", plotlinewidth
+);
+hold off;
+
+xxx = 40*graphdata_gmtp_pc(13:18, 2:2)/1024
+
+t = title("Tratamentos #\n", "fontsize", axissize, "fontweight", "bold");
+t = text(0.90, 12.3, "1", "fontsize", ticksize, "fontweight", "bold");
+t = text(1.90, 12.3, "2", "fontsize", ticksize, "fontweight", "bold");
+t = text(2.90, 12.3, "3", "fontsize", ticksize, "fontweight", "bold");
+t = text(3.90, 12.3, "4", "fontsize", ticksize, "fontweight", "bold");
+t = text(4.90, 12.3, "5", "fontsize", ticksize, "fontweight", "bold");
+t = text(5.90, 12.3, "6", "fontsize", ticksize, "fontweight", "bold");
+t = text(6.90, 12.3, "7", "fontsize", ticksize, "fontweight", "bold");
+t = text(7.90, 12.3, "8", "fontsize", ticksize, "fontweight", "bold");
+t = text(8.90, 12.3, "9", "fontsize", ticksize, "fontweight", "bold");
+t = text(9.77, 12.3, "10", "fontsize", ticksize, "fontweight", "bold");
+t = text(10.77, 12.3, "11", "fontsize", ticksize, "fontweight", "bold");
+t = text(11.77, 12.3, "12", "fontsize", ticksize, "fontweight", "bold");
+t = text(12.77, 12.3, "13", "fontsize", ticksize, "fontweight", "bold");
+t = text(13.77, 12.3, "14", "fontsize", ticksize, "fontweight", "bold");
+t = text(14.77, 12.3, "15", "fontsize", ticksize, "fontweight", "bold");
+t = text(15.77, 12.3, "16", "fontsize", ticksize, "fontweight", "bold");
+t = text(16.77, 12.3, "17", "fontsize", ticksize, "fontweight", "bold");
+t = text(17.77, 12.3, "18", "fontsize", ticksize, "fontweight", "bold");
+
+fmt = xlabel("Numero de nos clientes (10^3)",
+	         "fontweight", "bold",
+             "fontsize", axissize);
+fmt = ylabel("Quantidade de dados de controle (MBytes)\n",
+             "fontweight", "bold",
+	         "fontsize", axissize);
+#legend("location", "east");
+t = text(2.5, 25.7, "1 servidor", "fontsize", ticksize, "fontweight", "bold");
+t = text(8.4, 25.7, "2 servidores", "fontsize", ticksize, "fontweight", "bold");
+t = text(14.4, 25.7, "3 servidores", "fontsize", ticksize, "fontweight", "bold");
+setup_axies(borderlinesize, ticksize, 0, 12, xticklabel);
+print("-color", "-deps", "../../../../documento/imgs/results/tratamentos-packet_control.eps");
+
+
+
+
+# PROBLEMATICA DISTORCAO 
+clf("reset");
+
+hold on;
+h = errorbar(graphdata_denacast(1:6, 10:10), graphdata_denacast(1:6, 12:12));
+set (h, "color", "red", "linestyle", "none");
+h = errorbar(graphdata_ccntv(1:6, 10:10), graphdata_ccntv(1:6, 12:12));
+set (h, "color", "black", "linestyle", "none");
+plot(
+    [1:6], graphdata_denacast(1:6, 10:10),
+	[";{\bf {\fontsize{30} Denacast/CoolStreaming}};"],
+	"marker", "s",
+	"color", "red",
+	"markerfacecolor", "red",
+	"markersize", markersize+2,
+	"linestyle", ":",
+	"linewidth", plotlinewidth+1,
+    [1:6], graphdata_ccntv(1:6, 10:10),
+	[";{\bf {\fontsize{30} CCN-TV}};"],
+	"marker", "o",
+	"color", "black",
+	"markerfacecolor", "black",
+	"markersize", markersize+2,
+	"linestyle", ":",
+	"linewidth", plotlinewidth+1
+);
+hold off;
+
+fmt = xlabel("Numero de nos clientes (10^3)",
+	         "fontweight", "bold",
+             "fontsize", axissize+3);
+fmt = ylabel("Distorcao (%)\n",
+             "fontweight", "bold",
+	         "fontsize", axissize+3);
+legend("location", "southeast");
+setup_axies_prob(borderlinesize, ticksize+3, 0, 40, xticklabel_prob);
+print("-color", "-deps", "../../../../documento/imgs/results/problematica-distortion.eps");
+
+
+# PROBLEMATICA PACOTES DE CONTROLE
+clf("reset");
+
+hold on;
+h = errorbar(36*graphdata_denacast_pc(13:18, 2:2)/1024, 36*graphdata_denacast_pc(13:18, 4:4)/1024);
+set (h, "color", "red", "linestyle", "none");
+h = errorbar(40*graphdata_ccntv_pc(13:18, 2:2)/1024, 40*graphdata_ccntv_pc(13:18, 4:4)/1024);
+set (h, "color", "black", "linestyle", "none");
+plot(
+    [1:6], 36*graphdata_denacast_pc(13:18, 2:2)/1024,
+	[";{\bf {\fontsize{30} Denacast/CoolStreaming}};"],
+	"marker", "s",
+	"color", "red",
+	"markerfacecolor", "red",
+	"markersize", markersize+2,
+	"linestyle", ":",
+	"linewidth", plotlinewidth+1,
+    [1:6], 40*graphdata_ccntv_pc(13:18, 2:2)/1024,
+	[";{\bf {\fontsize{30} CCN-TV}};"],
+	"marker", "o",
+	"color", "black",
+	"markerfacecolor", "black",
+	"markersize", markersize+2,
+	"linestyle", ":",
+	"linewidth", plotlinewidth+1
+);
+hold off;
+
+fmt = xlabel("Numero de nos clientes (10^3)",
+	         "fontweight", "bold",
+             "fontsize", axissize+3);
+fmt = ylabel("Quantidade de dados de controle (MBytes)\n",
+             "fontweight", "bold",
+	         "fontsize", axissize+3);
+legend("location", "southeast");
+setup_axies_prob(borderlinesize, ticksize+3, 0, 12, xticklabel_prob);
+print("-color", "-deps", "../../../../documento/imgs/results/problematica-packet_control.eps");
+
