@@ -15,6 +15,22 @@ all:
 	@echo '-------------------------------'
 	/sbin/modinfo gmtp_ipv4.ko
 
+install:
+	@echo 'Installing gmtp.ko...'
+	/sbin/insmod gmtp.ko
+	@echo 'Installing gmtp_ipv4.ko...'
+	/sbin/insmod gmtp_ipv4.ko
+	@echo '-------------------------------'
+	/sbin/lsmod
+	
+uninstall:
+	@echo 'Uninstalling gmtp_ipv4.ko...'
+	/sbin/rmmod gmtp_ipv4.ko
+	@echo 'Uninstalling gmtp.ko...'
+	/sbin/rmmod gmtp.ko
+	@echo '-------------------------------'
+	/sbin/lsmod
+
 clean:
 	make -C $(KERNEL) M=$(PWD) clean
 	#rm -rf *.o *.ko
