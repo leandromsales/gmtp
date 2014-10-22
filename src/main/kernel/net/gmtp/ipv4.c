@@ -3,11 +3,13 @@
 
 #include <linux/err.h>
 #include <linux/errno.h>
-#include <net/sock.h>
-#include <net/request_sock.h>
-#include <net/protocol.h>
+
 #include <net/inet_hashtables.h>
 #include <net/inet_common.h>
+#include <net/ip.h>
+#include <net/protocol.h>
+#include <net/request_sock.h>
+#include <net/sock.h>
 
 #include "gmtp.h"
 
@@ -20,6 +22,24 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_connect);
 
+static const struct inet_connection_sock_af_ops gmtp_ipv4_af_ops = {
+	.queue_xmit	   = ip_queue_xmit,
+//	.send_check	   = dccp_v4_send_check,
+	.rebuild_header	   = inet_sk_rebuild_header,
+//	.conn_request	   = dccp_v4_conn_request,
+//	.syn_recv_sock	   = dccp_v4_request_recv_sock,
+	.net_header_len	   = sizeof(struct iphdr),
+//	.setsockopt	   = ip_setsockopt,
+//	.getsockopt	   = ip_getsockopt,
+	.addr2sockaddr	   = inet_csk_addr2sockaddr,
+	.sockaddr_len	   = sizeof(struct sockaddr_in),
+	.bind_conflict	   = inet_csk_bind_conflict,
+#ifdef CONFIG_COMPAT
+	.compat_setsockopt = compat_ip_setsockopt,
+	.compat_getsockopt = compat_ip_getsockopt,
+#endif
+};
+
 static int gmtp_v4_init_sock(struct sock *sk)
 {
 	static __u8 gmtp_v4_ctl_sock_initialized;
@@ -29,7 +49,7 @@ static int gmtp_v4_init_sock(struct sock *sk)
 		if (unlikely(!gmtp_v4_ctl_sock_initialized))
 			gmtp_v4_ctl_sock_initialized = 1;
 		//TODO Study this line:
-		//inet_csk(sk)->icsk_af_ops = &gmtp_ipv4_af_ops;
+		inet_csk(sk)->icsk_af_ops = &gmtp_ipv4_af_ops;
 	}
 
 	return err;

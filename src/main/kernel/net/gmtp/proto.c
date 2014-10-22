@@ -53,20 +53,11 @@ void gmtp_destroy_sock(struct sock *sk)
 }
 EXPORT_SYMBOL_GPL(gmtp_destroy_sock);
 
-static inline int gmtp_listen_start(struct sock *sk, int backlog)
-{
-	struct gmtp_sock *gs = gmtp_sk(sk);
-
-	//TODO Verificar se precisa
-	gs->gmtps_role = GMTP_ROLE_LISTEN;
-	return inet_csk_listen_start(sk, backlog);
-}
-
 int inet_gmtp_listen(struct socket *sock, int backlog)
 {
-
 	gmtp_print_debug("gmtp_listen");
 	struct sock *sk = sock->sk;
+	struct gmtp_sock *gs = gmtp_sk(sk);
 	unsigned char old_state;
 	int err;
 
@@ -84,11 +75,11 @@ int inet_gmtp_listen(struct socket *sock, int backlog)
 	 * we can only allow the backlog to be adjusted.
 	 */
 	if (old_state != GMTP_LISTEN) {
-		/*
-		 * FIXME: here it probably should be sk->sk_prot->listen_start
-		 * see tcp_listen_start
-		 */
-		err = gmtp_listen_start(sk, backlog);
+
+		//TODO Verificar se precisa
+		gs->gmtps_role = GMTP_ROLE_LISTEN;
+
+		err = inet_csk_listen_start(sk, backlog);
 		if (err)
 			goto out;
 	}
