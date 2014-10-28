@@ -10,8 +10,8 @@
 #include <net/protocol.h>
 #include <net/request_sock.h>
 #include <net/sock.h>
+#include <net/netns/gmtp.h>
 
-#include "include/net/netns/gmtp.h"
 #include "gmtp.h"
 
 extern int sysctl_ip_nonlocal_bind __read_mostly;
@@ -109,7 +109,7 @@ static struct proto gmtp_prot = {
 
 /**
  * In the socket creation routine, protocol implementer specifies a
- * â€œstruct proto_opsâ€� (/include/linux/net.h) instance.
+ * 'struct proto_ops' (/include/linux/net.h) instance.
  * The socket layer calls function members of this proto_ops instance before the
  * protocol specific functions are called.
  */
@@ -147,9 +147,9 @@ static const struct proto_ops inet_gmtp_ops = {
  * @type: This is the socket type and is a key to search entry for a given
  * socket and type in inetsw[] array.
  * @protocol: This is again a key to find an entry for the socket type in the
- * inetsw[] array. This is an L4 protocol number (L4â†’Transport layer protocol).
+ * inetsw[] array. This is an L4 protocol number (L4 Transport layer protocol).
  * @prot: This is a pointer to struct proto.
- * ops: This is a pointer to the structure of type â€˜proto_opsâ€™.
+ * ops: This is a pointer to the structure of type 'proto_ops'.
  */
 static struct inet_protosw gmtp_protosw = {
 	.type		= SOCK_GMTP,
@@ -159,24 +159,27 @@ static struct inet_protosw gmtp_protosw = {
 	.flags		= INET_PROTOSW_ICSK,
 };
 
-//static int __net_init gmtp_v4_init_net(struct net *net)
-//{
-//	if (gmtp_hashinfo.bhash == NULL)
-//		return -ESOCKTNOSUPPORT;
-//
-//	return inet_ctl_sock_create(&net->gmtp.v4_ctl_sk, PF_INET,
-//				    SOCK_GMTP, IPPROTO_DCCP, net);
-//}
-//
-//static void __net_exit gmtp_v4_exit_net(struct net *net)
-//{
-//	inet_ctl_sock_destroy(net->gmtp.v4_ctl_sk);
-//}
-//
-//static struct pernet_operations gmtp_v4_ops = {
-//	.init	= gmtp_v4_init_net,
-//	.exit	= gmtp_v4_exit_net,
-//};
+
+static int __net_init gmtp_v4_init_net(struct net *net)
+{
+	gmtp_print_debug("gmtp_v4_init_net\n");
+	if (gmtp_hashinfo.bhash == NULL)
+		return -ESOCKTNOSUPPORT;
+
+	return inet_ctl_sock_create(&net->gmtp.v4_ctl_sk, PF_INET,
+				    SOCK_GMTP, IPPROTO_GMTP, net);
+}
+
+static void __net_exit gmtp_v4_exit_net(struct net *net)
+{
+	gmtp_print_debug("gmtp_v4_exit_net\n");
+	inet_ctl_sock_destroy(net->gmtp.v4_ctl_sk);
+}
+
+static struct pernet_operations gmtp_v4_ops = {
+	.init	= gmtp_v4_init_net,
+	.exit	= gmtp_v4_exit_net,
+};
 
 //////////////////////////////////////////////////////////
 static int __init gmtp_v4_init(void)
@@ -202,7 +205,7 @@ static int __init gmtp_v4_init(void)
 	gmtp_print_debug("GMTP IPv4 inet_register_protosw\n");
 	inet_register_protosw(&gmtp_protosw);
 
-//	err = register_pernet_subsys(&gmtp_v4_ops);
+	err = register_pernet_subsys(&gmtp_v4_ops);
 	if (err)
 		goto out_destroy_ctl_sock;
 
@@ -228,7 +231,7 @@ static void __exit gmtp_v4_exit(void)
 {
 	gmtp_print_debug("GMTP IPv4 exit!\n");
 
-//	unregister_pernet_subsys(&gmtp_ops);
+	unregister_pernet_subsys(&gmtp_v4_ops);
 	inet_unregister_protosw(&gmtp_protosw);
 	inet_del_protocol(&gmtp_protocol, IPPROTO_GMTP);
 	proto_unregister(&gmtp_prot);

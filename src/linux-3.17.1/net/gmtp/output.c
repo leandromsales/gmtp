@@ -1,11 +1,11 @@
 #include <linux/kernel.h>
 #include <linux/skbuff.h>
 #include <linux/slab.h>
+#include <linux/gmtp.h>
 
 #include <net/inet_sock.h>
 #include <net/sock.h>
 
-#include "include/linux/gmtp.h"
 #include "gmtp.h"
 
 /*

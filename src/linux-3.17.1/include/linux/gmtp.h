@@ -5,11 +5,7 @@
 #include <net/inet_connection_sock.h>
 #include <net/tcp_states.h>
 
-
-#include "../uapi/linux/gmtp.h"
-
-#define IPPROTO_GMTP 254
-#define SOCK_GMTP 7
+#include <uapi/linux/gmtp.h>
 
 //TODO Study states
 enum gmtp_state {

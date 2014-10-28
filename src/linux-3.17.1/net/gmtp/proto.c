@@ -1,6 +1,7 @@
+#include <asm/ioctls.h>
+
 #include <linux/init.h>
 #include <linux/module.h>
-#include <asm/ioctls.h>
 #include <linux/types.h>
 
 #include <net/inet_hashtables.h>
