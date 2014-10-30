@@ -1,0 +1,2886 @@
+<html xmlns:v="urn:schemas-microsoft-com:vml"
+xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns:m="http://schemas.microsoft.com/office/2004/12/omml"
+xmlns:mv="http://macVmlSchemaUri" xmlns="http://www.w3.org/TR/REC-html40">
+
+<head>
+<meta name=Title content="Global Media Transmission Protocol (GMTP)">
+<meta name=Keywords content="">
+<meta http-equiv=Content-Type content="text/html; charset=macintosh">
+<meta name=ProgId content=Word.Document>
+<meta name=Generator content="Microsoft Word 14">
+<meta name=Originator content="Microsoft Word 14">
+<link rel=File-List href="index_files/filelist.xml">
+<link rel=Edit-Time-Data href="index_files/editdata.mso">
+<!--[if !mso]>
+<style>
+v\:* {behavior:url(#default#VML);}
+o\:* {behavior:url(#default#VML);}
+w\:* {behavior:url(#default#VML);}
+.shape {behavior:url(#default#VML);}
+</style>
+<![endif]-->
+<title>Global Media Transmission Protocol (GMTP)</title>
+<!--[if gte mso 9]><xml>
+ <o:DocumentProperties>
+  <o:Author>Leandro Melo de Sales</o:Author>
+  <o:LastAuthor>Leandro Melo de Sales</o:LastAuthor>
+  <o:Revision>15</o:Revision>
+  <o:TotalTime>112</o:TotalTime>
+  <o:Created>2014-05-20T21:03:00Z</o:Created>
+  <o:LastSaved>2014-05-21T18:14:00Z</o:LastSaved>
+  <o:Pages>5</o:Pages>
+  <o:Words>2576</o:Words>
+  <o:Characters>14545</o:Characters>
+  <o:Lines>283</o:Lines>
+  <o:Paragraphs>66</o:Paragraphs>
+  <o:CharactersWithSpaces>17193</o:CharactersWithSpaces>
+  <o:Version>14.0</o:Version>
+ </o:DocumentProperties>
+ <o:OfficeDocumentSettings>
+  <o:AllowPNG/>
+ </o:OfficeDocumentSettings>
+</xml><![endif]-->
+<link rel=themeData href="index_files/themedata.xml">
+<!--[if gte mso 9]><xml>
+ <w:WordDocument>
+  <w:Zoom>156</w:Zoom>
+  <w:SpellingState>Clean</w:SpellingState>
+  <w:GrammarState>Clean</w:GrammarState>
+  <w:TrackMoves>false</w:TrackMoves>
+  <w:TrackFormatting/>
+  <w:PunctuationKerning/>
+  <w:DrawingGridVerticalSpacing>18 pt</w:DrawingGridVerticalSpacing>
+  <w:DisplayHorizontalDrawingGridEvery>0</w:DisplayHorizontalDrawingGridEvery>
+  <w:UseMarginsForDrawingGridOrigin/>
+  <w:ValidateAgainstSchemas/>
+  <w:SaveIfXMLInvalid>false</w:SaveIfXMLInvalid>
+  <w:IgnoreMixedContent>false</w:IgnoreMixedContent>
+  <w:AlwaysShowPlaceholderText>false</w:AlwaysShowPlaceholderText>
+  <w:DoNotPromoteQF/>
+  <w:LidThemeOther>EN-US</w:LidThemeOther>
+  <w:LidThemeAsian>JA</w:LidThemeAsian>
+  <w:LidThemeComplexScript>X-NONE</w:LidThemeComplexScript>
+  <w:DrawingGridHorizontalOrigin>90 pt</w:DrawingGridHorizontalOrigin>
+  <w:DrawingGridVerticalOrigin>0 pt</w:DrawingGridVerticalOrigin>
+  <w:Compatibility>
+   <w:AdjustLineHeightInTable/>
+   <w:BreakWrappedTables/>
+   <w:SnapToGridInCell/>
+   <w:WrapTextWithPunct/>
+   <w:UseAsianBreakRules/>
+   <w:DontGrowAutofit/>
+   <w:DontAutofitConstrainedTables/>
+   <w:SplitPgBreakAndParaMark/>
+   <w:EnableOpenTypeKerning/>
+   <w:DontFlipMirrorIndents/>
+   <w:OverrideTableStyleHps/>
+   <w:UseFELayout/>
+  </w:Compatibility>
+  <w:DocumentVariables>
+   <w:_WNTabType_0>0</w:_WNTabType_0>
+   <w:_WNTabType_1>0</w:_WNTabType_1>
+   <w:_WNTabType_2>0</w:_WNTabType_2>
+   <w:_WNTabType_3>0</w:_WNTabType_3>
+   <w:_WNTabType_4>0</w:_WNTabType_4>
+   <w:_WNTabType_5>0</w:_WNTabType_5>
+   <w:_WNTabType_6>0</w:_WNTabType_6>
+   <w:_WNTabType_7>0</w:_WNTabType_7>
+   <w:_WNTabType_8>0</w:_WNTabType_8>
+   <w:EnableWordNotes>0</w:EnableWordNotes>
+  </w:DocumentVariables>
+  <m:mathPr>
+   <m:mathFont m:val="Cambria Math"/>
+   <m:brkBin m:val="before"/>
+   <m:brkBinSub m:val="&#45;-"/>
+   <m:smallFrac m:val="off"/>
+   <m:dispDef/>
+   <m:lMargin m:val="0"/>
+   <m:rMargin m:val="0"/>
+   <m:defJc m:val="centerGroup"/>
+   <m:wrapIndent m:val="1440"/>
+   <m:intLim m:val="subSup"/>
+   <m:naryLim m:val="undOvr"/>
+  </m:mathPr></w:WordDocument>
+</xml><![endif]--><!--[if gte mso 9]><xml>
+ <w:LatentStyles DefLockedState="false" DefUnhideWhenUsed="true"
+  DefSemiHidden="true" DefQFormat="false" DefPriority="99"
+  LatentStyleCount="276">
+  <w:LsdException Locked="false" Priority="0" SemiHidden="false"
+   UnhideWhenUsed="false" QFormat="true" Name="Normal"/>
+  <w:LsdException Locked="false" Priority="9" SemiHidden="false"
+   UnhideWhenUsed="false" QFormat="true" Name="heading 1"/>
+  <w:LsdException Locked="false" Priority="9" QFormat="true" Name="heading 2"/>
+  <w:LsdException Locked="false" Priority="9" QFormat="true" Name="heading 3"/>
+  <w:LsdException Locked="false" Priority="9" QFormat="true" Name="heading 4"/>
+  <w:LsdException Locked="false" Priority="9" QFormat="true" Name="heading 5"/>
+  <w:LsdException Locked="false" Priority="9" QFormat="true" Name="heading 6"/>
+  <w:LsdException Locked="false" Priority="9" QFormat="true" Name="heading 7"/>
+  <w:LsdException Locked="false" Priority="9" QFormat="true" Name="heading 8"/>
+  <w:LsdException Locked="false" Priority="9" QFormat="true" Name="heading 9"/>
+  <w:LsdException Locked="false" Priority="39" Name="toc 1"/>
+  <w:LsdException Locked="false" Priority="39" Name="toc 2"/>
+  <w:LsdException Locked="false" Priority="39" Name="toc 3"/>
+  <w:LsdException Locked="false" Priority="39" Name="toc 4"/>
+  <w:LsdException Locked="false" Priority="39" Name="toc 5"/>
+  <w:LsdException Locked="false" Priority="39" Name="toc 6"/>
+  <w:LsdException Locked="false" Priority="39" Name="toc 7"/>
+  <w:LsdException Locked="false" Priority="39" Name="toc 8"/>
+  <w:LsdException Locked="false" Priority="39" Name="toc 9"/>
+  <w:LsdException Locked="false" Priority="35" QFormat="true" Name="caption"/>
+  <w:LsdException Locked="false" Priority="10" SemiHidden="false"
+   UnhideWhenUsed="false" QFormat="true" Name="Title"/>
+  <w:LsdException Locked="false" Priority="1" Name="Default Paragraph Font"/>
+  <w:LsdException Locked="false" Priority="11" SemiHidden="false"
+   UnhideWhenUsed="false" QFormat="true" Name="Subtitle"/>
+  <w:LsdException Locked="false" Priority="22" SemiHidden="false"
+   UnhideWhenUsed="false" QFormat="true" Name="Strong"/>
+  <w:LsdException Locked="false" Priority="20" SemiHidden="false"
+   UnhideWhenUsed="false" QFormat="true" Name="Emphasis"/>
+  <w:LsdException Locked="false" Priority="59" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Table Grid"/>
+  <w:LsdException Locked="false" UnhideWhenUsed="false" Name="Placeholder Text"/>
+  <w:LsdException Locked="false" Priority="1" SemiHidden="false"
+   UnhideWhenUsed="false" QFormat="true" Name="No Spacing"/>
+  <w:LsdException Locked="false" Priority="60" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Light Shading"/>
+  <w:LsdException Locked="false" Priority="61" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Light List"/>
+  <w:LsdException Locked="false" Priority="62" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Light Grid"/>
+  <w:LsdException Locked="false" Priority="63" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Shading 1"/>
+  <w:LsdException Locked="false" Priority="64" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Shading 2"/>
+  <w:LsdException Locked="false" Priority="65" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium List 1"/>
+  <w:LsdException Locked="false" Priority="66" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium List 2"/>
+  <w:LsdException Locked="false" Priority="67" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Grid 1"/>
+  <w:LsdException Locked="false" Priority="68" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Grid 2"/>
+  <w:LsdException Locked="false" Priority="69" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Grid 3"/>
+  <w:LsdException Locked="false" Priority="70" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Dark List"/>
+  <w:LsdException Locked="false" Priority="71" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Colorful Shading"/>
+  <w:LsdException Locked="false" Priority="72" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Colorful List"/>
+  <w:LsdException Locked="false" Priority="73" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Colorful Grid"/>
+  <w:LsdException Locked="false" Priority="60" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Light Shading Accent 1"/>
+  <w:LsdException Locked="false" Priority="61" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Light List Accent 1"/>
+  <w:LsdException Locked="false" Priority="62" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Light Grid Accent 1"/>
+  <w:LsdException Locked="false" Priority="63" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Shading 1 Accent 1"/>
+  <w:LsdException Locked="false" Priority="64" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Shading 2 Accent 1"/>
+  <w:LsdException Locked="false" Priority="65" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium List 1 Accent 1"/>
+  <w:LsdException Locked="false" UnhideWhenUsed="false" Name="Revision"/>
+  <w:LsdException Locked="false" Priority="34" SemiHidden="false"
+   UnhideWhenUsed="false" QFormat="true" Name="List Paragraph"/>
+  <w:LsdException Locked="false" Priority="29" SemiHidden="false"
+   UnhideWhenUsed="false" QFormat="true" Name="Quote"/>
+  <w:LsdException Locked="false" Priority="30" SemiHidden="false"
+   UnhideWhenUsed="false" QFormat="true" Name="Intense Quote"/>
+  <w:LsdException Locked="false" Priority="66" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium List 2 Accent 1"/>
+  <w:LsdException Locked="false" Priority="67" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Grid 1 Accent 1"/>
+  <w:LsdException Locked="false" Priority="68" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Grid 2 Accent 1"/>
+  <w:LsdException Locked="false" Priority="69" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Grid 3 Accent 1"/>
+  <w:LsdException Locked="false" Priority="70" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Dark List Accent 1"/>
+  <w:LsdException Locked="false" Priority="71" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Colorful Shading Accent 1"/>
+  <w:LsdException Locked="false" Priority="72" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Colorful List Accent 1"/>
+  <w:LsdException Locked="false" Priority="73" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Colorful Grid Accent 1"/>
+  <w:LsdException Locked="false" Priority="60" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Light Shading Accent 2"/>
+  <w:LsdException Locked="false" Priority="61" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Light List Accent 2"/>
+  <w:LsdException Locked="false" Priority="62" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Light Grid Accent 2"/>
+  <w:LsdException Locked="false" Priority="63" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Shading 1 Accent 2"/>
+  <w:LsdException Locked="false" Priority="64" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Shading 2 Accent 2"/>
+  <w:LsdException Locked="false" Priority="65" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium List 1 Accent 2"/>
+  <w:LsdException Locked="false" Priority="66" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium List 2 Accent 2"/>
+  <w:LsdException Locked="false" Priority="67" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Grid 1 Accent 2"/>
+  <w:LsdException Locked="false" Priority="68" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Grid 2 Accent 2"/>
+  <w:LsdException Locked="false" Priority="69" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Grid 3 Accent 2"/>
+  <w:LsdException Locked="false" Priority="70" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Dark List Accent 2"/>
+  <w:LsdException Locked="false" Priority="71" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Colorful Shading Accent 2"/>
+  <w:LsdException Locked="false" Priority="72" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Colorful List Accent 2"/>
+  <w:LsdException Locked="false" Priority="73" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Colorful Grid Accent 2"/>
+  <w:LsdException Locked="false" Priority="60" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Light Shading Accent 3"/>
+  <w:LsdException Locked="false" Priority="61" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Light List Accent 3"/>
+  <w:LsdException Locked="false" Priority="62" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Light Grid Accent 3"/>
+  <w:LsdException Locked="false" Priority="63" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Shading 1 Accent 3"/>
+  <w:LsdException Locked="false" Priority="64" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Shading 2 Accent 3"/>
+  <w:LsdException Locked="false" Priority="65" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium List 1 Accent 3"/>
+  <w:LsdException Locked="false" Priority="66" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium List 2 Accent 3"/>
+  <w:LsdException Locked="false" Priority="67" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Grid 1 Accent 3"/>
+  <w:LsdException Locked="false" Priority="68" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Grid 2 Accent 3"/>
+  <w:LsdException Locked="false" Priority="69" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Grid 3 Accent 3"/>
+  <w:LsdException Locked="false" Priority="70" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Dark List Accent 3"/>
+  <w:LsdException Locked="false" Priority="71" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Colorful Shading Accent 3"/>
+  <w:LsdException Locked="false" Priority="72" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Colorful List Accent 3"/>
+  <w:LsdException Locked="false" Priority="73" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Colorful Grid Accent 3"/>
+  <w:LsdException Locked="false" Priority="60" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Light Shading Accent 4"/>
+  <w:LsdException Locked="false" Priority="61" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Light List Accent 4"/>
+  <w:LsdException Locked="false" Priority="62" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Light Grid Accent 4"/>
+  <w:LsdException Locked="false" Priority="63" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Shading 1 Accent 4"/>
+  <w:LsdException Locked="false" Priority="64" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Shading 2 Accent 4"/>
+  <w:LsdException Locked="false" Priority="65" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium List 1 Accent 4"/>
+  <w:LsdException Locked="false" Priority="66" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium List 2 Accent 4"/>
+  <w:LsdException Locked="false" Priority="67" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Grid 1 Accent 4"/>
+  <w:LsdException Locked="false" Priority="68" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Grid 2 Accent 4"/>
+  <w:LsdException Locked="false" Priority="69" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Grid 3 Accent 4"/>
+  <w:LsdException Locked="false" Priority="70" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Dark List Accent 4"/>
+  <w:LsdException Locked="false" Priority="71" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Colorful Shading Accent 4"/>
+  <w:LsdException Locked="false" Priority="72" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Colorful List Accent 4"/>
+  <w:LsdException Locked="false" Priority="73" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Colorful Grid Accent 4"/>
+  <w:LsdException Locked="false" Priority="60" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Light Shading Accent 5"/>
+  <w:LsdException Locked="false" Priority="61" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Light List Accent 5"/>
+  <w:LsdException Locked="false" Priority="62" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Light Grid Accent 5"/>
+  <w:LsdException Locked="false" Priority="63" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Shading 1 Accent 5"/>
+  <w:LsdException Locked="false" Priority="64" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Shading 2 Accent 5"/>
+  <w:LsdException Locked="false" Priority="65" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium List 1 Accent 5"/>
+  <w:LsdException Locked="false" Priority="66" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium List 2 Accent 5"/>
+  <w:LsdException Locked="false" Priority="67" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Grid 1 Accent 5"/>
+  <w:LsdException Locked="false" Priority="68" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Grid 2 Accent 5"/>
+  <w:LsdException Locked="false" Priority="69" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Grid 3 Accent 5"/>
+  <w:LsdException Locked="false" Priority="70" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Dark List Accent 5"/>
+  <w:LsdException Locked="false" Priority="71" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Colorful Shading Accent 5"/>
+  <w:LsdException Locked="false" Priority="72" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Colorful List Accent 5"/>
+  <w:LsdException Locked="false" Priority="73" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Colorful Grid Accent 5"/>
+  <w:LsdException Locked="false" Priority="60" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Light Shading Accent 6"/>
+  <w:LsdException Locked="false" Priority="61" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Light List Accent 6"/>
+  <w:LsdException Locked="false" Priority="62" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Light Grid Accent 6"/>
+  <w:LsdException Locked="false" Priority="63" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Shading 1 Accent 6"/>
+  <w:LsdException Locked="false" Priority="64" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Shading 2 Accent 6"/>
+  <w:LsdException Locked="false" Priority="65" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium List 1 Accent 6"/>
+  <w:LsdException Locked="false" Priority="66" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium List 2 Accent 6"/>
+  <w:LsdException Locked="false" Priority="67" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Grid 1 Accent 6"/>
+  <w:LsdException Locked="false" Priority="68" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Grid 2 Accent 6"/>
+  <w:LsdException Locked="false" Priority="69" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Medium Grid 3 Accent 6"/>
+  <w:LsdException Locked="false" Priority="70" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Dark List Accent 6"/>
+  <w:LsdException Locked="false" Priority="71" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Colorful Shading Accent 6"/>
+  <w:LsdException Locked="false" Priority="72" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Colorful List Accent 6"/>
+  <w:LsdException Locked="false" Priority="73" SemiHidden="false"
+   UnhideWhenUsed="false" Name="Colorful Grid Accent 6"/>
+  <w:LsdException Locked="false" Priority="19" SemiHidden="false"
+   UnhideWhenUsed="false" QFormat="true" Name="Subtle Emphasis"/>
+  <w:LsdException Locked="false" Priority="21" SemiHidden="false"
+   UnhideWhenUsed="false" QFormat="true" Name="Intense Emphasis"/>
+  <w:LsdException Locked="false" Priority="31" SemiHidden="false"
+   UnhideWhenUsed="false" QFormat="true" Name="Subtle Reference"/>
+  <w:LsdException Locked="false" Priority="32" SemiHidden="false"
+   UnhideWhenUsed="false" QFormat="true" Name="Intense Reference"/>
+  <w:LsdException Locked="false" Priority="33" SemiHidden="false"
+   UnhideWhenUsed="false" QFormat="true" Name="Book Title"/>
+  <w:LsdException Locked="false" Priority="37" Name="Bibliography"/>
+  <w:LsdException Locked="false" Priority="39" QFormat="true" Name="TOC Heading"/>
+ </w:LatentStyles>
+</xml><![endif]-->
+<style>
+<!--
+ /* Font Definitions */
+@font-face
+	{font-family:Arial;
+	panose-1:2 11 6 4 2 2 2 2 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:auto;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Courier New";
+	panose-1:2 7 3 9 2 2 5 2 4 4;
+	mso-font-charset:0;
+	mso-generic-font-family:auto;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Wingdings;
+	panose-1:5 0 0 0 0 0 0 0 0 0;
+	mso-font-charset:2;
+	mso-generic-font-family:auto;
+	mso-font-pitch:variable;
+	mso-font-signature:0 268435456 0 0 -2147483648 0;}
+@font-face
+	{font-family:"\FF2D\FF33 \660E\671D";
+	panose-1:0 0 0 0 0 0 0 0 0 0;
+	mso-font-charset:128;
+	mso-generic-font-family:roman;
+	mso-font-format:other;
+	mso-font-pitch:fixed;
+	mso-font-signature:1 134676480 16 0 131072 0;}
+@font-face
+	{font-family:"\FF2D\FF33 \30B4\30B7\30C3\30AF";
+	panose-1:0 0 0 0 0 0 0 0 0 0;
+	mso-font-charset:128;
+	mso-generic-font-family:modern;
+	mso-font-format:other;
+	mso-font-pitch:fixed;
+	mso-font-signature:1 134676480 16 0 131072 0;}
+@font-face
+	{font-family:Verdana;
+	panose-1:2 11 6 4 3 5 4 4 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:auto;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Verdana;
+	panose-1:2 11 6 4 3 5 4 4 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:auto;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Calibri;
+	panose-1:2 15 5 2 2 2 4 3 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:auto;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Cambria;
+	panose-1:2 4 5 3 5 4 6 3 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:auto;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Lucida Grande";
+	panose-1:2 11 6 0 4 5 2 2 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:auto;
+	mso-font-pitch:variable;
+	mso-font-signature:-520090897 1342218751 0 0 447 0;}
+ /* Style Definitions */
+p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{mso-style-unhide:no;
+	mso-style-qformat:yes;
+	mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:Cambria;
+	mso-ascii-font-family:Cambria;
+	mso-ascii-theme-font:minor-latin;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-hansi-font-family:Cambria;
+	mso-hansi-theme-font:minor-latin;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+h1
+	{mso-style-priority:9;
+	mso-style-unhide:no;
+	mso-style-qformat:yes;
+	mso-style-link:"Heading 1 Char";
+	mso-style-next:Normal;
+	margin-top:14.0pt;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:36.0pt;
+	margin-bottom:.0001pt;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan lines-together;
+	page-break-after:avoid;
+	mso-outline-level:1;
+	mso-list:l4 level1 lfo1;
+	font-size:16.0pt;
+	font-family:Calibri;
+	mso-ascii-font-family:Calibri;
+	mso-ascii-theme-font:major-latin;
+	mso-fareast-font-family:"\FF2D\FF33 \30B4\30B7\30C3\30AF";
+	mso-fareast-theme-font:major-fareast;
+	mso-hansi-font-family:Calibri;
+	mso-hansi-theme-font:major-latin;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:major-bidi;
+	color:#345A8A;
+	mso-themecolor:accent1;
+	mso-themeshade:181;
+	mso-font-kerning:0pt;}
+h2
+	{mso-style-noshow:yes;
+	mso-style-priority:9;
+	mso-style-qformat:yes;
+	mso-style-link:"Heading 2 Char";
+	mso-style-next:Normal;
+	margin-top:6.0pt;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan lines-together;
+	page-break-after:avoid;
+	mso-outline-level:2;
+	font-size:13.0pt;
+	font-family:Calibri;
+	mso-ascii-font-family:Calibri;
+	mso-ascii-theme-font:major-latin;
+	mso-fareast-font-family:"\FF2D\FF33 \30B4\30B7\30C3\30AF";
+	mso-fareast-theme-font:major-fareast;
+	mso-hansi-font-family:Calibri;
+	mso-hansi-theme-font:major-latin;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:major-bidi;
+	color:#4F81BD;
+	mso-themecolor:accent1;}
+p.MsoToc1, li.MsoToc1, div.MsoToc1
+	{mso-style-update:auto;
+	mso-style-noshow:yes;
+	mso-style-priority:39;
+	mso-style-next:Normal;
+	margin-top:6.0pt;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:Cambria;
+	mso-ascii-font-family:Cambria;
+	mso-ascii-theme-font:minor-latin;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-hansi-font-family:Cambria;
+	mso-hansi-theme-font:minor-latin;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;
+	font-weight:bold;
+	mso-bidi-font-weight:normal;}
+p.MsoToc2, li.MsoToc2, div.MsoToc2
+	{mso-style-update:auto;
+	mso-style-noshow:yes;
+	mso-style-priority:39;
+	mso-style-next:Normal;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:12.0pt;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:11.0pt;
+	font-family:Cambria;
+	mso-ascii-font-family:Cambria;
+	mso-ascii-theme-font:minor-latin;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-hansi-font-family:Cambria;
+	mso-hansi-theme-font:minor-latin;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;
+	font-weight:bold;
+	mso-bidi-font-weight:normal;}
+p.MsoToc3, li.MsoToc3, div.MsoToc3
+	{mso-style-update:auto;
+	mso-style-noshow:yes;
+	mso-style-priority:39;
+	mso-style-next:Normal;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:24.0pt;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:11.0pt;
+	font-family:Cambria;
+	mso-ascii-font-family:Cambria;
+	mso-ascii-theme-font:minor-latin;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-hansi-font-family:Cambria;
+	mso-hansi-theme-font:minor-latin;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoToc4, li.MsoToc4, div.MsoToc4
+	{mso-style-update:auto;
+	mso-style-noshow:yes;
+	mso-style-priority:39;
+	mso-style-next:Normal;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:36.0pt;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:10.0pt;
+	font-family:Cambria;
+	mso-ascii-font-family:Cambria;
+	mso-ascii-theme-font:minor-latin;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-hansi-font-family:Cambria;
+	mso-hansi-theme-font:minor-latin;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoToc5, li.MsoToc5, div.MsoToc5
+	{mso-style-update:auto;
+	mso-style-noshow:yes;
+	mso-style-priority:39;
+	mso-style-next:Normal;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:48.0pt;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:10.0pt;
+	font-family:Cambria;
+	mso-ascii-font-family:Cambria;
+	mso-ascii-theme-font:minor-latin;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-hansi-font-family:Cambria;
+	mso-hansi-theme-font:minor-latin;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoToc6, li.MsoToc6, div.MsoToc6
+	{mso-style-update:auto;
+	mso-style-noshow:yes;
+	mso-style-priority:39;
+	mso-style-next:Normal;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:60.0pt;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:10.0pt;
+	font-family:Cambria;
+	mso-ascii-font-family:Cambria;
+	mso-ascii-theme-font:minor-latin;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-hansi-font-family:Cambria;
+	mso-hansi-theme-font:minor-latin;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoToc7, li.MsoToc7, div.MsoToc7
+	{mso-style-update:auto;
+	mso-style-noshow:yes;
+	mso-style-priority:39;
+	mso-style-next:Normal;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:72.0pt;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:10.0pt;
+	font-family:Cambria;
+	mso-ascii-font-family:Cambria;
+	mso-ascii-theme-font:minor-latin;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-hansi-font-family:Cambria;
+	mso-hansi-theme-font:minor-latin;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoToc8, li.MsoToc8, div.MsoToc8
+	{mso-style-update:auto;
+	mso-style-noshow:yes;
+	mso-style-priority:39;
+	mso-style-next:Normal;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:84.0pt;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:10.0pt;
+	font-family:Cambria;
+	mso-ascii-font-family:Cambria;
+	mso-ascii-theme-font:minor-latin;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-hansi-font-family:Cambria;
+	mso-hansi-theme-font:minor-latin;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoToc9, li.MsoToc9, div.MsoToc9
+	{mso-style-update:auto;
+	mso-style-noshow:yes;
+	mso-style-priority:39;
+	mso-style-next:Normal;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:96.0pt;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:10.0pt;
+	font-family:Cambria;
+	mso-ascii-font-family:Cambria;
+	mso-ascii-theme-font:minor-latin;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-hansi-font-family:Cambria;
+	mso-hansi-theme-font:minor-latin;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoHeader, li.MsoHeader, div.MsoHeader
+	{mso-style-priority:99;
+	mso-style-link:"Header Char";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	tab-stops:center 216.0pt right 432.0pt;
+	font-size:12.0pt;
+	font-family:Cambria;
+	mso-ascii-font-family:Cambria;
+	mso-ascii-theme-font:minor-latin;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-hansi-font-family:Cambria;
+	mso-hansi-theme-font:minor-latin;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoFooter, li.MsoFooter, div.MsoFooter
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-link:"Footer Char";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	tab-stops:center 216.0pt right 432.0pt;
+	font-size:12.0pt;
+	font-family:Cambria;
+	mso-ascii-font-family:Cambria;
+	mso-ascii-theme-font:minor-latin;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-hansi-font-family:Cambria;
+	mso-hansi-theme-font:minor-latin;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoCaption, li.MsoCaption, div.MsoCaption
+	{mso-style-noshow:yes;
+	mso-style-priority:35;
+	mso-style-qformat:yes;
+	mso-style-next:Normal;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:10.0pt;
+	margin-left:0cm;
+	mso-pagination:widow-orphan;
+	font-size:9.0pt;
+	font-family:Cambria;
+	mso-ascii-font-family:Cambria;
+	mso-ascii-theme-font:minor-latin;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-hansi-font-family:Cambria;
+	mso-hansi-theme-font:minor-latin;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;
+	color:#4F81BD;
+	mso-themecolor:accent1;
+	font-weight:bold;}
+a:link, span.MsoHyperlink
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	color:blue;
+	mso-themecolor:hyperlink;
+	text-decoration:underline;
+	text-underline:single;}
+a:visited, span.MsoHyperlinkFollowed
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	color:purple;
+	mso-themecolor:followedhyperlink;
+	text-decoration:underline;
+	text-underline:single;}
+p.MsoDocumentMap, li.MsoDocumentMap, div.MsoDocumentMap
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-link:"Document Map Char";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Lucida Grande";
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;}
+p.MsoAcetate, li.MsoAcetate, div.MsoAcetate
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-link:"Balloon Text Char";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:9.0pt;
+	font-family:"Lucida Grande";
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;}
+p.MsoNoteLevel1, li.MsoNoteLevel1, div.MsoNoteLevel1
+	{mso-style-priority:99;
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:0cm;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:1;
+	mso-list:l0 level1 lfo2;
+	tab-stops:list 0cm;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel1CxSpFirst, li.MsoNoteLevel1CxSpFirst, div.MsoNoteLevel1CxSpFirst
+	{mso-style-priority:99;
+	mso-style-type:export-only;
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:0cm;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:1;
+	mso-list:l0 level1 lfo2;
+	tab-stops:list 0cm;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel1CxSpMiddle, li.MsoNoteLevel1CxSpMiddle, div.MsoNoteLevel1CxSpMiddle
+	{mso-style-priority:99;
+	mso-style-type:export-only;
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:0cm;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:1;
+	mso-list:l0 level1 lfo2;
+	tab-stops:list 0cm;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel1CxSpLast, li.MsoNoteLevel1CxSpLast, div.MsoNoteLevel1CxSpLast
+	{mso-style-priority:99;
+	mso-style-type:export-only;
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:0cm;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:1;
+	mso-list:l0 level1 lfo2;
+	tab-stops:list 0cm;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel2, li.MsoNoteLevel2, div.MsoNoteLevel2
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:54.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:2;
+	mso-list:l0 level2 lfo2;
+	tab-stops:list 36.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel2CxSpFirst, li.MsoNoteLevel2CxSpFirst, div.MsoNoteLevel2CxSpFirst
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-type:export-only;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:54.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:2;
+	mso-list:l0 level2 lfo2;
+	tab-stops:list 36.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel2CxSpMiddle, li.MsoNoteLevel2CxSpMiddle, div.MsoNoteLevel2CxSpMiddle
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-type:export-only;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:54.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:2;
+	mso-list:l0 level2 lfo2;
+	tab-stops:list 36.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel2CxSpLast, li.MsoNoteLevel2CxSpLast, div.MsoNoteLevel2CxSpLast
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-type:export-only;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:54.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:2;
+	mso-list:l0 level2 lfo2;
+	tab-stops:list 36.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel3, li.MsoNoteLevel3, div.MsoNoteLevel3
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:90.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:3;
+	mso-list:l0 level3 lfo2;
+	tab-stops:list 72.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel3CxSpFirst, li.MsoNoteLevel3CxSpFirst, div.MsoNoteLevel3CxSpFirst
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-type:export-only;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:90.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:3;
+	mso-list:l0 level3 lfo2;
+	tab-stops:list 72.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel3CxSpMiddle, li.MsoNoteLevel3CxSpMiddle, div.MsoNoteLevel3CxSpMiddle
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-type:export-only;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:90.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:3;
+	mso-list:l0 level3 lfo2;
+	tab-stops:list 72.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel3CxSpLast, li.MsoNoteLevel3CxSpLast, div.MsoNoteLevel3CxSpLast
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-type:export-only;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:90.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:3;
+	mso-list:l0 level3 lfo2;
+	tab-stops:list 72.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel4, li.MsoNoteLevel4, div.MsoNoteLevel4
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:126.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:4;
+	mso-list:l0 level4 lfo2;
+	tab-stops:list 108.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel4CxSpFirst, li.MsoNoteLevel4CxSpFirst, div.MsoNoteLevel4CxSpFirst
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-type:export-only;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:126.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:4;
+	mso-list:l0 level4 lfo2;
+	tab-stops:list 108.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel4CxSpMiddle, li.MsoNoteLevel4CxSpMiddle, div.MsoNoteLevel4CxSpMiddle
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-type:export-only;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:126.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:4;
+	mso-list:l0 level4 lfo2;
+	tab-stops:list 108.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel4CxSpLast, li.MsoNoteLevel4CxSpLast, div.MsoNoteLevel4CxSpLast
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-type:export-only;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:126.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:4;
+	mso-list:l0 level4 lfo2;
+	tab-stops:list 108.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel5, li.MsoNoteLevel5, div.MsoNoteLevel5
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:162.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:5;
+	mso-list:l0 level5 lfo2;
+	tab-stops:list 144.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel5CxSpFirst, li.MsoNoteLevel5CxSpFirst, div.MsoNoteLevel5CxSpFirst
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-type:export-only;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:162.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:5;
+	mso-list:l0 level5 lfo2;
+	tab-stops:list 144.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel5CxSpMiddle, li.MsoNoteLevel5CxSpMiddle, div.MsoNoteLevel5CxSpMiddle
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-type:export-only;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:162.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:5;
+	mso-list:l0 level5 lfo2;
+	tab-stops:list 144.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel5CxSpLast, li.MsoNoteLevel5CxSpLast, div.MsoNoteLevel5CxSpLast
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-type:export-only;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:162.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:5;
+	mso-list:l0 level5 lfo2;
+	tab-stops:list 144.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel6, li.MsoNoteLevel6, div.MsoNoteLevel6
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:198.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:6;
+	mso-list:l0 level6 lfo2;
+	tab-stops:list 180.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel6CxSpFirst, li.MsoNoteLevel6CxSpFirst, div.MsoNoteLevel6CxSpFirst
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-type:export-only;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:198.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:6;
+	mso-list:l0 level6 lfo2;
+	tab-stops:list 180.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel6CxSpMiddle, li.MsoNoteLevel6CxSpMiddle, div.MsoNoteLevel6CxSpMiddle
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-type:export-only;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:198.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:6;
+	mso-list:l0 level6 lfo2;
+	tab-stops:list 180.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel6CxSpLast, li.MsoNoteLevel6CxSpLast, div.MsoNoteLevel6CxSpLast
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-type:export-only;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:198.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:6;
+	mso-list:l0 level6 lfo2;
+	tab-stops:list 180.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel7, li.MsoNoteLevel7, div.MsoNoteLevel7
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:234.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:7;
+	mso-list:l0 level7 lfo2;
+	tab-stops:list 216.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel7CxSpFirst, li.MsoNoteLevel7CxSpFirst, div.MsoNoteLevel7CxSpFirst
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-type:export-only;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:234.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:7;
+	mso-list:l0 level7 lfo2;
+	tab-stops:list 216.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel7CxSpMiddle, li.MsoNoteLevel7CxSpMiddle, div.MsoNoteLevel7CxSpMiddle
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-type:export-only;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:234.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:7;
+	mso-list:l0 level7 lfo2;
+	tab-stops:list 216.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel7CxSpLast, li.MsoNoteLevel7CxSpLast, div.MsoNoteLevel7CxSpLast
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-type:export-only;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:234.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:7;
+	mso-list:l0 level7 lfo2;
+	tab-stops:list 216.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel8, li.MsoNoteLevel8, div.MsoNoteLevel8
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:270.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:8;
+	mso-list:l0 level8 lfo2;
+	tab-stops:list 252.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel8CxSpFirst, li.MsoNoteLevel8CxSpFirst, div.MsoNoteLevel8CxSpFirst
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-type:export-only;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:270.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:8;
+	mso-list:l0 level8 lfo2;
+	tab-stops:list 252.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel8CxSpMiddle, li.MsoNoteLevel8CxSpMiddle, div.MsoNoteLevel8CxSpMiddle
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-type:export-only;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:270.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:8;
+	mso-list:l0 level8 lfo2;
+	tab-stops:list 252.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel8CxSpLast, li.MsoNoteLevel8CxSpLast, div.MsoNoteLevel8CxSpLast
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-type:export-only;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:270.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:8;
+	mso-list:l0 level8 lfo2;
+	tab-stops:list 252.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel9, li.MsoNoteLevel9, div.MsoNoteLevel9
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:306.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:9;
+	mso-list:l0 level9 lfo2;
+	tab-stops:list 288.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel9CxSpFirst, li.MsoNoteLevel9CxSpFirst, div.MsoNoteLevel9CxSpFirst
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-type:export-only;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:306.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:9;
+	mso-list:l0 level9 lfo2;
+	tab-stops:list 288.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel9CxSpMiddle, li.MsoNoteLevel9CxSpMiddle, div.MsoNoteLevel9CxSpMiddle
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-type:export-only;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:306.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:9;
+	mso-list:l0 level9 lfo2;
+	tab-stops:list 288.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoNoteLevel9CxSpLast, li.MsoNoteLevel9CxSpLast, div.MsoNoteLevel9CxSpLast
+	{mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-type:export-only;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:306.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	text-indent:-18.0pt;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:9;
+	mso-list:l0 level9 lfo2;
+	tab-stops:list 288.0pt;
+	font-size:12.0pt;
+	font-family:Verdana;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoListParagraph, li.MsoListParagraph, div.MsoListParagraph
+	{mso-style-priority:34;
+	mso-style-unhide:no;
+	mso-style-qformat:yes;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:36.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:Cambria;
+	mso-ascii-font-family:Cambria;
+	mso-ascii-theme-font:minor-latin;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-hansi-font-family:Cambria;
+	mso-hansi-theme-font:minor-latin;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoListParagraphCxSpFirst, li.MsoListParagraphCxSpFirst, div.MsoListParagraphCxSpFirst
+	{mso-style-priority:34;
+	mso-style-unhide:no;
+	mso-style-qformat:yes;
+	mso-style-type:export-only;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:36.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:Cambria;
+	mso-ascii-font-family:Cambria;
+	mso-ascii-theme-font:minor-latin;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-hansi-font-family:Cambria;
+	mso-hansi-theme-font:minor-latin;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoListParagraphCxSpMiddle, li.MsoListParagraphCxSpMiddle, div.MsoListParagraphCxSpMiddle
+	{mso-style-priority:34;
+	mso-style-unhide:no;
+	mso-style-qformat:yes;
+	mso-style-type:export-only;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:36.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:Cambria;
+	mso-ascii-font-family:Cambria;
+	mso-ascii-theme-font:minor-latin;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-hansi-font-family:Cambria;
+	mso-hansi-theme-font:minor-latin;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+p.MsoListParagraphCxSpLast, li.MsoListParagraphCxSpLast, div.MsoListParagraphCxSpLast
+	{mso-style-priority:34;
+	mso-style-unhide:no;
+	mso-style-qformat:yes;
+	mso-style-type:export-only;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:36.0pt;
+	margin-bottom:.0001pt;
+	mso-add-space:auto;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:Cambria;
+	mso-ascii-font-family:Cambria;
+	mso-ascii-theme-font:minor-latin;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-hansi-font-family:Cambria;
+	mso-hansi-theme-font:minor-latin;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+span.Heading1Char
+	{mso-style-name:"Heading 1 Char";
+	mso-style-priority:9;
+	mso-style-unhide:no;
+	mso-style-locked:yes;
+	mso-style-link:"Heading 1";
+	mso-ansi-font-size:16.0pt;
+	mso-bidi-font-size:16.0pt;
+	font-family:Calibri;
+	mso-ascii-font-family:Calibri;
+	mso-ascii-theme-font:major-latin;
+	mso-fareast-font-family:"\FF2D\FF33 \30B4\30B7\30C3\30AF";
+	mso-fareast-theme-font:major-fareast;
+	mso-hansi-font-family:Calibri;
+	mso-hansi-theme-font:major-latin;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:major-bidi;
+	color:#345A8A;
+	mso-themecolor:accent1;
+	mso-themeshade:181;
+	font-weight:bold;}
+span.Heading2Char
+	{mso-style-name:"Heading 2 Char";
+	mso-style-noshow:yes;
+	mso-style-priority:9;
+	mso-style-unhide:no;
+	mso-style-locked:yes;
+	mso-style-link:"Heading 2";
+	mso-ansi-font-size:13.0pt;
+	mso-bidi-font-size:13.0pt;
+	font-family:Calibri;
+	mso-ascii-font-family:Calibri;
+	mso-ascii-theme-font:major-latin;
+	mso-fareast-font-family:"\FF2D\FF33 \30B4\30B7\30C3\30AF";
+	mso-fareast-theme-font:major-fareast;
+	mso-hansi-font-family:Calibri;
+	mso-hansi-theme-font:major-latin;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:major-bidi;
+	color:#4F81BD;
+	mso-themecolor:accent1;
+	font-weight:bold;}
+span.HeaderChar
+	{mso-style-name:"Header Char";
+	mso-style-priority:99;
+	mso-style-unhide:no;
+	mso-style-locked:yes;
+	mso-style-link:Header;}
+span.FooterChar
+	{mso-style-name:"Footer Char";
+	mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-unhide:no;
+	mso-style-locked:yes;
+	mso-style-link:Footer;}
+span.DocumentMapChar
+	{mso-style-name:"Document Map Char";
+	mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-unhide:no;
+	mso-style-locked:yes;
+	mso-style-link:"Document Map";
+	mso-ansi-font-size:12.0pt;
+	mso-bidi-font-size:12.0pt;
+	font-family:"Lucida Grande";
+	mso-ascii-font-family:"Lucida Grande";
+	mso-hansi-font-family:"Lucida Grande";
+	mso-bidi-font-family:"Lucida Grande";}
+span.BalloonTextChar
+	{mso-style-name:"Balloon Text Char";
+	mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-unhide:no;
+	mso-style-locked:yes;
+	mso-style-link:"Balloon Text";
+	mso-ansi-font-size:9.0pt;
+	mso-bidi-font-size:9.0pt;
+	font-family:"Lucida Grande";
+	mso-ascii-font-family:"Lucida Grande";
+	mso-hansi-font-family:"Lucida Grande";
+	mso-bidi-font-family:"Lucida Grande";}
+p.Text, li.Text, div.Text
+	{mso-style-name:Text;
+	mso-style-unhide:no;
+	mso-style-qformat:yes;
+	margin:0cm;
+	margin-bottom:.0001pt;
+	text-align:justify;
+	text-justify:inter-ideograph;
+	text-indent:10.1pt;
+	line-height:105%;
+	mso-pagination:none;
+	font-size:10.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+span.apple-converted-space
+	{mso-style-name:apple-converted-space;
+	mso-style-unhide:no;}
+span.SpellE
+	{mso-style-name:"";
+	mso-spl-e:yes;}
+span.GramE
+	{mso-style-name:"";
+	mso-gram-e:yes;}
+.MsoChpDefault
+	{mso-style-type:export-only;
+	mso-default-props:yes;
+	font-size:10.0pt;
+	mso-ansi-font-size:10.0pt;
+	mso-bidi-font-size:10.0pt;
+	font-family:Cambria;
+	mso-ascii-font-family:Cambria;
+	mso-ascii-theme-font:minor-latin;
+	mso-fareast-font-family:"\FF2D\FF33 \660E\671D";
+	mso-fareast-theme-font:minor-fareast;
+	mso-hansi-font-family:Cambria;
+	mso-hansi-theme-font:minor-latin;
+	mso-bidi-font-family:"Times New Roman";
+	mso-bidi-theme-font:minor-bidi;}
+ /* Page Definitions */
+@page
+	{mso-footnote-separator:url(":index_files:header.htm") fs;
+	mso-footnote-continuation-separator:url(":index_files:header.htm") fcs;
+	mso-endnote-separator:url(":index_files:header.htm") es;
+	mso-endnote-continuation-separator:url(":index_files:header.htm") ecs;}
+@page WordSection1
+	{size:595.0pt 842.0pt;
+	margin:72.0pt 72.0pt 72.0pt 72.0pt;
+	mso-header-margin:35.4pt;
+	mso-footer-margin:35.4pt;
+	mso-title-page:yes;
+	mso-first-header:url(":index_files:header.htm") fh1;
+	mso-paper-source:0;
+	layout-grid:18.0pt;}
+div.WordSection1
+	{page:WordSection1;}
+ /* List Definitions */
+@list l0
+	{mso-list-id:-227;
+	mso-list-template-ids:-597161006;}
+@list l0:level1
+	{mso-level-number-format:bullet;
+	mso-level-style-link:"Note Level 1";
+	mso-level-text:"";
+	mso-level-tab-stop:0cm;
+	mso-level-number-position:left;
+	margin-left:0cm;
+	text-indent:0cm;
+	font-family:Symbol;}
+@list l0:level2
+	{mso-level-number-format:bullet;
+	mso-level-style-link:"Note Level 2";
+	mso-level-text:\F0B7;
+	mso-level-tab-stop:36.0pt;
+	mso-level-number-position:left;
+	margin-left:54.0pt;
+	text-indent:-18.0pt;
+	font-family:Symbol;}
+@list l0:level3
+	{mso-level-number-format:bullet;
+	mso-level-style-link:"Note Level 3";
+	mso-level-text:o;
+	mso-level-tab-stop:72.0pt;
+	mso-level-number-position:left;
+	margin-left:90.0pt;
+	text-indent:-18.0pt;
+	font-family:"Courier New";
+	mso-bidi-font-family:"Times New Roman";}
+@list l0:level4
+	{mso-level-number-format:bullet;
+	mso-level-style-link:"Note Level 4";
+	mso-level-text:\F0A7;
+	mso-level-tab-stop:108.0pt;
+	mso-level-number-position:left;
+	margin-left:126.0pt;
+	text-indent:-18.0pt;
+	font-family:Wingdings;}
+@list l0:level5
+	{mso-level-number-format:bullet;
+	mso-level-style-link:"Note Level 5";
+	mso-level-text:\F0FA;
+	mso-level-tab-stop:144.0pt;
+	mso-level-number-position:left;
+	margin-left:162.0pt;
+	text-indent:-18.0pt;
+	font-family:Wingdings;}
+@list l0:level6
+	{mso-level-number-format:bullet;
+	mso-level-style-link:"Note Level 6";
+	mso-level-text:\F0B7;
+	mso-level-tab-stop:180.0pt;
+	mso-level-number-position:left;
+	margin-left:198.0pt;
+	text-indent:-18.0pt;
+	font-family:Symbol;}
+@list l0:level7
+	{mso-level-number-format:bullet;
+	mso-level-style-link:"Note Level 7";
+	mso-level-text:o;
+	mso-level-tab-stop:216.0pt;
+	mso-level-number-position:left;
+	margin-left:234.0pt;
+	text-indent:-18.0pt;
+	font-family:"Courier New";
+	mso-bidi-font-family:"Times New Roman";}
+@list l0:level8
+	{mso-level-number-format:bullet;
+	mso-level-style-link:"Note Level 8";
+	mso-level-text:\F0A7;
+	mso-level-tab-stop:252.0pt;
+	mso-level-number-position:left;
+	margin-left:270.0pt;
+	text-indent:-18.0pt;
+	font-family:Wingdings;}
+@list l0:level9
+	{mso-level-number-format:bullet;
+	mso-level-style-link:"Note Level 9";
+	mso-level-text:\F0FA;
+	mso-level-tab-stop:288.0pt;
+	mso-level-number-position:left;
+	margin-left:306.0pt;
+	text-indent:-18.0pt;
+	font-family:Wingdings;}
+@list l1
+	{mso-list-id:221528407;
+	mso-list-type:hybrid;
+	mso-list-template-ids:-1114729218 67698703 67698713 67698715 67698703 67698713 67698715 67698703 67698713 67698715;}
+@list l1:level1
+	{mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l1:level2
+	{mso-level-number-format:alpha-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l1:level3
+	{mso-level-number-format:roman-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:right;
+	text-indent:-9.0pt;}
+@list l1:level4
+	{mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l1:level5
+	{mso-level-number-format:alpha-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l1:level6
+	{mso-level-number-format:roman-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:right;
+	text-indent:-9.0pt;}
+@list l1:level7
+	{mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l1:level8
+	{mso-level-number-format:alpha-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l1:level9
+	{mso-level-number-format:roman-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:right;
+	text-indent:-9.0pt;}
+@list l2
+	{mso-list-id:1690447616;
+	mso-list-type:hybrid;
+	mso-list-template-ids:-1277156268 67698703 67698713 67698715 67698703 67698713 67698715 67698703 67698713 67698715;}
+@list l2:level1
+	{mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	margin-left:54.0pt;
+	text-indent:-18.0pt;}
+@list l2:level2
+	{mso-level-number-format:alpha-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	margin-left:90.0pt;
+	text-indent:-18.0pt;}
+@list l2:level3
+	{mso-level-number-format:roman-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:right;
+	margin-left:126.0pt;
+	text-indent:-9.0pt;}
+@list l2:level4
+	{mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	margin-left:162.0pt;
+	text-indent:-18.0pt;}
+@list l2:level5
+	{mso-level-number-format:alpha-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	margin-left:198.0pt;
+	text-indent:-18.0pt;}
+@list l2:level6
+	{mso-level-number-format:roman-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:right;
+	margin-left:234.0pt;
+	text-indent:-9.0pt;}
+@list l2:level7
+	{mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	margin-left:270.0pt;
+	text-indent:-18.0pt;}
+@list l2:level8
+	{mso-level-number-format:alpha-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	margin-left:306.0pt;
+	text-indent:-18.0pt;}
+@list l2:level9
+	{mso-level-number-format:roman-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:right;
+	margin-left:342.0pt;
+	text-indent:-9.0pt;}
+@list l3
+	{mso-list-id:1747221610;
+	mso-list-type:hybrid;
+	mso-list-template-ids:1088584590 67698703 67698713 67698715 67698703 67698713 67698715 67698703 67698713 67698715;}
+@list l3:level1
+	{mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l3:level2
+	{mso-level-number-format:alpha-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l3:level3
+	{mso-level-number-format:roman-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:right;
+	text-indent:-9.0pt;}
+@list l3:level4
+	{mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l3:level5
+	{mso-level-number-format:alpha-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l3:level6
+	{mso-level-number-format:roman-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:right;
+	text-indent:-9.0pt;}
+@list l3:level7
+	{mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l3:level8
+	{mso-level-number-format:alpha-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l3:level9
+	{mso-level-number-format:roman-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:right;
+	text-indent:-9.0pt;}
+@list l4
+	{mso-list-id:2106342916;
+	mso-list-type:hybrid;
+	mso-list-template-ids:-891254882 1779752426 67698713 67698715 67698703 67698713 67698715 67698703 67698713 67698715;}
+@list l4:level1
+	{mso-level-style-link:"Heading 1";
+	mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l4:level2
+	{mso-level-number-format:alpha-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l4:level3
+	{mso-level-number-format:roman-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:right;
+	text-indent:-9.0pt;}
+@list l4:level4
+	{mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l4:level5
+	{mso-level-number-format:alpha-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l4:level6
+	{mso-level-number-format:roman-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:right;
+	text-indent:-9.0pt;}
+@list l4:level7
+	{mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l4:level8
+	{mso-level-number-format:alpha-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l4:level9
+	{mso-level-number-format:roman-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:right;
+	text-indent:-9.0pt;}
+ol
+	{margin-bottom:0cm;}
+ul
+	{margin-bottom:0cm;}
+-->
+</style>
+<!--[if gte mso 10]>
+<style>
+ /* Style Definitions */
+table.MsoNormalTable
+	{mso-style-name:"Table Normal";
+	mso-tstyle-rowband-size:0;
+	mso-tstyle-colband-size:0;
+	mso-style-noshow:yes;
+	mso-style-priority:99;
+	mso-style-parent:"";
+	mso-padding-alt:0cm 5.4pt 0cm 5.4pt;
+	mso-para-margin:0cm;
+	mso-para-margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:10.0pt;
+	font-family:Cambria;
+	mso-ascii-font-family:Cambria;
+	mso-ascii-theme-font:minor-latin;
+	mso-hansi-font-family:Cambria;
+	mso-hansi-theme-font:minor-latin;}
+table.MsoTableGrid
+	{mso-style-name:"Table Grid";
+	mso-tstyle-rowband-size:0;
+	mso-tstyle-colband-size:0;
+	mso-style-priority:59;
+	mso-style-unhide:no;
+	border:solid windowtext 1.0pt;
+	mso-border-alt:solid windowtext .5pt;
+	mso-padding-alt:0cm 5.4pt 0cm 5.4pt;
+	mso-border-insideh:.5pt solid windowtext;
+	mso-border-insidev:.5pt solid windowtext;
+	mso-para-margin:0cm;
+	mso-para-margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:10.0pt;
+	font-family:Cambria;
+	mso-ascii-font-family:Cambria;
+	mso-ascii-theme-font:minor-latin;
+	mso-hansi-font-family:Cambria;
+	mso-hansi-theme-font:minor-latin;}
+</style>
+<![endif]--><!--[if gte mso 9]><xml>
+ <o:shapedefaults v:ext="edit" spidmax="6145"/>
+</xml><![endif]--><!--[if gte mso 9]><xml>
+ <o:shapelayout v:ext="edit">
+  <o:idmap v:ext="edit" data="1"/>
+ </o:shapelayout></xml><![endif]-->
+</head>
+
+<body lang=EN-US link=blue vlink=purple style='tab-interval:36.0pt'>
+
+<div class=WordSection1 style='layout-grid:18.0pt'>
+
+<p class=MsoNoteLevel1CxSpFirst style='margin-left:0cm;mso-add-space:auto;
+text-indent:0cm;mso-list:l0 level1 lfo2;background:white'><span
+style='font-size:13.5pt;mso-bidi-font-family:"Times New Roman";color:black'>&nbsp;<o:p></o:p></span></p>
+
+<div align=center>
+
+<table class=MsoNormalTable border=0 cellspacing=0 cellpadding=0
+ style='border-collapse:collapse;mso-yfti-tbllook:1184;mso-padding-alt:0cm 0cm 0cm 0cm'>
+ <tr style='mso-yfti-irow:0;mso-yfti-firstrow:yes;mso-yfti-lastrow:yes;
+  height:36.9pt'>
+  <td width=964 valign=top style='width:964.0pt;padding:0cm 5.4pt 0cm 5.4pt;
+  height:36.9pt'>
+  <p class=MsoNoteLevel1CxSpMiddle align=center style='margin-left:0cm;
+  mso-add-space:auto;text-align:center;text-indent:0cm;mso-list:l0 level1 lfo2;
+  background:white'><strong><span style='font-size:24.0pt;mso-bidi-font-size:
+  12.0pt;font-family:Cambria;mso-ascii-theme-font:minor-latin;mso-hansi-theme-font:
+  minor-latin'>Global Media Transmission Protocol (GMTP)<o:p></o:p></span></strong></p>
+  <p class=MsoNoteLevel1CxSpLast align=center style='margin-left:0cm;
+  mso-add-space:auto;text-align:center;text-indent:0cm;mso-list:l0 level1 lfo2;
+  background:white'><strong><i style='mso-bidi-font-style:normal'><span
+  style='font-size:10.0pt;font-family:Cambria;mso-ascii-theme-font:minor-latin;
+  mso-hansi-theme-font:minor-latin;font-weight:normal;mso-bidi-font-weight:
+  bold'>Leandro Melo de Sales</span></i></strong><span style='mso-bidi-font-family:
+  "Times New Roman"'><o:p></o:p></span></p>
+  </td>
+ </tr>
+</table>
+
+</div>
+
+<p class=MsoNoteLevel1 style='mso-list:none;tab-stops:36.0pt;background:white;
+orphans: auto;text-align:start;widows: auto;-webkit-text-stroke-width: 0px;
+background-position:initial initial;background-repeat:initial initial;
+word-spacing:0px'><u1:p><span style='font-size:13.5pt;mso-bidi-font-family:
+"Times New Roman";color:black'><o:p>&nbsp;</o:p></span></p>
+
+<div align=center>
+
+<table class=MsoNormalTable border=0 cellspacing=0 cellpadding=0
+ style='border-collapse:collapse;mso-yfti-tbllook:1184;mso-padding-alt:0cm 0cm 0cm 0cm'>
+ <tr style='mso-yfti-irow:0;mso-yfti-firstrow:yes;height:38.15pt'>
+  <td width=964 valign=top style='width:34.0cm;padding:0cm 5.4pt 0cm 5.4pt;
+  height:38.15pt'>
+  <p class=MsoNormal style='background:white'><span style='mso-ascii-font-family:
+  Cambria;mso-hansi-font-family:Cambria;mso-bidi-font-family:"Times New Roman"'><span
+  style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>The Global
+  Media Transmission Protocol (GMTP) is a cross-layer network protocol
+  operating in the transport and network layers of the TCP/IP stack for supporting
+  large-scale transmission of live streaming content over the Internet. GMTP
+  constitutes a network of cooperative routers and they disseminate the media
+  packets according to the demand of their clients. The cooperation between
+  routers are determined by the streaming servers, based on the bandwidth of
+  network channels explicitly shared by the routers already in use to
+  disseminate content, obtained and updated periodically. In the context of
+  GMTP, a router is called relay and the protocol is organized as depicted in
+  Figure 1.<o:p></o:p></span></p>
+  <p class=MsoNormal style='background:white'><span style='font-size:16.0pt;
+  mso-bidi-font-size:12.0pt;mso-ascii-font-family:Cambria;mso-hansi-font-family:
+  Cambria;mso-bidi-font-family:"Times New Roman"'><o:p>&nbsp;</o:p></span></p>
+  <p class=MsoNormal style='background:white'><span style='font-size:16.0pt;
+  mso-bidi-font-size:12.0pt;mso-ascii-font-family:Cambria;mso-hansi-font-family:
+  Cambria;mso-bidi-font-family:"Times New Roman"'><o:p>&nbsp;</o:p></span></p>
+  <p class=MsoNormal align=center style='text-align:center;page-break-after:
+  avoid;background:white'><u1:p></u1:p><span style='mso-ascii-font-family:Cambria;
+  mso-hansi-font-family:Cambria;mso-bidi-font-family:"Times New Roman"'><u1:p>&nbsp;<span
+  style='mso-no-proof:yes'><!--[if gte vml 1]><v:shapetype id="_x0000_t75"
+   coordsize="21600,21600" o:spt="75" o:preferrelative="t" path="m@4@5l@4@11@9@11@9@5xe"
+   filled="f" stroked="f">
+   <v:stroke joinstyle="miter"/>
+   <v:formulas>
+    <v:f eqn="if lineDrawn pixelLineWidth 0"/>
+    <v:f eqn="sum @0 1 0"/>
+    <v:f eqn="sum 0 0 @1"/>
+    <v:f eqn="prod @2 1 2"/>
+    <v:f eqn="prod @3 21600 pixelWidth"/>
+    <v:f eqn="prod @3 21600 pixelHeight"/>
+    <v:f eqn="sum @0 0 1"/>
+    <v:f eqn="prod @6 1 2"/>
+    <v:f eqn="prod @7 21600 pixelWidth"/>
+    <v:f eqn="sum @8 21600 0"/>
+    <v:f eqn="prod @7 21600 pixelHeight"/>
+    <v:f eqn="sum @10 21600 0"/>
+   </v:formulas>
+   <v:path o:extrusionok="f" gradientshapeok="t" o:connecttype="rect"/>
+   <o:lock v:ext="edit" aspectratio="t"/>
+  </v:shapetype><v:shape id="_x0000_i1025" type="#_x0000_t75" style='width:528pt;
+   height:118pt;visibility:visible;mso-wrap-style:square'>
+   <v:imagedata src="index_files/image001.png" o:title=""/>
+  </v:shape><![endif]--><![if !vml]><img width=530 height=120
+  src="index_files/image002.png" v:shapes="_x0000_i1025"><![endif]></span></span></p>
+  <p class=MsoCaption align=center style='text-align:center'>Figure <!--[if supportFields]><span
+  style='mso-element:field-begin'></span><span
+  style="mso-spacerun:yes">&nbsp;</span>SEQ Figure \* ARABIC <span
+  style='mso-element:field-separator'></span><![endif]--><span
+  style='mso-no-proof:yes'>1</span><!--[if supportFields]><span
+  style='mso-element:field-end'></span><![endif]-->: Functional blocks of GMTP
+  and the TCP/IP stack. GMTP as a cross-layer protocol between Transport <span
+  class=SpellE>anda</span> Network layers.</p>
+  <h1 style='mso-list:l4 level1 lfo1'><a name="_Toc262224756"></a><a
+  name="_Toc262223698"><span style='mso-bookmark:_Toc262224756'><![if !supportLists]><span
+  style='mso-fareast-font-family:Calibri;mso-fareast-theme-font:major-latin;
+  mso-bidi-font-family:Calibri;mso-bidi-theme-font:major-latin'><span
+  style='mso-list:Ignore'>1.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;
+  </span></span></span><![endif]>Overview and Motivation</span></a></h1>
+  <p class=MsoNormal><span style='mso-ascii-font-family:Cambria;mso-hansi-font-family:
+  Cambria;mso-bidi-font-family:"Times New Roman"'><span
+  style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span>Real time
+  multimedia delivery on the Internet is essential for the many current
+  applications such as WebTV. A hybrid Peer-to-Peer (P2P) / Content Delivery
+  Networks (CDN) architecture is the most efficient approach in robust system
+  for large-scale multimedia distribution over the Internet. In Live Streaming
+  Systems (LSS) based on P2P/CDN architecture, a data-source processes the
+  captured media and transmits data packets to CDN servers often deployed in
+  multiple locations, over multiple backbones and ISPs. Upon connecting to one
+  of these servers to start playing the media, Internet clients not only
+  receive the media content, but also become a media relay and share the
+  content with other clients. As depicted in Figure 2, this constitutes a P2P
+  network, where clients connect directly to each other and also play the same
+  media, indirectly from one of the CDN servers. From the network perspective,
+  the solutions concentrate efforts on improving the protocols throughput for
+  delivering data to multiple nodes at a time. In this context, it is more
+  desirable to keep the data flow and reproduce the content as it arrives than
+  waiting for retransmission of lost packets.</p>
+  <p class=MsoNormal><o:p>&nbsp;</o:p></p>
+  <p class=MsoNormal align=center style='text-align:center;page-break-after:
+  avoid'><span style='mso-no-proof:yes'><!--[if gte vml 1]><v:shape id="_x0000_i1026"
+   type="#_x0000_t75" style='width:507pt;height:303pt;visibility:visible;
+   mso-wrap-style:square'>
+   <v:imagedata src="index_files/image003.png" o:title=""/>
+  </v:shape><![endif]--><![if !vml]><img width=509 height=305
+  src="index_files/image004.png" v:shapes="_x0000_i1026"><![endif]></span></p>
+  <p class=MsoCaption align=center style='text-align:center'>Figure <!--[if supportFields]><span
+  style='mso-element:field-begin'></span><span
+  style="mso-spacerun:yes">&nbsp;</span>SEQ Figure \* ARABIC <span
+  style='mso-element:field-separator'></span><![endif]--><span
+  style='mso-no-proof:yes'>2</span><!--[if supportFields]><span
+  style='mso-element:field-end'></span><![endif]-->: Network <span
+  class=SpellE>arquitecture</span> used in P2P/CDN live streaming systems.</p>
+  <p class=MsoNormal><span style='mso-ascii-font-family:Cambria;mso-hansi-font-family:
+  Cambria;mso-bidi-font-family:"Times New Roman"'><o:p>&nbsp;</o:p></span></p>
+  <p class=MsoNormal><span style='mso-ascii-font-family:Cambria;mso-hansi-font-family:
+  Cambria;mso-bidi-font-family:"Times New Roman"'><span
+  style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span>The current
+  processes involved to distribute live content over the Internet promote an
+  unfair competition between heterogeneous devices. In essence, they prioritize
+  fixed-IP machines in a highly complex and dynamic network traffic generated
+  by these devices, where the systems uses the best effort IP service to
+  disseminate content, causing duplicated transmissions of the same flow. As a
+  consequence, it increases network resource consumption and degrades the
+  quality of service provided to the applications.</p>
+  <p class=MsoNormal><span style='mso-ascii-font-family:Cambria;mso-hansi-font-family:
+  Cambria;mso-bidi-font-family:"Times New Roman"'><span
+  style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>This problem
+  becomes increasingly critical when considering resource-limited devices, </span>where
+  the problem aforementioned provides serious concerns for end-users of devices
+  such as smart phones, TVs and tablets. Recent estimations show that worldwide
+  mobile traffic will increase 13-fold between 2012 and 2017, a rate of 66% per
+  year or almost three times of the fixed-IP machines. These systems avoid
+  mobile devices because of their nature of mobility and resource constraints,
+  but due to their popularization, a solution is indispensable to enable
+  different types of devices to fairly use network resources, from computers to
+  any type of consumer electronic devices.</p>
+  <p class=MsoNormal><span style='mso-ascii-font-family:Cambria;mso-hansi-font-family:
+  Cambria;mso-bidi-font-family:"Times New Roman"'><span
+  style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span>In this
+  context, an important challenge is how to define P2P/CDN networks to offer
+  resources regardless of the device type and the application layer protocols,
+  as well as encourage end-users to share network resources (e.g. upload
+  bandwidth) with others, while they watch a live event. In this context,
+  consider four important aspects:</p>
+  <p class=MsoNormal><o:p>&nbsp;</o:p></p>
+  <p class=MsoListParagraphCxSpFirst style='text-indent:-18.0pt;mso-list:l3 level1 lfo3'><![if !supportLists]><span
+  style='mso-fareast-font-family:Cambria;mso-fareast-theme-font:minor-latin;
+  mso-bidi-font-family:Cambria;mso-bidi-theme-font:minor-latin'><span
+  style='mso-list:Ignore'>1.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span></span><![endif]><i style='mso-bidi-font-style:normal'>The
+  opportunistic approach of live streaming systems is not feasible:</i>
+  end-users will not share their resources with others when they are with idle
+  upload bandwidth and are not interested in watching a live streaming of
+  interest to others. This is a typical scenario that P2P/CDN systems rely on:
+  users need to be interested in receiving a stream to allow the system to ask
+  them to share the content with others. A potential relay is useless when it
+  has no interest in receiving a stream, resulting in a waste of idle resources
+  (no interest, no sharing). This problem becomes increasingly critical when
+  there are end-users connected to the system acting as <span class=GramE>free-riders</span>,
+  consuming resources from the system without sharing their resources with
+  other end-users. A successful solution should compensate users that share
+  resources in some way regardless of their interest in the content, while
+  encouraging free-riders to contribute to the distribution of the live
+  content;</p>
+  <p class=MsoListParagraphCxSpMiddle style='text-indent:-18.0pt;mso-list:l3 level1 lfo3'><![if !supportLists]><span
+  style='mso-fareast-font-family:Cambria;mso-fareast-theme-font:minor-latin;
+  mso-bidi-font-family:Cambria;mso-bidi-theme-font:minor-latin'><span
+  style='mso-list:Ignore'>2.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span></span><![endif]><i style='mso-bidi-font-style:normal'>Limitation
+  of computing resources:</i> in general, a Resource Limited (RL) device such
+  as smart phones and smart TVs is not able to share as much of its
+  computational resources with other devices when compared to Resource Abundant
+  (RA) devices line desktops and laptops. The problem becomes increasingly
+  critical considering the mobility facilities of RL devices, which increases
+  the churn in the P2P network and hence impacting on the service. Since RA
+  devices are better fit for sharing more resources with other nodes, the
+  system can reduce media glitches and playback startup time. Also, when RL
+  nodes dominate the system, the P2P overlay network can get clogged, which
+  hampers its growth and makes the system become highly dependent on CDN
+  servers. A successful solution should normalize the available resources based
+  on the network perspective, instead of considering the available resources on
+  each device;</p>
+  <p class=MsoListParagraphCxSpMiddle style='text-indent:-18.0pt;mso-list:l3 level1 lfo3'><![if !supportLists]><span
+  style='mso-fareast-font-family:Cambria;mso-fareast-theme-font:minor-latin;
+  mso-bidi-font-family:Cambria;mso-bidi-theme-font:minor-latin'><span
+  style='mso-list:Ignore'>3.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span></span><![endif]><i style='mso-bidi-font-style:normal'>Network
+  protocols used in LSS are not suitable:</i> the LSS are based on network
+  protocols (TCP, UDP, DCCP [6]) that were not developed for such kind of
+  service. In this manner, the application layer should implement almost all
+  functions provided by LSS, which causes incompatibilities among them and
+  increases the number of solutions for the same purpose. A successful solution
+  should rely on good practices that have been instituted over the years on the
+  Internet, such as those considered for the Web. The Web does not depend on
+  the applications (browser) to transport the data from the client to the
+  server. Instead, it uses TCP to separate the data transmission from the way
+  the data will be exposed to end-users, which is an application decision
+  regardless of the type of the end-users' devices;</p>
+  <p class=MsoListParagraphCxSpLast style='text-indent:-18.0pt;mso-list:l3 level1 lfo3'><![if !supportLists]><span
+  style='mso-fareast-font-family:Cambria;mso-fareast-theme-font:minor-latin;
+  mso-bidi-font-family:Cambria;mso-bidi-theme-font:minor-latin'><span
+  style='mso-list:Ignore'>4.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span></span><![endif]><i style='mso-bidi-font-style:normal'>Information-Centric
+  Networking (ICN) is a great candidate for provisioning device independent
+  network services:</i> ICN has received significant attention in recent years,
+  mainly driven by the fact that distributing and manipulating information has
+  become the major function on the Internet today. Unlike the traditional
+  host-centric networking paradigm, where information is obtained by contacting
+  specified named hosts, ICN aims at providing native network primitives for
+  efficient information retrieval. It directly names and operates on
+  information objects. The goal is to provide a network infrastructure service
+  better suited to today’s use (in particular, content distribution and
+  mobility) and more resilient to disruptions and failures [5], [7].<span
+  class=apple-converted-space><span style='font-size:6.5pt;font-family:Arial;
+  color:#333333;background:white'>&nbsp;</span></span></p>
+  <p class=MsoNormal><span style='mso-ascii-font-family:Cambria;mso-hansi-font-family:
+  Cambria;mso-bidi-font-family:"Times New Roman"'><o:p>&nbsp;</o:p></span></p>
+  <p class=MsoNormal><span style='mso-ascii-font-family:Cambria;mso-hansi-font-family:
+  Cambria;mso-bidi-font-family:"Times New Roman"'><span
+  style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span>Based
+  on the aforementioned aspects, the Global Media Transmission Protocol (GMTP)
+  was designed to compensate the necessary features for live media distribution
+  over a datagram-oriented network, such as Internet. It decouples the way to
+  transport application data from the way they are delivered to and rendered by
+  end-users applications, similar to the Web, as discussed previously. The way
+  that devices get connected to receive a live streaming is also transparent
+  from how the data is distributed on a collaborative P2P/CDN network.</p>
+  <p class=MsoNormal style='background:white'><span style='mso-ascii-font-family:
+  Cambria;mso-hansi-font-family:Cambria;mso-bidi-font-family:"Times New Roman"'><o:p>&nbsp;</o:p></span></p>
+  <p class=MsoNormal style='background:white'><span style='mso-ascii-font-family:
+  Cambria;mso-hansi-font-family:Cambria;mso-bidi-font-family:"Times New Roman"'><span
+  style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>GMTP is a
+  result of an extensive investigation of the network protocols available in
+  today’s Internet, targeting on improving communication issues present in
+  previous protocols for transmitting live data, such as TCP, UDP, DCCP, SCTP,
+  and so forth. It supports unicast and multicast transmission of
+  congestion-controlled datagrams over an overlay network built in the network
+  layer of the TCP/IP stack, allowing the use of a new concept called P2P
+  sockets in the transport layer. For this case, when a client node expects to
+  receive a stream, it sends a requesting packet specifying the data source
+  node that is transmitting the event. Based on this information, the GMTP
+  transparently gets stream data from peers connected to the overlay network by
+  matching those already receiving the same data flow, according to their
+  capacity of contributions in terms of bandwidth of the known routes from clients
+  to servers, where new partnerships are defined based on route intersections.
+  In this way, GMTP allows the communication of peers from different vendors
+  and applications, regardless of the application architecture.<o:p></o:p></span></p>
+  <p class=MsoNormal style='background:white;background-position:initial initial;
+  background-repeat:initial initial'><u1:p><span style='mso-ascii-font-family:
+  Cambria;mso-hansi-font-family:Cambria;mso-bidi-font-family:"Times New Roman"'>&nbsp;<o:p></o:p></span></p>
+  <p class=MsoNormal style='background:white'></u1:p><span style='mso-ascii-font-family:
+  Cambria;mso-hansi-font-family:Cambria;mso-bidi-font-family:"Times New Roman"'><span
+  style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>In this
+  context, GMTP efficiently uses the available network resources by clustering
+  nodes with interests in common so that they can cooperate among them
+  targeting a single goal: watching a live streaming event. For this, GMTP
+  provides a novel host-to-host and host-to-server connection process; it
+  supports dual mode transmission chosen automatically according to the nodes
+  demand for a given live stream; and it makes use of a network assisted
+  congestion control algorithm called Rate Control Protocol (RCP), with a more
+  conservative use of network resources while downloading and uploading data
+  packets, regardless of the type and computational resources available on the
+  end-user devices.<o:p></o:p></span></p>
+  <h1 style='mso-list:l4 level1 lfo1;background:white'><a name="_Toc262224758"></a><a
+  name="_Toc262223700"><span style='mso-bookmark:_Toc262224758'><![if !supportLists]><span
+  style='mso-ascii-font-family:Calibri;mso-fareast-font-family:Calibri;
+  mso-hansi-font-family:Calibri;mso-bidi-font-family:Calibri;color:#345A8A'><span
+  style='mso-list:Ignore'>2.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;
+  </span></span></span><![endif]><span style='mso-ascii-font-family:Calibri;
+  mso-fareast-font-family:"Times New Roman";mso-hansi-font-family:Calibri;
+  mso-bidi-font-family:"Times New Roman";color:#345A8A'>GMTP at a glance</span></span></a><span
+  style='mso-ascii-font-family:Calibri;mso-fareast-font-family:"Times New Roman";
+  mso-hansi-font-family:Calibri;mso-bidi-font-family:"Times New Roman";
+  color:#345A8A'><o:p></o:p></span></h1>
+  <p class=MsoNormal align=center style='text-align:center;page-break-after:
+  avoid'><span style='mso-ascii-font-family:Cambria;mso-hansi-font-family:Cambria;
+  mso-no-proof:yes'><!--[if gte vml 1]><v:shape id="_x0000_i1027" type="#_x0000_t75"
+   style='width:731pt;height:583pt;visibility:visible;mso-wrap-style:square'>
+   <v:imagedata src="index_files/image005.png" o:title=""/>
+  </v:shape><![endif]--><![if !vml]><img width=733 height=585
+  src="index_files/image006.png" v:shapes="_x0000_i1027"><![endif]></span></p>
+  <p class=MsoCaption align=center style='text-align:center'>Figure <!--[if supportFields]><span
+  style='mso-element:field-begin'></span><span
+  style="mso-spacerun:yes">&nbsp;</span>SEQ Figure \* ARABIC <span
+  style='mso-element:field-separator'></span><![endif]--><span
+  style='mso-no-proof:yes'>3</span><!--[if supportFields]><span
+  style='mso-element:field-end'></span><![endif]-->: Flow diagram for GMTP,
+  from a client node that requests a content to receive it from the server.</p>
+  <p class=MsoNormal><o:p>&nbsp;</o:p></p>
+  <h1 style='mso-list:l4 level1 lfo1;background:white'><a name="_Toc262224757"></a><a
+  name="_Toc262223699"><span style='mso-bookmark:_Toc262224757'><![if !supportLists]><span
+  style='mso-ascii-font-family:Calibri;mso-fareast-font-family:Calibri;
+  mso-hansi-font-family:Calibri;mso-bidi-font-family:Calibri;color:#345A8A'><span
+  style='mso-list:Ignore'>3.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;
+  </span></span></span><![endif]><span style='mso-ascii-font-family:Calibri;
+  mso-fareast-font-family:"Times New Roman";mso-hansi-font-family:Calibri;
+  mso-bidi-font-family:"Times New Roman";color:#345A8A'>Main features of GMTP</span></span></a><span
+  style='mso-ascii-font-family:Calibri;mso-fareast-font-family:"Times New Roman";
+  mso-hansi-font-family:Calibri;mso-bidi-font-family:"Times New Roman";
+  color:#345A8A'><o:p></o:p></span></h1>
+  <p class=MsoListParagraphCxSpFirst style='text-indent:-18.0pt;mso-list:l1 level1 lfo4;
+  background-position:initial initial;background-repeat:initial initial'><![if !supportLists]><span
+  style='mso-fareast-font-family:Cambria;mso-fareast-theme-font:minor-latin;
+  mso-bidi-font-family:Cambria;mso-bidi-theme-font:minor-latin'><span
+  style='mso-list:Ignore'>1.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span></span><![endif]>Access to a broadcast of a live media through
+  a process of three-way hand-share (3WHS), where the existing relays in the
+  route between the client and the server is authorized to intercept the
+  request packet in case the streaming is already being processed and routed to
+  another relay.<o:p></o:p></p>
+  <p class=MsoListParagraphCxSpMiddle style='text-indent:-18.0pt;mso-list:l1 level1 lfo4;
+  background-position:initial initial;background-repeat:initial initial'><![if !supportLists]><span
+  style='mso-fareast-font-family:Cambria;mso-fareast-theme-font:minor-latin;
+  mso-bidi-font-family:Cambria;mso-bidi-theme-font:minor-latin'><span
+  style='mso-list:Ignore'>2.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span></span><![endif]>Constitution of a network of cooperative
+  relays transparent to the application. A relay executed a process called
+  Registration of Participation, which allows relays to participate of the
+  cooperative network by notifying the stream servers their intentions to
+  participate of the network and/or for receiving a specific live streaming.<o:p></o:p></p>
+  <p class=MsoListParagraphCxSpMiddle style='text-indent:-18.0pt;mso-list:l1 level1 lfo4;
+  background-position:initial initial;background-repeat:initial initial'><![if !supportLists]><span
+  style='mso-fareast-font-family:Cambria;mso-fareast-theme-font:minor-latin;
+  mso-bidi-font-family:Cambria;mso-bidi-theme-font:minor-latin'><span
+  style='mso-list:Ignore'>3.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span></span><![endif]>Allow server and client applications to send
+  and receive streams shared between nodes in the same network through the use
+  of multicast, while it uses unicast to transport stream data between distinct
+  administrative domains (networks), avoiding the ratio of one connection per
+  client to the server.</p>
+  <p class=MsoListParagraphCxSpMiddle style='text-indent:-18.0pt;mso-list:l1 level1 lfo4'><![if !supportLists]><span
+  style='mso-fareast-font-family:Cambria;mso-fareast-theme-font:minor-latin;
+  mso-bidi-font-family:Cambria;mso-bidi-theme-font:minor-latin'><span
+  style='mso-list:Ignore'>4.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span></span><![endif]>Allow different applications share the same
+  media streaming. If different applications A (<span class=SpellE>eg</span>.
+  standalone) and B (<span class=SpellE>eg</span>. embedded web object) are
+  interested in receiving the same media stream, GMTP automatically shares the
+  content among them.</p>
+  <p class=MsoListParagraphCxSpMiddle style='text-indent:-18.0pt;mso-list:l1 level1 lfo4'><![if !supportLists]><span
+  style='mso-fareast-font-family:Cambria;mso-fareast-theme-font:minor-latin;
+  mso-bidi-font-family:Cambria;mso-bidi-theme-font:minor-latin'><span
+  style='mso-list:Ignore'>5.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span></span><![endif]>Congestion control for unicast data flows,
+  based on the lower bandwidth of the existing relays between the client and
+  server, named Unicast Congestion Control (GMTP-UCC), and Congestion Control
+  for multicast data flows, based on reports submitted by client nodes, named
+  Multicast Congestion Control (GMTP-MCC).</p>
+  <p class=MsoListParagraphCxSpMiddle style='text-indent:-18.0pt;mso-list:l1 level1 lfo4'><![if !supportLists]><span
+  style='mso-fareast-font-family:Cambria;mso-fareast-theme-font:minor-latin;
+  mso-bidi-font-family:Cambria;mso-bidi-theme-font:minor-latin'><span
+  style='mso-list:Ignore'>6.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span></span><![endif]>Discovery of relay partners between different
+  networks and support for negotiating partnership; supported the formation of
+  partnerships based on network <span class=GramE>metrics ,</span> such as the
+  end-to-end transmission capacity.</p>
+  <p class=MsoListParagraphCxSpMiddle style='text-indent:-18.0pt;mso-list:l1 level1 lfo4'><![if !supportLists]><span
+  style='mso-fareast-font-family:Cambria;mso-fareast-theme-font:minor-latin;
+  mso-bidi-font-family:Cambria;mso-bidi-theme-font:minor-latin'><span
+  style='mso-list:Ignore'>7.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span></span><![endif]>Verification of data integrity through the use
+  of digital signatures provided by the servers, thus preventing pollution
+  attacks.</p>
+  <p class=MsoListParagraphCxSpLast style='text-indent:-18.0pt;mso-list:l1 level1 lfo4'><![if !supportLists]><span
+  style='mso-fareast-font-family:Cambria;mso-fareast-theme-font:minor-latin;
+  mso-bidi-font-family:Cambria;mso-bidi-theme-font:minor-latin'><span
+  style='mso-list:Ignore'>8.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span></span><![endif]>Support for auxiliary functions, such as
+  election of reporter nodes and tolerance for node disconnections.</p>
+  <p class=MsoNormal><o:p>&nbsp;</o:p></p>
+  <h1 style='mso-list:l4 level1 lfo1;background:white'><a name="_Toc262224759"></a><a
+  name="_Toc262223701"><span style='mso-bookmark:_Toc262224759'><![if !supportLists]><span
+  style='mso-ascii-font-family:Calibri;mso-fareast-font-family:Calibri;
+  mso-hansi-font-family:Calibri;mso-bidi-font-family:Calibri;color:#345A8A'><span
+  style='mso-list:Ignore'>4.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;
+  </span></span></span><![endif]><span style='mso-ascii-font-family:Calibri;
+  mso-fareast-font-family:"Times New Roman";mso-hansi-font-family:Calibri;
+  mso-bidi-font-family:"Times New Roman";color:#345A8A'>General Architecture</span></span></a><span
+  style='mso-ascii-font-family:Calibri;mso-fareast-font-family:"Times New Roman";
+  mso-hansi-font-family:Calibri;mso-bidi-font-family:"Times New Roman";
+  color:#345A8A'><o:p></o:p></span></h1>
+  <p class=MsoNormal><span style='mso-ascii-font-family:Cambria;mso-hansi-font-family:
+  Cambria;mso-bidi-font-family:"Times New Roman"'><span
+  style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span>GMTP is
+  composed by two modules called GMTP-Intra and GMTP-Inter, which operate at
+  the transport layer and network, respectively, thus defining its
+  architecture, shown in 4. </p>
+  <p class=MsoNormal><o:p>&nbsp;</o:p></p>
+  <p class=MsoNormal align=center style='text-align:center;page-break-after:
+  avoid'><span style='mso-no-proof:yes'><!--[if gte vml 1]><v:shape id="_x0000_i1028"
+   type="#_x0000_t75" style='width:362pt;height:223pt;visibility:visible;
+   mso-wrap-style:square'>
+   <v:imagedata src="index_files/image007.png" o:title=""/>
+  </v:shape><![endif]--><![if !vml]><img width=364 height=225
+  src="index_files/image008.png" v:shapes="_x0000_i1028"><![endif]></span></p>
+  <p class=MsoCaption align=center style='text-align:center'>Figure <!--[if supportFields]><span
+  style='mso-element:field-begin'></span><span
+  style="mso-spacerun:yes">&nbsp;</span>SEQ Figure \* ARABIC <span
+  style='mso-element:field-separator'></span><![endif]--><span
+  style='mso-no-proof:yes'>4</span><!--[if supportFields]><span
+  style='mso-element:field-end'></span><![endif]-->: General architecture of
+  GMTP protocol.</p>
+  <p class=MsoNormal><span style='mso-ascii-font-family:Cambria;mso-hansi-font-family:
+  Cambria;mso-bidi-font-family:"Times New Roman"'><span
+  style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span>The
+  responsibilities of GMTP-Intra and GMTP-Inter are the following:</p>
+  <p class=MsoListParagraphCxSpFirst style='margin-left:54.0pt;mso-add-space:
+  auto'><b style='mso-bidi-font-weight:normal'>GMTP-Intra:</b> it provides
+  services to network applications in order to abstract the complexity of
+  common tasks to any end-system, such as multi-point connecting, datagram
+  multiplexing/<span class=SpellE>demultiplexing</span> between
+  application/transport layers and between transport/network layers, as well as
+  control congestion of multicast data flows. This module comprises GMTP
+  instance running on the client operating system, accessible via a socket API,
+  such as POSIX/BSD. In this context, a socket is the representation of an
+  instance of the GMTP, which is responsible for managing all communication
+  activities relevant to the external environment (other GMTP applications). In
+  the context of a connection, the GMTP-Intra maintains several variables
+  related to state implementation of algorithms for connection management
+  (establishment and disconnection), multicast congestion control,
+  multiplexing/<span class=SpellE>demultiplexing</span>, election of reporter
+  nodes and determining the form and functions for allowing application to
+  generate and read the media description, by allowing the application to set
+  the values &#8203;&#8203;of the parameters or obtain access to their values.</p>
+  <p class=MsoListParagraphCxSpMiddle style='margin-left:54.0pt;mso-add-space:
+  auto'><o:p>&nbsp;</o:p></p>
+  <p class=MsoListParagraphCxSpMiddle style='margin-left:54.0pt;mso-add-space:
+  auto'><b style='mso-bidi-font-weight:normal'>GMTP-Inter:</b> it <span
+  class=GramE>provide</span> the P2P network of favor composed of routers,
+  which act as bridges for accessing CDN network servers. It is executed in the
+  routers, which cooperatively constitute the overlay network according to the
+  common interest for a given live media. The stream servers communicate
+  directly with the routers, asking them to form partnership to disseminate the
+  content to the client nodes. In the context of a connection, the GMTP-Inter
+  maintains state variables related to the functions of its responsibility,
+  such as establishing a connection between routers or servers; selection and
+  management of cooperative routers; election of report nodes; sharing of
+  multimedia streams; and congestion control assisted by the network.
+  Furthermore, it allows the definition of initial configuration parameters for
+  the network of favors and integration with one or more CDNs servers, as
+  depicted in Figure 5. In this case, the router administrator can define a set
+  of configuration parameters such as registration to participation in one or
+  more CDNs networks; the maximum bandwidth (download and upload) that the router
+  is authorized to use and share; the period that the router is authorized to
+  join the network of favors, in days and hours; the maximum number of
+  partnerships that can be performed and maximum number of data streams that
+  can be shared; parameters of the equations used to execute the congestion
+  control algorithms; maximum size of the media cache to be shared; and
+  settings about the digital certificates provided by the server, such as
+  automatic download and store of digital certificates.</p>
+  <p class=MsoListParagraphCxSpMiddle style='margin-left:54.0pt;mso-add-space:
+  auto'><o:p>&nbsp;</o:p></p>
+  <p class=MsoListParagraphCxSpLast align=center style='margin-left:0cm;
+  mso-add-space:auto;text-align:center;page-break-after:avoid'><span
+  style='mso-no-proof:yes'><!--[if gte vml 1]><v:shape id="_x0000_i1029"
+   type="#_x0000_t75" style='width:444pt;height:227pt;visibility:visible;
+   mso-wrap-style:square'>
+   <v:imagedata src="index_files/image009.png" o:title=""/>
+  </v:shape><![endif]--><![if !vml]><img width=446 height=229
+  src="index_files/image010.png" v:shapes="_x0000_i1029"><![endif]></span></p>
+  <p class=MsoCaption align=center style='text-align:center'>Figure <!--[if supportFields]><span
+  style='mso-element:field-begin'></span><span
+  style="mso-spacerun:yes">&nbsp;</span>SEQ Figure \* ARABIC <span
+  style='mso-element:field-separator'></span><![endif]--><span
+  style='mso-no-proof:yes'>5</span><!--[if supportFields]><span
+  style='mso-element:field-end'></span><![endif]-->: Form for setting up the
+  CDN network parameters, where end-users can select and setup the CDN networks
+  they want to participate with.</p>
+  <h1 style='mso-list:l4 level1 lfo1;background:white'><a name="_Toc262224760"></a><a
+  name="_Toc262223702"><span style='mso-bookmark:_Toc262224760'><![if !supportLists]><span
+  style='mso-ascii-font-family:Calibri;mso-fareast-font-family:Calibri;
+  mso-hansi-font-family:Calibri;mso-bidi-font-family:Calibri;color:#345A8A'><span
+  style='mso-list:Ignore'>5.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;
+  </span></span></span><![endif]><span style='mso-ascii-font-family:Calibri;
+  mso-fareast-font-family:"Times New Roman";mso-hansi-font-family:Calibri;
+  mso-bidi-font-family:"Times New Roman";color:#345A8A'>Packet types and
+  headers<o:p></o:p></span></span></a></h1>
+  <p class=MsoNormal style='margin-left:18.0pt'><span style='mso-bookmark:_Toc262223702'><span
+  style='mso-bookmark:_Toc262224760'>TBD</span></span></p>
+  <h1 style='mso-list:l4 level1 lfo1'><span style='mso-bookmark:_Toc262223702'><span
+  style='mso-bookmark:_Toc262224760'><![if !supportLists]><span
+  style='mso-fareast-font-family:Calibri;mso-fareast-theme-font:major-latin;
+  mso-bidi-font-family:Calibri;mso-bidi-theme-font:major-latin'><span
+  style='mso-list:Ignore'>6.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;
+  </span></span></span><![endif]>Details of the communication</span></span></h1>
+  <p class=MsoNormal style='margin-left:18.0pt'><span style='mso-bookmark:_Toc262223702'><span
+  style='mso-bookmark:_Toc262224760'>TBD</span></span></p>
+  <h1 style='mso-list:l4 level1 lfo1'><span style='mso-bookmark:_Toc262223702'><span
+  style='mso-bookmark:_Toc262224760'><![if !supportLists]><span
+  style='mso-fareast-font-family:Calibri;mso-fareast-theme-font:major-latin;
+  mso-bidi-font-family:Calibri;mso-bidi-theme-font:major-latin'><span
+  style='mso-list:Ignore'>7.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;
+  </span></span></span><![endif]>Results</span></span></h1>
+  <p class=MsoNormal style='margin-left:18.0pt'><span style='mso-bookmark:_Toc262223702'><span
+  style='mso-bookmark:_Toc262224760'>TBD</span></span></p>
+  <h1 style='mso-list:l4 level1 lfo1;background:white'><span style='mso-bookmark:
+  _Toc262223702'><span style='mso-bookmark:_Toc262224760'><![if !supportLists]><span
+  style='mso-ascii-font-family:Calibri;mso-fareast-font-family:Calibri;
+  mso-hansi-font-family:Calibri;mso-bidi-font-family:Calibri;color:#345A8A'><span
+  style='mso-list:Ignore'>8.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;
+  </span></span></span><![endif]><span style='mso-ascii-font-family:Calibri;
+  mso-fareast-font-family:"Times New Roman";mso-hansi-font-family:Calibri;
+  mso-bidi-font-family:"Times New Roman";color:#345A8A'>Publications</span></span></span><span
+  style='mso-ascii-font-family:Calibri;mso-fareast-font-family:"Times New Roman";
+  mso-hansi-font-family:Calibri;mso-bidi-font-family:"Times New Roman";
+  color:#345A8A'><o:p></o:p></span></h1>
+  <p class=MsoNormal><span style='mso-ascii-font-family:Cambria;mso-hansi-font-family:
+  Cambria;mso-bidi-font-family:"Times New Roman"'><span
+  style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span><b
+  style='mso-bidi-font-weight:normal'>PhD Thesis (in Portuguese)<o:p></o:p></b></p>
+  <p class=MsoNormal style='margin-left:36.0pt'>GMTP: Distribution of Live
+  Media over a Network of Cooperative Routers </p>
+  <p class=MsoNormal><o:p>&nbsp;</o:p></p>
+  <p class=MsoNormal><span style='mso-ascii-font-family:Cambria;mso-hansi-font-family:
+  Cambria;mso-bidi-font-family:"Times New Roman"'><span
+  style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span><b
+  style='mso-bidi-font-weight:normal'>Conference and journals:<o:p></o:p></b></p>
+  <p class=MsoListParagraphCxSpFirst style='margin-left:54.0pt;mso-add-space:
+  auto;text-indent:-18.0pt;mso-list:l2 level1 lfo5'><![if !supportLists]><span
+  style='mso-bidi-font-size:16.0pt;font-family:Calibri;mso-fareast-font-family:
+  Calibri;mso-bidi-font-family:Calibri;color:#345A8A'><span style='mso-list:
+  Ignore'>1.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span></span><![endif]><span style='background:white'>GMTP: A
+  Cross-layer Optimized Protocol for Large Scale Distribution of Live
+  Multimedia Content over the Internet. (Current technical report / to be
+  submitted)</span><span style='mso-bidi-font-size:16.0pt;font-family:Calibri;
+  color:#345A8A'><o:p></o:p></span></p>
+  <p class=MsoListParagraphCxSpMiddle style='margin-left:54.0pt;mso-add-space:
+  auto;text-indent:-18.0pt;mso-list:l2 level1 lfo5'><![if !supportLists]><span
+  style='mso-fareast-font-family:Cambria;mso-fareast-theme-font:minor-latin;
+  mso-bidi-font-family:Cambria;mso-bidi-theme-font:minor-latin'><span
+  style='mso-list:Ignore'>2.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span></span><![endif]>Designing GMTP: The Global Media Transmission
+  Protocol for Massive Multimedia Distribution over the Internet. (Current
+  technical report / to be submitted)</p>
+  <p class=MsoListParagraphCxSpMiddle style='margin-left:54.0pt;mso-add-space:
+  auto;text-indent:-18.0pt;mso-list:l2 level1 lfo5'><![if !supportLists]><span
+  style='mso-fareast-font-family:Cambria;mso-fareast-theme-font:minor-latin;
+  mso-bidi-font-family:Cambria;mso-bidi-theme-font:minor-latin'><span
+  style='mso-list:Ignore'>3.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span></span><![endif]>Generalized Connections and Incentives for
+  Better Supporting CE Devices in Live Streaming Systems. Under review at IEEE
+  Transaction on Consumers Electronics</p>
+  <p class=MsoListParagraphCxSpMiddle style='margin-left:54.0pt;mso-add-space:
+  auto;text-indent:-18.0pt;mso-list:l2 level1 lfo5'><![if !supportLists]><span
+  style='mso-fareast-font-family:Cambria;mso-fareast-theme-font:minor-latin;
+  mso-bidi-font-family:Cambria;mso-bidi-theme-font:minor-latin'><span
+  style='mso-list:Ignore'>4.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span></span><![endif]>Global Media Transmission Protocol (GMTP).
+  Under review to the I Workshop <span class=SpellE>Pré</span>-IETF do XXXIV <span
+  class=SpellE>Congresso</span> da <span class=SpellE>Sociedade</span> <span
+  class=SpellE>Brasileira</span> de <span class=SpellE>Computação</span>.
+  &nbsp;(<span class=GramE>in</span> Portuguese)</p>
+  <p class=MsoListParagraphCxSpMiddle style='margin-left:54.0pt;mso-add-space:
+  auto;text-indent:-18.0pt;mso-list:l2 level1 lfo5'><![if !supportLists]><span
+  style='mso-fareast-font-family:Cambria;mso-fareast-theme-font:minor-latin;
+  mso-bidi-font-family:Cambria;mso-bidi-theme-font:minor-latin'><span
+  style='mso-list:Ignore'>5.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span></span><![endif]>About Encouraging Residential Users to Share
+  Upload Bandwidth with CDN/P2P Live Streaming Systems. 31st IEEE International
+  Conference on Consumer Electronics</p>
+  <p class=MsoListParagraphCxSpMiddle style='margin-left:54.0pt;mso-add-space:
+  auto;text-indent:-18.0pt;mso-list:l2 level1 lfo5'><![if !supportLists]><span
+  style='mso-fareast-font-family:Cambria;mso-fareast-theme-font:minor-latin;
+  mso-bidi-font-family:Cambria;mso-bidi-theme-font:minor-latin'><span
+  style='mso-list:Ignore'>6.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span></span><![endif]><span class=GramE>Multi(</span><span
+  class=SpellE>Uni</span>)cast DCCP for Live Content Distribution with P2P
+  Support. 9th IEEE Wireless Communications and Networking Conference</p>
+  <p class=MsoListParagraphCxSpMiddle style='margin-left:54.0pt;mso-add-space:
+  auto;text-indent:-18.0pt;mso-list:l2 level1 lfo5'><![if !supportLists]><span
+  style='mso-fareast-font-family:Cambria;mso-fareast-theme-font:minor-latin;
+  mso-bidi-font-family:Cambria;mso-bidi-theme-font:minor-latin'><span
+  style='mso-list:Ignore'>7.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span></span><![endif]>Multimedia Content Distribution of Real Time
+  Controlled and Non-reliable Datagrams Between Peers. IEEE <span class=SpellE>Globecom</span>
+  2011, 2nd IEEE Workshop on Multimedia Communications &amp; Services</p>
+  <p class=MsoListParagraphCxSpMiddle style='margin-left:54.0pt;mso-add-space:
+  auto;text-indent:-18.0pt;mso-list:l2 level1 lfo5'><![if !supportLists]><span
+  style='mso-fareast-font-family:Cambria;mso-fareast-theme-font:minor-latin;
+  mso-bidi-font-family:Cambria;mso-bidi-theme-font:minor-latin'><span
+  style='mso-list:Ignore'>8.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span></span><![endif]><span class=SpellE>Distribuição</span> de <span
+  class=SpellE>Conteúdo</span> <span class=SpellE>Multimídia</span> <span
+  class=SpellE>em</span> Tempo Real <span class=GramE>com</span> <span
+  class=SpellE>Transporte</span> de <span class=SpellE>FluxosControlados</span>
+  e <span class=SpellE>Não</span> <span class=SpellE>Confiáveis</span> <span
+  class=SpellE>entrePares</span>. <span class=SpellE>Simpósio</span> <span
+  class=SpellE>Brasileiro</span> de <span class=SpellE>Redes</span> de
+  Computadores2011, VII Workshop de <span class=SpellE>Redes</span> <span
+  class=SpellE>Dinâmicas</span> e <span class=SpellE>Sistemas</span> P2P. 2011
+  (in Portuguese)</p>
+  <p class=MsoListParagraphCxSpMiddle style='margin-left:54.0pt;mso-add-space:
+  auto;text-indent:-18.0pt;mso-list:l2 level1 lfo5'><![if !supportLists]><span
+  style='mso-fareast-font-family:Cambria;mso-fareast-theme-font:minor-latin;
+  mso-bidi-font-family:Cambria;mso-bidi-theme-font:minor-latin'><span
+  style='mso-list:Ignore'>9.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span></span><![endif]>An Experimental Evaluation of DCCP Transport
+  Protocol: A Focus on the Fairness and Hand-off over 802.11g Networks. 5th
+  IEEE Consumer Communications and Networking Conference</p>
+  <p class=MsoListParagraphCxSpLast style='margin-left:54.0pt;mso-add-space:
+  auto;text-indent:-18.0pt;mso-list:l2 level1 lfo5'><![if !supportLists]><span
+  style='mso-fareast-font-family:Cambria;mso-fareast-theme-font:minor-latin;
+  mso-bidi-font-family:Cambria;mso-bidi-theme-font:minor-latin'><span
+  style='mso-list:Ignore'>10.<span style='font:7.0pt "Times New Roman"'> </span></span></span><![endif]>On
+  the Performance of TCP, UDP and DCCP over 802.11g Networks. 23rd ACM
+  Symposium on Applied Computing.</p>
+  <p class=MsoNormal><o:p>&nbsp;</o:p></p>
+  <h1 style='mso-list:l4 level1 lfo1;background:white'><a name="_Toc262224761"></a><a
+  name="_Toc262223703"><span style='mso-bookmark:_Toc262224761'><![if !supportLists]><span
+  style='mso-ascii-font-family:Calibri;mso-fareast-font-family:Calibri;
+  mso-hansi-font-family:Calibri;mso-bidi-font-family:Calibri;color:#345A8A'><span
+  style='mso-list:Ignore'>9.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;
+  </span></span></span><![endif]><span style='mso-ascii-font-family:Calibri;
+  mso-fareast-font-family:"Times New Roman";mso-hansi-font-family:Calibri;
+  mso-bidi-font-family:"Times New Roman";color:#345A8A'>Repository and Download</span></span></a><span
+  style='mso-ascii-font-family:Calibri;mso-fareast-font-family:"Times New Roman";
+  mso-hansi-font-family:Calibri;mso-bidi-font-family:"Times New Roman";
+  color:#345A8A'><o:p></o:p></span></h1>
+  <p class=MsoNormal><span style='mso-ascii-font-family:Cambria;mso-hansi-font-family:
+  Cambria;mso-bidi-font-family:"Times New Roman"'><span
+  style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span><a
+  href="https://github.com/compelab/gmtp">https://github.com/compelab/gmtp</a></p>
+  <p class=MsoNormal><span style='mso-ascii-font-family:Cambria;mso-hansi-font-family:
+  Cambria;mso-bidi-font-family:"Times New Roman"'><span
+  style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span>It
+  requires login and request to get access to the source code. Please, e-mail
+  the author.</p>
+  <h1 style='mso-list:l4 level1 lfo1'><a name="_Toc262224762"></a><a
+  name="_Toc262223704"><span style='mso-bookmark:_Toc262224762'><![if !supportLists]><span
+  style='mso-fareast-font-family:Calibri;mso-fareast-theme-font:major-latin;
+  mso-bidi-font-family:Calibri;mso-bidi-theme-font:major-latin'><span
+  style='mso-list:Ignore'>10.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span></span><![endif]>Contact</span></a></h1>
+  <p class=MsoNormal><span style='mso-ascii-font-family:Cambria;mso-hansi-font-family:
+  Cambria;mso-bidi-font-family:"Times New Roman"'><span
+  style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span><span
+  style='mso-no-proof:yes'><!--[if gte vml 1]><v:shape id="Picture_x0020_253"
+   o:spid="_x0000_i1030" type="#_x0000_t75" style='width:103pt;height:13pt;
+   visibility:visible;mso-wrap-style:square'>
+   <v:imagedata src="index_files/image011.png" o:title=""/>
+  </v:shape><![endif]--><![if !vml]><img border=0 width=105 height=15
+  src="index_files/image012.png" v:shapes="Picture_x0020_253"><![endif]></span></p>
+  <h1 style='mso-list:l4 level1 lfo1;background:white'><a name="_Toc262224763"></a><a
+  name="_Toc262223705"><span style='mso-bookmark:_Toc262224763'><![if !supportLists]><span
+  style='mso-ascii-font-family:Calibri;mso-fareast-font-family:Calibri;
+  mso-hansi-font-family:Calibri;mso-bidi-font-family:Calibri;color:#345A8A'><span
+  style='mso-list:Ignore'>11.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span></span><![endif]><span style='mso-ascii-font-family:Calibri;
+  mso-fareast-font-family:"Times New Roman";mso-hansi-font-family:Calibri;
+  mso-bidi-font-family:"Times New Roman";color:#345A8A'>Acknowledgement</span></span></a><span
+  style='mso-ascii-font-family:Calibri;mso-fareast-font-family:"Times New Roman";
+  mso-hansi-font-family:Calibri;mso-bidi-font-family:"Times New Roman";
+  color:#345A8A'><o:p></o:p></span></h1>
+  <p class=MsoNormal style='background:white;background-position:initial initial;
+  background-repeat:initial initial'><span style='mso-ascii-font-family:Cambria;
+  mso-hansi-font-family:Cambria;mso-bidi-font-family:"Times New Roman"'><span
+  style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>National
+  Council for Scientific and Technological Development (<span class=SpellE>CNPq</span>),
+  Brazil<o:p></o:p></span></p>
+  <p class=MsoNormal style='background:white;background-position:initial initial;
+  background-repeat:initial initial'><span style='mso-ascii-font-family:Cambria;
+  mso-hansi-font-family:Cambria;mso-bidi-font-family:"Times New Roman"'><span
+  style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Federal
+  University of Campina Grande (UFCG), Brazil<o:p></o:p></span></p>
+  <p class=MsoNormal style='background:white;background-position:initial initial;
+  background-repeat:initial initial'><span style='mso-ascii-font-family:Cambria;
+  mso-hansi-font-family:Cambria;mso-bidi-font-family:"Times New Roman"'><span
+  style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Federal
+  University of<span class=apple-converted-space>&nbsp;</span><span
+  class=SpellE>Alagoas</span><span class=apple-converted-space>&nbsp;</span>(UFAL),
+  Brazil<o:p></o:p></span></p>
+  <p class=MsoNormal style='background:white;background-position:initial initial;
+  background-repeat:initial initial'><span style='mso-ascii-font-family:Cambria;
+  mso-hansi-font-family:Cambria;mso-bidi-font-family:"Times New Roman"'><span
+  style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Angelo<span
+  class=apple-converted-space>&nbsp;</span><span class=SpellE>Perkusich</span>,
+  Electrical Engineering Department at UFCG (advisor)<o:p></o:p></span></p>
+  <p class=MsoNormal style='background:white;background-position:initial initial;
+  background-repeat:initial initial'><span style='mso-ascii-font-family:Cambria;
+  mso-hansi-font-family:Cambria;mso-bidi-font-family:"Times New Roman"'><span
+  style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span
+  class=SpellE>Hyggo</span><span class=apple-converted-space>&nbsp;</span>Almeida
+  (advisors), Systems and Computing Department at UFCG (advisor<span
+  class=GramE>)<span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span>&nbsp;&nbsp;&nbsp;</span><o:p></o:p></span></p>
+  </td>
+ </tr>
+ <tr style='mso-yfti-irow:1;mso-yfti-lastrow:yes;height:38.15pt'>
+  <td width=964 valign=top style='width:34.0cm;padding:0cm 5.4pt 0cm 5.4pt;
+  height:38.15pt'>
+  <p class=MsoNoteLevel1CxSpFirst align=center style='margin-left:0cm;
+  mso-add-space:auto;text-align:center;text-indent:0cm;mso-list:l0 level1 lfo2;
+  background:white;orphans: auto;text-align:start;widows: auto;-webkit-text-stroke-width: 0px;
+  background-position:initial initial;background-repeat:initial initial;
+  word-spacing:0px'><u1:p><strong><i style='mso-bidi-font-style:normal'><span
+  style='font-family:Cambria;mso-ascii-theme-font:minor-latin;mso-hansi-theme-font:
+  minor-latin;font-weight:normal;mso-bidi-font-weight:bold'><o:p>&nbsp;</o:p></span></i></strong></p>
+  <p class=MsoNoteLevel1CxSpLast align=center style='margin-left:0cm;
+  mso-add-space:auto;text-align:center;text-indent:0cm;mso-list:l0 level1 lfo2;
+  background:white'><strong><i style='mso-bidi-font-style:normal'><span
+  style='font-size:10.0pt;font-family:Cambria;mso-ascii-theme-font:minor-latin;
+  mso-hansi-theme-font:minor-latin;font-weight:normal;mso-bidi-font-weight:
+  bold'>Last update: 05/20/2014</span></i></strong></p>
+  </td>
+ </tr>
+</table>
+
+</div>
+
+<p class=MsoNoteLevel1CxSpFirst style='margin-left:0cm;mso-add-space:auto;
+text-indent:0cm;mso-list:l0 level1 lfo2;background:white'><span
+style='font-size:13.5pt;mso-bidi-font-family:"Times New Roman";color:black'>&nbsp;<o:p></o:p></span></p>
+
+<p class=MsoNoteLevel1CxSpMiddle style='margin-left:0cm;mso-add-space:auto;
+text-indent:0cm;mso-list:l0 level1 lfo2;background:white'></u1:p><span
+style='font-size:13.5pt;mso-bidi-font-family:"Times New Roman";color:black'>&nbsp;<o:p></o:p></span></p>
+
+<p class=MsoNoteLevel1CxSpMiddle style='margin-left:0cm;mso-add-space:auto;
+text-indent:0cm;mso-list:l0 level1 lfo2'></u1:p><o:p>&nbsp;</o:p></p>
+
+<p class=MsoNoteLevel1CxSpLast style='margin-left:0cm;mso-add-space:auto;
+text-indent:0cm;mso-list:l0 level1 lfo2'><span style='font-size:16.0pt;
+mso-bidi-font-size:12.0pt'><o:p>&nbsp;</o:p></span></p>
+
+</div>
+
+</body>
+
+</html>
