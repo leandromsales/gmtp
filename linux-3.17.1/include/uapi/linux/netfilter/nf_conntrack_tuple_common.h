@@ -28,6 +28,9 @@ union nf_conntrack_man_proto {
 	} dccp;
 	struct {
 		__be16 port;
+	} gmtp;
+	struct {
+		__be16 port;
 	} sctp;
 	struct {
 		__be16 key;	/* GRE key is 32bit, PPtP only uses 16bit */
