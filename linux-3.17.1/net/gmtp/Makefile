@@ -4,7 +4,7 @@ KERNEL:= /lib/modules/`uname -r`/build
 
 KBUILD_EXTRA_SYMBOLS := $(PWD)/Module.symvers
 
-obj-m += gmtp.o gmtp_ipv4.o
+obj-$(CONFIG_GMTP) += gmtp.o gmtp_ipv4.o
 
 gmtp-y = output.o proto.o
 gmtp_ipv4-y := ipv4.o
