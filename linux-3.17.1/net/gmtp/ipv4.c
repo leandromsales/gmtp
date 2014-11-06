@@ -81,8 +81,8 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 	 * lock select source port, enter ourselves into the hash tables and
 	 * complete initialization after this.
 	 */
-	dccp_set_state(sk, DCCP_REQUESTING);
-	err = inet_hash_connect(&dccp_death_row, sk);
+	gmtp_set_state(sk, GMTP_REQUESTING);
+	err = inet_hash_connect(&gmtp_death_row, sk);
 	if (err != 0)
 		goto failure;
 
@@ -96,13 +96,13 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 	/* OK, now commit destination to socket.  */
 	sk_setup_caps(sk, &rt->dst);
 
-	dp->dccps_iss = secure_dccp_sequence_number(inet->inet_saddr,
+	dp->gmtps_iss = secure_dccp_sequence_number(inet->inet_saddr,
 						    inet->inet_daddr,
 						    inet->inet_sport,
 						    inet->inet_dport);
-	inet->inet_id = dp->dccps_iss ^ jiffies;
+	inet->inet_id = dp->gmtps_iss ^ jiffies;
 
-	err = dccp_connect(sk);
+	err = gmtp_connect(sk);
 	rt = NULL;
 	if (err != 0)
 		goto failure;
