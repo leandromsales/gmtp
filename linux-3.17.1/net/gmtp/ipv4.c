@@ -10,6 +10,8 @@
 #include <net/protocol.h>
 #include <net/request_sock.h>
 #include <net/sock.h>
+#include <net/secure_seq.h>
+#include <linux/gmtp.h>
 #include <net/netns/gmtp.h>
 
 #include "gmtp.h"
@@ -96,7 +98,7 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 	/* OK, now commit destination to socket.  */
 	sk_setup_caps(sk, &rt->dst);
 
-	dp->gmtps_iss = secure_dccp_sequence_number(inet->inet_saddr,
+	dp->gmtps_iss = secure_gmtp_sequence_number(inet->inet_saddr,
 						    inet->inet_daddr,
 						    inet->inet_sport,
 						    inet->inet_dport);

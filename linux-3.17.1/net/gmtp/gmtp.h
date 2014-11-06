@@ -84,5 +84,6 @@ struct gmtp_skb_cb {
 };
 
 #define GMTP_SKB_CB(__skb) ((struct gmtp_skb_cb *)&((__skb)->cb[0]))
+void gmtp_set_state(sk, GMTP_REQUESTING);
 
 #endif /* GMTP_H_ */

@@ -4,6 +4,7 @@
 #include <net/inet_sock.h>
 #include <net/inet_connection_sock.h>
 #include <net/tcp_states.h>
+#include <linux/types.h>
 
 #include <uapi/linux/gmtp.h>
 
@@ -55,11 +56,59 @@ struct gmtp_request_sock {
  */
 struct gmtp_sock {
 	/* inet_connection_sock has to be the first member of gmtp_sock */
-	struct inet_connection_sock gmtp_inet_connection;
+	struct inet_connection_sock gmtps_inet_connection;
+#define gmtps_syn_rtt			gmtps_inet_connection.icsk_ack.lrcvtime
 
 	enum gmtp_role		gmtps_role:2;
 	__be32				gmtps_service;
+	__u64				gmtps_iss;
 };
+
+/****
+struct dccp_sock {
+	* inet_connection_sock has to be the first member of dccp_sock *
+	struct inet_connection_sock	dccps_inet_connection;
+#define dccps_syn_rtt			dccps_inet_connection.icsk_ack.lrcvtime
+	__u64				dccps_swl;
+	__u64				dccps_swh;
+	__u64				dccps_awl;
+	__u64				dccps_awh;
+	__u64				dccps_iss;
+	__u64				dccps_isr;
+	__u64				dccps_osr;
+	__u64				dccps_gss;
+	__u64				dccps_gsr;
+	__u64				dccps_gar;
+	__be32				dccps_service;
+	__u32				dccps_mss_cache;
+	struct dccp_service_list	*dccps_service_list;
+	__u32				dccps_timestamp_echo;
+	__u32				dccps_timestamp_time;
+	__u16				dccps_l_ack_ratio;
+	__u16				dccps_r_ack_ratio;
+	__u64				dccps_l_seq_win:48;
+	__u64				dccps_r_seq_win:48;
+	__u8				dccps_pcslen:4;
+	__u8				dccps_pcrlen:4;
+	__u8				dccps_send_ndp_count:1;
+	__u64				dccps_ndp_count:48;
+	unsigned long			dccps_rate_last;
+	struct list_head		dccps_featneg;
+	struct dccp_ackvec		*dccps_hc_rx_ackvec;
+	struct ccid			*dccps_hc_rx_ccid;
+	struct ccid			*dccps_hc_tx_ccid;
+	struct dccp_options_received	dccps_options_received;
+	__u8				dccps_qpolicy;
+	__u32				dccps_tx_qlen;
+	enum dccp_role			dccps_role:2;
+	__u8				dccps_hc_rx_insert_options:1;
+	__u8				dccps_hc_tx_insert_options:1;
+	__u8				dccps_server_timewait:1;
+	__u8				dccps_sync_scheduled:1;
+	struct tasklet_struct		dccps_xmitlet;
+	struct timer_list		dccps_xmit_timer;
+}
+****/
 
 static inline struct gmtp_sock *gmtp_sk(const struct sock *sk)
 {
@@ -72,5 +121,7 @@ static inline struct gmtp_hdr *gmtp_zeroed_hdr(struct sk_buff *skb, int headlen)
 	skb_reset_transport_header(skb);
 	return memset(skb_transport_header(skb), 0, headlen);
 }
+
+extern struct inet_timewait_death_row gmtp_death_row;
 
 #endif /* LINUX_GMTP_H_ */
