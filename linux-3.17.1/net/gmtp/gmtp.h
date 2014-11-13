@@ -9,8 +9,10 @@
 #define GMTP_H_
 
 #include <linux/gmtp.h>
+#include <net/inet_timewait_sock.h>
 
 #include <uapi/asm-generic/errno.h>
+#include <net/inet_hashtables.h>
 
 extern struct inet_hashinfo gmtp_hashinfo;
 
@@ -86,4 +88,7 @@ struct gmtp_skb_cb {
 #define GMTP_SKB_CB(__skb) ((struct gmtp_skb_cb *)&((__skb)->cb[0]))
 void gmtp_set_state(sk, GMTP_REQUESTING);
 
+#define GMTP_TIMEWAIT_LEN (60 * HZ) 
+
 #endif /* GMTP_H_ */
+

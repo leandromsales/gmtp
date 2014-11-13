@@ -5,7 +5,6 @@
 
 #include <net/inet_sock.h>
 #include <net/sock.h>
-
 #include "gmtp.h"
 
 /*
@@ -17,4 +16,6 @@ int gmtp_connect(struct sock *sk)
 	gmtp_print_debug("gmtp_connect");
 	return 0;
 }
+EXPORT_SYMBOL_GPL(gmtp_connect);
+
 

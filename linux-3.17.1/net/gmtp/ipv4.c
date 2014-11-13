@@ -17,6 +17,8 @@
 #include "gmtp.h"
 
 extern int sysctl_ip_nonlocal_bind __read_mostly;
+extern struct inet_timewait_death_row gmtp_death_row;
+
 
 int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 {
@@ -89,7 +91,7 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 		goto failure;
 
 	rt = ip_route_newports(fl4, rt, orig_sport, orig_dport,
-			       inet->inet_sport, inet->inet_dport, sk);
+			inet->inet_sport, inet->inet_dport, sk);
 	if (IS_ERR(rt)) {
 		err = PTR_ERR(rt);
 		rt = NULL;
@@ -98,7 +100,7 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 	/* OK, now commit destination to socket.  */
 	sk_setup_caps(sk, &rt->dst);
 
-	dp->gmtps_iss = secure_gmtp_sequence_number(inet->inet_saddr,
+	dp->gmtps_iss = secure_dccp_sequence_number(inet->inet_saddr,
 						    inet->inet_daddr,
 						    inet->inet_sport,
 						    inet->inet_dport);
@@ -188,7 +190,7 @@ static struct proto gmtp_prot = {
 	.owner			= THIS_MODULE,
 	.close			= gmtp_close,
 	.connect		= gmtp_v4_connect,
-//	.disconnect		= gmtp_disconnect, //dccp_disconnect
+	.disconnect		= gmtp_disconnect, //dccp_disconnect
 //	.ioctl			= gmtp_ioctl, //dccp_ioctl
 	.init			= gmtp_v4_init_sock,
 //	.setsockopt		= gmtp_setsockopt, //dccp_setsockopt

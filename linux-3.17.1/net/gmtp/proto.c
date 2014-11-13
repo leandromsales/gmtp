@@ -12,6 +12,24 @@
 struct inet_hashinfo gmtp_hashinfo;
 EXPORT_SYMBOL_GPL(gmtp_hashinfo);
 
+struct inet_timewait_death_row gmtp_death_row = {
+	.sysctl_max_tw_buckets = NR_FILE * 2,
+	.period		= GMTP_TIMEWAIT_LEN / INET_TWDR_TWKILL_SLOTS,
+	.death_lock	= __SPIN_LOCK_UNLOCKED(gmpt_death_row.death_lock),
+	.hashinfo	= &gmtp_hashinfo,
+	.tw_timer	= TIMER_INITIALIZER(inet_twdr_hangman, 0,
+					    (unsigned long)&gmtp_death_row),
+	.twkill_work	= __WORK_INITIALIZER(gmtp_death_row.twkill_work,
+					     inet_twdr_twkill_work),
+/* Short-time timewait calendar */
+
+	.twcal_hand	= -1,
+	.twcal_timer	= TIMER_INITIALIZER(inet_twdr_twcal_tick, 0,
+					    (unsigned long)&gmtp_death_row),
+};
+
+EXPORT_SYMBOL_GPL(gmtp_death_row);
+
 //TODO Study thash_entries... This is from DCCP thash_entries
 static int thash_entries;
 module_param(thash_entries, int, 0444);
@@ -29,6 +47,7 @@ void gmtp_set_state(struct sock *sk, const int state)
 	else
 		sk->sk_state = state;
 }
+EXPORT_SYMBOL_GPL(gmtp_set_state);
 
 int gmtp_init_sock(struct sock *sk, const __u8 ctl_sock_initialized)
 {
