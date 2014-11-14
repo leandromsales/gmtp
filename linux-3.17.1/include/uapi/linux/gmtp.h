@@ -40,8 +40,8 @@ struct gmtp_hdr {
 	__u8 pull:1;
 	__u8 relay:1;
 	__u8 res:3;
-	__be16 src_port;
-	__be16 dest_port;
+	__be16 sport; //source port
+	__be16 dport; //dest port
 	__be32 seq;
 	__be32 transm_r;
 	__be32 flowname[4]; //128

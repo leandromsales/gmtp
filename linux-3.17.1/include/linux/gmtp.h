@@ -62,6 +62,7 @@ struct gmtp_sock {
 	enum gmtp_role		gmtps_role:2;
 	__be32				gmtps_service;
 	__u64				gmtps_iss;
+
 };
 
 /****
@@ -113,6 +114,11 @@ struct dccp_sock {
 static inline struct gmtp_sock *gmtp_sk(const struct sock *sk)
 {
 	return (struct gmtp_sock *)sk;
+}
+
+static inline struct gmtp_hdr *gmtp_hdr(const struct sk_buff *skb)
+{
+	return (struct gmtp_hdr *)skb_transport_header(skb);
 }
 
 static inline struct gmtp_hdr *gmtp_zeroed_hdr(struct sk_buff *skb, int headlen)

@@ -13,16 +13,25 @@
 #include <net/secure_seq.h>
 #include <linux/gmtp.h>
 #include <net/netns/gmtp.h>
+#include <net/secure_seq.h>
 
 #include "gmtp.h"
 
 extern int sysctl_ip_nonlocal_bind __read_mostly;
 extern struct inet_timewait_death_row gmtp_death_row;
 
+static inline u64 gmtp_v4_init_sequence(const struct sk_buff *skb)
+{
+	return secure_gmtp_sequence_number(ip_hdr(skb)->daddr,
+					   ip_hdr(skb)->saddr,
+					   gmtp_hdr(skb)->sport,
+					   gmtp_hdr(skb)->dport);
+}
+
 
 int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 {
-	gmtp_print_debug("gmtp_v4_connect");
+	gmtp_print_debug("gmtp_v4_connect\n");
 	const struct sockaddr_in *usin = (struct sockaddr_in *)uaddr;
 	struct inet_sock *inet = inet_sk(sk);
 	struct gmtp_sock *dp = gmtp_sk(sk);
@@ -100,7 +109,7 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 	/* OK, now commit destination to socket.  */
 	sk_setup_caps(sk, &rt->dst);
 
-	dp->gmtps_iss = secure_dccp_sequence_number(inet->inet_saddr,
+	dp->gmtps_iss = secure_gmtp_sequence_number(inet->inet_saddr,
 						    inet->inet_daddr,
 						    inet->inet_sport,
 						    inet->inet_dport);
@@ -146,6 +155,7 @@ static const struct inet_connection_sock_af_ops gmtp_ipv4_af_ops = {
 
 static int gmtp_v4_init_sock(struct sock *sk)
 {
+	gmtp_print_debug("gmtp_v4_init_sock\n");
 	static __u8 gmtp_v4_ctl_sock_initialized;
 	int err = gmtp_init_sock(sk, gmtp_v4_ctl_sock_initialized);
 
@@ -347,5 +357,5 @@ MODULE_ALIAS_NET_PF_PROTO_TYPE(PF_INET, IPPROTO_GMTP, SOCK_GMTP);
 MODULE_ALIAS_NET_PF_PROTO_TYPE(PF_INET, 0, SOCK_GMTP);
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Wendell Silva Soares <wendell@compelab.org>");
+MODULE_AUTHOR("Wendell Silva Soares <wss@ic.ufal.br>");
 MODULE_DESCRIPTION("GMTP - Global Media Transmission Protocol");
