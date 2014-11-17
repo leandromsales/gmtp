@@ -121,7 +121,4 @@ static inline struct gmtp_hdr *gmtp_zeroed_hdr(struct sk_buff *skb, int headlen)
 	skb_reset_transport_header(skb);
 	return memset(skb_transport_header(skb), 0, headlen);
 }
-
-extern struct inet_timewait_death_row gmtp_death_row;
-
 #endif /* LINUX_GMTP_H_ */
