@@ -16,13 +16,13 @@
 
 extern struct inet_hashinfo gmtp_hashinfo;
 
-#define GMTP_INFO "GMTP_INFO: "
-#define GMTP_WARNING "GMTP_WARNING: "
-#define GMTP_ERROR "GMTP_ERROR: "
+#define GMTP_INFO "[GMTP_INFO] %s:%d - "
+#define GMTP_WARNING "[GMTP_WARNING]  %s:%d - "
+#define GMTP_ERROR "[GMTP_ERROR] %s:%d, at %s - "
 
-#define gmtp_print_debug(fmt, args...) printk(KERN_INFO GMTP_INFO fmt, ##args)
-#define gmtp_print_warning(fmt, args...) printk(KERN_WARNING GMTP_WARNING fmt, ##args)
-#define gmtp_print_error(fmt, args...) printk(KERN_ERR GMTP_ERROR fmt, ##args)
+#define gmtp_print_debug(fmt, args...) printk(KERN_INFO GMTP_INFO fmt "\n", __FUNCTION__, __LINE__, ##args)
+#define gmtp_print_warning(fmt, args...) printk(KERN_WARNING GMTP_WARNING fmt "\n", __FUNCTION__, __LINE__, ##args)
+#define gmtp_print_error(fmt, args...) printk(KERN_ERR GMTP_ERROR fmt "\n", __FUNCTION__, __LINE__, __FILE__, ##args)
 
 #define MAX_GMTP_SPECIFIC_HEADER (8 * sizeof(uint32_t))
 #define MAX_GMTP_VARIABLE_HEADER (2047 * sizeof(uint32_t))
@@ -83,6 +83,7 @@ struct gmtp_skb_cb {
 	__u8  gmtpd_type:5;
 	__u16 gmtpd_opt_len;
 	__u64 gmtpd_seq;
+	__u64 gmtpd_ack_seq;
 };
 
 #define GMTP_SKB_CB(__skb) ((struct gmtp_skb_cb *)&((__skb)->cb[0]))

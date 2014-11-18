@@ -299,6 +299,9 @@ static int gmtp_init_hashinfo(void)
 static int __init gmtp_init(void)
 {
 	gmtp_print_debug("GMTP init!\n");
+
+
+
 	int rc;
 	rc = gmtp_init_hashinfo();
 	return rc;

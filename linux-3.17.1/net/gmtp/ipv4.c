@@ -20,21 +20,16 @@
 extern int sysctl_ip_nonlocal_bind __read_mostly;
 extern struct inet_timewait_death_row gmtp_death_row;
 
-static inline u64 gmtp_v4_init_sequence(const struct sk_buff *skb)
-{
-	return secure_gmtp_sequence_number(ip_hdr(skb)->daddr,
-					   ip_hdr(skb)->saddr,
-					   gmtp_hdr(skb)->sport,
-					   gmtp_hdr(skb)->dport);
+static inline u64 gmtp_v4_init_sequence(const struct sk_buff *skb) {
+	return secure_gmtp_sequence_number(ip_hdr(skb)->daddr, ip_hdr(skb)->saddr,
+			gmtp_hdr(skb)->sport, gmtp_hdr(skb)->dport);
 }
 
-
-int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
-{
-	gmtp_print_debug("gmtp_v4_connect\n");
-	const struct sockaddr_in *usin = (struct sockaddr_in *)uaddr;
+int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len) {
+	gmtp_print_debug("gmtp_v4_connect");
+	const struct sockaddr_in *usin = (struct sockaddr_in *) uaddr;
 	struct inet_sock *inet = inet_sk(sk);
-	struct gmtp_sock *dp = gmtp_sk(sk);
+	struct gmtp_sock *gp = gmtp_sk(sk);
 	__be16 orig_sport, orig_dport;
 	__be32 daddr, nexthop;
 	struct flowi4 *fl4;
@@ -42,7 +37,7 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 	int err;
 	struct ip_options_rcu *inet_opt;
 
-	dp->gmtps_role = GMTP_ROLE_CLIENT;
+	gp->gmtps_role = GMTP_ROLE_CLIENT;
 
 	if (addr_len < sizeof(struct sockaddr_in))
 		return -EINVAL;
@@ -53,7 +48,7 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 	nexthop = daddr = usin->sin_addr.s_addr;
 
 	inet_opt = rcu_dereference_protected(inet->inet_opt,
-					     sock_owned_by_user(sk));
+			sock_owned_by_user(sk));
 	if (inet_opt != NULL && inet_opt->opt.srr) {
 		if (daddr == 0)
 			return -EINVAL;
@@ -63,10 +58,11 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 	orig_sport = inet->inet_sport;
 	orig_dport = usin->sin_port;
 	fl4 = &inet->cork.fl.u.ip4;
-	rt = ip_route_connect(fl4, nexthop, inet->inet_saddr,
-			      RT_CONN_FLAGS(sk), sk->sk_bound_dev_if,
-			      IPPROTO_DCCP,
-			      orig_sport, orig_dport, sk);
+
+	gmtp_print_debug("rt = ip_route_connect(...)");
+	rt = ip_route_connect(fl4, nexthop, inet->inet_saddr, RT_CONN_FLAGS(sk),
+			sk->sk_bound_dev_if,
+			IPPROTO_DCCP, orig_sport, orig_dport, sk);
 	if (IS_ERR(rt))
 		return PTR_ERR(rt);
 
@@ -90,17 +86,20 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 		inet_csk(sk)->icsk_ext_hdr_len = inet_opt->opt.optlen;
 	/*
 	 * Socket identity is still unknown (sport may be zero).
-	 * However we set state to DCCP_REQUESTING and not releasing socket
+	 * However we set state to GMTP_REQUESTING and not releasing socket
 	 * lock select source port, enter ourselves into the hash tables and
 	 * complete initialization after this.
 	 */
 	gmtp_set_state(sk, GMTP_REQUESTING);
 	err = inet_hash_connect(&gmtp_death_row, sk);
-	if (err != 0)
+	if (err != 0) {
+		gmtp_print_error("err = inet_hash_connect(&gmtp_death_row, sk) == %d\n",
+				err);
 		goto failure;
+	}
 
-	rt = ip_route_newports(fl4, rt, orig_sport, orig_dport,
-			inet->inet_sport, inet->inet_dport, sk);
+	rt = ip_route_newports(fl4, rt, orig_sport, orig_dport, inet->inet_sport,
+			inet->inet_dport, sk);
 	if (IS_ERR(rt)) {
 		err = PTR_ERR(rt);
 		rt = NULL;
@@ -109,19 +108,21 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 	/* OK, now commit destination to socket.  */
 	sk_setup_caps(sk, &rt->dst);
 
-	dp->gmtps_iss = secure_gmtp_sequence_number(inet->inet_saddr,
-						    inet->inet_daddr,
-						    inet->inet_sport,
-						    inet->inet_dport);
-	inet->inet_id = dp->gmtps_iss ^ jiffies;
+	gp->gmtps_iss = secure_gmtp_sequence_number(inet->inet_saddr,
+			inet->inet_daddr, inet->inet_sport, inet->inet_dport);
+	gmtp_print_error("gp->gmtps_iss = %u", gp->gmtps_iss);
 
+	inet->inet_id = gp->gmtps_iss ^ jiffies;
+
+	gmtp_print_error("calling gmtp_connect(sk)");
 	err = gmtp_connect(sk);
+	gmtp_print_error("err = gmtp_connect(sk) == %d", err);
+
 	rt = NULL;
 	if (err != 0)
 		goto failure;
-out:
-	return err;
-failure:
+	out: return err;
+	failure:
 	/*
 	 * This unhashes the socket and releases the local port, if necessary.
 	 */
@@ -136,26 +137,25 @@ failure:
 EXPORT_SYMBOL_GPL(gmtp_v4_connect);
 
 static const struct inet_connection_sock_af_ops gmtp_ipv4_af_ops = {
-	.queue_xmit	   = ip_queue_xmit,
+		.queue_xmit = ip_queue_xmit,
 //	.send_check	   = dccp_v4_send_check,
-	.rebuild_header	   = inet_sk_rebuild_header,
+		.rebuild_header = inet_sk_rebuild_header,
 //	.conn_request	   = dccp_v4_conn_request,
 //	.syn_recv_sock	   = dccp_v4_request_recv_sock,
-	.net_header_len	   = sizeof(struct iphdr),
+		.net_header_len = sizeof(struct iphdr),
 //	.setsockopt	   = ip_setsockopt,
 //	.getsockopt	   = ip_getsockopt,
-	.addr2sockaddr	   = inet_csk_addr2sockaddr,
-	.sockaddr_len	   = sizeof(struct sockaddr_in),
-	.bind_conflict	   = inet_csk_bind_conflict,
+		.addr2sockaddr = inet_csk_addr2sockaddr, .sockaddr_len =
+				sizeof(struct sockaddr_in), .bind_conflict =
+				inet_csk_bind_conflict,
 #ifdef CONFIG_COMPAT
-	.compat_setsockopt = compat_ip_setsockopt,
-	.compat_getsockopt = compat_ip_getsockopt,
+		.compat_setsockopt = compat_ip_setsockopt,
+		.compat_getsockopt = compat_ip_getsockopt,
 #endif
-};
+	};
 
-static int gmtp_v4_init_sock(struct sock *sk)
-{
-	gmtp_print_debug("gmtp_v4_init_sock\n");
+static int gmtp_v4_init_sock(struct sock *sk) {
+	gmtp_print_debug("gmtp_v4_init_sock");
 	static __u8 gmtp_v4_ctl_sock_initialized;
 	int err = gmtp_init_sock(sk, gmtp_v4_ctl_sock_initialized);
 
@@ -169,10 +169,8 @@ static int gmtp_v4_init_sock(struct sock *sk)
 	return err;
 }
 
-static struct request_sock_ops gmtp_request_sock_ops __read_mostly = {
-	.family		= PF_INET,
-	.obj_size	= sizeof(struct gmtp_request_sock)
-};
+static struct request_sock_ops gmtp_request_sock_ops __read_mostly = { .family =
+		PF_INET, .obj_size = sizeof(struct gmtp_request_sock) };
 
 /**
  * We define the gmtp_protocol object (net_protocol object) and add it with the
@@ -183,42 +181,32 @@ static struct request_sock_ops gmtp_request_sock_ops __read_mostly = {
  * @handler is called when real data arrives
  *
  */
-static const struct net_protocol gmtp_protocol = {
-	.handler	= gmtp_rcv,  //dccp_v4_rcv
-	.err_handler	= gmtp_err, //dccp_v4_err
-	.no_policy	= 1,
-	.netns_ok	= 1, //mandatory
-	.icmp_strict_tag_validation = 1,
-};
+static const struct net_protocol gmtp_protocol = { .handler = gmtp_rcv, //dccp_v4_rcv
+		.err_handler = gmtp_err, //dccp_v4_err
+		.no_policy = 1, .netns_ok = 1, //mandatory
+		.icmp_strict_tag_validation = 1, };
 
 /* Networking protocol blocks we attach to sockets.
  * socket layer -> transport layer interface (struct proto)
  * transport -> network interface is defined by (struct inet_proto)
  */
-static struct proto gmtp_prot = {
-	.name			= "GMTP",
-	.owner			= THIS_MODULE,
-	.close			= gmtp_close,
-	.connect		= gmtp_v4_connect,
-	.disconnect		= gmtp_disconnect, //dccp_disconnect
+static struct proto gmtp_prot = { .name = "GMTP", .owner = THIS_MODULE, .close =
+		gmtp_close, .connect = gmtp_v4_connect,
+		.disconnect = gmtp_disconnect, //dccp_disconnect
 //	.ioctl			= gmtp_ioctl, //dccp_ioctl
-	.init			= gmtp_v4_init_sock,
+		.init = gmtp_v4_init_sock,
 //	.setsockopt		= gmtp_setsockopt, //dccp_setsockopt
 //	.getsockopt		= gmtp_getsockopt, //dccp_getsockopt
 //	.sendmsg		= gmtp_sendmsg, //dccp_sendmsg
 //	.recvmsg		= gmtp_recvmsg, //dccp_recvmsg
-	.hash			= inet_hash,
-	.unhash			= inet_unhash,
-	.accept			= inet_csk_accept,
-	.get_port		= inet_csk_get_port,
+		.hash = inet_hash, .unhash = inet_unhash, .accept = inet_csk_accept,
+		.get_port = inet_csk_get_port,
 //	.shutdown		= gmtp_shutdown,  //dccp_shutdown
 //	.destroy		= gmtp_destroy_sock, //dccp_destroy_sock
-	.max_header		= MAX_GMTP_HEADER,
-	.obj_size		= sizeof(struct gmtp_sock),
-	.slab_flags		= SLAB_DESTROY_BY_RCU,
-	.rsk_prot		= &gmtp_request_sock_ops,
-	.h.hashinfo		= &gmtp_hashinfo,          //dccp_hashinfo,
-};
+		.max_header = MAX_GMTP_HEADER, .obj_size = sizeof(struct gmtp_sock),
+		.slab_flags = SLAB_DESTROY_BY_RCU, .rsk_prot = &gmtp_request_sock_ops,
+		.h.hashinfo = &gmtp_hashinfo,          //dccp_hashinfo,
+		};
 
 /**
  * In the socket creation routine, protocol implementer specifies a
@@ -226,26 +214,17 @@ static struct proto gmtp_prot = {
  * The socket layer calls function members of this proto_ops instance before the
  * protocol specific functions are called.
  */
-static const struct proto_ops inet_gmtp_ops = {
-	.family		   = PF_INET,
-	.owner		   = THIS_MODULE,
-	.release	   = inet_release,
-	.bind		   = inet_bind,
-	.connect	   = inet_stream_connect,
-	.socketpair	   = sock_no_socketpair,
-	.accept		   = inet_accept,
-	.getname	   = inet_getname,
+static const struct proto_ops inet_gmtp_ops = { .family = PF_INET, .owner =
+		THIS_MODULE, .release = inet_release, .bind = inet_bind, .connect =
+		inet_stream_connect, .socketpair = sock_no_socketpair, .accept =
+		inet_accept, .getname = inet_getname,
 //	.poll		   = dccp_poll,
-	.ioctl		   = inet_ioctl,
-	.listen		   = inet_gmtp_listen, //inet_dccp_listen
-	.shutdown	   = inet_shutdown,
-	.setsockopt	   = sock_common_setsockopt,
-	.getsockopt	   = sock_common_getsockopt,
-	.sendmsg	   = inet_sendmsg,
-	.recvmsg	   = sock_common_recvmsg,
-	.mmap		   = sock_no_mmap,
-	.sendpage	   = sock_no_sendpage,
-};
+		.ioctl = inet_ioctl,
+		.listen = inet_gmtp_listen, //inet_dccp_listen
+		.shutdown = inet_shutdown, .setsockopt = sock_common_setsockopt,
+		.getsockopt = sock_common_getsockopt, .sendmsg = inet_sendmsg,
+		.recvmsg = sock_common_recvmsg, .mmap = sock_no_mmap, .sendpage =
+				sock_no_sendpage, };
 
 /**
  * Describes the PF_INET protocols
@@ -264,39 +243,29 @@ static const struct proto_ops inet_gmtp_ops = {
  * @prot: This is a pointer to struct proto.
  * ops: This is a pointer to the structure of type 'proto_ops'.
  */
-static struct inet_protosw gmtp_protosw = {
-	.type		= SOCK_GMTP,
-	.protocol	= IPPROTO_GMTP,
-	.prot		= &gmtp_prot,
-	.ops		= &inet_gmtp_ops,
-	.flags		= INET_PROTOSW_ICSK,
-};
+static struct inet_protosw gmtp_protosw = { .type = SOCK_GMTP, .protocol =
+		IPPROTO_GMTP, .prot = &gmtp_prot, .ops = &inet_gmtp_ops, .flags =
+		INET_PROTOSW_ICSK, };
 
-
-static int __net_init gmtp_v4_init_net(struct net *net)
-{
+static int __net_init gmtp_v4_init_net(struct net *net) {
 	gmtp_print_debug("gmtp_v4_init_net\n");
 	if (gmtp_hashinfo.bhash == NULL)
 		return -ESOCKTNOSUPPORT;
 
-	return inet_ctl_sock_create(&net->gmtp.v4_ctl_sk, PF_INET,
-				    SOCK_GMTP, IPPROTO_GMTP, net);
+	return inet_ctl_sock_create(&net->gmtp.v4_ctl_sk, PF_INET, SOCK_GMTP,
+			IPPROTO_GMTP, net);
 }
 
-static void __net_exit gmtp_v4_exit_net(struct net *net)
-{
+static void __net_exit gmtp_v4_exit_net(struct net *net) {
 	gmtp_print_debug("gmtp_v4_exit_net\n");
 	inet_ctl_sock_destroy(net->gmtp.v4_ctl_sk);
 }
 
-static struct pernet_operations gmtp_v4_ops = {
-	.init	= gmtp_v4_init_net,
-	.exit	= gmtp_v4_exit_net,
-};
+static struct pernet_operations gmtp_v4_ops = { .init = gmtp_v4_init_net,
+		.exit = gmtp_v4_exit_net, };
 
 //////////////////////////////////////////////////////////
-static int __init gmtp_v4_init(void)
-{
+static int __init gmtp_v4_init(void) {
 	int err = 0;
 	int i;
 
@@ -324,24 +293,22 @@ static int __init gmtp_v4_init(void)
 
 	return err;
 
-out_destroy_ctl_sock:
+	out_destroy_ctl_sock:
 	gmtp_print_error("inet_unregister_protosw GMTP IPv4\n");
 	inet_unregister_protosw(&gmtp_protosw);
 	gmtp_print_error("inet_del_protocol GMTP IPv4\n");
 	inet_del_protocol(&gmtp_protocol, IPPROTO_GMTP);
-    return err;
+	return err;
 
-out_proto_unregister:
+	out_proto_unregister:
 	gmtp_print_error("proto_unregister GMTP IPv4\n");
 	proto_unregister(&gmtp_prot);
-    return err;
-
-out:
 	return err;
+
+	out: return err;
 }
 
-static void __exit gmtp_v4_exit(void)
-{
+static void __exit gmtp_v4_exit(void) {
 	gmtp_print_debug("GMTP IPv4 exit!\n");
 
 	unregister_pernet_subsys(&gmtp_v4_ops);
