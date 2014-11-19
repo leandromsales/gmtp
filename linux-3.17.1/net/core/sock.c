@@ -486,8 +486,11 @@ int sk_receive_skb(struct sock *sk, struct sk_buff *skb, const int nested)
 {
 	int rc = NET_RX_SUCCESS;
 
+
+    pr_info("ENTREI AQUI %s %d\n",__FUNCTION__, __LINE__);
 	if (sk_filter(sk, skb))
 		goto discard_and_relse;
+    pr_info("PASSEI AQUI %s %d\n",__FUNCTION__, __LINE__);
 
 	skb->dev = NULL;
 
@@ -495,19 +498,26 @@ int sk_receive_skb(struct sock *sk, struct sk_buff *skb, const int nested)
 		atomic_inc(&sk->sk_drops);
 		goto discard_and_relse;
 	}
+    pr_info("PASSEI AQUI %s %d\n",__FUNCTION__, __LINE__);
+
 	if (nested)
 		bh_lock_sock_nested(sk);
 	else
 		bh_lock_sock(sk);
+
+    pr_info("PASSEI AQUI %s %d\n",__FUNCTION__, __LINE__);
+
 	if (!sock_owned_by_user(sk)) {
 		/*
 		 * trylock + unlock semantics:
 		 */
+        pr_info("PASSEI AQUI %s %d\n",__FUNCTION__, __LINE__);
 		mutex_acquire(&sk->sk_lock.dep_map, 0, 1, _RET_IP_);
 
 		rc = sk_backlog_rcv(sk, skb);
 
 		mutex_release(&sk->sk_lock.dep_map, 1, _RET_IP_);
+        pr_info("PASSEI AQUI %s %d\n",__FUNCTION__, __LINE__);
 	} else if (sk_add_backlog(sk, skb, sk->sk_rcvbuf)) {
 		bh_unlock_sock(sk);
 		atomic_inc(&sk->sk_drops);

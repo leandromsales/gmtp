@@ -154,6 +154,7 @@ int gmtp_invalid_packet(struct sk_buff *skb)
 
 	const struct gmtp_hdr *gh;
 
+    gmtp_print_debug("ENTROU AQUI");
 	if (skb->pkt_type != PACKET_HOST)
 		return 1;
 
@@ -169,6 +170,7 @@ int gmtp_invalid_packet(struct sk_buff *skb)
 		gmtp_print_warning("invalid packet type\n");
 		return 1;
 	}
+    gmtp_print_debug("PASSOU AQUI");
 
 	return 0;
 }
@@ -178,8 +180,8 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 {
 	gmtp_print_debug("gmtp_v4_rcv");
 
-	const struct gmtp_hdr *gh;
-	const struct iphdr *iph;
+	const struct gmtp_hdr *gh = gmtp_hdr(skb);
+	const struct iphdr *iph = ip_hdr(skb);
 	struct sock *sk;
 
 	/* Step 1: Check header basics */
@@ -187,10 +189,10 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 	if (gmtp_invalid_packet(skb))
 		goto discard_it;
 
-	GMTP_SKB_CB(skb)->gmtpd_seq  = gh->seq;
-	GMTP_SKB_CB(skb)->gmtpd_type = gh->type;
-
-	gmtp_print_debug("%8.8s src=%pI4@%-5d dst=%pI4@%-5d seq=%llu",
+ 	GMTP_SKB_CB(skb)->gmtpd_seq  = gh->seq;
+ 	GMTP_SKB_CB(skb)->gmtpd_type = gh->type;
+ 
+ 	gmtp_print_debug("%8.8s src=%pI4@%-5d dst=%pI4@%-5d seq=%llu",
 		      gmtp_packet_name(gh->type),
 		      &iph->saddr, ntohs(gh->sport),
 		      &iph->daddr, ntohs(gh->dport),
@@ -255,12 +257,12 @@ no_gmtp_socket:
 	}
 
 discard_it:
-	kfree_skb(skb);
-	return 0;
-
+ 	kfree_skb(skb);
+ 	return 0;
+ 
 discard_and_relse:
-	sock_put(sk);
-	goto discard_it;
+ 	sock_put(sk);
+ 	goto discard_it;
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_rcv);
 
