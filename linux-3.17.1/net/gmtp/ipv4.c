@@ -13,6 +13,8 @@
 #include <net/xfrm.h>
 #include <net/secure_seq.h>
 
+#include <uapi/linux/if_packet.h>
+
 #include <linux/gmtp.h>
 
 #include "gmtp.h"
@@ -26,7 +28,7 @@ static inline u64 gmtp_v4_init_sequence(const struct sk_buff *skb) {
 }
 
 int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len) {
-	gmtp_print_debug("gmtp_v4_connect");
+
 	const struct sockaddr_in *usin = (struct sockaddr_in *) uaddr;
 	struct inet_sock *inet = inet_sk(sk);
 	struct gmtp_sock *gp = gmtp_sk(sk);
@@ -36,6 +38,8 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len) {
 	struct rtable *rt;
 	int err;
 	struct ip_options_rcu *inet_opt;
+
+	gmtp_print_debug("gmtp_v4_connect");
 
 	gp->gmtps_role = GMTP_ROLE_CLIENT;
 
@@ -110,7 +114,7 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len) {
 
 	gp->gmtps_iss = secure_gmtp_sequence_number(inet->inet_saddr,
 			inet->inet_daddr, inet->inet_sport, inet->inet_dport);
-	gmtp_print_error("gp->gmtps_iss = %u", gp->gmtps_iss);
+	gmtp_print_error("gp->gmtps_iss = %llu", gp->gmtps_iss);
 
 	inet->inet_id = gp->gmtps_iss ^ jiffies;
 
@@ -142,19 +146,13 @@ void gmtp_v4_err(struct sk_buff *skb, u32 info)
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_err);
 
-static void gmtp_v4_ctl_send_reset(struct sock *sk, struct sk_buff *rxskb)
-{
-	//TODO Implement this...
-	gmtp_print_debug("gmtp_v4_ctl_send_reset");
-}
-
 int gmtp_invalid_packet(struct sk_buff *skb)
 {
-	//TODO Verify each packet
-
 	const struct gmtp_hdr *gh;
 
-    gmtp_print_debug("ENTROU AQUI");
+	//TODO Verify each packet
+	gmtp_print_debug("Starting gmtp_invalid_packet checking");
+
 	if (skb->pkt_type != PACKET_HOST)
 		return 1;
 
@@ -170,24 +168,37 @@ int gmtp_invalid_packet(struct sk_buff *skb)
 		gmtp_print_warning("invalid packet type\n");
 		return 1;
 	}
-    gmtp_print_debug("PASSOU AQUI");
+
+	/* If header checksum is incorrect, drop packet and return.
+	 * (This step is completed in the AF-dependent functions.) */
+	skb->csum = skb_checksum(skb, 0, skb->len, 0);
+
+	gmtp_print_debug("Finish gmtp_invalid_packet checking");
 
 	return 0;
+}
+
+static void gmtp_v4_ctl_send_reset(struct sock *sk, struct sk_buff *rxskb)
+{
+	//TODO Implement this...
+	gmtp_print_debug("gmtp_v4_ctl_send_reset");
 }
 
 /* this is called when real data arrives */
 static int gmtp_v4_rcv(struct sk_buff *skb)
 {
-	gmtp_print_debug("gmtp_v4_rcv");
-
-	const struct gmtp_hdr *gh = gmtp_hdr(skb);
-	const struct iphdr *iph = ip_hdr(skb);
+	const struct gmtp_hdr *gh;
+	const struct iphdr *iph;
 	struct sock *sk;
 
-	/* Step 1: Check header basics */
+	gmtp_print_debug("gmtp_v4_rcv");
 
+	/* Step 1: Check header basics */
 	if (gmtp_invalid_packet(skb))
 		goto discard_it;
+
+	gh = gmtp_hdr(skb);
+	iph = ip_hdr(skb);
 
  	GMTP_SKB_CB(skb)->gmtpd_seq  = gh->seq;
  	GMTP_SKB_CB(skb)->gmtpd_type = gh->type;
@@ -199,20 +210,12 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 		      (unsigned long long) GMTP_SKB_CB(skb)->gmtpd_seq);
 
 
-//	if (dccp_packet_without_ack(skb)) {
-//		DCCP_SKB_CB(skb)->dccpd_ack_seq = DCCP_PKT_WITHOUT_ACK_SEQ;
-//		dccp_pr_debug_cat("\n");
-//	} else {
-//		DCCP_SKB_CB(skb)->dccpd_ack_seq = dccp_hdr_ack_seq(skb);
-//		dccp_pr_debug_cat(", ack=%llu\n", (unsigned long long)
-//				  DCCP_SKB_CB(skb)->dccpd_ack_seq);
-//	}
-
-
 	/* Step 2:
 	 *	Look up flow ID in table and get corresponding socket */
 	sk = __inet_lookup_skb(&gmtp_hashinfo, skb,
 			       gh->sport, gh->dport);
+	gmtp_print_debug("sk: %p", sk);
+
 	/*
 	 * Step 2:
 	 *	If no socket ...
@@ -239,9 +242,13 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 		goto discard_and_relse;
 	nf_reset(skb);
 
-	return sk_receive_skb(sk, skb, 1);
+	gmtp_print_debug("Calling sk_receive_skb");
+	gmtp_print_debug("sk: %p, skb: %p", sk, skb);
+//	return sk_receive_skb(sk, skb, 1);
+	goto discard_it;
 
 no_gmtp_socket:
+	gmtp_print_debug("no_gmtp_socket");
 	if (!xfrm4_policy_check(NULL, XFRM_POLICY_IN, skb))
 		goto discard_it;
 	/*
@@ -257,6 +264,7 @@ no_gmtp_socket:
 	}
 
 discard_it:
+	gmtp_print_debug("discard_it");
  	kfree_skb(skb);
  	return 0;
  
@@ -285,10 +293,13 @@ static const struct inet_connection_sock_af_ops gmtp_ipv4_af_ops = {
 };
 
 static int gmtp_v4_init_sock(struct sock *sk) {
-	gmtp_print_debug("gmtp_v4_init_sock");
-	static __u8 gmtp_v4_ctl_sock_initialized;
-	int err = gmtp_init_sock(sk, gmtp_v4_ctl_sock_initialized);
 
+	static __u8 gmtp_v4_ctl_sock_initialized;
+	int err = 0;
+
+	gmtp_print_debug("gmtp_v4_init_sock");
+
+	err = gmtp_init_sock(sk, gmtp_v4_ctl_sock_initialized);
 	if (err == 0) {
 		if (unlikely(!gmtp_v4_ctl_sock_initialized))
 			gmtp_v4_ctl_sock_initialized = 1;
@@ -403,6 +414,7 @@ static struct inet_protosw gmtp_protosw = {
 
 static int __net_init gmtp_v4_init_net(struct net *net) {
 	gmtp_print_debug("gmtp_v4_init_net");
+
 	if (gmtp_hashinfo.bhash == NULL)
 		return -ESOCKTNOSUPPORT;
 
@@ -415,13 +427,14 @@ static void __net_exit gmtp_v4_exit_net(struct net *net) {
 	inet_ctl_sock_destroy(net->gmtp.v4_ctl_sk);
 }
 
-static struct pernet_operations gmtp_v4_ops = { .init = gmtp_v4_init_net,
-		.exit = gmtp_v4_exit_net, };
+static struct pernet_operations gmtp_v4_ops = {
+		.init = gmtp_v4_init_net,
+		.exit = gmtp_v4_exit_net,
+};
 
 //////////////////////////////////////////////////////////
 static int __init gmtp_v4_init(void) {
 	int err = 0;
-	int i;
 
 	gmtp_print_debug("GMTP IPv4 init!");
 

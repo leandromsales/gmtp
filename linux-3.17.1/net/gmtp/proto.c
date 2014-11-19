@@ -77,10 +77,10 @@ EXPORT_SYMBOL_GPL(gmtp_set_state);
 
 int gmtp_init_sock(struct sock *sk, const __u8 ctl_sock_initialized)
 {
-	gmtp_print_debug("gmtp_init_sock");
-
 	struct gmtp_sock *gs = gmtp_sk(sk);
-	struct inet_connection_sock *icsk = inet_csk(sk);
+//	struct inet_connection_sock *icsk = inet_csk(sk);
+
+	gmtp_print_debug("gmtp_init_sock");
 
 	sk->sk_state		= GMTP_CLOSED;
 
@@ -101,11 +101,12 @@ EXPORT_SYMBOL_GPL(gmtp_destroy_sock);
 
 int inet_gmtp_listen(struct socket *sock, int backlog)
 {
-	gmtp_print_debug("gmtp_listen");
 	struct sock *sk = sock->sk;
 	struct gmtp_sock *gs = gmtp_sk(sk);
 	unsigned char old_state;
 	int err;
+
+	gmtp_print_debug("gmtp_listen");
 
 	lock_sock(sk);
 
@@ -189,8 +190,6 @@ int gmtp_recvmsg(struct kiocb *iocb, struct sock *sk,
 {
 	gmtp_print_debug("gmtp_recvmsg");
 
-	const struct gmtp_hdr *dh;
-
 	lock_sock(sk);
 
 	if (sk->sk_state == GMTP_LISTEN) {
@@ -224,10 +223,11 @@ EXPORT_SYMBOL_GPL(gmtp_shutdown);
  */
 static int gmtp_init_hashinfo(void)
 {
-	gmtp_print_debug("gmtp_init_hashinfo");
 	unsigned long goal;
 	int ehash_order, bhash_order, i;
 	int rc;
+
+	gmtp_print_debug("gmtp_init_hashinfo");
 
 	BUILD_BUG_ON(sizeof(struct gmtp_skb_cb) >
 	FIELD_SIZEOF(struct sk_buff, cb));
@@ -322,11 +322,8 @@ static int gmtp_init_hashinfo(void)
 
 static int __init gmtp_init(void)
 {
-	gmtp_print_debug("GMTP init!");
-
-
-
 	int rc;
+	gmtp_print_debug("GMTP init!");
 	rc = gmtp_init_hashinfo();
 	return rc;
 }

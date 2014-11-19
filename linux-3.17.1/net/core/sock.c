@@ -486,8 +486,9 @@ int sk_receive_skb(struct sock *sk, struct sk_buff *skb, const int nested)
 {
 	int rc = NET_RX_SUCCESS;
 
-
     pr_info("ENTREI AQUI %s %d\n",__FUNCTION__, __LINE__);
+    pr_info("sk: %p, skb: %p, nested: %d\n", sk, skb, nested);
+
 	if (sk_filter(sk, skb))
 		goto discard_and_relse;
     pr_info("PASSEI AQUI %s %d\n",__FUNCTION__, __LINE__);

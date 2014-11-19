@@ -24,17 +24,16 @@ static struct sk_buff *gmtp_skb_entail(struct sock *sk, struct sk_buff *skb) {
  * device.
  */
 static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
-	if (likely(skb != NULL)) {
 
-		gmtp_print_debug("skb (%p) != NULL", skb);
+	gmtp_print_debug("gmtp_transmit_skb");
+
+	if (likely(skb != NULL)) {
 
 		struct inet_sock *inet = inet_sk(sk);
 		const struct inet_connection_sock *icsk = inet_csk(sk);
 		struct gmtp_sock *gp = gmtp_sk(sk);
-		gmtp_print_debug("gmtp_sock *gp = %p", gp);
 
 		struct gmtp_skb_cb *gcb = GMTP_SKB_CB(skb);
-		gmtp_print_debug("gmtp_skb_cb *gcb  = %p", gcb);
 
 		struct gmtp_hdr *gh;
 
@@ -42,7 +41,7 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 				+ gmtp_packet_hdr_variable_len(gcb->gmtpd_type);
 
 		int err, set_ack = 1;
-		u64 ackno = gp->gmtps_gsr;
+//		u64 ackno = gp->gmtps_gsr;
 
 		/*
 		 * Increment GSS here already in case the option code needs it.
@@ -119,12 +118,12 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
  */
 int gmtp_connect(struct sock *sk) {
 
-	gmtp_print_debug("gmtp_connect");
-
 	struct sk_buff *skb;
-	struct gmtp_sock *dp = gmtp_sk(sk);
-	struct dst_entry *dst = __sk_dst_get(sk);
-	struct inet_connection_sock *icsk = inet_csk(sk);
+//	struct gmtp_sock *gp = gmtp_sk(sk);
+//	struct dst_entry *dst = __sk_dst_get(sk);
+//	struct inet_connection_sock *icsk = inet_csk(sk);
+
+	gmtp_print_debug("gmtp_connect");
 
 	sk->sk_err = 0;
 	sock_reset_flag(sk, SOCK_DONE);

@@ -53,11 +53,8 @@ int gmtp_recvmsg(struct kiocb *iocb, struct sock *sk,
 void gmtp_shutdown(struct sock *sk, int how);
 void gmtp_destroy_sock(struct sock *sk);
 
-//unsigned int dccp_poll(struct file *file, struct socket *sock,
-//		       poll_table *wait);
+void gmtp_set_state(struct sock*, const int);
 int inet_gmtp_listen(struct socket *sock, int backlog);
-
-
 int gmtp_insert_options(struct sock *sk, struct sk_buff *skb);
 
 
@@ -74,8 +71,8 @@ int gmtp_insert_options(struct sock *sk, struct sk_buff *skb);
  *
  * @gmtpd_type: one of %dccp_pkt_type (or unknown)
  * @gmtpd_seq: sequence number
- * @gmtpd_reset_code: one of %dccp_reset_codes
- * @gmtpd_reset_data: Data1..3 fields (depend on @dccpd_reset_code)
+ * @gmtpd_reset_code: one of %gmtp_reset_codes
+ * @gmtpd_reset_data: Data1..3 fields (depend on @gmtpd_reset_code)
  *
  * This is used for transmission as well as for reception.
  */
@@ -88,7 +85,6 @@ struct gmtp_skb_cb {
 };
 
 #define GMTP_SKB_CB(__skb) ((struct gmtp_skb_cb *)&((__skb)->cb[0]))
-void gmtp_set_state(sk, GMTP_REQUESTING);
 
 #define GMTP_TIMEWAIT_LEN (60 * HZ) 
 
