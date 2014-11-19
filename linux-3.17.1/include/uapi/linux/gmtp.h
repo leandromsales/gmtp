@@ -6,15 +6,30 @@
 /**
  * GMTP packet header
  *
- * -------------------------------------------- 32 bits -------------------------------------------
- * [0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6  7  8  9  0  1]
- * [Version][Packet type ][          Header lenght         ][       Server RTT     ][P][R][Reserv.]
- * [                   Source port                   ][                 Destiny port              ]
- * [                                           Sequence number                                    ]
- * [                                          Transmission rate                                   ]
- * [                               Data flow name 128 bits (part i), i -> [1..4]                  ]
- * [                    { Variable part, depends of the 'Packet type' field...  }                 ]
- * [                                                (...)                                         ]
+ *  0                   1                   2                   3
+ *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *  | Ver |   Type  |     Header Lenght   |   Server RTT  |P|R| Res |
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *  |          Source Port          |           Dest Port           |
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *  |                         Sequence Number                       |
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *  |                        Transmission Rate                      |
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *  |            Data Flow Name - part 1 of 4 (128 bits)            .
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *  .                 Data Flow Name - part 2 of 4                  .
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *  .                 Data Flow Name - part 3 of 4                  .
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *  .                 Data Flow Name - part 4 of 4                  |
+ *  +=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *  |                                                               |
+ *  |              Variable part (depends of 'type')                |
+ *  |                 Max Lenght = (2^11-1) - 256                   |
+ *  |                                                               |
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
  * struct gmtp_hdr - generic part of GMTP packet header
  *
@@ -45,7 +60,7 @@ struct gmtp_hdr {
 	__be32 seq;
 	__be32 transm_r;
 	__be32 flowname[4]; //128
-	//Variable part MAX = (2^11 - 1) bytes (2047)
+	//TODO Variable part
 };
 
 /**
@@ -82,7 +97,26 @@ enum gmtp_pkt_type {
 	GMTP_PKT_INVALID,
 };
 
-static inline unsigned int gmtp_packet_hdr_len(const __u8 type)
+#define GMTP_NR_PKT_TYPES GMTP_PKT_INVALID
+
+enum gmtp_reset_codes {
+	GMTP_RESET_CODE_UNSPECIFIED = 0,
+	GMTP_RESET_CODE_CLOSED,
+	GMTP_RESET_CODE_ABORTED,
+	GMTP_RESET_CODE_NO_CONNECTION,
+	GMTP_RESET_CODE_PACKET_ERROR,
+	GMTP_RESET_CODE_OPTION_ERROR,
+	GMTP_RESET_CODE_MANDATORY_ERROR,
+	GMTP_RESET_CODE_CONNECTION_REFUSED,
+	GMTP_RESET_CODE_BAD_SERVICE_CODE,
+	GMTP_RESET_CODE_TOO_BUSY,
+	GMTP_RESET_CODE_BAD_INIT_COOKIE,
+	GMTP_RESET_CODE_AGGRESSION_PENALTY,
+
+	GMTP_MAX_RESET_CODES		/* Leave at the end!  */
+};
+
+static inline unsigned int gmtp_packet_hdr_variable_len(const __u8 type)
 {
 	//TODO Implementar
 //	if (type == GMTP_PKT_DATA)

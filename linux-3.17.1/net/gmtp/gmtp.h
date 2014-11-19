@@ -8,21 +8,22 @@
 #ifndef GMTP_H_
 #define GMTP_H_
 
-#include <linux/gmtp.h>
 #include <net/inet_timewait_sock.h>
-
-#include <uapi/asm-generic/errno.h>
 #include <net/inet_hashtables.h>
+#include <uapi/asm-generic/errno.h>
+
+#include <linux/gmtp.h>
+#include <net/netns/gmtp.h>
 
 extern struct inet_hashinfo gmtp_hashinfo;
 
-#define GMTP_INFO "GMTP_INFO: "
-#define GMTP_WARNING "GMTP_WARNING: "
-#define GMTP_ERROR "GMTP_ERROR: "
+#define GMTP_INFO "[GMTP_INFO] %s:%d - "
+#define GMTP_WARNING "[GMTP_WARNING]  %s:%d - "
+#define GMTP_ERROR "[GMTP_ERROR] %s:%d, at %s - "
 
-#define gmtp_print_debug(fmt, args...) printk(KERN_INFO GMTP_INFO fmt, ##args)
-#define gmtp_print_warning(fmt, args...) printk(KERN_WARNING GMTP_WARNING fmt, ##args)
-#define gmtp_print_error(fmt, args...) printk(KERN_ERR GMTP_ERROR fmt, ##args)
+#define gmtp_print_debug(fmt, args...) printk(KERN_INFO GMTP_INFO fmt "\n", __FUNCTION__, __LINE__, ##args)
+#define gmtp_print_warning(fmt, args...) printk(KERN_WARNING GMTP_WARNING fmt "\n", __FUNCTION__, __LINE__, ##args)
+#define gmtp_print_error(fmt, args...) printk(KERN_ERR GMTP_ERROR fmt "\n", __FUNCTION__, __LINE__, __FILE__, ##args)
 
 #define MAX_GMTP_SPECIFIC_HEADER (8 * sizeof(uint32_t))
 #define MAX_GMTP_VARIABLE_HEADER (2047 * sizeof(uint32_t))
@@ -30,12 +31,10 @@ extern struct inet_hashinfo gmtp_hashinfo;
 
 extern struct percpu_counter gmtp_orphan_count;
 
-int gmtp_rcv(struct sk_buff *skb);
-void gmtp_err(struct sk_buff *skb, u32 info);
+
+const char *gmtp_packet_name(const int);
 
 int gmtp_init_sock(struct sock *sk, const __u8 ctl_sock_initialized);
-
-//int gmtp_inet_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len);
 
 void gmtp_close(struct sock *sk, long timeout);
 int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len);
@@ -74,15 +73,18 @@ int gmtp_insert_options(struct sock *sk, struct sk_buff *skb);
  * gmtp_skb_cb  -  GMTP per-packet control information
  *
  * @gmtpd_type: one of %dccp_pkt_type (or unknown)
- * @gmtpd_opt_len: total length of all options (5.8) in the packet
  * @gmtpd_seq: sequence number
+ * @gmtpd_reset_code: one of %dccp_reset_codes
+ * @gmtpd_reset_data: Data1..3 fields (depend on @dccpd_reset_code)
  *
  * This is used for transmission as well as for reception.
  */
 struct gmtp_skb_cb {
 	__u8  gmtpd_type:5;
-	__u16 gmtpd_opt_len;
 	__u64 gmtpd_seq;
+
+	__u8  gmtpd_reset_code,
+	gmtpd_reset_data[3];
 };
 
 #define GMTP_SKB_CB(__skb) ((struct gmtp_skb_cb *)&((__skb)->cb[0]))

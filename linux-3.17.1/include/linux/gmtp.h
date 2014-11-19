@@ -53,6 +53,10 @@ struct gmtp_request_sock {
  *
  * @dccps_role - role of this sock, one of %gmtp_role
  * @gmtps_service - first (passive sock) or unique (active sock) service code
+ * @gmtps_iss - initial sequence number sent
+ * @gmtps_isr - initial sequence number received
+ * @gmtps_gss - greatest sequence number sent
+ * @gmtps_gsr - greatest valid sequence number received
  */
 struct gmtp_sock {
 	/* inet_connection_sock has to be the first member of gmtp_sock */
@@ -62,10 +66,56 @@ struct gmtp_sock {
 	enum gmtp_role		gmtps_role:2;
 	__be32				gmtps_service;
 	__u64				gmtps_iss;
+	__u64				gmtps_isr;
+	__u64				gmtps_gss;
+	__u64				gmtps_gsr;
 
 };
 
-/****
+/**
+ * struct dccp_sock - DCCP socket state
+ *
+ * @dccps_swl - sequence number window low
+ * @dccps_swh - sequence number window high
+ * @dccps_awl - acknowledgement number window low
+ * @dccps_awh - acknowledgement number window high
+ * @dccps_iss - initial sequence number sent
+ * @dccps_isr - initial sequence number received
+ * @dccps_osr - first OPEN sequence number received
+ * @dccps_gss - greatest sequence number sent
+ * @dccps_gsr - greatest valid sequence number received
+ * @dccps_gar - greatest valid ack number received on a non-Sync; initialized to %dccps_iss
+ * @dccps_service - first (passive sock) or unique (active sock) service code
+ * @dccps_service_list - second .. last service code on passive socket
+ * @dccps_timestamp_echo - latest timestamp received on a TIMESTAMP option
+ * @dccps_timestamp_time - time of receiving latest @dccps_timestamp_echo
+ * @dccps_l_ack_ratio - feature-local Ack Ratio
+ * @dccps_r_ack_ratio - feature-remote Ack Ratio
+ * @dccps_l_seq_win - local Sequence Window (influences ack number validity)
+ * @dccps_r_seq_win - remote Sequence Window (influences seq number validity)
+ * @dccps_pcslen - sender   partial checksum coverage (via sockopt)
+ * @dccps_pcrlen - receiver partial checksum coverage (via sockopt)
+ * @dccps_send_ndp_count - local Send NDP Count feature (7.7.2)
+ * @dccps_ndp_count - number of Non Data Packets since last data packet
+ * @dccps_mss_cache - current value of MSS (path MTU minus header sizes)
+ * @dccps_rate_last - timestamp for rate-limiting DCCP-Sync (RFC 4340, 7.5.4)
+ * @dccps_featneg - tracks feature-negotiation state (mostly during handshake)
+ * @dccps_hc_rx_ackvec - rx half connection ack vector
+ * @dccps_hc_rx_ccid - CCID used for the receiver (or receiving half-connection)
+ * @dccps_hc_tx_ccid - CCID used for the sender (or sending half-connection)
+ * @dccps_options_received - parsed set of retrieved options
+ * @dccps_qpolicy - TX dequeueing policy, one of %dccp_packet_dequeueing_policy
+ * @dccps_tx_qlen - maximum length of the TX queue
+ * @dccps_role - role of this sock, one of %dccp_role
+ * @dccps_hc_rx_insert_options - receiver wants to add options when acking
+ * @dccps_hc_tx_insert_options - sender wants to add options when sending
+ * @dccps_server_timewait - server holds timewait state on close (RFC 4340, 8.3)
+ * @dccps_sync_scheduled - flag which signals "send out-of-band message soon"
+ * @dccps_xmitlet - tasklet scheduled by the TX CCID to dequeue data packets
+ * @dccps_xmit_timer - used by the TX CCID to delay sending (rate-based pacing)
+ * @dccps_syn_rtt - RTT sample from Request/Response exchange (in usecs)
+ */
+/*
 struct dccp_sock {
 	* inet_connection_sock has to be the first member of dccp_sock *
 	struct inet_connection_sock	dccps_inet_connection;
