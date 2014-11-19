@@ -9,8 +9,7 @@
 #include "gmtp.h"
 
 /* enqueue @skb on sk_send_head for retransmission, return clone to send now */
-static struct sk_buff *gmtp_skb_entail(struct sock *sk, struct sk_buff *skb)
-{
+static struct sk_buff *gmtp_skb_entail(struct sock *sk, struct sk_buff *skb) {
 	gmtp_print_debug("gmtp_skb_entail...");
 	skb_set_owner_w(skb, sk);
 	WARN_ON(sk->sk_send_head);
@@ -24,8 +23,7 @@ static struct sk_buff *gmtp_skb_entail(struct sock *sk, struct sk_buff *skb)
  * IP so it can do the same plus pass the packet off to the
  * device.
  */
-static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb)
-{
+static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 	if (likely(skb != NULL)) {
 
 		gmtp_print_debug("skb (%p) != NULL", skb);
@@ -40,10 +38,8 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb)
 
 		struct gmtp_hdr *gh;
 
-		/* TODO Calculate size of header */
-		const u32 gmtp_header_size = sizeof(*gh) +
-//				sizeof(struct gmtp_hdr_ext) +
-				gmtp_packet_hdr_len(gcb->gmtpd_type);
+		const u32 gmtp_header_size = sizeof(*gh)
+				+ gmtp_packet_hdr_variable_len(gcb->gmtpd_type);
 
 		int err, set_ack = 1;
 		u64 ackno = gp->gmtps_gsr;
@@ -58,7 +54,7 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb)
 		case GMTP_PKT_DATA:
 			set_ack = 0;
 			/* fall through */
-		case GMTP_PKT_DATAACK:
+		case GMTP_PKT_ACK:
 		case GMTP_PKT_RESET:
 			break;
 
@@ -69,7 +65,7 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb)
 				gcb->gmtpd_seq = gp->gmtps_iss;
 			/* fall through */
 
-		//TODO Treat each GMTP packet type...
+			//TODO Treat each GMTP packet type...
 //		case GMTP_PKT_SYNC:
 //		case GMTP_PKT_SYNCACK:
 //			ackno = dcb->gmtpd_ack_seq;
@@ -91,10 +87,11 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb)
 		gh = gmtp_zeroed_hdr(skb, gmtp_header_size);
 		gmtp_print_debug("gh = %p", gh);
 
-		gh->type	= gcb->gmtpd_type;
-		gh->sport	= inet->inet_sport;
-		gh->dport	= inet->inet_dport;
-		gh->hdrlen	= gmtp_header_size;
+		gh->version = 1;
+		gh->type = gcb->gmtpd_type;
+		gh->sport = inet->inet_sport;
+		gh->dport = inet->inet_dport;
+		gh->hdrlen = gmtp_header_size;
 
 		//TODO set sequence numbers and ack...
 
@@ -104,11 +101,14 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb)
 			break;
 		}
 
-		//TODO icsk_af_ops is null...
-//		icsk->icsk_af_ops->send_check(sk, skb);
-//		err = icsk->icsk_af_ops->queue_xmit(sk, skb, &inet->cork.fl);
-//		return net_xmit_eval(err);
+		//If protocol has checksum... calculate here...
+		//DCCP timer...
+//		if (set_ack)
+//			dccp_event_ack_sent(sk);
 
+		gmtp_print_debug("Calling: icsk->icsk_af_ops->queue_xmit(sk, skb, &inet->cork.fl)");
+		err = icsk->icsk_af_ops->queue_xmit(sk, skb, &inet->cork.fl);
+		return net_xmit_eval(err);
 
 	}
 	return -ENOBUFS;
@@ -117,9 +117,8 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb)
 /*
  * Do all connect socket setups that can be done AF independent.
  */
-int gmtp_connect(struct sock *sk)
-{
-	//TODO Implement gmtp_connect
+int gmtp_connect(struct sock *sk) {
+
 	gmtp_print_debug("gmtp_connect");
 
 	struct sk_buff *skb;
@@ -130,28 +129,25 @@ int gmtp_connect(struct sock *sk)
 	sk->sk_err = 0;
 	sock_reset_flag(sk, SOCK_DONE);
 
-	//TODO Sync GMTP MSS
+	//TODO Sync GMTP MSS?
 //	dccp_sync_mss(sk, dst_mtu(dst));
 
 	//TODO Initialize variables...
 	skb = alloc_skb(sk->sk_prot->max_header, sk->sk_allocation);
 	gmtp_print_debug("skb == %p", skb);
 
-	if (unlikely(skb == NULL))
-	{
+	if (unlikely(skb == NULL)) {
 		gmtp_print_error("skb = alloc_skb(...) == NULL");
 		return -ENOBUFS;
 	}
 
 	/* Reserve space for headers. */
 
-	gmtp_print_debug("sk->sk_prot->max_header == %d", sk->sk_prot->max_header);
+	gmtp_print_debug("Reserving space for headers. ");
 	skb_reserve(skb, sk->sk_prot->max_header);
 
 	GMTP_SKB_CB(skb)->gmtpd_type = GMTP_PKT_REQUEST;
 
-	gmtp_print_debug("Calling gmtp_transmit_skb(sk, gmtp_skb_entail(sk, skb))");
-//	dccp_transmit_skb(sk, dccp_skb_entail(sk, skb));
 	gmtp_transmit_skb(sk, gmtp_skb_entail(sk, skb));
 
 	//TODO Retransmit?
