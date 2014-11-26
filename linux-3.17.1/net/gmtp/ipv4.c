@@ -182,62 +182,8 @@ int gmtp_invalid_packet(struct sk_buff *skb)
 static void gmtp_v4_ctl_send_reset(struct sock *sk, struct sk_buff *rxskb)
 {
 	//TODO Implement this...
-	gmtp_print_debug("gmtp_v4_ctl_send_reset");
+	gmtp_print_debug("gmtp_v4_ctl_send_reset: not implemented...");
 }
-
-int gmtp_sk_receive_skb(struct sock *sk, struct sk_buff *skb, const int nested)
-{
-	int rc = NET_RX_SUCCESS;
-
-	gmtp_print_debug("gmtp_sk_receive_skb");
-	gmtp_print_debug("sk: %p, skb: %p, nested: %d\n", sk, skb, nested);
-
-	if (sk_filter(sk, skb))
-		goto discard_and_relse;
-	gmtp_print_debug("After sf_filter()");
-
-	skb->dev = NULL;
-
-	if (sk_rcvqueues_full(sk, sk->sk_rcvbuf)) {
-		atomic_inc(&sk->sk_drops);
-		goto discard_and_relse;
-	}
-	gmtp_print_debug("After ks_rcvqueues_full(...)");
-
-	if (nested)
-		bh_lock_sock_nested(sk);
-	else
-		bh_lock_sock(sk);
-	gmtp_print_debug("After if(nested)");
-
-	if (!sock_owned_by_user(sk)) {
-	/*
-	 * trylock + unlock semantics:
-	 */
-		gmtp_print_debug("if(!socket_owned_by_user(sk)");
-		mutex_acquire(&sk->sk_lock.dep_map, 0, 1, _RET_IP_);
-
-	//	rc = sk_backlog_rcv(sk, skb);
-
-		mutex_release(&sk->sk_lock.dep_map, 1, _RET_IP_);
-	//	gmtp_print_debug("After rc = sk_backlog_rcv(sk, skb)");
-
-	} else if (sk_add_backlog(sk, skb, sk->sk_rcvbuf)) {
-		bh_unlock_sock(sk);
-		atomic_inc(&sk->sk_drops);
-		goto discard_and_relse;
-	}
-
-	bh_unlock_sock(sk);
-out:
-	sock_put(sk);
-	return rc;
-discard_and_relse:
-	gmtp_print_debug("discard_and_relse");
-	kfree_skb(skb);
-	goto out;
-}
-EXPORT_SYMBOL(gmtp_sk_receive_skb);
 
 /* this is called when real data arrives */
 static int gmtp_v4_rcv(struct sk_buff *skb)
@@ -298,10 +244,7 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 	nf_reset(skb);
 
 	gmtp_print_debug("Calling sk_receive_skb");
-	gmtp_print_debug("sk: %p, skb: %p", sk, skb);
-	return gmtp_sk_receive_skb(sk, skb, 1);
-	//return sk_receive_skb(sk, skb, 1);
-
+	return sk_receive_skb(sk, skb, 1);
 
 no_gmtp_socket:
 	gmtp_print_debug("no_gmtp_socket");
@@ -333,10 +276,89 @@ EXPORT_SYMBOL_GPL(gmtp_v4_rcv);
 int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
 {
 	gmtp_print_debug("gmtp_v4_conn_request");
-	gmtp_print_debug("sk: %p, skb: %p", sk, skb);
 	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_conn_request);
+
+static struct sock *gmtp_v4_hnd_req(struct sock *sk, struct sk_buff *skb)
+{
+	const struct gmtp_hdr *gh = gmtp_hdr(skb);
+	const struct iphdr *iph = ip_hdr(skb);
+	struct sock *nsk;
+	struct request_sock **prev;
+
+	gmtp_print_debug("gmtp_v4_hnd_req");
+
+	/* Find possible connection requests. */
+	//TODO Tratar req != NULL
+//	struct request_sock *req = inet_csk_search_req(sk, &prev,
+//						       dh->sport,
+//						       iph->saddr, iph->daddr);
+//	if (req != NULL)
+//		return gmtp_check_req(sk, skb, req, prev);
+
+	nsk = inet_lookup_established(sock_net(sk), &gmtp_hashinfo,
+				      iph->saddr, gh->sport,
+				      iph->daddr, gh->dport,
+				      inet_iif(skb));
+	if (nsk != NULL) {
+		if (nsk->sk_state != GMTP_TIME_WAIT) {
+			bh_lock_sock(nsk);
+			return nsk;
+		}
+		inet_twsk_put(inet_twsk(nsk));
+		return NULL;
+	}
+
+	return sk;
+}
+
+int gmtp_v4_do_rcv(struct sock *sk, struct sk_buff *skb)
+{
+	struct gmtp_hdr *dh = gmtp_hdr(skb);
+	gmtp_print_debug("gmtp_v4_do_rcv");
+
+	if (sk->sk_state == GMTP_OPEN) { /* Fast path */
+
+		gmtp_print_debug("sk_state: GMTP_OPEN (%d)", sk->sk_state);
+
+		if (gmtp_rcv_established(sk, skb, dh, skb->len))
+			goto reset;
+		return 0;
+	}
+
+	/*
+	 * Step 3: Process LISTEN state
+	 */
+	if (sk->sk_state == GMTP_LISTEN) {
+
+		struct sock *nsk;
+
+		gmtp_print_debug("sk_state: GMTP_LISTEN (%d)", sk->sk_state);
+
+		nsk = gmtp_v4_hnd_req(sk, skb);
+		if (nsk == NULL)
+			goto discard;
+
+		//TODO tratar isso
+//		if (nsk != sk) {
+//			if (dccp_child_process(sk, nsk, skb))
+//				goto reset;
+//			return 0;
+//		}
+	}
+
+	return 0;
+
+reset:
+	gmtp_v4_ctl_send_reset(sk, skb);
+discard:
+	gmtp_print_debug("discard");
+	kfree_skb(skb);
+	return 0;
+
+}
+EXPORT_SYMBOL_GPL(gmtp_v4_do_rcv);
 
 static const struct inet_connection_sock_af_ops gmtp_ipv4_af_ops = {
 	.queue_xmit = ip_queue_xmit,
@@ -399,7 +421,7 @@ static const struct net_protocol gmtp_protocol = {
  * socket layer -> transport layer interface (struct proto)
  * transport -> network interface is defined by (struct inet_proto)
  */
-static struct proto gmtp_prot = {
+static struct proto gmtp_v4_prot = {
 	.name = "GMTP",
 	.owner = THIS_MODULE,
 	.close = gmtp_close,
@@ -411,6 +433,7 @@ static struct proto gmtp_prot = {
 //	.getsockopt		= gmtp_getsockopt,
 //	.sendmsg		= gmtp_sendmsg,
 //	.recvmsg		= gmtp_recvmsg,
+	.backlog_rcv = gmtp_v4_do_rcv,
 	.hash = inet_hash,
 	.unhash = inet_unhash,
 	.accept = inet_csk_accept,
@@ -471,7 +494,7 @@ static const struct proto_ops inet_gmtp_ops = {
 static struct inet_protosw gmtp_protosw = {
 	.type = SOCK_GMTP,
 	.protocol =	IPPROTO_GMTP,
-	.prot = &gmtp_prot,
+	.prot = &gmtp_v4_prot,
 	.ops = &inet_gmtp_ops,
 	.flags = INET_PROTOSW_ICSK,
 };
@@ -506,7 +529,7 @@ static int __init gmtp_v4_init(void) {
 
 	// PROTOCOLS REGISTER
 	gmtp_print_debug("GMTP IPv4 proto_register");
-	err = proto_register(&gmtp_prot, 1);
+	err = proto_register(&gmtp_v4_prot, 1);
 	if (err != 0)
 		goto out;
 
@@ -533,7 +556,7 @@ static int __init gmtp_v4_init(void) {
 
 	out_proto_unregister:
 	gmtp_print_error("proto_unregister GMTP IPv4");
-	proto_unregister(&gmtp_prot);
+	proto_unregister(&gmtp_v4_prot);
 	return err;
 
 	out: return err;
@@ -545,7 +568,7 @@ static void __exit gmtp_v4_exit(void) {
 	unregister_pernet_subsys(&gmtp_v4_ops);
 	inet_unregister_protosw(&gmtp_protosw);
 	inet_del_protocol(&gmtp_protocol, IPPROTO_GMTP);
-	proto_unregister(&gmtp_prot);
+	proto_unregister(&gmtp_v4_prot);
 }
 
 module_init(gmtp_v4_init);

@@ -56,7 +56,8 @@ void gmtp_destroy_sock(struct sock *sk);
 void gmtp_set_state(struct sock*, const int);
 int inet_gmtp_listen(struct socket *sock, int backlog);
 int gmtp_insert_options(struct sock *sk, struct sk_buff *skb);
-
+int gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
+                         const struct gmtp_hdr *dh, const unsigned int len);
 
 /**
  * This is the control buffer. It is free to use by any layer.
