@@ -120,23 +120,24 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len) {
 
 	gmtp_print_debug("calling gmtp_connect(sk)");
 	err = gmtp_connect(sk);
-	gmtp_print_warning("err = gmtp_connect(sk) == %d", err);
+	gmtp_print_debug("gmtp_connect(sk) returned %d", err);
 
 	rt = NULL;
 	if (err != 0)
 		goto failure;
-	out: return err;
-	failure:
+
+out:
+	return err;
+
 	/*
 	 * This unhashes the socket and releases the local port, if necessary.
 	 */
+failure:
 	gmtp_set_state(sk, GMTP_CLOSED);
 	ip_rt_put(rt);
 	sk->sk_route_caps = 0;
 	inet->inet_dport = 0;
 	goto out;
-
-	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_connect);
 
@@ -183,6 +184,60 @@ static void gmtp_v4_ctl_send_reset(struct sock *sk, struct sk_buff *rxskb)
 	//TODO Implement this...
 	gmtp_print_debug("gmtp_v4_ctl_send_reset");
 }
+
+int gmtp_sk_receive_skb(struct sock *sk, struct sk_buff *skb, const int nested)
+{
+	int rc = NET_RX_SUCCESS;
+
+	gmtp_print_debug("gmtp_sk_receive_skb");
+	gmtp_print_debug("sk: %p, skb: %p, nested: %d\n", sk, skb, nested);
+
+	if (sk_filter(sk, skb))
+		goto discard_and_relse;
+	gmtp_print_debug("After sf_filter()");
+
+	skb->dev = NULL;
+
+	if (sk_rcvqueues_full(sk, sk->sk_rcvbuf)) {
+		atomic_inc(&sk->sk_drops);
+		goto discard_and_relse;
+	}
+	gmtp_print_debug("After ks_rcvqueues_full(...)");
+
+	if (nested)
+		bh_lock_sock_nested(sk);
+	else
+		bh_lock_sock(sk);
+	gmtp_print_debug("After if(nested)");
+
+	if (!sock_owned_by_user(sk)) {
+	/*
+	 * trylock + unlock semantics:
+	 */
+		gmtp_print_debug("if(!socket_owned_by_user(sk)");
+		mutex_acquire(&sk->sk_lock.dep_map, 0, 1, _RET_IP_);
+
+	//	rc = sk_backlog_rcv(sk, skb);
+
+		mutex_release(&sk->sk_lock.dep_map, 1, _RET_IP_);
+	//	gmtp_print_debug("After rc = sk_backlog_rcv(sk, skb)");
+
+	} else if (sk_add_backlog(sk, skb, sk->sk_rcvbuf)) {
+		bh_unlock_sock(sk);
+		atomic_inc(&sk->sk_drops);
+		goto discard_and_relse;
+	}
+
+	bh_unlock_sock(sk);
+out:
+	sock_put(sk);
+	return rc;
+discard_and_relse:
+	gmtp_print_debug("discard_and_relse");
+	kfree_skb(skb);
+	goto out;
+}
+EXPORT_SYMBOL(gmtp_sk_receive_skb);
 
 /* this is called when real data arrives */
 static int gmtp_v4_rcv(struct sk_buff *skb)
@@ -244,8 +299,9 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 
 	gmtp_print_debug("Calling sk_receive_skb");
 	gmtp_print_debug("sk: %p, skb: %p", sk, skb);
-//	return sk_receive_skb(sk, skb, 1);
-	goto discard_it;
+	return gmtp_sk_receive_skb(sk, skb, 1);
+	//return sk_receive_skb(sk, skb, 1);
+
 
 no_gmtp_socket:
 	gmtp_print_debug("no_gmtp_socket");
@@ -274,11 +330,19 @@ discard_and_relse:
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_rcv);
 
+int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
+{
+	gmtp_print_debug("gmtp_v4_conn_request");
+	gmtp_print_debug("sk: %p, skb: %p", sk, skb);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(gmtp_v4_conn_request);
+
 static const struct inet_connection_sock_af_ops gmtp_ipv4_af_ops = {
 	.queue_xmit = ip_queue_xmit,
 //	.send_check	   = gmtp_v4_send_check, //GMTP has no checksum...
 	.rebuild_header = inet_sk_rebuild_header,
-//	.conn_request	   = dccp_v4_conn_request,
+	.conn_request	   = gmtp_v4_conn_request,
 //	.syn_recv_sock	   = dccp_v4_request_recv_sock,
 	.net_header_len = sizeof(struct iphdr),
 	.setsockopt	   = ip_setsockopt,
