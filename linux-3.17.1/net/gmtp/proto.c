@@ -127,6 +127,8 @@ int inet_gmtp_listen(struct socket *sock, int backlog)
 		gs->gmtps_role = GMTP_ROLE_LISTEN;
 
 		err = inet_csk_listen_start(sk, backlog);
+		gmtp_print_debug("inet_csk_listen_start(sk, %d) "
+				"returns: %d", backlog, err);
 		if (err)
 			goto out;
 	}
@@ -155,8 +157,37 @@ EXPORT_SYMBOL_GPL(gmtp_disconnect);
 
 int gmtp_ioctl(struct sock *sk, int cmd, unsigned long arg)
 {
+	int rc = -ENOTCONN;
+
 	gmtp_print_debug("gmtp_ioctl");
-	return 0;
+	lock_sock(sk);
+
+	if (sk->sk_state == GMTP_LISTEN)
+		goto out;
+
+	switch (cmd) {
+	case SIOCINQ: {
+		struct sk_buff *skb;
+		unsigned long amount = 0;
+
+		skb = skb_peek(&sk->sk_receive_queue);
+		if (skb != NULL) {
+			/*
+			 * We will only return the amount of this packet since
+			 * that is all that will be read.
+			 */
+			amount = skb->len;
+		}
+		rc = put_user(amount, (int __user *)arg);
+	}
+	break;
+	default:
+		rc = -ENOIOCTLCMD;
+		break;
+	}
+out:
+	release_sock(sk);
+	return rc;
 }
 EXPORT_SYMBOL_GPL(gmtp_ioctl);
 

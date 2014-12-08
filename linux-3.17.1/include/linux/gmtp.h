@@ -42,11 +42,20 @@ enum gmtp_role {
 
 /**
  * struct gmtp_request_sock  -  represent GMTP-specific connection request
+ * @greq_inet_rsk: structure inherited from
+ * @greq_service: service code present on the Request (there is just one)
  */
 struct gmtp_request_sock {
-	struct inet_request_sock dreq_inet_rsk;
+	struct inet_request_sock greq_inet_rsk;
+
+	__be32			 greq_service;
 	//TODO Specific gmtp fields
 };
+
+static inline struct gmtp_request_sock *gmtp_rsk(const struct request_sock *req)
+{
+	return (struct gmtp_request_sock *)req;
+}
 
 /**
  * struct gmtp_sock - GMTP socket state

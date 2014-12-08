@@ -18,19 +18,24 @@
 extern struct inet_hashinfo gmtp_hashinfo;
 
 #define GMTP_INFO "[GMTP_INFO] %s:%d - "
-#define GMTP_WARNING "[GMTP_WARNING]  %s:%d - "
-#define GMTP_ERROR "[GMTP_ERROR] %s:%d, at %s - "
+#define GMTP_WARNING "[GMTP_WARNING]  %s:%d at %s - "
+#define GMTP_ERROR "[GMTP_ERROR] %s:%d at %s - "
 
-#define gmtp_print_debug(fmt, args...) printk(KERN_INFO GMTP_INFO fmt "\n", __FUNCTION__, __LINE__, ##args)
-#define gmtp_print_warning(fmt, args...) printk(KERN_WARNING GMTP_WARNING fmt "\n", __FUNCTION__, __LINE__, ##args)
-#define gmtp_print_error(fmt, args...) printk(KERN_ERR GMTP_ERROR fmt "\n", __FUNCTION__, __LINE__, __FILE__, ##args)
+#define gmtp_print_debug(fmt, args...) printk(KERN_INFO GMTP_INFO fmt \
+		"\n", __FUNCTION__, __LINE__, ##args)
+#define gmtp_print_warning(fmt, args...) printk(KERN_WARNING GMTP_WARNING fmt\
+		"\n", __FUNCTION__, __LINE__, __FILE__, ##args)
+#define gmtp_print_error(fmt, args...) printk(KERN_ERR GMTP_ERROR fmt \
+		"\n", __FUNCTION__, __LINE__, __FILE__, ##args)
 
 #define MAX_GMTP_SPECIFIC_HEADER (8 * sizeof(uint32_t))
 #define MAX_GMTP_VARIABLE_HEADER (2047 * sizeof(uint32_t))
 #define MAX_GMTP_HEADER (MAX_GMTP_SPECIFIC_HEADER + MAX_GMTP_VARIABLE_HEADER)
 
-extern struct percpu_counter gmtp_orphan_count;
+/* RFC ????,  initial RTO value */
+#define GMTP_TIMEOUT_INIT ((unsigned int)(3 * HZ))
 
+extern struct percpu_counter gmtp_orphan_count;
 
 const char *gmtp_packet_name(const int);
 
@@ -42,14 +47,13 @@ int gmtp_connect(struct sock *sk);
 int gmtp_disconnect(struct sock *sk, int flags);
 int gmtp_ioctl(struct sock *sk, int cmd, unsigned long arg);
 int gmtp_getsockopt(struct sock *sk, int level, int optname,
-		    char __user *optval, int __user *optlen);
+		char __user *optval, int __user *optlen);
 int gmtp_setsockopt(struct sock *sk, int level, int optname,
-		    char __user *optval, unsigned int optlen);
+		char __user *optval, unsigned int optlen);
 int gmtp_sendmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
-		 size_t size);
-int gmtp_recvmsg(struct kiocb *iocb, struct sock *sk,
-		 struct msghdr *msg, size_t len, int nonblock, int flags,
-		 int *addr_len);
+		size_t size);
+int gmtp_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
+		size_t len, int nonblock, int flags, int *addr_len);
 void gmtp_shutdown(struct sock *sk, int how);
 void gmtp_destroy_sock(struct sock *sk);
 
@@ -57,7 +61,14 @@ void gmtp_set_state(struct sock*, const int);
 int inet_gmtp_listen(struct socket *sock, int backlog);
 int gmtp_insert_options(struct sock *sk, struct sk_buff *skb);
 int gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
-                         const struct gmtp_hdr *dh, const unsigned int len);
+		const struct gmtp_hdr *dh, const unsigned int len);
+int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
+		struct gmtp_hdr *gh, unsigned int len);
+
+struct sk_buff *gmtp_make_response(struct sock *sk, struct dst_entry *dst,
+		struct request_sock *req);
+struct sk_buff *gmtp_ctl_make_reset(struct sock *sk,
+		struct sk_buff *rcv_skb);
 
 /**
  * This is the control buffer. It is free to use by any layer.
@@ -78,11 +89,10 @@ int gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
  * This is used for transmission as well as for reception.
  */
 struct gmtp_skb_cb {
-	__u8  gmtpd_type:5;
+	__u8 gmtpd_type :5;
 	__u64 gmtpd_seq;
 
-	__u8  gmtpd_reset_code,
-	gmtpd_reset_data[3];
+	__u8 gmtpd_reset_code, gmtpd_reset_data[3];
 };
 
 #define GMTP_SKB_CB(__skb) ((struct gmtp_skb_cb *)&((__skb)->cb[0]))

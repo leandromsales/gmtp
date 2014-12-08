@@ -5,6 +5,7 @@ import socket
 IPPROTO_GMTP = 254
 
 address = (socket.gethostname(), 12345)
+#address = ("172.20.8.6", 12345)
 
 # Create sockets
 client_socket = socket.socket(socket.AF_INET, 7, IPPROTO_GMTP)

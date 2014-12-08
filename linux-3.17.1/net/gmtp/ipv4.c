@@ -14,9 +14,10 @@
 #include <net/secure_seq.h>
 
 #include <uapi/linux/if_packet.h>
+#include <uapi/linux/snmp.h>
 
+#include <uapi/linux/gmtp.h>
 #include <linux/gmtp.h>
-
 #include "gmtp.h"
 
 extern int sysctl_ip_nonlocal_bind __read_mostly;
@@ -114,13 +115,13 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len) {
 
 	gp->gmtps_iss = secure_gmtp_sequence_number(inet->inet_saddr,
 			inet->inet_daddr, inet->inet_sport, inet->inet_dport);
-	gmtp_print_error("gp->gmtps_iss = %llu", gp->gmtps_iss);
+	gmtp_print_debug("gp->gmtps_iss = %llu", gp->gmtps_iss);
 
 	inet->inet_id = gp->gmtps_iss ^ jiffies;
 
-	gmtp_print_debug("calling gmtp_connect(sk)");
+	gmtp_print_debug("calling gmtp_connect(sk)...");
 	err = gmtp_connect(sk);
-	gmtp_print_debug("gmtp_connect(sk) returned %d", err);
+	gmtp_print_debug("gmtp_connect(sk) returned %d.", err);
 
 	rt = NULL;
 	if (err != 0)
@@ -179,10 +180,105 @@ int gmtp_invalid_packet(struct sk_buff *skb)
 	return 0;
 }
 
+static struct dst_entry* gmtp_v4_route_skb(struct net *net, struct sock *sk,
+					   struct sk_buff *skb)
+{
+	struct rtable *rt;
+	const struct iphdr *iph = ip_hdr(skb);
+	struct flowi4 fl4 = {
+		.flowi4_oif = inet_iif(skb),
+		.daddr = iph->saddr,
+		.saddr = iph->daddr,
+		.flowi4_tos = RT_CONN_FLAGS(sk),
+		.flowi4_proto = sk->sk_protocol,
+		.fl4_sport = gmtp_hdr(skb)->dport,
+		.fl4_dport = gmtp_hdr(skb)->sport,
+	};
+
+	gmtp_print_debug("gmtp_v4_route_skb");
+
+	security_skb_classify_flow(skb, flowi4_to_flowi(&fl4));
+	rt = ip_route_output_flow(net, &fl4, sk);
+	if (IS_ERR(rt)) {
+		IP_INC_STATS_BH(net, IPSTATS_MIB_OUTNOROUTES);
+		return NULL;
+	}
+
+	return &rt->dst;
+}
+
+
+static int gmtp_v4_send_response(struct sock *sk, struct request_sock *req)
+{
+	int err = -1;
+	struct sk_buff *skb;
+	struct dst_entry *dst;
+	struct flowi4 fl4;
+
+	dst = inet_csk_route_req(sk, &fl4, req);
+	if (dst == NULL)
+		goto out;
+
+	skb = gmtp_make_response(sk, dst, req);
+
+	if (skb != NULL) {
+		const struct inet_request_sock *ireq = inet_rsk(req);
+		struct gmtp_hdr *dh = gmtp_hdr(skb);
+
+//		dh->dccph_checksum = dccp_v4_csum_finish(skb, ireq->ir_loc_addr,
+//							      ireq->ir_rmt_addr);
+		err = ip_build_and_send_pkt(skb, sk, ireq->ir_loc_addr,
+					    ireq->ir_rmt_addr,
+					    ireq->opt);
+		err = net_xmit_eval(err);
+	}
+
+out:
+	dst_release(dst);
+	return err;
+}
+
 static void gmtp_v4_ctl_send_reset(struct sock *sk, struct sk_buff *rxskb)
 {
-	//TODO Implement this...
+	int err;
+	const struct iphdr *rxiph;
+	struct sk_buff *skb;
+	struct dst_entry *dst;
+	struct net *net = dev_net(skb_dst(rxskb)->dev);
+	struct sock *ctl_sk = net->gmtp.v4_ctl_sk;
+
 	gmtp_print_debug("gmtp_v4_ctl_send_reset: not implemented...");
+
+	/* Never send a reset in response to a reset. */
+	if (gmtp_hdr(rxskb)->type == GMTP_PKT_RESET)
+		return;
+
+	if (skb_rtable(rxskb)->rt_type != RTN_LOCAL)
+		return;
+
+	dst = gmtp_v4_route_skb(net, ctl_sk, rxskb);
+	if (dst == NULL)
+		return;
+
+	skb = gmtp_ctl_make_reset(ctl_sk, rxskb);
+	if (skb == NULL)
+		goto out;
+
+	rxiph = ip_hdr(rxskb);
+	skb_dst_set(skb, dst_clone(dst));
+
+	bh_lock_sock(ctl_sk);
+	err = ip_build_and_send_pkt(skb, ctl_sk,
+			rxiph->daddr, rxiph->saddr, NULL);
+	bh_unlock_sock(ctl_sk);
+
+	if (net_xmit_eval(err) == 0) {
+//		DCCP_INC_STATS_BH(DCCP_MIB_OUTSEGS);
+//		DCCP_INC_STATS_BH(DCCP_MIB_OUTRSTS);
+	}
+
+out:
+	dst_release(dst);
 }
 
 /* this is called when real data arrives */
@@ -215,14 +311,13 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 	 *	Look up flow ID in table and get corresponding socket */
 	sk = __inet_lookup_skb(&gmtp_hashinfo, skb,
 			       gh->sport, gh->dport);
-	gmtp_print_debug("sk: %p", sk);
 
 	/*
 	 * Step 2:
 	 *	If no socket ...
 	 */
 	if (sk == NULL) {
-		gmtp_print_debug("failed to look up flow ID in table and "
+		gmtp_print_warning("failed to look up flow ID in table and "
 			      "get corresponding socket\n");
 		goto no_gmtp_socket;
 	}
@@ -243,8 +338,9 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 		goto discard_and_relse;
 	nf_reset(skb);
 
-	gmtp_print_debug("Calling sk_receive_skb");
-	return sk_receive_skb(sk, skb, 1);
+	int ret = sk_receive_skb(sk, skb, 1);
+	gmtp_print_debug("sk_receive_skb return: %d", ret);
+	return ret;
 
 no_gmtp_socket:
 	gmtp_print_debug("no_gmtp_socket");
@@ -273,9 +369,90 @@ discard_and_relse:
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_rcv);
 
+static struct request_sock_ops gmtp_request_sock_ops __read_mostly = {
+	.family = PF_INET,
+	.obj_size = sizeof(struct gmtp_request_sock),
+	.rtx_syn_ack	= gmtp_v4_send_response,
+	.send_reset	= gmtp_v4_ctl_send_reset,
+};
+
 int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
 {
+//	struct inet_request_sock *ireq;
+//	struct request_sock *req;
+//	struct gmtp_request_sock *dreq;
+//	//const __be32 service = dccp_hdr_request(skb)->dccph_req_service;
+//	struct gmtp_skb_cb *dcb = GMTP_SKB_CB(skb);
+
 	gmtp_print_debug("gmtp_v4_conn_request");
+
+	/* Never answer to DCCP_PKT_REQUESTs send to broadcast or multicast */
+//	if (skb_rtable(skb)->rt_flags & (RTCF_BROADCAST | RTCF_MULTICAST))
+//		return 0;	/* discard, don't send a reset here */
+//
+////	if (dccp_bad_service_code(sk, service)) {
+////		dcb->dccpd_reset_code = DCCP_RESET_CODE_BAD_SERVICE_CODE;
+////		goto drop;
+////	}
+//	/*
+//	 * TW buckets are converted to open requests without
+//	 * limitations, they conserve resources and peer is
+//	 * evidently real one.
+//	 */
+//	dcb->gmtpd_reset_code = GMTP_RESET_CODE_TOO_BUSY;
+//	if (inet_csk_reqsk_queue_is_full(sk))
+//		goto drop;
+//
+//	/*
+//	 * Accept backlog is full. If we have already queued enough
+//	 * of warm entries in syn queue, drop request. It is better than
+//	 * clogging syn queue with openreqs with exponentially increasing
+//	 * timeout.
+//	 */
+//	if (sk_acceptq_is_full(sk) && inet_csk_reqsk_queue_young(sk) > 1)
+//		goto drop;
+//
+//	req = inet_reqsk_alloc(&gmtp_request_sock_ops);
+//	if (req == NULL)
+//		goto drop;
+//
+////	if (gmtp_reqsk_init(req, gmtp_sk(sk), skb))
+////		goto drop_and_free;
+//
+////	dreq = gmtp_rsk(req);
+////	if (gmtp_parse_options(sk, dreq, skb))
+////		goto drop_and_free;
+//
+//	if (security_inet_conn_request(sk, skb, req))
+//		goto drop_and_free;
+//
+//	ireq = inet_rsk(req);
+//	ireq->ir_loc_addr = ip_hdr(skb)->daddr;
+//	ireq->ir_rmt_addr = ip_hdr(skb)->saddr;
+//
+//	/*
+//	 * Step 3: Process LISTEN state
+//	 *
+//	 * Set S.ISR, S.GSR, S.SWL, S.SWH from packet or Init Cookie
+//	 *
+//	 * Setting S.SWL/S.SWH to is deferred to dccp_create_openreq_child().
+//	 */
+////	dreq->dreq_isr	   = dcb->dccpd_seq;
+////	dreq->dreq_gsr	   = dreq->dreq_isr;
+////	dreq->dreq_iss	   = dccp_v4_init_sequence(skb);
+////	dreq->dreq_gss     = dreq->dreq_iss;
+////	dreq->dreq_service = service;
+//
+//	if (gmtp_v4_send_response(sk, req))
+//		goto drop_and_free;
+//
+//	inet_csk_reqsk_queue_hash_add(sk, req, GMTP_TIMEOUT_INIT);
+//	return 0;
+
+//drop_and_free:
+//	reqsk_free(req);
+//drop:
+//	DCCP_INC_STATS_BH(DCCP_MIB_ATTEMPTFAILS);
 	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_conn_request);
@@ -287,13 +464,12 @@ static struct sock *gmtp_v4_hnd_req(struct sock *sk, struct sk_buff *skb)
 	struct sock *nsk;
 	struct request_sock **prev;
 
-	gmtp_print_debug("gmtp_v4_hnd_req");
-
 	/* Find possible connection requests. */
 	//TODO Tratar req != NULL
-//	struct request_sock *req = inet_csk_search_req(sk, &prev,
-//						       dh->sport,
-//						       iph->saddr, iph->daddr);
+	struct request_sock *req = inet_csk_search_req(sk, &prev,
+						       gh->sport,
+						       iph->saddr, iph->daddr);
+
 //	if (req != NULL)
 //		return gmtp_check_req(sk, skb, req, prev);
 
@@ -301,11 +477,19 @@ static struct sock *gmtp_v4_hnd_req(struct sock *sk, struct sk_buff *skb)
 				      iph->saddr, gh->sport,
 				      iph->daddr, gh->dport,
 				      inet_iif(skb));
+
+	gmtp_print_debug("gmtp_v4_hnd_req");
+	gmtp_print_debug("req: %p", req);
+	gmtp_print_debug("nsk: %p", nsk);
+
 	if (nsk != NULL) {
+		gmtp_print_debug("trying if...");
 		if (nsk->sk_state != GMTP_TIME_WAIT) {
+			gmtp_print_debug("nsk->sk_state != GMTP_TIME_WAIT (returning nsk...)");
 			bh_lock_sock(nsk);
 			return nsk;
 		}
+		gmtp_print_debug("calling inet_twsk_put(inet_twsk(nsk))");
 		inet_twsk_put(inet_twsk(nsk));
 		return NULL;
 	}
@@ -315,14 +499,15 @@ static struct sock *gmtp_v4_hnd_req(struct sock *sk, struct sk_buff *skb)
 
 int gmtp_v4_do_rcv(struct sock *sk, struct sk_buff *skb)
 {
-	struct gmtp_hdr *dh = gmtp_hdr(skb);
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+
 	gmtp_print_debug("gmtp_v4_do_rcv");
 
 	if (sk->sk_state == GMTP_OPEN) { /* Fast path */
 
 		gmtp_print_debug("sk_state: GMTP_OPEN (%d)", sk->sk_state);
 
-		if (gmtp_rcv_established(sk, skb, dh, skb->len))
+		if (gmtp_rcv_established(sk, skb, gh, skb->len))
 			goto reset;
 		return 0;
 	}
@@ -337,23 +522,29 @@ int gmtp_v4_do_rcv(struct sock *sk, struct sk_buff *skb)
 		gmtp_print_debug("sk_state: GMTP_LISTEN (%d)", sk->sk_state);
 
 		nsk = gmtp_v4_hnd_req(sk, skb);
+
 		if (nsk == NULL)
 			goto discard;
 
+		gmtp_print_debug("sk: %p", sk);
+		gmtp_print_debug("nsk: %p", nsk);
 		//TODO tratar isso
-//		if (nsk != sk) {
+		if (nsk != sk) {
+			gmtp_print_debug("nsk != sk");
 //			if (dccp_child_process(sk, nsk, skb))
 //				goto reset;
-//			return 0;
-//		}
+			return 0;
+		}
 	}
+
+	if (gmtp_rcv_state_process(sk, skb, gh, skb->len))
+		goto reset;
 
 	return 0;
 
 reset:
-	gmtp_v4_ctl_send_reset(sk, skb);
+//	gmtp_v4_ctl_send_reset(sk, skb);
 discard:
-	gmtp_print_debug("discard");
 	kfree_skb(skb);
 	return 0;
 
@@ -397,9 +588,34 @@ static int gmtp_v4_init_sock(struct sock *sk) {
 	return err;
 }
 
-static struct request_sock_ops gmtp_request_sock_ops __read_mostly = {
-	.family = PF_INET,
-	.obj_size = sizeof(struct gmtp_request_sock)
+/* Networking protocol blocks we attach to sockets.
+ * socket layer -> transport layer interface (struct proto)
+ * transport -> network interface is defined by (struct inet_proto)
+ */
+static struct proto gmtp_v4_prot = {
+	.name = "GMTP",
+	.owner = THIS_MODULE,
+	.close = gmtp_close,
+	.connect = gmtp_v4_connect,
+	.disconnect = gmtp_disconnect,
+	.ioctl			= gmtp_ioctl,
+	.init = gmtp_v4_init_sock,
+//	.setsockopt		= gmtp_setsockopt,
+//	.getsockopt		= gmtp_getsockopt,
+//	.sendmsg		= gmtp_sendmsg,
+	.recvmsg		= gmtp_recvmsg,
+	.backlog_rcv = gmtp_v4_do_rcv,
+	.hash = inet_hash,
+	.unhash = inet_unhash,
+	.accept = inet_csk_accept,
+	.get_port = inet_csk_get_port,
+//	.shutdown		= gmtp_shutdown,
+//	.destroy		= gmtp_destroy_sock,
+	.max_header = MAX_GMTP_HEADER,
+	.obj_size = sizeof(struct gmtp_sock),
+	.slab_flags = SLAB_DESTROY_BY_RCU,
+	.rsk_prot = &gmtp_request_sock_ops,
+	.h.hashinfo = &gmtp_hashinfo,
 };
 
 /**
@@ -414,37 +630,9 @@ static struct request_sock_ops gmtp_request_sock_ops __read_mostly = {
 static const struct net_protocol gmtp_protocol = {
 	.handler = gmtp_v4_rcv,
 	.err_handler = gmtp_v4_err,
-	.no_policy = 1, .netns_ok = 1, //mandatory
-	.icmp_strict_tag_validation = 1, };
-
-/* Networking protocol blocks we attach to sockets.
- * socket layer -> transport layer interface (struct proto)
- * transport -> network interface is defined by (struct inet_proto)
- */
-static struct proto gmtp_v4_prot = {
-	.name = "GMTP",
-	.owner = THIS_MODULE,
-	.close = gmtp_close,
-	.connect = gmtp_v4_connect,
-	.disconnect = gmtp_disconnect,
-//	.ioctl			= gmtp_ioctl,
-	.init = gmtp_v4_init_sock,
-//	.setsockopt		= gmtp_setsockopt,
-//	.getsockopt		= gmtp_getsockopt,
-//	.sendmsg		= gmtp_sendmsg,
-//	.recvmsg		= gmtp_recvmsg,
-	.backlog_rcv = gmtp_v4_do_rcv,
-	.hash = inet_hash,
-	.unhash = inet_unhash,
-	.accept = inet_csk_accept,
-	.get_port = inet_csk_get_port,
-//	.shutdown		= gmtp_shutdown,
-//	.destroy		= gmtp_destroy_sock,
-	.max_header = MAX_GMTP_HEADER,
-	.obj_size = sizeof(struct gmtp_sock),
-	.slab_flags = SLAB_DESTROY_BY_RCU,
-	.rsk_prot = &gmtp_request_sock_ops,
-	.h.hashinfo = &gmtp_hashinfo,
+	.no_policy = 1,
+	.netns_ok = 1, //mandatory
+	.icmp_strict_tag_validation = 1,
 };
 
 /**
