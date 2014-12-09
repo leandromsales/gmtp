@@ -215,6 +215,8 @@ static int gmtp_v4_send_response(struct sock *sk, struct request_sock *req)
 	struct dst_entry *dst;
 	struct flowi4 fl4;
 
+	gmtp_print_debug("gmtp_v4_send_response");
+
 	dst = inet_csk_route_req(sk, &fl4, req);
 	if (dst == NULL)
 		goto out;
@@ -223,10 +225,6 @@ static int gmtp_v4_send_response(struct sock *sk, struct request_sock *req)
 
 	if (skb != NULL) {
 		const struct inet_request_sock *ireq = inet_rsk(req);
-		struct gmtp_hdr *dh = gmtp_hdr(skb);
-
-//		dh->dccph_checksum = dccp_v4_csum_finish(skb, ireq->ir_loc_addr,
-//							      ireq->ir_rmt_addr);
 		err = ip_build_and_send_pkt(skb, sk, ireq->ir_loc_addr,
 					    ireq->ir_rmt_addr,
 					    ireq->opt);
@@ -234,6 +232,7 @@ static int gmtp_v4_send_response(struct sock *sk, struct request_sock *req)
 	}
 
 out:
+	gmtp_print_debug("returns: %d", err);
 	dst_release(dst);
 	return err;
 }
@@ -336,11 +335,9 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 
 	if (!xfrm4_policy_check(sk, XFRM_POLICY_IN, skb))
 		goto discard_and_relse;
-	nf_reset(skb);
 
-	int ret = sk_receive_skb(sk, skb, 1);
-	gmtp_print_debug("sk_receive_skb return: %d", ret);
-	return ret;
+	nf_reset(skb);
+	return sk_receive_skb(sk, skb, 1);
 
 no_gmtp_socket:
 	gmtp_print_debug("no_gmtp_socket");
@@ -378,80 +375,82 @@ static struct request_sock_ops gmtp_request_sock_ops __read_mostly = {
 
 int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
 {
-//	struct inet_request_sock *ireq;
-//	struct request_sock *req;
+	struct inet_request_sock *ireq;
+	struct request_sock *req;
 //	struct gmtp_request_sock *dreq;
 //	//const __be32 service = dccp_hdr_request(skb)->dccph_req_service;
-//	struct gmtp_skb_cb *dcb = GMTP_SKB_CB(skb);
+	struct gmtp_skb_cb *dcb = GMTP_SKB_CB(skb);
 
 	gmtp_print_debug("gmtp_v4_conn_request");
 
-	/* Never answer to DCCP_PKT_REQUESTs send to broadcast or multicast */
-//	if (skb_rtable(skb)->rt_flags & (RTCF_BROADCAST | RTCF_MULTICAST))
-//		return 0;	/* discard, don't send a reset here */
-//
+	/* Never answer to GMTP_PKT_REQUESTs send to broadcast or multicast */
+	if (skb_rtable(skb)->rt_flags & (RTCF_BROADCAST | RTCF_MULTICAST))
+		return 0;	/* discard, don't send a reset here */
+
 ////	if (dccp_bad_service_code(sk, service)) {
 ////		dcb->dccpd_reset_code = DCCP_RESET_CODE_BAD_SERVICE_CODE;
 ////		goto drop;
 ////	}
-//	/*
-//	 * TW buckets are converted to open requests without
-//	 * limitations, they conserve resources and peer is
-//	 * evidently real one.
-//	 */
-//	dcb->gmtpd_reset_code = GMTP_RESET_CODE_TOO_BUSY;
-//	if (inet_csk_reqsk_queue_is_full(sk))
-//		goto drop;
-//
-//	/*
-//	 * Accept backlog is full. If we have already queued enough
-//	 * of warm entries in syn queue, drop request. It is better than
-//	 * clogging syn queue with openreqs with exponentially increasing
-//	 * timeout.
-//	 */
-//	if (sk_acceptq_is_full(sk) && inet_csk_reqsk_queue_young(sk) > 1)
-//		goto drop;
-//
-//	req = inet_reqsk_alloc(&gmtp_request_sock_ops);
-//	if (req == NULL)
-//		goto drop;
-//
-////	if (gmtp_reqsk_init(req, gmtp_sk(sk), skb))
-////		goto drop_and_free;
-//
-////	dreq = gmtp_rsk(req);
-////	if (gmtp_parse_options(sk, dreq, skb))
-////		goto drop_and_free;
-//
-//	if (security_inet_conn_request(sk, skb, req))
-//		goto drop_and_free;
-//
-//	ireq = inet_rsk(req);
-//	ireq->ir_loc_addr = ip_hdr(skb)->daddr;
-//	ireq->ir_rmt_addr = ip_hdr(skb)->saddr;
-//
-//	/*
-//	 * Step 3: Process LISTEN state
-//	 *
-//	 * Set S.ISR, S.GSR, S.SWL, S.SWH from packet or Init Cookie
-//	 *
-//	 * Setting S.SWL/S.SWH to is deferred to dccp_create_openreq_child().
-//	 */
-////	dreq->dreq_isr	   = dcb->dccpd_seq;
-////	dreq->dreq_gsr	   = dreq->dreq_isr;
-////	dreq->dreq_iss	   = dccp_v4_init_sequence(skb);
-////	dreq->dreq_gss     = dreq->dreq_iss;
-////	dreq->dreq_service = service;
-//
-//	if (gmtp_v4_send_response(sk, req))
-//		goto drop_and_free;
-//
-//	inet_csk_reqsk_queue_hash_add(sk, req, GMTP_TIMEOUT_INIT);
-//	return 0;
+	/*
+	 * TW buckets are converted to open requests without
+	 * limitations, they conserve resources and peer is
+	 * evidently real one.
+	 */
+	dcb->gmtpd_reset_code = GMTP_RESET_CODE_TOO_BUSY;
+	if (inet_csk_reqsk_queue_is_full(sk))
+		goto drop;
 
-//drop_and_free:
-//	reqsk_free(req);
-//drop:
+	/*
+	 * Accept backlog is full. If we have already queued enough
+	 * of warm entries in syn queue, drop request. It is better than
+	 * clogging syn queue with openreqs with exponentially increasing
+	 * timeout.
+	 */
+	if (sk_acceptq_is_full(sk) && inet_csk_reqsk_queue_young(sk) > 1)
+		goto drop;
+
+	req = inet_reqsk_alloc(&gmtp_request_sock_ops);
+	gmtp_print_debug("req: %p", req);
+	if (req == NULL)
+		goto drop;
+
+//	if (gmtp_reqsk_init(req, gmtp_sk(sk), skb))
+//		goto drop_and_free;
+//
+//	dreq = gmtp_rsk(req);
+//	if (gmtp_parse_options(sk, dreq, skb))
+//		goto drop_and_free;
+//
+	if (security_inet_conn_request(sk, skb, req))
+		goto drop_and_free;
+
+	ireq = inet_rsk(req);
+	gmtp_print_debug("ireq: %p", ireq);
+	ireq->ir_loc_addr = ip_hdr(skb)->daddr;
+	ireq->ir_rmt_addr = ip_hdr(skb)->saddr;
+
+	/*
+	 * Step 3: Process LISTEN state
+	 *
+	 * Set S.ISR, S.GSR, S.SWL, S.SWH from packet or Init Cookie
+	 *
+	 * Setting S.SWL/S.SWH to is deferred to dccp_create_openreq_child().
+	 */
+//	dreq->dreq_isr	   = dcb->dccpd_seq;
+//	dreq->dreq_gsr	   = dreq->dreq_isr;
+//	dreq->dreq_iss	   = dccp_v4_init_sequence(skb);
+//	dreq->dreq_gss     = dreq->dreq_iss;
+//	dreq->dreq_service = service;
+
+	if (gmtp_v4_send_response(sk, req))
+		goto drop_and_free;
+
+	//inet_csk_reqsk_queue_hash_add(sk, req, GMTP_TIMEOUT_INIT); //FIXME <- Tt crashs gmtp
+	return 0;
+
+drop_and_free:
+//	reqsk_free(req); //FIXME <- It crashs gmtp (req != null)
+drop:
 //	DCCP_INC_STATS_BH(DCCP_MIB_ATTEMPTFAILS);
 	return 0;
 }
@@ -543,7 +542,7 @@ int gmtp_v4_do_rcv(struct sock *sk, struct sk_buff *skb)
 	return 0;
 
 reset:
-//	gmtp_v4_ctl_send_reset(sk, skb);
+	gmtp_v4_ctl_send_reset(sk, skb);
 discard:
 	kfree_skb(skb);
 	return 0;
