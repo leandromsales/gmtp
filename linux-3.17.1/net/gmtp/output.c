@@ -82,9 +82,8 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 		}
 
 		//TODO GMTP insert options here!
-		//TODO Build GMTP header here!
+		//TODO Build complete GMTP header here!
 		gh = gmtp_zeroed_hdr(skb, gmtp_header_size);
-		gmtp_print_debug("gh = %p", gh);
 
 		gh->version = 1;
 		gh->type = gcb->gmtpd_type;
@@ -93,7 +92,6 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 		gh->hdrlen = gmtp_header_size;
 
 		//TODO set sequence numbers and ack...
-
 		switch (gcb->gmtpd_type) {
 		case GMTP_PKT_REQUEST:
 			//TODO treat request
@@ -105,7 +103,7 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 //		if (set_ack)
 //			dccp_event_ack_sent(sk);
 
-		gmtp_print_debug("Calling: icsk->icsk_af_ops->queue_xmit(sk, skb, &inet->cork.fl)");
+		gmtp_print_debug("skb header size: %d", skb_headlen(skb));
 		err = icsk->icsk_af_ops->queue_xmit(sk, skb, &inet->cork.fl);
 		return net_xmit_eval(err);
 
@@ -162,7 +160,6 @@ EXPORT_SYMBOL_GPL(gmtp_connect);
 struct sk_buff *gmtp_make_response(struct sock *sk, struct dst_entry *dst,
 				   struct request_sock *req)
 {
-
 	struct gmtp_hdr *dh;
 	struct gmtp_request_sock *dreq;
 	const u32 gmtp_header_size = sizeof(struct gmtp_hdr);/* +
@@ -187,6 +184,9 @@ struct sk_buff *gmtp_make_response(struct sock *sk, struct dst_entry *dst,
 	GMTP_SKB_CB(skb)->gmtpd_type = GMTP_PKT_RESPONSE;
 	GMTP_SKB_CB(skb)->gmtpd_seq  = 1; //dreq->dreq_gss;
 
+	/* Build header */
+	dh = gmtp_zeroed_hdr(skb, gmtp_header_size);
+
 	dh->sport	= htons(inet_rsk(req)->ir_num);
 	dh->dport	= inet_rsk(req)->ir_rmt_port;
 	dh->hdrlen	= (gmtp_header_size); /*+
@@ -200,6 +200,8 @@ struct sk_buff *gmtp_make_response(struct sock *sk, struct dst_entry *dst,
 	/* We use `acked' to remember that a Response was already sent. */
 	inet_rsk(req)->acked = 1;
 //	DCCP_INC_STATS(DCCP_MIB_OUTSEGS);
+
+	gmtp_print_debug("Response skb header size: %d", skb_headlen(skb));
 	return skb;
 //response_failed:
 //	kfree_skb(skb);

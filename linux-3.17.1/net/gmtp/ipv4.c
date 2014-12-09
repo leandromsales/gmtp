@@ -148,16 +148,25 @@ void gmtp_v4_err(struct sk_buff *skb, u32 info)
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_err);
 
+/**
+ *	dccp_invalid_packet  -  check for malformed packets
+ *	Packets that fail these checks are ignored and do not receive Resets.
+ */
 int gmtp_invalid_packet(struct sk_buff *skb)
 {
 	const struct gmtp_hdr *gh;
 
 	//TODO Verify each packet
 	gmtp_print_debug("Starting gmtp_invalid_packet checking");
+	gmtp_print_debug("sizeof(struct gmtp_hdr): %d", sizeof(struct gmtp_hdr));
+	gmtp_print_debug("skb size: %d", skb_headlen(skb));
+
 
 	if (skb->pkt_type != PACKET_HOST)
 		return 1;
 
+	/* If the packet is shorter than sizeof(struct gmtp_hdr),
+	 * drop packet and return */
 	if (!pskb_may_pull(skb, sizeof(struct gmtp_hdr))) {
 		gmtp_print_warning("pskb_may_pull failed\n");
 		return 1;
@@ -222,17 +231,17 @@ static int gmtp_v4_send_response(struct sock *sk, struct request_sock *req)
 		goto out;
 
 	skb = gmtp_make_response(sk, dst, req);
-
 	if (skb != NULL) {
 		const struct inet_request_sock *ireq = inet_rsk(req);
 		err = ip_build_and_send_pkt(skb, sk, ireq->ir_loc_addr,
 					    ireq->ir_rmt_addr,
 					    ireq->opt);
+		gmtp_print_debug("response skb header size: %d", skb_headlen(skb));
 		err = net_xmit_eval(err);
 	}
 
 out:
-	gmtp_print_debug("returns: %d", err);
+	gmtp_print_debug("return: %d", err);
 	dst_release(dst);
 	return err;
 }
@@ -246,7 +255,7 @@ static void gmtp_v4_ctl_send_reset(struct sock *sk, struct sk_buff *rxskb)
 	struct net *net = dev_net(skb_dst(rxskb)->dev);
 	struct sock *ctl_sk = net->gmtp.v4_ctl_sk;
 
-	gmtp_print_debug("gmtp_v4_ctl_send_reset: not implemented...");
+	gmtp_print_debug("gmtp_v4_ctl_send_reset");
 
 	/* Never send a reset in response to a reset. */
 	if (gmtp_hdr(rxskb)->type == GMTP_PKT_RESET)
@@ -366,10 +375,16 @@ discard_and_relse:
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_rcv);
 
+static void gmtp_v4_reqsk_destructor(struct request_sock *req)
+{
+	kfree(inet_rsk(req)->opt);
+}
+
 static struct request_sock_ops gmtp_request_sock_ops __read_mostly = {
 	.family = PF_INET,
 	.obj_size = sizeof(struct gmtp_request_sock),
 	.rtx_syn_ack	= gmtp_v4_send_response,
+	.destructor	= gmtp_v4_reqsk_destructor,
 	.send_reset	= gmtp_v4_ctl_send_reset,
 };
 
@@ -446,10 +461,10 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
 		goto drop_and_free;
 
 	//inet_csk_reqsk_queue_hash_add(sk, req, GMTP_TIMEOUT_INIT); //FIXME <- Tt crashs gmtp
-	return 0;
+//	return 0;
 
 drop_and_free:
-//	reqsk_free(req); //FIXME <- It crashs gmtp (req != null)
+	reqsk_free(req);
 drop:
 //	DCCP_INC_STATS_BH(DCCP_MIB_ATTEMPTFAILS);
 	return 0;

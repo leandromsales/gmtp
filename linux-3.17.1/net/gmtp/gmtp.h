@@ -28,9 +28,9 @@ extern struct inet_hashinfo gmtp_hashinfo;
 #define gmtp_print_error(fmt, args...) printk(KERN_ERR GMTP_ERROR fmt \
 		"\n", __FUNCTION__, __LINE__, __FILE__, ##args)
 
+#define MAX_GMTP_HEADER (2047 * sizeof(uint32_t))
 #define MAX_GMTP_SPECIFIC_HEADER (8 * sizeof(uint32_t))
-#define MAX_GMTP_VARIABLE_HEADER (2047 * sizeof(uint32_t))
-#define MAX_GMTP_HEADER (MAX_GMTP_SPECIFIC_HEADER + MAX_GMTP_VARIABLE_HEADER)
+#define MAX_GMTP_VARIABLE_HEADER (MAX_GMTP_HEADER - MAX_GMTP_SPECIFIC_HEADER)
 
 /* RFC ????,  initial RTO value */
 #define GMTP_TIMEOUT_INIT ((unsigned int)(3 * HZ))
