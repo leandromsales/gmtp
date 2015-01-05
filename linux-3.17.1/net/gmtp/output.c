@@ -91,13 +91,6 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 		gh->dport = inet->inet_dport;
 		gh->hdrlen = gmtp_header_size;
 
-		//TODO set sequence numbers and ack...
-		switch (gcb->gmtpd_type) {
-		case GMTP_PKT_REQUEST:
-			//TODO treat request
-			break;
-		}
-
 		//If protocol has checksum... calculate here...
 		//DCCP timer...
 //		if (set_ack)

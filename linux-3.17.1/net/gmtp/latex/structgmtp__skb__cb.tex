@@ -1,0 +1,38 @@
+\hypertarget{structgmtp__skb__cb}{\section{gmtp\-\_\-skb\-\_\-cb Struct Reference}
+\label{structgmtp__skb__cb}\index{gmtp\-\_\-skb\-\_\-cb@{gmtp\-\_\-skb\-\_\-cb}}
+}
+
+
+{\ttfamily \#include $<$gmtp.\-h$>$}
+
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{structgmtp__skb__cb_a40635375f5d8223a8de70b79833c32c2}{\-\_\-\-\_\-u8 {\bfseries gmtpd\-\_\-type}\-:5}\label{structgmtp__skb__cb_a40635375f5d8223a8de70b79833c32c2}
+
+\item 
+\hypertarget{structgmtp__skb__cb_ac2ed3bbe3289ce05b2fa7847c5e67da6}{\-\_\-\-\_\-u64 {\bfseries gmtpd\-\_\-seq}}\label{structgmtp__skb__cb_ac2ed3bbe3289ce05b2fa7847c5e67da6}
+
+\item 
+\hypertarget{structgmtp__skb__cb_a5f970494c68fc06c84823c233ed9d6a8}{\-\_\-\-\_\-u8 {\bfseries gmtpd\-\_\-reset\-\_\-code}}\label{structgmtp__skb__cb_a5f970494c68fc06c84823c233ed9d6a8}
+
+\item 
+\hypertarget{structgmtp__skb__cb_a766db441c404018311173c1171ef917a}{\-\_\-\-\_\-u8 {\bfseries gmtpd\-\_\-reset\-\_\-data} \mbox{[}3\mbox{]}}\label{structgmtp__skb__cb_a766db441c404018311173c1171ef917a}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\hyperlink{protocolThis-p}{This} is the control buffer. It is free to use by any layer. \hyperlink{protocolThis-p}{This} is an opaque area used to store private information.
+
+struct sk\-\_\-buff \{ (...) char cb\mbox{[}48\mbox{]} \}
+
+\hyperlink{structgmtp__skb__cb}{gmtp\-\_\-skb\-\_\-cb} -\/ G\-M\-T\-P per-\/packet control information
+
+\-: one of dccp\-\_\-pkt\-\_\-type (or unknown) \-: sequence number \-: one of gmtp\-\_\-reset\-\_\-codes \-: Data1..3 fields (depend on )
+
+\hyperlink{protocolThis-p}{This} is used for transmission as well as for reception. 
+
+The documentation for this struct was generated from the following file\-:\begin{DoxyCompactItemize}
+\item 
+gmtp.\-h\end{DoxyCompactItemize}
