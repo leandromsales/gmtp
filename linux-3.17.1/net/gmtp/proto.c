@@ -234,13 +234,6 @@ out:
 }
 EXPORT_SYMBOL_GPL(gmtp_recvmsg);
 
-int gmtp_do_rcv(struct sock *sk, struct sk_buff *skb)
-{
-	gmtp_print_debug("gmtp_do_rcv");
-	return 0;
-}
-EXPORT_SYMBOL_GPL(gmtp_do_rcv);
-
 void gmtp_shutdown(struct sock *sk, int how)
 {
 	gmtp_print_debug("gmtp_shutdown");

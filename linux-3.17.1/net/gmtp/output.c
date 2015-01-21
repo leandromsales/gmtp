@@ -182,6 +182,9 @@ struct sk_buff *gmtp_make_response(struct sock *sk, struct dst_entry *dst,
 
 	dh->sport	= htons(inet_rsk(req)->ir_num);
 	dh->dport	= inet_rsk(req)->ir_rmt_port;
+
+	gmtp_print_debug("Destiny port: %d", dh->dport);
+
 	dh->hdrlen	= (gmtp_header_size); /*+
 			   DCCP_SKB_CB(skb)->dccpd_opt_len) / 4; */
 	dh->type	= GMTP_PKT_RESPONSE;
@@ -194,7 +197,7 @@ struct sk_buff *gmtp_make_response(struct sock *sk, struct dst_entry *dst,
 	inet_rsk(req)->acked = 1;
 //	DCCP_INC_STATS(DCCP_MIB_OUTSEGS);
 
-	gmtp_print_debug("Response skb header size: %d", skb_headlen(skb));
+	gmtp_print_debug("Response skb header size (GMTP): %u", skb_headlen(skb));
 	return skb;
 //response_failed:
 //	kfree_skb(skb);

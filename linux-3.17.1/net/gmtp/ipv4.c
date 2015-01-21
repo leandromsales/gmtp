@@ -149,7 +149,7 @@ void gmtp_v4_err(struct sk_buff *skb, u32 info)
 EXPORT_SYMBOL_GPL(gmtp_v4_err);
 
 /**
- *	dccp_invalid_packet  -  check for malformed packets
+ *	gmtp_invalid_packet  -  check for malformed packets
  *	Packets that fail these checks are ignored and do not receive Resets.
  */
 int gmtp_invalid_packet(struct sk_buff *skb)
@@ -157,7 +157,7 @@ int gmtp_invalid_packet(struct sk_buff *skb)
 	const struct gmtp_hdr *gh;
 
 	//TODO Verify each packet
-	gmtp_print_debug("Starting gmtp_invalid_packet checking");
+	gmtp_print_debug("Starting packet checking");
 	gmtp_print_debug("sizeof(struct gmtp_hdr): %d", sizeof(struct gmtp_hdr));
 	gmtp_print_debug("skb size: %d", skb_headlen(skb));
 
@@ -184,7 +184,7 @@ int gmtp_invalid_packet(struct sk_buff *skb)
 	 * (This step is completed in the AF-dependent functions.) */
 	skb->csum = skb_checksum(skb, 0, skb->len, 0);
 
-	gmtp_print_debug("Finish gmtp_invalid_packet checking");
+	gmtp_print_debug("Valid packet! - OK!");
 
 	return 0;
 }
@@ -236,7 +236,7 @@ static int gmtp_v4_send_response(struct sock *sk, struct request_sock *req)
 		err = ip_build_and_send_pkt(skb, sk, ireq->ir_loc_addr,
 					    ireq->ir_rmt_addr,
 					    ireq->opt);
-		gmtp_print_debug("response skb header size: %d", skb_headlen(skb));
+		gmtp_print_debug("Response skb header size (IP): %d", skb_headlen(skb));
 		err = net_xmit_eval(err);
 	}
 
@@ -392,7 +392,7 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
 {
 	struct inet_request_sock *ireq;
 	struct request_sock *req;
-//	struct gmtp_request_sock *dreq;
+	struct gmtp_request_sock *dreq;
 //	//const __be32 service = dccp_hdr_request(skb)->dccph_req_service;
 	struct gmtp_skb_cb *dcb = GMTP_SKB_CB(skb);
 
@@ -425,14 +425,17 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
 		goto drop;
 
 	req = inet_reqsk_alloc(&gmtp_request_sock_ops);
-	gmtp_print_debug("req: %p", req);
 	if (req == NULL)
 		goto drop;
 
-//	if (gmtp_reqsk_init(req, gmtp_sk(sk), skb))
-//		goto drop_and_free;
-//
-//	dreq = gmtp_rsk(req);
+	if (gmtp_reqsk_init(req, gmtp_sk(sk), skb))
+	{
+		gmtp_print_debug("if(gmtp_reqsk_init)");
+		goto drop_and_free;
+	}
+
+	gmtp_print_debug("dreq = gmtp_rsk(req);");
+	dreq = gmtp_rsk(req);
 //	if (gmtp_parse_options(sk, dreq, skb))
 //		goto drop_and_free;
 //
