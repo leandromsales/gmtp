@@ -8,6 +8,7 @@ IPPROTO_GMTP = 254
 
 print("Starting server...")
 address = (socket.gethostname(), 12345)
+#address = ("192.168.1.106", 12345)
 print(address)
 
 # Create sockets

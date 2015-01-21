@@ -70,6 +70,9 @@ struct sk_buff *gmtp_make_response(struct sock *sk, struct dst_entry *dst,
 struct sk_buff *gmtp_ctl_make_reset(struct sock *sk,
 		struct sk_buff *rcv_skb);
 
+int gmtp_reqsk_init(struct request_sock *rq, struct gmtp_sock const *gp,
+		    struct sk_buff const *skb);
+
 /**
  * This is the control buffer. It is free to use by any layer.
  * This is an opaque area used to store private information.

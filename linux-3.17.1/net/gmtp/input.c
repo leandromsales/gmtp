@@ -111,7 +111,6 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 				gmtp_print_debug("inet_csk(sk)->icsk_af_ops->conn_request(sk, skb) < 0");
 				return 1;
 			}
-			gmtp_print_debug("goto discard...");
 			goto discard;
 		}
 		if (gh->type == GMTP_PKT_RESET) {
