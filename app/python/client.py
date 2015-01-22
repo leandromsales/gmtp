@@ -12,7 +12,7 @@ def get_ip_address(ifname):
 
 IPPROTO_GMTP = 254
 
-ip_address = get_ip_address('wlan0')
+ip_address = get_ip_address('eth0')
 #ip_address = "172.20.9.89"
 
 address = (ip_address, 12345)

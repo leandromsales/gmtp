@@ -13,7 +13,7 @@ def get_ip_address(ifname):
 SOCK_GMTP = 7
 IPPROTO_GMTP = 254
 
-ip_address = get_ip_address('wlan0')
+ip_address = get_ip_address('eth0')
 
 print("Starting server... at ", ip_address)
 address = (ip_address, 12345)
