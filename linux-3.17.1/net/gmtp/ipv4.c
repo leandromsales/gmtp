@@ -41,6 +41,7 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len) {
 	struct ip_options_rcu *inet_opt;
 
 	gmtp_print_debug("gmtp_v4_connect");
+    gmtp_print_debug("endereco %s\n", uaddr->sa_data);
 
 	gp->gmtps_role = GMTP_ROLE_CLIENT;
 
@@ -325,7 +326,7 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 	 *	If no socket ...
 	 */
 	if (sk == NULL) {
-		gmtp_print_warning("failed to look up flow ID in table and "
+		gmtp_print_debug("failed to look up flow ID in table and "
 			      "get corresponding socket\n");
 		goto no_gmtp_socket;
 	}
