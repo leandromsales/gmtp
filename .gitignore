@@ -19,6 +19,9 @@
 *.order
 *.save
 
+# Linux Kernel
+linux-3.17.1/Documentation/*
+
 # Latex
 *.aux
 *.bbl
