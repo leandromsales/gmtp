@@ -70,8 +70,8 @@ struct sk_buff *gmtp_make_response(struct sock *sk, struct dst_entry *dst,
 struct sk_buff *gmtp_ctl_make_reset(struct sock *sk,
 		struct sk_buff *rcv_skb);
 
-int gmtp_reqsk_init(struct request_sock *rq, struct gmtp_sock const *gp,
-		    struct sk_buff const *skb);
+int gmtp_reqsk_init(struct request_sock *rq, struct gmtp_sock const *gp, struct sk_buff const *skb);
+void gmtp_send_ack(struct sock *sk);
 
 /**
  * This is the control buffer. It is free to use by any layer.

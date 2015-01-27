@@ -133,7 +133,6 @@ int inet_gmtp_listen(struct socket *sock, int backlog)
 			goto out;
 	}
 	err = 0;
-
 out:
 	release_sock(sk);
 	return err;
