@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import sys
 import socket
 import fcntl
 import struct
@@ -14,9 +15,15 @@ SOCK_GMTP = 7
 IPPROTO_GMTP = 254
 
 ip = get_ip_address('eth0')
+default_port = 12345
+default_address = (ip, default_port)
 
-print("Starting server... at ", ip)
-address = (ip, 12345)
+if(len(sys.argv) > 1):
+    address = (ip, sys.argv[1])
+else:
+    address = default_address
+
+print("Starting server... at ", str(address))
 
 # Create sockets
 server_socket = socket.socket(socket.AF_INET, SOCK_GMTP, IPPROTO_GMTP)

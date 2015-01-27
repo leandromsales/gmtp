@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import sys
 import socket
 import fcntl
 import struct
@@ -13,19 +14,20 @@ def get_ip_address(ifname):
 IPPROTO_GMTP = 254
 
 default_ip = get_ip_address('eth0')
-default_address = (ip_default, 12345)
+default_port = 12345
+default_address = (default_ip, default_port)
 
-print(sys.argv)
 if(len(sys.argv) > 2):
     address = (sys.argv[1], int(sys.argv[2]))
 elif(len(sys.argv) > 1):
-    address = (sys.argv[1], 12345)
+    address = (sys.argv[1], default_port)
 else:
     address = default_address
 
 # Create sockets
 client_socket = socket.socket(socket.AF_INET, 7, IPPROTO_GMTP)
 print(client_socket)
+print(address)
 
 client_socket.connect(address)
 
