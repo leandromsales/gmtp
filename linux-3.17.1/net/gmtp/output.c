@@ -5,7 +5,10 @@
 #include <linux/types.h>
 
 #include <net/inet_sock.h>
+#include <net/tcp.h>
 #include <net/sock.h>
+#include <linux/gmtp.h>
+#include <uapi/linux/gmtp.h>
 #include "gmtp.h"
 
 /* enqueue @skb on sk_send_head for retransmission, return clone to send now */
@@ -53,7 +56,7 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 		case GMTP_PKT_DATA:
 			set_ack = 0;
 			/* fall through */
-		case GMTP_PKT_ACK:
+		// case GMTP_PKT_ACK:
 		case GMTP_PKT_RESET:
 			break;
 
@@ -261,31 +264,28 @@ EXPORT_SYMBOL_GPL(gmtp_ctl_make_reset);
 
 void gmtp_send_ack(struct sock *sk)
 {
+    gmtp_print_function();
 	/* If we have been reset, we may not send again. */
-    /****
-	if (sk->sk_state != DCCP_CLOSED) {
+	if (sk->sk_state != GMTP_CLOSED) {
 		struct sk_buff *skb = alloc_skb(sk->sk_prot->max_header,
 						GFP_ATOMIC);
 
 		if (skb == NULL) {
 			inet_csk_schedule_ack(sk);
 			inet_csk(sk)->icsk_ack.ato = TCP_ATO_MIN;
-			inet_csk_reset_xmit_timer(sk, ICSK_TIME_DACK,
-						  TCP_DELACK_MAX,
-						  DCCP_RTO_MAX);
+			// inet_csk_reset_xmit_timer(sk, ICSK_TIME_DACK,
+			//			  TCP_DELACK_MAX,
+			//			  DCCP_RTO_MAX);
 			return;
 		}
 
-     ****/
-		/* Reserve space for headers */
-    /****
+	/* Reserve space for headers */
 		skb_reserve(skb, sk->sk_prot->max_header);
-		DCCP_SKB_CB(skb)->dccpd_type = DCCP_PKT_ACK;
-		dccp_transmit_skb(sk, skb);
+		GMTP_SKB_CB(skb)->gmtpd_type = GMTP_PKT_ACK;
+        gmtp_print_debug("Enviando ACK");
+		gmtp_transmit_skb(sk, skb);
 	}
-    ****/
 }
-
 EXPORT_SYMBOL_GPL(gmtp_send_ack);
 
 

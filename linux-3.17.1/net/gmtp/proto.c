@@ -347,6 +347,7 @@ static int __init gmtp_init(void)
 {
 	int rc;
 	gmtp_print_debug("GMTP init!");
+    gmtp_print_function();
 	rc = gmtp_init_hashinfo();
 	return rc;
 }

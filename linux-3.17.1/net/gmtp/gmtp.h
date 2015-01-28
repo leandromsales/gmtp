@@ -27,10 +27,12 @@ extern struct inet_hashinfo gmtp_hashinfo;
 		"\n", __FUNCTION__, __LINE__, __FILE__, ##args)
 #define gmtp_print_error(fmt, args...) printk(KERN_ERR GMTP_ERROR fmt \
 		"\n", __FUNCTION__, __LINE__, __FILE__, ##args)
+#define gmtp_print_function() gmtp_print_debug("")
 
 #define MAX_GMTP_HEADER (2047 * sizeof(uint32_t))
 #define MAX_GMTP_SPECIFIC_HEADER (8 * sizeof(uint32_t))
 #define MAX_GMTP_VARIABLE_HEADER (MAX_GMTP_HEADER - MAX_GMTP_SPECIFIC_HEADER)
+
 
 /* RFC ????,  initial RTO value */
 #define GMTP_TIMEOUT_INIT ((unsigned int)(3 * HZ))
@@ -72,6 +74,7 @@ struct sk_buff *gmtp_ctl_make_reset(struct sock *sk,
 
 int gmtp_reqsk_init(struct request_sock *rq, struct gmtp_sock const *gp, struct sk_buff const *skb);
 void gmtp_send_ack(struct sock *sk);
+int gmtp_parse_options(struct sock *sk, struct gmtp_request_sock *dreq, struct sk_buff *skb);
 
 /**
  * This is the control buffer. It is free to use by any layer.
