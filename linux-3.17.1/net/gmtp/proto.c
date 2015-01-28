@@ -7,6 +7,7 @@
 #include <net/inet_hashtables.h>
 #include <net/sock.h>
 
+#include <linux/gmtp.h>
 #include "gmtp.h"
 
 struct inet_hashinfo gmtp_hashinfo;
@@ -64,14 +65,80 @@ const char *gmtp_packet_name(const int type)
 }
 EXPORT_SYMBOL_GPL(gmtp_packet_name);
 
+static const char *gmtp_state_name(const int state)
+{
+	static const char *const gmtp_state_names[] = {
+	[GMTP_OPEN]		= "OPEN",
+	[GMTP_REQUESTING]	= "REQUESTING",
+	[GMTP_LISTEN]		= "LISTEN",
+	[GMTP_RESPOND]		= "RESPOND",
+	[GMTP_ACTIVE_CLOSEREQ]	= "CLOSEREQ",
+	[GMTP_PASSIVE_CLOSE]	= "PASSIVE_CLOSE",
+	[GMTP_CLOSING]		= "CLOSING",
+	[GMTP_TIME_WAIT]	= "TIME_WAIT",
+	[GMTP_CLOSED]		= "CLOSED",
+	};
+
+	if (state >= GMTP_PKT_INVALID)
+		return "INVALID STATE!";
+	else
+		return gmtp_state_names[state];
+}
+EXPORT_SYMBOL_GPL(gmtp_state_name);
+
+static inline const char *gmtp_role(const struct sock *sk)
+{
+	switch (gmtp_sk(sk)->gmtps_role) {
+	case GMTP_ROLE_UNDEFINED: return "undefined";
+	case GMTP_ROLE_LISTEN:	  return "listen";
+	case GMTP_ROLE_SERVER:	  return "server";
+	case GMTP_ROLE_CLIENT:	  return "client";
+	}
+	return NULL;
+}
+
 void gmtp_set_state(struct sock *sk, const int state)
 {
-	gmtp_print_debug("gmtp_set_state");
+	const int oldstate = sk->sk_state;
 
-	if(!sk)
-		gmtp_print_warning("sk is NULL!");
-	else
-		sk->sk_state = state;
+	gmtp_print_function();
+	gmtp_print_debug("%s(%p)  %s  -->  %s\n", gmtp_role(sk), sk,
+			      gmtp_state_name(oldstate), gmtp_state_name(state));
+
+	if(state == oldstate)
+		gmtp_print_warning("new state == old state!");
+
+//	switch (state) {
+//	case GMTP_OPEN:
+//		if (oldstate != GMTP_OPEN)
+////			DCCP_INC_STATS(DCCP_MIB_CURRESTAB);
+//			;
+//		/* Client retransmits all Confirm options until entering OPEN */
+////		if (oldstate == DCCP_PARTOPEN)
+////			dccp_feat_list_purge(&dccp_sk(sk)->dccps_featneg);
+//		break;
+//	case GMTP_CLOSED:
+//		if (oldstate == GMTP_OPEN || oldstate == GMTP_ACTIVE_CLOSEREQ
+//				|| oldstate == GMTP_CLOSING)
+////			DCCP_INC_STATS(DCCP_MIB_ESTABRESETS);
+//			;
+//
+//		sk->sk_prot->unhash(sk);
+//		if (inet_csk(sk)->icsk_bind_hash != NULL
+//				&& !(sk->sk_userlocks & SOCK_BINDPORT_LOCK))
+//			inet_put_port(sk);
+//		/* fall through */
+//	default:
+//		if (oldstate == GMTP_OPEN)
+////			DCCP_DEC_STATS(DCCP_MIB_CURRESTAB);
+//			;
+//	}
+
+
+	/* Change state AFTER socket is unhashed to avoid closed
+	 * socket sitting in hash tables.
+	 */
+	sk->sk_state = state;
 }
 EXPORT_SYMBOL_GPL(gmtp_set_state);
 
@@ -80,7 +147,7 @@ int gmtp_init_sock(struct sock *sk, const __u8 ctl_sock_initialized)
 	struct gmtp_sock *gs = gmtp_sk(sk);
 //	struct inet_connection_sock *icsk = inet_csk(sk);
 
-	gmtp_print_debug("gmtp_init_sock");
+	gmtp_print_function();
 
 	sk->sk_state		= GMTP_CLOSED;
 
@@ -95,7 +162,7 @@ EXPORT_SYMBOL_GPL(gmtp_init_sock);
 void gmtp_destroy_sock(struct sock *sk)
 {
 	//TODO Implement gmtp_destroy_sock
-	gmtp_print_debug("gmtp_destroy_sock");
+	gmtp_print_function();
 }
 EXPORT_SYMBOL_GPL(gmtp_destroy_sock);
 
@@ -106,7 +173,7 @@ int inet_gmtp_listen(struct socket *sock, int backlog)
 	unsigned char old_state;
 	int err;
 
-	gmtp_print_debug("gmtp_listen");
+	gmtp_print_function();
 
 	lock_sock(sk);
 
@@ -142,14 +209,14 @@ EXPORT_SYMBOL_GPL(inet_gmtp_listen);
 //TODO Implement gmtp callbacks
 void gmtp_close(struct sock *sk, long timeout)
 {
-	gmtp_print_debug("gmtp_close");
+	gmtp_print_function();
 }
 EXPORT_SYMBOL_GPL(gmtp_close);
 
 
 int gmtp_disconnect(struct sock *sk, int flags)
 {
-	gmtp_print_debug("gmtp_disconnect");
+	gmtp_print_function();
 	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_disconnect);
@@ -158,7 +225,7 @@ int gmtp_ioctl(struct sock *sk, int cmd, unsigned long arg)
 {
 	int rc = -ENOTCONN;
 
-	gmtp_print_debug("gmtp_ioctl");
+	gmtp_print_function();
 	lock_sock(sk);
 
 	if (sk->sk_state == GMTP_LISTEN)
@@ -193,7 +260,7 @@ EXPORT_SYMBOL_GPL(gmtp_ioctl);
 int gmtp_getsockopt(struct sock *sk, int level, int optname,
 		char __user *optval, int __user *optlen)
 {
-	gmtp_print_debug("gmtp_getsockopt");
+	gmtp_print_function();
 	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_getsockopt);
@@ -201,7 +268,7 @@ EXPORT_SYMBOL_GPL(gmtp_getsockopt);
 int gmtp_sendmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 		size_t size)
 {
-	gmtp_print_debug("gmtp_sendmsg");
+	gmtp_print_function();
 	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_sendmsg);
@@ -209,7 +276,7 @@ EXPORT_SYMBOL_GPL(gmtp_sendmsg);
 int gmtp_setsockopt(struct sock *sk, int level, int optname,
 		char __user *optval, unsigned int optlen)
 {
-	gmtp_print_debug("gmtp_setsockopt");
+	gmtp_print_function();
 	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_setsockopt);
@@ -218,7 +285,7 @@ int gmtp_recvmsg(struct kiocb *iocb, struct sock *sk,
 		struct msghdr *msg, size_t len, int nonblock, int flags,
 		int *addr_len)
 {
-	gmtp_print_debug("gmtp_recvmsg");
+	gmtp_print_function();
 
 	lock_sock(sk);
 
@@ -235,7 +302,7 @@ EXPORT_SYMBOL_GPL(gmtp_recvmsg);
 
 void gmtp_shutdown(struct sock *sk, int how)
 {
-	gmtp_print_debug("gmtp_shutdown");
+	gmtp_print_function();
 	gmtp_print_debug("called shutdown(%x)", how);
 }
 EXPORT_SYMBOL_GPL(gmtp_shutdown);
@@ -250,7 +317,7 @@ static int gmtp_init_hashinfo(void)
 	int ehash_order, bhash_order, i;
 	int rc;
 
-	gmtp_print_debug("gmtp_init_hashinfo");
+	gmtp_print_function();
 
 	BUILD_BUG_ON(sizeof(struct gmtp_skb_cb) >
 	FIELD_SIZEOF(struct sk_buff, cb));
@@ -347,13 +414,14 @@ static int __init gmtp_init(void)
 {
 	int rc;
 	gmtp_print_debug("GMTP init!");
-    gmtp_print_function();
+	gmtp_print_function();
 	rc = gmtp_init_hashinfo();
 	return rc;
 }
 
 static void __exit gmtp_exit(void)
 {
+	gmtp_print_function();
 	gmtp_print_debug("GMTP exit!");
 	free_pages((unsigned long)gmtp_hashinfo.bhash,
 			get_order(gmtp_hashinfo.bhash_size *

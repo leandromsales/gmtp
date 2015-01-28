@@ -10,11 +10,23 @@
 #include <uapi/linux/gmtp.h>
 #include "gmtp.h"
 
+static void gmtp_enqueue_skb(struct sock *sk, struct sk_buff *skb)
+{
+	gmtp_print_function();
+//	__skb_pull(skb, dccp_hdr(skb)->dccph_doff * 4);
+	__skb_pull(skb, gmtp_hdr(skb)->hdrlen);
+	__skb_queue_tail(&sk->sk_receive_queue, skb);
+	skb_set_owner_r(skb, sk);
+	sk->sk_data_ready(sk);
+}
+
 static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 					       struct sk_buff *skb,
 					       const struct gmtp_hdr *dh,
 					       const unsigned int len)
 {
+	gmtp_print_function();
+
 	/*
 	 *  Step 4: Prepare sequence numbers in REQUEST
 	 *     If S.state == REQUEST,
@@ -87,7 +99,7 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 		 *	  / * Step 12 will send the Ack completing the
 		 *	      three-way handshake * /
 		 */
-		 // gmtp_set_state(sk, DCCP_PARTOPEN);
+//		 gmtp_set_state(sk, DCCP_PARTOPEN);
 
 		/* Make sure socket is routed, for correct metrics. */
 		icsk->icsk_af_ops->rebuild_header(sk);
@@ -138,6 +150,8 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 
 static void gmtp_rcv_reset(struct sock *sk, struct sk_buff *skb)
 {
+	//TODO Implement gmtp_rcv_reset
+	gmtp_print_function();
     /****
 	u16 err = dccp_reset_code_convert(dccp_hdr_reset(skb)->dccph_reset_code);
 
@@ -157,36 +171,157 @@ static void gmtp_rcv_reset(struct sock *sk, struct sk_buff *skb)
 
 static int gmtp_check_seqno(struct sock *sk, struct sk_buff *skb)
 {
-	gmtp_print_debug("gmtp_check_seqno");
+	gmtp_print_function();
 	return 0;
 }
 
-
 static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
-				  const struct gmtp_hdr *gh, const unsigned int len)
+				  const struct gmtp_hdr *dh, const unsigned int len)
 {
-	//struct gmtp_sock *dp = gmtp_sk(sk);
+	struct gmtp_sock *dp = gmtp_sk(sk);
 
-	gmtp_print_debug("__gmtp_rcv_established");
+	gmtp_print_function();
 
 	switch (gmtp_hdr(skb)->type) {
-        case GMTP_PKT_DATAACK:
-        case GMTP_PKT_DATA:
-            return 0;
-        case GMTP_PKT_ACK:
-            goto discard;
+	case GMTP_PKT_DATAACK:
+	case GMTP_PKT_DATA:
+//		/*
+//		 * FIXME: schedule DATA_DROPPED (RFC 4340, 11.7.2) if and when
+//		 * - sk_shutdown == RCV_SHUTDOWN, use Code 1, "Not Listening"
+//		 * - sk_receive_queue is full, use Code 2, "Receive Buffer"
+//		 */
+		gmtp_enqueue_skb(sk, skb);
+		return 0;
+	case GMTP_PKT_ACK:
+		goto discard;
+	case GMTP_PKT_RESET:
+		/*
+		 *  Step 9: Process Reset
+		 *	If P.type == Reset,
+		 *		Tear down connection
+		 *		S.state := TIMEWAIT
+		 *		Set TIMEWAIT timer
+		 *		Drop packet and return
+		 */
+		gmtp_rcv_reset(sk, skb);
+		return 0;
+//	case DCCP_PKT_CLOSEREQ:
+//		if (dccp_rcv_closereq(sk, skb))
+//			return 0;
+//		goto discard;
+//	case DCCP_PKT_CLOSE:
+//		if (dccp_rcv_close(sk, skb))
+//			return 0;
+//		goto discard;
+	case GMTP_PKT_REQUEST:
+		//TODO Treat Step 7.
+		/* Step 7
+		 *   or (S.is_server and P.type == Response)
+		 *   or (S.is_client and P.type == Request)
+		 *   or (S.state >= OPEN and P.type == Request
+		 *	and P.seqno >= S.OSR)
+		 *    or (S.state >= OPEN and P.type == Response
+		 *	and P.seqno >= S.OSR)
+		 *    or (S.state == RESPOND and P.type == Data),
+		 *  Send Sync packet acknowledging P.seqno
+		 *  Drop packet and return
+		 */
+		if (dp->gmtps_role != GMTP_ROLE_LISTEN)
+			goto send_sync;
+		goto check_seq;
+	case GMTP_PKT_RESPONSE:
+		if (dp->gmtps_role != GMTP_ROLE_CLIENT)
+			goto send_sync;
+check_seq:  ;
+//		if (dccp_delta_seqno(dp->dccps_osr,
+//				     DCCP_SKB_CB(skb)->dccpd_seq) >= 0) {
+send_sync:  ;
+//			dccp_send_sync(sk, DCCP_SKB_CB(skb)->dccpd_seq,
+//				       DCCP_PKT_SYNC);
+//		}
+//		break;
+//	case DCCP_PKT_SYNC:
+//		dccp_send_sync(sk, DCCP_SKB_CB(skb)->dccpd_seq,
+//			       DCCP_PKT_SYNCACK);
+//		/*
+//		 * From RFC 4340, sec. 5.7
+//		 *
+//		 * As with DCCP-Ack packets, DCCP-Sync and DCCP-SyncAck packets
+//		 * MAY have non-zero-length application data areas, whose
+//		 * contents receivers MUST ignore.
+//		 */
+		goto discard;
 	}
-
-	return 0;
+//
+//	DCCP_INC_STATS_BH(DCCP_MIB_INERRS);
 discard:
 	__kfree_skb(skb);
 	return 0;
 }
 
+static int gmtp_rcv_respond_partopen_state_process(struct sock *sk,
+						   struct sk_buff *skb,
+						   const struct gmtp_hdr *dh,
+						   const unsigned int len)
+{
+	struct gmtp_sock *dp = gmtp_sk(sk);
+//	u32 sample = dp->dccps_options_received.dccpor_timestamp_echo;
+	int queued = 0;
+
+	gmtp_print_function();
+
+	switch (dh->type) {
+	case GMTP_PKT_RESET:
+		gmtp_print_debug("GMTP_PKT_RESET");
+//		inet_csk_clear_xmit_timer(sk, ICSK_TIME_DACK);
+		break;
+	case GMTP_PKT_DATA:
+		if (sk->sk_state == GMTP_RESPOND)
+			break;
+	case GMTP_PKT_DATAACK:
+	case GMTP_PKT_ACK:
+//		/*
+//		 * FIXME: we should be reseting the PARTOPEN (DELACK) timer
+//		 * here but only if we haven't used the DELACK timer for
+//		 * something else, like sending a delayed ack for a TIMESTAMP
+//		 * echo, etc, for now were not clearing it, sending an extra
+//		 * ACK when there is nothing else to do in DELACK is not a big
+//		 * deal after all.
+//		 */
+//
+//		/* Stop the PARTOPEN timer */
+//		if (sk->sk_state == DCCP_PARTOPEN)
+//			inet_csk_clear_xmit_timer(sk, ICSK_TIME_DACK);
+//
+//		/* Obtain usec RTT sample from SYN exchange (used by TFRC). */
+//		if (likely(sample)) {
+//			long delta = dccp_timestamp() - sample;
+//
+//			dp->dccps_syn_rtt = dccp_sample_rtt(sk, 10 * delta);
+//		}
+//
+//		dp->dccps_osr = DCCP_SKB_CB(skb)->dccpd_seq;
+		gmtp_print_debug("GMTP_PKT_ACK... setting to OPEN");
+		gmtp_set_state(sk, GMTP_OPEN);
+		queued = 1;
+//
+//		if (dh->type == GMTP_PKT_DATAACK ||
+//		    dh->type == GMTP_PKT_DATA) {
+//			__gmtp_rcv_established(sk, skb, dh, len);
+//			queued = 1; /* packet was queued
+//				       (by __dccp_rcv_established) */
+//		}
+		break;
+	}
+	gmtp_print_debug("queued = %d", queued);
+	return queued;
+}
+
+
 int gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 			 const struct gmtp_hdr *gh, const unsigned int len)
 {
-	gmtp_print_debug("gmtp_rcv_established");
+	gmtp_print_function();
 
 	//Check sequence numbers...
 	if (gmtp_check_seqno(sk, skb))
@@ -213,7 +348,7 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 	const int old_state = sk->sk_state;
 	int queued = 0;
 
-	gmtp_print_debug("gmtp_rcv_state_process");
+	gmtp_print_function();
 
 	/*
 	 *  Step 3: Process LISTEN state
@@ -261,11 +396,11 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 
 	/* Step 6: Check sequence numbers (omitted in LISTEN/REQUEST state) */
 	//TODO check sequence number
-	if (sk->sk_state != GMTP_REQUESTING/* && dccp_check_seqno(sk, skb)*/)
-	{
-		gmtp_print_debug("state != GMTP_REQUESTING (goto discard...)");
-		goto discard;
-	}
+//	if (sk->sk_state != GMTP_REQUESTING/* && dccp_check_seqno(sk, skb)*/)
+//	{
+//		gmtp_print_debug("state != GMTP_REQUESTING (goto discard...)");
+//		goto discard;
+//	}
 
 	/*
 	 *   Step 7: Check for unexpected packet types
@@ -330,9 +465,8 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 //		dccp_deliver_input_to_ccids(sk, skb);
 //		/* fall through */
 	case GMTP_RESPOND:
-//		queued = dccp_rcv_respond_partopen_state_process(sk, skb,
-//				dh, len);
-		queued = 0;
+		gmtp_print_debug("State == GMTP_RESPOND");
+		queued = gmtp_rcv_respond_partopen_state_process(sk, skb, gh, len);
 		break;
 	}
 
@@ -347,8 +481,7 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 //	} else if (unlikely(gh->type == GMTP_PKT_SYNC)) {
 //		dccp_send_sync(sk, dcb->dccpd_seq, GMTP_PKT_SYNCACK);
 		//goto discard;
-	//}
-
+//	}
 
 	if (!queued) {
 discard:
@@ -369,7 +502,7 @@ EXPORT_SYMBOL_GPL(gmtp_rcv_state_process);
 int gmtp_parse_options(struct sock *sk, struct gmtp_request_sock *dreq,
 		       struct sk_buff *skb)
 {
-	gmtp_print_debug("gmtp_parse_options");
+	gmtp_print_function();
 	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_parse_options);

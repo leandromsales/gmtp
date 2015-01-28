@@ -13,7 +13,7 @@
 
 /* enqueue @skb on sk_send_head for retransmission, return clone to send now */
 static struct sk_buff *gmtp_skb_entail(struct sock *sk, struct sk_buff *skb) {
-	gmtp_print_debug("gmtp_skb_entail...");
+	gmtp_print_function();
 	skb_set_owner_w(skb, sk);
 	WARN_ON(sk->sk_send_head);
 	sk->sk_send_head = skb;
@@ -28,7 +28,7 @@ static struct sk_buff *gmtp_skb_entail(struct sock *sk, struct sk_buff *skb) {
  */
 static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 
-	gmtp_print_debug("gmtp_transmit_skb");
+	gmtp_print_function();
 
 	if (likely(skb != NULL)) {
 
@@ -56,7 +56,7 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 		case GMTP_PKT_DATA:
 			set_ack = 0;
 			/* fall through */
-		// case GMTP_PKT_ACK:
+		case GMTP_PKT_DATAACK:
 		case GMTP_PKT_RESET:
 			break;
 
@@ -94,15 +94,16 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 		gh->dport = inet->inet_dport;
 		gh->hdrlen = gmtp_header_size;
 
-		//If protocol has checksum... calculate here...
-		//DCCP timer...
+		//Checksum... GMTP has no checksum...
+		//icsk->icsk_af_ops->send_check(sk, skb);
+
+		//TODO ACK timer...
 //		if (set_ack)
 //			dccp_event_ack_sent(sk);
 
 		gmtp_print_debug("skb header size: %d", skb_headlen(skb));
 		err = icsk->icsk_af_ops->queue_xmit(sk, skb, &inet->cork.fl);
 		return net_xmit_eval(err);
-
 	}
 	return -ENOBUFS;
 }
@@ -117,7 +118,7 @@ int gmtp_connect(struct sock *sk) {
 //	struct dst_entry *dst = __sk_dst_get(sk);
 //	struct inet_connection_sock *icsk = inet_csk(sk);
 
-	gmtp_print_debug("gmtp_connect");
+	gmtp_print_function();
 
 	sk->sk_err = 0;
 	sock_reset_flag(sk, SOCK_DONE);
@@ -164,7 +165,7 @@ struct sk_buff *gmtp_make_response(struct sock *sk, struct dst_entry *dst,
 	struct sk_buff *skb = sock_wmalloc(sk, sk->sk_prot->max_header, 1,
 			GFP_ATOMIC);
 
-	gmtp_print_debug("gmtp_make_response");
+	gmtp_print_function();
 
 	if (skb == NULL)
 		return NULL;
@@ -219,7 +220,7 @@ struct sk_buff *gmtp_ctl_make_reset(struct sock *sk, struct sk_buff *rcv_skb)
 	struct gmtp_hdr_reset *ghr;
 	struct sk_buff *skb;
 
-	gmtp_print_debug("gmtp_ctl_make_reset");
+	gmtp_print_function();
 
 	skb = alloc_skb(sk->sk_prot->max_header, GFP_ATOMIC);
 	if (skb == NULL)
@@ -282,7 +283,7 @@ void gmtp_send_ack(struct sock *sk)
 	/* Reserve space for headers */
 		skb_reserve(skb, sk->sk_prot->max_header);
 		GMTP_SKB_CB(skb)->gmtpd_type = GMTP_PKT_ACK;
-        gmtp_print_debug("Enviando ACK");
+        gmtp_print_debug("Sending ACK");
 		gmtp_transmit_skb(sk, skb);
 	}
 }

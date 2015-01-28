@@ -27,7 +27,7 @@ extern struct inet_hashinfo gmtp_hashinfo;
 		"\n", __FUNCTION__, __LINE__, __FILE__, ##args)
 #define gmtp_print_error(fmt, args...) printk(KERN_ERR GMTP_ERROR fmt \
 		"\n", __FUNCTION__, __LINE__, __FILE__, ##args)
-#define gmtp_print_function() gmtp_print_debug("")
+#define gmtp_print_function() gmtp_print_debug("%s", __FUNCTION__)
 
 #define MAX_GMTP_HEADER (2047 * sizeof(uint32_t))
 #define MAX_GMTP_SPECIFIC_HEADER (8 * sizeof(uint32_t))
