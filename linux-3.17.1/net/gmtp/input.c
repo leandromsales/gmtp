@@ -131,19 +131,18 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
  		return -1;
  	}
 // 
-// out_invalid_packet:
-// 	/* dccp_v4_do_rcv will send a reset */
-// 	DCCP_SKB_CB(skb)->dccpd_reset_code = DCCP_RESET_CODE_PACKET_ERROR;
-// 	return 1;
-// 
-// unable_to_proceed:
-// 	DCCP_SKB_CB(skb)->dccpd_reset_code = DCCP_RESET_CODE_ABORTED;
-// 	/*
-// 	 * We mark this socket as no longer usable, so that the loop in
-// 	 * dccp_sendmsg() terminates and the application gets notified.
-// 	 */
-// 	dccp_set_state(sk, DCCP_CLOSED);
-// 	sk->sk_err = ECOMM;
+out_invalid_packet:
+ 	/* dccp_v4_do_rcv will send a reset */
+ 	GMTP_SKB_CB(skb)->gmtpd_reset_code = GMTP_RESET_CODE_PACKET_ERROR;
+ 	return 1;
+unable_to_proceed:
+ 	GMTP_SKB_CB(skb)->gmtpd_reset_code = GMTP_RESET_CODE_ABORTED;
+ 	/*
+ 	 * We mark this socket as no longer usable, so that the loop in
+ 	 * dccp_sendmsg() terminates and the application gets notified.
+ 	 */
+ 	gmtp_set_state(sk, GMTP_CLOSED);
+ 	sk->sk_err = ECOMM;
  	return 1;
 }
 
