@@ -107,6 +107,34 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 	}
 	return -ENOBUFS;
 }
+int gmtp_send_reset(struct sock *sk, enum gmtp_reset_codes code)
+{
+	struct sk_buff *skb;
+	/*
+	 * FIXME: what if rebuild_header fails?
+	 * Should we be doing a rebuild_header here?
+	 */
+
+    gmtp_print_function();
+	int err = inet_csk(sk)->icsk_af_ops->rebuild_header(sk);
+
+	if (err != 0)
+		return err;
+
+	skb = sock_wmalloc(sk, sk->sk_prot->max_header, 1, GFP_ATOMIC);
+	if (skb == NULL)
+		return -ENOBUFS;
+
+	/* Reserve space for headers and prepare control bits. */
+	skb_reserve(skb, sk->sk_prot->max_header);
+	GMTP_SKB_CB(skb)->gmtpd_type = GMTP_PKT_RESET;
+	GMTP_SKB_CB(skb)->gmtpd_reset_code = code;
+
+	return gmtp_transmit_skb(sk, skb);
+}
+
+
+
 
 /*
  * Do all connect socket setups that can be done AF independent.

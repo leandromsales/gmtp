@@ -65,6 +65,21 @@ const char *gmtp_packet_name(const int type)
 }
 EXPORT_SYMBOL_GPL(gmtp_packet_name);
 
+void gmtp_done(struct sock *sk)
+{
+    gmtp_print_function();
+	gmtp_set_state(sk, GMTP_CLOSED);
+	// gmtp_clear_xmit_timers(sk);
+
+	sk->sk_shutdown = SHUTDOWN_MASK;
+
+	if (!sock_flag(sk, SOCK_DEAD))
+		sk->sk_state_change(sk);
+	else
+		inet_csk_destroy_sock(sk);
+}
+EXPORT_SYMBOL_GPL(gmtp_done);
+
 static const char *gmtp_state_name(const int state)
 {
 	static const char *const gmtp_state_names[] = {

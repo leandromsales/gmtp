@@ -20,6 +20,70 @@ static void gmtp_enqueue_skb(struct sock *sk, struct sk_buff *skb)
 	sk->sk_data_ready(sk);
 }
 
+static void gmtp_fin(struct sock *sk, struct sk_buff *skb)
+{
+	/*
+	 * On receiving Close/CloseReq, both RD/WR shutdown are performed.
+	 * RFC 4340, 8.3 says that we MAY send further Data/DataAcks after
+	 * receiving the closing segment, but there is no guarantee that such
+	 * data will be processed at all.
+	 */
+    gmtp_print_function();
+	sk->sk_shutdown = SHUTDOWN_MASK;
+	sock_set_flag(sk, SOCK_DONE);
+	gmtp_enqueue_skb(sk, skb);
+}
+
+static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
+{
+	int queued = 0;
+
+    gmtp_print_function();
+
+	switch (sk->sk_state) {
+	/*
+	 * We ignore Close when received in one of the following states:
+	 *  - CLOSED		(may be a late or duplicate packet)
+	 *  - PASSIVE_CLOSEREQ	(the peer has sent a CloseReq earlier)
+	 *  - RESPOND		(already handled by dccp_check_req)
+	 */
+	case GMTP_CLOSING:
+		/*
+		 * Simultaneous-close: receiving a Close after sending one. This
+		 * can happen if both client and server perform active-close and
+		 * will result in an endless ping-pong of crossing and retrans-
+		 * mitted Close packets, which only terminates when one of the
+		 * nodes times out (min. 64 seconds). Quicker convergence can be
+		 * achieved when one of the nodes acts as tie-breaker.
+		 * This is ok as both ends are done with data transfer and each
+		 * end is just waiting for the other to acknowledge termination.
+		 */
+		if (gmtp_sk(sk)->gmtps_role != GMTP_ROLE_CLIENT)
+			break;
+		/* fall through */
+	case GMTP_REQUESTING:
+	case GMTP_ACTIVE_CLOSEREQ:
+		gmtp_send_reset(sk, GMTP_RESET_CODE_CLOSED);
+		gmtp_done(sk);
+		break;
+	case GMTP_OPEN:
+	// case GMTP_PARTOPEN:
+		/* Give waiting application a chance to read pending data */
+		queued = 1;
+		gmtp_fin(sk, skb);
+		gmtp_set_state(sk, GMTP_PASSIVE_CLOSE);
+		/* fall through */
+	case GMTP_PASSIVE_CLOSE:
+		/*
+		 * Retransmitted Close: we have already enqueued the first one.
+		 */
+		sk_wake_async(sk, SOCK_WAKE_WAITD, POLL_HUP);
+	}
+	return queued;
+}
+
+
+
 static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 					       struct sk_buff *skb,
 					       const struct gmtp_hdr *dh,
@@ -435,15 +499,15 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 	 */
 	//TODO Tratar RESET e CLOSE
 	if (gh->type == GMTP_PKT_RESET) {
-		//dccp_rcv_reset(sk, skb);
+		gmtp_rcv_reset(sk, skb);
 		return 0;
 //	} else if (gh->type == GMTP_PKT_CLOSEREQ) {	/* Step 13 */
 //		if (dccp_rcv_closereq(sk, skb))
 //			return 0;
 //		goto discard;
 	} else if (gh->type == GMTP_PKT_CLOSE) {		/* Step 14 */
-//		if (dccp_rcv_close(sk, skb))
-//			return 0;
+		if (gmtp_rcv_close(sk, skb))
+			return 0;
 		goto discard;
 	}
 
