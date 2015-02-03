@@ -27,7 +27,7 @@ extern struct inet_hashinfo gmtp_hashinfo;
 		"\n", __FUNCTION__, __LINE__, __FILE__, ##args)
 #define gmtp_print_error(fmt, args...) printk(KERN_ERR GMTP_ERROR fmt \
 		"\n", __FUNCTION__, __LINE__, __FILE__, ##args)
-#define gmtp_print_function() gmtp_print_debug("%s", __FUNCTION__)
+#define gmtp_print_function() gmtp_print_debug("== %s ==" , __FUNCTION__)
 
 #define MAX_GMTP_HEADER (2047 * sizeof(uint32_t))
 #define MAX_GMTP_SPECIFIC_HEADER (8 * sizeof(uint32_t))
@@ -73,6 +73,16 @@ struct sk_buff *gmtp_ctl_make_reset(struct sock *sk,
 		struct sk_buff *rcv_skb);
 
 int gmtp_reqsk_init(struct request_sock *rq, struct gmtp_sock const *gp, struct sk_buff const *skb);
+struct sock *gmtp_create_openreq_child(struct sock *sk,
+				       const struct request_sock *req,
+				       const struct sk_buff *skb);
+int gmtp_child_process(struct sock *parent, struct sock *child,
+		       struct sk_buff *skb);
+struct sock *gmtp_check_req(struct sock *sk, struct sk_buff *skb,
+			    struct request_sock *req,
+			    struct request_sock **prev);
+void gmtp_reqsk_send_ack(struct sock *sk, struct sk_buff *skb,
+			 struct request_sock *rsk);
 void gmtp_send_ack(struct sock *sk);
 int gmtp_parse_options(struct sock *sk, struct gmtp_request_sock *dreq, struct sk_buff *skb);
 int gmtp_send_reset(struct sock *sk, enum gmtp_reset_codes code);

@@ -6,6 +6,7 @@
 
 #include <net/inet_hashtables.h>
 #include <net/sock.h>
+#include <net/tcp.h>
 
 #include <linux/gmtp.h>
 #include "gmtp.h"
@@ -69,7 +70,7 @@ void gmtp_done(struct sock *sk)
 {
     gmtp_print_function();
 	gmtp_set_state(sk, GMTP_CLOSED);
-	// gmtp_clear_xmit_timers(sk);
+	// gmtp_clear_xmit_timers(sk); TODO Tratar timers
 
 	sk->sk_shutdown = SHUTDOWN_MASK;
 
@@ -86,7 +87,7 @@ static const char *gmtp_state_name(const int state)
 	[GMTP_OPEN]		= "OPEN",
 	[GMTP_REQUESTING]	= "REQUESTING",
 	[GMTP_LISTEN]		= "LISTEN",
-	[GMTP_RESPOND]		= "RESPOND",
+	[GMTP_REQ_RECV]		= "REQUEST_RECEIVED",
 	[GMTP_ACTIVE_CLOSEREQ]	= "CLOSEREQ",
 	[GMTP_PASSIVE_CLOSE]	= "PASSIVE_CLOSE",
 	[GMTP_CLOSING]		= "CLOSING",
@@ -117,38 +118,10 @@ void gmtp_set_state(struct sock *sk, const int state)
 	const int oldstate = sk->sk_state;
 
 	gmtp_print_function();
-	gmtp_print_debug("%s(%p)  %s  -->  %s\n", gmtp_role(sk), sk,
-			      gmtp_state_name(oldstate), gmtp_state_name(state));
+	gmtp_print_debug("%s --> %s\n", gmtp_state_name(oldstate), gmtp_state_name(state));
 
 	if(state == oldstate)
 		gmtp_print_warning("new state == old state!");
-
-//	switch (state) {
-//	case GMTP_OPEN:
-//		if (oldstate != GMTP_OPEN)
-////			DCCP_INC_STATS(DCCP_MIB_CURRESTAB);
-//			;
-//		/* Client retransmits all Confirm options until entering OPEN */
-////		if (oldstate == DCCP_PARTOPEN)
-////			dccp_feat_list_purge(&dccp_sk(sk)->dccps_featneg);
-//		break;
-//	case GMTP_CLOSED:
-//		if (oldstate == GMTP_OPEN || oldstate == GMTP_ACTIVE_CLOSEREQ
-//				|| oldstate == GMTP_CLOSING)
-////			DCCP_INC_STATS(DCCP_MIB_ESTABRESETS);
-//			;
-//
-//		sk->sk_prot->unhash(sk);
-//		if (inet_csk(sk)->icsk_bind_hash != NULL
-//				&& !(sk->sk_userlocks & SOCK_BINDPORT_LOCK))
-//			inet_put_port(sk);
-//		/* fall through */
-//	default:
-//		if (oldstate == GMTP_OPEN)
-////			DCCP_DEC_STATS(DCCP_MIB_CURRESTAB);
-//			;
-//	}
-
 
 	/* Change state AFTER socket is unhashed to avoid closed
 	 * socket sitting in hash tables.
@@ -160,10 +133,12 @@ EXPORT_SYMBOL_GPL(gmtp_set_state);
 int gmtp_init_sock(struct sock *sk, const __u8 ctl_sock_initialized)
 {
 	struct gmtp_sock *gs = gmtp_sk(sk);
-//	struct inet_connection_sock *icsk = inet_csk(sk);
+	struct inet_connection_sock *icsk = inet_csk(sk);
 
 	gmtp_print_function();
 
+	icsk->icsk_rto		= GMTP_TIMEOUT_INIT;
+	icsk->icsk_syn_retries	= TCP_SYN_RETRIES;
 	sk->sk_state		= GMTP_CLOSED;
 
 	//TODO Study those:

@@ -3,11 +3,14 @@
 #include <linux/slab.h>
 #include <linux/gmtp.h>
 #include <linux/types.h>
+#include <linux/net.h>
+#include <linux/security.h>
 
 #include <net/inet_sock.h>
 #include <net/sock.h>
 
 #include <uapi/linux/gmtp.h>
+#include <linux/gmtp.h>
 #include "gmtp.h"
 
 static void gmtp_enqueue_skb(struct sock *sk, struct sk_buff *skb)
@@ -327,8 +330,8 @@ static int gmtp_rcv_respond_partopen_state_process(struct sock *sk,
 						   const struct gmtp_hdr *dh,
 						   const unsigned int len)
 {
+	struct inet_connection_sock *icsk = inet_csk(sk);
 	struct gmtp_sock *dp = gmtp_sk(sk);
-//	u32 sample = dp->dccps_options_received.dccpor_timestamp_echo;
 	int queued = 0;
 
 	gmtp_print_function();
@@ -336,44 +339,32 @@ static int gmtp_rcv_respond_partopen_state_process(struct sock *sk,
 	switch (dh->type) {
 	case GMTP_PKT_RESET:
 		gmtp_print_debug("GMTP_PKT_RESET");
-//		inet_csk_clear_xmit_timer(sk, ICSK_TIME_DACK);
 		break;
 	case GMTP_PKT_DATA:
-		if (sk->sk_state == GMTP_RESPOND)
-			break;
 	case GMTP_PKT_DATAACK:
 	case GMTP_PKT_ACK:
-//		/*
-//		 * FIXME: we should be reseting the PARTOPEN (DELACK) timer
-//		 * here but only if we haven't used the DELACK timer for
-//		 * something else, like sending a delayed ack for a TIMESTAMP
-//		 * echo, etc, for now were not clearing it, sending an extra
-//		 * ACK when there is nothing else to do in DELACK is not a big
-//		 * deal after all.
-//		 */
-//
-//		/* Stop the PARTOPEN timer */
-//		if (sk->sk_state == DCCP_PARTOPEN)
-//			inet_csk_clear_xmit_timer(sk, ICSK_TIME_DACK);
-//
-//		/* Obtain usec RTT sample from SYN exchange (used by TFRC). */
-//		if (likely(sample)) {
-//			long delta = dccp_timestamp() - sample;
-//
-//			dp->dccps_syn_rtt = dccp_sample_rtt(sk, 10 * delta);
-//		}
-//
-//		dp->dccps_osr = DCCP_SKB_CB(skb)->dccpd_seq;
-		gmtp_print_debug("GMTP_PKT_ACK... setting to OPEN");
+
 		gmtp_set_state(sk, GMTP_OPEN);
-		queued = 1;
-//
-//		if (dh->type == GMTP_PKT_DATAACK ||
-//		    dh->type == GMTP_PKT_DATA) {
-//			__gmtp_rcv_established(sk, skb, dh, len);
-//			queued = 1; /* packet was queued
-//				       (by __dccp_rcv_established) */
+
+		if (skb != NULL) {
+			gmtp_print_debug("Nao chamo nada...");
+//			icsk->icsk_af_ops->sk_rx_dst_set(sk, skb);
+//			security_inet_conn_established(sk, skb);
+		}
+
+		/* Make sure socket is routed, for correct metrics.  */
+//		icsk->icsk_af_ops->rebuild_header(sk);
+
+//		tcp_init_buffer_space(sk);
+
+//		if (sock_flag(sk, SOCK_KEEPOPEN))
+//			inet_csk_reset_keepalive_timer(sk, keepalive_time_when(dp));
+
+//		if (!sock_flag(sk, SOCK_DEAD)) {
+//			sk->sk_state_change(sk);
+//			sk_wake_async(sk, SOCK_WAKE_IO, POLL_OUT);
 //		}
+
 		break;
 	}
 	gmtp_print_debug("queued = %d", queued);
@@ -419,10 +410,7 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 	 *  If P.type == Request
 	 *  (* Generate a new socket and switch to that socket *)
 	 *	      Set S := new socket for this port pair
-	 *	      S.state = GMTP_RESPOND
-	 *	      Choose S.ISS (initial seqno)
-	 *	      Initialize S.GAR := S.ISS
-	 *	      Set S.ISR, S.GSR, S.SWL, S.SWH from packet
+	 *	      S.state = GMTP_REQ_RECV
 	 *	      Continue with S.state == RESPOND
 	 *	      (* A Response packet will be generated in Step 11 (dccp) *)
 	 *	 Otherwise,
@@ -477,7 +465,7 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 			gh->type == GMTP_PKT_RESPONSE) ||
 			(dp->gmtps_role == GMTP_ROLE_CLIENT &&
 					gh->type == GMTP_PKT_REQUEST) ||
-					(sk->sk_state == GMTP_RESPOND && gh->type == GMTP_PKT_DATA)) {
+					(sk->sk_state == GMTP_REQ_RECV && gh->type == GMTP_PKT_DATA)) {
 		//TODO Send sync
 		//dccp_send_sync(sk, dcb->dccpd_seq, DCCP_PKT_SYNC);
 		gmtp_print_debug("unexpected packet types...");
@@ -527,8 +515,8 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 //		dccp_handle_ackvec_processing(sk, skb);
 //		dccp_deliver_input_to_ccids(sk, skb);
 //		/* fall through */
-	case GMTP_RESPOND:
-		gmtp_print_debug("State == GMTP_RESPOND");
+	case GMTP_REQ_RECV:
+		gmtp_print_debug("State == GMTP_REQ_RECV");
 		queued = gmtp_rcv_respond_partopen_state_process(sk, skb, gh, len);
 		break;
 	}

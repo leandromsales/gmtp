@@ -27,6 +27,7 @@ print("Starting server... at ", str(address))
 
 # Create sockets
 server_socket = socket.socket(socket.AF_INET, SOCK_GMTP, IPPROTO_GMTP)
+#server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 print(server_socket)
 
 # Connect sockets
