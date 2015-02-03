@@ -160,7 +160,7 @@ int gmtp_child_process(struct sock *parent, struct sock *child,
 					     skb->len);
 
 		/* Wakeup parent, send SIGIO */
-		if (state == GMTP_RESPOND && child->sk_state != state)
+		if (state == GMTP_REQ_RECV && child->sk_state != state)
 			parent->sk_data_ready(parent);
 	} else {
 		/* Alas, it is possible again, because we do lookup

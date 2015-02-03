@@ -182,7 +182,7 @@ int gmtp_connect(struct sock *sk) {
 EXPORT_SYMBOL_GPL(gmtp_connect);
 
 
-struct sk_buff *gmtp_make_response(struct sock *sk, struct dst_entry *dst,
+struct sk_buff *gmtp_make_register_reply(struct sock *sk, struct dst_entry *dst,
 				   struct request_sock *req)
 {
 	struct gmtp_hdr *dh;
@@ -219,7 +219,7 @@ struct sk_buff *gmtp_make_response(struct sock *sk, struct dst_entry *dst,
 
 	dh->hdrlen	= (gmtp_header_size); /*+
 			   DCCP_SKB_CB(skb)->dccpd_opt_len) / 4; */
-	dh->type	= GMTP_PKT_RESPONSE;
+	dh->type	= GMTP_PKT_REGISTER_REPLY;
 
 	dh->seq = 1; //TODO configure sequence
 //	dccp_hdr_set_ack(dccp_hdr_ack_bits(skb), dreq->dreq_gsr);
@@ -235,7 +235,7 @@ struct sk_buff *gmtp_make_response(struct sock *sk, struct dst_entry *dst,
 //	kfree_skb(skb);
 //	return NULL;
 }
-EXPORT_SYMBOL_GPL(gmtp_make_response);
+EXPORT_SYMBOL_GPL(gmtp_make_register_reply);
 
 /* answer offending packet in @rcv_skb with Reset from control socket @ctl */
 struct sk_buff *gmtp_ctl_make_reset(struct sock *sk, struct sk_buff *rcv_skb)

@@ -222,7 +222,7 @@ static int gmtp_v4_send_response(struct sock *sk, struct request_sock *req) {
 	if (dst == NULL)
 		goto out;
 
-	skb = gmtp_make_response(sk, dst, req);
+	skb = gmtp_make_register_reply(sk, dst, req);
 	if (skb != NULL) {
 		const struct inet_request_sock *ireq = inet_rsk(req);
 		err = ip_build_and_send_pkt(skb, sk, ireq->ir_loc_addr,
@@ -232,7 +232,7 @@ static int gmtp_v4_send_response(struct sock *sk, struct request_sock *req) {
 	}
 
 	out: if (err == 0)
-		gmtp_set_state(sk, GMTP_RESPOND);
+		gmtp_set_state(sk, GMTP_REQ_RECV);
 
 	gmtp_print_debug("%s returned: %d", __FUNCTION__, err);
 	dst_release(dst);

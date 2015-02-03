@@ -67,7 +67,7 @@ int gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 		struct gmtp_hdr *gh, unsigned int len);
 
-struct sk_buff *gmtp_make_response(struct sock *sk, struct dst_entry *dst,
+struct sk_buff *gmtp_make_register_reply(struct sock *sk, struct dst_entry *dst,
 		struct request_sock *req);
 struct sk_buff *gmtp_ctl_make_reset(struct sock *sk,
 		struct sk_buff *rcv_skb);

@@ -105,7 +105,7 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 	 *	     / * Response processing continues in Step 10; Reset
 	 *		processing continues in Step 9 * /
 	*/
-	if (dh->type == GMTP_PKT_RESPONSE) {
+	if (dh->type == GMTP_PKT_REGISTER_REPLY) {
 		const struct inet_connection_sock *icsk = inet_csk(sk);
 		struct gmtp_sock *dp = gmtp_sk(sk);
 		// long tstamp = dccp_timestamp();
@@ -398,6 +398,7 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 			   struct gmtp_hdr *gh, unsigned int len)
 {
 	struct gmtp_sock *dp = gmtp_sk(sk);
+	struct inet_connection_sock *icsk = inet_csk(sk);
 	struct gmtp_skb_cb *dcb = GMTP_SKB_CB(skb);
 	const int old_state = sk->sk_state;
 	int queued = 0;
@@ -411,7 +412,7 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 	 *  (* Generate a new socket and switch to that socket *)
 	 *	      Set S := new socket for this port pair
 	 *	      S.state = GMTP_REQ_RECV
-	 *	      Continue with S.state == RESPOND
+	 *	      Continue with S.state == REQ_RECV
 	 *	      (* A Response packet will be generated in Step 11 (dccp) *)
 	 *	 Otherwise,
 	 *	      Generate Reset(No Connection) unless P.type == Reset
@@ -509,36 +510,31 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 		__kfree_skb(skb);
 		return 0;
 
-		//TODO Tratar GMTP_CLOSE...
-//	case DCCP_PARTOPEN:
-//		/* Step 8: if using Ack Vectors, mark packet acknowledgeable */
-//		dccp_handle_ackvec_processing(sk, skb);
-//		dccp_deliver_input_to_ccids(sk, skb);
-//		/* fall through */
 	case GMTP_REQ_RECV:
 		gmtp_print_debug("State == GMTP_REQ_RECV");
-		queued = gmtp_rcv_respond_partopen_state_process(sk, skb, gh, len);
+//		queued = gmtp_rcv_respond_partopen_state_process(sk, skb, gh, len);
+		gmtp_print_debug("Rebuilding");
+		icsk->icsk_af_ops->rebuild_header(sk);
+
+		//TODO MTU probing init per socket tcp_outuput.c
+		//tcp_mtup_init(sk);
+		//tcp_init_buffer_space(sk); ??
+
+		gmtp_print_debug("Calling smp_mb");
+		smp_mb();
+		gmtp_set_state(sk, GMTP_OPEN);
+
+		sk->sk_state_change(sk);
+		sk_wake_async(sk, SOCK_WAKE_IO, POLL_OUT);
+
+		gmtp_print_debug("break;");
 		break;
 	}
 
-//	if (gh->type == GMTP_PKT_ACK ||
-//			gh->type == GMTP_PKT_DATAACK) {
-//		switch (old_state) {
-//		case DCCP_PARTOPEN:
-//			sk->sk_state_change(sk);
-//			sk_wake_async(sk, SOCK_WAKE_IO, POLL_OUT);
-//			break;
-//		}
-//	} else if (unlikely(gh->type == GMTP_PKT_SYNC)) {
-//		dccp_send_sync(sk, dcb->dccpd_seq, GMTP_PKT_SYNCACK);
-		//goto discard;
-//	}
-
-	if (!queued) {
 discard:
-		__kfree_skb(skb);
-	}
+	__kfree_skb(skb);
 	return 0;
+
 }
 EXPORT_SYMBOL_GPL(gmtp_rcv_state_process);
 
