@@ -108,6 +108,9 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 	if (dh->type == GMTP_PKT_REGISTER_REPLY) {
 		const struct inet_connection_sock *icsk = inet_csk(sk);
 		struct gmtp_sock *dp = gmtp_sk(sk);
+
+		gmtp_print_debug("GMTP_PKT_REGISTER_REPLY received");
+
 		// long tstamp = dccp_timestamp();
 
     /*** TODO verificar numero de sequencia ***/
@@ -408,6 +411,8 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 	/*
 	 *  Step 3: Process LISTEN state
 	 *
+	 *  If S.state == LISTEN,
+	 *
 	 *  If P.type == Request
 	 *  (* Generate a new socket and switch to that socket *)
 	 *	      Set S := new socket for this port pair
@@ -420,10 +425,10 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 	 */
 
 	if (sk->sk_state == GMTP_LISTEN) {
-		gmtp_print_debug("state == GMTP_LISTEN");
+
 		if (gh->type == GMTP_PKT_REQUEST) {
 
-			gmtp_print_debug("type == GMTP_PKT_REQUEST");
+			gmtp_print_debug("Calling gmtp_v4_conn_request via inet_csk");
 
 			if (inet_csk(sk)->icsk_af_ops->conn_request(sk, skb) < 0) {
 				gmtp_print_debug("inet_csk(sk)->icsk_af_ops->conn_request(sk, skb) < 0");

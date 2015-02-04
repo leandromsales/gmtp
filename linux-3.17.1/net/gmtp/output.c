@@ -215,7 +215,7 @@ struct sk_buff *gmtp_make_register_reply(struct sock *sk, struct dst_entry *dst,
 	dh->sport	= htons(inet_rsk(req)->ir_num);
 	dh->dport	= inet_rsk(req)->ir_rmt_port;
 
-	gmtp_print_debug("Destiny port: %d", dh->dport);
+	gmtp_print_debug("Destiny port: %d", ntohs(dh->dport));
 
 	dh->hdrlen	= (gmtp_header_size); /*+
 			   DCCP_SKB_CB(skb)->dccpd_opt_len) / 4; */

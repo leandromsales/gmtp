@@ -3,7 +3,7 @@
 
 #include <linux/err.h>
 #include <linux/errno.h>
-#include <net/xfrm.h>
+#include <linux/types.h>
 
 #include <net/inet_hashtables.h>
 #include <net/inet_common.h>
@@ -297,8 +297,10 @@ static int gmtp_v4_rcv(struct sk_buff *skb) {
 	GMTP_SKB_CB(skb)->gmtpd_seq = gh->seq;
 	GMTP_SKB_CB(skb)->gmtpd_type = gh->type;
 
-	gmtp_print_debug("%8.8s src=%pI4@%-5d dst=%pI4@%-5d seq=%llu",
-			gmtp_packet_name(gh->type), &iph->saddr, ntohs(gh->sport),
+	gmtp_print_debug("%s (%d) src=%pI4@%-5d dst=%pI4@%-5d seq=%llu",
+			gmtp_packet_name(gh->type),
+			gh->type,
+			&iph->saddr, ntohs(gh->sport),
 			&iph->daddr, ntohs(gh->dport),
 			(unsigned long long) GMTP_SKB_CB(skb)->gmtpd_seq);
 
@@ -334,7 +336,7 @@ static int gmtp_v4_rcv(struct sk_buff *skb) {
 	nf_reset(skb);
 	return sk_receive_skb(sk, skb, 1);
 
-	no_gmtp_socket:
+no_gmtp_socket:
 	gmtp_print_debug("no_gmtp_socket");
 	if (!xfrm4_policy_check(NULL, XFRM_POLICY_IN, skb))
 		goto discard_it;
@@ -346,13 +348,13 @@ static int gmtp_v4_rcv(struct sk_buff *skb) {
 	 */
 	if (gh->type != GMTP_PKT_RESET) {
 		GMTP_SKB_CB(skb)->gmtpd_reset_code = GMTP_RESET_CODE_NO_CONNECTION;
-		gmtp_v4_ctl_send_reset(sk, skb); //TODO serah implementado...
+		gmtp_v4_ctl_send_reset(sk, skb);
 	}
 
-	discard_it: kfree_skb(skb);
+discard_it: kfree_skb(skb);
 	return 0;
 
-	discard_and_relse: sock_put(sk);
+discard_and_relse: sock_put(sk);
 	goto discard_it;
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_rcv);
@@ -377,23 +379,68 @@ static struct request_sock_ops gmtp_request_sock_ops __read_mostly = {
 	.syn_ack_timeout = gmtp_syn_ack_timeout,
 };
 
+//================================================
+//================================================
+
+void gmtp_csk_reset_keepalive_timer(struct sock *sk, unsigned long len)
+{
+	gmtp_print_function();
+	sk_reset_timer(sk, &sk->sk_timer, jiffies + len);
+}
+EXPORT_SYMBOL(gmtp_csk_reset_keepalive_timer);
+
+static inline void gmtp_csk_reqsk_queue_added(struct sock *sk,
+					      const unsigned long timeout)
+{
+	gmtp_print_function();
+
+	if (reqsk_queue_added(&inet_csk(sk)->icsk_accept_queue) == 0)
+		gmtp_csk_reset_keepalive_timer(sk, timeout);
+}
+
+static inline u32 gmtp_synq_hash(const __be32 raddr, const __be16 rport,
+				 const u32 rnd, const u32 synq_hsize)
+{
+	gmtp_print_function();
+	u32 ret = jhash_2words((__force u32)raddr, (__force u32)rport, rnd) & (synq_hsize - 1);
+	gmtp_print_debug("ret: %u", ret);
+	return ret;
+}
+
+void gmtp_csk_reqsk_queue_hash_add(struct sock *sk, struct request_sock *req,
+				   unsigned long timeout)
+{
+	struct inet_connection_sock *icsk = inet_csk(sk);
+	struct listen_sock *lopt = icsk->icsk_accept_queue.listen_opt;
+	const u32 h = gmtp_synq_hash(inet_rsk(req)->ir_rmt_addr,
+				     inet_rsk(req)->ir_rmt_port,
+				     lopt->hash_rnd, lopt->nr_table_entries);
+
+	gmtp_print_function();
+
+	gmtp_print_debug("h: %u", h);
+
+	reqsk_queue_hash_req(&icsk->icsk_accept_queue, h, req, timeout);
+	gmtp_csk_reqsk_queue_added(sk, timeout);
+}
+EXPORT_SYMBOL_GPL(gmtp_csk_reqsk_queue_hash_add);
+//================================================
+//================================================
+
 int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb) {
 	struct inet_request_sock *ireq;
 	struct request_sock *req;
 	struct gmtp_request_sock *dreq;
-//	//const __be32 service = dccp_hdr_request(skb)->dccph_req_service;
 	struct gmtp_skb_cb *dcb = GMTP_SKB_CB(skb);
 
 	gmtp_print_function();
 
-	/* Never answer to GMTP_PKT_REQUESTs send to broadcast or multicast */
+	/*
+	 * FIXME GMTP must accept GMTP_PKT_REQUESTs send to broadcast or multicast
+	 **/
 	if (skb_rtable(skb)->rt_flags & (RTCF_BROADCAST | RTCF_MULTICAST))
 		return 0; /* discard, don't send a reset here */
 
-////	if (dccp_bad_service_code(sk, service)) {
-////		dcb->dccpd_reset_code = DCCP_RESET_CODE_BAD_SERVICE_CODE;
-////		goto drop;
-////	}
 	/*
 	 * TW buckets are converted to open requests without
 	 * limitations, they conserve resources and peer is
@@ -416,45 +463,43 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb) {
 	if (req == NULL)
 		goto drop;
 
-	if (gmtp_reqsk_init(req, gmtp_sk(sk), skb)) {
-		gmtp_print_debug("if(gmtp_reqsk_init)");
+	if (gmtp_reqsk_init(req, gmtp_sk(sk), skb))
 		goto drop_and_free;
-	}
 
-	gmtp_print_debug("dreq = gmtp_rsk(req);");
 	dreq = gmtp_rsk(req);
-//	if (gmtp_parse_options(sk, dreq, skb))
-//		goto drop_and_free;
-//
+	if (gmtp_parse_options(sk, dreq, skb))
+		goto drop_and_free;
+
 	if (security_inet_conn_request(sk, skb, req))
 		goto drop_and_free;
 
 	ireq = inet_rsk(req);
-	gmtp_print_debug("ireq: %p", ireq);
 	ireq->ir_loc_addr = ip_hdr(skb)->daddr;
 	ireq->ir_rmt_addr = ip_hdr(skb)->saddr;
 
 	/*
 	 * Step 3: Process LISTEN state
 	 *
-	 * Set S.ISR, S.GSR, S.SWL, S.SWH from packet or Init Cookie
-	 *
 	 * Setting S.SWL/S.SWH to is deferred to dccp_create_openreq_child().
 	 */
-//	dreq->dreq_isr	   = dcb->dccpd_seq;
-//	dreq->dreq_gsr	   = dreq->dreq_isr;
-//	dreq->dreq_iss	   = dccp_v4_init_sequence(skb);
-//	dreq->dreq_gss     = dreq->dreq_iss;
-//	dreq->dreq_service = service;
+
 	if (gmtp_v4_send_response(sk, req))
 		goto drop_and_free;
 
-//	inet_csk_reqsk_queue_hash_add(sk, req, GMTP_TIMEOUT_INIT); //FIXME <- Tt crashs gmtp
+	gmtp_print_debug("sk: %p", sk);
+	gmtp_print_debug("req: %p", req);
+	gmtp_print_debug("GMTP_TIMEOUT_INIT: %u", GMTP_TIMEOUT_INIT);
+
+	gmtp_print_debug("Calling gmtp_csk_reqsk_queue_hash_add...");
+	//FIXME <- Tt crashs gmtp
+//	inet_csk_reqsk_queue_hash_add(sk, req, GMTP_TIMEOUT_INIT);
+	gmtp_csk_reqsk_queue_hash_add(sk, req, GMTP_TIMEOUT_INIT);
+
 	return 0;
 
-	drop_and_free: reqsk_free(req);
-	drop:
-//	DCCP_INC_STATS_BH(DCCP_MIB_ATTEMPTFAILS);
+drop_and_free:
+	reqsk_free(req);
+drop:
 	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_conn_request);
@@ -462,15 +507,6 @@ EXPORT_SYMBOL_GPL(gmtp_v4_conn_request);
 
 //=========================================================
 //=========================================================
-
-static inline u32 gmtp_synq_hash(const __be32 raddr, const __be16 rport,
-				 const u32 rnd, const u32 synq_hsize)
-{
-	gmtp_print_function();
-	u32 ret = jhash_2words((__force u32)raddr, (__force u32)rport, rnd) & (synq_hsize - 1);
-	gmtp_print_debug("ret: %u", ret);
-	return ret;
-}
 
 #define AF_INET_FAMILY(fam) 1
 
@@ -488,7 +524,7 @@ struct request_sock *gmtp_csk_search_req(const struct sock *sk,
 	gmtp_print_debug("icsk: %p", icsk);
 	gmtp_print_debug("lopt: %p", lopt);
 
-	gmtp_print_debug("rport: %hu", rport);
+	gmtp_print_debug("rport: %d", ntohs(rport));
 	gmtp_print_debug("raddr: %d", raddr);
 	gmtp_print_debug("laddr: %d", laddr);
 
@@ -501,7 +537,7 @@ struct request_sock *gmtp_csk_search_req(const struct sock *sk,
 		const struct inet_request_sock *ireq = inet_rsk(req);
 
 		gmtp_print_debug("ireq: %p", ireq);
-		gmtp_print_debug("ireq->ir_rmt_port: %d", ireq->ir_rmt_port);
+		gmtp_print_debug("ireq->ir_rmt_port: %d", ntohs(ireq->ir_rmt_port));
 		gmtp_print_debug("ireq->ir_rmt_addr: %d", ireq->ir_rmt_addr);
 		gmtp_print_debug("ireq->ir_loc_addr: %d", ireq->ir_loc_addr);
 		gmtp_print_debug("AF_INET_FAMILY(req->rsk_ops->family): %d",
