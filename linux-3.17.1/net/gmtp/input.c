@@ -216,26 +216,44 @@ unable_to_proceed:
  	return 1;
 }
 
+static u16 gmtp_reset_code_convert(const u8 code)
+{
+	const u16 error_code[] = {
+	[GMTP_RESET_CODE_CLOSED]	     = 0,	/* normal termination */
+	[GMTP_RESET_CODE_UNSPECIFIED]	     = 0,	/* nothing known */
+	[GMTP_RESET_CODE_ABORTED]	     = ECONNRESET,
+
+	[GMTP_RESET_CODE_NO_CONNECTION]	     = ECONNREFUSED,
+	[GMTP_RESET_CODE_CONNECTION_REFUSED] = ECONNREFUSED,
+	[GMTP_RESET_CODE_TOO_BUSY]	     = EUSERS,
+	[GMTP_RESET_CODE_AGGRESSION_PENALTY] = EDQUOT,
+
+	[GMTP_RESET_CODE_PACKET_ERROR]	     = ENOMSG,
+	[GMTP_RESET_CODE_BAD_INIT_COOKIE]    = EBADR,
+	[GMTP_RESET_CODE_BAD_SERVICE_CODE]   = EBADRQC,
+	[GMTP_RESET_CODE_OPTION_ERROR]	     = EILSEQ,
+	[GMTP_RESET_CODE_MANDATORY_ERROR]    = EOPNOTSUPP,
+	};
+
+	return code >= GMTP_MAX_RESET_CODES ? 0 : error_code[code];
+}
 
 static void gmtp_rcv_reset(struct sock *sk, struct sk_buff *skb)
 {
 	//TODO Implement gmtp_rcv_reset
 	gmtp_print_function();
-    /****
-	u16 err = dccp_reset_code_convert(dccp_hdr_reset(skb)->dccph_reset_code);
+	// u16 err = gmtp_reset_code_convert(dccp_hdr_reset(skb)->gmtp_reset_code);
+	u16 err;
 
-	sk->sk_err = err;
-    ****/
+	sk->sk_err = err = (u16) ECONNRESET;
 
-	/* Queue the equivalent of TCP fin so that dccp_recvmsg exits the loop */
+	/*Queue the equivalent of TCP fin so that dccp_recvmsg exits the loop */
 
-    /****
-	dccp_fin(sk, skb);
+	gmtp_fin(sk, skb);
 
 	if (err && !sock_flag(sk, SOCK_DEAD))
 		sk_wake_async(sk, SOCK_WAKE_IO, POLL_ERR);
-	dccp_time_wait(sk, DCCP_TIME_WAIT, 0);
-    ****/
+	// dccp_time_wait(sk, DCCP_TIME_WAIT, 0);
 }
 
 static int gmtp_check_seqno(struct sock *sk, struct sk_buff *skb)
@@ -381,8 +399,8 @@ int gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 	gmtp_print_function();
 
 	//Check sequence numbers...
-	if (gmtp_check_seqno(sk, skb))
-		goto discard;
+	// if (gmtp_check_seqno(sk, skb))
+	//	goto discard;
 
 	if (gmtp_parse_options(sk, NULL, skb))
 		return 1;
