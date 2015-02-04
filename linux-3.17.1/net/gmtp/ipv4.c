@@ -131,12 +131,14 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len) {
 	if (err != 0)
 		goto failure;
 
-	out: return err;
+out:
+	return err;
 
 	/*
 	 * This unhashes the socket and releases the local port, if necessary.
 	 */
-	failure: gmtp_set_state(sk, GMTP_CLOSED);
+failure:
+	gmtp_set_state(sk, GMTP_CLOSED);
 	ip_rt_put(rt);
 	sk->sk_route_caps = 0;
 	inet->inet_dport = 0;
@@ -231,7 +233,8 @@ static int gmtp_v4_send_response(struct sock *sk, struct request_sock *req) {
 		err = net_xmit_eval(err);
 	}
 
-	out: if (err == 0)
+out:
+	if (err == 0)
 		gmtp_set_state(sk, GMTP_REQ_RECV);
 
 	gmtp_print_debug("%s returned: %d", __FUNCTION__, err);
@@ -318,6 +321,9 @@ static int gmtp_v4_rcv(struct sk_buff *skb) {
 		goto no_gmtp_socket;
 	}
 
+	gmtp_print_debug("sk_state: %s (%d)",
+							gmtp_state_name(sk->sk_state), sk->sk_state);
+
 	/*
 	 * Step 2:
 	 *	... or S.state == TIMEWAIT,
@@ -325,7 +331,6 @@ static int gmtp_v4_rcv(struct sk_buff *skb) {
 	 *		Drop packet and return
 	 */
 	if (sk->sk_state == GMTP_TIME_WAIT) {
-		gmtp_print_debug("sk->sk_state == GMTP_TIME_WAIT: do_time_wait\n");
 		inet_twsk_put(inet_twsk(sk));
 		goto no_gmtp_socket;
 	}
@@ -378,54 +383,6 @@ static struct request_sock_ops gmtp_request_sock_ops __read_mostly = {
 	.send_reset = gmtp_v4_ctl_send_reset,
 	.syn_ack_timeout = gmtp_syn_ack_timeout,
 };
-
-//================================================
-//================================================
-
-void gmtp_csk_reset_keepalive_timer(struct sock *sk, unsigned long len)
-{
-	gmtp_print_function();
-	sk_reset_timer(sk, &sk->sk_timer, jiffies + len);
-}
-EXPORT_SYMBOL(gmtp_csk_reset_keepalive_timer);
-
-static inline void gmtp_csk_reqsk_queue_added(struct sock *sk,
-					      const unsigned long timeout)
-{
-	gmtp_print_function();
-
-	if (reqsk_queue_added(&inet_csk(sk)->icsk_accept_queue) == 0)
-		gmtp_csk_reset_keepalive_timer(sk, timeout);
-}
-
-static inline u32 gmtp_synq_hash(const __be32 raddr, const __be16 rport,
-				 const u32 rnd, const u32 synq_hsize)
-{
-	gmtp_print_function();
-	u32 ret = jhash_2words((__force u32)raddr, (__force u32)rport, rnd) & (synq_hsize - 1);
-	gmtp_print_debug("ret: %u", ret);
-	return ret;
-}
-
-void gmtp_csk_reqsk_queue_hash_add(struct sock *sk, struct request_sock *req,
-				   unsigned long timeout)
-{
-	struct inet_connection_sock *icsk = inet_csk(sk);
-	struct listen_sock *lopt = icsk->icsk_accept_queue.listen_opt;
-	const u32 h = gmtp_synq_hash(inet_rsk(req)->ir_rmt_addr,
-				     inet_rsk(req)->ir_rmt_port,
-				     lopt->hash_rnd, lopt->nr_table_entries);
-
-	gmtp_print_function();
-
-	gmtp_print_debug("h: %u", h);
-
-	reqsk_queue_hash_req(&icsk->icsk_accept_queue, h, req, timeout);
-	gmtp_csk_reqsk_queue_added(sk, timeout);
-}
-EXPORT_SYMBOL_GPL(gmtp_csk_reqsk_queue_hash_add);
-//================================================
-//================================================
 
 int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb) {
 	struct inet_request_sock *ireq;
@@ -486,14 +443,8 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb) {
 	if (gmtp_v4_send_response(sk, req))
 		goto drop_and_free;
 
-	gmtp_print_debug("sk: %p", sk);
-	gmtp_print_debug("req: %p", req);
-	gmtp_print_debug("GMTP_TIMEOUT_INIT: %u", GMTP_TIMEOUT_INIT);
-
-	gmtp_print_debug("Calling gmtp_csk_reqsk_queue_hash_add...");
-	//FIXME <- Tt crashs gmtp
-//	inet_csk_reqsk_queue_hash_add(sk, req, GMTP_TIMEOUT_INIT);
-	gmtp_csk_reqsk_queue_hash_add(sk, req, GMTP_TIMEOUT_INIT);
+	gmtp_print_debug("Calling gmtp_csk_reqsk_queue_hash_add(...)");
+	inet_csk_reqsk_queue_hash_add(sk, req, GMTP_TIMEOUT_INIT);
 
 	return 0;
 
@@ -507,6 +458,15 @@ EXPORT_SYMBOL_GPL(gmtp_v4_conn_request);
 
 //=========================================================
 //=========================================================
+
+static inline u32 gmtp_synq_hash(const __be32 raddr, const __be16 rport,
+				 const u32 rnd, const u32 synq_hsize)
+{
+	gmtp_print_function();
+	u32 ret = jhash_2words((__force u32)raddr, (__force u32)rport, rnd) & (synq_hsize - 1);
+	gmtp_print_debug("ret: %u", ret);
+	return ret;
+}
 
 #define AF_INET_FAMILY(fam) 1
 
@@ -608,10 +568,10 @@ int gmtp_v4_do_rcv(struct sock *sk, struct sk_buff *skb) {
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 
 	gmtp_print_function();
+	gmtp_print_debug("sk_state: %s (%d)",
+					gmtp_state_name(sk->sk_state), sk->sk_state);
 
 	if (sk->sk_state == GMTP_OPEN) { /* Fast path */
-
-		gmtp_print_debug("sk_state: GMTP_OPEN (%d)", sk->sk_state);
 
 		if (gmtp_rcv_established(sk, skb, gh, skb->len))
 			goto reset;
@@ -634,10 +594,7 @@ int gmtp_v4_do_rcv(struct sock *sk, struct sk_buff *skb) {
 
 		struct sock *nsk;
 
-		gmtp_print_debug("sk_state: GMTP_LISTEN (%d)", sk->sk_state);
-
 		nsk = gmtp_v4_hnd_req(sk, skb);
-
 		if (nsk == NULL)
 			goto discard;
 
@@ -660,8 +617,10 @@ int gmtp_v4_do_rcv(struct sock *sk, struct sk_buff *skb) {
 
 	return 0;
 
-	reset: gmtp_v4_ctl_send_reset(sk, skb);
-	discard: kfree_skb(skb);
+reset:
+	gmtp_v4_ctl_send_reset(sk, skb);
+discard:
+	kfree_skb(skb);
 	return 0;
 
 }
@@ -712,13 +671,15 @@ struct sock *gmtp_v4_request_recv_sock(struct sock *sk, struct sk_buff *skb,
 
 	return newsk;
 
-	exit_overflow:
+exit_overflow:
 	NET_INC_STATS_BH(sock_net(sk), LINUX_MIB_LISTENOVERFLOWS);
-	exit_nonewsk: dst_release(dst);
-	exit:
+exit_nonewsk:
+	dst_release(dst);
+exit:
 	NET_INC_STATS_BH(sock_net(sk), LINUX_MIB_LISTENDROPS);
 	return NULL;
-	put_and_exit: inet_csk_prepare_forced_close(newsk);
+put_and_exit:
+	inet_csk_prepare_forced_close(newsk);
 	gmtp_done(newsk);
 	goto exit;
 }
@@ -921,12 +882,12 @@ static int __init gmtp_v4_init(void) {
 	inet_del_protocol(&gmtp_protocol, IPPROTO_GMTP);
 	return err;
 
-	out_proto_unregister:
+out_proto_unregister:
 	gmtp_print_error("proto_unregister GMTP IPv4");
 	proto_unregister(&gmtp_v4_prot);
-	return err;
 
-	out: return err;
+out:
+	return err;
 }
 
 static void __exit gmtp_v4_exit(void) {

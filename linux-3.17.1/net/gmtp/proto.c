@@ -81,7 +81,7 @@ void gmtp_done(struct sock *sk)
 }
 EXPORT_SYMBOL_GPL(gmtp_done);
 
-static const char *gmtp_state_name(const int state)
+const char *gmtp_state_name(const int state)
 {
 	static const char *const gmtp_state_names[] = {
 	[GMTP_OPEN]		= "OPEN",
@@ -140,10 +140,14 @@ int gmtp_init_sock(struct sock *sk, const __u8 ctl_sock_initialized)
 	icsk->icsk_rto		= GMTP_TIMEOUT_INIT;
 	icsk->icsk_syn_retries	= TCP_SYN_RETRIES;
 	sk->sk_state		= GMTP_CLOSED;
+	sk->sk_write_space	= gmtp_write_space;
+	//icsk->icsk_sync_mss	= gmtp_sync_mss; //TODO calc MSS
 
 	//TODO Study those:
 	gs->gmtps_role		= GMTP_ROLE_UNDEFINED;
 	gs->gmtps_service	= 0;
+
+	gmtp_init_xmit_timers(sk);
 
 	return 0;
 }

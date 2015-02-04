@@ -20,6 +20,21 @@ static struct sk_buff *gmtp_skb_entail(struct sock *sk, struct sk_buff *skb) {
 	return skb_clone(sk->sk_send_head, gfp_any());
 }
 
+void gmtp_write_space(struct sock *sk)
+{
+	struct socket_wq *wq;
+
+	rcu_read_lock();
+	wq = rcu_dereference(sk->sk_wq);
+	if (wq_has_sleeper(wq))
+		wake_up_interruptible(&wq->wait);
+	/* Should agree with poll, otherwise some programs break */
+	if (sock_writeable(sk))
+		sk_wake_async(sk, SOCK_WAKE_SPACE, POLL_OUT);
+
+	rcu_read_unlock();
+}
+
 /*
  * All SKB's seen here are completely headerless. It is our
  * job to build the DCCP header, and pass the packet down to
@@ -133,9 +148,6 @@ int gmtp_send_reset(struct sock *sk, enum gmtp_reset_codes code)
 	return gmtp_transmit_skb(sk, skb);
 }
 
-
-
-
 /*
  * Do all connect socket setups that can be done AF independent.
  */
@@ -181,6 +193,27 @@ int gmtp_connect(struct sock *sk) {
 }
 EXPORT_SYMBOL_GPL(gmtp_connect);
 
+/**
+ * gmtp_retransmit_skb  -  Retransmit Request, Close, or CloseReq packets
+ * There are only four retransmittable packet types in GMTP:
+ * - Request  in client-REQUEST  state (sec. 8.1.1),
+ * - CloseReq in server-CLOSEREQ state (sec. 8.3),
+ * - Close    in   node-CLOSING  state (sec. 8.3),
+ * - Acks in client-PARTOPEN state (sec. 8.1.5, handled by gmtp_delack_timer()).
+ * This function expects sk->sk_send_head to contain the original skb.
+ */
+int gmtp_retransmit_skb(struct sock *sk)
+{
+	WARN_ON(sk->sk_send_head == NULL);
+
+	if (inet_csk(sk)->icsk_af_ops->rebuild_header(sk) != 0)
+		return -EHOSTUNREACH; /* Routing failure or similar. */
+
+	/* this count is used to distinguish original and retransmitted skb */
+	inet_csk(sk)->icsk_retransmits++;
+
+	return gmtp_transmit_skb(sk, skb_clone(sk->sk_send_head, GFP_ATOMIC));
+}
 
 struct sk_buff *gmtp_make_register_reply(struct sock *sk, struct dst_entry *dst,
 				   struct request_sock *req)

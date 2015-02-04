@@ -36,10 +36,18 @@ extern struct inet_hashinfo gmtp_hashinfo;
 
 /* RFC ????,  initial RTO value */
 #define GMTP_TIMEOUT_INIT ((unsigned int)(3 * HZ))
+/*
+ * The maximum back-off value for retransmissions. This is needed for
+ *  - retransmitting client-Requests (sec. 8.1.1),
+ *  - retransmitting Close/CloseReq when closing (sec. 8.3),
+ *  - Acks in client-PARTOPEN state (sec. 8.1.5). (???)
+ */
+#define GMTP_RTO_MAX ((unsigned int)(64 * HZ))
 
 extern struct percpu_counter gmtp_orphan_count;
 
 const char *gmtp_packet_name(const int);
+const char *gmtp_state_name(const int);
 
 int gmtp_init_sock(struct sock *sk, const __u8 ctl_sock_initialized);
 
@@ -87,6 +95,10 @@ void gmtp_send_ack(struct sock *sk);
 int gmtp_parse_options(struct sock *sk, struct gmtp_request_sock *dreq, struct sk_buff *skb);
 int gmtp_send_reset(struct sock *sk, enum gmtp_reset_codes code);
 void gmtp_done(struct sock *sk);
+
+void gmtp_write_space(struct sock *sk);
+int gmtp_retransmit_skb(struct sock *sk);
+void gmtp_init_xmit_timers(struct sock *sk);
 
 
 /**

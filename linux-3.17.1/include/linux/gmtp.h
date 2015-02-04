@@ -79,6 +79,9 @@ struct gmtp_sock {
 	__u64				gmtps_gss;
 	__u64				gmtps_gsr;
 
+	struct tasklet_struct	gmtps_xmitlet;
+	struct timer_list		gmtps_xmit_timer;
+
 };
 
 /**
