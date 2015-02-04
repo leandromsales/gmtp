@@ -190,3 +190,5 @@ static inline struct gmtp_hdr *gmtp_zeroed_hdr(struct sk_buff *skb, int headlen)
 	return memset(skb_transport_header(skb), 0, headlen);
 }
 #endif /* LINUX_GMTP_H_ */
+
+
