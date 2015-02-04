@@ -493,7 +493,7 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb) {
 	gmtp_print_debug("Calling gmtp_csk_reqsk_queue_hash_add...");
 	//FIXME <- Tt crashs gmtp
 //	inet_csk_reqsk_queue_hash_add(sk, req, GMTP_TIMEOUT_INIT);
-	gmtp_csk_reqsk_queue_hash_add(sk, req, GMTP_TIMEOUT_INIT);
+//	gmtp_csk_reqsk_queue_hash_add(sk, req, GMTP_TIMEOUT_INIT);
 
 	return 0;
 
