@@ -1,0 +1,15 @@
+\hypertarget{protocolThis-p}{\section{$<$This$>$ Protocol Reference}
+\label{protocolThis-p}\index{$<$\-This$>$@{$<$\-This$>$}}
+}
+
+
+\subsection{Detailed Description}
+Describes the P\-F\-\_\-\-I\-N\-E\-T protocols Defines the different S\-O\-C\-K types for P\-F\-\_\-\-I\-N\-E\-T Ex\-: S\-O\-C\-K\-\_\-\-S\-T\-R\-E\-A\-M (T\-C\-P), S\-O\-C\-K\-\_\-\-D\-G\-R\-A\-M (U\-D\-P), S\-O\-C\-K\-\_\-\-R\-A\-W
+
+inet\-\_\-register\-\_\-protosw() is the function called to register inet sockets. There is a static array of type inet\-\_\-protosw inetsw\-\_\-array\mbox{[}\mbox{]} which contains information about all the inet socket types.
+
+\-: \hyperlink{protocolThis-p}{This} is a pointer to the next node in the list. \-: \hyperlink{protocolThis-p}{This} is the socket type and is a key to search entry for a given socket and type in inetsw\mbox{[}\mbox{]} array. a key to find an entry for the socket type in the inetsw\mbox{[}\mbox{]} array. \hyperlink{protocolThis-p}{This} is an L4 protocol number (L4 Transport layer protocol). \-: \hyperlink{protocolThis-p}{This} is a pointer to struct proto. ops\-: \hyperlink{protocolThis-p}{This} is a pointer to the structure of type 'proto\-\_\-ops'. 
+
+The documentation for this protocol was generated from the following file\-:\begin{DoxyCompactItemize}
+\item 
+ipv4.\-c\end{DoxyCompactItemize}

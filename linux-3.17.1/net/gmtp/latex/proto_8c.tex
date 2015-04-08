@@ -1,0 +1,159 @@
+\hypertarget{proto_8c}{\section{proto.\-c File Reference}
+\label{proto_8c}\index{proto.\-c@{proto.\-c}}
+}
+{\ttfamily \#include $<$asm/ioctls.\-h$>$}\\*
+{\ttfamily \#include $<$linux/init.\-h$>$}\\*
+{\ttfamily \#include $<$linux/module.\-h$>$}\\*
+{\ttfamily \#include $<$linux/types.\-h$>$}\\*
+{\ttfamily \#include $<$net/inet\-\_\-hashtables.\-h$>$}\\*
+{\ttfamily \#include $<$net/sock.\-h$>$}\\*
+{\ttfamily \#include \char`\"{}gmtp.\-h\char`\"{}}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{proto_8c_a55eca9800ebea2d452379b6c957e1ae0}{{\bfseries E\-X\-P\-O\-R\-T\-\_\-\-S\-Y\-M\-B\-O\-L\-\_\-\-G\-P\-L} (gmtp\-\_\-hashinfo)}\label{proto_8c_a55eca9800ebea2d452379b6c957e1ae0}
+
+\item 
+\hypertarget{proto_8c_ab79c6a01f15a2d7a57c601da48518b94}{{\bfseries E\-X\-P\-O\-R\-T\-\_\-\-S\-Y\-M\-B\-O\-L\-\_\-\-G\-P\-L} (gmtp\-\_\-death\-\_\-row)}\label{proto_8c_ab79c6a01f15a2d7a57c601da48518b94}
+
+\item 
+\hypertarget{proto_8c_a232988d276bf40d7c15be1fcd7af9d83}{{\bfseries module\-\_\-param} (thash\-\_\-entries, int, 0444)}\label{proto_8c_a232988d276bf40d7c15be1fcd7af9d83}
+
+\item 
+\hypertarget{proto_8c_ad4e09849d2bc32d70e247bc5172fcf8b}{{\bfseries M\-O\-D\-U\-L\-E\-\_\-\-P\-A\-R\-M\-\_\-\-D\-E\-S\-C} (thash\-\_\-entries,\char`\"{}Number of ehash buckets\char`\"{})}\label{proto_8c_ad4e09849d2bc32d70e247bc5172fcf8b}
+
+\item 
+\hypertarget{proto_8c_a9984b8752cb8758660297cce25f6dd54}{const char $\ast$ {\bfseries gmtp\-\_\-packet\-\_\-name} (const int type)}\label{proto_8c_a9984b8752cb8758660297cce25f6dd54}
+
+\item 
+\hypertarget{proto_8c_a022de102dea8fa0d856b0250705464b7}{{\bfseries E\-X\-P\-O\-R\-T\-\_\-\-S\-Y\-M\-B\-O\-L\-\_\-\-G\-P\-L} (gmtp\-\_\-packet\-\_\-name)}\label{proto_8c_a022de102dea8fa0d856b0250705464b7}
+
+\item 
+\hypertarget{proto_8c_a2c20286d5df6e6774719d719be9d3a13}{void {\bfseries gmtp\-\_\-set\-\_\-state} (struct sock $\ast$sk, const int state)}\label{proto_8c_a2c20286d5df6e6774719d719be9d3a13}
+
+\item 
+\hypertarget{proto_8c_a7f4fc2baaa902bf0faa4b08718ca48c9}{{\bfseries E\-X\-P\-O\-R\-T\-\_\-\-S\-Y\-M\-B\-O\-L\-\_\-\-G\-P\-L} (gmtp\-\_\-set\-\_\-state)}\label{proto_8c_a7f4fc2baaa902bf0faa4b08718ca48c9}
+
+\item 
+\hypertarget{proto_8c_a1c872c8a33008e99befdb297a6518e03}{int {\bfseries gmtp\-\_\-init\-\_\-sock} (struct sock $\ast$sk, const \-\_\-\-\_\-u8 ctl\-\_\-sock\-\_\-initialized)}\label{proto_8c_a1c872c8a33008e99befdb297a6518e03}
+
+\item 
+\hypertarget{proto_8c_a43dd2bf3cf0ea29dc62991109832cf66}{{\bfseries E\-X\-P\-O\-R\-T\-\_\-\-S\-Y\-M\-B\-O\-L\-\_\-\-G\-P\-L} (gmtp\-\_\-init\-\_\-sock)}\label{proto_8c_a43dd2bf3cf0ea29dc62991109832cf66}
+
+\item 
+\hypertarget{proto_8c_ada146a75c7595313fda4021b3d64f2af}{void {\bfseries gmtp\-\_\-destroy\-\_\-sock} (struct sock $\ast$sk)}\label{proto_8c_ada146a75c7595313fda4021b3d64f2af}
+
+\item 
+\hypertarget{proto_8c_a71c81285d972adbb9dac3c2901474913}{{\bfseries E\-X\-P\-O\-R\-T\-\_\-\-S\-Y\-M\-B\-O\-L\-\_\-\-G\-P\-L} (gmtp\-\_\-destroy\-\_\-sock)}\label{proto_8c_a71c81285d972adbb9dac3c2901474913}
+
+\item 
+\hypertarget{proto_8c_aa43e6c6314b0b836ffb2616535879838}{int {\bfseries inet\-\_\-gmtp\-\_\-listen} (struct socket $\ast$sock, int backlog)}\label{proto_8c_aa43e6c6314b0b836ffb2616535879838}
+
+\item 
+\hypertarget{proto_8c_a5e92e64108425c3efcfedafe042b69f5}{{\bfseries E\-X\-P\-O\-R\-T\-\_\-\-S\-Y\-M\-B\-O\-L\-\_\-\-G\-P\-L} (inet\-\_\-gmtp\-\_\-listen)}\label{proto_8c_a5e92e64108425c3efcfedafe042b69f5}
+
+\item 
+\hypertarget{proto_8c_a59f856ab28c13b885fbe2c38f7a70a87}{void {\bfseries gmtp\-\_\-close} (struct sock $\ast$sk, long timeout)}\label{proto_8c_a59f856ab28c13b885fbe2c38f7a70a87}
+
+\item 
+\hypertarget{proto_8c_a62309d17a84cfca80bd5ed64f792b81d}{{\bfseries E\-X\-P\-O\-R\-T\-\_\-\-S\-Y\-M\-B\-O\-L\-\_\-\-G\-P\-L} (gmtp\-\_\-close)}\label{proto_8c_a62309d17a84cfca80bd5ed64f792b81d}
+
+\item 
+\hypertarget{proto_8c_a8dacfb87447f165efac077aa907a8e27}{int {\bfseries gmtp\-\_\-disconnect} (struct sock $\ast$sk, int flags)}\label{proto_8c_a8dacfb87447f165efac077aa907a8e27}
+
+\item 
+\hypertarget{proto_8c_a58189c4b73a9797678c889b711c43370}{{\bfseries E\-X\-P\-O\-R\-T\-\_\-\-S\-Y\-M\-B\-O\-L\-\_\-\-G\-P\-L} (gmtp\-\_\-disconnect)}\label{proto_8c_a58189c4b73a9797678c889b711c43370}
+
+\item 
+\hypertarget{proto_8c_ab9bd011833dc85384f4d3c6e5c29f6de}{int {\bfseries gmtp\-\_\-ioctl} (struct sock $\ast$sk, int cmd, unsigned long arg)}\label{proto_8c_ab9bd011833dc85384f4d3c6e5c29f6de}
+
+\item 
+\hypertarget{proto_8c_aff3994d7b921e54bf48117ad68260008}{{\bfseries E\-X\-P\-O\-R\-T\-\_\-\-S\-Y\-M\-B\-O\-L\-\_\-\-G\-P\-L} (gmtp\-\_\-ioctl)}\label{proto_8c_aff3994d7b921e54bf48117ad68260008}
+
+\item 
+\hypertarget{proto_8c_a789192a2299f8f626e034ad9c87d99b2}{int {\bfseries gmtp\-\_\-getsockopt} (struct sock $\ast$sk, int level, int optname, char \-\_\-\-\_\-user $\ast$optval, int \-\_\-\-\_\-user $\ast$optlen)}\label{proto_8c_a789192a2299f8f626e034ad9c87d99b2}
+
+\item 
+\hypertarget{proto_8c_a0c2d8183d16404af5ecc36d7f369d40c}{{\bfseries E\-X\-P\-O\-R\-T\-\_\-\-S\-Y\-M\-B\-O\-L\-\_\-\-G\-P\-L} (gmtp\-\_\-getsockopt)}\label{proto_8c_a0c2d8183d16404af5ecc36d7f369d40c}
+
+\item 
+\hypertarget{proto_8c_a76ebcaaace625859ee741e890d7e7da7}{int {\bfseries gmtp\-\_\-sendmsg} (struct kiocb $\ast$iocb, struct sock $\ast$sk, struct msghdr $\ast$msg, size\-\_\-t size)}\label{proto_8c_a76ebcaaace625859ee741e890d7e7da7}
+
+\item 
+\hypertarget{proto_8c_a7aa55ae25e24baeabffdcae359c65699}{{\bfseries E\-X\-P\-O\-R\-T\-\_\-\-S\-Y\-M\-B\-O\-L\-\_\-\-G\-P\-L} (gmtp\-\_\-sendmsg)}\label{proto_8c_a7aa55ae25e24baeabffdcae359c65699}
+
+\item 
+\hypertarget{proto_8c_aa5511c6bf84a1956f308ce920a134c29}{int {\bfseries gmtp\-\_\-setsockopt} (struct sock $\ast$sk, int level, int optname, char \-\_\-\-\_\-user $\ast$optval, unsigned int optlen)}\label{proto_8c_aa5511c6bf84a1956f308ce920a134c29}
+
+\item 
+\hypertarget{proto_8c_a06f8bada3169d9f63b013280475ee6f0}{{\bfseries E\-X\-P\-O\-R\-T\-\_\-\-S\-Y\-M\-B\-O\-L\-\_\-\-G\-P\-L} (gmtp\-\_\-setsockopt)}\label{proto_8c_a06f8bada3169d9f63b013280475ee6f0}
+
+\item 
+\hypertarget{proto_8c_a462ae3f8dd122bdee2af7fd115694db4}{int {\bfseries gmtp\-\_\-recvmsg} (struct kiocb $\ast$iocb, struct sock $\ast$sk, struct msghdr $\ast$msg, size\-\_\-t len, int nonblock, int flags, int $\ast$addr\-\_\-len)}\label{proto_8c_a462ae3f8dd122bdee2af7fd115694db4}
+
+\item 
+\hypertarget{proto_8c_a828a1602037d7a1e44abcc0756010e79}{{\bfseries E\-X\-P\-O\-R\-T\-\_\-\-S\-Y\-M\-B\-O\-L\-\_\-\-G\-P\-L} (gmtp\-\_\-recvmsg)}\label{proto_8c_a828a1602037d7a1e44abcc0756010e79}
+
+\item 
+\hypertarget{proto_8c_ad87dbd137414cabb75038daf5d227af2}{int {\bfseries gmtp\-\_\-do\-\_\-rcv} (struct sock $\ast$sk, struct sk\-\_\-buff $\ast$skb)}\label{proto_8c_ad87dbd137414cabb75038daf5d227af2}
+
+\item 
+\hypertarget{proto_8c_a0530c0aaec158dfb00d2ab15a71c6571}{{\bfseries E\-X\-P\-O\-R\-T\-\_\-\-S\-Y\-M\-B\-O\-L\-\_\-\-G\-P\-L} (gmtp\-\_\-do\-\_\-rcv)}\label{proto_8c_a0530c0aaec158dfb00d2ab15a71c6571}
+
+\item 
+\hypertarget{proto_8c_ae74ac6585ac8e29b98e916f4f29ae3f0}{void {\bfseries gmtp\-\_\-shutdown} (struct sock $\ast$sk, int how)}\label{proto_8c_ae74ac6585ac8e29b98e916f4f29ae3f0}
+
+\item 
+\hypertarget{proto_8c_a457458302de4290b0602c55c7b619ea0}{{\bfseries E\-X\-P\-O\-R\-T\-\_\-\-S\-Y\-M\-B\-O\-L\-\_\-\-G\-P\-L} (gmtp\-\_\-shutdown)}\label{proto_8c_a457458302de4290b0602c55c7b619ea0}
+
+\item 
+\hypertarget{proto_8c_a8fe804f33b35ccae3b8c82bee513b750}{{\bfseries module\-\_\-init} (gmtp\-\_\-init)}\label{proto_8c_a8fe804f33b35ccae3b8c82bee513b750}
+
+\item 
+\hypertarget{proto_8c_a9761956e9851cccd3f1c40d2a6b0fcdd}{{\bfseries module\-\_\-exit} (gmtp\-\_\-exit)}\label{proto_8c_a9761956e9851cccd3f1c40d2a6b0fcdd}
+
+\item 
+\hypertarget{proto_8c_ad94b36675e7eb067ea3ce6ff9e244a44}{{\bfseries M\-O\-D\-U\-L\-E\-\_\-\-L\-I\-C\-E\-N\-S\-E} (\char`\"{}G\-P\-L\char`\"{})}\label{proto_8c_ad94b36675e7eb067ea3ce6ff9e244a44}
+
+\item 
+\hypertarget{proto_8c_ae540d1ed034c92753f40dcc69dc8081b}{{\bfseries M\-O\-D\-U\-L\-E\-\_\-\-A\-U\-T\-H\-O\-R} (\char`\"{}Wendell Silva Soares $<$wss@ic.\-ufal.\-br$>$\char`\"{})}\label{proto_8c_ae540d1ed034c92753f40dcc69dc8081b}
+
+\item 
+\hypertarget{proto_8c_a81aa4475647c79e5e7d0050d75deda0b}{{\bfseries M\-O\-D\-U\-L\-E\-\_\-\-D\-E\-S\-C\-R\-I\-P\-T\-I\-O\-N} (\char`\"{}G\-M\-T\-P -\/ Global Media Transmission Protocol\char`\"{})}\label{proto_8c_a81aa4475647c79e5e7d0050d75deda0b}
+
+\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{proto_8c_ab43beb876bb256a2f539107b7f589c44}{struct inet\-\_\-hashinfo {\bfseries gmtp\-\_\-hashinfo}}\label{proto_8c_ab43beb876bb256a2f539107b7f589c44}
+
+\item 
+struct inet\-\_\-timewait\-\_\-death\-\_\-row {\bfseries gmtp\-\_\-death\-\_\-row}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+
+
+\subsection{Variable Documentation}
+\hypertarget{proto_8c_a304672a5f2e443d5c24f0c7d520a2299}{\index{proto.\-c@{proto.\-c}!gmtp\-\_\-death\-\_\-row@{gmtp\-\_\-death\-\_\-row}}
+\index{gmtp\-\_\-death\-\_\-row@{gmtp\-\_\-death\-\_\-row}!proto.c@{proto.\-c}}
+\subsubsection[{gmtp\-\_\-death\-\_\-row}]{\setlength{\rightskip}{0pt plus 5cm}struct inet\-\_\-timewait\-\_\-death\-\_\-row gmtp\-\_\-death\-\_\-row}}\label{proto_8c_a304672a5f2e443d5c24f0c7d520a2299}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+ \{
+        .sysctl\_max\_tw\_buckets = NR\_FILE * 2,
+        .period         = GMTP\_TIMEWAIT\_LEN / INET\_TWDR\_TWKILL\_SLOTS,
+        .death\_lock     = \_\_SPIN\_LOCK\_UNLOCKED(gmpt\_death\_row.death\_lock),
+        .hashinfo       = &gmtp\_hashinfo,
+        .tw\_timer       = TIMER\_INITIALIZER(inet\_twdr\_hangman, 0,
+                                            (\textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{long})&gmtp\_death\_row),
+        .twkill\_work    = \_\_WORK\_INITIALIZER(gmtp\_death\_row.twkill\_work,
+                                             inet\_twdr\_twkill\_work),
+
+
+        .twcal\_hand     = -1,
+        .twcal\_timer    = TIMER\_INITIALIZER(inet\_twdr\_twcal\_tick, 0,
+                                            (\textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{long})&gmtp\_death\_row),
+\}
+\end{DoxyCode}

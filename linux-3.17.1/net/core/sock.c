@@ -495,10 +495,12 @@ int sk_receive_skb(struct sock *sk, struct sk_buff *skb, const int nested)
 		atomic_inc(&sk->sk_drops);
 		goto discard_and_relse;
 	}
+
 	if (nested)
 		bh_lock_sock_nested(sk);
 	else
 		bh_lock_sock(sk);
+
 	if (!sock_owned_by_user(sk)) {
 		/*
 		 * trylock + unlock semantics:

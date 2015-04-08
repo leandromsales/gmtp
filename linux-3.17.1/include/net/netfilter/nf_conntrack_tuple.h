@@ -57,6 +57,9 @@ struct nf_conntrack_tuple {
 			} dccp;
 			struct {
 				__be16 port;
+			} gmtp;
+			struct {
+				__be16 port;
 			} sctp;
 			struct {
 				__be16 key;
