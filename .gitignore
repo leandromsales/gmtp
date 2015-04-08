@@ -1,10 +1,24 @@
 # Ignored files
 
+# Output files
+*.wav
+
 # GitEye
-/.project
+*.project
+*.cproject
 /.settings/
 
+# Temporary files
+*.swp
+*.save
+*.RData
+*.Rhistory
+
+# Python
+*.pyc
+
 # Kernel Module compilation
+*.config
 *.ko
 *.o
 *.mod
@@ -14,6 +28,9 @@
 *.symvers
 *.order
 *.save
+
+# Linux Kernel Docs
+linux-3.17.1/Documentation/*
 
 # Latex
 *.aux
