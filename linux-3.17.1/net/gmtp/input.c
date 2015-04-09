@@ -146,13 +146,6 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 			struct ip_mreqn mreq;
 			struct gmtp_client_entry *media_entry;
 
-			/* Obtain usec RTT sample from Request (used by CC). */
-			if(gp->relay_rtt == 0)
-				gp->relay_rtt = jiffies - gp->req_stamp;
-
-			gmtp_print_debug("Relay RTT: %u ms",
-					jiffies_to_msecs(gp->relay_rtt));
-
 			gh_rnotify = gmtp_hdr_reqnotify(skb);
 			gmtp_print_debug("Processing RequestNotify packet...");
 			gmtp_print_debug("RequestNotify => Channel: %pI4@%-5d "
@@ -161,17 +154,33 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 					ntohs(gh_rnotify->mcst_port),
 					gh_rnotify->error_code);
 
+			/* Obtain usec RTT sample from Request (used by CC). */
+			if(gp->relay_rtt == 0)
+				gp->relay_rtt = jiffies - gp->req_stamp;
+
+			switch(gh_rnotify->error_code) {
+			case GMTP_REQNOTIFY_CODE_OK: /* Process packet */
+				break;
+			case GMTP_REQNOTIFY_CODE_WAIT:  /* Do nothing... */
+				return 0;
+			/* FIXME Del entry in table when receiving error... */
+			case GMTP_REQNOTIFY_CODE_ERROR:
+				goto err;
+			default:
+				goto out_invalid_packet;
+			}
+
 			media_entry = gmtp_lookup_media(gmtp_hashtable,
 					gh->flowname);
 			if(media_entry == NULL)
 				goto out_invalid_packet;
 
+			gmtp_print_debug("Relay RTT: %u ms",
+					jiffies_to_msecs(gp->relay_rtt));
+
 			/* Inserting information in client table */
 			media_entry->channel_addr = gh_rnotify->mcst_addr;
 			media_entry->channel_port = gh_rnotify->mcst_port;
-
-			if(gh_rnotify->error_code != 0)
-				goto out_invalid_packet;
 
 			newsk = sk_clone_lock(sk, GFP_ATOMIC);
 			if(newsk == NULL)

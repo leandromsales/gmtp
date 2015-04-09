@@ -64,7 +64,7 @@ void gmtp_intra_add_relayid(struct sk_buff *skb);
 struct gmtp_hdr *gmtp_intra_make_route_hdr(struct sk_buff *skb);
 struct gmtp_hdr *gmtp_intra_make_request_notify_hdr(struct sk_buff *skb,
 		struct gmtp_relay_entry *media_info, __be16 new_sport,
-		__be16 new_dport);
+		__be16 new_dport, __u8 error_code);
 int gmtp_intra_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
 		__be16 new_sport, __be32 new_daddr, __be16 new_dport);
 

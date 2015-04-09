@@ -151,6 +151,7 @@ int gmtp_intra_request_rcv(struct sk_buff *skb)
 	int err = 0;
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct gmtp_hdr *gh_reqnotify;
 	struct gmtp_relay_entry *media_info;
 	__be32 mcst_addr;
 
@@ -158,27 +159,30 @@ int gmtp_intra_request_rcv(struct sk_buff *skb)
 
 	media_info = gmtp_intra_lookup_media(relay_hashtable, gh->flowname);
 	if(media_info != NULL) {
-		struct gmtp_hdr *gh_reqnotify;
 
 		gmtp_print_debug("Media found... ");
 
 		switch(media_info->state) {
 		case GMTP_INTRA_WAITING_REGISTER_REPLY:
+			gh_reqnotify = gmtp_intra_make_request_notify_hdr(skb,
+					media_info, gh->dport, gh->sport,
+					GMTP_REQNOTIFY_CODE_WAIT);
 			break;
 		case GMTP_INTRA_REGISTER_REPLY_RECEIVED:
 			gh_reqnotify = gmtp_intra_make_request_notify_hdr(skb,
-					media_info, gh->dport, gh->sport);
-
-			if(gh_reqnotify != NULL)
-				gmtp_intra_build_and_send_pkt(skb, iph->daddr,
-						iph->saddr, gh_reqnotify, true);
+					media_info, gh->dport, gh->sport,
+					GMTP_REQNOTIFY_CODE_OK);
 			ret = NF_DROP;
 			break;
 		default:
 			gmtp_print_error("Inconsistent state at gmtp-intra: %d",
 					media_info->state);
+
+			gh_reqnotify = gmtp_intra_make_request_notify_hdr(skb,
+					media_info, gh->dport, gh->sport,
+					GMTP_REQNOTIFY_CODE_ERROR);
+
 			ret = NF_DROP;
-			goto out;
 		}
 
 	} else {
@@ -195,11 +199,21 @@ int gmtp_intra_request_rcv(struct sk_buff *skb)
 
 		if(err) {
 			gmtp_print_error("Failed to insert flow in table...");
+			gh_reqnotify = gmtp_intra_make_request_notify_hdr(skb,
+					media_info, gh->dport, gh->sport,
+					GMTP_REQNOTIFY_CODE_ERROR);
 			ret = NF_DROP;
+		} else {
+			gh_reqnotify = gmtp_intra_make_request_notify_hdr(skb,
+					media_info, gh->dport, gh->sport,
+					GMTP_REQNOTIFY_CODE_WAIT);
 		}
 	}
 
-out:
+	if(gh_reqnotify != NULL)
+		gmtp_intra_build_and_send_pkt(skb, iph->daddr,
+				iph->saddr, gh_reqnotify, true);
+
 	return ret;
 }
 
@@ -280,7 +294,7 @@ int gmtp_intra_register_reply_rcv(struct sk_buff *skb)
 	 */
 	ret = gmtp_intra_make_request_notify(skb,
 			iph->saddr, gh->sport,
-			iph->daddr, gh->dport);
+			iph->daddr, gh->dport, GMTP_REQNOTIFY_CODE_OK);
 
 out:
 	return ret;

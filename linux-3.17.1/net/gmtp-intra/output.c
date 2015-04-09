@@ -64,7 +64,7 @@ struct gmtp_hdr *gmtp_intra_make_route_hdr(struct sk_buff *skb)
 
 struct gmtp_hdr *gmtp_intra_make_request_notify_hdr(struct sk_buff *skb,
 		struct gmtp_relay_entry *media_info, __be16 new_sport,
-		__be16 new_dport)
+		__be16 new_dport, __u8 error_code)
 {
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	__u8 *transport_header;
@@ -91,13 +91,20 @@ struct gmtp_hdr *gmtp_intra_make_request_notify_hdr(struct sk_buff *skb,
 	gh_rnotify = (struct gmtp_hdr_reqnotify*)(transport_header
 			+ sizeof(struct gmtp_hdr));
 
-	gh_rnotify->error_code = 0;
-	gh_rnotify->mcst_addr = media_info->channel_addr;
-	gh_rnotify->mcst_port = media_info->channel_port;
+	gh_rnotify->error_code = error_code;
 
-	gmtp_print_debug("RequestNotify => Channel: %pI4@%-5d | Error: %d",
-			&gh_rnotify->mcst_addr, ntohs(gh_rnotify->mcst_port),
-			gh_rnotify->error_code);
+	if(media_info != NULL && error_code != GMTP_REQNOTIFY_CODE_ERROR) {
+		gh_rnotify->mcst_addr = media_info->channel_addr;
+		gh_rnotify->mcst_port = media_info->channel_port;
+
+		gmtp_print_debug("ReqNotify => Channel: %pI4@%-5d | Error: %d",
+				&gh_rnotify->mcst_addr,
+				ntohs(gh_rnotify->mcst_port),
+				gh_rnotify->error_code);
+	} else {
+		gmtp_print_debug("ReqNotify => Channel: NULL | Error: %d",
+				gh_rnotify->error_code);
+	}
 
 	return gh_cpy;
 }
@@ -132,7 +139,8 @@ struct gmtp_hdr *gmtp_intra_make_request_notify_hdr(struct sk_buff *skb,
  * end
  */
 int gmtp_intra_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
-		__be16 new_sport, __be32 new_daddr, __be16 new_dport)
+		__be16 new_sport, __be32 new_daddr, __be16 new_dport,
+		__u8 error_code)
 {
 	int ret = NF_ACCEPT;
 
@@ -167,19 +175,24 @@ int gmtp_intra_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
 	if(gh_rnotify == NULL)
 		goto fail;
 
-	gh_rnotify->error_code = 0;
-	gh_rnotify->mcst_addr = media_info->channel_addr;
-	gh_rnotify->mcst_port = media_info->channel_port;
+	if(media_info != NULL && error_code != GMTP_REQNOTIFY_CODE_ERROR) {
+		gh_rnotify->error_code = error_code;
+		gh_rnotify->mcst_addr = media_info->channel_addr;
+		gh_rnotify->mcst_port = media_info->channel_port;
+
+		gmtp_print_debug("ReqNotify => Channel: %pI4@%-5d | Error: %d",
+				&gh_rnotify->mcst_addr,
+				ntohs(gh_rnotify->mcst_port),
+				gh_rnotify->error_code);
+	} else {
+		gmtp_print_debug("ReqNotify => Channel: NULL | Error: %d",
+				gh_rnotify->error_code);
+	}
 
 	iph->saddr = new_saddr;
 	iph->daddr = new_daddr;
 	iph->tot_len = htons(skb->len);
 	ip_send_check(iph);
-
-	gmtp_print_debug("RequestNotify => Channel: %pI4@%-5d | Error: %d",
-			&gh_rnotify->mcst_addr,
-			ntohs(gh_rnotify->mcst_port),
-			gh_rnotify->error_code);
 
 	return ret;
 

@@ -143,14 +143,21 @@ struct gmtp_hdr_ack {
 /**
  * struct gmtp_hdr_reqnotify - RequestNotify to clients
  *
- * @relay_list - list of relays in path
- * @channel_addr - multicast channel address
- * @chport - multicast channel port
+ * @error_code: One of gmtp_reqnotify_error_code
+ * @channel_addr: multicast channel address
+ * @mcst_port: multicast channel port
  */
 struct gmtp_hdr_reqnotify {
 	__u8	error_code;
 	__be32	mcst_addr;
 	__be16  mcst_port; 
+};
+
+enum gmtp_reqnotify_error_code {
+	GMTP_REQNOTIFY_CODE_OK = 0,
+	GMTP_REQNOTIFY_CODE_WAIT,
+	GMTP_REQNOTIFY_CODE_ERROR,
+	GMTP_REQNOTIFY_MAX_CODES
 };
 
 /**
