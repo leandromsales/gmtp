@@ -78,10 +78,10 @@ static inline struct gmtp_request_sock *gmtp_rsk(const struct request_sock *req)
  * @gss: greatest sequence number sent
  * @gsr: greatest valid sequence number received
  * @mss: current value of MSS (path MTU minus header sizes)
- * FIXME Next two fields are unnecessary...
- * @qpolicy: Dequeueing policy, one of %gmtp_packet_dequeueing_policy
- * @qlen: maximum length of the queue
  * @role: role of this sock, one of %gmtp_role
+ * @req_stamp: time stamp of request sent
+ * @rtt: RTT from client to server
+ * @relay_rtt: RTT from client to origin relay
  * @server_timewait: server holds timewait state on close
  * @xmitlet: tasklet scheduled by the TX CCID to dequeue data packets
  * @xmit_timer: used to control the TX (rate-based pacing)
@@ -93,7 +93,7 @@ static inline struct gmtp_request_sock *gmtp_rsk(const struct request_sock *req)
  * @b_sample: Bytes sent at sample window
  * @first_tx_stamp: time stamp of first data packet sent
  * @tx_stamp: time stamp of last data packet sent
- * @max_tx: Maximum transmission rate (bytes/s)
+ * @max_tx: Maximum transmission rate (bytes/s). 0 means no tx limit.
  * byte_budget: the amount of bytes that can be sent immediately. It can be < 0.
  * adj_budget: memory of last adjustment in transmission rate.
  * @flowname: name of the dataflow
@@ -110,10 +110,12 @@ struct gmtp_sock {
 	__u32				gsr;
 	
 	__u32				mss;
-	__u8				qpolicy;
-	__u32				qlen;
 
 	enum gmtp_role			role:3;
+
+	unsigned long			req_stamp;
+	__u8 				rtt;
+	__u8				relay_rtt;
 
 	__u8				server_timewait:1;
 	struct tasklet_struct		xmitlet;

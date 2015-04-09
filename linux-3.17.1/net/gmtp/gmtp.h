@@ -44,8 +44,6 @@ extern struct percpu_counter gmtp_orphan_count;
 #define GMTP_FIXED_HDR_LEN 36  /* theoretically: 32 bytes, In fact: 36 bytes */
 #define GMTP_MAX_VARIABLE_HDR_LEN (GMTP_MAX_HDR_LEN - GMTP_FIXED_HDR_LEN)
 
-#define GMTP_MAX_TX  1512000 /* 1,512,000 bytes/s == 12Mbps */
-
 #define GMTP_MIN_SAMPLE_LEN 100 /* Minimal sample to measure 'instant' Tx rate*/
 #define GMTP_DEFAULT_SAMPLE_LEN 1000 /* Sample to measure 'instant' Tx rate */
 #define GMTP_MAX_SAMPLE_LEN 10000 /* Max sample to measure 'instant' Tx rate */
@@ -196,14 +194,6 @@ struct sock *gmtp_check_req(struct sock *sk, struct sk_buff *skb,
 void gmtp_reqsk_send_ack(struct sock *sk, struct sk_buff *skb,
 			 struct request_sock *rsk);
 
-/* qpolicy.c
- * Packet Dequeueing Interface */
-void gmtp_qpolicy_push(struct sock *sk, struct sk_buff *skb);
-bool gmtp_qpolicy_full(struct sock *sk);
-void gmtp_qpolicy_drop(struct sock *sk, struct sk_buff *skb);
-struct sk_buff *gmtp_qpolicy_top(struct sock *sk);
-struct sk_buff *gmtp_qpolicy_pop(struct sock *sk);
-
 /** ipv4.c */
 int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len);
 
@@ -214,6 +204,7 @@ struct gmtp_client_entry *gmtp_lookup_media(
 int gmtp_add_client_entry(struct gmtp_hashtable *hashtable, __u8 *flowname,
 		__be32 local_addr, __be16 local_port,
 		__be32 channel_addr, __be16 channel_port);
+void gmtp_del_client_entry(struct gmtp_hashtable *hashtable, __u8 *media);
 
 struct gmtp_server_entry *gmtp_lookup_route(
 		struct gmtp_hashtable *hashtable, const __u8 *relayid);

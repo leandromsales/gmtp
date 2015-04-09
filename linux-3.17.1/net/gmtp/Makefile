@@ -5,7 +5,7 @@ KBUILD_EXTRA_SYMBOLS := $(PWD)/Module.symvers
 
 obj-m += gmtp.o gmtp_ipv4.o
 
-gmtp-y = hash.o qpolicy.o timer.o minisocks.o input.o output.o sockopt.o proto.o
+gmtp-y = hash.o timer.o minisocks.o input.o output.o sockopt.o proto.o
 gmtp_ipv4-y := ipv4.o
 
 all:

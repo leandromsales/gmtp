@@ -21,10 +21,6 @@ EXPORT_SYMBOL_GPL(gmtp_inet_hashinfo);
 struct gmtp_hashtable* gmtp_hashtable;
 EXPORT_SYMBOL_GPL(gmtp_hashtable);
 
-/* the maximum queue length for gmtp in packets. 0 is no limit */
-/* TODO make a better choice of this number... */
-int sysctl_gmtp_qlen __read_mostly = 5;
-
 const char *gmtp_packet_name(const int type)
 {
 	static const char *const gmtp_packet_names[] = {
@@ -192,11 +188,12 @@ int gmtp_init_sock(struct sock *sk)
 	sk->sk_state		= GMTP_CLOSED;
 	sk->sk_write_space	= gmtp_write_space;
 	icsk->icsk_sync_mss	= gmtp_sync_mss;
-
 	gp->mss			= GMTP_DEFAULT_MSS;
-	gp->qlen		= sysctl_gmtp_qlen;
-
 	gp->role		= GMTP_ROLE_UNDEFINED;
+
+	gp->req_stamp		= 0;
+	gp->rtt			= 0;
+	gp->relay_rtt		= 0;
 
 	gp->pkt_sent 		= 0;
 	gp->data_sent 		= 0;
@@ -211,7 +208,7 @@ int gmtp_init_sock(struct sock *sk)
 
 	gp->first_tx_stamp	= 0;
 	gp->tx_stamp		= 0;
-	gp->max_tx		= GMTP_MAX_TX;
+	gp->max_tx		= 0; /* Unlimited */
 	gp->byte_budget		= LONG_MIN;
 	gp->adj_budget		= 0;
 
@@ -466,6 +463,7 @@ int gmtp_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 		 size_t len, int nonblock, int flags, int *addr_len)
 {
 	const struct gmtp_hdr *gh;
+	struct gmtp_sock *gp = gmtp_sk(sk);
 	long timeo;
 
 	gmtp_print_function();
@@ -490,8 +488,8 @@ int gmtp_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 		switch(gh->type) {
 		case GMTP_PKT_DATA:
 		case GMTP_PKT_DATAACK:
+			gp->rtt = gp->relay_rtt + gh->server_rtt;
 			goto found_ok_skb;
-
 		case GMTP_PKT_CLOSE:
 			if(!(flags & MSG_PEEK))
 				gmtp_finish_passive_close(sk);

@@ -61,6 +61,7 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 			/* Use ISS on the first (non-retransmitted) Request. */
 			if (icsk->icsk_retransmits == 0)
 				gcb->seq = gp->iss;
+			gp->req_stamp = jiffies;
 			/* fall through */
 		default:
 			/*
@@ -531,7 +532,7 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 
 	gmtp_print_function();
 
-	if(gp->max_tx >= GMTP_MAX_TX)
+	if(gp->max_tx == 0)
 		goto send;
 
 	/*

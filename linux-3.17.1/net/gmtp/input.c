@@ -34,6 +34,7 @@ static void gmtp_fin(struct sock *sk, struct sk_buff *skb)
 
 static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
 {
+	struct gmtp_sock *gp = gmtp_sk(sk);
 	int queued = 0;
 
 	gmtp_print_function();
@@ -56,7 +57,7 @@ static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
 		 * This is ok as both ends are done with data transfer and each
 		 * end is just waiting for the other to acknowledge termination.
 		 */
-		if(gmtp_sk(sk)->role != GMTP_ROLE_CLIENT)
+		if(gp->role != GMTP_ROLE_CLIENT)
 			break;
 		/* fall through */
 	case GMTP_REQUESTING:
@@ -65,6 +66,14 @@ static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
 		gmtp_done(sk);
 		break;
 	case GMTP_OPEN:
+		/* Clear hash table */
+		/* FIXME: Implement gmtp_del_server_entry() */
+		/*if(gp->role == GMTP_ROLE_CLIENT)
+			gmtp_del_client_entry(gmtp_hashtable, gp->flowname);
+		else if(gp->role == GMTP_ROLE_SERVER)
+			gmtp_print_error("FIXME: "
+					"Implement gmtp_del_server_entry()");*/
+
 		/* Give waiting application a chance to read pending data */
 		queued = 1;
 		gmtp_fin(sk, skb);
@@ -78,8 +87,6 @@ static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
 	}
 	return queued;
 }
-
-
 
 static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 					       struct sk_buff *skb,
@@ -108,10 +115,9 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 		const struct inet_connection_sock *icsk = inet_csk(sk);
 		struct gmtp_sock *gp = gmtp_sk(sk);
 
-    /*** FIXME Check sequence numbers  ***/
+		/*** FIXME Check sequence numbers  ***/
 
 		/* Stop the REQUEST timer */
-		gmtp_print_debug("Stop the requesting timer");
 		inet_csk_clear_xmit_timer(sk, ICSK_TIME_RETRANS);
 		WARN_ON(sk->sk_send_head == NULL);
 		kfree_skb(sk->sk_send_head);
@@ -140,6 +146,13 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 			struct ip_mreqn mreq;
 			struct gmtp_client_entry *media_entry;
 
+			/* Obtain usec RTT sample from Request (used by CC). */
+			if(gp->relay_rtt == 0)
+				gp->relay_rtt = jiffies - gp->req_stamp;
+
+			gmtp_print_debug("Relay RTT: %u ms",
+					jiffies_to_msecs(gp->relay_rtt));
+
 			gh_rnotify = gmtp_hdr_reqnotify(skb);
 			gmtp_print_debug("Processing RequestNotify packet...");
 			gmtp_print_debug("RequestNotify => Channel: %pI4@%-5d "
@@ -164,7 +177,7 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 			if(newsk == NULL)
 				goto err;
 
-			/* FIXME Validate multicast channel */
+			/* FIXME Validate received multicast channel */
 			newsk->sk_reuse = true;  /* SO_REUSEADDR */
 			newsk->sk_reuseport = true;
 			newsk->sk_rcv_saddr =  htonl(INADDR_ANY);
@@ -174,7 +187,7 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 			/* FIXME Interface index must be filled */
 			mreq.imr_ifindex = 0;
 
-			gmtp_print_debug("Making join group...");
+			gmtp_print_debug("Joining the multicast group...");
 			ip_mc_join_group(newsk, &mreq);
 			__inet_hash_nolisten(newsk, NULL);
 			gmtp_set_state(newsk, GMTP_OPEN);
@@ -440,7 +453,8 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 			gh->type == GMTP_PKT_RESPONSE) ||
 			(gp->role == GMTP_ROLE_CLIENT &&
 					gh->type == GMTP_PKT_REQUEST) ||
-					(sk->sk_state == GMTP_REQUEST_RECV && gh->type == GMTP_PKT_DATA))
+					(sk->sk_state == GMTP_REQUEST_RECV &&
+						gh->type == GMTP_PKT_DATA))
 	{
 		gmtp_print_error("Unexpected packet type");
 		goto discard;
