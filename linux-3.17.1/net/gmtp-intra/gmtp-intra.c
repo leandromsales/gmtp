@@ -53,6 +53,20 @@ unsigned int nbytes = 0;
 
 unsigned int current_tx = 1;
 /*Function to read device information*/
+
+/* FIXME Make the real Relay ID */
+/*static const inline __u8 *gmtp_intra_relay_id(void)
+{
+	return "777777777777777777777";
+}*/
+
+/* FIXME Make the real Relay IP */
+static const inline __be32 gmtp_intra_relay_ip(void)
+{
+	unsigned char *ip = "\xc0\xa8\x02\x01"; /* 192.168.2.1 */
+	return *(unsigned int *)ip;
+}
+
 void gmtp_intra_relay_read_devices (const char *ifname, int info)
 {
     int sock, i;
@@ -133,15 +147,22 @@ void gmtp_intra_relay_get_devices (int info){
     
     return;*/
 }
-void gmtp_intra_relay_addr()
+const __u8 *gmtp_intra_relay_id()
 {
 	gmtp_intra_relay_get_devices(GET_MAC_ADRESS);
-	return;
+
+    /*just to keep the same return of previous implementation*/
+	return "777777777777777777777";
+
 }
-void gmtp_intra_relay_ip()
+__be32 gmtp_intra_relay_ip()
 {
 	gmtp_intra_relay_get_devices(GET_IP_ADRESS);
-	return;
+   
+    /*just to keep the same return of previous implementation*/
+	unsigned char *ip = "\xc0\xa8\x02\x01"; /* 192.168.2.1 */
+	return *(unsigned int *)ip;
+
 }
 static inline void increase_stats(struct iphdr *iph)
 {

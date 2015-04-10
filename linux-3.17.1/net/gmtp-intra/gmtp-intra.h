@@ -60,8 +60,8 @@ int gmtp_intra_ack_rcv(struct sk_buff *skb);
 int gmtp_intra_data_rcv(struct sk_buff *skb);
 void gmtp_intra_relay_read_devices (const char *ifname, int info);
 void gmtp_intra_relay_get_devices (int info);
-void gmtp_intra_relay_addr ();
-void gmtp_intra_relay_ip ();
+const __u8 *gmtp_intra_relay_id (void);
+__be32 gmtp_intra_relay_ip (void);
 
 /** Output.c */
 void gmtp_intra_add_relayid(struct sk_buff *skb);
@@ -83,18 +83,7 @@ unsigned int gmtp_get_current_tx_rate(void);
 void gmtp_update_tx_rate(unsigned int h_user);
 
 
-/* FIXME Make the real Relay ID */
-static const inline __u8 *gmtp_intra_relay_id(void)
-{
-	return "777777777777777777777";
-}
 
-/* FIXME Make the real Relay IP */
-static const inline __be32 gmtp_intra_relay_ip(void)
-{
-	unsigned char *ip = "\xc0\xa8\x02\x01"; /* 192.168.2.1 */
-	return *(unsigned int *)ip;
-}
 
 /** Printers **/
 static inline void print_packet(struct iphdr *iph, bool in)
