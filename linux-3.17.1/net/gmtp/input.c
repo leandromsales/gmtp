@@ -265,17 +265,13 @@ static u16 gmtp_reset_code_convert(const u8 code)
 
 static void gmtp_rcv_reset(struct sock *sk, struct sk_buff *skb)
 {
-	/* TODO Implement gmtp_rcv_reset */
-	/*
-	u16 err = gmtp_reset_code_convert(dccp_hdr_reset(skb)->gmtp_reset_code);
-	*/
-	u16 err = (u16) ECONNRESET;
+	u16 err = gmtp_reset_code_convert(gmtp_hdr_reset(skb)->reset_code);
 
 	gmtp_print_function();
 
 	sk->sk_err = err;
 
-	/*Queue the equivalent of TCP fin so that dccp_recvmsg exits the loop */
+	/*Queue the equivalent of TCP fin so that gmtp_recvmsg exits the loop */
 	gmtp_fin(sk, skb);
 
 	if (err && !sock_flag(sk, SOCK_DEAD))
@@ -326,11 +322,18 @@ discard:
 int gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 			 const struct gmtp_hdr *gh, const unsigned int len)
 {
+	struct gmtp_sock *gp = gmtp_sk(sk);
+
 	gmtp_print_function();
 
 	/* Check sequence numbers... */
-	 if (gmtp_check_seqno(sk, skb))
+	if(gmtp_check_seqno(sk, skb))
 		goto discard;
+
+/*	if(gh->type == GMTP_PKT_DATA) {
+
+	}*/
+	gp->gsr = gh->seq;
 
 	return __gmtp_rcv_established(sk, skb, gh, len);
 discard:
