@@ -1,3 +1,6 @@
+#define GET_MAC_ADRESS = 0;
+#define GET_IP_ADRESS = 1;
+
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/netfilter.h>
@@ -16,6 +19,15 @@
 #include "../gmtp/gmtp.h"
 
 #include "gmtp-intra.h"
+
+/*includes from funcionts to get ip and mac adress
+#include <stdio.h>
+#include <string.h>
+#include <net/if.h>
+#include <sys/ioctl.h>
+#include <arpa/inet.h>
+#include <dirent.h>
+*/
 
 extern const char *gmtp_packet_name(const int);
 extern const char *gmtp_state_name(const int);
@@ -40,12 +52,102 @@ unsigned int npackets = 0;
 unsigned int nbytes = 0;
 
 unsigned int current_tx = 1;
+/*Function to read device information*/
+void gmtp_intra_relay_read_devices (const char *ifname, int info)
+{
+    int sock, i;
+    struct ifreq ifr;
+    struct sockaddr_in *ipaddr;
+    char address[INET_ADDRSTRLEN];
+    size_t ifnamelen;
+    
+    /* copy ifname to ifr object */
+    ifnamelen = strlen(ifname);
+    if (ifnamelen >= sizeof(ifr.ifr_name)) {
+        return;
+    }
 
+    memcpy(ifr.ifr_name, ifname, ifnamelen);
+    ifr.ifr_name[ifnamelen] = '\0';
+
+    /* open socket */
+    sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP);
+    if (sock < 0) {
+        return;
+    }
+    
+    /* process mac if(info == 0)*/
+    if (ioctl(sock, SIOCGIFHWADDR, &ifr) != -1 && info == 0) {
+        printf("Mac Address: ");
+        for(i = 0; i < 6; ++i){
+            printf("%02x",(unsigned char)ifr.ifr_hwaddr.sa_data[i]);
+            if (i != 5)
+                printf(":");
+            if (i == 5)
+                printf("\n");
+        }
+        goto close;
+    }
+     
+    /* die if cannot get address */
+    if (ioctl(sock, SIOCGIFADDR, &ifr) == -1) {
+        goto close;
+    }
+    
+    /* process ip */
+    if(info == 1){
+    	ipaddr = (struct sockaddr_in *)&ifr.ifr_addr;
+    	if (inet_ntop(AF_INET, &ipaddr->sin_addr, address, sizeof(address)) != NULL) {
+        	printf("Ip address: %s\n", address);
+    	}
+    }
+
+close:  
+    close(sock);
+}
+/*Function to get device names from /sys/class/net*/
+void gmtp_intra_relay_get_devices (int info){
+	
+	 
+    /*DIR *d;
+    struct dirent *de;
+
+    d = opendir("/sys/class/net/");
+    if (d == NULL) {
+        return -1;
+    }
+    printf("\n");   
+    while (NULL != (de = readdir(d))) {
+        if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0) {
+            continue;
+        }
+        
+        printf("Interface %s\n", de->d_name);
+        
+        gmtp_intra_relay_read_devices(de->d_name, info);
+        
+        printf("\n");
+    }
+    
+    closedir(d);
+    
+    return;*/
+}
+void gmtp_intra_relay_addr()
+{
+	gmtp_intra_relay_get_devices(GET_MAC_ADRESS);
+	return;
+}
+void gmtp_intra_relay_ip()
+{
+	gmtp_intra_relay_get_devices(GET_IP_ADRESS);
+	return;
+}
 static inline void increase_stats(struct iphdr *iph)
 {
 	seq++;
 	npackets++;
-	nbytes += ntohs(iph->tot_len);
+	nbytes += ntoqhs(iph->tot_len);
 }
 
 static inline void decrease_stats(struct iphdr *iph)
