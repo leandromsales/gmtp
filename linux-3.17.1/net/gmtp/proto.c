@@ -188,11 +188,12 @@ int gmtp_init_sock(struct sock *sk)
 	sk->sk_state		= GMTP_CLOSED;
 	sk->sk_write_space	= gmtp_write_space;
 	icsk->icsk_sync_mss	= gmtp_sync_mss;
+
 	gp->mss			= GMTP_DEFAULT_MSS;
 	gp->role		= GMTP_ROLE_UNDEFINED;
 
 	gp->req_stamp		= 0;
-	gp->rtt			= 0;
+	gp->rtt			= GMTP_DEFAULT_RTT;
 	gp->relay_rtt		= 0;
 
 	gp->pkt_sent 		= 0;
@@ -463,7 +464,6 @@ int gmtp_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 		 size_t len, int nonblock, int flags, int *addr_len)
 {
 	const struct gmtp_hdr *gh;
-	struct gmtp_sock *gp = gmtp_sk(sk);
 	long timeo;
 
 	gmtp_print_function();
@@ -488,7 +488,6 @@ int gmtp_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 		switch(gh->type) {
 		case GMTP_PKT_DATA:
 		case GMTP_PKT_DATAACK:
-			gp->rtt = gp->relay_rtt + gh->server_rtt;
 			goto found_ok_skb;
 		case GMTP_PKT_CLOSE:
 			if(!(flags & MSG_PEEK))

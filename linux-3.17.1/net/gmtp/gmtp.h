@@ -62,6 +62,9 @@ extern struct percpu_counter gmtp_orphan_count;
  */
 #define GMTP_DEFAULT_MSS (576 - GMTP_FIXED_HDR_LEN - 20)
 
+#define GMTP_DEFAULT_RTT 64  /* milisseconds */
+
+
 /* initial RTO value */
 #define GMTP_TIMEOUT_INIT ((unsigned int)(3 * HZ))
 /*

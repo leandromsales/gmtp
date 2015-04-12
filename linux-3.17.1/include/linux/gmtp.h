@@ -79,9 +79,9 @@ static inline struct gmtp_request_sock *gmtp_rsk(const struct request_sock *req)
  * @gsr: greatest valid sequence number received
  * @mss: current value of MSS (path MTU minus header sizes)
  * @role: role of this sock, one of %gmtp_role
- * @req_stamp: time stamp of request sent
- * @rtt: RTT from client to server
- * @relay_rtt: RTT from client to origin relay
+ * @req_stamp: time stamp of request sent (jiffies)
+ * @rtt: RTT from client to server (milisseconds)
+ * @relay_rtt: RTT from client to origin relay  (milisseconds)
  * @server_timewait: server holds timewait state on close
  * @xmitlet: tasklet scheduled by the TX CCID to dequeue data packets
  * @xmit_timer: used to control the TX (rate-based pacing)
@@ -89,10 +89,10 @@ static inline struct gmtp_request_sock *gmtp_rsk(const struct request_sock *req)
  * @data_sent: Number of bytes (only app data) sent by socket
  * @bytes_sent: Number of bytes (app data + headers) sent by socket
  * @sample_len: Size of the sample window (to measure 'instant' Tx Rate)
- * @t_sample: Elapsed time at sample window
+ * @t_sample: Elapsed time at sample window (jiffies)
  * @b_sample: Bytes sent at sample window
- * @first_tx_stamp: time stamp of first data packet sent
- * @tx_stamp: time stamp of last data packet sent
+ * @first_tx_stamp: time stamp of first data packet sent (jiffies)
+ * @tx_stamp: time stamp of last data packet sent (jiffies)
  * @max_tx: Maximum transmission rate (bytes/s). 0 means no tx limit.
  * byte_budget: the amount of bytes that can be sent immediately. It can be < 0.
  * adj_budget: memory of last adjustment in transmission rate.
@@ -113,9 +113,10 @@ struct gmtp_sock {
 
 	enum gmtp_role			role:3;
 
-	unsigned long			req_stamp;
-	__u8 				rtt;
-	__u8				relay_rtt;
+	unsigned long			req_stamp; /* jiffies */
+	unsigned long			reply_stamp; /* jiffies */
+	__u8 				rtt;       /* milisseconds */
+	__u8				relay_rtt;  /* milisseconds */
 
 	__u8				server_timewait:1;
 	struct tasklet_struct		xmitlet;
@@ -132,8 +133,8 @@ struct gmtp_sock {
 	unsigned long			sample_rate;
 	unsigned long			total_rate;
 
-	unsigned long			first_tx_stamp;
-	unsigned long 			tx_stamp;
+	unsigned long			first_tx_stamp;  /* jiffies */
+	unsigned long 			tx_stamp;	/* jiffies */
 	unsigned long			max_tx;
 	long 				byte_budget;
 	int				adj_budget;

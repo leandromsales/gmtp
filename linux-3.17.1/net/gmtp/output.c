@@ -79,6 +79,7 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 
 		gh->version = 1;
 		gh->type = gcb->type;
+		gh->server_rtt = gp->rtt;
 		gh->sport = inet->inet_sport;
 		gh->dport = inet->inet_dport;
 		gh->hdrlen = gmtp_header_size;
@@ -190,9 +191,10 @@ struct sk_buff *gmtp_make_register_reply(struct sock *sk, struct dst_entry *dst,
 	/* At this point, Register-Reply specific header is zeroed. */
 	gh->sport	= htons(inet_rsk(req)->ir_num);
 	gh->dport	= inet_rsk(req)->ir_rmt_port;
-	gh->hdrlen	= gmtp_header_size;
 	gh->type	= GMTP_PKT_REGISTER_REPLY;
 	gh->seq 	= greq->gss;
+	gh->server_rtt	= gmtp_sock(sk)->rtt;
+	gh->hdrlen	= gmtp_header_size;
 	memcpy(gh->flowname, greq->flowname, GMTP_FLOWNAME_LEN);
 
 	/* We use `acked' to remember that a Register-Reply was already sent. */
@@ -232,6 +234,7 @@ struct sk_buff *gmtp_ctl_make_reset(struct sock *sk, struct sk_buff *rcv_skb)
 	gh->dport	= rxgh->sport;
 	gh->hdrlen	= gmtp_hdr_reset_len;
 	gh->seq 	= gp->iss;
+	gh->server_rtt	= gp->rtt;
 	memcpy(gh->flowname, gp->flowname, GMTP_FLOWNAME_LEN);
 
 	ghr = gmtp_hdr_reset(skb);

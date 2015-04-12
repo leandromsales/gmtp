@@ -126,6 +126,12 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 		gp->gsr = gp->isr = GMTP_SKB_CB(skb)->seq;
 		gmtp_sync_mss(sk, icsk->icsk_pmtu_cookie);
 
+		if(gp->relay_rtt == 0)
+			gp->relay_rtt = jiffies - gp->req_stamp;
+		gp->rtt = gp->relay_rtt + gh->server_rtt;
+		gmtp_print_debug("Relay RTT: %u ms",
+				jiffies_to_msecs(gp->relay_rtt));
+
 		/*
 		 *    Step 10: Process REQUEST state (second part)
 		 *       If S.state == REQUESTING,
@@ -155,9 +161,6 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 					gh_rnotify->error_code);
 
 			/* Obtain usec RTT sample from Request (used by CC). */
-			if(gp->relay_rtt == 0)
-				gp->relay_rtt = jiffies - gp->req_stamp;
-
 			switch(gh_rnotify->error_code) {
 			case GMTP_REQNOTIFY_CODE_OK: /* Process packet */
 				break;
@@ -174,9 +177,6 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 					gh->flowname);
 			if(media_entry == NULL)
 				goto out_invalid_packet;
-
-			gmtp_print_debug("Relay RTT: %u ms",
-					jiffies_to_msecs(gp->relay_rtt));
 
 			/* Inserting information in client table */
 			media_entry->channel_addr = gh_rnotify->mcst_addr;
@@ -289,11 +289,17 @@ static int gmtp_check_seqno(struct sock *sk, struct sk_buff *skb)
 static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 		const struct gmtp_hdr *gh, const unsigned int len)
 {
+	struct gmtp_sock *gp = gmtp_sk(sk);
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+
 	gmtp_print_function();
 
-	switch (gmtp_hdr(skb)->type) {
+	switch (gh->type) {
 	case GMTP_PKT_DATAACK:
 	case GMTP_PKT_DATA:
+		if(gp->role == GMTP_ROLE_CLIENT)
+			gp->rtt = gp->relay_rtt + gh->server_rtt;
+
 		gmtp_enqueue_skb(sk, skb);
 		return 0;
 	case GMTP_PKT_ACK:
@@ -381,11 +387,14 @@ static int gmtp_rcv_request_rcv_state_process(struct sock *sk,
 	case GMTP_PKT_DATA:
 		if (sk->sk_state == GMTP_REQUEST_RECV)
 			break;
+	/* ROUTE_NOTIFY is a special ack */
 	case GMTP_PKT_ROUTE_NOTIFY:
-		gmtp_rcv_route_notify(sk, skb, gh);
-		/* ROUTE_NOTIFY is a special ack */
 	case GMTP_PKT_DATAACK:
 	case GMTP_PKT_ACK:
+		unsigned long elapsed = jiffies - gmtp_sk(sk)->reply_stamp;
+		gmtp_sk(sk)->rtt = jiffies_to_msecs(elapsed);
+		gmtp_print_debug("RTT: %u", gmtp_sk(sk)->rtt);
+
 		inet_csk_clear_xmit_timer(sk, ICSK_TIME_DACK);
 
 		icsk->icsk_af_ops->rebuild_header(sk);
@@ -394,11 +403,15 @@ static int gmtp_rcv_request_rcv_state_process(struct sock *sk,
 		sk->sk_state_change(sk);
 		sk_wake_async(sk, SOCK_WAKE_IO, POLL_OUT);
 
+		if(gh->type == GMTP_PKT_ROUTE_NOTIFY)
+			gmtp_rcv_route_notify(sk, skb, gh);
+
 		if (gh->type == GMTP_PKT_DATAACK)
 		{
 			__gmtp_rcv_established(sk, skb, gh, len);
 			queued = 1;
 		}
+
 		break;
 	}
 	return queued;

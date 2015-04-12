@@ -311,7 +311,9 @@ static struct dst_entry* gmtp_v4_route_skb(struct net *net, struct sock *sk,
 	return &rt->dst;
 }
 
-static int gmtp_v4_send_register_reply(struct sock *sk, struct request_sock *req) {
+static int gmtp_v4_send_register_reply(struct sock *sk,
+		struct request_sock *req) {
+
 	int err = -1;
 	struct sk_buff *skb;
 	struct dst_entry *dst;
@@ -326,6 +328,8 @@ static int gmtp_v4_send_register_reply(struct sock *sk, struct request_sock *req
 	skb = gmtp_make_register_reply(sk, dst, req);
 	if (skb != NULL) {
 		const struct inet_request_sock *ireq = inet_rsk(req);
+		gmtp_sock(sk)->reply_stamp = jiffies;
+
 		err = ip_build_and_send_pkt(skb, sk, ireq->ir_loc_addr,
 				ireq->ir_rmt_addr, ireq->opt);
 		err = net_xmit_eval(err);
@@ -685,6 +689,9 @@ static struct request_sock_ops gmtp_request_sock_ops __read_mostly = {
 	.syn_ack_timeout = gmtp_syn_ack_timeout,
 };
 
+/*
+ * Called when a client sends a REQUEST
+ */
 int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb) {
 	struct inet_request_sock *ireq;
 
