@@ -62,6 +62,13 @@ extern struct percpu_counter gmtp_orphan_count;
  */
 #define GMTP_DEFAULT_MSS (576 - GMTP_FIXED_HDR_LEN - 20)
 
+/*
+ * RTT sampling: sanity bounds and fallback RTT value from RFC 4340, section 3.4
+ */
+#define GMTP_SANE_RTT_MIN	100 /* microsseconds */
+#define GMTP_FALLBACK_RTT	(USEC_PER_SEC / 5)
+#define GMTP_SANE_RTT_MAX	(3 * USEC_PER_SEC)
+
 #define GMTP_DEFAULT_RTT 64  /* milisseconds */
 
 
@@ -242,6 +249,30 @@ struct gmtp_skb_cb {
 };
 
 #define GMTP_SKB_CB(__skb) ((struct gmtp_skb_cb *)&((__skb)->cb[0]))
+
+/**
+ * gmtp_loss_count - Approximate the number of lost data packets in a burst loss
+ * @s1:  last known sequence number before the loss ('hole')
+ * @s2:  first sequence number seen after the 'hole'
+ * @ndp: NDP count on packet with sequence number @s2
+ */
+static inline u64 gmtp_loss_count(const u64 s1, const u64 s2, const u64 ndp)
+{
+	s64 delta = s2 - s1;
+
+	WARN_ON(delta < 0);
+	delta -= ndp + 1;
+
+	return delta > 0 ? delta : 0;
+}
+
+/**
+ * dccp_loss_free - Evaluate condition for data loss from RFC 4340, 7.7.1
+ */
+static inline bool gmtp_loss_free(const u64 s1, const u64 s2, const u64 ndp)
+{
+	return gmtp_loss_free(s1, s2, ndp) == 0;
+}
 
 #endif /* GMTP_H_ */
 

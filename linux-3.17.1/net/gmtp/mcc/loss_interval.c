@@ -102,7 +102,8 @@ u8 mcc_lh_update_i_mean(struct mcc_loss_hist *lh, struct sk_buff *skb)
 	if (len - (s64)cur->li_length <= 0)	/* duplicate or reordered */
 		return 0;
 
-	if (SUB16(dccp_hdr(skb)->dccph_ccval, cur->li_ccval) > 4)
+	/* FIXME Distance greater than 1 RTT (ccval = RTT/4) */
+	/*if (SUB16(dccp_hdr(skb)->dccph_ccval, cur->li_ccval) > 4)*/
 		/*
 		 * Implements RFC 4342, 10.2:
 		 * If a packet S (skb) exists whose seqno comes `after' the one
@@ -111,7 +112,7 @@ u8 mcc_lh_update_i_mean(struct mcc_loss_hist *lh, struct sk_buff *skb)
 		 * subsequent packets as belonging to a new loss interval. This
 		 * test is necessary since CCVal may wrap between intervals.
 		 */
-		cur->li_is_closed = 1;
+		/*cur->li_is_closed = 1;*/
 
 	if (mcc_lh_length(lh) == 1)		/* due to RFC 3448, 6.3.1 */
 		return 0;
@@ -149,7 +150,7 @@ int mcc_lh_interval_add(struct mcc_loss_hist *lh, struct mcc_rx_hist *rh,
 
 	new = mcc_lh_demand_next(lh);
 	if (unlikely(new == NULL)) {
-		DCCP_CRIT("Cannot allocate/add loss record.");
+		gmtp_print_error("Cannot allocate/add loss record.");
 		return 0;
 	}
 

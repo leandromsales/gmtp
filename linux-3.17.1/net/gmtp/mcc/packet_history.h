@@ -70,7 +70,7 @@ void mcc_tx_hist_purge(struct mcc_tx_hist_entry **headp);
 #define SUB16(a, b) (((a) + 16 - (b)) & 0xF)
 
 /* Number of packets to wait after a missing packet (RFC 4342, 6.1) */
-#define TFRC_NDUPACK 3
+#define MCC_NDUPACK 3
 
 /**
  * mcc_rx_hist_entry - Store information about a single received packet
@@ -95,7 +95,7 @@ struct mcc_rx_hist_entry {
  * @rtt_sample_prev:	Used during RTT sampling, points to candidate entry
  */
 struct mcc_rx_hist {
-	struct mcc_rx_hist_entry *ring[TFRC_NDUPACK + 1];
+	struct mcc_rx_hist_entry *ring[MCC_NDUPACK + 1];
 	u8			  loss_count:2,
 				  loss_start:2;
 #define rtt_sample_prev		  loss_start
@@ -106,7 +106,7 @@ struct mcc_rx_hist {
  */
 static inline u8 mcc_rx_hist_index(const struct mcc_rx_hist *h, const u8 n)
 {
-	return (h->loss_start + n) & TFRC_NDUPACK;
+	return (h->loss_start + n) & MCC_NDUPACK;
 }
 
 /**
