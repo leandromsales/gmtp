@@ -28,11 +28,11 @@ extern struct percpu_counter gmtp_orphan_count;
 #define GMTP_HASH_SIZE  16
 
 /** GMTP Debugs */
-#define GMTP_INFO "[GMTP_INFO] %s:%d - "
+#define GMTP_DEBUG "[GMTP] %s:%d - "
 #define GMTP_WARNING "[GMTP_WARNING]  %s:%d at %s - "
 #define GMTP_ERROR "[GMTP_ERROR] %s:%d at %s - "
 
-#define gmtp_print_debug(fmt, args...) pr_info(GMTP_INFO fmt \
+#define gmtp_print_debug(fmt, args...) pr_info(GMTP_DEBUG fmt \
 		"\n", __FUNCTION__, __LINE__, ##args)
 #define gmtp_print_warning(fmt, args...) pr_warning(GMTP_WARNING fmt\
 		"\n", __FUNCTION__, __LINE__, __FILE__, ##args)

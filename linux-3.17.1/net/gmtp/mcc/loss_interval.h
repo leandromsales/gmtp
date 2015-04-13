@@ -1,10 +1,13 @@
-#ifndef _DCCP_LI_HIST_
-#define _DCCP_LI_HIST_
+#ifndef _MCC_LI_HIST
+#define _MCC_LI_HIST_
 /*
  *  Copyright (c) 2007   The University of Aberdeen, Scotland, UK
  *  Copyright (c) 2005-7 The University of Waikato, Hamilton, New Zealand.
  *  Copyright (c) 2005-7 Ian McDonald <ian.mcdonald@jandi.co.nz>
  *  Copyright (c) 2005 Arnaldo Carvalho de Melo <acme@conectiva.com.br>
+ *
+ *  Adapted to GMTP by
+ *  Copyright (c) 2015   Federal University of Alagoas, Maceió, Brazil
  *
  *  This program is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the Free
@@ -23,13 +26,13 @@
 #define LIH_SIZE	(NINTERVAL + 1)
 
 /**
- *  tfrc_loss_interval  -  Loss history record for TFRC-based protocols
+ *  mcc_loss_interval  -  Loss history record for TFRC-based protocols
  *  @li_seqno:		Highest received seqno before the start of loss
  *  @li_ccval:		The CCVal belonging to @li_seqno
  *  @li_is_closed:	Whether @li_seqno is older than 1 RTT
  *  @li_length:		Loss interval sequence length
  */
-struct tfrc_loss_interval {
+struct mcc_loss_interval {
 	u64		 li_seqno:48,
 			 li_ccval:4,
 			 li_is_closed:1;
@@ -42,32 +45,32 @@ struct tfrc_loss_interval {
  *  @counter:	Current count of entries (can be more than %LIH_SIZE)
  *  @i_mean:	Current Average Loss Interval [RFC 3448, 5.4]
  */
-struct tfrc_loss_hist {
-	struct tfrc_loss_interval	*ring[LIH_SIZE];
+struct mcc_loss_hist {
+	struct mcc_loss_interval	*ring[LIH_SIZE];
 	u8				counter;
 	u32				i_mean;
 };
 
-static inline void tfrc_lh_init(struct tfrc_loss_hist *lh)
+static inline void mcc_lh_init(struct mcc_loss_hist *lh)
 {
-	memset(lh, 0, sizeof(struct tfrc_loss_hist));
+	memset(lh, 0, sizeof(struct mcc_loss_hist));
 }
 
-static inline u8 tfrc_lh_is_initialised(struct tfrc_loss_hist *lh)
+static inline u8 mcc_lh_is_initialised(struct mcc_loss_hist *lh)
 {
 	return lh->counter > 0;
 }
 
-static inline u8 tfrc_lh_length(struct tfrc_loss_hist *lh)
+static inline u8 mcc_lh_length(struct mcc_loss_hist *lh)
 {
 	return min(lh->counter, (u8)LIH_SIZE);
 }
 
-struct tfrc_rx_hist;
+struct mcc_rx_hist;
 
-int tfrc_lh_interval_add(struct tfrc_loss_hist *, struct tfrc_rx_hist *,
+int mcc_lh_interval_add(struct mcc_loss_hist *, struct mcc_rx_hist *,
 			 u32 (*first_li)(struct sock *), struct sock *);
-u8 tfrc_lh_update_i_mean(struct tfrc_loss_hist *lh, struct sk_buff *);
-void tfrc_lh_cleanup(struct tfrc_loss_hist *lh);
+u8 mcc_lh_update_i_mean(struct mcc_loss_hist *lh, struct sk_buff *);
+void mcc_lh_cleanup(struct mcc_loss_hist *lh);
 
-#endif /* _DCCP_LI_HIST_ */
+#endif /* _MCC_LI_HIST */

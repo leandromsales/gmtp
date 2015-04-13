@@ -1,45 +1,42 @@
 /*
- * TFRC library initialisation
+ * GMTP-MCC library initialisation
  *
  * Copyright (c) 2007 The University of Aberdeen, Scotland, UK
  * Copyright (c) 2007 Arnaldo Carvalho de Melo <acme@redhat.com>
+ *
+ * Adapted to GMTP by
+ * Copyright (c) 2015 Federal University of Alagoas, Maceió, Brazil
  */
 #include <linux/moduleparam.h>
-#include "tfrc.h"
+#include "mcc.h"
 
-#ifdef CONFIG_IP_DCCP_TFRC_DEBUG
-bool tfrc_debug;
-module_param(tfrc_debug, bool, 0644);
-MODULE_PARM_DESC(tfrc_debug, "Enable TFRC debug messages");
-#endif
-
-int __init tfrc_lib_init(void)
+int __init mcc_lib_init(void)
 {
-	int rc = tfrc_li_init();
+	int rc = mcc_li_init();
 
 	if (rc)
 		goto out;
 
-	rc = tfrc_tx_packet_history_init();
+	rc = mcc_tx_packet_history_init();
 	if (rc)
 		goto out_free_loss_intervals;
 
-	rc = tfrc_rx_packet_history_init();
+	rc = mcc_rx_packet_history_init();
 	if (rc)
 		goto out_free_tx_history;
 	return 0;
 
 out_free_tx_history:
-	tfrc_tx_packet_history_exit();
+	mcc_tx_packet_history_exit();
 out_free_loss_intervals:
-	tfrc_li_exit();
+	mcc_li_exit();
 out:
 	return rc;
 }
 
-void tfrc_lib_exit(void)
+void mcc_lib_exit(void)
 {
-	tfrc_rx_packet_history_exit();
-	tfrc_tx_packet_history_exit();
-	tfrc_li_exit();
+	mcc_rx_packet_history_exit();
+	mcc_tx_packet_history_exit();
+	mcc_li_exit();
 }
