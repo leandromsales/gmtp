@@ -193,7 +193,7 @@ struct sk_buff *gmtp_make_register_reply(struct sock *sk, struct dst_entry *dst,
 	gh->dport	= inet_rsk(req)->ir_rmt_port;
 	gh->type	= GMTP_PKT_REGISTER_REPLY;
 	gh->seq 	= greq->gss;
-	gh->server_rtt	= gmtp_sock(sk)->rtt;
+	gh->server_rtt	= gmtp_sk(sk)->rtt;
 	gh->hdrlen	= gmtp_header_size;
 	memcpy(gh->flowname, greq->flowname, GMTP_FLOWNAME_LEN);
 

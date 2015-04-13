@@ -80,6 +80,7 @@ static inline struct gmtp_request_sock *gmtp_rsk(const struct request_sock *req)
  * @mss: current value of MSS (path MTU minus header sizes)
  * @role: role of this sock, one of %gmtp_role
  * @req_stamp: time stamp of request sent (jiffies)
+ * @reply_stamp: time stamp of Request-Reply sent (jiffies)
  * @rtt: RTT from client to server (milisseconds)
  * @relay_rtt: RTT from client to origin relay  (milisseconds)
  * @server_timewait: server holds timewait state on close

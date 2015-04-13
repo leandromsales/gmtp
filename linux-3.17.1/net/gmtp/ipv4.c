@@ -328,7 +328,7 @@ static int gmtp_v4_send_register_reply(struct sock *sk,
 	skb = gmtp_make_register_reply(sk, dst, req);
 	if (skb != NULL) {
 		const struct inet_request_sock *ireq = inet_rsk(req);
-		gmtp_sock(sk)->reply_stamp = jiffies;
+		gmtp_sk(sk)->reply_stamp = jiffies;
 
 		err = ip_build_and_send_pkt(skb, sk, ireq->ir_loc_addr,
 				ireq->ir_rmt_addr, ireq->opt);
@@ -421,8 +421,6 @@ static struct sock *gmtp_v4_hnd_req(struct sock *sk, struct sk_buff *skb) {
 
 	if (nsk != NULL) {
 		if (nsk->sk_state != GMTP_TIME_WAIT) {
-			gmtp_print_debug(
-					"nsk->sk_state != GMTP_TIME_WAIT (returning nsk...)");
 			bh_lock_sock(nsk);
 			return nsk;
 		}
@@ -569,12 +567,14 @@ static int gmtp_v4_rcv(struct sk_buff *skb) {
 	GMTP_SKB_CB(skb)->type = gh->type;
 
 	flowname_str(flowname, gh->flowname);
-	gmtp_print_debug("%s (%d) src=%pI4@%-5d dst=%pI4@%-5d seq=%llu flow=%s",
+	gmtp_print_debug("%s (%d) src=%pI4@%-5d dst=%pI4@%-5d seq=%llu "
+			"RTT: %u ms flow=%s",
 			gmtp_packet_name(gh->type),
 			gh->type,
 			&iph->saddr, ntohs(gh->sport),
 			&iph->daddr, ntohs(gh->dport),
 			(unsigned long long) GMTP_SKB_CB(skb)->seq,
+			gh->server_rtt,
 			flowname);
 
 	if(skb->pkt_type == PACKET_MULTICAST) {

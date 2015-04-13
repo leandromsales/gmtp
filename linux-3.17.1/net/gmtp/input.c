@@ -290,7 +290,6 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 		const struct gmtp_hdr *gh, const unsigned int len)
 {
 	struct gmtp_sock *gp = gmtp_sk(sk);
-	struct gmtp_hdr *gh = gmtp_hdr(skb);
 
 	gmtp_print_function();
 
@@ -376,6 +375,7 @@ static int gmtp_rcv_request_rcv_state_process(struct sock *sk,
 						   const unsigned int len)
 {
 	struct inet_connection_sock *icsk = inet_csk(sk);
+	unsigned long elapsed = 0;
 	int queued = 0;
 
 	gmtp_print_function();
@@ -391,9 +391,9 @@ static int gmtp_rcv_request_rcv_state_process(struct sock *sk,
 	case GMTP_PKT_ROUTE_NOTIFY:
 	case GMTP_PKT_DATAACK:
 	case GMTP_PKT_ACK:
-		unsigned long elapsed = jiffies - gmtp_sk(sk)->reply_stamp;
+		elapsed = jiffies - gmtp_sk(sk)->reply_stamp;
 		gmtp_sk(sk)->rtt = jiffies_to_msecs(elapsed);
-		gmtp_print_debug("RTT: %u", gmtp_sk(sk)->rtt);
+		gmtp_print_debug("RTT: %u ms", gmtp_sk(sk)->rtt);
 
 		inet_csk_clear_xmit_timer(sk, ICSK_TIME_DACK);
 
