@@ -12,7 +12,6 @@
 #include <net/inet_hashtables.h>
 #include <uapi/asm-generic/errno.h>
 
-#include <linux/gmtp.h>
 #include <net/netns/gmtp.h>
 
 #include <linux/types.h>

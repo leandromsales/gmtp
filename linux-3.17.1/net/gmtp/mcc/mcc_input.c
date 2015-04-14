@@ -7,6 +7,8 @@
  *  GMTP-MCC receiver routines
  */
 
+#include "mcc_proto.h"
+
 /* GMTP-MCC feedback types */
 enum mcc_fback_type {
 	MCC_FBACK_NONE = 0,

@@ -1,8 +1,8 @@
 #include <linux/kernel.h>
 #include <linux/skbuff.h>
 #include <linux/slab.h>
-#include <linux/gmtp.h>
 #include <linux/types.h>
+#include <linux/gmtp.h>
 #include <linux/net.h>
 #include <linux/security.h>
 #include <linux/igmp.h>
@@ -12,8 +12,8 @@
 #include <net/sock.h>
 
 #include <uapi/linux/gmtp.h>
-#include <linux/gmtp.h>
 #include "gmtp.h"
+#include "mcc.h"
 
 static void gmtp_enqueue_skb(struct sock *sk, struct sk_buff *skb)
 {
@@ -281,7 +281,7 @@ static void gmtp_rcv_reset(struct sock *sk, struct sk_buff *skb)
 
 static void gmtp_deliver_input_to_mcc(struct sock *sk, struct sk_buff *skb)
 {
-	const struct dccp_sock *dp = dccp_sk(sk);
+	const struct gmtp_sock *dp = gmtp_sk(sk);
 
 	/* Don't deliver to RX MCC when node has shut down read end. */
 	if (!(sk->sk_shutdown & RCV_SHUTDOWN))

@@ -18,13 +18,6 @@
 #include <linux/list.h>
 #include <linux/slab.h>
 
-/*
- * Number of loss intervals (RFC 4342, 8.6.1). The history size is one more than
- * NINTERVAL, since the `open' interval I_0 is always stored as the first entry.
- */
-#define NINTERVAL	8
-#define LIH_SIZE	(NINTERVAL + 1)
-
 /**
  *  mcc_loss_interval  -  Loss history record for TFRC-based protocols
  *  @li_seqno:		Highest received seqno before the start of loss
@@ -37,18 +30,6 @@ struct mcc_loss_interval {
 			 li_ccval:4,
 			 li_is_closed:1;
 	u32		 li_length;
-};
-
-/**
- *  tfrc_loss_hist  -  Loss record database
- *  @ring:	Circular queue managed in LIFO manner
- *  @counter:	Current count of entries (can be more than %LIH_SIZE)
- *  @i_mean:	Current Average Loss Interval [RFC 3448, 5.4]
- */
-struct mcc_loss_hist {
-	struct mcc_loss_interval	*ring[LIH_SIZE];
-	u8				counter;
-	u32				i_mean;
 };
 
 static inline void mcc_lh_init(struct mcc_loss_hist *lh)

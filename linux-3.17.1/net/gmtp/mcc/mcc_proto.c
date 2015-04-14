@@ -8,7 +8,7 @@
  * Copyright (c) 2015 Federal University of Alagoas, Maceió, Brazil
  */
 #include <linux/moduleparam.h>
-#include "gmtp_mcc.h"
+#include "mcc_proto.h"
 
 int __init mcc_lib_init(void)
 {

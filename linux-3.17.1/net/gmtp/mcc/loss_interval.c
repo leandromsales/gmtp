@@ -13,7 +13,7 @@
  *  (at your option) any later version.
  */
 #include <net/sock.h>
-#include "mcc.h"
+#include "mcc_proto.h"
 
 static struct kmem_cache  *tfrc_lh_slab  __read_mostly;
 /* Loss Interval weights from [RFC 3448, 5.4], scaled by 10 */

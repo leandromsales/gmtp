@@ -14,8 +14,8 @@
  */
 
 #include <linux/module.h>
+#include "mcc_proto.h"
 #include "../gmtp.h"
-#include "mcc.h"
 
 #define MCC_CALC_X_ARRSIZE 500
 #define MCC_CALC_X_SPLIT   50000	/* 0.05 * 1000000, details below */

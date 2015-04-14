@@ -41,7 +41,7 @@
 
 #include <linux/list.h>
 #include <linux/slab.h>
-#include "mcc.h"
+#include "mcc_proto.h"
 
 /**
  *  mcc_tx_hist_entry  -  Simple singly-linked TX history list
@@ -67,10 +67,7 @@ int mcc_tx_hist_add(struct mcc_tx_hist_entry **headp, u64 seqno);
 void mcc_tx_hist_purge(struct mcc_tx_hist_entry **headp);
 
 /* Subtraction a-b modulo-16, respects circular wrap-around */
-#define SUB16(a, b) (((a) + 16 - (b)) & 0xF)
-
-/* Number of packets to wait after a missing packet (RFC 4342, 6.1) */
-#define MCC_NDUPACK 3
+#define SUB16(a, b) (((a) + 16 - (b)) & 0xF)i
 
 /**
  * mcc_rx_hist_entry - Store information about a single received packet
@@ -85,20 +82,6 @@ struct mcc_rx_hist_entry {
 			 type:4;
 	u64		 ndp:48;
 	ktime_t		 tstamp;
-};
-
-/**
- * mcc_rx_hist  -  RX history structure for TFRC-based protocols
- * @ring:		Packet history for RTT sampling and loss detection
- * @loss_count:		Number of entries in circular history
- * @loss_start:		Movable index (for loss detection)
- * @rtt_sample_prev:	Used during RTT sampling, points to candidate entry
- */
-struct mcc_rx_hist {
-	struct mcc_rx_hist_entry *ring[MCC_NDUPACK + 1];
-	u8			  loss_count:2,
-				  loss_start:2;
-#define rtt_sample_prev		  loss_start
 };
 
 /**
