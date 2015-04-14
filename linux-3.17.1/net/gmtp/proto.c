@@ -196,22 +196,22 @@ int gmtp_init_sock(struct sock *sk)
 	gp->rtt			= GMTP_DEFAULT_RTT;
 	gp->relay_rtt		= 0;
 
-	gp->pkt_sent 		= 0;
-	gp->data_sent 		= 0;
-	gp->bytes_sent 		= 0;
+	gp->tx_pkts_sent 		= 0;
+	gp->tx_data_sent 		= 0;
+	gp->tx_bytes_sent 		= 0;
 
-	gp->sample_len 		= GMTP_DEFAULT_SAMPLE_LEN;
-	gp->t_sample 		= 0;
-	gp->b_sample 		= 0;
+	gp->tx_sample_len 		= GMTP_DEFAULT_SAMPLE_LEN;
+	gp->tx_time_sample 		= 0;
+	gp->tx_byte_sample 		= 0;
 
-	gp->sample_rate 	= 0;
-	gp->total_rate 		= 0;
+	gp->tx_sample_rate 	= 0;
+	gp->tx_total_rate 		= 0;
 
-	gp->first_tx_stamp	= 0;
-	gp->tx_stamp		= 0;
-	gp->max_tx		= 0; /* Unlimited */
-	gp->byte_budget		= LONG_MIN;
-	gp->adj_budget		= 0;
+	gp->tx_first_stamp	= 0;
+	gp->tx_last_stamp		= 0;
+	gp->tx_max_rate		= 0; /* Unlimited */
+	gp->tx_byte_budget		= LONG_MIN;
+	gp->tx_adj_budget		= 0;
 
 	memset(gp->flowname, 0, GMTP_FLOWNAME_LEN);
 

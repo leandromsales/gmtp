@@ -274,5 +274,13 @@ static inline bool gmtp_loss_free(const u64 s1, const u64 s2, const u64 ndp)
 	return gmtp_loss_free(s1, s2, ndp) == 0;
 }
 
+static inline int gmtp_data_packet(const struct sk_buff *skb)
+{
+	const __u8 type = GMTP_SKB_CB(skb)->type;
+
+	return type == GMTP_PKT_DATA	 ||
+	       type == GMTP_PKT_DATAACK;
+}
+
 #endif /* GMTP_H_ */
 

@@ -279,6 +279,22 @@ static void gmtp_rcv_reset(struct sock *sk, struct sk_buff *skb)
 	gmtp_time_wait(sk, GMTP_TIME_WAIT, 0);
 }
 
+static void gmtp_deliver_input_to_mcc(struct sock *sk, struct sk_buff *skb)
+{
+	const struct dccp_sock *dp = dccp_sk(sk);
+
+	/* Don't deliver to RX MCC when node has shut down read end. */
+	if (!(sk->sk_shutdown & RCV_SHUTDOWN))
+		mcc_rx_packet_recv(sk, skb);
+	/*
+	 * Until the TX queue has been drained, we can not honour SHUT_WR, since
+	 * we need received feedback as input to adjust congestion control.
+	 */
+/*	if (sk->sk_write_queue.qlen > 0 || !(sk->sk_shutdown & SEND_SHUTDOWN))
+		mcc_tx_packet_recv(sk, skb);*/
+}
+
+
 /* TODO Implement check sequence number */
 static int gmtp_check_seqno(struct sock *sk, struct sk_buff *skb)
 {
@@ -335,9 +351,7 @@ int gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 	if(gmtp_check_seqno(sk, skb))
 		goto discard;
 
-/*	if(gh->type == GMTP_PKT_DATA) {
-
-	}*/
+	/*gmtp_deliver_input_to_mcc(sk, skb);*/
 	gp->gsr = gh->seq;
 
 	return __gmtp_rcv_established(sk, skb, gh, len);

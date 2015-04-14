@@ -442,31 +442,31 @@ static inline void packet_sent(struct gmtp_sock *gp, int data_len)
 	unsigned long elapsed;
 	int len = pkt_len(data_len);
 
-	++gp->pkt_sent;
-	gp->data_sent += (unsigned long) data_len;
-	gp->bytes_sent += (unsigned long) len;
+	++gp->tx_pkts_sent;
+	gp->tx_data_sent += (unsigned long) data_len;
+	gp->tx_bytes_sent += (unsigned long) len;
 
-	gp->tx_stamp = jiffies;
-	if(gp->first_tx_stamp == 0) { /* This is the first sent */
-		gp->first_tx_stamp = gp->tx_stamp;
-		gp->t_sample = jiffies;
-		gp->b_sample = gp->bytes_sent;
+	gp->tx_last_stamp = jiffies;
+	if(gp->tx_first_stamp == 0) { /* This is the first sent */
+		gp->tx_first_stamp = gp->tx_last_stamp;
+		gp->tx_time_sample = jiffies;
+		gp->tx_byte_sample = gp->tx_bytes_sent;
 	}
 
-	if(gp->byte_budget != LONG_MIN)
-		gp->byte_budget -= (long)(len);
+	if(gp->tx_byte_budget != LONG_MIN)
+		gp->tx_byte_budget -= (long)(len);
 
-	elapsed = jiffies - gp->first_tx_stamp;
-	if(gp->first_tx_stamp != 0 && elapsed != 0)
-		gp->total_rate = (HZ * gp->bytes_sent) / elapsed;
+	elapsed = jiffies - gp->tx_first_stamp;
+	if(gp->tx_first_stamp != 0 && elapsed != 0)
+		gp->tx_total_rate = (HZ * gp->tx_bytes_sent) / elapsed;
 
-	if(gp->pkt_sent >= gp->sample_len) {
+	if(gp->tx_pkts_sent >= gp->tx_sample_len) {
 
-		gp->t_sample = jiffies - gp->t_sample;
-		gp->b_sample = gp->bytes_sent - gp->b_sample;
+		gp->tx_time_sample = jiffies - gp->tx_time_sample;
+		gp->tx_byte_sample = gp->tx_bytes_sent - gp->tx_byte_sample;
 
-		if(gp->t_sample != 0 && gp->b_sample != 0)
-			gp->sample_rate = (HZ * gp->b_sample) / gp->t_sample;
+		if(gp->tx_time_sample != 0 && gp->tx_byte_sample != 0)
+			gp->tx_sample_rate = (HZ * gp->tx_byte_sample) / gp->tx_time_sample;
 	}
 }
 
@@ -496,24 +496,24 @@ static void gmtp_xmit_packet(struct sock *sk, struct sk_buff *skb) {
  */
 static int get_rate_gap(struct gmtp_sock *gp, int acum)
 {
-	long rate = (long)gp->sample_rate;
-	long tx = (long)gp->max_tx;
+	long rate = (long)gp->tx_sample_rate;
+	long tx = (long)gp->tx_max_rate;
 	int coef_adj = 0;
 
-	if(gp->pkt_sent < GMTP_MIN_SAMPLE_LEN)
+	if(gp->tx_pkts_sent < GMTP_MIN_SAMPLE_LEN)
 		return 0;
 
-	if(rate <= gp->total_rate/2) /* Eliminate discrepancies */
-		rate = (long)gp->total_rate;
+	if(rate <= gp->tx_total_rate/2) /* Eliminate discrepancies */
+		rate = (long)gp->tx_total_rate;
 
 	coef_adj = (int) (((rate - tx) * 100) / tx);
 
 	if(acum) {
-		coef_adj += gp->adj_budget;
+		coef_adj += gp->tx_adj_budget;
 		if(coef_adj > 110 || coef_adj < -90)
-			gp->adj_budget = 0;
+			gp->tx_adj_budget = 0;
 		else
-			gp->adj_budget += coef_adj;
+			gp->tx_adj_budget += coef_adj;
 	}
 
 	return coef_adj;
@@ -535,7 +535,7 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 
 	gmtp_print_function();
 
-	if(gp->max_tx == 0)
+	if(gp->tx_max_rate == 0)
 		goto send;
 
 	/*
@@ -543,18 +543,18 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 	pr_info("[-] Tx rate (sample): %lu bytes/s\n", gp->sample_rate);
 	*/
 
-	elapsed = jiffies - gp->tx_stamp; /* time elapsed since last sent */
+	elapsed = jiffies - gp->tx_last_stamp; /* time elapsed since last sent */
 
-	if(gp->byte_budget >= (3*len)/4) {
+	if(gp->tx_byte_budget >= (3*len)/4) {
 		goto send;
-	} else if(gp->byte_budget != LONG_MIN) {
+	} else if(gp->tx_byte_budget != LONG_MIN) {
 		delay_budget = factor;
 		goto wait;
 	}
 
-	delay = (HZ * len) / gp->max_tx;
-	rest = (HZ * len) % gp->max_tx;
-	if(rest >= gp->max_tx/2)
+	delay = (HZ * len) / gp->tx_max_rate;
+	rest = (HZ * len) % gp->tx_max_rate;
+	if(rest >= gp->tx_max_rate/2)
 		++delay;
 
 	delay2 = delay - elapsed;
@@ -581,10 +581,10 @@ wait:
 	if(delay <= 0) {
 		long coef_adj = 0;
 		coef_adj = (long) get_rate_gap(gp, 0);
-		gp->byte_budget = factor * (gp->max_tx / HZ);
-		gp->byte_budget -= (gp->byte_budget * coef_adj) / 100;
+		gp->tx_byte_budget = factor * (gp->tx_max_rate / HZ);
+		gp->tx_byte_budget -= (gp->tx_byte_budget * coef_adj) / 100;
 	} else
-		gp->byte_budget = LONG_MIN;
+		gp->tx_byte_budget = LONG_MIN;
 
 send:
 	gmtp_xmit_packet(sk, skb);

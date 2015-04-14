@@ -70,6 +70,10 @@ static inline struct gmtp_request_sock *gmtp_rsk(const struct request_sock *req)
 	return (struct gmtp_request_sock *)req;
 }
 
+enum mcc_rx_states;
+struct mcc_rx_hist;
+struct mcc_loss_hist;
+
 /**
  * struct gmtp_sock - GMTP socket state
  *
@@ -86,17 +90,27 @@ static inline struct gmtp_request_sock *gmtp_rsk(const struct request_sock *req)
  * @server_timewait: server holds timewait state on close
  * @xmitlet: tasklet scheduled by the TX CCID to dequeue data packets
  * @xmit_timer: used to control the TX (rate-based pacing)
+ * @rx_last_counter:	     Tracks window counter (RFC 4342, 8.1)
+ * @rx_state:		     Receiver state, one of %mcc_rx_states
+ * @rx_bytes_recv:	     Total sum of GMTP payload bytes
+ * @rx_x_recv:		     Receiver estimate of send rate (RFC 3448, sec. 4.3)
+ * @rx_rtt:		     Receiver estimate of RTT (average)
+ * @rx_tstamp_last_feedback: Time at which last feedback was sent
+ * @rx_hist:		     Packet history (loss detection + RTT sampling)
+ * @rx_li_hist:		     Loss Interval database
+ * @rx_s:		     Received packet size in bytes
+ * @rx_pinv:		     Inverse of Loss Event Rate (RFC 4342, sec. 8.5)
  * @pkt_sent: Number of packets (type == data) sent by socket
  * @data_sent: Number of bytes (only app data) sent by socket
  * @bytes_sent: Number of bytes (app data + headers) sent by socket
- * @sample_len: Size of the sample window (to measure 'instant' Tx Rate)
- * @t_sample: Elapsed time at sample window (jiffies)
- * @b_sample: Bytes sent at sample window
- * @first_tx_stamp: time stamp of first data packet sent (jiffies)
- * @tx_stamp: time stamp of last data packet sent (jiffies)
- * @max_tx: Maximum transmission rate (bytes/s). 0 means no tx limit.
- * byte_budget: the amount of bytes that can be sent immediately. It can be < 0.
- * adj_budget: memory of last adjustment in transmission rate.
+ * @tx_sample_len: Size of the sample window (to measure 'instant' Tx Rate)
+ * @tx_time_sample: Elapsed time at sample window (jiffies)
+ * @tx_byte_sample: Bytes sent at sample window
+ * @tx_first_stamp: time stamp of first data packet sent (jiffies)
+ * @tx_last_stamp: time stamp of last data packet sent (jiffies)
+ * @tx_max_rate: Maximum transmission rate (bytes/s). 0 means no limits.
+ * tx_byte_budget: the amount of bytes that can be sent immediately.
+ * tx_adj_budget: memory of last adjustment in tx rate.
  * @flowname: name of the dataflow
  *
  */
@@ -123,22 +137,37 @@ struct gmtp_sock {
 	struct tasklet_struct		xmitlet;
 	struct timer_list		xmit_timer;
 
-	unsigned int 			pkt_sent;
-	unsigned long			data_sent;
-	unsigned long			bytes_sent;
+	/** Rx variables */
 
-	unsigned int 			sample_len;
-	unsigned long 			t_sample;
-	unsigned long 			b_sample;
+	u8				rx_last_counter:4;
+	enum mcc_rx_states		rx_state:8;
+	u32				rx_bytes_recv;
+	u32				rx_x_recv;
+	u32				rx_rtt;
+	ktime_t				rx_tstamp_last_feedback;
+	struct mcc_rx_hist		rx_hist;
+	struct mcc_loss_hist		rx_li_hist;
+	u16				rx_s;
+#define rx_pinv				rx_li_hist.i_mean
 
-	unsigned long			sample_rate;
-	unsigned long			total_rate;
+	/** Tx variables */
 
-	unsigned long			first_tx_stamp;  /* jiffies */
-	unsigned long 			tx_stamp;	/* jiffies */
-	unsigned long			max_tx;
-	long 				byte_budget;
-	int				adj_budget;
+	unsigned int 			tx_pkts_sent;
+	unsigned long			tx_data_sent;
+	unsigned long			tx_bytes_sent;
+
+	unsigned int 			tx_sample_len;
+	unsigned long 			tx_time_sample;
+	unsigned long 			tx_byte_sample;
+
+	unsigned long			tx_sample_rate;
+	unsigned long			tx_total_rate;
+
+	unsigned long			tx_first_stamp;  /* jiffies */
+	unsigned long 			tx_last_stamp;	/* jiffies */
+	unsigned long			tx_max_rate;
+	long 				tx_byte_budget;
+	int				tx_adj_budget;
 
 	__u8 flowname[GMTP_FLOWNAME_LEN];
 };
