@@ -42,9 +42,47 @@ enum gmtp_role {
 	GMTP_ROLE_RELAY
 };
 
-enum mcc_rx_states;
-struct mcc_rx_hist;
-struct mcc_loss_hist;
+/*
+ * Number of loss intervals (RFC 4342, 8.6.1). The history size is one more than
+ * NINTERVAL, since the `open' interval I_0 is always stored as the first entry.
+ */
+#define NINTERVAL	8
+#define LIH_SIZE	(NINTERVAL + 1)
+
+/* Number of packets to wait after a missing packet (RFC 4342, 6.1) */
+#define MCC_NDUPACK 3
+
+/* GMTP-MCC receiver states */
+enum mcc_rx_states {
+	MCC_RSTATE_NO_DATA = 1,
+	MCC_RSTATE_DATA,
+};
+
+/**
+ * mcc_rx_hist  -  RX history structure for TFRC-based protocols
+ * @ring:		Packet history for RTT sampling and loss detection
+ * @loss_count:		Number of entries in circular history
+ * @loss_start:		Movable index (for loss detection)
+ * @rtt_sample_prev:	Used during RTT sampling, points to candidate entry
+ */
+struct mcc_rx_hist {
+	struct mcc_rx_hist_entry *ring[MCC_NDUPACK + 1];
+	u8			  loss_count:2,
+				  loss_start:2;
+#define rtt_sample_prev		  loss_start
+};
+
+/**
+ *  tfrc_loss_hist  -  Loss record database
+ *  @ring:	Circular queue managed in LIFO manner
+ *  @counter:	Current count of entries (can be more than %LIH_SIZE)
+ *  @i_mean:	Current Average Loss Interval [RFC 3448, 5.4]
+ */
+struct mcc_loss_hist {
+	struct mcc_loss_interval	*ring[LIH_SIZE];
+	u8				counter;
+	u32				i_mean;
+};
 
 /**
  * struct gmtp_request_sock  -  represent GMTP-specific connection request
