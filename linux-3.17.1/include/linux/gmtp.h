@@ -5,8 +5,6 @@
 #include <net/inet_connection_sock.h>
 #include <net/tcp_states.h>
 #include <linux/types.h>
-
-#include <net/gmtp/mcc/mcc.h>
 #include <uapi/linux/gmtp.h>
 
 //TODO Study states
@@ -43,6 +41,10 @@ enum gmtp_role {
 	GMTP_ROLE_SERVER,
 	GMTP_ROLE_RELAY
 };
+
+enum mcc_rx_states;
+struct mcc_rx_hist;
+struct mcc_loss_hist;
 
 /**
  * struct gmtp_request_sock  -  represent GMTP-specific connection request

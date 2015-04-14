@@ -19,19 +19,12 @@
 #include <linux/math64.h>
 #include "../gmtp.h"
 
-/* internal includes that this library exports: */
 #include "loss_interval.h"
 #include "packet_history.h"
 
 #define MCC_DEBUG "[GMTP-MCC] %s:%d - "
 #define mcc_pr_debug(format, args...) pr_info(MCC_DEBUG format \
 		"\n", __FUNCTION__, __LINE__, ##args)
-
-/* GMTP-MCC receiver states */
-enum mcc_rx_states {
-	MCC_RSTATE_NO_DATA = 1,
-	MCC_RSTATE_DATA,
-};
 
 /* integer-arithmetic divisions of type (a * 1000000)/b */
 static inline u64 scaled_div(u64 a, u64 b)
