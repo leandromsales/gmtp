@@ -12,6 +12,8 @@
 #include <linux/gmtp.h>
 #include "gmtp.h"
 
+#include "mcc/mcc.h"
+
 struct percpu_counter gmtp_orphan_count;
 EXPORT_SYMBOL_GPL(gmtp_orphan_count);
 

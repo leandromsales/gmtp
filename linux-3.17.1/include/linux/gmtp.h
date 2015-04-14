@@ -6,6 +6,7 @@
 #include <net/tcp_states.h>
 #include <linux/types.h>
 
+#include <net/gmtp/mcc/mcc.h>
 #include <uapi/linux/gmtp.h>
 
 //TODO Study states
@@ -69,10 +70,6 @@ static inline struct gmtp_request_sock *gmtp_rsk(const struct request_sock *req)
 {
 	return (struct gmtp_request_sock *)req;
 }
-
-enum mcc_rx_states;
-struct mcc_rx_hist;
-struct mcc_loss_hist;
 
 /**
  * struct gmtp_sock - GMTP socket state
