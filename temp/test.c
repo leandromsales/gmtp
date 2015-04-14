@@ -6,6 +6,19 @@
 //#include <linux/tcp.h>
 #include <linux/netdevice.h>
 #include <net/sock.h>
+#include <linux/types.h>
+#include <linux/list.h>
+
+struct __netdev_adjacent{
+    struct net_device *dev;
+bool master;
+
+u16 ref_nr;
+void *private;
+
+struct list_head list;
+struct rcu_head rcu; 
+};
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("LINKED LIST TEST");
@@ -62,7 +75,6 @@ printk(KERN_INFO"\n\n\n");
     nfho.priority = NF_IP_PRI_FIRST;
     nf_register_hook(&nfho);
     
-
     struct ifreq tmp;
     struct socket *sock = NULL;
     struct net_device *dev = NULL;
@@ -72,15 +84,33 @@ printk(KERN_INFO"\n\n\n");
     retval = sock_create(AF_INET, SOCK_STREAM, 0, &sock);
     net = sock_net (sock->sk);
 
-    dev = dev_get_by_name_rcu(net, "eth0");
+       // dev = dev_get_by_index_rcu(net,1);
+   // printk(KERN_DEBUG"INDEX DEV = %d\n",dev->ifindex);
 
-    memcpy(&mac_address, dev->dev_addr, 6);
-    printk(KERN_DEBUG"ip address =%x:%x:%x:%x:%x:%x\n",
+    struct __netdev_adjacent *iter;
+    
+    list_for_each_entry(iter, &dev->adj_list.upper, list){
+ //       dev = dev_get_by_name_rcu(net, "eth0");
+        if(iter == NULL)
+           {
+            printk(KERN_DEBUG"essa merda ta nula iter");
+                return 1;
+                }
+         if(iter->dev == NULL)
+           {
+            printk(KERN_DEBUG"essa merda ta nula dev");
+            return 1;
+            }
+        
+            memcpy(&mac_address, iter->dev->dev_addr, 6);
+        printk(KERN_DEBUG"ip address =%x:%x:%x:%x:%x:%x\n",
               mac_address[0],mac_address[1],
               mac_address[2],mac_address[3], 
               mac_address[4],mac_address[5]);
  
-    sock_release(sock);
+     
+    }
+       sock_release(sock);
     return 0; 
 }
 
