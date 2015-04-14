@@ -67,7 +67,7 @@ int mcc_tx_hist_add(struct mcc_tx_hist_entry **headp, u64 seqno);
 void mcc_tx_hist_purge(struct mcc_tx_hist_entry **headp);
 
 /* Subtraction a-b modulo-16, respects circular wrap-around */
-#define SUB16(a, b) (((a) + 16 - (b)) & 0xF)i
+#define SUB16(a, b) (((a) + 16 - (b)) & 0xF)
 
 /**
  * mcc_rx_hist_entry - Store information about a single received packet

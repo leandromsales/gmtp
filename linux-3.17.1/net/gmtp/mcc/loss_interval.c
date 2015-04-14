@@ -13,6 +13,8 @@
  *  (at your option) any later version.
  */
 #include <net/sock.h>
+#include <linux/gmtp.h>
+
 #include "mcc_proto.h"
 
 static struct kmem_cache  *tfrc_lh_slab  __read_mostly;
