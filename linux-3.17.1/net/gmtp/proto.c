@@ -89,17 +89,6 @@ const char *gmtp_state_name(const int state)
 }
 EXPORT_SYMBOL_GPL(gmtp_state_name);
 
-static inline const char *gmtp_role(const struct sock *sk)
-{
-	switch (gmtp_sk(sk)->role) {
-	case GMTP_ROLE_UNDEFINED: return "undefined";
-	case GMTP_ROLE_LISTEN:	  return "listen";
-	case GMTP_ROLE_SERVER:	  return "server";
-	case GMTP_ROLE_CLIENT:	  return "client";
-	}
-	return NULL;
-}
-
 /**
  * @str size MUST HAVE len >= GMTP_FLOWNAME_STR_LEN
  */
@@ -809,6 +798,10 @@ static int __init gmtp_init(void)
 	gmtp_print_debug("GMTP init!");
 	gmtp_print_function();
 
+	rc = mcc_lib_init();
+	if(rc)
+		goto out;
+
 	rc = percpu_counter_init(&gmtp_orphan_count, 0);
 	if(rc) {
 		percpu_counter_destroy(&gmtp_orphan_count);
@@ -841,8 +834,8 @@ static void __exit gmtp_exit(void)
 	kmem_cache_destroy(gmtp_inet_hashinfo.bind_bucket_cachep);
 
 	kfree_gmtp_hashtable(gmtp_hashtable);
-
 	percpu_counter_destroy(&gmtp_orphan_count);
+	mcc_lib_exit();
 }
 
 module_init(gmtp_init);

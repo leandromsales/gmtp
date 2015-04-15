@@ -96,6 +96,8 @@ u8 mcc_lh_update_i_mean(struct mcc_loss_hist *lh, struct sk_buff *skb)
 	u32 old_i_mean = lh->i_mean;
 	s64 len;
 
+	gmtp_pr_func();
+
 	if (cur == NULL)			/* not initialised */
 		return 0;
 

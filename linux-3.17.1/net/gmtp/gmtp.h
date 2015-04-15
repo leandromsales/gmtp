@@ -27,10 +27,12 @@ extern struct percpu_counter gmtp_orphan_count;
 #define GMTP_HASH_SIZE  16
 
 /** GMTP Debugs */
-#define GMTP_DEBUG "[GMTP] %s:%d - "
+#define GMTP_INFO "[GMTP] %s:%d - "
+#define GMTP_DEBUG GMTP_INFO
 #define GMTP_WARNING "[GMTP_WARNING]  %s:%d at %s - "
 #define GMTP_ERROR "[GMTP_ERROR] %s:%d at %s - "
 
+/* TODO Improve debug func names */
 #define gmtp_print_debug(fmt, args...) pr_info(GMTP_DEBUG fmt \
 		"\n", __FUNCTION__, __LINE__, ##args)
 #define gmtp_print_warning(fmt, args...) pr_warning(GMTP_WARNING fmt\
@@ -39,6 +41,13 @@ extern struct percpu_counter gmtp_orphan_count;
 		"\n", __FUNCTION__, __LINE__, __FILE__, ##args)
 #define gmtp_print_function() pr_info("-------- %s --------\n" , __FUNCTION__)
 
+/* Better print names */
+#define gmtp_pr_func() pr_info("-------- %s --------\n" , __FUNCTION__)
+#define gmtp_pr_info(fmt, args...) pr_info(GMTP_DEBUG fmt \
+		"\n", __FUNCTION__, __LINE__, ##args)
+#define gmtp_pr_debug(fmt, args...) gmtp_pr_info(fmt, ##args);
+
+/** ---- */
 #define GMTP_MAX_HDR_LEN 2047  /* 2^11 - 1 */
 #define GMTP_FIXED_HDR_LEN 36  /* theoretically: 32 bytes, In fact: 36 bytes */
 #define GMTP_MAX_VARIABLE_HDR_LEN (GMTP_MAX_HDR_LEN - GMTP_FIXED_HDR_LEN)

@@ -7,6 +7,8 @@
  *  GMTP-MCC receiver routines
  */
 
+#include <linux/gmtp.h>
+
 #include "mcc_proto.h"
 
 /* GMTP-MCC feedback types */
@@ -32,8 +34,9 @@ static void mcc_rx_set_state(struct sock *sk, enum mcc_rx_states state)
 	struct gmtp_sock *hc = gmtp_sk(sk);
 	enum mcc_rx_states oldstate = hc->rx_state;
 
+	gmtp_pr_func();
 	mcc_pr_debug("%s(%p) %-8.8s -> %s\n",
-		       gmtp_role(sk), sk, mcc_rx_state_name(oldstate),
+			gmtp_role_name(sk), sk, mcc_rx_state_name(oldstate),
 		       mcc_rx_state_name(state));
 	WARN_ON(state == oldstate);
 	hc->rx_state = state;
@@ -45,7 +48,7 @@ static void mcc_rx_send_feedback(struct sock *sk,
 				      enum mcc_fback_type fbtype)
 {
 	struct gmtp_sock *hc = gmtp_sk(sk);
-	struct gmtp_sock *dp = gmtp_sk(sk);
+	/*struct gmtp_sock *dp = gmtp_sk(sk);*/
 	ktime_t now = ktime_get_real();
 	s64 delta = 0;
 
@@ -128,86 +131,92 @@ static u32 mcc_first_li(struct sock *sk)
 
 	fval = scaled_div(hc->rx_s, hc->rx_rtt);
 	fval = scaled_div32(fval, x_recv);
-	p = tfrc_calc_x_reverse_lookup(fval);
+	p = mcc_calc_x_reverse_lookup(fval);
 
 	mcc_pr_debug("%s(%p), receive rate=%u bytes/s, implied "
-		       "loss rate=%u\n", gmtp_role(sk), sk, x_recv, p);
+		       "loss rate=%u\n", gmtp_role_name(sk), sk, x_recv, p);
 
 	return p == 0 ? ~0U : scaled_div(1, p);
 }
 
 
-static void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
+void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 {
 	/*struct ccid3_hc_rx_sock *hc = ccid3_hc_rx_sk(sk);*/
 	struct gmtp_sock *hc = gmtp_sk(sk);
-	enum ccid3_fback_type do_feedback = CCID3_FBACK_NONE;
+	enum mcc_fback_type do_feedback = MCC_FBACK_NONE;
 	/*const u64 ndp = gmtp_sk(sk)->dccps_options_received.dccpor_ndp;*/
+	const u64 ndp = 0;
 	const bool is_data_packet = gmtp_data_packet(skb);
+
+	gmtp_pr_func();
 
 	if(unlikely(hc->rx_state == MCC_RSTATE_NO_DATA)) {
 		if(is_data_packet) {
 			const u32 payload = skb->len
-					- dccp_hdr(skb)->dccph_doff * 4;
+					- gmtp_hdr(skb)->hdrlen * 4;
 			do_feedback = MCC_FBACK_INITIAL;
-			mcc_rx_set_state(sk, TFRC_RSTATE_DATA);
+			mcc_rx_set_state(sk, MCC_RSTATE_DATA);
 			hc->rx_s = payload;
-			/*
-			 * Not necessary to update rx_bytes_recv here,
+
+			/* Not necessary to update rx_bytes_recv here,
 			 * since X_recv = 0 for the first feedback packet (cf.
-			 * RFC 3448, 6.3) -- gerrit
-			 */
+			 * RFC 3448, 6.3) -- gerrit */
+
 		}
 		goto update_records;
 	}
 
+	/* FIXME This breaks gmtp */
+	/*
 	if(mcc_rx_hist_duplicate(&hc->rx_hist, skb))
-		return; /* done receiving */
+		return;  /* done receiving */
 
 	if(is_data_packet) {
 		const u32 payload = skb->len - gmtp_hdr(skb)->hdrlen;
-		/*
-		 * Update moving-average of s and the sum of received payload bytes
-		 */
+
+		/* Update moving-average of s and
+		 * the sum of received payload bytes */
 		hc->rx_s = mcc_ewma(hc->rx_s, payload, 9);
 		hc->rx_bytes_recv += payload;
 	}
 
-	/*
-	 * Perform loss detection and handle pending losses
-	 */
-	if(mcc_rx_handle_loss(&hc->rx_hist, &hc->rx_li_hist, skb, ndp,
+	/* FIXME This breaks GMTP */
+	/* Perform loss detection and handle pending losses */
+	/*if(mcc_rx_handle_loss(&hc->rx_hist, &hc->rx_li_hist, skb, ndp,
 			mcc_first_li, sk)) {
 		do_feedback = MCC_FBACK_PARAM_CHANGE;
 		goto done_receiving;
-	}
+	}*/
 
 	if(mcc_rx_hist_loss_pending(&hc->rx_hist))
-		return; /* done receiving */
+		return;  /* done receiving */
 
-	/*
-	 * Handle data packets: RTT sampling and monitoring p
-	 */
+	/* Handle data packets: RTT sampling and monitoring p */
 	if(unlikely(!is_data_packet))
 		goto update_records;
 
 	if(!mcc_lh_is_initialised(&hc->rx_li_hist)) {
-		const u32 sample = mcc_rx_hist_sample_rtt(&hc->rx_hist, skb);
-		/*
-		 * Empty loss history: no loss so far, hence p stays 0.
+		/* FIXME mcc history */
+		/*const u32 sample = mcc_rx_hist_sample_rtt(&hc->rx_hist, skb);*/
+		const u32 sample = gmtp_hdr(skb)->server_rtt;
+
+		/* Empty loss history: no loss so far, hence p stays 0.
 		 * Sample RTT values, since an RTT estimate is required for the
 		 * computation of p when the first loss occurs; RFC 3448, 6.3.1.
 		 */
 		if(sample != 0)
 			hc->rx_rtt = mcc_ewma(hc->rx_rtt, sample, 9);
-
+	}
+/*
 	} else if(mcc_lh_update_i_mean(&hc->rx_li_hist, skb)) {
-		/*
-		 * Step (3) of [RFC 3448, 6.1]: Recompute I_mean and, if I_mean
+
+		/* Step (3) of [RFC 3448, 6.1]: Recompute I_mean and, if I_mean
 		 * has decreased (resp. p has increased), send feedback now.
 		 */
-		do_feedback = MCC_FBACK_PARAM_CHANGE;
-	}
+
+/*		do_feedback = MCC_FBACK_PARAM_CHANGE;
+	}*/
 
 	/*
 	 * FIXME
@@ -217,9 +226,14 @@ static void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 		do_feedback = MCC_FBACK_PERIODIC;*/
 
 update_records:
-	mcc_rx_hist_add_packet(&hc->rx_hist, skb, ndp);
+	/*mcc_rx_hist_add_packet(&hc->rx_hist, skb, ndp);*/
+	;
 
 done_receiving:
-	if(do_feedback)
-		mcc_rx_send_feedback(sk, skb, do_feedback);
+/*	if(do_feedback)
+		mcc_rx_send_feedback(sk, skb, do_feedback);*/
+	return;
 }
+EXPORT_SYMBOL_GPL(mcc_rx_packet_recv);
+
+

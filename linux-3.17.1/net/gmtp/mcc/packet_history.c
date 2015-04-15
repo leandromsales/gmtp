@@ -317,7 +317,7 @@ static void __three_after_loss(struct mcc_rx_hist *h)
  *  @skb:	    Currently received packet
  *  @ndp:	    The NDP count belonging to @skb
  *  @calc_first_li: Caller-dependent computation of first loss interval in @lh
- *  @sk:	    Used by @calc_first_li (see tfrc_lh_interval_add)
+ *  @sk:	    Used by @calc_first_li (see mcc_lh_interval_add)
  *
  *  Chooses action according to pending loss, updates LI database when a new
  *  loss was detected, and does required post-processing. Returns 1 when caller
@@ -332,6 +332,8 @@ int mcc_rx_handle_loss(struct mcc_rx_hist *h,
 			u32 (*calc_first_li)(struct sock *), struct sock *sk)
 {
 	int is_new_loss = 0;
+
+	gmtp_pr_func();
 
 	if (h->loss_count == 0) {
 		__do_track_loss(h, skb, ndp);

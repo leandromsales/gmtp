@@ -67,9 +67,7 @@ void mcc_rx_packet_history_exit(void);
 int mcc_li_init(void);
 void mcc_li_exit(void);
 
-/*
-#define mcc_lib_init() (0)
-#define mcc_lib_exit()
-*/
+int mcc_lib_init(void);
+void mcc_lib_exit(void);
 
 #endif /* _MCC_H_ */

@@ -281,7 +281,9 @@ static void gmtp_rcv_reset(struct sock *sk, struct sk_buff *skb)
 
 static void gmtp_deliver_input_to_mcc(struct sock *sk, struct sk_buff *skb)
 {
-	const struct gmtp_sock *dp = gmtp_sk(sk);
+	/*const struct gmtp_sock *gp = gmtp_sk(sk);*/
+
+	gmtp_print_function();
 
 	/* Don't deliver to RX MCC when node has shut down read end. */
 	if (!(sk->sk_shutdown & RCV_SHUTDOWN))
@@ -351,7 +353,7 @@ int gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 	if(gmtp_check_seqno(sk, skb))
 		goto discard;
 
-	/*gmtp_deliver_input_to_mcc(sk, skb);*/
+	gmtp_deliver_input_to_mcc(sk, skb);
 	gp->gsr = gh->seq;
 
 	return __gmtp_rcv_established(sk, skb, gh, len);

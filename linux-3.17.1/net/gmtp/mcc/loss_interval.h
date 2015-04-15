@@ -18,6 +18,8 @@
 #include <linux/list.h>
 #include <linux/slab.h>
 
+#include <linux/gmtp.h>
+
 /**
  *  mcc_loss_interval  -  Loss history record for TFRC-based protocols
  *  @li_seqno:		Highest received seqno before the start of loss

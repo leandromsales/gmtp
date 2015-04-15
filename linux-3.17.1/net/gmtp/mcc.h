@@ -16,8 +16,7 @@
 
 #include "mcc/mcc_proto.h"
 
-static void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb);
-
+void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb);
 
 
 #endif /* MCC_H_ */
