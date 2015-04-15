@@ -128,6 +128,9 @@ void mcc_rx_hist_add_packet(struct mcc_rx_hist *h,
 			     const u64 ndp)
 {
 	struct mcc_rx_hist_entry *entry = mcc_rx_hist_last_rcv(h);
+	gmtp_pr_func();
+
+	gmtp_pr_info("hist_entry: %p", entry);
 
 	mcc_rx_hist_entry_from_skb(entry, skb, ndp);
 }
@@ -135,10 +138,18 @@ void mcc_rx_hist_add_packet(struct mcc_rx_hist *h,
 /* has the packet contained in skb been seen before? */
 int mcc_rx_hist_duplicate(struct mcc_rx_hist *h, struct sk_buff *skb)
 {
-	const u64 seq = GMTP_SKB_CB(skb)->seq;
+	const __be32 seq = GMTP_SKB_CB(skb)->seq;
+	struct mcc_rx_hist_entry *loss_prev = mcc_rx_hist_loss_prev(h);
 	int i;
 
-	if ((seq - mcc_rx_hist_loss_prev(h)->seqno) <= 0)
+	gmtp_pr_func();
+
+	if(loss_prev == NULL) {
+		gmtp_pr_warning("loss_prev is NULL");
+		return 1;
+	}
+
+	if ((seq - loss_prev->seqno) <= 0)
 		return 1;
 
 	for (i = 1; i <= h->loss_count; i++)
@@ -348,6 +359,8 @@ int mcc_rx_handle_loss(struct mcc_rx_hist *h,
 		is_new_loss = mcc_lh_interval_add(lh, h, calc_first_li, sk);
 		__three_after_loss(h);
 	}
+
+	gmtp_pr_info("Is new loss: %d", is_new_loss);
 	return is_new_loss;
 }
 

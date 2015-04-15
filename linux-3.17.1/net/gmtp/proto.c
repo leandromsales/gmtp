@@ -170,6 +170,7 @@ int gmtp_init_sock(struct sock *sk)
 {
 	struct gmtp_sock *gp = gmtp_sk(sk);
 	struct inet_connection_sock *icsk = inet_csk(sk);
+	int ret = 0;
 
 	gmtp_print_function();
 
@@ -186,34 +187,45 @@ int gmtp_init_sock(struct sock *sk)
 	gp->rtt			= GMTP_DEFAULT_RTT;
 	gp->relay_rtt		= 0;
 
-	gp->tx_pkts_sent 		= 0;
-	gp->tx_data_sent 		= 0;
-	gp->tx_bytes_sent 		= 0;
+	ret = mcc_rx_init(sk);
 
-	gp->tx_sample_len 		= GMTP_DEFAULT_SAMPLE_LEN;
-	gp->tx_time_sample 		= 0;
-	gp->tx_byte_sample 		= 0;
+/*	gp->rx_last_counter	= 0;
+	gp->rx_bytes_recv 	= 0;
+	gp->rx_x_recv 		= 0;
+	gp->rx_rtt 		= 0;
+	gp->rx_s		= 0;
+	gp->rx_li_hist.i_mean 	= 0;*/
+
+	gp->tx_pkts_sent 	= 0;
+	gp->tx_data_sent 	= 0;
+	gp->tx_bytes_sent 	= 0;
+
+	gp->tx_sample_len 	= GMTP_DEFAULT_SAMPLE_LEN;
+	gp->tx_time_sample 	= 0;
+	gp->tx_byte_sample 	= 0;
 
 	gp->tx_sample_rate 	= 0;
-	gp->tx_total_rate 		= 0;
+	gp->tx_total_rate 	= 0;
 
 	gp->tx_first_stamp	= 0;
-	gp->tx_last_stamp		= 0;
+	gp->tx_last_stamp	= 0;
 	gp->tx_max_rate		= 0; /* Unlimited */
-	gp->tx_byte_budget		= LONG_MIN;
-	gp->tx_adj_budget		= 0;
+	gp->tx_byte_budget	= LONG_MIN;
+	gp->tx_adj_budget	= 0;
 
 	memset(gp->flowname, 0, GMTP_FLOWNAME_LEN);
 
 	gmtp_init_xmit_timers(sk);
 
-	return 0;
+	return ret;
 }
 EXPORT_SYMBOL_GPL(gmtp_init_sock);
 
 void gmtp_destroy_sock(struct sock *sk)
 {
 	gmtp_print_function();
+
+	mcc_rx_exit(sk);
 
 	if (sk->sk_send_head != NULL) {
 		kfree_skb(sk->sk_send_head);

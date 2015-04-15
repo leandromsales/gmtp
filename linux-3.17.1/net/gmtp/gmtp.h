@@ -46,6 +46,10 @@ extern struct percpu_counter gmtp_orphan_count;
 #define gmtp_pr_info(fmt, args...) pr_info(GMTP_DEBUG fmt \
 		"\n", __FUNCTION__, __LINE__, ##args)
 #define gmtp_pr_debug(fmt, args...) gmtp_pr_info(fmt, ##args);
+#define gmtp_pr_warning(fmt, args...) pr_warning(GMTP_WARNING fmt\
+		"\n", __FUNCTION__, __LINE__, __FILE__, ##args)
+#define gmtp_pr_error(fmt, args...) pr_err(GMTP_ERROR fmt \
+		"\n", __FUNCTION__, __LINE__, __FILE__, ##args)
 
 /** ---- */
 #define GMTP_MAX_HDR_LEN 2047  /* 2^11 - 1 */

@@ -142,7 +142,6 @@ static u32 mcc_first_li(struct sock *sk)
 
 void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 {
-	/*struct ccid3_hc_rx_sock *hc = ccid3_hc_rx_sk(sk);*/
 	struct gmtp_sock *hc = gmtp_sk(sk);
 	enum mcc_fback_type do_feedback = MCC_FBACK_NONE;
 	/*const u64 ndp = gmtp_sk(sk)->dccps_options_received.dccpor_ndp;*/
@@ -164,11 +163,10 @@ void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 			 * RFC 3448, 6.3) -- gerrit */
 
 		}
+		gmtp_pr_info("goto update_records");
 		goto update_records;
 	}
 
-	/* FIXME This breaks gmtp */
-	/*
 	if(mcc_rx_hist_duplicate(&hc->rx_hist, skb))
 		return;  /* done receiving */
 
@@ -181,7 +179,7 @@ void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 		hc->rx_bytes_recv += payload;
 	}
 
-	/* FIXME This breaks GMTP */
+	/* FIXME This breaks GMTP (and VirtualBox!!!!!) */
 	/* Perform loss detection and handle pending losses */
 	/*if(mcc_rx_handle_loss(&hc->rx_hist, &hc->rx_li_hist, skb, ndp,
 			mcc_first_li, sk)) {
@@ -226,8 +224,7 @@ void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 		do_feedback = MCC_FBACK_PERIODIC;*/
 
 update_records:
-	/*mcc_rx_hist_add_packet(&hc->rx_hist, skb, ndp);*/
-	;
+	mcc_rx_hist_add_packet(&hc->rx_hist, skb, ndp);
 
 done_receiving:
 /*	if(do_feedback)
@@ -235,5 +232,30 @@ done_receiving:
 	return;
 }
 EXPORT_SYMBOL_GPL(mcc_rx_packet_recv);
+
+int mcc_rx_init(struct sock *sk)
+{
+	struct gmtp_sock *hc = gmtp_sk(sk);
+
+	gmtp_pr_func();
+
+	hc->rx_state = MCC_RSTATE_NO_DATA;
+	mcc_lh_init(&hc->rx_li_hist);
+	return mcc_rx_hist_alloc(&hc->rx_hist);
+}
+
+void mcc_rx_exit(struct sock *sk)
+{
+	struct gmtp_sock *hc = gmtp_sk(sk);
+
+	gmtp_pr_func();
+
+	/* FIXME this breaks the modules  */
+	/*
+	mcc_rx_hist_purge(&hc->rx_hist);
+	mcc_lh_cleanup(&hc->rx_li_hist);
+	*/
+}
+
 
 

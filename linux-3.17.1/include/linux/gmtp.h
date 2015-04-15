@@ -175,7 +175,6 @@ struct gmtp_sock {
 	struct timer_list		xmit_timer;
 
 	/** Rx variables */
-
 	u8				rx_last_counter:4;
 	enum mcc_rx_states		rx_state:8;
 	u32				rx_bytes_recv;
