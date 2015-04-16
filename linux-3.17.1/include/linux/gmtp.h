@@ -175,15 +175,16 @@ struct gmtp_sock {
 	struct timer_list		xmit_timer;
 
 	/** Rx variables */
-	u8				rx_last_counter:4;
+	__be32				ndp_count;
+	__u8				rx_last_counter:4;
 	enum mcc_rx_states		rx_state:8;
-	u32				rx_bytes_recv;
-	u32				rx_x_recv;
-	u32				rx_rtt;
+	__u32				rx_bytes_recv;
+	__u32				rx_x_recv;
+	__u32				rx_rtt;
 	ktime_t				rx_tstamp_last_feedback;
 	struct mcc_rx_hist		rx_hist;
 	struct mcc_loss_hist		rx_li_hist;
-	u16				rx_s;
+	__u16				rx_s;
 #define rx_pinv				rx_li_hist.i_mean
 
 	/** Tx variables */

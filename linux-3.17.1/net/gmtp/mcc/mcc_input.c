@@ -147,9 +147,7 @@ void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 {
 	struct gmtp_sock *hc = gmtp_sk(sk);
 	enum mcc_fback_type do_feedback = MCC_FBACK_NONE;
-	/*const u64 ndp = gmtp_sk(sk)->dccps_options_received.dccpor_ndp;*/
-	/* FIXME Get correct ndp */
-	const __be32 ndp = 0;
+	const __be32 ndp = gmtp_sk(sk)->ndp_count;
 	const bool is_data_packet = gmtp_data_packet(skb);
 
 	gmtp_pr_func();

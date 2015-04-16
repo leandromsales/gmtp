@@ -266,7 +266,6 @@ struct gmtp_skb_cb {
  * gmtp_loss_count - Approximate the number of lost data packets in a burst loss
  * @s1:  last known sequence number before the loss ('hole')
  * @s2:  first sequence number seen after the 'hole'
- * @ndp: NDP count on packet with sequence number @s2
  */
 static inline __be32 gmtp_loss_count(const __be32 s1, const __be32 s2,
 		const __be32 ndp)
