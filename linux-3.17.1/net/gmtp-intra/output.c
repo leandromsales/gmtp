@@ -49,6 +49,7 @@ struct gmtp_hdr *gmtp_intra_make_route_hdr(struct sk_buff *skb)
 	gh_cpy = (struct gmtp_hdr *) transport_header;
 	memcpy(gh_cpy, gh, sizeof(struct gmtp_hdr));
 
+	gh_cpy->version = GMTP_VERSION;
 	gh_cpy->type = GMTP_PKT_ROUTE_NOTIFY;
 	gh_cpy->hdrlen = gmtp_hdr_len;
 	gh_cpy->dport = gh->sport;
@@ -83,6 +84,7 @@ struct gmtp_hdr *gmtp_intra_make_request_notify_hdr(struct sk_buff *skb,
 	gh_cpy = (struct gmtp_hdr *)transport_header;
 	memcpy(gh_cpy, gh, sizeof(struct gmtp_hdr));
 
+	gh_cpy->version = GMTP_VERSION;
 	gh_cpy->type = GMTP_PKT_REQUESTNOTIFY;
 	gh_cpy->hdrlen = gmtp_hdr_len;
 	gh_cpy->sport = new_sport;
@@ -164,6 +166,7 @@ int gmtp_intra_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
 	gmtp_print_debug("Deleting specific headers...");
 	skb_trim(skb, (skb_len - gmtp_packet_hdr_variable_len(gh->type)));
 
+	gh->version = GMTP_VERSION;
 	gh->type = GMTP_PKT_REQUESTNOTIFY;
 	gh->hdrlen = gmtp_hdr_len;
 	gh->sport = new_sport;

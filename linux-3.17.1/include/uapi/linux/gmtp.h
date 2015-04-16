@@ -134,10 +134,17 @@ struct gmtp_hdr_route {
 /**
  * struct gmtp_hdr_ack - Ack packet from clients to relays
  *
- * @ackcode: type of acked packet
+ * @ackcode: One of gmtp_ack_codes
  */
 struct gmtp_hdr_ack {
-	__u8 ackcode:5;
+	__u8 ackcode:2;
+};
+
+enum gmtp_ack_codes {
+	GMTP_ACK_NO_CODE = 0,
+	GMTP_ACK_REQUESTNOTIFY,
+	GMTP_ACK_MCC_FEEDBACK,
+	GMTP_ACK_MAX_CODES
 };
 
 /**

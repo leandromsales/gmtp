@@ -77,7 +77,7 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 
 		gh = gmtp_zeroed_hdr(skb, gmtp_header_size);
 
-		gh->version = 1;
+		gh->version = GMTP_VERSION;
 		gh->type = gcb->type;
 		gh->server_rtt = gp->rtt;
 		gh->sport = inet->inet_sport;
@@ -329,7 +329,7 @@ int gmtp_connect(struct sock *sk) {
 }
 EXPORT_SYMBOL_GPL(gmtp_connect);
 
-void gmtp_send_ack(struct sock *sk)
+void gmtp_send_ack(struct sock *sk, __u8 ackcode)
 {
 	gmtp_print_function();
 
@@ -355,15 +355,12 @@ void gmtp_send_ack(struct sock *sk)
 		skb_reserve(skb, sk->sk_prot->max_header);
 		GMTP_SKB_CB(skb)->type = GMTP_PKT_ACK;
 
-		/* This works only for clients */
-		if(gs->role == GMTP_ROLE_CLIENT) {
-			gmtp_print_debug("Building ack header...");
-			gack = (struct gmtp_hdr_ack *)skb_put(skb,
-					sizeof(struct gmtp_hdr_ack));
+		gmtp_print_debug("Building ack header...");
+		gack = (struct gmtp_hdr_ack *)skb_put(skb,
+				sizeof(struct gmtp_hdr_ack));
+		/* Type of ack */
+		gack->ackcode = ackcode;
 
-			/* Acked packet */
-			gack->ackcode = GMTP_PKT_REQUESTNOTIFY;
-		}
 		gmtp_transmit_skb(sk, skb);
 	}
 }

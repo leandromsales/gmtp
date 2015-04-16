@@ -220,7 +220,7 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 			__kfree_skb(skb);
 			return 0;
 		}
-		gmtp_send_ack(sk);
+		gmtp_send_ack(sk, GMTP_ACK_REQUESTNOTIFY);
 		return -1;
  	}
 

@@ -84,7 +84,7 @@ static void mcc_rx_send_feedback(struct sock *sk,
 		return;
 	}
 
-	mcc_pr_debug("Interval %ldusec, X_recv=%u, 1/p=%u\n", (long)delta,
+	mcc_pr_debug("Interval %ld usec | X_recv: %u | 1/p: %u", (long)delta,
 		       hc->rx_x_recv, hc->rx_pinv);
 
 	hc->rx_tstamp_last_feedback = now;
@@ -94,7 +94,7 @@ static void mcc_rx_send_feedback(struct sock *sk,
 
 	gmtp_pr_info("Now, we should send a feedback... Testing send ack");
 	/* FIXME Choose a packet type to send Feedback */
-	gmtp_send_ack(sk);
+	gmtp_send_ack(sk, GMTP_ACK_MCC_FEEDBACK);
 }
 
 
@@ -159,11 +159,11 @@ void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 			do_feedback = MCC_FBACK_INITIAL;
 			mcc_rx_set_state(sk, MCC_RSTATE_DATA);
 			hc->rx_s = payload;
-
-			/* Not necessary to update rx_bytes_recv here,
+			/*
+			 * Not necessary to update rx_bytes_recv here,
 			 * since X_recv = 0 for the first feedback packet (cf.
-			 * RFC 3448, 6.3) -- gerrit */
-
+			 * RFC 3448, 6.3) -- gerrit
+			 */
 		}
 		goto update_records;
 	}
@@ -173,9 +173,9 @@ void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 
 	if(is_data_packet) {
 		const u32 payload = skb->len - gmtp_hdr(skb)->hdrlen;
-
-		/* Update moving-average of s and
-		 * the sum of received payload bytes */
+		/*
+		 * Update moving-average of s and the sum of received payload bytes
+		 */
 		hc->rx_s = mcc_ewma(hc->rx_s, payload, 9);
 		hc->rx_bytes_recv += payload;
 	}
@@ -195,11 +195,9 @@ void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 		goto update_records;
 
 	if(!mcc_lh_is_initialised(&hc->rx_li_hist)) {
-		/* FIXME mcc history */
-		/*const u32 sample = mcc_rx_hist_sample_rtt(&hc->rx_hist, skb);*/
-		const u32 sample = gmtp_hdr(skb)->server_rtt;
-
-		/* Empty loss history: no loss so far, hence p stays 0.
+		const u32 sample = hc->rtt;
+		/*
+		 * Empty loss history: no loss so far, hence p stays 0.
 		 * Sample RTT values, since an RTT estimate is required for the
 		 * computation of p when the first loss occurs; RFC 3448, 6.3.1.
 		 */
@@ -207,11 +205,10 @@ void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 			hc->rx_rtt = mcc_ewma(hc->rx_rtt, sample, 9);
 
 	} else if(mcc_lh_update_i_mean(&hc->rx_li_hist, skb)) {
-
-		/* Step (3) of [RFC 3448, 6.1]: Recompute I_mean and, if I_mean
+		/*
+		 * Step (3) of [RFC 3448, 6.1]: Recompute I_mean and, if I_mean
 		 * has decreased (resp. p has increased), send feedback now.
 		 */
-
 		do_feedback = MCC_FBACK_PARAM_CHANGE;
 	}
 
@@ -239,6 +236,7 @@ int mcc_rx_init(struct sock *sk)
 	gmtp_pr_func();
 
 	hc->rx_state = MCC_RSTATE_NO_DATA;
+	hc->ndp_count = 0;
 	mcc_lh_init(&hc->rx_li_hist);
 	return mcc_rx_hist_alloc(&hc->rx_hist);
 }
