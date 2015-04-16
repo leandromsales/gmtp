@@ -34,8 +34,6 @@ static struct sk_buff *gmtp_skb_entail(struct sock *sk, struct sk_buff *skb) {
  */
 static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 
-	gmtp_print_function();
-
 	if (likely(skb != NULL)) {
 
 		struct inet_sock *inet = inet_sk(sk);
@@ -47,7 +45,9 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 				gmtp_packet_hdr_variable_len(gcb->type);
 		int err, set_ack = 1;
 
+		/*
 		gmtp_print_debug("Packet: %s", gmtp_packet_name(gcb->type));
+		*/
 
 		switch (gcb->type) {
 		case GMTP_PKT_DATA:
@@ -413,9 +413,6 @@ static int gmtp_wait_for_delay(struct sock *sk, unsigned long delay)
 	DEFINE_WAIT(wait);
 	long remaining;
 
-	gmtp_print_function();
-	pr_info("Delay: %lu jiffies (%u ms)\n", delay, jiffies_to_msecs(delay));
-
 	prepare_to_wait(sk_sleep(sk), &wait, TASK_INTERRUPTIBLE);
 	sk->sk_write_pending++;
 	release_sock(sk);
@@ -442,6 +439,9 @@ static inline void packet_sent(struct gmtp_sock *gp, int data_len)
 	unsigned long elapsed;
 	int len = pkt_len(data_len);
 
+	if(gp->tx_pkts_sent == 0)
+		gmtp_pr_info("Sending data packets...");
+
 	++gp->tx_pkts_sent;
 	gp->tx_data_sent += (unsigned long) data_len;
 	gp->tx_bytes_sent += (unsigned long) len;
@@ -458,7 +458,7 @@ static inline void packet_sent(struct gmtp_sock *gp, int data_len)
 
 	elapsed = jiffies - gp->tx_first_stamp;
 	if(gp->tx_first_stamp != 0 && elapsed != 0)
-		gp->tx_total_rate = (HZ * gp->tx_bytes_sent) / elapsed;
+		gp->tx_total_rate = mult_frac(HZ, gp->tx_bytes_sent, elapsed);
 
 	if(gp->tx_pkts_sent >= gp->tx_sample_len) {
 
@@ -466,7 +466,9 @@ static inline void packet_sent(struct gmtp_sock *gp, int data_len)
 		gp->tx_byte_sample = gp->tx_bytes_sent - gp->tx_byte_sample;
 
 		if(gp->tx_time_sample != 0 && gp->tx_byte_sample != 0)
-			gp->tx_sample_rate = (HZ * gp->tx_byte_sample) / gp->tx_time_sample;
+			gp->tx_sample_rate = mult_frac(HZ,
+							gp->tx_byte_sample,
+							gp->tx_time_sample);
 	}
 }
 
@@ -480,7 +482,7 @@ static void gmtp_xmit_packet(struct sock *sk, struct sk_buff *skb) {
 
 	err = gmtp_transmit_skb(sk, skb);
 	if (err)
-		gmtp_print_debug("transmit_skb() returned err=%d\n", err);
+		gmtp_pr_error("transmit_skb() returned err=%d\n", err);
 
 	/*
 	 * Register this one as sent (even if an error occurred).
@@ -494,11 +496,11 @@ static void gmtp_xmit_packet(struct sock *sk, struct sk_buff *skb) {
  * Return difference between actual tx_rate and max tx_rate
  * If return > 0, actual tx_rate is greater than max tx_rate
  */
-static int get_rate_gap(struct gmtp_sock *gp, int acum)
+static long get_rate_gap(struct gmtp_sock *gp, int acum)
 {
 	long rate = (long)gp->tx_sample_rate;
 	long tx = (long)gp->tx_max_rate;
-	int coef_adj = 0;
+	long coef_adj = 0;
 
 	if(gp->tx_pkts_sent < GMTP_MIN_SAMPLE_LEN)
 		return 0;
@@ -506,7 +508,7 @@ static int get_rate_gap(struct gmtp_sock *gp, int acum)
 	if(rate <= gp->tx_total_rate/2) /* Eliminate discrepancies */
 		rate = (long)gp->tx_total_rate;
 
-	coef_adj = (int) (((rate - tx) * 100) / tx);
+	coef_adj = mult_frac((rate - tx), 100, tx);
 
 	if(acum) {
 		coef_adj += gp->tx_adj_budget;
@@ -522,18 +524,14 @@ static int get_rate_gap(struct gmtp_sock *gp, int acum)
 void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 {
 	struct gmtp_sock *gp = gmtp_sk(sk);
-	unsigned long rest, elapsed;
-	long delay = 0;
-	long delay2 = 0;
-	long delay_budget = 0;
+	unsigned long elapsed;
+	long delay = 0, delay2 = 0, delay_budget = 0;
 	int len = pkt_len(skb->len);
 	int rc = 0;
 
-	/** TODO Continue tests with different factors... */
-	static const int factor = 1;
-	/*static const int factor = HZ/100;*/
-
-	gmtp_print_function();
+	/** TODO Continue tests with different scales... */
+	static const int scale = 1;
+	/*static const int scale = HZ/100;*/
 
 	if(gp->tx_max_rate == 0)
 		goto send;
@@ -545,26 +543,18 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 
 	elapsed = jiffies - gp->tx_last_stamp; /* time elapsed since last sent */
 
-	if(gp->tx_byte_budget >= (3*len)/4) {
+	if(gp->tx_byte_budget >= mult_frac(len, 3, 4)) {
 		goto send;
 	} else if(gp->tx_byte_budget != LONG_MIN) {
-		delay_budget = factor;
+		delay_budget = scale;
 		goto wait;
 	}
 
-	delay = (HZ * len) / gp->tx_max_rate;
-	rest = (HZ * len) % gp->tx_max_rate;
-	if(rest >= gp->tx_max_rate/2)
-		++delay;
-
+	delay = DIV_ROUND_CLOSEST((HZ * len), gp->tx_max_rate);
 	delay2 = delay - elapsed;
 
-	if(delay2 > 0) {
-		long coef_adj = (long) get_rate_gap(gp, 1);
-		long delay_adjust = 0;
-		delay_adjust = (delay2 * coef_adj) / 100;
-		delay2 += delay_adjust;
-	}
+	if(delay2 > 0)
+		delay2 += mult_frac(delay2, get_rate_gap(gp, 1), 100);
 
 wait:
 	delay2 += delay_budget;
@@ -575,15 +565,13 @@ wait:
 	if(rc < 0)
 		return;
 
-	/* Work fine!
+	/*
 	 * TODO More tests with byte_budgets...
 	 */
-	if(delay <= 0) {
-		long coef_adj = 0;
-		coef_adj = (long) get_rate_gap(gp, 0);
-		gp->tx_byte_budget = factor * (gp->tx_max_rate / HZ);
-		gp->tx_byte_budget -= (gp->tx_byte_budget * coef_adj) / 100;
-	} else
+	if(delay <= 0)
+		gp->tx_byte_budget = mult_frac(scale, gp->tx_max_rate, HZ) -
+			mult_frac(gp->tx_byte_budget, get_rate_gap(gp, 0), 100);
+	else
 		gp->tx_byte_budget = LONG_MIN;
 
 send:

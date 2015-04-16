@@ -51,19 +51,19 @@
  */
 struct mcc_tx_hist_entry {
 	struct mcc_tx_hist_entry *next;
-	u64			  seqno;
+	__be32			  seqno;
 	ktime_t			  stamp;
 };
 
 static inline struct mcc_tx_hist_entry *
-	mcc_tx_hist_find_entry(struct mcc_tx_hist_entry *head, u64 seqno)
+	mcc_tx_hist_find_entry(struct mcc_tx_hist_entry *head, __be32 seqno)
 {
 	while (head != NULL && head->seqno != seqno)
 		head = head->next;
 	return head;
 }
 
-int mcc_tx_hist_add(struct mcc_tx_hist_entry **headp, u64 seqno);
+int mcc_tx_hist_add(struct mcc_tx_hist_entry **headp, __be32 seqno);
 void mcc_tx_hist_purge(struct mcc_tx_hist_entry **headp);
 
 /* Subtraction a-b modulo-16, respects circular wrap-around */
@@ -71,16 +71,16 @@ void mcc_tx_hist_purge(struct mcc_tx_hist_entry **headp);
 
 /**
  * mcc_rx_hist_entry - Store information about a single received packet
- * @seqno:	DCCP packet sequence number
+ * @seqno:	GMTP packet sequence number
  * @ccval:	window counter value of packet (RFC 4342, 8.1)
  * @ndp:	the NDP count (if any) of the packet
  * @tstamp:	actual receive time of packet
  */
 struct mcc_rx_hist_entry {
-	u64		 seqno:48,
+	__be32		 seqno,
 			 ccval:4,
 			 type:4;
-	u64		 ndp:48;
+	__be32		 ndp;
 	ktime_t		 tstamp;
 };
 
@@ -126,13 +126,13 @@ static inline bool mcc_rx_hist_loss_pending(const struct mcc_rx_hist *h)
 }
 
 void mcc_rx_hist_add_packet(struct mcc_rx_hist *h, const struct sk_buff *skb,
-			     const u64 ndp);
+			     const __be32 ndp);
 
 int mcc_rx_hist_duplicate(struct mcc_rx_hist *h, struct sk_buff *skb);
 
 struct mcc_loss_hist;
 int mcc_rx_handle_loss(struct mcc_rx_hist *h, struct mcc_loss_hist *lh,
-			struct sk_buff *skb, const u64 ndp,
+			struct sk_buff *skb, const __be32 ndp,
 			u32 (*first_li)(struct sock *sk), struct sock *sk);
 u32 mcc_rx_hist_sample_rtt(struct mcc_rx_hist *h, const struct sk_buff *skb);
 int mcc_rx_hist_alloc(struct mcc_rx_hist *h);

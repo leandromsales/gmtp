@@ -28,7 +28,7 @@
  *  @li_length:		Loss interval sequence length
  */
 struct mcc_loss_interval {
-	u64		 li_seqno:48,
+	__be32		 li_seqno,
 			 li_ccval:4,
 			 li_is_closed:1;
 	u32		 li_length;

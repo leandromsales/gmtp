@@ -61,7 +61,7 @@ void mcc_tx_packet_history_exit(void)
 	}
 }
 
-int mcc_tx_hist_add(struct mcc_tx_hist_entry **headp, u64 seqno)
+int mcc_tx_hist_add(struct mcc_tx_hist_entry **headp, __be32 seqno)
 {
 	struct mcc_tx_hist_entry *entry = kmem_cache_alloc(tfrc_tx_hist_slab, gfp_any());
 
@@ -111,7 +111,7 @@ void mcc_rx_packet_history_exit(void)
 
 static inline void mcc_rx_hist_entry_from_skb(struct mcc_rx_hist_entry *entry,
 					       const struct sk_buff *skb,
-					       const u64 ndp)
+					       const __be32 ndp)
 {
 	const struct gmtp_hdr *gh = gmtp_hdr(skb);
 
@@ -125,7 +125,7 @@ static inline void mcc_rx_hist_entry_from_skb(struct mcc_rx_hist_entry *entry,
 
 void mcc_rx_hist_add_packet(struct mcc_rx_hist *h,
 			     const struct sk_buff *skb,
-			     const u64 ndp)
+			     const __be32 ndp)
 {
 	struct mcc_rx_hist_entry *entry = mcc_rx_hist_last_rcv(h);
 	gmtp_pr_func();
@@ -178,10 +178,13 @@ static void mcc_rx_hist_swap(struct mcc_rx_hist *h, const u8 a, const u8 b)
  *       performed already: the seqno of the skb must not be less than the seqno
  *       of loss_prev; and it must not equal that of any valid history entry.
  */
-static void __do_track_loss(struct mcc_rx_hist *h, struct sk_buff *skb, u64 n1)
+static void __do_track_loss(struct mcc_rx_hist *h, struct sk_buff *skb,
+		__be32 n1)
 {
-	u64 s0 = mcc_rx_hist_loss_prev(h)->seqno,
+	__be32 s0 = mcc_rx_hist_loss_prev(h)->seqno,
 	    s1 = GMTP_SKB_CB(skb)->seq;
+
+	gmtp_pr_func();
 
 	if (!gmtp_loss_free(s0, s1, n1)) {	/* gap between S0 and S1 */
 		h->loss_count = 1;
@@ -191,7 +194,7 @@ static void __do_track_loss(struct mcc_rx_hist *h, struct sk_buff *skb, u64 n1)
 
 static void __one_after_loss(struct mcc_rx_hist *h, struct sk_buff *skb, u32 n2)
 {
-	u64 s0 = mcc_rx_hist_loss_prev(h)->seqno,
+	__be32 s0 = mcc_rx_hist_loss_prev(h)->seqno,
 	    s1 = mcc_rx_hist_entry(h, 1)->seqno,
 	    s2 = GMTP_SKB_CB(skb)->seq;
 
@@ -204,7 +207,7 @@ static void __one_after_loss(struct mcc_rx_hist *h, struct sk_buff *skb, u32 n2)
 	/* S0  <  S2  <  S1 */
 
 	if (gmtp_loss_free(s0, s2, n2)) {
-		u64 n1 = mcc_rx_hist_entry(h, 1)->ndp;
+		__be32 n1 = mcc_rx_hist_entry(h, 1)->ndp;
 
 		if (gmtp_loss_free(s2, s1, n1)) {
 			/* hole is filled: S0, S2, and S1 are consecutive */
@@ -228,7 +231,7 @@ static void __one_after_loss(struct mcc_rx_hist *h, struct sk_buff *skb, u32 n2)
 /* return 1 if a new loss event has been identified */
 static int __two_after_loss(struct mcc_rx_hist *h, struct sk_buff *skb, u32 n3)
 {
-	u64 s0 = mcc_rx_hist_loss_prev(h)->seqno,
+	__be32 s0 = mcc_rx_hist_loss_prev(h)->seqno,
 	    s1 = mcc_rx_hist_entry(h, 1)->seqno,
 	    s2 = mcc_rx_hist_entry(h, 2)->seqno,
 	    s3 = GMTP_SKB_CB(skb)->seq;
@@ -254,11 +257,11 @@ static int __two_after_loss(struct mcc_rx_hist *h, struct sk_buff *skb, u32 n3)
 	/* S0  <  S3  <  S1 */
 
 	if (gmtp_loss_free(s0, s3, n3)) {
-		u64 n1 = mcc_rx_hist_entry(h, 1)->ndp;
+		__be32 n1 = mcc_rx_hist_entry(h, 1)->ndp;
 
 		if (gmtp_loss_free(s3, s1, n1)) {
 			/* hole between S0 and S1 filled by S3 */
-			u64 n2 = mcc_rx_hist_entry(h, 2)->ndp;
+			__be32 n2 = mcc_rx_hist_entry(h, 2)->ndp;
 
 			if (gmtp_loss_free(s1, s2, n2)) {
 				/* entire hole filled by S0, S3, S1, S2 */
@@ -297,10 +300,10 @@ static void __three_after_loss(struct mcc_rx_hist *h)
 	 * the loss). To recycle the loss record, it is	thus only necessary to
 	 * check for other possible gaps between S1/S2 and between S2/S3.
 	 */
-	u64 s1 = mcc_rx_hist_entry(h, 1)->seqno,
+	__be32 s1 = mcc_rx_hist_entry(h, 1)->seqno,
 	    s2 = mcc_rx_hist_entry(h, 2)->seqno,
 	    s3 = mcc_rx_hist_entry(h, 3)->seqno;
-	u64 n2 = mcc_rx_hist_entry(h, 2)->ndp,
+	__be32 n2 = mcc_rx_hist_entry(h, 2)->ndp,
 	    n3 = mcc_rx_hist_entry(h, 3)->ndp;
 
 	if (gmtp_loss_free(s1, s2, n2)) {
@@ -339,7 +342,7 @@ static void __three_after_loss(struct mcc_rx_hist *h)
  */
 int mcc_rx_handle_loss(struct mcc_rx_hist *h,
 			struct mcc_loss_hist *lh,
-			struct sk_buff *skb, const u64 ndp,
+			struct sk_buff *skb, const __be32 ndp,
 			u32 (*calc_first_li)(struct sock *), struct sock *sk)
 {
 	int is_new_loss = 0;

@@ -268,9 +268,10 @@ struct gmtp_skb_cb {
  * @s2:  first sequence number seen after the 'hole'
  * @ndp: NDP count on packet with sequence number @s2
  */
-static inline u64 gmtp_loss_count(const u64 s1, const u64 s2, const u64 ndp)
+static inline __be32 gmtp_loss_count(const __be32 s1, const __be32 s2,
+		const __be32 ndp)
 {
-	s64 delta = s2 - s1;
+	__be32 delta = s2 - s1;
 
 	WARN_ON(delta < 0);
 	delta -= ndp + 1;
@@ -279,11 +280,12 @@ static inline u64 gmtp_loss_count(const u64 s1, const u64 s2, const u64 ndp)
 }
 
 /**
- * dccp_loss_free - Evaluate condition for data loss from RFC 4340, 7.7.1
+ * gmtp_loss_free - Evaluate condition for data loss from RFC 4340, 7.7.1
  */
-static inline bool gmtp_loss_free(const u64 s1, const u64 s2, const u64 ndp)
+static inline bool gmtp_loss_free(const __be32 s1, const __be32 s2,
+		const __be32 ndp)
 {
-	return gmtp_loss_free(s1, s2, ndp) == 0;
+	return gmtp_loss_count(s1, s2, ndp) == 0;
 }
 
 static inline int gmtp_data_packet(const struct sk_buff *skb)

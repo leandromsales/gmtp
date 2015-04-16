@@ -270,9 +270,10 @@ void gmtp_close(struct sock *sk, long timeout)
 	u32 data_was_unread = 0;
 	int state;
 
-	gmtp_print_function();
-	gmtp_print_debug("Timeout: %ld", timeout);
-	gmtp_print_debug("sk->st_state: %s", gmtp_state_name(sk->sk_state));
+	gmtp_pr_func();
+	gmtp_pr_info("Closing connection...");
+	gmtp_pr_info("Timeout: %ld", timeout);
+	gmtp_pr_info("sk->st_state: %s", gmtp_state_name(sk->sk_state));
 
 	lock_sock(sk);
 
@@ -285,7 +286,7 @@ void gmtp_close(struct sock *sk, long timeout)
 
 		goto adjudge_to_death;
 	}
-	gmtp_print_debug("Calling sk_stop_timer(sk, &gp->xmit_timer)");
+	gmtp_print_debug("Stopping timers...");
 	sk_stop_timer(sk, &gp->xmit_timer);
 
 	/*
@@ -468,8 +469,6 @@ int gmtp_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 	const struct gmtp_hdr *gh;
 	long timeo;
 
-	gmtp_print_function();
-
 	lock_sock(sk);
 
 	if(sk->sk_state == GMTP_LISTEN) {
@@ -589,8 +588,6 @@ int gmtp_sendmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 	struct sk_buff *skb;
 	int rc, size;
 	long timeo;
-
-	gmtp_print_function();
 
 	if (len > gp->mss)
 		return -EMSGSIZE;

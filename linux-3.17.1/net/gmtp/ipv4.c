@@ -159,7 +159,7 @@ void gmtp_v4_err(struct sk_buff *skb, u32 info)
 	const int type = icmp_hdr(skb)->type;
 	const int code = icmp_hdr(skb)->code;
 	struct sock *sk;
-	__u64 seq;
+	__be32 seq;
 	int err;
 	struct net *net = dev_net(skb->dev);
 
