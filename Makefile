@@ -1,4 +1,4 @@
-obj-m := ok.o
+obj-m := teste.o
 KDIR := /lib/modules/$(shell uname -r)/build
 PWD := $(shell pwd)
 default:

@@ -19,7 +19,12 @@
 #include "../gmtp/gmtp.h"
 
 #include "gmtp-intra.h"
+#include <linux/if.h>
+#include <linux/ioctl.h>
 
+#include <linux/inet.h>
+#include <linux/dirent.h>
+*
 /*includes from funcionts to get ip and mac adress
 #include <stdio.h>
 #include <string.h>
@@ -61,11 +66,12 @@ unsigned int current_tx = 1;
 }*/
 
 /* FIXME Make the real Relay IP */
-static const inline __be32 gmtp_intra_relay_ip(void)
+/*static const inline __be32 gmtp_intra_relay_ip(void)
 {
-	unsigned char *ip = "\xc0\xa8\x02\x01"; /* 192.168.2.1 */
+     // 192.168.2.1
+	unsigned char *ip = "\xc0\xa8\x02\x01";
 	return *(unsigned int *)ip;
-}
+}*/
 
 void gmtp_intra_relay_read_devices (const char *ifname, int info)
 {

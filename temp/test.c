@@ -79,37 +79,47 @@ printk(KERN_INFO"\n\n\n");
     struct socket *sock = NULL;
     struct net_device *dev = NULL;
     struct net *net;
-    int retval;
+    int retval, i;
     char mac_address[6];
+    
     retval = sock_create(AF_INET, SOCK_STREAM, 0, &sock);
     net = sock_net (sock->sk);
 
-       // dev = dev_get_by_index_rcu(net,1);
-   // printk(KERN_DEBUG"INDEX DEV = %d\n",dev->ifindex);
-
-    struct __netdev_adjacent *iter;
-    
-    list_for_each_entry(iter, &dev->adj_list.upper, list){
- //       dev = dev_get_by_name_rcu(net, "eth0");
-        if(iter == NULL)
-           {
-            printk(KERN_DEBUG"essa merda ta nula iter");
-                return 1;
-                }
-         if(iter->dev == NULL)
-           {
-            printk(KERN_DEBUG"essa merda ta nula dev");
-            return 1;
-            }
+    for(i = 2; (dev = dev_get_by_index_rcu(net,i)) != NULL; ++i){
         
-            memcpy(&mac_address, iter->dev->dev_addr, 6);
-        printk(KERN_DEBUG"ip address =%x:%x:%x:%x:%x:%x\n",
+        memcpy(&mac_address, dev->dev_addr, 6);
+        printk(KERN_DEBUG"Interface[%d] MAC = %x:%x:%x:%x:%x:%x\n",i,
               mac_address[0],mac_address[1],
               mac_address[2],mac_address[3], 
               mac_address[4],mac_address[5]);
  
-     
+
     }
+   // printk(KERN_DEBUG"INDEX DEV = %d\n",dev->ifindex);
+
+//    struct __netdev_adjacent *iter;
+    
+  //  list_for_each_entry(iter, &dev->adj_list.upper, list){
+ //       dev = dev_get_by_name_rcu(net, "eth0");
+    //    if(iter == NULL)
+      //     {
+        //    printk(KERN_DEBUG"essa merda ta nula iter");
+          //      return 1;
+            //    }
+//         if(iter->dev == NULL)
+  //         {
+    //        printk(KERN_DEBUG"essa merda ta nula dev");
+      //      return 1;
+        //    }
+        
+          //  memcpy(&mac_address, iter->dev->dev_addr, 6);
+//        printk(KERN_DEBUG"ip address =%x:%x:%x:%x:%x:%x\n",
+  //            mac_address[0],mac_address[1],
+    //          mac_address[2],mac_address[3], 
+      //        mac_address[4],mac_address[5]);
+ 
+     
+    //}
        sock_release(sock);
     return 0; 
 }

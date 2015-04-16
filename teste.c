@@ -23,7 +23,7 @@ struct socket *udpsock;
 u32 get_address(char *ifname) 
 { 
         struct net *net;
-        struct net_device *dev; 
+        struct net_device *dev = kmalloc(sizeof(struct net_device), GFP_KERNEL); 
         u32 addr; 
         if ((dev = dev_get_by_name(net, ifname)) == NULL) 
                 return -ENODEV; 
