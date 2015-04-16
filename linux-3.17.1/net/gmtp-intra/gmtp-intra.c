@@ -73,57 +73,66 @@ unsigned int current_tx = 1;
 	return *(unsigned int *)ip;
 }*/
 
-void gmtp_intra_relay_read_devices (const char *ifname, int info)
+void gmtp_intra_relay_read_devices (int option)
 {
-    int sock, i;
-    struct ifreq ifr;
-    struct sockaddr_in *ipaddr;
-    char address[INET_ADDRSTRLEN];
-    size_t ifnamelen;
-    
-    /* copy ifname to ifr object */
-    ifnamelen = strlen(ifname);
-    if (ifnamelen >= sizeof(ifr.ifr_name)) {
-        return;
-    }
+    struct socket *sock = NULL;
+    struct net_device *dev = NULL;
 
-    memcpy(ifr.ifr_name, ifname, ifnamelen);
-    ifr.ifr_name[ifnamelen] = '\0';
+    struct in_device *in_dev;
+    struct in_ifaddr *if_info;
 
-    /* open socket */
-    sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP);
-    if (sock < 0) {
-        return;
-    }
+    struct net *net;
+    int i;
+    char mac_address[6];
     
-    /* process mac if(info == 0)*/
-    if (ioctl(sock, SIOCGIFHWADDR, &ifr) != -1 && info == 0) {
-        printf("Mac Address: ");
-        for(i = 0; i < 6; ++i){
-            printf("%02x",(unsigned char)ifr.ifr_hwaddr.sa_data[i]);
-            if (i != 5)
-                printf(":");
-            if (i == 5)
-                printf("\n");
+    retval = sock_create(AF_INET, SOCK_STREAM, 0, &sock);
+    net = sock_net (sock->sk);
+    
+    if(option == GET_MAC_ADRESS){
+        for(i = 2; (dev = dev_get_by_index_rcu(net,i)) != NULL; ++i){
+        
+            memcpy(&mac_address, dev->dev_addr, 6);
+            printk(KERN_DEBUG"Interface[%d] MAC = %x:%x:%x:%x:%x:%x\n",i,
+                  mac_address[0],mac_address[1],
+                  mac_address[2],mac_address[3], 
+                  mac_address[4],mac_address[5]);
+            if(option ==  GET_IP_ADRESS){    
+                in_dev = (struct in_device * )dev->ip_ptr;
+                if_info = in_dev0>ifa_list;
+                for(;if_info;if_info = if_info->ifa_next){
+                    if( ! (strcmp(if_info->ifa_label, "eth0"))){ // TODO is really necessary?
+                        printk("if_info->ifa_address=%x\n",if_info->ifa_address);
+                        break;    
+                    }
+                }   
+
+            }
         }
-        goto close;
     }
-     
-    /* die if cannot get address */
-    if (ioctl(sock, SIOCGIFADDR, &ifr) == -1) {
-        goto close;
-    }
-    
-    /* process ip */
-    if(info == 1){
-    	ipaddr = (struct sockaddr_in *)&ifr.ifr_addr;
-    	if (inet_ntop(AF_INET, &ipaddr->sin_addr, address, sizeof(address)) != NULL) {
-        	printf("Ip address: %s\n", address);
-    	}
-    }
+   // printk(KERN_DEBUG"INDEX DEV = %d\n",dev->ifindex);
 
-close:  
-    close(sock);
+//    struct __netdev_adjacent *iter;
+    
+  //  list_for_each_entry(iter, &dev->adj_list.upper, list){
+ //       dev = dev_get_by_name_rcu(net, "eth0");
+    //    if(iter == NULL)
+      //     {
+        //    printk(KERN_DEBUG"essa merda ta nula iter");
+          //      return 1;
+            //    }
+//         if(iter->dev == NULL)
+  //         {
+    //        printk(KERN_DEBUG"essa merda ta nula dev");
+      //      return 1;
+        //    }
+        
+          //  memcpy(&mac_address, iter->dev->dev_addr, 6);
+//        printk(KERN_DEBUG"ip address =%x:%x:%x:%x:%x:%x\n",
+  //            mac_address[0],mac_address[1],
+    //          mac_address[2],mac_address[3], 
+      //        mac_address[4],mac_address[5]);
+
+       sock_release(sock);
 }
 /*Function to get device names from /sys/class/net*/
 void gmtp_intra_relay_get_devices (int info){
