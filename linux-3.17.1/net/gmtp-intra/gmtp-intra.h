@@ -58,8 +58,7 @@ int gmtp_intra_request_rcv(struct sk_buff *skb);
 int gmtp_intra_register_reply_rcv(struct sk_buff *skb);
 int gmtp_intra_ack_rcv(struct sk_buff *skb);
 int gmtp_intra_data_rcv(struct sk_buff *skb);
-void gmtp_intra_relay_read_devices (const char *ifname, int info);
-void gmtp_intra_relay_get_devices (int info);
+void gmtp_intra_relay_get_devices (int option);
 const __u8 *gmtp_intra_relay_id (void);
 __be32 gmtp_intra_relay_ip (void);
 

@@ -8,6 +8,11 @@
 #include <net/sock.h>
 #include <linux/types.h>
 #include <linux/list.h>
+#include <linux/if_addr.h>
+#include <linux/inetdevice.h>
+
+#define GET_MAC_ADDRESS 0
+#define GET_IP_ADDRESS 1
 
 struct __netdev_adjacent{
     struct net_device *dev;
@@ -48,53 +53,52 @@ struct gmtp_net_device_addr {
 struct gmtp_net_device_addr gmtp_list;
 
 int init_module(){
+    int  option = GET_IP_ADDRESS;
 
-    //create list node
-   // INIT_LIST_HEAD(&gmtp_list.list);
-    //struct gmtp_net_device_addr *new_entry;
+    printk(KERN_INFO"\n\n\n");
     
-    //new_entry = kmalloc(sizeof(struct gmtp_net_device_addr),GFP_KERNEL);
-
-   // memcpy(new_entry->dev_addr,"testando",MAX_ADDR_LEN);
-  
-    //INIT_LIST_HEAD(&new_entry->list);
-
-    //add a list node
-    //list_add(&new_entry->list, &gmtp_list.list);
-
-    //printk(KERN_INFO"Printing the list");
-
-//    list_for_each_entry(new_entry, &gmtp_list.list, list){
-  //          printk(KERN_INFO"Dev_ADDR = %s",new_entry->dev_addr);
-//}
-printk(KERN_INFO"\n\n\n");
-
-    nfho.hook = hook_func;
-    nfho.hooknum = 0; //NF_IP_PRE_ROUTING
-    nfho.pf = PF_INET;
-    nfho.priority = NF_IP_PRI_FIRST;
-    nf_register_hook(&nfho);
-    
-    struct ifreq tmp;
     struct socket *sock = NULL;
     struct net_device *dev = NULL;
+
+    struct in_device *in_dev;
+    struct in_ifaddr *if_info;
+
     struct net *net;
-    int retval, i;
+    int i, retval;
     char mac_address[6];
+    char *ip_address;
     
     retval = sock_create(AF_INET, SOCK_STREAM, 0, &sock);
     net = sock_net (sock->sk);
+    
+            for(i = 2; (dev = dev_get_by_index_rcu(net,i)) != NULL; ++i){
+            
+                if(option == GET_MAC_ADDRESS){
+   
+                    memcpy(&mac_address, dev->dev_addr, 6);
+                    printk(KERN_DEBUG"Interface[%d] MAC = %x:%x:%x:%x:%x:%x\n",i,
+                              mac_address[0],mac_address[1],
+                              mac_address[2],mac_address[3], 
+                              mac_address[4],mac_address[5]);
+                }
 
-    for(i = 2; (dev = dev_get_by_index_rcu(net,i)) != NULL; ++i){
-        
-        memcpy(&mac_address, dev->dev_addr, 6);
-        printk(KERN_DEBUG"Interface[%d] MAC = %x:%x:%x:%x:%x:%x\n",i,
-              mac_address[0],mac_address[1],
-              mac_address[2],mac_address[3], 
-              mac_address[4],mac_address[5]);
- 
+                if(option ==  GET_IP_ADDRESS){    
+                    
+                    in_dev = (struct in_device * )dev->ip_ptr;
 
-    }
+                    if(in_dev == NULL)
+                        printk("in_dev == NULL\n");
+
+                    if_info = in_dev->ifa_list;
+                    for(;if_info;if_info = if_info->ifa_next){
+                        if(if_info != NULL){
+                            printk("if_info->ifa_address=%032x\n",if_info->ifa_address);
+                            break;    
+                        }
+                    }   
+
+                }   
+            }
    // printk(KERN_DEBUG"INDEX DEV = %d\n",dev->ifindex);
 
 //    struct __netdev_adjacent *iter;
@@ -117,11 +121,9 @@ printk(KERN_INFO"\n\n\n");
   //            mac_address[0],mac_address[1],
     //          mac_address[2],mac_address[3], 
       //        mac_address[4],mac_address[5]);
- 
-     
-    //}
+
        sock_release(sock);
-    return 0; 
+
 }
 
 void cleanup_module(){

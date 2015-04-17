@@ -1,5 +1,5 @@
-#define GET_MAC_ADRESS = 0;
-#define GET_IP_ADRESS = 1;
+#define GET_MAC_ADDRESS  0
+#define GET_IP_ADDRESS   1
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -24,15 +24,8 @@
 
 #include <linux/inet.h>
 #include <linux/dirent.h>
-*
-/*includes from funcionts to get ip and mac adress
-#include <stdio.h>
-#include <string.h>
-#include <net/if.h>
-#include <sys/ioctl.h>
-#include <arpa/inet.h>
-#include <dirent.h>
-*/
+#include <linux/inetdevice.h>
+
 
 extern const char *gmtp_packet_name(const int);
 extern const char *gmtp_state_name(const int);
@@ -75,6 +68,8 @@ unsigned int current_tx = 1;
 
 void gmtp_intra_relay_read_devices (int option)
 {
+    printk(KERN_INFO"\n\n\n");
+    
     struct socket *sock = NULL;
     struct net_device *dev = NULL;
 
@@ -82,89 +77,49 @@ void gmtp_intra_relay_read_devices (int option)
     struct in_ifaddr *if_info;
 
     struct net *net;
-    int i;
+    int i, retval;
     char mac_address[6];
+    char *ip_address;
     
     retval = sock_create(AF_INET, SOCK_STREAM, 0, &sock);
     net = sock_net (sock->sk);
     
-    if(option == GET_MAC_ADRESS){
-        for(i = 2; (dev = dev_get_by_index_rcu(net,i)) != NULL; ++i){
-        
-            memcpy(&mac_address, dev->dev_addr, 6);
-            printk(KERN_DEBUG"Interface[%d] MAC = %x:%x:%x:%x:%x:%x\n",i,
-                  mac_address[0],mac_address[1],
-                  mac_address[2],mac_address[3], 
-                  mac_address[4],mac_address[5]);
-            if(option ==  GET_IP_ADRESS){    
-                in_dev = (struct in_device * )dev->ip_ptr;
-                if_info = in_dev0>ifa_list;
-                for(;if_info;if_info = if_info->ifa_next){
-                    if( ! (strcmp(if_info->ifa_label, "eth0"))){ // TODO is really necessary?
-                        printk("if_info->ifa_address=%x\n",if_info->ifa_address);
-                        break;    
-                    }
+            for(i = 2; (dev = dev_get_by_index_rcu(net,i)) != NULL; ++i){
+            
+                if(option == GET_MAC_ADDRESS){
+   
+                    memcpy(&mac_address, dev->dev_addr, 6);
+                    printk(KERN_DEBUG"Interface[%d] MAC = %x:%x:%x:%x:%x:%x\n",i,
+                              mac_address[0],mac_address[1],
+                              mac_address[2],mac_address[3], 
+                              mac_address[4],mac_address[5]);
+                }
+
+                if(option ==  GET_IP_ADDRESS){    
+                    
+                    in_dev = (struct in_device * )dev->ip_ptr;
+
+                    if(in_dev == NULL)
+                        printk("in_dev == NULL\n");
+
+                    if_info = in_dev->ifa_list;
+                    for(;if_info;if_info = if_info->ifa_next){
+                        if(if_info != NULL){
+                            printk("if_info->ifa_address=%032x\n",if_info->ifa_address);
+                            break;    
+                        }
+                    }   
+
                 }   
-
             }
-        }
-    }
-   // printk(KERN_DEBUG"INDEX DEV = %d\n",dev->ifindex);
-
-//    struct __netdev_adjacent *iter;
     
-  //  list_for_each_entry(iter, &dev->adj_list.upper, list){
- //       dev = dev_get_by_name_rcu(net, "eth0");
-    //    if(iter == NULL)
-      //     {
-        //    printk(KERN_DEBUG"essa merda ta nula iter");
-          //      return 1;
-            //    }
-//         if(iter->dev == NULL)
-  //         {
-    //        printk(KERN_DEBUG"essa merda ta nula dev");
-      //      return 1;
-        //    }
-        
-          //  memcpy(&mac_address, iter->dev->dev_addr, 6);
-//        printk(KERN_DEBUG"ip address =%x:%x:%x:%x:%x:%x\n",
-  //            mac_address[0],mac_address[1],
-    //          mac_address[2],mac_address[3], 
-      //        mac_address[4],mac_address[5]);
+    sock_release(sock);
 
-       sock_release(sock);
 }
-/*Function to get device names from /sys/class/net*/
-void gmtp_intra_relay_get_devices (int info){
-	
-	 
-    /*DIR *d;
-    struct dirent *de;
 
-    d = opendir("/sys/class/net/");
-    if (d == NULL) {
-        return -1;
-    }
-    printf("\n");   
-    while (NULL != (de = readdir(d))) {
-        if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0) {
-            continue;
-        }
-        
-        printf("Interface %s\n", de->d_name);
-        
-        gmtp_intra_relay_read_devices(de->d_name, info);
-        
-        printf("\n");
-    }
-    
-    closedir(d);
-    
-    return;*/
-}
 const __u8 *gmtp_intra_relay_id()
 {
-	gmtp_intra_relay_get_devices(GET_MAC_ADRESS);
+	gmtp_intra_relay_get_devices(GET_MAC_ADDRESS);
 
     /*just to keep the same return of previous implementation*/
 	return "777777777777777777777";
@@ -172,7 +127,7 @@ const __u8 *gmtp_intra_relay_id()
 }
 __be32 gmtp_intra_relay_ip()
 {
-	gmtp_intra_relay_get_devices(GET_IP_ADRESS);
+	gmtp_intra_relay_get_devices(GET_IP_ADDRESS);
    
     /*just to keep the same return of previous implementation*/
 	unsigned char *ip = "\xc0\xa8\x02\x01"; /* 192.168.2.1 */
@@ -183,7 +138,7 @@ static inline void increase_stats(struct iphdr *iph)
 {
 	seq++;
 	npackets++;
-	nbytes += ntoqhs(iph->tot_len);
+	nbytes += ntohs(iph->tot_len);
 }
 
 static inline void decrease_stats(struct iphdr *iph)
