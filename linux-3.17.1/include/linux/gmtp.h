@@ -131,6 +131,7 @@ static inline struct gmtp_request_sock *gmtp_rsk(const struct request_sock *req)
  * @rx_state:		     Receiver state, one of %mcc_rx_states
  * @rx_bytes_recv:	     Total sum of GMTP payload bytes
  * @rx_x_recv:		     Receiver estimate of send rate (RFC 3448, sec. 4.3)
+ * @rx_max_rate:	Receiver max send rate calculated by TFRC Equation
  * @rx_rtt:		     Receiver estimate of RTT (average)
  * @rx_tstamp_last_feedback: Time at which last feedback was sent
  * @rx_hist:		     Packet history (loss detection + RTT sampling)
@@ -180,6 +181,7 @@ struct gmtp_sock {
 	enum mcc_rx_states		rx_state:8;
 	__u32				rx_bytes_recv;
 	__u32				rx_x_recv;
+	__be32				rx_max_rate;
 	__u32				rx_rtt;
 	ktime_t				rx_tstamp_last_feedback;
 	struct mcc_rx_hist		rx_hist;

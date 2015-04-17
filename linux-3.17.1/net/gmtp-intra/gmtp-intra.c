@@ -310,10 +310,11 @@ int gmtp_intra_ack_rcv(struct sk_buff *skb)
 
 	gmtp_print_function();
 
-	gmtp_pr_info("%s (%d) src=%pI4@%-5d dst=%pI4@%-5d",
+	gmtp_pr_info("%s (%d) src=%pI4@%-5d dst=%pI4@%-5d transm_r: %u",
 			gmtp_packet_name(gh->type), gh->type,
 			&iph->saddr, ntohs(gh->sport),
-			&iph->daddr, ntohs(gh->dport));
+			&iph->daddr, ntohs(gh->dport),
+			gh->transm_r);
 
 	return ret;
 }
@@ -348,7 +349,7 @@ int gmtp_intra_data_rcv(struct sk_buff *skb)
 	unsigned char *data, *data_str;
 	unsigned int data_len;
 
-	gmtp_print_function();
+	/*gmtp_print_function();*/
 
 	/**
 	 * FIXME If destiny is not me, just let it go!

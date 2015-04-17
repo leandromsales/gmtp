@@ -92,6 +92,8 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 		if (set_ack) {
 			struct gmtp_hdr_ack *gack = gmtp_hdr_ack(skb);
 			gack->ackcode = gcb->ackcode;
+			if(gack->ackcode == GMTP_ACK_MCC_FEEDBACK)
+				gh->transm_r = gp->rx_max_rate;
 			gcb->seq = --gp->gss;
 			gmtp_event_ack_sent(sk);
 		}

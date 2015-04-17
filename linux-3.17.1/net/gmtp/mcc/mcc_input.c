@@ -48,7 +48,6 @@ static void mcc_rx_send_feedback(struct sock *sk,
 				      enum mcc_fback_type fbtype)
 {
 	struct gmtp_sock *hc = gmtp_sk(sk);
-	/*struct gmtp_sock *dp = gmtp_sk(sk);*/
 	ktime_t now = ktime_get_real();
 	s64 delta = 0;
 
@@ -91,6 +90,10 @@ static void mcc_rx_send_feedback(struct sock *sk,
 	/* FIXME Change ccval by tstamp or other method */
 	/*hc->rx_last_counter	    = dccp_hdr(skb)->dccph_ccval;*/
 	hc->rx_bytes_recv	    = 0;
+
+	if(hc->px_inv > 0)
+		hc->rx_max_rate = mcc_calc_x(hc->rx_s, hc->rx_rtt,
+				mcc_invert_loss_event_rate(hc->rx_pinv));
 
 	gmtp_pr_info("Now, we should send a feedback... Testing send ack");
 	/* FIXME Choose a packet type to send Feedback */
