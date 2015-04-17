@@ -729,7 +729,6 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb) {
 	greq = gmtp_rsk(req);
 	greq->isr	   = gcb->seq;
 	greq->gsr	   = greq->isr;
-	/*greq->iss	   = gmtp_v4_init_sequence(skb);*/
 	greq->iss	   = greq->isr;
 	greq->gss     = greq->iss;
 	memcpy(greq->flowname, gp->flowname, GMTP_FLOWNAME_LEN);

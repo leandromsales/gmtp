@@ -91,7 +91,7 @@ static void mcc_rx_send_feedback(struct sock *sk,
 	/*hc->rx_last_counter	    = dccp_hdr(skb)->dccph_ccval;*/
 	hc->rx_bytes_recv	    = 0;
 
-	if(hc->px_inv > 0)
+	if(hc->rx_pinv > 0)
 		hc->rx_max_rate = mcc_calc_x(hc->rx_s, hc->rx_rtt,
 				mcc_invert_loss_event_rate(hc->rx_pinv));
 
@@ -198,7 +198,7 @@ void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 		goto update_records;
 
 	if(!mcc_lh_is_initialised(&hc->rx_li_hist)) {
-		const u32 sample = hc->rtt;
+		const u32 sample = hc->server_rtt;
 		/*
 		 * Empty loss history: no loss so far, hence p stays 0.
 		 * Sample RTT values, since an RTT estimate is required for the

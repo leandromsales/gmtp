@@ -79,7 +79,8 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 
 		gh->version = GMTP_VERSION;
 		gh->type = gcb->type;
-		gh->server_rtt = gp->rtt;
+		gh->server_rtt = gp->server_rtt;
+		gh->transm_r = gp->tx_max_rate;
 		gh->sport = inet->inet_sport;
 		gh->dport = inet->inet_dport;
 		gh->hdrlen = gmtp_header_size;
@@ -196,7 +197,8 @@ struct sk_buff *gmtp_make_register_reply(struct sock *sk, struct dst_entry *dst,
 	gh->dport	= inet_rsk(req)->ir_rmt_port;
 	gh->type	= GMTP_PKT_REGISTER_REPLY;
 	gh->seq 	= greq->gss;
-	gh->server_rtt	= gmtp_sk(sk)->rtt;
+	gh->server_rtt	= gmtp_sk(sk)->server_rtt;
+	gh->transm_r	= gmtp_sk(sk)->tx_max_rate;
 	gh->hdrlen	= gmtp_header_size;
 	memcpy(gh->flowname, greq->flowname, GMTP_FLOWNAME_LEN);
 
@@ -237,7 +239,8 @@ struct sk_buff *gmtp_ctl_make_reset(struct sock *sk, struct sk_buff *rcv_skb)
 	gh->dport	= rxgh->sport;
 	gh->hdrlen	= gmtp_hdr_reset_len;
 	gh->seq 	= gp->iss;
-	gh->server_rtt	= gp->rtt;
+	gh->server_rtt	= gp->server_rtt;
+	gh->transm_r	= gp->tx_max_rate;
 	memcpy(gh->flowname, gp->flowname, GMTP_FLOWNAME_LEN);
 
 	ghr = gmtp_hdr_reset(skb);

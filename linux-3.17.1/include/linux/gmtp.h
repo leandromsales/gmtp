@@ -168,7 +168,7 @@ struct gmtp_sock {
 
 	unsigned long			req_stamp; /* jiffies */
 	unsigned long			reply_stamp; /* jiffies */
-	__u8 				rtt;       /* milisseconds */
+	__u8 				server_rtt;       /* milisseconds */
 	__u8				relay_rtt;  /* milisseconds */
 
 	__u8				server_timewait:1;
