@@ -35,7 +35,7 @@ extern struct percpu_counter gmtp_orphan_count;
 /* TODO Improve debug func names */
 #define gmtp_print_debug(fmt, args...) pr_info(GMTP_DEBUG fmt \
 		"\n", __FUNCTION__, __LINE__, ##args)
-#define gmtp_print_warning(fmt, args...) pr_warning(GMTP_WARNING fmt\
+#define gmtp_print_warning(fmt, args...) pr_warning(GMTP_WARNING fmt \
 		"\n", __FUNCTION__, __LINE__, __FILE__, ##args)
 #define gmtp_print_error(fmt, args...) pr_err(GMTP_ERROR fmt \
 		"\n", __FUNCTION__, __LINE__, __FILE__, ##args)
@@ -46,7 +46,7 @@ extern struct percpu_counter gmtp_orphan_count;
 #define gmtp_pr_info(fmt, args...) pr_info(GMTP_DEBUG fmt \
 		"\n", __FUNCTION__, __LINE__, ##args)
 #define gmtp_pr_debug(fmt, args...) gmtp_pr_info(fmt, ##args);
-#define gmtp_pr_warning(fmt, args...) pr_warning(GMTP_WARNING fmt\
+#define gmtp_pr_warning(fmt, args...) pr_warning(GMTP_WARNING fmt \
 		"\n", __FUNCTION__, __LINE__, __FILE__, ##args)
 #define gmtp_pr_error(fmt, args...) pr_err(GMTP_ERROR fmt \
 		"\n", __FUNCTION__, __LINE__, __FILE__, ##args)

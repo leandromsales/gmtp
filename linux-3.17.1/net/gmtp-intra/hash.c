@@ -64,8 +64,6 @@ struct gmtp_relay_entry *gmtp_intra_lookup_media(
 	struct gmtp_relay_entry *entry;
 	unsigned int hashval;
 
-	gmtp_print_function();
-
 	hashval = gmtp_intra_hash(hashtable, media);
 
 	/* Error */

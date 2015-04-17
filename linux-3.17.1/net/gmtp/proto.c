@@ -208,9 +208,9 @@ int gmtp_init_sock(struct sock *sk)
 	gp->tx_sample_rate 	= 0;
 	gp->tx_total_rate 	= 0;
 
-	gp->tx_first_stamp	= 0;
-	gp->tx_last_stamp	= 0;
-	gp->tx_max_rate		= 0; /* Unlimited */
+	gp->tx_first_stamp	= 0UL;
+	gp->tx_last_stamp	= 0UL;
+	gp->tx_max_rate		= 0UL; /* Unlimited */
 	gp->tx_byte_budget	= LONG_MIN;
 	gp->tx_adj_budget	= 0;
 

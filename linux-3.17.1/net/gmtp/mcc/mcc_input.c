@@ -91,9 +91,21 @@ static void mcc_rx_send_feedback(struct sock *sk,
 	/*hc->rx_last_counter	    = dccp_hdr(skb)->dccph_ccval;*/
 	hc->rx_bytes_recv	    = 0;
 
-	if(hc->rx_pinv > 0)
-		hc->rx_max_rate = mcc_calc_x(hc->rx_s, hc->rx_rtt,
-				mcc_invert_loss_event_rate(hc->rx_pinv));
+	if(hc->rx_rtt <= 0)
+		hc->rx_rtt = GMTP_SANE_RTT_MIN;
+
+	if(hc->rx_pinv > 0) {
+		u32 p = mcc_invert_loss_event_rate(hc->rx_pinv);
+		gmtp_pr_info("Calc... size: %d, rtt: %u, p: %u, 1/p: %u",
+				ntohs(hc->rx_s), hc->rx_rtt, p, hc->rx_pinv);
+		u32 new_rate = mcc_calc_x(hc->rx_s, hc->rx_rtt, p);
+		gmtp_pr_info("new_rate = %u", new_rate);
+		/*
+		 * Change only if the value is valid!
+		 */
+		if(new_rate > 0)
+			hc->rx_max_rate = new_rate;
+	}
 
 	gmtp_pr_info("Now, we should send a feedback... Testing send ack");
 	/* FIXME Choose a packet type to send Feedback */
@@ -198,7 +210,7 @@ void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 		goto update_records;
 
 	if(!mcc_lh_is_initialised(&hc->rx_li_hist)) {
-		const u32 sample = hc->server_rtt;
+		const u32 sample = hc->server_rtt * 1000; /* ms to us */
 		/*
 		 * Empty loss history: no loss so far, hence p stays 0.
 		 * Sample RTT values, since an RTT estimate is required for the
@@ -228,7 +240,6 @@ update_records:
 done_receiving:
 	if(do_feedback)
 		mcc_rx_send_feedback(sk, skb, do_feedback);
-	return;
 }
 EXPORT_SYMBOL_GPL(mcc_rx_packet_recv);
 

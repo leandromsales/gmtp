@@ -190,7 +190,6 @@ struct gmtp_sock {
 #define rx_pinv				rx_li_hist.i_mean
 
 	/** Tx variables */
-
 	unsigned int 			tx_pkts_sent;
 	unsigned long			tx_data_sent;
 	unsigned long			tx_bytes_sent;

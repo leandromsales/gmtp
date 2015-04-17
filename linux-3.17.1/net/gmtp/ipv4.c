@@ -550,14 +550,13 @@ static int gmtp_v4_rcv(struct sk_buff *skb) {
 	GMTP_SKB_CB(skb)->type = gh->type;
 
 	flowname_str(flowname, gh->flowname);
-	gmtp_print_debug("%s (%d) src=%pI4@%-5d dst=%pI4@%-5d seq=%llu "
-			"RTT: %u ms flow=%s",
-			gmtp_packet_name(gh->type),
-			gh->type,
+	gmtp_print_debug("%s(%d) src=%pI4@%-5d dst=%pI4@%-5d seq=%llu "
+			"RTT=%u ms, transm_r=%u, flow=%s",
+			gmtp_packet_name(gh->type), gh->type,
 			&iph->saddr, ntohs(gh->sport),
 			&iph->daddr, ntohs(gh->dport),
 			(unsigned long long) GMTP_SKB_CB(skb)->seq,
-			gh->server_rtt,
+			gh->server_rtt, gh->transm_r,
 			flowname);
 
 	if(skb->pkt_type == PACKET_MULTICAST) {

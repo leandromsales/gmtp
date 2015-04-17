@@ -111,13 +111,14 @@ static inline void print_gmtp_packet(struct iphdr *iph, struct gmtp_hdr *gh)
 {
 	__u8 flowname[GMTP_FLOWNAME_STR_LEN];
 	flowname_str(flowname, gh->flowname);
-	pr_info("%s (%d) | src=%pI4@%-5d | dst=%pI4@%-5d | seq=%llu | "
-			"flow=%s\n",
+	pr_info("%s (%d) src=%pI4@%-5d dst=%pI4@%-5d server_rtt=%u "
+			" transm_r=%u flow=%s\n",
 				gmtp_packet_name(gh->type),
 				gh->type,
 				&iph->saddr, ntohs(gh->sport),
 				&iph->daddr, ntohs(gh->dport),
-				(unsigned long long) gh->seq,
+				gh->server_rtt,
+				gh->transm_r,
 				flowname);
 }
 

@@ -623,28 +623,47 @@ u32 mcc_calc_x(u16 s, u32 R, u32 p)
 	u32 f;
 	u64 result;
 
+	gmtp_pr_func();
+
 	/* check against invalid parameters and divide-by-zero   */
-	BUG_ON(p >  1000000);		/* p must not exceed 100%   */
-	BUG_ON(p == 0);			/* f(0) = 0, divide by zero */
+//	BUG_ON(p >  1000000);		/* p must not exceed 100%   */
+//	BUG_ON(p == 0);			/* f(0) = 0, divide by zero */
+
+	if(p == 0 || p > 1000000) {
+		gmtp_pr_error("Invalid value of p: %u", p);
+		return 0;
+	}
+
+
 	if (R == 0) {			/* possible  divide by zero */
-		gmtp_print_warning("WARNING: RTT is 0, returning maximum X_calc.");
+		gmtp_pr_warning("WARNING: RTT is 0, returning maximum X_calc.");
 		return ~0U;
 	}
 
 	if (p <= MCC_CALC_X_SPLIT)		{     /* 0.0000 < p <= 0.05   */
+		gmtp_pr_info("If...");
 		if (p < MCC_SMALLEST_P) {	      /* 0.0000 < p <  0.0001 */
-			gmtp_print_warning("Value of p (%d) below resolution. "
+			gmtp_pr_warning("Value of p (%d) below resolution. "
 				  "Substituting %d\n", p, MCC_SMALLEST_P);
 			index = 0;
-		} else				      /* 0.0001 <= p <= 0.05  */
+		} else	{			      /* 0.0001 <= p <= 0.05  */
 			index =  p/MCC_SMALLEST_P - 1;
+		}
+		gmtp_pr_info("index: %d", ntohs(p));
 
-		f = mcc_calc_x_lookup[index][1];
+		if(index > 0 && index < MCC_CALC_X_ARRSIZE) {
+			f = mcc_calc_x_lookup[index][1];
+			gmtp_pr_info("if: f=%u", f);
+		} else {
+			gmtp_pr_info("f?");
+		}
 
 	} else {				      /* 0.05   <  p <= 1.00  */
+		gmtp_pr_info("else...");
 		index = p/(1000000/MCC_CALC_X_ARRSIZE) - 1;
 
 		f = mcc_calc_x_lookup[index][0];
+		gmtp_pr_info("else: f=%u", f);
 	}
 
 	/*
