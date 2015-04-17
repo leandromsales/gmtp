@@ -247,6 +247,7 @@ void kfree_gmtp_hashtable(struct gmtp_hashtable *hashtable);
  * gmtp_skb_cb  -  GMTP per-packet control information
  *
  * @type: one of %gmtp_pkt_type (or unknown)
+ * @ackcode: ack code. One of sock, one of %gmtp_ack_codes
  * @reset_code: one of %gmtp_reset_codes
  * @reset_data: Data1..3 fields (depend on @gmtpd_reset_code)
  * @seq: sequence number
@@ -255,6 +256,7 @@ void kfree_gmtp_hashtable(struct gmtp_hashtable *hashtable);
  */
 struct gmtp_skb_cb {
 	__u8 type :5;
+	__u8 ackcode;
 	__u8 reset_code,
 		reset_data[3];
 	__be32 seq;

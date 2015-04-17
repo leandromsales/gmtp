@@ -90,10 +90,11 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 
 		gcb->seq = ++gp->gss;
 		if (set_ack) {
+			struct gmtp_hdr_ack *gack = gmtp_hdr_ack(skb);
+			gack->ackcode = gcb->ackcode;
 			gcb->seq = --gp->gss;
 			gmtp_event_ack_sent(sk);
 		}
-
 		gh->seq = gcb->seq;
 
 		err = icsk->icsk_af_ops->queue_xmit(sk, skb, &inet->cork.fl);
@@ -336,12 +337,10 @@ void gmtp_send_ack(struct sock *sk, __u8 ackcode)
 	/* If we have been reset, we may not send again. */
 	if(sk->sk_state != GMTP_CLOSED) {
 
-		struct gmtp_sock *gs = gmtp_sk(sk);
 		struct sk_buff *skb = alloc_skb(sk->sk_prot->max_header,
 		GFP_ATOMIC);
 
-		struct gmtp_hdr_ack *gack;
-
+		/* FIXME How to define the ackcode in this case? */
 		if(skb == NULL) {
 			inet_csk_schedule_ack(sk);
 			inet_csk(sk)->icsk_ack.ato = TCP_ATO_MIN;
@@ -354,13 +353,7 @@ void gmtp_send_ack(struct sock *sk, __u8 ackcode)
 		/* Reserve space for headers */
 		skb_reserve(skb, sk->sk_prot->max_header);
 		GMTP_SKB_CB(skb)->type = GMTP_PKT_ACK;
-
-		gmtp_print_debug("Building ack header...");
-		gack = (struct gmtp_hdr_ack *)skb_put(skb,
-				sizeof(struct gmtp_hdr_ack));
-		/* Type of ack */
-		gack->ackcode = ackcode;
-
+		GMTP_SKB_CB(skb)->ackcode = ackcode;
 		gmtp_transmit_skb(sk, skb);
 	}
 }

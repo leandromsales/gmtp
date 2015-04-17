@@ -137,7 +137,7 @@ struct gmtp_hdr_route {
  * @ackcode: One of gmtp_ack_codes
  */
 struct gmtp_hdr_ack {
-	__u8 ackcode:2;
+	__u8 ackcode;
 };
 
 enum gmtp_ack_codes {

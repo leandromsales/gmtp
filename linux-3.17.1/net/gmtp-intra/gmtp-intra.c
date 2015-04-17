@@ -304,7 +304,17 @@ out:
 int gmtp_intra_ack_rcv(struct sk_buff *skb)
 {
 	int ret = NF_DROP;
+
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct iphdr *iph = ip_hdr(skb);
+
 	gmtp_print_function();
+
+	gmtp_pr_info("%s (%d) src=%pI4@%-5d dst=%pI4@%-5d",
+			gmtp_packet_name(gh->type), gh->type,
+			&iph->saddr, ntohs(gh->sport),
+			&iph->daddr, ntohs(gh->dport));
+
 	return ret;
 }
 
@@ -356,11 +366,13 @@ int gmtp_intra_data_rcv(struct sk_buff *skb)
 		ret = NF_DROP;
 		goto out;
 	}
+	/*
 	data_len = ntohs(iph->tot_len) - (iph->ihl + gh->hdrlen) - 15;
 	data_str = kmalloc(data_len + 1, GFP_KERNEL);
 	memcpy(data_str, data, data_len);
 	data_str[data_len] = (unsigned char)'\0';
-	gmtp_print_debug("Data: %s", data_str); /** Remove it later */
+	gmtp_print_debug("Data: %s", data_str);
+	*/
 
 	iph->daddr = flow_info->channel_addr;
 	ip_send_check(iph);
@@ -387,11 +399,13 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 	if(iph->protocol == IPPROTO_GMTP) {
 
 		gh = gmtp_hdr(skb);
-		gmtp_print_debug("GMTP packet: %s (%d)",
-				gmtp_packet_name(gh->type), gh->type);
 
-		print_packet(iph, true);
-		print_gmtp_packet(iph, gh);
+		if(gh->type != GMTP_PKT_DATA) {
+			gmtp_print_debug("GMTP packet: %s (%d)",
+					gmtp_packet_name(gh->type), gh->type);
+			print_packet(iph, true);
+			print_gmtp_packet(iph, gh);
+		}
 
 		switch(gh->type) {
 		case GMTP_PKT_REQUEST:
@@ -429,20 +443,19 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 	if(iph->protocol == IPPROTO_GMTP) {
 
 		gh = gmtp_hdr(skb);
-		gmtp_print_debug("GMTP packet: %s (%d)",
-				gmtp_packet_name(gh->type), gh->type);
-
-		print_packet(iph, false);
 
 		switch(gh->type) {
 		case GMTP_PKT_DATA:
-
 			/* Artificial loss (only for tests) */
 			if(gh->seq % 2)
 				return NF_DROP;
 
 			ret = gmtp_intra_data_rcv(skb);
 			break;
+		default:
+			gmtp_print_debug("GMTP packet: %s (%d)",
+					gmtp_packet_name(gh->type), gh->type);
+			print_packet(iph, false);
 		}
 
 	}

@@ -382,16 +382,6 @@ out:
 	dst_release(dst);
 }
 
-static inline u32 gmtp_synq_hash(const __be32 raddr, const __be16 rport,
-				 const u32 rnd, const u32 synq_hsize)
-{
-	u32 ret;
-	gmtp_print_function();
-	ret = jhash_2words((__force u32)raddr, (__force u32)rport, rnd) & (synq_hsize - 1);
-	gmtp_print_debug("ret: %u", ret);
-	return ret;
-}
-
 #define AF_INET_FAMILY(fam) 1
 
 static struct sock *gmtp_v4_hnd_req(struct sock *sk, struct sk_buff *skb) {
@@ -415,9 +405,6 @@ static struct sock *gmtp_v4_hnd_req(struct sock *sk, struct sk_buff *skb) {
 			gh->sport, iph->daddr, gh->dport, inet_iif(skb));
 
 	gmtp_print_function();
-
-	gmtp_print_debug("req: %p", req);
-	gmtp_print_debug("nsk: %p", nsk);
 
 	if (nsk != NULL) {
 		if (nsk->sk_state != GMTP_TIME_WAIT) {
@@ -467,12 +454,8 @@ int gmtp_v4_do_rcv(struct sock *sk, struct sk_buff *skb) {
 		if (nsk == NULL)
 			goto discard;
 
-		gmtp_print_debug("sk: %p", sk);
-		gmtp_print_debug("nsk: %p", nsk);
-
 		/* TODO Treat it */
 		if (nsk != sk) {
-			gmtp_print_debug("nsk != sk");
 			if (gmtp_child_process(sk, nsk, skb))
 				goto reset;
 			return 0;

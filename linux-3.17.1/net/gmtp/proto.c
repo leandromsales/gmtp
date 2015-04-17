@@ -480,7 +480,6 @@ int gmtp_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 
 	do {
 		struct sk_buff *skb = skb_peek(&sk->sk_receive_queue);
-
 		if(skb == NULL)
 			goto verify_sock_status;
 
@@ -523,14 +522,8 @@ verify_sock_status:
 		if(sk->sk_state == GMTP_CLOSED) {
 			if(!sock_flag(sk, SOCK_DONE)) {
 
-				if(ipv4_is_multicast(sk->sk_rcv_saddr)) {
-					gmtp_print_debug(
-							"%pI4 is a multicast "
-							"address\n",
-							&sk->sk_rcv_saddr);
-
+				if(ipv4_is_multicast(sk->sk_rcv_saddr))
 					goto found_ok_skb;
-				}
 
 				/* This occurs when user tries to read
 				 * from never connected socket.
