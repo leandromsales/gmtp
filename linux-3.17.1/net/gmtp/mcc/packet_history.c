@@ -109,6 +109,9 @@ void mcc_rx_packet_history_exit(void)
 	}
 }
 
+/**
+ * FIXME insert timestamp at gmtp_hdr for DATA packets...
+ */
 static inline void mcc_rx_hist_entry_from_skb(struct mcc_rx_hist_entry *entry,
 					       const struct sk_buff *skb,
 					       const __be32 ndp)
@@ -198,6 +201,8 @@ static void __one_after_loss(struct mcc_rx_hist *h, struct sk_buff *skb, u32 n2)
 	    s1 = mcc_rx_hist_entry(h, 1)->seqno,
 	    s2 = GMTP_SKB_CB(skb)->seq;
 
+	gmtp_pr_func();
+
 	if (likely((s2 - s1) > 0)) {	/* S1  <  S2 */
 		h->loss_count = 2;
 		mcc_rx_hist_entry_from_skb(mcc_rx_hist_entry(h, 2), skb, n2);
@@ -236,18 +241,21 @@ static int __two_after_loss(struct mcc_rx_hist *h, struct sk_buff *skb, u32 n3)
 	    s2 = mcc_rx_hist_entry(h, 2)->seqno,
 	    s3 = GMTP_SKB_CB(skb)->seq;
 
+	gmtp_pr_func();
+
 	if (likely((s3 - s2) > 0)) {	/* S2  <  S3 */
+		mcc_pr_debug("S2  <  S3");
 		h->loss_count = 3;
 		mcc_rx_hist_entry_from_skb(mcc_rx_hist_entry(h, 3), skb, n3);
 		return 1;
 	}
 
 	/* S3  <  S2 */
-
 	if ((s3 - s1) > 0) {		/* S1  <  S3  <  S2 */
 		/*
 		 * Reorder history to insert S3 between S1 and S2
 		 */
+		mcc_pr_debug("S3  <  S2");
 		mcc_rx_hist_swap(h, 2, 3);
 		mcc_rx_hist_entry_from_skb(mcc_rx_hist_entry(h, 2), skb, n3);
 		h->loss_count = 3;
@@ -255,8 +263,8 @@ static int __two_after_loss(struct mcc_rx_hist *h, struct sk_buff *skb, u32 n3)
 	}
 
 	/* S0  <  S3  <  S1 */
-
 	if (gmtp_loss_free(s0, s3, n3)) {
+		mcc_pr_debug("S0  <  S3  <  S1");
 		__be32 n1 = mcc_rx_hist_entry(h, 1)->ndp;
 
 		if (gmtp_loss_free(s3, s1, n1)) {
@@ -283,6 +291,7 @@ static int __two_after_loss(struct mcc_rx_hist *h, struct sk_buff *skb, u32 n3)
 	 * The remaining case:  S0  <  S3  <  S1  <  S2;  gap between S0 and S3
 	 * Reorder history to insert S3 between S0 and S1.
 	 */
+	mcc_pr_debug("S0  <  S3  <  S1  <  S2");
 	mcc_rx_hist_swap(h, 0, 3);
 	h->loss_start = mcc_rx_hist_index(h, 3);
 	mcc_rx_hist_entry_from_skb(mcc_rx_hist_entry(h, 1), skb, n3);
@@ -305,6 +314,8 @@ static void __three_after_loss(struct mcc_rx_hist *h)
 	    s3 = mcc_rx_hist_entry(h, 3)->seqno;
 	__be32 n2 = mcc_rx_hist_entry(h, 2)->ndp,
 	    n3 = mcc_rx_hist_entry(h, 3)->ndp;
+
+	gmtp_pr_func();
 
 	if (gmtp_loss_free(s1, s2, n2)) {
 
@@ -348,6 +359,8 @@ int mcc_rx_handle_loss(struct mcc_rx_hist *h,
 	int is_new_loss = 0;
 
 	gmtp_pr_func();
+
+	gmtp_pr_info("Loss count: %u", h->loss_count);
 
 	if (h->loss_count == 0) {
 		__do_track_loss(h, skb, ndp);

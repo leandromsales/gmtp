@@ -80,11 +80,15 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 		gh->version = GMTP_VERSION;
 		gh->type = gcb->type;
 		gh->server_rtt = gp->server_rtt;
-		gh->transm_r = (__be32) gp->tx_max_rate;
 		gh->sport = inet->inet_sport;
 		gh->dport = inet->inet_dport;
 		gh->hdrlen = gmtp_header_size;
 		memcpy(gh->flowname, gp->flowname, GMTP_FLOWNAME_LEN);
+
+		if (gcb->type == GMTP_PKT_FEEDBACK)
+			gh->transm_r = gp->rx_max_rate;
+		else
+			gh->transm_r = (__be32) gp->tx_max_rate;
 
 		if (gcb->type == GMTP_PKT_RESET)
 			gmtp_hdr_reset(skb)->reset_code = gcb->reset_code;
@@ -93,8 +97,6 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 		if (set_ack) {
 			struct gmtp_hdr_ack *gack = gmtp_hdr_ack(skb);
 			gack->ackcode = gcb->ackcode;
-			if(gack->ackcode == GMTP_ACK_MCC_FEEDBACK)
-				gh->transm_r = gp->rx_max_rate;
 			gcb->seq = --gp->gss;
 			gmtp_event_ack_sent(sk);
 		}
@@ -423,23 +425,29 @@ static int gmtp_wait_for_delay(struct sock *sk, unsigned long delay)
 	return remaining;
 }
 
-static inline int pkt_len(int data_len)
+static inline unsigned int payload_len(struct sk_buff *skb)
 {
-	/* Data + GMTP + IP + MAC */
-	return data_len + sizeof(struct gmtp_hdr) + 20 + ETH_HLEN;
+	/* Data = Total - (GMTP + IP + MAC) */
+	return skb->len - (gmtp_hdr_len(skb) + 20 + ETH_HLEN);
 }
 
-static inline void packet_sent(struct gmtp_sock *gp, int data_len)
+/*static inline void packet_sent(struct gmtp_sock *gp, int data_len)*/
+static inline void packet_sent(struct sock *sk, struct sk_buff *skb)
 {
-	unsigned long elapsed;
-	int len = pkt_len(data_len);
+	struct gmtp_sock *gp = gmtp_sk(sk);
+	unsigned long elapsed = 0;
+	int data_len = payload_len(skb);
 
-	if(gp->tx_pkts_sent == 0)
-		gmtp_pr_info("Sending data packets...");
+	gmtp_pr_info("Comparing....");
+	gmtp_pr_info("Payload len: %u", data_len);
+	gmtp_pr_info("skb->data_len: %u", skb->data_len);
 
-	++gp->tx_pkts_sent;
-	gp->tx_data_sent += (unsigned long) data_len;
-	gp->tx_bytes_sent += (unsigned long) len;
+	if(gp->tx_dpkts_sent == 0)
+		gmtp_pr_info("Start sending data packets...");
+
+	++gp->tx_dpkts_sent;
+	gp->tx_data_sent += data_len;
+	gp->tx_bytes_sent += skb->len;
 
 	gp->tx_last_stamp = jiffies;
 	if(gp->tx_first_stamp == 0) { /* This is the first sent */
@@ -448,14 +456,14 @@ static inline void packet_sent(struct gmtp_sock *gp, int data_len)
 		gp->tx_byte_sample = gp->tx_bytes_sent;
 	}
 
-	if(gp->tx_byte_budget != LONG_MIN)
-		gp->tx_byte_budget -= (long)(len);
+	if(gp->tx_byte_budget != INT_MIN)
+		gp->tx_byte_budget -= (int) skb->len;
 
 	elapsed = jiffies - gp->tx_first_stamp;
 	if(gp->tx_first_stamp != 0 && elapsed != 0)
 		gp->tx_total_rate = mult_frac(HZ, gp->tx_bytes_sent, elapsed);
 
-	if(gp->tx_pkts_sent >= gp->tx_sample_len) {
+	if(gp->tx_dpkts_sent >= gp->tx_sample_len) {
 
 		gp->tx_time_sample = jiffies - gp->tx_time_sample;
 		gp->tx_byte_sample = gp->tx_bytes_sent - gp->tx_byte_sample;
@@ -469,10 +477,9 @@ static inline void packet_sent(struct gmtp_sock *gp, int data_len)
 
 static void gmtp_xmit_packet(struct sock *sk, struct sk_buff *skb) {
 
-	int err, data_len;
+	int err;
 	struct gmtp_sock *gp = gmtp_sk(sk);
 
-	data_len = skb->len; /* Only data */
 	GMTP_SKB_CB(skb)->type = GMTP_PKT_DATA;
 
 	err = gmtp_transmit_skb(sk, skb);
@@ -484,7 +491,7 @@ static void gmtp_xmit_packet(struct sock *sk, struct sk_buff *skb) {
 	 * @data_len: only data (before gmtp_transmit_skb)
 	 * @skb->len: packet (after gmtp_transmit_skb)
 	 */
-	packet_sent(gp, data_len);
+	packet_sent(sk, skb);
 }
 
 /**
@@ -497,7 +504,7 @@ static long get_rate_gap(struct gmtp_sock *gp, int acum)
 	long tx = (long)gp->tx_max_rate;
 	long coef_adj = 0;
 
-	if(gp->tx_pkts_sent < GMTP_MIN_SAMPLE_LEN)
+	if(gp->tx_dpkts_sent < GMTP_MIN_SAMPLE_LEN)
 		return 0;
 
 	if(rate <= gp->tx_total_rate/2) /* Eliminate discrepancies */
@@ -540,7 +547,7 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 
 	if(gp->tx_byte_budget >= mult_frac(len, 3, 4)) {
 		goto send;
-	} else if(gp->tx_byte_budget != LONG_MIN) {
+	} else if(gp->tx_byte_budget != INT_MIN) {
 		delay_budget = scale;
 		goto wait;
 	}
@@ -567,7 +574,7 @@ wait:
 		gp->tx_byte_budget = mult_frac(scale, gp->tx_max_rate, HZ) -
 			mult_frac(gp->tx_byte_budget, get_rate_gap(gp, 0), 100);
 	else
-		gp->tx_byte_budget = LONG_MIN;
+		gp->tx_byte_budget = INT_MIN;
 
 send:
 	gmtp_xmit_packet(sk, skb);

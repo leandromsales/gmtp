@@ -38,6 +38,7 @@ enum gmtp_role {
 	GMTP_ROLE_UNDEFINED,
 	GMTP_ROLE_LISTEN,
 	GMTP_ROLE_CLIENT,
+	GMTP_ROLE_REPORTER,
 	GMTP_ROLE_SERVER,
 	GMTP_ROLE_RELAY
 };
@@ -122,10 +123,10 @@ static inline struct gmtp_request_sock *gmtp_rsk(const struct request_sock *req)
  * @role: role of this sock, one of %gmtp_role
  * @req_stamp: time stamp of request sent (jiffies)
  * @reply_stamp: time stamp of Request-Reply sent (jiffies)
- * @rtt: RTT from client to server (milisseconds)
- * @relay_rtt: RTT from client to origin relay  (milisseconds)
+ * @rtt: RTT from client to server
+ * @relay_rtt: RTT from client to origin relay
  * @server_timewait: server holds timewait state on close
- * @xmitlet: tasklet scheduled by the TX CCID to dequeue data packets
+ * @xmitlet: tasklet scheduled by the TX to dequeue data packets (???)
  * @xmit_timer: used to control the TX (rate-based pacing)
  * @rx_last_counter:	     Tracks window counter (RFC 4342, 8.1)
  * @rx_state:		     Receiver state, one of %mcc_rx_states
@@ -138,17 +139,17 @@ static inline struct gmtp_request_sock *gmtp_rsk(const struct request_sock *req)
  * @rx_li_hist:		     Loss Interval database
  * @rx_s:		     Received packet size in bytes
  * @rx_pinv:		     Inverse of Loss Event Rate (RFC 4342, sec. 8.5)
- * @pkt_sent: Number of packets (type == data) sent by socket
- * @data_sent: Number of bytes (only app data) sent by socket
- * @bytes_sent: Number of bytes (app data + headers) sent by socket
- * @tx_sample_len: Size of the sample window (to measure 'instant' Tx Rate)
+ * @pkt_sent: Number of data packets sent
+ * @data_sent: Amount of data sent (bytes)
+ * @bytes_sent: Amount of data+headers sent (bytes)
+ * @tx_sample_len: Length of the sample window (used to infer 'instant' Tx Rate)
  * @tx_time_sample: Elapsed time at sample window (jiffies)
  * @tx_byte_sample: Bytes sent at sample window
- * @tx_first_stamp: time stamp of first data packet sent (jiffies)
- * @tx_last_stamp: time stamp of last data packet sent (jiffies)
- * @tx_max_rate: Maximum transmission rate (bytes/s). 0 means no limits.
+ * @tx_first_stamp: time stamp of first sent data packet (jiffies)
+ * @tx_last_stamp: time stamp of last sent data packet (jiffies)
+ * @tx_max_rate: Max TX rate (bytes/s). 0 == no limits.
  * tx_byte_budget: the amount of bytes that can be sent immediately.
- * tx_adj_budget: memory of last adjustment in tx rate.
+ * tx_adj_budget: memory of last adjustment in TX rate.
  * @flowname: name of the dataflow
  *
  */
@@ -168,8 +169,8 @@ struct gmtp_sock {
 
 	unsigned long			req_stamp; /* jiffies */
 	unsigned long			reply_stamp; /* jiffies */
-	__u8 				server_rtt;       /* milisseconds */
-	__u8				relay_rtt;  /* milisseconds */
+	__u8 				server_rtt;
+	__u8				relay_rtt;
 
 	__u8				server_timewait:1;
 	struct tasklet_struct		xmitlet;
@@ -190,13 +191,13 @@ struct gmtp_sock {
 #define rx_pinv				rx_li_hist.i_mean
 
 	/** Tx variables */
-	unsigned int 			tx_pkts_sent;
-	unsigned long			tx_data_sent;
-	unsigned long			tx_bytes_sent;
+	__u32	 			tx_dpkts_sent;
+	__u32				tx_data_sent;
+	__u32				tx_bytes_sent;
 
-	unsigned int 			tx_sample_len;
-	unsigned long 			tx_time_sample;
-	unsigned long 			tx_byte_sample;
+	__u32	 			tx_sample_len;
+	unsigned long 			tx_time_sample; /* jiffies */
+	__u32	 			tx_byte_sample;
 
 	unsigned long			tx_sample_rate;
 	unsigned long			tx_total_rate;
@@ -204,7 +205,7 @@ struct gmtp_sock {
 	unsigned long			tx_first_stamp;  /* jiffies */
 	unsigned long 			tx_last_stamp;	/* jiffies */
 	unsigned long			tx_max_rate;
-	long 				tx_byte_budget;
+	int 				tx_byte_budget;
 	int				tx_adj_budget;
 
 	__u8 flowname[GMTP_FLOWNAME_LEN];
@@ -222,9 +223,16 @@ static inline const char *gmtp_role_name(const struct sock *sk)
 	case GMTP_ROLE_LISTEN:	  return "listen";
 	case GMTP_ROLE_SERVER:	  return "server";
 	case GMTP_ROLE_CLIENT:	  return "client";
+	case GMTP_ROLE_REPORTER	  return "client (reporter)";
 	case GMTP_ROLE_RELAY:	  return "relay";
 	}
 	return NULL;
+}
+
+static inline int gmtp_role_client(const struct sock *sk)
+{
+	return (gmtp_sk(sk)->role == GMTP_ROLE_CLIENT ||
+		gmtp_sk(sk)->role == GMTP_ROLE_REPORTER);
 }
 
 static inline struct gmtp_hdr *gmtp_hdr(const struct sk_buff *skb)
@@ -237,6 +245,12 @@ static inline struct gmtp_hdr *gmtp_zeroed_hdr(struct sk_buff *skb, int headlen)
 	skb_push(skb, headlen);
 	skb_reset_transport_header(skb);
 	return memset(skb_transport_header(skb), 0, headlen);
+}
+
+static inline struct gmtp_hdr_ack *gmtp_hdr_data(const struct sk_buff *skb)
+{
+	return (struct gmtp_hdr_data *)(skb_transport_header(skb) +
+						 sizeof(struct gmtp_hdr));
 }
 
 static inline struct gmtp_hdr_ack *gmtp_hdr_ack(const struct sk_buff *skb)

@@ -164,6 +164,8 @@ void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 	enum mcc_fback_type do_feedback = MCC_FBACK_NONE;
 	const __be32 ndp = gmtp_sk(sk)->ndp_count;
 	const bool is_data_packet = gmtp_data_packet(skb);
+	ktime_t now = ktime_get_real();
+	s64 delta = 0;
 
 	gmtp_pr_func();
 
@@ -195,7 +197,9 @@ void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 		hc->rx_bytes_recv += payload;
 	}
 
-	/* Perform loss detection and handle pending losses */
+	/*
+	 * Perform loss detection and handle pending losses
+	 */
 	if(mcc_rx_handle_loss(&hc->rx_hist, &hc->rx_li_hist, skb, ndp,
 			mcc_first_li, sk)) {
 		do_feedback = MCC_FBACK_PARAM_CHANGE;
@@ -205,7 +209,9 @@ void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 	if(mcc_rx_hist_loss_pending(&hc->rx_hist))
 		return;  /* done receiving */
 
-	/* Handle data packets: RTT sampling and monitoring p */
+	/*
+	 * Handle data packets: RTT sampling and monitoring p
+	 */
 	if(unlikely(!is_data_packet))
 		goto update_records;
 
@@ -228,11 +234,18 @@ void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 	}
 
 	/*
-	 * FIXME
 	 * Check if the periodic once-per-RTT feedback is due; RFC 4342, 10.3
 	 */
-	/*if(SUB16(dccp_hdr(skb)->dccph_ccval, hc->rx_last_counter) > 3)
-		do_feedback = MCC_FBACK_PERIODIC;*/
+	delta = ktime_us_delta(now, hc->rx_tstamp_last_feedback);
+	if(delta <= 0)
+		gmtp_pr_error("delta (%ld) <= 0", (long )delta);
+	else if(delta >= hc->rx_rtt) {
+		gmtp_pr_info("delta >= hc->rtt...");
+		do_feedback = MCC_FBACK_PERIODIC;
+	} else {
+		gmtp_pr_info("delta < rtt");
+	}
+	gmtp_pr_info("delta: %ld, hc->rx_rtt: %u", delta, hc->rx_rtt);
 
 update_records:
 	mcc_rx_hist_add_packet(&hc->rx_hist, skb, ndp);

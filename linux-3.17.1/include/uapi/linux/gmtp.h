@@ -87,6 +87,29 @@ struct gmtp_hdr {
 };
 
 /**
+ * struct gmtp_hdr_data - Data packets
+ * @tstamp: time stamp of sent data packet
+ */
+struct gmtp_hdr_data {
+	__u64 tstamp;
+};
+
+/**
+ * struct gmtp_hdr_ack - Acknowledgment packets
+ * @ackcode: One of gmtp_ack_codes
+ */
+struct gmtp_hdr_ack {
+	__u8 ackcode;
+};
+
+enum gmtp_ack_codes {
+	GMTP_ACK_NO_CODE = 0,
+	GMTP_ACK_REQUESTNOTIFY,
+	GMTP_ACK_MCC_FEEDBACK,
+	GMTP_ACK_MAX_CODES
+};
+
+/**
  * struct gmtp_hdr_reset - Unconditionally shut down a connection
  *
  * @reset_code - one of %gmtp_reset_codes
@@ -132,22 +155,6 @@ struct gmtp_hdr_route {
 };
 
 /**
- * struct gmtp_hdr_ack - Ack packet from clients to relays
- *
- * @ackcode: One of gmtp_ack_codes
- */
-struct gmtp_hdr_ack {
-	__u8 ackcode;
-};
-
-enum gmtp_ack_codes {
-	GMTP_ACK_NO_CODE = 0,
-	GMTP_ACK_REQUESTNOTIFY,
-	GMTP_ACK_MCC_FEEDBACK,
-	GMTP_ACK_MAX_CODES
-};
-
-/**
  * struct gmtp_hdr_reqnotify - RequestNotify to clients
  *
  * @error_code: One of gmtp_reqnotify_error_code
@@ -168,7 +175,6 @@ enum gmtp_reqnotify_error_code {
 };
 
 /**
- *
  * see www.gmtp-protocol.org
  */
 enum gmtp_pkt_type {
@@ -190,6 +196,9 @@ enum gmtp_pkt_type {
 	GMTP_PKT_ELECT_RESPONSE,
 	GMTP_PKT_CLOSE,
 	GMTP_PKT_RESET,
+
+	GMTP_PKT_FEEDBACK,
+
 	GMTP_PKT_INVALID,
 	GMTP_PKT_MAX_STATES
 };
@@ -218,10 +227,13 @@ static inline unsigned int gmtp_packet_hdr_variable_len(const __u8 type)
 	switch(type)
 	{
 	case GMTP_PKT_DATA:
+		len = sizeof(struct gmtp_hdr_data);
 		break;
 	case GMTP_PKT_ACK:
-	case GMTP_PKT_DATAACK:
 		len = sizeof(struct gmtp_hdr_ack);
+		break;
+	case GMTP_PKT_DATAACK:
+		len = sizeof(struct gmtp_hdr_data) + sizeof(struct gmtp_hdr_ack);
 		break;
 	case GMTP_PKT_REGISTER_REPLY:
 		len = sizeof(struct gmtp_hdr_register_reply);
@@ -235,7 +247,8 @@ static inline unsigned int gmtp_packet_hdr_variable_len(const __u8 type)
 	case GMTP_PKT_RESET:
 		len = sizeof(struct gmtp_hdr_reset);
 		break;
-	default:
+	case GMTP_PKT_FEEDBACK:
+		len = sizeof(struct gmtp_hdr_feedback);
 		break;
 	}
 	

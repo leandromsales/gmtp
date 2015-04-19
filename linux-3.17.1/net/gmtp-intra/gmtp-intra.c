@@ -319,6 +319,25 @@ int gmtp_intra_ack_rcv(struct sk_buff *skb)
 	return ret;
 }
 
+/* FIXME Treat acks from clients */
+int gmtp_intra_feedback_rcv(struct sk_buff *skb)
+{
+	int ret = NF_DROP;
+
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct iphdr *iph = ip_hdr(skb);
+
+	gmtp_print_function();
+
+	gmtp_pr_info("%s (%d) src=%pI4@%-5d dst=%pI4@%-5d transm_r: %u",
+			gmtp_packet_name(gh->type), gh->type,
+			&iph->saddr, ntohs(gh->sport),
+			&iph->daddr, ntohs(gh->dport),
+			gh->transm_r);
+
+	return ret;
+}
+
 /* Treat close from servers */
 int gmtp_intra_close_rcv(struct sk_buff *skb)
 {
@@ -417,6 +436,9 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 			break;
 		case GMTP_PKT_ACK:
 			ret = gmtp_intra_ack_rcv(skb);
+			break;
+		case GMTP_PKT_FEEDBACK:
+			ret = gmtp_intra_feedback_rcv(skb);
 			break;
 		case GMTP_PKT_CLOSE:
 			ret = gmtp_intra_close_rcv(skb);

@@ -314,7 +314,7 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 	switch (gh->type) {
 	case GMTP_PKT_DATAACK:
 	case GMTP_PKT_DATA:
-		if(gp->role == GMTP_ROLE_CLIENT)
+		if(gmtp_role_client(sk))
 			gp->server_rtt = gh->server_rtt + gp->relay_rtt;
 		gmtp_enqueue_skb(sk, skb);
 		return 0;
@@ -489,12 +489,9 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 	 *	    or (S.state GMTP_REQUEST_RECV_ ==  and P.type == Data),
 	 *	  Drop packet and return
 	 */
-	if ((gp->role != GMTP_ROLE_CLIENT &&
-			gh->type == GMTP_PKT_RESPONSE) ||
-			(gp->role == GMTP_ROLE_CLIENT &&
-					gh->type == GMTP_PKT_REQUEST) ||
-					(sk->sk_state == GMTP_REQUEST_RECV &&
-						gh->type == GMTP_PKT_DATA))
+	if ((!gmtp_role_client(sk) && gh->type == GMTP_PKT_REQ) ||
+		(gmtp_role_client(sk) && gh->type == GMTP_PKT_REQUESTNOTIFY) ||
+		(sk->sk_state == GMTP_REQUEST_RECV && gh->type == GMTP_PKT_DATA))
 	{
 		gmtp_print_error("Unexpected packet type");
 		goto discard;

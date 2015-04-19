@@ -43,6 +43,7 @@ const char *gmtp_packet_name(const int type)
 		[GMTP_PKT_ELECT_RESPONSE]  = "ELECT_RESPONSE",
 		[GMTP_PKT_CLOSE]    = "CLOSE",
 		[GMTP_PKT_RESET]    = "RESET",
+		[GMTP_PKT_FEEDBACK]    = "REPORTER_FEEDBACK",
 	};
 
 	if (type >= GMTP_NR_PKT_TYPES)
@@ -188,16 +189,10 @@ int gmtp_init_sock(struct sock *sk)
 	gp->relay_rtt		= 0;
 
 	ret = mcc_rx_init(sk);
+
 	gp->rx_max_rate 	= 0;
 
-/*	gp->rx_last_counter	= 0;
-	gp->rx_bytes_recv 	= 0;
-	gp->rx_x_recv 		= 0;
-	gp->rx_rtt 		= 0;
-	gp->rx_s		= 0;
-	gp->rx_li_hist.i_mean 	= 0;*/
-
-	gp->tx_pkts_sent 	= 0;
+	gp->tx_dpkts_sent 	= 0;
 	gp->tx_data_sent 	= 0;
 	gp->tx_bytes_sent 	= 0;
 
