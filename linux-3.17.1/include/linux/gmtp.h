@@ -223,7 +223,7 @@ static inline const char *gmtp_role_name(const struct sock *sk)
 	case GMTP_ROLE_LISTEN:	  return "listen";
 	case GMTP_ROLE_SERVER:	  return "server";
 	case GMTP_ROLE_CLIENT:	  return "client";
-	case GMTP_ROLE_REPORTER	  return "client (reporter)";
+	case GMTP_ROLE_REPORTER:  return "client (reporter)";
 	case GMTP_ROLE_RELAY:	  return "relay";
 	}
 	return NULL;
@@ -247,7 +247,7 @@ static inline struct gmtp_hdr *gmtp_zeroed_hdr(struct sk_buff *skb, int headlen)
 	return memset(skb_transport_header(skb), 0, headlen);
 }
 
-static inline struct gmtp_hdr_ack *gmtp_hdr_data(const struct sk_buff *skb)
+static inline struct gmtp_hdr_data *gmtp_hdr_data(const struct sk_buff *skb)
 {
 	return (struct gmtp_hdr_data *)(skb_transport_header(skb) +
 						 sizeof(struct gmtp_hdr));

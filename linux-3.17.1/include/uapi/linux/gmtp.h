@@ -223,7 +223,6 @@ enum gmtp_reset_codes {
 static inline unsigned int gmtp_packet_hdr_variable_len(const __u8 type)
 {
 	int len = 0;
-	//TODO Implementar
 	switch(type)
 	{
 	case GMTP_PKT_DATA:
@@ -246,9 +245,6 @@ static inline unsigned int gmtp_packet_hdr_variable_len(const __u8 type)
 		break;
 	case GMTP_PKT_RESET:
 		len = sizeof(struct gmtp_hdr_reset);
-		break;
-	case GMTP_PKT_FEEDBACK:
-		len = sizeof(struct gmtp_hdr_feedback);
 		break;
 	}
 	
