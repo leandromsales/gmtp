@@ -110,7 +110,7 @@ void mcc_rx_packet_history_exit(void)
 }
 
 /**
- * FIXME insert timestamp at gmtp_hdr for DATA packets...
+ * FIXME insert timestamp from gmtp_hdr...
  */
 static inline void mcc_rx_hist_entry_from_skb(struct mcc_rx_hist_entry *entry,
 					       const struct sk_buff *skb,

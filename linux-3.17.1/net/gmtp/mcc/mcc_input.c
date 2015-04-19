@@ -96,9 +96,10 @@ static void mcc_rx_send_feedback(struct sock *sk,
 
 	if(hc->rx_pinv > 0) {
 		u32 p = mcc_invert_loss_event_rate(hc->rx_pinv);
+		u32 new_rate ;
 		gmtp_pr_info("Calc... size: %d, rtt: %u, p: %u, 1/p: %u",
 				ntohs(hc->rx_s), hc->rx_rtt, p, hc->rx_pinv);
-		u32 new_rate = mcc_calc_x(hc->rx_s, hc->rx_rtt, p);
+		new_rate = mcc_calc_x(hc->rx_s, hc->rx_rtt, p);
 		gmtp_pr_info("new_rate = %u", new_rate);
 		/*
 		 * Change only if the value is valid!

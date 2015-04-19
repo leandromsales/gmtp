@@ -425,6 +425,12 @@ static int gmtp_wait_for_delay(struct sock *sk, unsigned long delay)
 	return remaining;
 }
 
+static inline unsigned int packet_len(struct sk_buff *skb)
+{
+	/* Total = Data + (GMTP + IP + MAC) */
+	return skb->len + (gmtp_hdr_len(skb) + 20 + ETH_HLEN);
+}
+
 static inline unsigned int payload_len(struct sk_buff *skb)
 {
 	/* Data = Total - (GMTP + IP + MAC) */
@@ -437,10 +443,6 @@ static inline void packet_sent(struct sock *sk, struct sk_buff *skb)
 	struct gmtp_sock *gp = gmtp_sk(sk);
 	unsigned long elapsed = 0;
 	int data_len = payload_len(skb);
-
-	gmtp_pr_info("Comparing....");
-	gmtp_pr_info("Payload len: %u", data_len);
-	gmtp_pr_info("skb->data_len: %u", skb->data_len);
 
 	if(gp->tx_dpkts_sent == 0)
 		gmtp_pr_info("Start sending data packets...");
@@ -478,7 +480,6 @@ static inline void packet_sent(struct sock *sk, struct sk_buff *skb)
 static void gmtp_xmit_packet(struct sock *sk, struct sk_buff *skb) {
 
 	int err;
-	struct gmtp_sock *gp = gmtp_sk(sk);
 
 	GMTP_SKB_CB(skb)->type = GMTP_PKT_DATA;
 
@@ -488,8 +489,6 @@ static void gmtp_xmit_packet(struct sock *sk, struct sk_buff *skb) {
 
 	/*
 	 * Register this one as sent (even if an error occurred).
-	 * @data_len: only data (before gmtp_transmit_skb)
-	 * @skb->len: packet (after gmtp_transmit_skb)
 	 */
 	packet_sent(sk, skb);
 }
@@ -526,9 +525,9 @@ static long get_rate_gap(struct gmtp_sock *gp, int acum)
 void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 {
 	struct gmtp_sock *gp = gmtp_sk(sk);
-	unsigned long elapsed;
+	int len = (int) packet_len(skb);
+	unsigned long elapsed = 0;
 	long delay = 0, delay2 = 0, delay_budget = 0;
-	int len = pkt_len(skb->len);
 	int rc = 0;
 
 	/** TODO Continue tests with different scales... */
@@ -572,7 +571,7 @@ wait:
 	 */
 	if(delay <= 0)
 		gp->tx_byte_budget = mult_frac(scale, gp->tx_max_rate, HZ) -
-			mult_frac(gp->tx_byte_budget, get_rate_gap(gp, 0), 100);
+			mult_frac(gp->tx_byte_budget, (int) get_rate_gap(gp, 0), 100);
 	else
 		gp->tx_byte_budget = INT_MIN;
 

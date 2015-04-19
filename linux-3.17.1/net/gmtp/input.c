@@ -436,7 +436,6 @@ EXPORT_SYMBOL_GPL(gmtp_rcv_request_rcv_state_process);
 int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 			   struct gmtp_hdr *gh, unsigned int len)
 {
-	struct gmtp_sock *gp = gmtp_sk(sk);
 	struct gmtp_skb_cb *gcb = GMTP_SKB_CB(skb);
 	int queued = 0;
 
@@ -484,13 +483,9 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 
 	/*
 	 *   Step 7: Check for unexpected packet types
-	 *      If (S.is_server and P.type == Request_Reply)
-	 *	    or (S.is_client and P.type == Request)
-	 *	    or (S.state GMTP_REQUEST_RECV_ ==  and P.type == Data),
-	 *	  Drop packet and return
 	 */
-	if ((!gmtp_role_client(sk) && gh->type == GMTP_PKT_REQ) ||
-		(gmtp_role_client(sk) && gh->type == GMTP_PKT_REQUESTNOTIFY) ||
+	if ((!gmtp_role_client(sk) && gh->type == GMTP_PKT_REQUESTNOTIFY) ||
+		(gmtp_role_client(sk) && gh->type == GMTP_PKT_REQUEST) ||
 		(sk->sk_state == GMTP_REQUEST_RECV && gh->type == GMTP_PKT_DATA))
 	{
 		gmtp_print_error("Unexpected packet type");
