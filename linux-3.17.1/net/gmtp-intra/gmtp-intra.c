@@ -66,7 +66,7 @@ unsigned int current_tx = 1;
 	return *(unsigned int *)ip;
 }*/
 
-void gmtp_intra_relay_read_devices (int option)
+void gmtp_intra_relay_get_devices (int option)
 {
     printk(KERN_INFO"\n\n\n");
     
@@ -89,6 +89,7 @@ void gmtp_intra_relay_read_devices (int option)
                 if(option == GET_MAC_ADDRESS){
    
                     memcpy(&mac_address, dev->dev_addr, 6);
+                    printk(KERN_DEBUG"size of dev_addr = %d\n",sizeof(dev->dev_addr));
                     printk(KERN_DEBUG"Interface[%d] MAC = %x:%x:%x:%x:%x:%x\n",i,
                               mac_address[0],mac_address[1],
                               mac_address[2],mac_address[3], 
