@@ -128,7 +128,7 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 
 		if(gp->relay_rtt == 0)
 			gp->relay_rtt = jiffies - gp->req_stamp;
-		gp->server_rtt = gh->server_rtt + gp->relay_rtt;
+		gp->rx_rtt = gh->server_rtt + gp->relay_rtt;
 		gmtp_print_debug("Relay RTT: %u ms",
 				jiffies_to_msecs(gp->relay_rtt));
 
@@ -315,7 +315,7 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 	case GMTP_PKT_DATAACK:
 	case GMTP_PKT_DATA:
 		if(gmtp_role_client(sk))
-			gp->server_rtt = gh->server_rtt + gp->relay_rtt;
+			gp->rx_rtt = gh->server_rtt + gp->relay_rtt;
 		gmtp_enqueue_skb(sk, skb);
 		return 0;
 	case GMTP_PKT_ACK:
@@ -407,8 +407,8 @@ static int gmtp_rcv_request_rcv_state_process(struct sock *sk,
 	case GMTP_PKT_DATAACK:
 	case GMTP_PKT_ACK:
 		elapsed = jiffies - gmtp_sk(sk)->reply_stamp;
-		gmtp_sk(sk)->server_rtt = jiffies_to_msecs(elapsed);
-		gmtp_print_debug("RTT: %u ms", gmtp_sk(sk)->server_rtt);
+		gmtp_sk(sk)->tx_rtt = jiffies_to_msecs(elapsed);
+		gmtp_print_debug("RTT: %u ms", gmtp_sk(sk)->tx_rtt);
 
 		inet_csk_clear_xmit_timer(sk, ICSK_TIME_DACK);
 

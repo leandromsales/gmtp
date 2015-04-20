@@ -23,15 +23,16 @@
 /**
  *  mcc_loss_interval  -  Loss history record for TFRC-based protocols
  *  @li_seqno:		Highest received seqno before the start of loss
- *  @li_ccval:		The CCVal belonging to @li_seqno
  *  @li_is_closed:	Whether @li_seqno is older than 1 RTT
  *  @li_length:		Loss interval sequence length
+ *  @li_tstamp:		Time stamp of packet with seqno.
  */
 struct mcc_loss_interval {
-	__be32		 li_seqno,
-			 li_ccval:4,
-			 li_is_closed:1;
+	__be32		 li_seqno;
+	__be32		 li_is_closed:1;
 	u32		 li_length;
+	__u64		 li_tstamp;
+	__u32		 li_rtt;
 };
 
 static inline void mcc_lh_init(struct mcc_loss_hist *lh)

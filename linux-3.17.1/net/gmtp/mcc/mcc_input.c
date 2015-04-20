@@ -55,6 +55,7 @@ static void mcc_rx_send_feedback(struct sock *sk,
 
 	switch (fbtype) {
 	case MCC_FBACK_INITIAL:
+		pr_info("MCC_FBACK_INITIAL\n");
 		hc->rx_x_recv = 0;
 		hc->rx_pinv   = ~0U;   /* see RFC 4342, 8.5 */
 		break;
@@ -69,10 +70,12 @@ static void mcc_rx_send_feedback(struct sock *sk,
 		 * the number of bytes since last feedback.
 		 * This is a safe fallback, since X is bounded above by X_calc.
 		 */
+		pr_info("MCC_FBACK_PARAM_CHANGE\n");
 		if (hc->rx_x_recv > 0)
 			break;
 		/* fall through */
 	case MCC_FBACK_PERIODIC:
+		pr_info("MCC_FBACK_PERIODIC\n");
 		delta = ktime_us_delta(now, hc->rx_tstamp_last_feedback);
 		if (delta <= 0)
 			gmtp_pr_error("delta (%ld) <= 0", (long)delta);
@@ -97,7 +100,7 @@ static void mcc_rx_send_feedback(struct sock *sk,
 	if(hc->rx_pinv > 0) {
 		u32 p = mcc_invert_loss_event_rate(hc->rx_pinv);
 		u32 new_rate ;
-		gmtp_pr_info("Calc... size: %d, rtt: %u, p: %u, 1/p: %u",
+		gmtp_pr_info("Size: %d, rtt: %u, p: %u, 1/p: %u",
 				ntohs(hc->rx_s), hc->rx_rtt, p, hc->rx_pinv);
 		new_rate = mcc_calc_x(hc->rx_s, hc->rx_rtt, p);
 		gmtp_pr_info("new_rate = %u", new_rate);
@@ -132,7 +135,7 @@ static u32 mcc_first_li(struct sock *sk)
 	u64 fval;
 
 	if (hc->rx_rtt == 0) {
-		gmtp_print_warning("No RTT estimate available, using fallback RTT\n");
+		gmtp_pr_warning("No RTT estimate available, using fallback RTT");
 		/* FIXME Use server RTT */
 		hc->rx_rtt = GMTP_FALLBACK_RTT;
 	}
@@ -140,9 +143,9 @@ static u32 mcc_first_li(struct sock *sk)
 	delta  = ktime_to_us(net_timedelta(hc->rx_tstamp_last_feedback));
 	x_recv = scaled_div32(hc->rx_bytes_recv, delta);
 	if (x_recv == 0) {		/* would also trigger divide-by-zero */
-		gmtp_print_warning("X_recv==0\n");
+		gmtp_pr_warning("X_recv==0\n");
 		if (hc->rx_x_recv == 0) {
-			gmtp_print_error("stored value of X_recv is zero");
+			gmtp_pr_error("stored value of X_recv is zero");
 			return ~0U;
 		}
 		x_recv = hc->rx_x_recv;
@@ -201,8 +204,8 @@ void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 	/*
 	 * Perform loss detection and handle pending losses
 	 */
-	if(mcc_rx_handle_loss(&hc->rx_hist, &hc->rx_li_hist, skb, ndp,
-			mcc_first_li, sk)) {
+	if(mcc_rx_handle_loss(&hc->rx_hist, &hc->rx_li_hist,
+			skb, ndp, mcc_first_li, sk)) {
 		do_feedback = MCC_FBACK_PARAM_CHANGE;
 		goto done_receiving;
 	}
@@ -217,14 +220,14 @@ void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 		goto update_records;
 
 	if(!mcc_lh_is_initialised(&hc->rx_li_hist)) {
-		const u32 sample = hc->server_rtt * 1000; /* ms to us */
+		const u32 sample = hc->rx_rtt * 1000; /* ms to us */
 		/*
 		 * Empty loss history: no loss so far, hence p stays 0.
 		 * Sample RTT values, since an RTT estimate is required for the
 		 * computation of p when the first loss occurs; RFC 3448, 6.3.1.
 		 */
 		if(sample != 0)
-			hc->rx_rtt = mcc_ewma(hc->rx_rtt, sample, 9);
+			hc->rx_avg_rtt = mcc_ewma(hc->rx_avg_rtt, sample, 9);
 
 	} else if(mcc_lh_update_i_mean(&hc->rx_li_hist, skb)) {
 		/*
@@ -240,13 +243,13 @@ void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 	delta = ktime_us_delta(now, hc->rx_tstamp_last_feedback);
 	if(delta <= 0)
 		gmtp_pr_error("delta (%ld) <= 0", (long )delta);
-	else if(delta >= hc->rx_rtt) {
-		gmtp_pr_info("delta >= hc->rtt...");
+	else if(delta >= hc->rx_avg_rtt) {
+		gmtp_pr_info("delta >= hc->rx_avg_rtt...");
 		do_feedback = MCC_FBACK_PERIODIC;
 	} else {
-		gmtp_pr_info("delta < rtt");
+		gmtp_pr_info("delta < rx_avg_rtt");
 	}
-	gmtp_pr_info("delta: %ld, hc->rx_rtt: %u", delta, hc->rx_rtt);
+	gmtp_pr_info("delta: %ld, hc->rx_avg_rtt: %u", delta, hc->rx_avg_rtt);
 
 update_records:
 	mcc_rx_hist_add_packet(&hc->rx_hist, skb, ndp);

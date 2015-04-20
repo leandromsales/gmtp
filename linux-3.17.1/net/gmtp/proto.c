@@ -185,7 +185,7 @@ int gmtp_init_sock(struct sock *sk)
 	gp->role		= GMTP_ROLE_UNDEFINED;
 
 	gp->req_stamp		= 0;
-	gp->server_rtt		= GMTP_DEFAULT_RTT;
+	gp->tx_rtt		= GMTP_DEFAULT_RTT;
 	gp->relay_rtt		= 0;
 
 	ret = mcc_rx_init(sk);

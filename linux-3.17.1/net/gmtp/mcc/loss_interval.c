@@ -106,17 +106,18 @@ u8 mcc_lh_update_i_mean(struct mcc_loss_hist *lh, struct sk_buff *skb)
 	if (len - (s64)cur->li_length <= 0)	/* duplicate or reordered */
 		return 0;
 
-	/* FIXME Distance greater than 1 RTT (ccval = RTT/4) */
-	/*if (SUB16(dccp_hdr(skb)->dccph_ccval, cur->li_ccval) > 4)*/
-		/*
-		 * Implements RFC 4342, 10.2:
-		 * If a packet S (skb) exists whose seqno comes `after' the one
-		 * starting the current loss interval (cur) and if the modulo-16
-		 * distance from C(cur) to C(S) is greater than 4, consider all
-		 * subsequent packets as belonging to a new loss interval. This
-		 * test is necessary since CCVal may wrap between intervals.
-		 */
-		/*cur->li_is_closed = 1;*/
+	if(gmtp_hdr(skb)->type == GMTP_PKT_DATA) {
+		if((gmtp_hdr_data(skb)->tstamp - cur->li_tstamp) > cur->li_rtt)
+			/*
+			 * Implements TFRC:
+			 * If a packet S (skb) exists whose seqno comes `after'
+			 * the one starting the current loss interval (cur) and
+			 * if the distance from C(cur) to C(S) is greater than RTT,
+			 * consider all subsequent packets as belonging to a
+			 * new loss interval.
+			 */
+			cur->li_is_closed = 1;
+	}
 
 	if (mcc_lh_length(lh) == 1)		/* due to RFC 3448, 6.3.1 */
 		return 0;
@@ -132,7 +133,8 @@ static inline u8 mcc_lh_is_new_loss(struct mcc_loss_interval *cur,
 				     struct mcc_rx_hist_entry *new_loss)
 {
 	return	(new_loss->seqno - cur->li_seqno) > 0 &&
-		(cur->li_is_closed || SUB16(new_loss->ccval, cur->li_ccval) > 4);
+		(cur->li_is_closed ||
+		(new_loss->tx_tstamp - cur->li_tstamp) > (__u64) cur->li_rtt);
 }
 
 /**
@@ -159,7 +161,8 @@ int mcc_lh_interval_add(struct mcc_loss_hist *lh, struct mcc_rx_hist *rh,
 	}
 
 	new->li_seqno	  = mcc_rx_hist_loss_prev(rh)->seqno;
-	new->li_ccval	  = mcc_rx_hist_loss_prev(rh)->ccval;
+	new->li_tstamp 	  = mcc_rx_hist_loss_prev(rh)->tx_tstamp;
+	new->li_rtt 	  = gmtp_sk(sk)->server_rtt;
 	new->li_is_closed = 0;
 
 	if (++lh->counter == 1)

@@ -72,16 +72,16 @@ void mcc_tx_hist_purge(struct mcc_tx_hist_entry **headp);
 /**
  * mcc_rx_hist_entry - Store information about a single received packet
  * @seqno:	GMTP packet sequence number
- * @ccval:	window counter value of packet (RFC 4342, 8.1)
  * @ndp:	the NDP count (if any) of the packet
  * @tstamp:	actual receive time of packet
+ * @tx_tstamp:	send time of packet with sequence number @seqno
  */
 struct mcc_rx_hist_entry {
-	__be32		 seqno,
-			 ccval:4,
-			 type:4;
+	__be32		 seqno;
+	__be32		 type:5;
 	__be32		 ndp;
 	ktime_t		 tstamp;
+	__u64 		 tx_tstamp;
 };
 
 /**

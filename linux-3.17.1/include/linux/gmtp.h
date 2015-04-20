@@ -123,8 +123,7 @@ static inline struct gmtp_request_sock *gmtp_rsk(const struct request_sock *req)
  * @role: role of this sock, one of %gmtp_role
  * @req_stamp: time stamp of request sent (jiffies)
  * @reply_stamp: time stamp of Request-Reply sent (jiffies)
- * @rtt: RTT from client to server
- * @relay_rtt: RTT from client to origin relay
+ * @tx_rtt: RTT from sender to relays
  * @server_timewait: server holds timewait state on close
  * @xmitlet: tasklet scheduled by the TX to dequeue data packets (???)
  * @xmit_timer: used to control the TX (rate-based pacing)
@@ -133,7 +132,9 @@ static inline struct gmtp_request_sock *gmtp_rsk(const struct request_sock *req)
  * @rx_bytes_recv:	     Total sum of GMTP payload bytes
  * @rx_x_recv:		     Receiver estimate of send rate (RFC 3448, sec. 4.3)
  * @rx_max_rate:	Receiver max send rate calculated by TFRC Equation
- * @rx_rtt:		     Receiver estimate of RTT (average)
+ * @rx_rtt:		RTT from receiver to sender
+ * @rx_avg_rtt:		Receiver estimate of RTT (average)
+ * @relay_rtt: 		     RTT from receiver to relay
  * @rx_tstamp_last_feedback: Time at which last feedback was sent
  * @rx_hist:		     Packet history (loss detection + RTT sampling)
  * @rx_li_hist:		     Loss Interval database
@@ -169,8 +170,6 @@ struct gmtp_sock {
 
 	unsigned long			req_stamp; /* jiffies */
 	unsigned long			reply_stamp; /* jiffies */
-	__u8 				server_rtt;
-	__u8				relay_rtt;
 
 	__u8				server_timewait:1;
 	struct tasklet_struct		xmitlet;
@@ -184,6 +183,8 @@ struct gmtp_sock {
 	__u32				rx_x_recv;
 	__be32				rx_max_rate;
 	__u32				rx_rtt;
+	__u32				rx_avg_rtt;
+	__u8				relay_rtt;
 	ktime_t				rx_tstamp_last_feedback;
 	struct mcc_rx_hist		rx_hist;
 	struct mcc_loss_hist		rx_li_hist;
@@ -191,6 +192,7 @@ struct gmtp_sock {
 #define rx_pinv				rx_li_hist.i_mean
 
 	/** Tx variables */
+	__u8 				tx_rtt;
 	__u32	 			tx_dpkts_sent;
 	__u32				tx_data_sent;
 	__u32				tx_bytes_sent;

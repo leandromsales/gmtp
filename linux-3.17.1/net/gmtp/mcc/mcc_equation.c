@@ -719,8 +719,12 @@ u32 mcc_calc_x_reverse_lookup(u32 fvalue)
  */
 u32 mcc_invert_loss_event_rate(u32 loss_event_rate)
 {
-	if (loss_event_rate == UINT_MAX)		/* see RFC 4342, 8.5 */
+	gmtp_pr_func();
+
+	if (loss_event_rate == UINT_MAX) {		/* see RFC 4342, 8.5 */
+		gmtp_pr_debug("loss_event_rate == UINT_MAX");
 		return 0;
+	}
 	if (unlikely(loss_event_rate == 0))		/* map 1/0 into 100% */
 		return 1000000;
 	return max_t(u32, scaled_div(1, loss_event_rate), MCC_SMALLEST_P);

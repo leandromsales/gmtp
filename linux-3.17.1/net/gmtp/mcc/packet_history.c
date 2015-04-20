@@ -119,11 +119,14 @@ static inline void mcc_rx_hist_entry_from_skb(struct mcc_rx_hist_entry *entry,
 	const struct gmtp_hdr *gh = gmtp_hdr(skb);
 
 	entry->seqno = GMTP_SKB_CB(skb)->seq;
-	/*entry->ccval = dh->dccph_ccval;*/
-	entry->ccval = 0; /* gh->server_rtt/4 */
 	entry->type  = gh->type;
 	entry->ndp   = ndp;
 	entry->tstamp = ktime_get_real();
+
+	if(gh->type == GMTP_PKT_DATA) {
+		const struct gmtp_hdr_data *gh_data = gmtp_hdr_data(skb);
+		entry->tx_tstamp = gh_data->tstamp;
+	}
 }
 
 void mcc_rx_hist_add_packet(struct mcc_rx_hist *h,
