@@ -470,8 +470,8 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 		switch(gh->type) {
 		case GMTP_PKT_DATA:
 			/* Artificial loss (only for tests) */
-			if(gh->seq % 2)
-				return NF_DROP;
+			/*if(gh->seq % 2)
+				return NF_DROP;*/
 
 			ret = gmtp_intra_data_rcv(skb);
 			break;

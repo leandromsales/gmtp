@@ -49,7 +49,9 @@ static void mcc_rx_send_feedback(struct sock *sk,
 {
 	struct gmtp_sock *hc = gmtp_sk(sk);
 	ktime_t now = ktime_get_real();
+	u32 sample;
 	s64 delta = 0;
+	u32 p;
 
 	gmtp_pr_func();
 
@@ -86,24 +88,20 @@ static void mcc_rx_send_feedback(struct sock *sk,
 		return;
 	}
 
-	mcc_pr_debug("Interval %ld usec | X_recv: %u | 1/p: %u", (long)delta,
-		       hc->rx_x_recv, hc->rx_pinv);
-
+	now = ktime_get_real();
 	hc->rx_tstamp_last_feedback = now;
-	/* FIXME Change ccval by tstamp or other method */
-	/*hc->rx_last_counter	    = dccp_hdr(skb)->dccph_ccval;*/
 	hc->rx_bytes_recv	    = 0;
+	sample = hc->rx_rtt * 1000; /* ms to us */
+	if(sample != 0)
+		hc->rx_avg_rtt = mcc_ewma(hc->rx_avg_rtt, sample, 9);
 
-	if(hc->rx_rtt <= 0)
-		hc->rx_rtt = GMTP_SANE_RTT_MIN;
+	if(hc->rx_avg_rtt <= 0)
+		hc->rx_avg_rtt = GMTP_SANE_RTT_MIN;
 
-	if(hc->rx_pinv > 0) {
-		u32 p = mcc_invert_loss_event_rate(hc->rx_pinv);
-		u32 new_rate ;
-		gmtp_pr_info("Size: %d, rtt: %u, p: %u, 1/p: %u",
-				ntohs(hc->rx_s), hc->rx_rtt, p, hc->rx_pinv);
-		new_rate = mcc_calc_x(hc->rx_s, hc->rx_rtt, p);
-		gmtp_pr_info("new_rate = %u", new_rate);
+	p = mcc_invert_loss_event_rate(hc->rx_pinv);
+	if(p > 0) {
+		u32 new_rate = mcc_calc_x(hc->rx_s, hc->rx_avg_rtt, p);
+		gmtp_pr_info("new_rate = %u bytes/s", new_rate);
 		/*
 		 * Change only if the value is valid!
 		 */
@@ -111,9 +109,15 @@ static void mcc_rx_send_feedback(struct sock *sk,
 			hc->rx_max_rate = new_rate;
 	}
 
-	gmtp_pr_info("Now, we should send a feedback... Testing send ack");
-	/* FIXME Choose a packet type to send Feedback */
-	gmtp_send_ack(sk, GMTP_ACK_MCC_FEEDBACK);
+	mcc_pr_debug("RESULT: %s(%p), RTT=%u us (sample=%u us), s=%u, "
+			       "p=%u, X_calc=%u, X_recv=%u",
+			       gmtp_role_name(sk), sk,
+			       hc->rx_avg_rtt, sample,
+			       hc->rx_s, p,
+			       hc->rx_max_rate,
+			       hc->rx_x_recv);
+
+	gmtp_send_feedback(sk);
 }
 
 
@@ -243,13 +247,8 @@ void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 	delta = ktime_us_delta(now, hc->rx_tstamp_last_feedback);
 	if(delta <= 0)
 		gmtp_pr_error("delta (%ld) <= 0", (long )delta);
-	else if(delta >= hc->rx_avg_rtt) {
-		gmtp_pr_info("delta >= hc->rx_avg_rtt...");
+	else if(delta >= hc->rx_avg_rtt)
 		do_feedback = MCC_FBACK_PERIODIC;
-	} else {
-		gmtp_pr_info("delta < rx_avg_rtt");
-	}
-	gmtp_pr_info("delta: %ld, hc->rx_avg_rtt: %u", delta, hc->rx_avg_rtt);
 
 update_records:
 	mcc_rx_hist_add_packet(&hc->rx_hist, skb, ndp);

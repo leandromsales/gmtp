@@ -96,8 +96,6 @@ u8 mcc_lh_update_i_mean(struct mcc_loss_hist *lh, struct sk_buff *skb)
 	u32 old_i_mean = lh->i_mean;
 	s64 len;
 
-	gmtp_pr_func();
-
 	if (cur == NULL)			/* not initialised */
 		return 0;
 
@@ -162,7 +160,7 @@ int mcc_lh_interval_add(struct mcc_loss_hist *lh, struct mcc_rx_hist *rh,
 
 	new->li_seqno	  = mcc_rx_hist_loss_prev(rh)->seqno;
 	new->li_tstamp 	  = mcc_rx_hist_loss_prev(rh)->tx_tstamp;
-	new->li_rtt 	  = gmtp_sk(sk)->server_rtt;
+	new->li_rtt 	  = gmtp_sk(sk)->rx_rtt;
 	new->li_is_closed = 0;
 
 	if (++lh->counter == 1)

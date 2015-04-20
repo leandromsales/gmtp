@@ -45,10 +45,6 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 				gmtp_packet_hdr_variable_len(gcb->type);
 		int err, set_ack = 1;
 
-		/*
-		gmtp_print_debug("Packet: %s", gmtp_packet_name(gcb->type));
-		*/
-
 		switch (gcb->type) {
 		case GMTP_PKT_DATA:
 			set_ack = 0;
@@ -370,6 +366,24 @@ void gmtp_send_ack(struct sock *sk, __u8 ackcode)
 	}
 }
 EXPORT_SYMBOL_GPL(gmtp_send_ack);
+
+
+void gmtp_send_feedback(struct sock *sk)
+{
+	gmtp_pr_func();
+
+	if(sk->sk_state != GMTP_CLOSED) {
+
+		struct sk_buff *skb = alloc_skb(sk->sk_prot->max_header,
+		GFP_ATOMIC);
+
+		/* Reserve space for headers */
+		skb_reserve(skb, sk->sk_prot->max_header);
+		GMTP_SKB_CB(skb)->type = GMTP_PKT_FEEDBACK;
+		gmtp_transmit_skb(sk, skb);
+	}
+}
+EXPORT_SYMBOL_GPL(gmtp_send_feedback);
 
 /*
  * Send a GMTP_PKT_CLOSE/CLOSEREQ. The caller locks the socket for us.

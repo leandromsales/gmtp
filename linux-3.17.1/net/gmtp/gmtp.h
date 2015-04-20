@@ -189,6 +189,7 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 
 /** output.c */
 void gmtp_send_ack(struct sock *sk,  __u8 ackcode);
+void gmtp_send_feedback(struct sock *sk);
 void gmtp_send_close(struct sock *sk, const int active);
 int gmtp_send_reset(struct sock *sk, enum gmtp_reset_codes code);
 void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb);

@@ -105,7 +105,6 @@ struct gmtp_hdr_ack {
 enum gmtp_ack_codes {
 	GMTP_ACK_NO_CODE = 0,
 	GMTP_ACK_REQUESTNOTIFY,
-	GMTP_ACK_MCC_FEEDBACK,
 	GMTP_ACK_MAX_CODES
 };
 

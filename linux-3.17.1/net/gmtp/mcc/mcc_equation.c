@@ -641,29 +641,17 @@ u32 mcc_calc_x(u16 s, u32 R, u32 p)
 	}
 
 	if (p <= MCC_CALC_X_SPLIT)		{     /* 0.0000 < p <= 0.05   */
-		gmtp_pr_info("If...");
-		if (p < MCC_SMALLEST_P) {	      /* 0.0000 < p <  0.0001 */
-			gmtp_pr_warning("Value of p (%d) below resolution. "
-				  "Substituting %d\n", p, MCC_SMALLEST_P);
+		if (p < MCC_SMALLEST_P)	      /* 0.0000 < p <  0.0001 */
 			index = 0;
-		} else	{			      /* 0.0001 <= p <= 0.05  */
+		else			      /* 0.0001 <= p <= 0.05  */
 			index =  p/MCC_SMALLEST_P - 1;
-		}
-		gmtp_pr_info("index: %d", ntohs(p));
 
-		if(index > 0 && index < MCC_CALC_X_ARRSIZE) {
+		if(index > 0 && index < MCC_CALC_X_ARRSIZE)
 			f = mcc_calc_x_lookup[index][1];
-			gmtp_pr_info("if: f=%u", f);
-		} else {
-			gmtp_pr_info("f?");
-		}
 
 	} else {				      /* 0.05   <  p <= 1.00  */
-		gmtp_pr_info("else...");
 		index = p/(1000000/MCC_CALC_X_ARRSIZE) - 1;
-
 		f = mcc_calc_x_lookup[index][0];
-		gmtp_pr_info("else: f=%u", f);
 	}
 
 	/*
@@ -694,11 +682,11 @@ u32 mcc_calc_x_reverse_lookup(u32 fvalue)
 
 	/* Error cases. */
 	if (fvalue < mcc_calc_x_lookup[0][1]) {
-		gmtp_print_warning("fvalue %u smaller than resolution\n", fvalue);
+		gmtp_pr_warning("fvalue %u smaller than resolution\n", fvalue);
 		return MCC_SMALLEST_P;
 	}
 	if (fvalue > mcc_calc_x_lookup[MCC_CALC_X_ARRSIZE - 1][0]) {
-		gmtp_print_warning("fvalue %u exceeds bounds!\n", fvalue);
+		gmtp_pr_warning("fvalue %u exceeds bounds!\n", fvalue);
 		return 1000000;
 	}
 
@@ -719,12 +707,8 @@ u32 mcc_calc_x_reverse_lookup(u32 fvalue)
  */
 u32 mcc_invert_loss_event_rate(u32 loss_event_rate)
 {
-	gmtp_pr_func();
-
-	if (loss_event_rate == UINT_MAX) {		/* see RFC 4342, 8.5 */
-		gmtp_pr_debug("loss_event_rate == UINT_MAX");
+	if (loss_event_rate == UINT_MAX)		/* see RFC 4342, 8.5 */
 		return 0;
-	}
 	if (unlikely(loss_event_rate == 0))		/* map 1/0 into 100% */
 		return 1000000;
 	return max_t(u32, scaled_div(1, loss_event_rate), MCC_SMALLEST_P);
