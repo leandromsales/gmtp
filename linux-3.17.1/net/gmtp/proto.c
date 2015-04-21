@@ -11,6 +11,7 @@
 #include <uapi/linux/gmtp.h>
 #include <linux/gmtp.h>
 #include "gmtp.h"
+#include "mcc.h"
 
 struct percpu_counter gmtp_orphan_count;
 EXPORT_SYMBOL_GPL(gmtp_orphan_count);
@@ -20,10 +21,6 @@ EXPORT_SYMBOL_GPL(gmtp_inet_hashinfo);
 
 struct gmtp_hashtable* gmtp_hashtable;
 EXPORT_SYMBOL_GPL(gmtp_hashtable);
-
-/* the maximum queue length for gmtp in packets. 0 is no limit */
-/* TODO make a better choice of this number... */
-int sysctl_gmtp_qlen __read_mostly = 5;
 
 const char *gmtp_packet_name(const int type)
 {
@@ -46,6 +43,7 @@ const char *gmtp_packet_name(const int type)
 		[GMTP_PKT_ELECT_RESPONSE]  = "ELECT_RESPONSE",
 		[GMTP_PKT_CLOSE]    = "CLOSE",
 		[GMTP_PKT_RESET]    = "RESET",
+		[GMTP_PKT_FEEDBACK]    = "REPORTER_FEEDBACK",
 	};
 
 	if (type >= GMTP_NR_PKT_TYPES)
@@ -91,17 +89,6 @@ const char *gmtp_state_name(const int state)
 		return gmtp_state_names[state];
 }
 EXPORT_SYMBOL_GPL(gmtp_state_name);
-
-static inline const char *gmtp_role(const struct sock *sk)
-{
-	switch (gmtp_sk(sk)->role) {
-	case GMTP_ROLE_UNDEFINED: return "undefined";
-	case GMTP_ROLE_LISTEN:	  return "listen";
-	case GMTP_ROLE_SERVER:	  return "server";
-	case GMTP_ROLE_CLIENT:	  return "client";
-	}
-	return NULL;
-}
 
 /**
  * @str size MUST HAVE len >= GMTP_FLOWNAME_STR_LEN
@@ -184,6 +171,7 @@ int gmtp_init_sock(struct sock *sk)
 {
 	struct gmtp_sock *gp = gmtp_sk(sk);
 	struct inet_connection_sock *icsk = inet_csk(sk);
+	int ret = 0;
 
 	gmtp_print_function();
 
@@ -194,38 +182,46 @@ int gmtp_init_sock(struct sock *sk)
 	icsk->icsk_sync_mss	= gmtp_sync_mss;
 
 	gp->mss			= GMTP_DEFAULT_MSS;
-	gp->qlen		= sysctl_gmtp_qlen;
-
 	gp->role		= GMTP_ROLE_UNDEFINED;
 
-	gp->pkt_sent 		= 0;
-	gp->data_sent 		= 0;
-	gp->bytes_sent 		= 0;
+	gp->req_stamp		= 0;
+	gp->tx_rtt		= GMTP_DEFAULT_RTT;
+	gp->relay_rtt		= 0;
 
-	gp->sample_len 		= GMTP_DEFAULT_SAMPLE_LEN;
-	gp->t_sample 		= 0;
-	gp->b_sample 		= 0;
+	ret = mcc_rx_init(sk);
 
-	gp->sample_rate 	= 0;
-	gp->total_rate 		= 0;
+	gp->rx_max_rate 	= 0;
 
-	gp->first_tx_stamp	= 0;
-	gp->tx_stamp		= 0;
-	gp->max_tx		= GMTP_MAX_TX;
-	gp->byte_budget		= LONG_MIN;
-	gp->adj_budget		= 0;
+	gp->tx_dpkts_sent 	= 0;
+	gp->tx_data_sent 	= 0;
+	gp->tx_bytes_sent 	= 0;
+
+	gp->tx_sample_len 	= GMTP_DEFAULT_SAMPLE_LEN;
+	gp->tx_time_sample 	= 0;
+	gp->tx_byte_sample 	= 0;
+
+	gp->tx_sample_rate 	= 0;
+	gp->tx_total_rate 	= 0;
+
+	gp->tx_first_stamp	= 0UL;
+	gp->tx_last_stamp	= 0UL;
+	gp->tx_max_rate		= 0UL; /* Unlimited */
+	gp->tx_byte_budget	= INT_MIN;
+	gp->tx_adj_budget	= 0;
 
 	memset(gp->flowname, 0, GMTP_FLOWNAME_LEN);
 
 	gmtp_init_xmit_timers(sk);
 
-	return 0;
+	return ret;
 }
 EXPORT_SYMBOL_GPL(gmtp_init_sock);
 
 void gmtp_destroy_sock(struct sock *sk)
 {
 	gmtp_print_function();
+
+	mcc_rx_exit(sk);
 
 	if (sk->sk_send_head != NULL) {
 		kfree_skb(sk->sk_send_head);
@@ -270,9 +266,10 @@ void gmtp_close(struct sock *sk, long timeout)
 	u32 data_was_unread = 0;
 	int state;
 
-	gmtp_print_function();
-	gmtp_print_debug("Timeout: %ld", timeout);
-	gmtp_print_debug("sk->st_state: %s", gmtp_state_name(sk->sk_state));
+	gmtp_pr_func();
+	gmtp_pr_info("Closing connection...");
+	gmtp_pr_info("Timeout: %ld", timeout);
+	gmtp_pr_info("sk->st_state: %s", gmtp_state_name(sk->sk_state));
 
 	lock_sock(sk);
 
@@ -285,7 +282,7 @@ void gmtp_close(struct sock *sk, long timeout)
 
 		goto adjudge_to_death;
 	}
-	gmtp_print_debug("Calling sk_stop_timer(sk, &gp->xmit_timer)");
+	gmtp_print_debug("Stopping timers...");
 	sk_stop_timer(sk, &gp->xmit_timer);
 
 	/*
@@ -468,8 +465,6 @@ int gmtp_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 	const struct gmtp_hdr *gh;
 	long timeo;
 
-	gmtp_print_function();
-
 	lock_sock(sk);
 
 	if(sk->sk_state == GMTP_LISTEN) {
@@ -481,7 +476,6 @@ int gmtp_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 
 	do {
 		struct sk_buff *skb = skb_peek(&sk->sk_receive_queue);
-
 		if(skb == NULL)
 			goto verify_sock_status;
 
@@ -491,7 +485,6 @@ int gmtp_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 		case GMTP_PKT_DATA:
 		case GMTP_PKT_DATAACK:
 			goto found_ok_skb;
-
 		case GMTP_PKT_CLOSE:
 			if(!(flags & MSG_PEEK))
 				gmtp_finish_passive_close(sk);
@@ -525,14 +518,8 @@ verify_sock_status:
 		if(sk->sk_state == GMTP_CLOSED) {
 			if(!sock_flag(sk, SOCK_DONE)) {
 
-				if(ipv4_is_multicast(sk->sk_rcv_saddr)) {
-					gmtp_print_debug(
-							"%pI4 is a multicast "
-							"address\n",
-							&sk->sk_rcv_saddr);
-
+				if(ipv4_is_multicast(sk->sk_rcv_saddr))
 					goto found_ok_skb;
-				}
 
 				/* This occurs when user tries to read
 				 * from never connected socket.
@@ -590,8 +577,6 @@ int gmtp_sendmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 	struct sk_buff *skb;
 	int rc, size;
 	long timeo;
-
-	gmtp_print_function();
 
 	if (len > gp->mss)
 		return -EMSGSIZE;
@@ -811,6 +796,10 @@ static int __init gmtp_init(void)
 	gmtp_print_debug("GMTP init!");
 	gmtp_print_function();
 
+	rc = mcc_lib_init();
+	if(rc)
+		goto out;
+
 	rc = percpu_counter_init(&gmtp_orphan_count, 0);
 	if(rc) {
 		percpu_counter_destroy(&gmtp_orphan_count);
@@ -843,8 +832,8 @@ static void __exit gmtp_exit(void)
 	kmem_cache_destroy(gmtp_inet_hashinfo.bind_bucket_cachep);
 
 	kfree_gmtp_hashtable(gmtp_hashtable);
-
 	percpu_counter_destroy(&gmtp_orphan_count);
+	mcc_lib_exit();
 }
 
 module_init(gmtp_init);

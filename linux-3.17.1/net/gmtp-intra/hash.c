@@ -64,8 +64,6 @@ struct gmtp_relay_entry *gmtp_intra_lookup_media(
 	struct gmtp_relay_entry *entry;
 	unsigned int hashval;
 
-	gmtp_print_function();
-
 	hashval = gmtp_intra_hash(hashtable, media);
 
 	/* Error */
@@ -123,12 +121,13 @@ EXPORT_SYMBOL_GPL(gmtp_intra_add_entry);
 struct gmtp_relay_entry *gmtp_intra_del_entry(
 		struct gmtp_intra_hashtable *hashtable, __u8 *media)
 {
-	int hashval = gmtp_intra_hash(hashtable, media);
 	struct gmtp_relay_entry *previous_entry;
 	struct gmtp_relay_entry *current_entry;
+	int hashval;
 
 	gmtp_print_function();
 
+	hashval = gmtp_intra_hash(hashtable, media);
 	if(hashval < 0)
 		return NULL;
 
