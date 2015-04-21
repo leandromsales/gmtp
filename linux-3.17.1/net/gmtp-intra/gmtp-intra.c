@@ -151,6 +151,7 @@ int gmtp_intra_request_rcv(struct sk_buff *skb)
 	int err = 0;
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct gmtp_hdr *gh_reqnotify;
 	struct gmtp_relay_entry *media_info;
 	__be32 mcst_addr;
 
@@ -158,27 +159,30 @@ int gmtp_intra_request_rcv(struct sk_buff *skb)
 
 	media_info = gmtp_intra_lookup_media(relay_hashtable, gh->flowname);
 	if(media_info != NULL) {
-		struct gmtp_hdr *gh_reqnotify;
 
 		gmtp_print_debug("Media found... ");
 
 		switch(media_info->state) {
 		case GMTP_INTRA_WAITING_REGISTER_REPLY:
+			gh_reqnotify = gmtp_intra_make_request_notify_hdr(skb,
+					media_info, gh->dport, gh->sport,
+					GMTP_REQNOTIFY_CODE_WAIT);
 			break;
 		case GMTP_INTRA_REGISTER_REPLY_RECEIVED:
 			gh_reqnotify = gmtp_intra_make_request_notify_hdr(skb,
-					media_info, gh->dport, gh->sport);
-
-			if(gh_reqnotify != NULL)
-				gmtp_intra_build_and_send_pkt(skb, iph->daddr,
-						iph->saddr, gh_reqnotify, true);
+					media_info, gh->dport, gh->sport,
+					GMTP_REQNOTIFY_CODE_OK);
 			ret = NF_DROP;
 			break;
 		default:
 			gmtp_print_error("Inconsistent state at gmtp-intra: %d",
 					media_info->state);
+
+			gh_reqnotify = gmtp_intra_make_request_notify_hdr(skb,
+					media_info, gh->dport, gh->sport,
+					GMTP_REQNOTIFY_CODE_ERROR);
+
 			ret = NF_DROP;
-			goto out;
 		}
 
 	} else {
@@ -195,11 +199,21 @@ int gmtp_intra_request_rcv(struct sk_buff *skb)
 
 		if(err) {
 			gmtp_print_error("Failed to insert flow in table...");
+			gh_reqnotify = gmtp_intra_make_request_notify_hdr(skb,
+					media_info, gh->dport, gh->sport,
+					GMTP_REQNOTIFY_CODE_ERROR);
 			ret = NF_DROP;
+		} else {
+			gh_reqnotify = gmtp_intra_make_request_notify_hdr(skb,
+					media_info, gh->dport, gh->sport,
+					GMTP_REQNOTIFY_CODE_WAIT);
 		}
 	}
 
-out:
+	if(gh_reqnotify != NULL)
+		gmtp_intra_build_and_send_pkt(skb, iph->daddr,
+				iph->saddr, gh_reqnotify, true);
+
 	return ret;
 }
 
@@ -280,7 +294,7 @@ int gmtp_intra_register_reply_rcv(struct sk_buff *skb)
 	 */
 	ret = gmtp_intra_make_request_notify(skb,
 			iph->saddr, gh->sport,
-			iph->daddr, gh->dport);
+			iph->daddr, gh->dport, GMTP_REQNOTIFY_CODE_OK);
 
 out:
 	return ret;
@@ -290,7 +304,37 @@ out:
 int gmtp_intra_ack_rcv(struct sk_buff *skb)
 {
 	int ret = NF_DROP;
+
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct iphdr *iph = ip_hdr(skb);
+
 	gmtp_print_function();
+
+	gmtp_pr_info("%s (%d) src=%pI4@%-5d dst=%pI4@%-5d transm_r: %u",
+			gmtp_packet_name(gh->type), gh->type,
+			&iph->saddr, ntohs(gh->sport),
+			&iph->daddr, ntohs(gh->dport),
+			gh->transm_r);
+
+	return ret;
+}
+
+/* FIXME Treat acks from clients */
+int gmtp_intra_feedback_rcv(struct sk_buff *skb)
+{
+	int ret = NF_DROP;
+
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct iphdr *iph = ip_hdr(skb);
+
+	gmtp_print_function();
+
+	gmtp_pr_info("%s (%d) src=%pI4@%-5d dst=%pI4@%-5d transm_r: %u",
+			gmtp_packet_name(gh->type), gh->type,
+			&iph->saddr, ntohs(gh->sport),
+			&iph->daddr, ntohs(gh->dport),
+			gh->transm_r);
+
 	return ret;
 }
 
@@ -324,7 +368,7 @@ int gmtp_intra_data_rcv(struct sk_buff *skb)
 	unsigned char *data, *data_str;
 	unsigned int data_len;
 
-	gmtp_print_function();
+	/*gmtp_print_function();*/
 
 	/**
 	 * FIXME If destiny is not me, just let it go!
@@ -342,11 +386,13 @@ int gmtp_intra_data_rcv(struct sk_buff *skb)
 		ret = NF_DROP;
 		goto out;
 	}
+	/*
 	data_len = ntohs(iph->tot_len) - (iph->ihl + gh->hdrlen) - 15;
 	data_str = kmalloc(data_len + 1, GFP_KERNEL);
 	memcpy(data_str, data, data_len);
 	data_str[data_len] = (unsigned char)'\0';
-	gmtp_print_debug("Data: %s", data_str); /** Remove it later */
+	gmtp_print_debug("Data: %s", data_str);
+	*/
 
 	iph->daddr = flow_info->channel_addr;
 	ip_send_check(iph);
@@ -373,11 +419,13 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 	if(iph->protocol == IPPROTO_GMTP) {
 
 		gh = gmtp_hdr(skb);
-		gmtp_print_debug("GMTP packet: %s (%d)",
-				gmtp_packet_name(gh->type), gh->type);
 
-		print_packet(iph, true);
-		print_gmtp_packet(iph, gh);
+		if(gh->type != GMTP_PKT_DATA) {
+			gmtp_print_debug("GMTP packet: %s (%d)",
+					gmtp_packet_name(gh->type), gh->type);
+			print_packet(iph, true);
+			print_gmtp_packet(iph, gh);
+		}
 
 		switch(gh->type) {
 		case GMTP_PKT_REQUEST:
@@ -388,6 +436,9 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 			break;
 		case GMTP_PKT_ACK:
 			ret = gmtp_intra_ack_rcv(skb);
+			break;
+		case GMTP_PKT_FEEDBACK:
+			ret = gmtp_intra_feedback_rcv(skb);
 			break;
 		case GMTP_PKT_CLOSE:
 			ret = gmtp_intra_close_rcv(skb);
@@ -415,15 +466,19 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 	if(iph->protocol == IPPROTO_GMTP) {
 
 		gh = gmtp_hdr(skb);
-		gmtp_print_debug("GMTP packet: %s (%d)",
-				gmtp_packet_name(gh->type), gh->type);
-
-		print_packet(iph, false);
 
 		switch(gh->type) {
 		case GMTP_PKT_DATA:
+			/* Artificial loss (only for tests) */
+			/*if(gh->seq % 2)
+				return NF_DROP;*/
+
 			ret = gmtp_intra_data_rcv(skb);
 			break;
+		default:
+			gmtp_print_debug("GMTP packet: %s (%d)",
+					gmtp_packet_name(gh->type), gh->type);
+			print_packet(iph, false);
 		}
 
 	}

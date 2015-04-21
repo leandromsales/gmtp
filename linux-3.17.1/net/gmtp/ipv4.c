@@ -159,7 +159,7 @@ void gmtp_v4_err(struct sk_buff *skb, u32 info)
 	const int type = icmp_hdr(skb)->type;
 	const int code = icmp_hdr(skb)->code;
 	struct sock *sk;
-	__u64 seq;
+	__be32 seq;
 	int err;
 	struct net *net = dev_net(skb->dev);
 
@@ -311,7 +311,9 @@ static struct dst_entry* gmtp_v4_route_skb(struct net *net, struct sock *sk,
 	return &rt->dst;
 }
 
-static int gmtp_v4_send_register_reply(struct sock *sk, struct request_sock *req) {
+static int gmtp_v4_send_register_reply(struct sock *sk,
+		struct request_sock *req) {
+
 	int err = -1;
 	struct sk_buff *skb;
 	struct dst_entry *dst;
@@ -326,6 +328,8 @@ static int gmtp_v4_send_register_reply(struct sock *sk, struct request_sock *req
 	skb = gmtp_make_register_reply(sk, dst, req);
 	if (skb != NULL) {
 		const struct inet_request_sock *ireq = inet_rsk(req);
+		gmtp_sk(sk)->reply_stamp = jiffies;
+
 		err = ip_build_and_send_pkt(skb, sk, ireq->ir_loc_addr,
 				ireq->ir_rmt_addr, ireq->opt);
 		err = net_xmit_eval(err);
@@ -378,16 +382,6 @@ out:
 	dst_release(dst);
 }
 
-static inline u32 gmtp_synq_hash(const __be32 raddr, const __be16 rport,
-				 const u32 rnd, const u32 synq_hsize)
-{
-	u32 ret;
-	gmtp_print_function();
-	ret = jhash_2words((__force u32)raddr, (__force u32)rport, rnd) & (synq_hsize - 1);
-	gmtp_print_debug("ret: %u", ret);
-	return ret;
-}
-
 #define AF_INET_FAMILY(fam) 1
 
 static struct sock *gmtp_v4_hnd_req(struct sock *sk, struct sk_buff *skb) {
@@ -412,13 +406,8 @@ static struct sock *gmtp_v4_hnd_req(struct sock *sk, struct sk_buff *skb) {
 
 	gmtp_print_function();
 
-	gmtp_print_debug("req: %p", req);
-	gmtp_print_debug("nsk: %p", nsk);
-
 	if (nsk != NULL) {
 		if (nsk->sk_state != GMTP_TIME_WAIT) {
-			gmtp_print_debug(
-					"nsk->sk_state != GMTP_TIME_WAIT (returning nsk...)");
 			bh_lock_sock(nsk);
 			return nsk;
 		}
@@ -465,12 +454,8 @@ int gmtp_v4_do_rcv(struct sock *sk, struct sk_buff *skb) {
 		if (nsk == NULL)
 			goto discard;
 
-		gmtp_print_debug("sk: %p", sk);
-		gmtp_print_debug("nsk: %p", nsk);
-
 		/* TODO Treat it */
 		if (nsk != sk) {
-			gmtp_print_debug("nsk != sk");
 			if (gmtp_child_process(sk, nsk, skb))
 				goto reset;
 			return 0;
@@ -565,12 +550,13 @@ static int gmtp_v4_rcv(struct sk_buff *skb) {
 	GMTP_SKB_CB(skb)->type = gh->type;
 
 	flowname_str(flowname, gh->flowname);
-	gmtp_print_debug("%s (%d) src=%pI4@%-5d dst=%pI4@%-5d seq=%llu flow=%s",
-			gmtp_packet_name(gh->type),
-			gh->type,
+	gmtp_print_debug("%s(%d) src=%pI4@%-5d dst=%pI4@%-5d seq=%llu "
+			"RTT=%u ms, transm_r=%u, flow=%s",
+			gmtp_packet_name(gh->type), gh->type,
 			&iph->saddr, ntohs(gh->sport),
 			&iph->daddr, ntohs(gh->dport),
 			(unsigned long long) GMTP_SKB_CB(skb)->seq,
+			gh->server_rtt, gh->transm_r,
 			flowname);
 
 	if(skb->pkt_type == PACKET_MULTICAST) {
@@ -685,6 +671,9 @@ static struct request_sock_ops gmtp_request_sock_ops __read_mostly = {
 	.syn_ack_timeout = gmtp_syn_ack_timeout,
 };
 
+/*
+ * Called when a client sends a REQUEST
+ */
 int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb) {
 	struct inet_request_sock *ireq;
 
@@ -739,7 +728,6 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb) {
 	greq = gmtp_rsk(req);
 	greq->isr	   = gcb->seq;
 	greq->gsr	   = greq->isr;
-	/*greq->iss	   = gmtp_v4_init_sequence(skb);*/
 	greq->iss	   = greq->isr;
 	greq->gss     = greq->iss;
 	memcpy(greq->flowname, gp->flowname, GMTP_FLOWNAME_LEN);

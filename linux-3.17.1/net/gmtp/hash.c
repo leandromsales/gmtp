@@ -114,6 +114,23 @@ int gmtp_add_client_entry(struct gmtp_hashtable *hashtable, __u8 *flowname,
 }
 EXPORT_SYMBOL_GPL(gmtp_add_client_entry);
 
+void gmtp_del_client_entry(struct gmtp_hashtable *hashtable, __u8 *media)
+{
+	struct gmtp_client_entry *entry;
+	int hashval;
+
+	gmtp_print_function();
+
+	hashval = gmtp_hash(hashtable, media);
+
+	if(hashval < 0)
+		return;
+
+	entry = hashtable->table[hashval].client_entry;
+	if(entry != NULL)
+		kfree(entry);
+}
+
 struct gmtp_server_entry *gmtp_lookup_route(
 		struct gmtp_hashtable *hashtable, const __u8 *relayid)
 {

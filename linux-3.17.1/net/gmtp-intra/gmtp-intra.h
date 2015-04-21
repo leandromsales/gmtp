@@ -64,9 +64,10 @@ void gmtp_intra_add_relayid(struct sk_buff *skb);
 struct gmtp_hdr *gmtp_intra_make_route_hdr(struct sk_buff *skb);
 struct gmtp_hdr *gmtp_intra_make_request_notify_hdr(struct sk_buff *skb,
 		struct gmtp_relay_entry *media_info, __be16 new_sport,
-		__be16 new_dport);
+		__be16 new_dport, __u8 error_code);
 int gmtp_intra_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
-		__be16 new_sport, __be32 new_daddr, __be16 new_dport);
+		__be16 new_sport, __be32 new_daddr, __be16 new_dport,
+		__u8 error_code);
 
 void gmtp_intra_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
 		__be32 daddr, struct gmtp_hdr *gh_ref, bool backward);
@@ -110,13 +111,14 @@ static inline void print_gmtp_packet(struct iphdr *iph, struct gmtp_hdr *gh)
 {
 	__u8 flowname[GMTP_FLOWNAME_STR_LEN];
 	flowname_str(flowname, gh->flowname);
-	pr_info("%s (%d) | src=%pI4@%-5d | dst=%pI4@%-5d | seq=%llu | "
-			"flow=%s\n",
+	pr_info("%s (%d) src=%pI4@%-5d dst=%pI4@%-5d server_rtt=%u "
+			" transm_r=%u flow=%s\n",
 				gmtp_packet_name(gh->type),
 				gh->type,
 				&iph->saddr, ntohs(gh->sport),
 				&iph->daddr, ntohs(gh->dport),
-				(unsigned long long) gh->seq,
+				gh->server_rtt,
+				gh->transm_r,
 				flowname);
 }
 
