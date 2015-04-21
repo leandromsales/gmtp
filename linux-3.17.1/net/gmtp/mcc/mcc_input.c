@@ -107,11 +107,17 @@ static void mcc_rx_send_feedback(struct sock *sk,
 		 */
 		if(new_rate > 0)
 			hc->rx_max_rate = new_rate;
+	} else {
+		/*
+		 * No loss events. Returning max X_calc.
+		 * Sender will ignore feedback and keep last TX
+		 */
+		hc->rx_max_rate = ~0U;
 	}
 
-	mcc_pr_debug("RESULT: %s(%p), RTT=%u us (sample=%u us), s=%u, "
+	mcc_pr_debug("RESULT: %s, RTT=%u us (sample=%u us), s=%u, "
 			       "p=%u, X_calc=%u, X_recv=%u",
-			       gmtp_role_name(sk), sk,
+			       gmtp_role_name(sk),
 			       hc->rx_avg_rtt, sample,
 			       hc->rx_s, p,
 			       hc->rx_max_rate,
@@ -159,8 +165,8 @@ static u32 mcc_first_li(struct sock *sk)
 	fval = scaled_div32(fval, x_recv);
 	p = mcc_calc_x_reverse_lookup(fval);
 
-	mcc_pr_debug("%s(%p), receive rate=%u bytes/s, implied "
-		       "loss rate=%u\n", gmtp_role_name(sk), sk, x_recv, p);
+	mcc_pr_debug("%s receive rate=%u bytes/s, implied "
+		       "loss rate=%u\n", gmtp_role_name(sk), x_recv, p);
 
 	return p == 0 ? ~0U : scaled_div(1, p);
 }

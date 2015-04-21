@@ -623,20 +623,19 @@ u32 mcc_calc_x(u16 s, u32 R, u32 p)
 	u32 f;
 	u64 result;
 
-	gmtp_pr_func();
-
 	/* check against invalid parameters and divide-by-zero   */
-//	BUG_ON(p >  1000000);		/* p must not exceed 100%   */
-//	BUG_ON(p == 0);			/* f(0) = 0, divide by zero */
+	BUG_ON(p >  1000000);		/* p must not exceed 100%   */
+	BUG_ON(p == 0);			/* f(0) = 0, divide by zero */
 
+	/*
 	if(p == 0 || p > 1000000) {
 		gmtp_pr_error("Invalid value of p: %u", p);
 		return 0;
 	}
-
+	*/
 
 	if (R == 0) {			/* possible  divide by zero */
-		gmtp_pr_warning("WARNING: RTT is 0, returning maximum X_calc.");
+		gmtp_pr_error("WARNING: RTT is 0, returning maximum X_calc.");
 		return ~0U;
 	}
 
@@ -646,8 +645,7 @@ u32 mcc_calc_x(u16 s, u32 R, u32 p)
 		else			      /* 0.0001 <= p <= 0.05  */
 			index =  p/MCC_SMALLEST_P - 1;
 
-		if(index > 0 && index < MCC_CALC_X_ARRSIZE)
-			f = mcc_calc_x_lookup[index][1];
+		f = mcc_calc_x_lookup[index][1];
 
 	} else {				      /* 0.05   <  p <= 1.00  */
 		index = p/(1000000/MCC_CALC_X_ARRSIZE) - 1;
