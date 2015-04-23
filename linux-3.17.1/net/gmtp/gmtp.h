@@ -60,7 +60,6 @@ extern struct percpu_counter gmtp_orphan_count;
 #define GMTP_DEFAULT_SAMPLE_LEN 1000 /* Sample to measure 'instant' Tx rate */
 #define GMTP_MAX_SAMPLE_LEN 10000 /* Max sample to measure 'instant' Tx rate */
 
-
 /**
  * Based on TCP Default Maximum Segment Size calculation
  * The solution to these two competing issues was to establish a default MSS
@@ -74,15 +73,15 @@ extern struct percpu_counter gmtp_orphan_count;
  */
 #define GMTP_DEFAULT_MSS (576 - GMTP_FIXED_HDR_LEN - 20)
 
-/*
- * RTT sampling: sanity bounds and fallback RTT value from RFC 4340, section 3.4
- */
-#define GMTP_SANE_RTT_MIN	100 /* microsseconds */
-#define GMTP_FALLBACK_RTT	(USEC_PER_SEC / 5)
-#define GMTP_SANE_RTT_MAX	(3 * USEC_PER_SEC)
 
 #define GMTP_DEFAULT_RTT 64  /* milisseconds */
-
+/*
+ * RTT sampling: sanity bounds and fallback RTT value from RFC 4340, section 3.4
+ * Units in usec (microseconds)
+ */
+#define GMTP_SANE_RTT_MIN	100		    /* 0.1 ms */
+#define GMTP_FALLBACK_RTT	(USEC_PER_SEC / 5)  /* 200 ms */
+#define GMTP_SANE_RTT_MAX	(3 * USEC_PER_SEC)  /* 3 s    */
 
 /* initial RTO value */
 #define GMTP_TIMEOUT_INIT ((unsigned int)(3 * HZ))
@@ -93,6 +92,10 @@ extern struct percpu_counter gmtp_orphan_count;
  */
 #define GMTP_RTO_MAX ((unsigned int)(64 * HZ))
 #define GMTP_TIMEWAIT_LEN (60 * HZ)
+
+/* Int to __u8 operations */
+#define TO_U8(x) ((x) > UINT_MAX) ? UINT_MAX : (__u8)(x)
+#define SUB_U8(a, b) ((a-b) > UINT_MAX) ? UINT_MAX : (a-b)
 
 /**
  * struct gmtp_client_entry - An entry in client hash table

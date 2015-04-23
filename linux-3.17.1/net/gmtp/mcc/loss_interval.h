@@ -30,8 +30,8 @@
 struct mcc_loss_interval {
 	__be32		 li_seqno;
 	__be32		 li_is_closed:1;
-	u32		 li_length;
-	__u64		 li_tstamp;
+	__u32		 li_length;
+	__u32		 li_tstamp;
 	__u32		 li_rtt;
 };
 

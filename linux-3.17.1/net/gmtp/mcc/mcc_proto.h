@@ -59,8 +59,6 @@ u32 mcc_calc_x(u16 s, u32 R, u32 p);
 u32 mcc_calc_x_reverse_lookup(u32 fvalue);
 u32 mcc_invert_loss_event_rate(u32 loss_event_rate);
 
-int mcc_tx_packet_history_init(void);
-void mcc_tx_packet_history_exit(void);
 int mcc_rx_packet_history_init(void);
 void mcc_rx_packet_history_exit(void);
 
