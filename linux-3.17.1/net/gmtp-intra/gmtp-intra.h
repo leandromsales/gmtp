@@ -15,6 +15,18 @@
 #include <uapi/linux/gmtp.h>
 #include "../gmtp/gmtp.h"
 
+struct gmtp_intra {
+	unsigned char mcst[4];
+
+	unsigned int npackets;
+	unsigned int nbytes;
+
+	unsigned int current_tx;
+	__u64 seq;
+};
+
+extern struct gmtp_intra gmtp;
+
 #define GMTP_HASH_SIZE  16
 #define H_USER 1024
 
@@ -39,7 +51,6 @@ enum {
 	GMTP_INTRA_REGISTER_REPLY_RECEIVED
 };
 
-static long long unsigned int seq=0; /* Sequence number of received packets */
 extern struct gmtp_intra_hashtable* relay_hashtable;
 
 /** hash.c */
@@ -100,7 +111,7 @@ static inline void print_packet(struct iphdr *iph, bool in)
 	pr_info("%s: %llu | Src=%pI4 | Dst=%pI4 | Proto: %d | "
 			"Len: %d bytes\n",
 			type,
-			seq,
+			gmtp.seq,
 			&iph->saddr,
 			&iph->daddr,
 			iph->protocol,

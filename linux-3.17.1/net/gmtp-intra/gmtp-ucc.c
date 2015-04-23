@@ -19,8 +19,7 @@
 
 #define C 1250 /* bytes/ms => 10 Mbit/s */
 
-extern u32 nbytes;
-extern unsigned int current_tx;
+extern struct gmtp_intra gmtp;
 
 unsigned int gmtp_rtt_average()
 {
@@ -34,7 +33,7 @@ unsigned int gmtp_rx_rate()
 
 unsigned int gmtp_relay_queue_size()
 {
-	return nbytes;
+	return gmtp.nbytes;
 }
 
 /**
@@ -42,7 +41,7 @@ unsigned int gmtp_relay_queue_size()
  */
 unsigned int gmtp_get_current_tx_rate()
 {
-	return current_tx;
+	return gmtp.current_tx;
 }
 EXPORT_SYMBOL_GPL(gmtp_get_current_tx_rate);
 
@@ -56,7 +55,7 @@ void gmtp_update_tx_rate(unsigned int  h_user)
 	unsigned int r_prev = gmtp_get_current_tx_rate();
 	int up, delta;
 
-	gmtp_print_function();
+	gmtp_pr_func();
 
 	gmtp_print_debug("r_prev: %d", r_prev);
 
@@ -92,7 +91,7 @@ void gmtp_update_tx_rate(unsigned int  h_user)
 	r = (int)(r_prev) + delta;
 
 	gmtp_print_debug("new_r: %d", r);
-	current_tx = r;
+	gmtp.current_tx = r;
 }
 EXPORT_SYMBOL_GPL(gmtp_update_tx_rate);
 
