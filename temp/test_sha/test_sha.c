@@ -13,47 +13,54 @@
 #include <linux/err.h>
 #include <linux/scatterlist.h>
  
-#define SHA1_LENGTH     20
+#define SHA1_LENGTH     50
  
 static int __init sha1_init(void)
 {
     struct scatterlist sg;
     struct crypto_hash *tfm;
     struct hash_desc desc;
-    unsigned char output[SHA1_LENGTH];
-    unsigned char buf[10];
-    int i, j;
- 
-    printk(KERN_INFO "sha1: %s\n", __FUNCTION__);
- 
-    memset(buf, 'A', 10);
-    memset(output, 0x00, SHA1_LENGTH);
+    char output[SHA1_LENGTH];
+    //unsigned char buf[10];
+    unsigned char buf[] = "README";
+    size_t buf_size = sizeof(buf) - 1;
+    int i;
+    
+    printk(KERN_INFO "sha1: %s\n\n\n\n\n", __FUNCTION__);
+      
+    printk(KERN_INFO "bUFFER = %s\n", buf);
+
+  //  memset(buf, 'A', 10);
+//    memset(output, 0x00, SHA1_LENGTH);
  
     tfm = crypto_alloc_hash("sha1", 0, CRYPTO_ALG_ASYNC);
     if (IS_ERR(tfm)) {
-    printk(KERN_ERR "daveti: tfm allocation failed\n");
+        printk(KERN_ERR "daveti: tfm allocation failed\n");
     return 0;
     }
  
     desc.tfm = tfm;
     desc.flags = 0;
  
-    //crypto_hash_init(&desc);
+    crypto_hash_init(&desc);
     //daveti: NOTE, crypto_hash_init is needed
     //for every new hasing!
  
-    for (j = 0; j < 3; j++) {
-    crypto_hash_init(&desc);
-    sg_init_one(&sg, buf, 10);
-    crypto_hash_update(&desc, &sg, 10);
+   // for (j = 0; j < 3; j++) {
+     //   crypto_hash_init(&desc);
+       
+    sg_init_one(&sg, buf, buf_size);
+    crypto_hash_update(&desc, &sg, buf_size);
     crypto_hash_final(&desc, output);
  
-    for (i = 0; i < 20; i++) {
-        printk(KERN_ERR "%02x", output[i]);
+    printk(KERN_INFO"resultado ------------------------- %d \n",buf_size);
+
+    for (i = 0; i < SHA1_LENGTH; i++) {
+        printk(KERN_INFO "%x", output[i]);
     }
-    printk(KERN_INFO "\n---------------\n");
+    printk(KERN_INFO "\n\n\n\n\n---------------\n");
     memset(output, 0x00, SHA1_LENGTH);
-    }
+ //   }
  
     crypto_free_hash(tfm);
  

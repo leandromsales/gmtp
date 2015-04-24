@@ -76,6 +76,8 @@ int init_module(){
                 if(option == GET_MAC_ADDRESS){
    
                     memcpy(&mac_address, dev->dev_addr, 6);
+                    printk(KERN_DEBUG"SIZE of dev_addr = %d\n",
+                                        sizeof(dev->dev_addr));
                     printk(KERN_DEBUG"Interface[%d] MAC = %x:%x:%x:%x:%x:%x\n",i,
                               mac_address[0],mac_address[1],
                               mac_address[2],mac_address[3], 
