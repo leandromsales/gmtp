@@ -121,8 +121,8 @@ static inline struct gmtp_request_sock *gmtp_rsk(const struct request_sock *req)
  * @gsr: greatest valid sequence number received
  * @mss: current value of MSS (path MTU minus header sizes)
  * @role: role of this sock, one of %gmtp_role
- * @req_stamp: time stamp of request sent (jiffies)
- * @reply_stamp: time stamp of Request-Reply sent (jiffies)
+ * @req_stamp: time stamp of request sent
+ * @reply_stamp: time stamp of Request-Reply sent
  * @tx_rtt: RTT from sender to relays
  * @server_timewait: server holds timewait state on close
  * @xmitlet: tasklet scheduled by the TX to dequeue data packets (???)
@@ -168,8 +168,8 @@ struct gmtp_sock {
 
 	enum gmtp_role			role:3;
 
-	unsigned long			req_stamp; /* jiffies */
-	unsigned long			reply_stamp; /* jiffies */
+	__u32				req_stamp;
+	__u32				reply_stamp;
 
 	__u8				server_timewait:1;
 	struct tasklet_struct		xmitlet;
@@ -177,14 +177,13 @@ struct gmtp_sock {
 
 	/** Rx variables */
 	__be32				ndp_count;
-	__u8				rx_last_counter:4;
 	enum mcc_rx_states		rx_state:8;
 	__u32				rx_bytes_recv;
 	__u32				rx_x_recv;
 	__be32				rx_max_rate;
 	__u32				rx_rtt;
 	__u32				rx_avg_rtt;
-	__u8				relay_rtt;
+	__u32				relay_rtt;
 	ktime_t				rx_tstamp_last_feedback;
 	struct mcc_rx_hist		rx_hist;
 	struct mcc_loss_hist		rx_li_hist;
@@ -192,7 +191,7 @@ struct gmtp_sock {
 #define rx_pinv				rx_li_hist.i_mean
 
 	/** Tx variables */
-	__u8 				tx_rtt;
+	__u32 				tx_rtt;
 	__u32	 			tx_dpkts_sent;
 	__u32				tx_data_sent;
 	__u32				tx_bytes_sent;

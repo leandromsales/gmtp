@@ -44,32 +44,6 @@
 #include "mcc_proto.h"
 
 /**
- *  mcc_tx_hist_entry  -  Simple singly-linked TX history list
- *  @next:  next oldest entry (LIFO order)
- *  @seqno: sequence number of this entry
- *  @stamp: send time of packet with sequence number @seqno
- */
-struct mcc_tx_hist_entry {
-	struct mcc_tx_hist_entry *next;
-	__be32			  seqno;
-	ktime_t			  stamp;
-};
-
-static inline struct mcc_tx_hist_entry *
-	mcc_tx_hist_find_entry(struct mcc_tx_hist_entry *head, __be32 seqno)
-{
-	while (head != NULL && head->seqno != seqno)
-		head = head->next;
-	return head;
-}
-
-int mcc_tx_hist_add(struct mcc_tx_hist_entry **headp, __be32 seqno);
-void mcc_tx_hist_purge(struct mcc_tx_hist_entry **headp);
-
-/* Subtraction a-b modulo-16, respects circular wrap-around */
-#define SUB16(a, b) (((a) + 16 - (b)) & 0xF)
-
-/**
  * mcc_rx_hist_entry - Store information about a single received packet
  * @seqno:	GMTP packet sequence number
  * @ndp:	the NDP count (if any) of the packet
@@ -81,7 +55,7 @@ struct mcc_rx_hist_entry {
 	__be32		 type:5;
 	__be32		 ndp;
 	ktime_t		 tstamp;
-	__u64 		 tx_tstamp;
+	__u32 		 tx_tstamp;
 };
 
 /**

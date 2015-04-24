@@ -91,7 +91,7 @@ static void mcc_rx_send_feedback(struct sock *sk,
 	now = ktime_get_real();
 	hc->rx_tstamp_last_feedback = now;
 	hc->rx_bytes_recv	    = 0;
-	sample = hc->rx_rtt * 1000; /* ms to us */
+	sample = jiffies_to_usecs(msecs_to_jiffies(hc->rx_rtt)); /* ms to us */
 	if(sample != 0)
 		hc->rx_avg_rtt = mcc_ewma(hc->rx_avg_rtt, sample, 9);
 
@@ -230,7 +230,8 @@ void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 		goto update_records;
 
 	if(!mcc_lh_is_initialised(&hc->rx_li_hist)) {
-		const u32 sample = hc->rx_rtt * 1000; /* ms to us */
+		/* ms to us */
+		const u32 sample = jiffies_to_usecs(msecs_to_jiffies(hc->rx_rtt));
 		/*
 		 * Empty loss history: no loss so far, hence p stays 0.
 		 * Sample RTT values, since an RTT estimate is required for the

@@ -127,10 +127,9 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 		gmtp_sync_mss(sk, icsk->icsk_pmtu_cookie);
 
 		if(gp->relay_rtt == 0)
-			gp->relay_rtt = jiffies - gp->req_stamp;
+			gp->relay_rtt = jiffies_to_msecs(jiffies - gp->req_stamp);
 		gp->rx_rtt = gh->server_rtt + gp->relay_rtt;
-		gmtp_print_debug("Relay RTT: %u ms",
-				jiffies_to_msecs(gp->relay_rtt));
+		gmtp_pr_debug("Relay RTT: %u ms", gp->relay_rtt);
 
 		/*
 		 *    Step 10: Process REQUEST state (second part)
@@ -390,7 +389,7 @@ static int gmtp_rcv_request_rcv_state_process(struct sock *sk,
 						   const unsigned int len)
 {
 	struct inet_connection_sock *icsk = inet_csk(sk);
-	unsigned long elapsed = 0;
+	__u32 elapsed = 0;
 	int queued = 0;
 
 	gmtp_print_function();
@@ -406,8 +405,8 @@ static int gmtp_rcv_request_rcv_state_process(struct sock *sk,
 	case GMTP_PKT_ROUTE_NOTIFY:
 	case GMTP_PKT_DATAACK:
 	case GMTP_PKT_ACK:
-		elapsed = jiffies - gmtp_sk(sk)->reply_stamp;
-		gmtp_sk(sk)->tx_rtt = jiffies_to_msecs(elapsed);
+		elapsed = jiffies_to_msecs(jiffies) - gmtp_sk(sk)->reply_stamp;
+		gmtp_sk(sk)->tx_rtt = elapsed;
 		gmtp_print_debug("RTT: %u ms", gmtp_sk(sk)->tx_rtt);
 
 		inet_csk_clear_xmit_timer(sk, ICSK_TIME_DACK);

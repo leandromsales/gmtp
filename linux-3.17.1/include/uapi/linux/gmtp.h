@@ -91,7 +91,7 @@ struct gmtp_hdr {
  * @tstamp: time stamp of sent data packet
  */
 struct gmtp_hdr_data {
-	__u64 tstamp;
+	__be32 tstamp;
 };
 
 /**
@@ -107,6 +107,14 @@ enum gmtp_ack_codes {
 	GMTP_ACK_REQUESTNOTIFY,
 	GMTP_ACK_MAX_CODES
 };
+
+/**
+ * struct gmtp_hdr_feedback - Data packets
+ * @tstamp: time stamp of received data packet
+ */
+/*struct gmtp_hdr_feedback {
+	__be32 rx_tstamp;
+};*/
 
 /**
  * struct gmtp_hdr_reset - Unconditionally shut down a connection
@@ -233,6 +241,9 @@ static inline unsigned int gmtp_packet_hdr_variable_len(const __u8 type)
 	case GMTP_PKT_DATAACK:
 		len = sizeof(struct gmtp_hdr_data) + sizeof(struct gmtp_hdr_ack);
 		break;
+/*	case GMTP_PKT_FEEDBACK:
+		len = sizeof(struct gmtp_hdr_feedback);
+		break;*/
 	case GMTP_PKT_REGISTER_REPLY:
 		len = sizeof(struct gmtp_hdr_register_reply);
 		break;
