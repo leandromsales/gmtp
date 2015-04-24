@@ -16,13 +16,15 @@
 #include "../gmtp/gmtp.h"
 
 struct gmtp_intra {
-	unsigned char mcst[4];
-
+	unsigned long seq;
 	unsigned int npackets;
 	unsigned int nbytes;
-
 	unsigned int current_tx;
-	__u64 seq;
+
+	unsigned char mcst[4];
+
+	struct sk_buff_head *buffer;
+	unsigned int buffer_size;
 };
 
 extern struct gmtp_intra gmtp;
@@ -31,19 +33,19 @@ extern struct gmtp_intra gmtp;
 #define H_USER 1024
 
 struct gmtp_relay_entry {
-    __u8 flowname[GMTP_FLOWNAME_LEN];
-    __be32 server_addr;
-    __be32 *relay;
-    __be16 media_port;
-    __be32 channel_addr;
-    __be16 channel_port;
-    __u8 state:1;
-    struct gmtp_relay_entry *next;
+	__u8 flowname[GMTP_FLOWNAME_LEN];
+	__be32 server_addr;
+	__be32 *relay;
+	__be16 media_port;
+	__be32 channel_addr;
+	__be16 channel_port;
+	__u8 state :1;
+	struct gmtp_relay_entry *next;
 };
 
 struct gmtp_intra_hashtable {
-    int size;
-    struct gmtp_relay_entry **table;
+	int size;
+	struct gmtp_relay_entry **table;
 };
 
 enum {
@@ -108,7 +110,7 @@ static const inline __be32 gmtp_intra_relay_ip(void)
 static inline void print_packet(struct iphdr *iph, bool in)
 {
 	const char *type = in ? "IN" : "OUT";
-	pr_info("%s: %llu | Src=%pI4 | Dst=%pI4 | Proto: %d | "
+	pr_info("%s: %lu | Src=%pI4 | Dst=%pI4 | Proto: %d | "
 			"Len: %d bytes\n",
 			type,
 			gmtp.seq,
@@ -122,12 +124,13 @@ static inline void print_gmtp_packet(struct iphdr *iph, struct gmtp_hdr *gh)
 {
 	__u8 flowname[GMTP_FLOWNAME_STR_LEN];
 	flowname_str(flowname, gh->flowname);
-	pr_info("%s (%d) src=%pI4@%-5d dst=%pI4@%-5d server_rtt=%u "
-			" transm_r=%u flow=%s\n",
+	pr_info("%s (%d) src=%pI4@%-5d dst=%pI4@%-5d seq=%u rtt=%u ms "
+			" tx=%u flow=%s\n",
 				gmtp_packet_name(gh->type),
 				gh->type,
 				&iph->saddr, ntohs(gh->sport),
 				&iph->daddr, ntohs(gh->dport),
+				gh->seq,
 				gh->server_rtt,
 				gh->transm_r,
 				flowname);

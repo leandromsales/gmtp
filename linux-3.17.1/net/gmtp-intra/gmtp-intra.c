@@ -368,8 +368,33 @@ int gmtp_intra_data_rcv(struct sk_buff *skb)
 
 	iph->daddr = flow_info->channel_addr;
 	ip_send_check(iph);
-
 	gh->dport = flow_info->channel_port;
+
+	/*skb_queue_tail(gmtp.buffer, skb_copy(skb, GFP_ATOMIC));
+
+	pr_info("qlen: %u\n", gmtp.buffer->qlen);
+	pr_info("skb (%s): %p\n", skb->dev->name, skb);
+
+	if(gmtp.buffer->qlen >= 5) {
+		int i;
+		for(i=0; i<gmtp.data_buffer->qlen; ++i) {
+
+			struct sk_buff *buf_skb = skb_dequeue(gmtp.buffer);
+
+			struct gmtp_hdr *gh2 = gmtp_hdr(buf_skb);
+			struct iphdr *iph2 = ip_hdr(buf_skb);
+
+			iph2->daddr = flow_info->channel_addr;
+			ip_send_check(iph2);
+			gh2->dport = flow_info->channel_port;
+
+			pr_info("buf_skb (%s): %p\n", buf_skb->dev->name, buf_skb);
+			print_gmtp_packet(iph2, gh2);
+			gmtp_intra_build_and_send_pkt(buf_skb, iph2->saddr,
+					iph2->daddr, gh2, 0);
+		}
+
+	}*/
 
 out:
 	return ret;
@@ -441,8 +466,8 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 
 		switch(gh->type) {
 		case GMTP_PKT_DATA:
-			/* Artificial loss (only for tests) */
-			/*if(gh->seq % 2)
+			/* Artificial loss (only for tests)
+			if(gh->seq % 2)
 				return NF_DROP;*/
 
 			ret = gmtp_intra_data_rcv(skb);
@@ -470,6 +495,9 @@ int init_module()
 	gmtp.nbytes = 0;
 	gmtp.current_tx = 1;
 	gmtp.seq = 0;
+	gmtp.buffer = kmalloc(sizeof(struct sk_buff_head), GFP_ATOMIC);
+	skb_queue_head_init(gmtp.buffer);
+	gmtp.buffer_size = 0;
 
 	relay_hashtable = gmtp_intra_create_hashtable(64);
 	if(relay_hashtable == NULL) {
@@ -497,6 +525,8 @@ out:
 void cleanup_module()
 {
 	gmtp_print_debug("Finishing GMTP-Intra");
+
+	skb_queue_purge(gmtp.buffer);
 
 	kfree_gmtp_intra_hashtable(relay_hashtable);
 
