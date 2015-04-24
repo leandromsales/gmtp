@@ -8,6 +8,13 @@
 #include <linux/skbuff.h>
 #include <linux/ip.h>
 
+#include <linux/if.h>
+#include <linux/ioctl.h>
+
+#include <linux/inet.h>
+#include <linux/dirent.h>
+#include <linux/inetdevice.h>
+
 #include <net/ip.h>
 #include <net/sock.h>
 #include <net/sch_generic.h>
@@ -19,13 +26,6 @@
 #include "../gmtp/gmtp.h"
 
 #include "gmtp-intra.h"
-#include <linux/if.h>
-#include <linux/ioctl.h>
-
-#include <linux/inet.h>
-#include <linux/dirent.h>
-#include <linux/inetdevice.h>
-
 
 extern const char *gmtp_packet_name(const int);
 extern const char *gmtp_state_name(const int);
@@ -34,37 +34,10 @@ extern void flowname_str(__u8* str, const __u8* flowname);
 static struct nf_hook_ops nfho_in;
 static struct nf_hook_ops nfho_out;
 
+struct gmtp_intra gmtp;
+
 struct gmtp_intra_hashtable* relay_hashtable;
 EXPORT_SYMBOL_GPL(relay_hashtable);
-
-unsigned char mcst_l0 = 0;
-unsigned char mcst_l1 = 0;
-unsigned char mcst_l2 = 0;
-unsigned char mcst_l3 = 0;
-
-/*
- * @npackets: Total of packets currently in router
- * @nbytes: Total of currently bytes in router
- */
-unsigned int npackets = 0;
-unsigned int nbytes = 0;
-
-unsigned int current_tx = 1;
-/*Function to read device information*/
-
-/* FIXME Make the real Relay ID */
-/*static const inline __u8 *gmtp_intra_relay_id(void)
-{
-	return "777777777777777777777";
-}*/
-
-/* FIXME Make the real Relay IP */
-/*static const inline __be32 gmtp_intra_relay_ip(void)
-{
-     // 192.168.2.1
-	unsigned char *ip = "\xc0\xa8\x02\x01";
-	return *(unsigned int *)ip;
-}*/
 
 void gmtp_intra_relay_get_devices (int option)
 {
@@ -135,22 +108,23 @@ __be32 gmtp_intra_relay_ip()
 	return *(unsigned int *)ip;
 
 }
+
 static inline void increase_stats(struct iphdr *iph)
 {
-	seq++;
-	npackets++;
-	nbytes += ntohs(iph->tot_len);
+	gmtp.seq++;
+	gmtp.npackets++;
+	gmtp.nbytes += ntohs(iph->tot_len);
 }
 
 static inline void decrease_stats(struct iphdr *iph)
 {
-	if(npackets > 0)
-		npackets--;
+	if(gmtp.npackets > 0)
+		gmtp.npackets--;
 
-	if(nbytes <= ntohs(iph->tot_len))
-		nbytes = 0;
+	if(gmtp.nbytes <= ntohs(iph->tot_len))
+		gmtp.nbytes = 0;
 	else
-		nbytes -= ntohs(iph->tot_len);
+		gmtp.nbytes -= ntohs(iph->tot_len);
 }
 
 __be32 get_mcst_v4_addr(void)
@@ -168,32 +142,32 @@ __be32 get_mcst_v4_addr(void)
 
 	memcpy(channel, base_channel, 4 * sizeof(unsigned char));
 
-	channel[3] += mcst_l3++;
+	channel[3] += gmtp.mcst[3]++;
 
 	/**
 	 * From: base_channel (224. 0 . 0 . 1 )
 	 * to:   max_channel  (239.255.255.255)
 	 *                     L0  L1  L2  L3
 	 */
-	if(mcst_l3 > 254) {  /* L3 starts with 1 */
-		mcst_l3 = 0;
-		mcst_l2++;
+	if(gmtp.mcst[3] > 254) {  /* L3 starts with 1 */
+		gmtp.mcst[3] = 0;
+		gmtp.mcst[2]++;
 	}
-	if(mcst_l2 > 255) {
-		mcst_l2 = 0;
-		mcst_l1++;
+	if(gmtp.mcst[2] > 255) {
+		gmtp.mcst[2] = 0;
+		gmtp.mcst[1]++;
 	}
-	if(mcst_l1 > 255) {
-		mcst_l1 = 0;
-		mcst_l0++;
+	if(gmtp.mcst[1] > 255) {
+		gmtp.mcst[1] = 0;
+		gmtp.mcst[0]++;
 	}
-	if(mcst_l0 > 15) {  /* 239 - 224 */
+	if(gmtp.mcst[0] > 15) {  /* 239 - 224 */
 		gmtp_print_error("Cannot assign requested multicast address");
 		return -EADDRNOTAVAIL;
 	}
-	channel[2] += mcst_l2;
-	channel[1] += mcst_l1;
-	channel[0] += mcst_l0;
+	channel[2] += gmtp.mcst[2];
+	channel[1] += gmtp.mcst[1];
+	channel[0] += gmtp.mcst[0];
 
 	mcst_addr = *(unsigned int *)channel;
 	gmtp_print_debug("Channel addr: %pI4", &mcst_addr);
@@ -459,8 +433,6 @@ int gmtp_intra_data_rcv(struct sk_buff *skb)
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_relay_entry *flow_info;
-	unsigned char *data, *data_str;
-	unsigned int data_len;
 
 	/*gmtp_print_function();*/
 
@@ -474,24 +446,35 @@ int gmtp_intra_data_rcv(struct sk_buff *skb)
 		goto out;
 	}
 
-	/** FIXME Just to print data... Remove it later */
-	data = skb_transport_header(skb) + gmtp_hdr_len(skb);
-	if(data == NULL) {
-		ret = NF_DROP;
-		goto out;
-	}
-	/*
-	data_len = ntohs(iph->tot_len) - (iph->ihl + gh->hdrlen) - 15;
-	data_str = kmalloc(data_len + 1, GFP_KERNEL);
-	memcpy(data_str, data, data_len);
-	data_str[data_len] = (unsigned char)'\0';
-	gmtp_print_debug("Data: %s", data_str);
-	*/
-
 	iph->daddr = flow_info->channel_addr;
 	ip_send_check(iph);
-
 	gh->dport = flow_info->channel_port;
+
+	/*skb_queue_tail(gmtp.buffer, skb_copy(skb, GFP_ATOMIC));
+
+	pr_info("qlen: %u\n", gmtp.buffer->qlen);
+	pr_info("skb (%s): %p\n", skb->dev->name, skb);
+
+	if(gmtp.buffer->qlen >= 5) {
+		int i;
+		for(i=0; i<gmtp.data_buffer->qlen; ++i) {
+
+			struct sk_buff *buf_skb = skb_dequeue(gmtp.buffer);
+
+			struct gmtp_hdr *gh2 = gmtp_hdr(buf_skb);
+			struct iphdr *iph2 = ip_hdr(buf_skb);
+
+			iph2->daddr = flow_info->channel_addr;
+			ip_send_check(iph2);
+			gh2->dport = flow_info->channel_port;
+
+			pr_info("buf_skb (%s): %p\n", buf_skb->dev->name, buf_skb);
+			print_gmtp_packet(iph2, gh2);
+			gmtp_intra_build_and_send_pkt(buf_skb, iph2->saddr,
+					iph2->daddr, gh2, 0);
+		}
+
+	}*/
 
 out:
 	return ret;
@@ -563,8 +546,8 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 
 		switch(gh->type) {
 		case GMTP_PKT_DATA:
-			/* Artificial loss (only for tests) */
-			/*if(gh->seq % 2)
+			/* Artificial loss (only for tests)
+			if(gh->seq % 2)
 				return NF_DROP;*/
 
 			ret = gmtp_intra_data_rcv(skb);
@@ -586,6 +569,15 @@ int init_module()
 	int ret = 0;
 	gmtp_print_function();
 	gmtp_print_debug("Starting GMTP-Intra");
+
+	memset(&gmtp.mcst, 0, 4*sizeof(unsigned char));
+	gmtp.npackets = 0;
+	gmtp.nbytes = 0;
+	gmtp.current_tx = 1;
+	gmtp.seq = 0;
+	gmtp.buffer = kmalloc(sizeof(struct sk_buff_head), GFP_ATOMIC);
+	skb_queue_head_init(gmtp.buffer);
+	gmtp.buffer_size = 0;
 
 	relay_hashtable = gmtp_intra_create_hashtable(64);
 	if(relay_hashtable == NULL) {
@@ -613,6 +605,8 @@ out:
 void cleanup_module()
 {
 	gmtp_print_debug("Finishing GMTP-Intra");
+
+	skb_queue_purge(gmtp.buffer);
 
 	kfree_gmtp_intra_hashtable(relay_hashtable);
 

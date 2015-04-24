@@ -328,7 +328,7 @@ static int gmtp_v4_send_register_reply(struct sock *sk,
 	skb = gmtp_make_register_reply(sk, dst, req);
 	if (skb != NULL) {
 		const struct inet_request_sock *ireq = inet_rsk(req);
-		gmtp_sk(sk)->reply_stamp = jiffies;
+		gmtp_sk(sk)->reply_stamp = jiffies_to_msecs(jiffies);
 
 		err = ip_build_and_send_pkt(skb, sk, ireq->ir_loc_addr,
 				ireq->ir_rmt_addr, ireq->opt);

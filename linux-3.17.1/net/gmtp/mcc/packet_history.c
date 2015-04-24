@@ -41,54 +41,6 @@
 #include "../gmtp.h"
 
 /*
- * Transmitter History Routines
- */
-static struct kmem_cache *tfrc_tx_hist_slab;
-
-int __init mcc_tx_packet_history_init(void)
-{
-	tfrc_tx_hist_slab = kmem_cache_create("mcc_tx_hist",
-					      sizeof(struct mcc_tx_hist_entry),
-					      0, SLAB_HWCACHE_ALIGN, NULL);
-	return tfrc_tx_hist_slab == NULL ? -ENOBUFS : 0;
-}
-
-void mcc_tx_packet_history_exit(void)
-{
-	if (tfrc_tx_hist_slab != NULL) {
-		kmem_cache_destroy(tfrc_tx_hist_slab);
-		tfrc_tx_hist_slab = NULL;
-	}
-}
-
-int mcc_tx_hist_add(struct mcc_tx_hist_entry **headp, __be32 seqno)
-{
-	struct mcc_tx_hist_entry *entry = kmem_cache_alloc(tfrc_tx_hist_slab, gfp_any());
-
-	if (entry == NULL)
-		return -ENOBUFS;
-	entry->seqno = seqno;
-	entry->stamp = ktime_get_real();
-	entry->next  = *headp;
-	*headp	     = entry;
-	return 0;
-}
-
-void mcc_tx_hist_purge(struct mcc_tx_hist_entry **headp)
-{
-	struct mcc_tx_hist_entry *head = *headp;
-
-	while (head != NULL) {
-		struct mcc_tx_hist_entry *next = head->next;
-
-		kmem_cache_free(tfrc_tx_hist_slab, head);
-		head = next;
-	}
-
-	*headp = NULL;
-}
-
-/*
  *	Receiver History Routines
  */
 static struct kmem_cache *tfrc_rx_hist_slab;

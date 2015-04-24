@@ -213,6 +213,7 @@ void gmtp_intra_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
 {
 	struct net_device *dev = skb_src->dev;
 	struct ethhdr *eth_src = eth_hdr(skb_src);
+	int err = 0;
 
 	struct sk_buff *skb = alloc_skb(gh_ref->hdrlen, GFP_ATOMIC);
 	struct iphdr *iph;
@@ -220,7 +221,7 @@ void gmtp_intra_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
 	struct ethhdr *eth;
 	int total_len, ip_len, gmtp_len;
 
-	gmtp_print_function();
+	gmtp_pr_func();
 
 	if(eth_src == NULL) {
 		gmtp_print_warning("eth_src is NULL!");
@@ -272,14 +273,9 @@ void gmtp_intra_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
 
 	skb->dev = dev;
 
-	/* Send it out. */
-	pr_info("");
-	gmtp_print_debug("dev_queue_xmit(skb): Src=%pI4 | Dst=%pI4 | "
-			"Proto: %d | Len: %d bytes",
-			&iph->saddr,
-			&iph->daddr,
-			iph->protocol,
-			ntohs(iph->tot_len));
+	err = dev_queue_xmit(skb);
 
-	dev_queue_xmit(skb);
+	if(err) {
+		gmtp_pr_error("Error %d trying send packet (%p)", err, skb);
+	}
 }

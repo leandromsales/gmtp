@@ -18,23 +18,14 @@ int __init mcc_lib_init(void)
 
 	mcc_pr_debug("Starting GMTP-MCC");
 
+	rc = mcc_rx_packet_history_init();
 	if (rc)
 		goto out;
 
-	rc = mcc_tx_packet_history_init();
-	if (rc)
-		goto out_free_loss_intervals;
-
-	rc = mcc_rx_packet_history_init();
-	if (rc)
-		goto out_free_tx_history;
 	return 0;
 
-out_free_tx_history:
-	mcc_tx_packet_history_exit();
-out_free_loss_intervals:
-	mcc_li_exit();
 out:
+	mcc_li_exit();
 	return rc;
 }
 
@@ -42,7 +33,6 @@ void mcc_lib_exit(void)
 {
 	mcc_pr_debug("Finishing GMTP-MCC");
 	mcc_rx_packet_history_exit();
-	mcc_tx_packet_history_exit();
 	mcc_li_exit();
 }
 
