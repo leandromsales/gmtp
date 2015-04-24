@@ -213,13 +213,15 @@ void gmtp_intra_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
 {
 	struct net_device *dev = skb_src->dev;
 	struct ethhdr *eth_src = eth_hdr(skb_src);
-	int err = 0;
+	__u8* data_src = skb_transport_header(skb_src) + gmtp_hdr_len(skb_src);
+	__u32 data_len = (__u32)(skb_tail_pointer(skb_src) - data_src);
 
 	struct sk_buff *skb = alloc_skb(gh_ref->hdrlen, GFP_ATOMIC);
+	struct ethhdr *eth;
 	struct iphdr *iph;
 	struct gmtp_hdr *gh;
-	struct ethhdr *eth;
 	int total_len, ip_len, gmtp_len;
+	int err = 0;
 
 	gmtp_pr_func();
 
@@ -235,9 +237,16 @@ void gmtp_intra_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
 
 	gmtp_len = gh_ref->hdrlen;
 	ip_len = gmtp_len + sizeof(*iph);
-	total_len = ip_len + LL_RESERVED_SPACE(dev);
+	total_len = data_len + ip_len + LL_RESERVED_SPACE(dev);
 
 	skb_reserve(skb, total_len);
+
+	/* Build data */
+	gmtp_pr_info("data_len: %d", data_len);
+	if(data_len > 0) {
+		__u8 *data = skb_push(skb, data_len);
+		memcpy(data, data_src, data_len);
+	}
 
 	/* Build GMTP header */
 	skb_push(skb, gh_ref->hdrlen);
@@ -278,4 +287,56 @@ void gmtp_intra_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
 	if(err) {
 		gmtp_pr_error("Error %d trying send packet (%p)", err, skb);
 	}
+}
+
+
+/**
+ * begin
+ * P = p.flowname
+ * If P != NULL:
+ *     p.dest_address = get_multicast_channel(P)
+ *     p.port = get_multicast_port(P)
+ *     send(P)
+ */
+int gmtp_intra_data_out(struct sk_buff *skb)
+{
+	struct iphdr *iph;
+	struct gmtp_hdr *gh;
+	struct gmtp_relay_entry *flow_info;
+
+	struct sk_buff *buf_skb = skb_dequeue(gmtp.buffer);
+
+	if(buf_skb == NULL) {
+		gmtp_pr_warning("buf_skb: %p", buf_skb);
+		return NF_ACCEPT;
+	}
+
+	gh = gmtp_hdr(buf_skb);
+	iph = ip_hdr(buf_skb);
+
+	/**
+	 * FIXME If destiny is not me, just let it go!
+	 */
+	flow_info = gmtp_intra_lookup_media(relay_hashtable, gh->flowname);
+	if(flow_info == NULL) {
+		gmtp_print_warning("Failed to lookup media info in table...");
+		return NF_DROP;
+	}
+
+	if(iph->daddr == flow_info->channel_addr)
+		return NF_ACCEPT;
+
+	iph->daddr = flow_info->channel_addr;
+	ip_send_check(iph);
+	gh->dport = flow_info->channel_port;
+
+	skb = buf_skb;
+
+	pr_info("[WENDELL] skb: %p\n", skb);
+	pr_info("[WENDELL] buf_skb: %p\n", buf_skb);
+	pr_info("[WENDELL] comp: %d:\n", (skb == buf_skb));
+
+	print_packet(iph, false);
+
+	return NF_REPEAT;
 }

@@ -66,11 +66,15 @@ struct gmtp_relay_entry *gmtp_intra_del_entry(struct gmtp_intra_hashtable *hasht
 void kfree_gmtp_intra_hashtable(struct gmtp_intra_hashtable *hashtable);
 
 /** gmtp-intra.c */
-__be32 get_mcst_addr(void);
+__be32 get_mcst_v4_addr(void);
+
+/** input.c */
 int gmtp_intra_request_rcv(struct sk_buff *skb);
 int gmtp_intra_register_reply_rcv(struct sk_buff *skb);
 int gmtp_intra_ack_rcv(struct sk_buff *skb);
 int gmtp_intra_data_rcv(struct sk_buff *skb);
+int gmtp_intra_feedback_rcv(struct sk_buff *skb);
+int gmtp_intra_close_rcv(struct sk_buff *skb);
 
 /** Output.c */
 void gmtp_intra_add_relayid(struct sk_buff *skb);
@@ -84,6 +88,8 @@ int gmtp_intra_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
 
 void gmtp_intra_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
 		__be32 daddr, struct gmtp_hdr *gh_ref, bool backward);
+
+int gmtp_intra_data_out(struct sk_buff *skb);
 
 /** gmtp-ucc. */
 unsigned int gmtp_rtt_average(void);
@@ -134,6 +140,20 @@ static inline void print_gmtp_packet(struct iphdr *iph, struct gmtp_hdr *gh)
 				gh->server_rtt,
 				gh->transm_r,
 				flowname);
+}
+
+static inline void print_gmtp_data(struct sk_buff *skb, char* label)
+{
+	__u8* data = skb_transport_header(skb) + gmtp_hdr_len(skb);
+	__u32 data_len = (__u32)(skb_tail_pointer(skb) - data);
+
+	if(data_len > 0) {
+		char *lb = label != NULL ? label : "Data";
+		unsigned char *data_str = kmalloc(data_len+1, GFP_KERNEL);
+		memcpy(data_str, data, data_len);
+		data_str[data_len] = '\0';
+		pr_info("%s: %s\n", lb, data_str);
+	}
 }
 
 #endif /* GMTP_INTRA_H_ */
