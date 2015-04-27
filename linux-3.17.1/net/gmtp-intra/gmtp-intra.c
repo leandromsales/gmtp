@@ -29,25 +29,16 @@ struct gmtp_intra gmtp;
 struct gmtp_intra_hashtable* relay_hashtable;
 EXPORT_SYMBOL_GPL(relay_hashtable);
 
-static inline void increase_stats(struct iphdr *iph)
+static inline void gmtp_update_stats(struct sk_buff *skb, struct gmtp_hdr *gh)
 {
-	gmtp.seq++;
-	gmtp.npackets++;
-	gmtp.nbytes += ntohs(iph->tot_len);
+	if(gmtp.iseq == 0)
+		gmtp.iseq = gh->seq;
+	if(gh->seq > gmtp.seq)
+		gmtp.seq = gh->seq;
+	gmtp.nbytes += skb->len;
 }
 
-static inline void decrease_stats(struct iphdr *iph)
-{
-	if(gmtp.npackets > 0)
-		gmtp.npackets--;
-
-	if(gmtp.nbytes <= ntohs(iph->tot_len))
-		gmtp.nbytes = 0;
-	else
-		gmtp.nbytes -= ntohs(iph->tot_len);
-}
-
-__be32 get_mcst_v4_addr(void)
+__be32 get_mcst_v4_addr()
 {
 	__be32 mcst_addr;
 	unsigned char *base_channel = "\xe0\x00\x00\x01"; /* 224.0.0.1 */
@@ -95,6 +86,19 @@ __be32 get_mcst_v4_addr(void)
 }
 EXPORT_SYMBOL_GPL(get_mcst_v4_addr);
 
+void gmtp_buffer_add(struct sk_buff *newsk)
+{
+	skb_queue_tail(gmtp.buffer, skb_copy(newsk, GFP_ATOMIC));
+	gmtp.buffer_size += newsk->len;
+}
+
+struct sk_buff *gmtp_buffer_dequeue()
+{
+	struct sk_buff *skb = skb_dequeue(gmtp.buffer);
+	if(skb != NULL)
+		gmtp.buffer_size -= skb->len;
+	return skb;
+}
 
 unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 		const struct net_device *in, const struct net_device *out,
@@ -105,9 +109,7 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 	struct gmtp_hdr *gh;
 
 	if(in == NULL)
-		goto out;
-
-	increase_stats(iph);
+		goto exit;
 
 	if(iph->protocol == IPPROTO_GMTP) {
 
@@ -144,9 +146,11 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 			ret = gmtp_intra_close_rcv(skb);
 			break;
 		}
+
+		gmtp_update_stats(iph, gh);
 	}
 
-out:
+exit:
 	return ret;
 }
 
@@ -159,9 +163,7 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 	struct gmtp_hdr *gh;
 
 	if(out == NULL)
-		goto out;
-
-	decrease_stats(iph);
+		goto exit;
 
 	if(iph->protocol == IPPROTO_GMTP) {
 
@@ -179,7 +181,7 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 
 	}
 
-out:
+exit:
 	return ret;
 }
 
@@ -189,11 +191,11 @@ int init_module()
 	gmtp_print_function();
 	gmtp_print_debug("Starting GMTP-Intra");
 
-	memset(&gmtp.mcst, 0, 4*sizeof(unsigned char));
-	gmtp.npackets = 0;
+	gmtp.iseq = 0;
+	gmtp.seq = 0;
 	gmtp.nbytes = 0;
 	gmtp.current_tx = 1;
-	gmtp.seq = 0;
+	memset(&gmtp.mcst, 0, 4*sizeof(unsigned char));
 	gmtp.buffer = kmalloc(sizeof(struct sk_buff_head), GFP_ATOMIC);
 	skb_queue_head_init(gmtp.buffer);
 	gmtp.buffer_size = 0;

@@ -15,16 +15,29 @@
 #include <uapi/linux/gmtp.h>
 #include "../gmtp/gmtp.h"
 
+/**
+ * struct gmtp_intra: GMTP-Intra state variables
+ *
+ * @seq: received packets sequence number
+ * @npackets: number of received packets
+ * @nbytes: amount of received bytes
+ * @current_tx: ?
+ * @mcst: control of granted multicast addresses
+ * @buffer: buffer of GMTP-Data packets
+ * @buffer_size: size (in bytes) of GMTP-Data buffer.
+ * @buffer_len: number of packets in GMTP-Data buffer
+ */
 struct gmtp_intra {
-	unsigned long seq;
-	unsigned int npackets;
-	unsigned int nbytes;
-	unsigned int current_tx;
+	unsigned int		iseq;
+	unsigned int 		seq;
+	unsigned int 		nbytes;
+	unsigned int 		current_tx;
 
-	unsigned char mcst[4];
+	unsigned char		mcst[4];
 
-	struct sk_buff_head *buffer;
-	unsigned int buffer_size;
+	struct sk_buff_head 	*buffer;
+	unsigned int 		buffer_size;
+#define buffer_len 		buffer->qlen
 };
 
 extern struct gmtp_intra gmtp;
@@ -32,6 +45,19 @@ extern struct gmtp_intra gmtp;
 #define GMTP_HASH_SIZE  16
 #define H_USER 1024
 
+/**
+ * struct gmtp_relay_entry: entry in GMTP-Intra Relay Table
+ *
+ * @flowname: Name of dataflow
+ * @server_addr: IP address of media server
+ * @relay: list of relays
+ * @media_port: port of media at server
+ * @channel_addr: IP address of media multicast channel
+ * @channel_port: Port of media multicast channel
+ * @state: state of media transmission
+ *
+ * @next: pointer to next gmtp_relay_entry
+ */
 struct gmtp_relay_entry {
 	__u8 flowname[GMTP_FLOWNAME_LEN];
 	__be32 server_addr;
@@ -43,6 +69,9 @@ struct gmtp_relay_entry {
 	struct gmtp_relay_entry *next;
 };
 
+/*
+ * struct gmtp_intra_hashtable: GMTP-Intra Relay Table
+ */
 struct gmtp_intra_hashtable {
 	int size;
 	struct gmtp_relay_entry **table;
@@ -67,6 +96,9 @@ void kfree_gmtp_intra_hashtable(struct gmtp_intra_hashtable *hashtable);
 
 /** gmtp-intra.c */
 __be32 get_mcst_v4_addr(void);
+void gmtp_buffer_add(struct sk_buff *newsk);
+struct sk_buff *gmtp_buffer_dequeue(void);
+
 
 /** input.c */
 int gmtp_intra_request_rcv(struct sk_buff *skb);
@@ -112,20 +144,22 @@ static const inline __be32 gmtp_intra_relay_ip(void)
 	return *(unsigned int *)ip;
 }
 
-/** Printers **/
+/*
+ * Print IP packet basic information
+ */
 static inline void print_packet(struct iphdr *iph, bool in)
 {
 	const char *type = in ? "IN" : "OUT";
-	pr_info("%s: %lu | Src=%pI4 | Dst=%pI4 | Proto: %d | "
-			"Len: %d bytes\n",
+	pr_info("%s: Src=%pI4 | Dst=%pI4 | Proto: %d | Len: %d bytes\n",
 			type,
-			gmtp.seq,
-			&iph->saddr,
-			&iph->daddr,
+			&iph->saddr, &iph->daddr,
 			iph->protocol,
 			ntohs(iph->tot_len));
 }
 
+/*
+ * Print GMTP packet basic information
+ */
 static inline void print_gmtp_packet(struct iphdr *iph, struct gmtp_hdr *gh)
 {
 	__u8 flowname[GMTP_FLOWNAME_STR_LEN];
@@ -142,10 +176,13 @@ static inline void print_gmtp_packet(struct iphdr *iph, struct gmtp_hdr *gh)
 				flowname);
 }
 
+/*
+ * Print Data of GMTP-Data packets
+ */
 static inline void print_gmtp_data(struct sk_buff *skb, char* label)
 {
-	__u8* data = skb_transport_header(skb) + gmtp_hdr_len(skb);
-	__u32 data_len = (__u32)(skb_tail_pointer(skb) - data);
+	__u8* data = gmtp_data(skb);
+	__u32 data_len = gmtp_data_len(skb);
 
 	if(data_len > 0) {
 		char *lb = label != NULL ? label : "Data";

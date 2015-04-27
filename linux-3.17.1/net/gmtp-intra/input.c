@@ -262,7 +262,6 @@ int gmtp_intra_close_rcv(struct sk_buff *skb)
 int gmtp_intra_data_rcv(struct sk_buff *skb)
 {
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
-	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_relay_entry *flow_info;
 
 	/**
@@ -274,7 +273,11 @@ int gmtp_intra_data_rcv(struct sk_buff *skb)
 		return NF_DROP;
 	}
 
-	skb_queue_tail(gmtp.buffer, skb_copy(skb, GFP_ATOMIC));
+	pr_info("IN (%u) - %s\n", gh->seq, skb->dev->name);
+
+	/* Dont add repeated packets */
+	if(gh->seq > gmtp.seq)
+		gmtp_buffer_add(skb);
 
 	return NF_ACCEPT;
 }

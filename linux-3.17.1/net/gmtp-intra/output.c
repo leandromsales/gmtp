@@ -284,11 +284,33 @@ void gmtp_intra_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
 
 	err = dev_queue_xmit(skb);
 
-	if(err) {
+	if(err)
 		gmtp_pr_error("Error %d trying send packet (%p)", err, skb);
-	}
 }
 
+void gmtp_copy_hdr(struct sk_buff *skb, struct sk_buff *src_skb)
+{
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct gmtp_hdr *gh_src = gmtp_hdr(src_skb);
+
+	if(gh->type == gh_src->type)
+		memcpy(gh, gh_src, gh_src->hdrlen);
+}
+
+void gmtp_copy_data(struct sk_buff *skb, struct sk_buff *src_skb)
+{
+	__u8* data = gmtp_data(skb);
+	__u32 data_len = gmtp_data_len(skb);
+
+	__u8* data_src = gmtp_data(src_skb);
+	__u32 data_src_len = gmtp_data_len(src_skb);
+
+	if(data_src_len > 0) {
+		skb_trim(skb, data_len);
+		data = skb_put(skb, data_src_len);
+		memcpy(data, data_src, data_src_len);
+	}
+}
 
 /**
  * begin
@@ -304,15 +326,18 @@ int gmtp_intra_data_out(struct sk_buff *skb)
 	struct gmtp_hdr *gh;
 	struct gmtp_relay_entry *flow_info;
 
-	struct sk_buff *buf_skb = skb_dequeue(gmtp.buffer);
+	struct sk_buff *skbuff = gmtp_buffer_dequeue();
 
-	if(buf_skb == NULL) {
-		gmtp_pr_warning("buf_skb: %p", buf_skb);
-		return NF_ACCEPT;
+	gh = gmtp_hdr(skb);
+	iph = ip_hdr(skb);
+
+	pr_info("OUT (%u) - %s\n", gh->seq, skb->dev->name);
+	if(skbuff != NULL) {
+		pr_info("Buffer: OUT (%u) - %s\n", gmtp_hdr(skbuff)->seq,
+				skbuff->dev->name);
+		gmtp_copy_hdr();
+		gmtp_copy_data(skb, skbuff);
 	}
-
-	gh = gmtp_hdr(buf_skb);
-	iph = ip_hdr(buf_skb);
 
 	/**
 	 * FIXME If destiny is not me, just let it go!
@@ -330,13 +355,8 @@ int gmtp_intra_data_out(struct sk_buff *skb)
 	ip_send_check(iph);
 	gh->dport = flow_info->channel_port;
 
-	skb = buf_skb;
+	pr_info("[WENDELL] buffer.len: %u, buffer.size: %u\n",
+			gmtp.buffer_len, gmtp.buffer_size);
 
-	pr_info("[WENDELL] skb: %p\n", skb);
-	pr_info("[WENDELL] buf_skb: %p\n", buf_skb);
-	pr_info("[WENDELL] comp: %d:\n", (skb == buf_skb));
-
-	print_packet(iph, false);
-
-	return NF_REPEAT;
+	return NF_ACCEPT;
 }
