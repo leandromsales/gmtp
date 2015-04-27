@@ -238,7 +238,10 @@ int gmtp_intra_feedback_rcv(struct sk_buff *skb)
 	return ret;
 }
 
-/* Treat close from servers */
+/*
+ * FIXME Send close to multicast and delete entry later...
+ * Treat close from servers
+ */
 int gmtp_intra_close_rcv(struct sk_buff *skb)
 {
 	int ret = NF_ACCEPT;

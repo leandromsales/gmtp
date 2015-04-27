@@ -213,8 +213,6 @@ void gmtp_intra_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
 {
 	struct net_device *dev = skb_src->dev;
 	struct ethhdr *eth_src = eth_hdr(skb_src);
-	__u8* data_src = skb_transport_header(skb_src) + gmtp_hdr_len(skb_src);
-	__u32 data_len = (__u32)(skb_tail_pointer(skb_src) - data_src);
 
 	struct sk_buff *skb = alloc_skb(gh_ref->hdrlen, GFP_ATOMIC);
 	struct ethhdr *eth;
@@ -237,16 +235,9 @@ void gmtp_intra_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
 
 	gmtp_len = gh_ref->hdrlen;
 	ip_len = gmtp_len + sizeof(*iph);
-	total_len = data_len + ip_len + LL_RESERVED_SPACE(dev);
+	total_len = ip_len + LL_RESERVED_SPACE(dev);
 
 	skb_reserve(skb, total_len);
-
-	/* Build data */
-	gmtp_pr_info("data_len: %d", data_len);
-	if(data_len > 0) {
-		__u8 *data = skb_push(skb, data_len);
-		memcpy(data, data_src, data_len);
-	}
 
 	/* Build GMTP header */
 	skb_push(skb, gh_ref->hdrlen);
@@ -305,11 +296,15 @@ void gmtp_copy_data(struct sk_buff *skb, struct sk_buff *src_skb)
 	__u8* data_src = gmtp_data(src_skb);
 	__u32 data_src_len = gmtp_data_len(src_skb);
 
-	if(data_src_len > 0) {
-		skb_trim(skb, data_len);
-		data = skb_put(skb, data_src_len);
-		memcpy(data, data_src, data_src_len);
-	}
+	int diff = data_len - data_src_len;
+
+	if(diff > 0)
+		skb_trim(skb, diff);
+	else if(diff < 0)
+		skb_put(skb, diff);
+
+	memcpy(data, data_src, data_src_len);
+
 }
 
 /**
@@ -325,18 +320,25 @@ int gmtp_intra_data_out(struct sk_buff *skb)
 	struct iphdr *iph;
 	struct gmtp_hdr *gh;
 	struct gmtp_relay_entry *flow_info;
-
-	struct sk_buff *skbuff = gmtp_buffer_dequeue();
+	struct sk_buff *buffered;
 
 	gh = gmtp_hdr(skb);
 	iph = ip_hdr(skb);
 
 	pr_info("OUT (%u) - %s\n", gh->seq, skb->dev->name);
-	if(skbuff != NULL) {
-		pr_info("Buffer: OUT (%u) - %s\n", gmtp_hdr(skbuff)->seq,
-				skbuff->dev->name);
-		gmtp_copy_hdr();
-		gmtp_copy_data(skb, skbuff);
+
+	if(gmtp.buffer->qlen > 5) {
+		buffered = gmtp_buffer_dequeue();
+		if(buffered != NULL) {
+			pr_info("Buffer: OUT (%u) - %s\n",
+					gmtp_hdr(buffered)->seq,
+					buffered->dev->name);
+			gmtp_copy_hdr(skb, buffered);
+			gmtp_copy_data(skb, buffered);
+			pr_info("NEW OUT (%u) - %s\n", gh->seq, skb->dev->name);
+		}
+	} else {
+		return NF_DROP;
 	}
 
 	/**
