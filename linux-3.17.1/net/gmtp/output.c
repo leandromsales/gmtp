@@ -424,7 +424,7 @@ void gmtp_send_close(struct sock *sk, const int active)
  *
  * To delay the send time in process context.
  */
-static int gmtp_wait_for_delay(struct sock *sk, unsigned long delay)
+static long gmtp_wait_for_delay(struct sock *sk, unsigned long delay)
 {
 	DEFINE_WAIT(wait);
 	long remaining;
@@ -547,7 +547,6 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 	int len = (int) packet_len(skb);
 	unsigned long elapsed = 0;
 	long delay = 0, delay2 = 0, delay_budget = 0;
-	int rc = 0;
 
 	/** TODO Continue tests with different scales... */
 	static const int scale = 1;
@@ -577,13 +576,16 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 		delay2 += mult_frac(delay2, get_rate_gap(gp, 1), 100);
 
 wait:
-	delay2 += delay_budget;
+	delay2 += delay_budget + gp->tx_time_budget;
+	gp->tx_time_budget = 0;
 
 	/* We set LONG_MIN to indicate that byte_budget is over */
-	if(delay2 > 0)
-		rc = gmtp_wait_for_delay(sk, delay2);
-	if(rc < 0)
-		return;
+	if(delay2 > 0) {
+		int rc = gmtp_wait_for_delay(sk, delay2);
+		if(rc < 0)
+			return;
+		gp->tx_time_budget += (delay - rc);
+	}
 
 	/*
 	 * TODO More tests with byte_budgets...

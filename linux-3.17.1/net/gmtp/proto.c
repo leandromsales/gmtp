@@ -207,6 +207,7 @@ int gmtp_init_sock(struct sock *sk)
 	gp->tx_last_stamp	= 0UL;
 	gp->tx_max_rate		= 0UL; /* Unlimited */
 	gp->tx_byte_budget	= INT_MIN;
+	gp->tx_time_budget	= 0;
 	gp->tx_adj_budget	= 0;
 
 	memset(gp->flowname, 0, GMTP_FLOWNAME_LEN);

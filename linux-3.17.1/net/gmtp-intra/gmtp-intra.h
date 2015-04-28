@@ -36,6 +36,7 @@ struct gmtp_intra {
 	unsigned char		mcst[4];
 
 	struct sk_buff_head 	*buffer;
+	/* TODO Negotiate buffer size with server */
 	unsigned int 		buffer_size;
 #define buffer_len 		buffer->qlen
 };

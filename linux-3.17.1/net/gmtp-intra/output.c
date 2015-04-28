@@ -350,9 +350,6 @@ int gmtp_intra_data_out(struct sk_buff *skb)
 		return NF_DROP;
 	}
 
-	if(iph->daddr == flow_info->channel_addr)
-		return NF_ACCEPT;
-
 	iph->daddr = flow_info->channel_addr;
 	ip_send_check(iph);
 	gh->dport = flow_info->channel_port;

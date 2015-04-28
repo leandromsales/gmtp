@@ -57,6 +57,9 @@ int gmtp_intra_request_rcv(struct sk_buff *skb)
 
 	gmtp_print_function();
 
+	/*set_current_state(TASK_INTERRUPTIBLE);
+	schedule_timeout (3*HZ);*/
+
 	media_info = gmtp_intra_lookup_media(relay_hashtable, gh->flowname);
 	if(media_info != NULL) {
 
