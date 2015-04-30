@@ -39,6 +39,8 @@ struct gmtp_intra {
 	/* TODO Negotiate buffer size with server */
 	unsigned int 		buffer_size;
 #define buffer_len 		buffer->qlen
+
+	struct sk_buff		*next;
 };
 
 extern struct gmtp_intra gmtp;
@@ -66,7 +68,7 @@ struct gmtp_relay_entry {
 	__be16 media_port;
 	__be32 channel_addr;
 	__be16 channel_port;
-	__u8 state :1;
+	__u8 state :3;
 	struct gmtp_relay_entry *next;
 };
 
@@ -78,9 +80,15 @@ struct gmtp_intra_hashtable {
 	struct gmtp_relay_entry **table;
 };
 
+/**
+ * Transmitting
+ */
 enum {
 	GMTP_INTRA_WAITING_REGISTER_REPLY,
-	GMTP_INTRA_REGISTER_REPLY_RECEIVED
+	GMTP_INTRA_REGISTER_REPLY_RECEIVED,
+	GMTP_INTRA_TRANSMITTING,
+	GMTP_INTRA_CLOSE_RECEIVED,
+	GMTP_INTRA_CLOSED
 };
 
 extern struct gmtp_intra_hashtable* relay_hashtable;
@@ -107,7 +115,6 @@ int gmtp_intra_register_reply_rcv(struct sk_buff *skb);
 int gmtp_intra_ack_rcv(struct sk_buff *skb);
 int gmtp_intra_data_rcv(struct sk_buff *skb);
 int gmtp_intra_feedback_rcv(struct sk_buff *skb);
-int gmtp_intra_close_rcv(struct sk_buff *skb);
 
 /** Output.c */
 void gmtp_intra_add_relayid(struct sk_buff *skb);
@@ -121,8 +128,10 @@ int gmtp_intra_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
 
 void gmtp_intra_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
 		__be32 daddr, struct gmtp_hdr *gh_ref, bool backward);
+void gmtp_intra_build_and_send_skb(struct sk_buff *skb);
 
 int gmtp_intra_data_out(struct sk_buff *skb);
+int gmtp_intra_close_out(struct sk_buff *skb);
 
 /** gmtp-ucc. */
 unsigned int gmtp_rtt_average(void);
@@ -130,6 +139,18 @@ unsigned int gmtp_rx_rate(void);
 unsigned int gmtp_relay_queue_size(void);
 unsigned int gmtp_get_current_tx_rate(void);
 void gmtp_update_tx_rate(unsigned int h_user);
+
+/**
+ * A very ugly delayer, to GMTP-Intra...
+ *
+ * We don't check delay correctness
+ */
+static inline void gmtp_wait(unsigned long delay)
+{
+	unsigned long timeout = jiffies + delay;
+	while(time_before(jiffies, timeout))
+		; /* Do nothing, just wait... */
+}
 
 
 /* FIXME Make the real Relay ID */
@@ -148,11 +169,12 @@ static const inline __be32 gmtp_intra_relay_ip(void)
 /*
  * Print IP packet basic information
  */
-static inline void print_packet(struct iphdr *iph, bool in)
+static inline void print_packet(struct sk_buff *skb, bool in)
 {
+	struct iphdr *iph = ip_hdr(skb);
 	const char *type = in ? "IN" : "OUT";
-	pr_info("%s: Src=%pI4 | Dst=%pI4 | Proto: %d | Len: %d bytes\n",
-			type,
+	pr_info("%s (%s): Src=%pI4 | Dst=%pI4 | Proto: %d | Len: %d bytes\n",
+			type, skb->dev->name,
 			&iph->saddr, &iph->daddr,
 			iph->protocol,
 			ntohs(iph->tot_len));

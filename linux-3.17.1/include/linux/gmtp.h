@@ -207,7 +207,6 @@ struct gmtp_sock {
 	unsigned long 			tx_last_stamp;	/* jiffies */
 	unsigned long			tx_max_rate;
 	int 				tx_byte_budget;
-	unsigned long			tx_time_budget; /* jiffies */
 	int				tx_adj_budget;
 
 	__u8 flowname[GMTP_FLOWNAME_LEN];

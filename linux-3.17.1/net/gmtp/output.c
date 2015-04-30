@@ -424,16 +424,15 @@ void gmtp_send_close(struct sock *sk, const int active)
  *
  * To delay the send time in process context.
  */
-static long gmtp_wait_for_delay(struct sock *sk, unsigned long delay)
+static void gmtp_wait_for_delay(struct sock *sk, unsigned long delay)
 {
 	DEFINE_WAIT(wait);
-	long remaining;
 
-	prepare_to_wait(sk_sleep(sk), &wait, TASK_INTERRUPTIBLE);
+	prepare_to_wait(sk_sleep(sk), &wait, TASK_UNINTERRUPTIBLE);
 	sk->sk_write_pending++;
 	release_sock(sk);
 
-	remaining = schedule_timeout(delay);
+	schedule_timeout(delay);
 
 	lock_sock(sk);
 	sk->sk_write_pending--;
@@ -441,7 +440,6 @@ static long gmtp_wait_for_delay(struct sock *sk, unsigned long delay)
 
 	if (signal_pending(current) || sk->sk_err)
 		return -1;
-	return remaining;
 }
 
 static inline unsigned int packet_len(struct sk_buff *skb)
@@ -576,16 +574,9 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 		delay2 += mult_frac(delay2, get_rate_gap(gp, 1), 100);
 
 wait:
-	delay2 += delay_budget + gp->tx_time_budget;
-	gp->tx_time_budget = 0;
-
-	/* We set LONG_MIN to indicate that byte_budget is over */
-	if(delay2 > 0) {
-		int rc = gmtp_wait_for_delay(sk, delay2);
-		if(rc < 0)
-			return;
-		gp->tx_time_budget += (delay - rc);
-	}
+	delay2 += delay_budget;
+	if(delay2 > 0)
+		gmtp_wait_for_delay(sk, delay2);
 
 	/*
 	 * TODO More tests with byte_budgets...

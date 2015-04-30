@@ -208,7 +208,7 @@ fail:
  * Add an ip header to a skbuff and send it out.
  * Based on netpoll_send_udp(...) (netpoll.c)
  */
-void gmtp_intra_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
+struct sk_buff *gmtp_intra_build_pkt(struct sk_buff *skb_src, __be32 saddr,
 		__be32 daddr, struct gmtp_hdr *gh_ref, bool backward)
 {
 	struct net_device *dev = skb_src->dev;
@@ -218,26 +218,32 @@ void gmtp_intra_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
 	struct ethhdr *eth;
 	struct iphdr *iph;
 	struct gmtp_hdr *gh;
-	int total_len, ip_len, gmtp_len;
-	int err = 0;
-
-	gmtp_pr_func();
+	int total_len, ip_len, gmtp_len, data_len = 0;
 
 	if(eth_src == NULL) {
 		gmtp_print_warning("eth_src is NULL!");
-		return;
+		return NULL;
 	}
 
 	if (skb == NULL) {
 		gmtp_print_warning("skb is null");
-		return;
+		return NULL;
 	}
 
-	gmtp_len = gh_ref->hdrlen;
+	if(gh_ref->type == GMTP_PKT_DATA)
+		data_len = gmtp_data_len(skb_src);
+
+	gmtp_len = gh_ref->hdrlen + data_len;
 	ip_len = gmtp_len + sizeof(*iph);
 	total_len = ip_len + LL_RESERVED_SPACE(dev);
 
 	skb_reserve(skb, total_len);
+
+	/* Build GMTP data */
+	if(data_len > 0) {
+		unsigned char *data = skb_push(skb, data_len);
+		memcpy(data, gmtp_data(skb_src), data_len);
+	}
 
 	/* Build GMTP header */
 	skb_push(skb, gh_ref->hdrlen);
@@ -273,10 +279,36 @@ void gmtp_intra_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
 
 	skb->dev = dev;
 
-	err = dev_queue_xmit(skb);
+	return skb;
+}
 
+void gmtp_intra_send_pkt(struct sk_buff *skb)
+{
+	int err = dev_queue_xmit(skb);
 	if(err)
 		gmtp_pr_error("Error %d trying send packet (%p)", err, skb);
+}
+
+/*
+ * Add an ip header to a skbuff and send it out.
+ * Based on netpoll_send_udp(...) (netpoll.c)
+ */
+void gmtp_intra_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
+		__be32 daddr, struct gmtp_hdr *gh_ref, bool backward)
+{
+	struct sk_buff *skb = gmtp_intra_build_pkt(skb_src, saddr, daddr,
+			gh_ref, backward);
+
+	if(skb != NULL)
+		gmtp_intra_send_pkt(skb);
+}
+
+void gmtp_intra_build_and_send_skb(struct sk_buff *skb)
+{
+	struct iphdr *iph = ip_hdr(skb);
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+
+	gmtp_intra_build_and_send_pkt(skb, iph->saddr, iph->daddr, gh, 0);
 }
 
 void gmtp_copy_hdr(struct sk_buff *skb, struct sk_buff *src_skb)
@@ -296,15 +328,14 @@ void gmtp_copy_data(struct sk_buff *skb, struct sk_buff *src_skb)
 	__u8* data_src = gmtp_data(src_skb);
 	__u32 data_src_len = gmtp_data_len(src_skb);
 
-	int diff = data_len - data_src_len;
+	int diff = (int)data_len - (int)data_src_len;
 
 	if(diff > 0)
 		skb_trim(skb, diff);
 	else if(diff < 0)
-		skb_put(skb, diff);
+		skb_put(skb, -diff);
 
 	memcpy(data, data_src, data_src_len);
-
 }
 
 /**
@@ -325,37 +356,75 @@ int gmtp_intra_data_out(struct sk_buff *skb)
 	gh = gmtp_hdr(skb);
 	iph = ip_hdr(skb);
 
-	pr_info("OUT (%u) - %s\n", gh->seq, skb->dev->name);
-
-	if(gmtp.buffer->qlen > 5) {
-		buffered = gmtp_buffer_dequeue();
-		if(buffered != NULL) {
-			pr_info("Buffer: OUT (%u) - %s\n",
-					gmtp_hdr(buffered)->seq,
-					buffered->dev->name);
-			gmtp_copy_hdr(skb, buffered);
-			gmtp_copy_data(skb, buffered);
-			pr_info("NEW OUT (%u) - %s\n", gh->seq, skb->dev->name);
-		}
-	} else {
-		return NF_DROP;
-	}
-
-	/**
-	 * FIXME If destiny is not me, just let it go!
-	 */
 	flow_info = gmtp_intra_lookup_media(relay_hashtable, gh->flowname);
 	if(flow_info == NULL) {
-		gmtp_print_warning("Failed to lookup media info in table...");
-		return NF_DROP;
+		gmtp_pr_info("Failed to lookup media info in table...");
+		goto out;
+	}
+
+	if(flow_info->state == GMTP_INTRA_TRANSMITTING) {
+		if(gmtp.buffer->qlen > 5) {
+			buffered = gmtp_buffer_dequeue();
+			if(buffered != NULL) {
+				gmtp_copy_hdr(skb, buffered);
+				gmtp_copy_data(skb, buffered);
+			}
+		} else
+			return NF_DROP;
 	}
 
 	iph->daddr = flow_info->channel_addr;
 	ip_send_check(iph);
 	gh->dport = flow_info->channel_port;
 
-	pr_info("[WENDELL] buffer.len: %u, buffer.size: %u\n",
-			gmtp.buffer_len, gmtp.buffer_size);
-
+out:
 	return NF_ACCEPT;
+}
+
+/*
+ * FIXME Send close to multicast (or foreach client) and delete entry later...
+ * Treat close from servers
+ */
+int gmtp_intra_close_out(struct sk_buff *skb)
+{
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct gmtp_relay_entry *flow_info;
+
+	gmtp_print_function();
+
+	/**
+	 * If destiny is not me, just let it go!
+	 */
+	flow_info = gmtp_intra_lookup_media(relay_hashtable, gh->flowname);
+	if(flow_info == NULL)
+		return NF_ACCEPT;
+
+	switch(flow_info->state) {
+	case GMTP_INTRA_TRANSMITTING:
+		flow_info->state = GMTP_INTRA_CLOSE_RECEIVED;
+		gmtp_buffer_add(skb);
+		return NF_REPEAT;
+	case GMTP_INTRA_CLOSED:
+		gmtp_intra_del_entry(relay_hashtable, gh->flowname);
+		return NF_ACCEPT;
+	case GMTP_INTRA_CLOSE_RECEIVED:
+		flow_info->state = GMTP_INTRA_CLOSED;
+		break;
+		/** Continue... */
+	}
+
+	/* TODO Send data packets before send close... */
+	while(gmtp.buffer->qlen > 0) {
+		struct sk_buff *buffered = gmtp_buffer_dequeue();
+		if(buffered == NULL) {
+			gmtp_pr_error("Buffered is NULL...");
+			return NF_ACCEPT;
+		}
+		buffered->dev = skb->dev;
+		gmtp_intra_build_and_send_skb(buffered);
+	}
+
+	flow_info->state = GMTP_INTRA_CLOSED;
+
+	return NF_STOLEN;
 }

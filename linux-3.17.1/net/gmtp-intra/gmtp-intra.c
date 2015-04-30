@@ -118,7 +118,7 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 		if(gh->type != GMTP_PKT_DATA) {
 			gmtp_print_debug("GMTP packet: %s (%d)",
 					gmtp_packet_name(gh->type), gh->type);
-			print_packet(iph, true);
+			print_packet(skb, true);
 			print_gmtp_packet(iph, gh);
 		}
 
@@ -142,12 +142,9 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 		case GMTP_PKT_FEEDBACK:
 			ret = gmtp_intra_feedback_rcv(skb);
 			break;
-		case GMTP_PKT_CLOSE:
-			ret = gmtp_intra_close_rcv(skb);
-			break;
 		}
 
-		gmtp_update_stats(iph, gh);
+		gmtp_update_stats(skb, gh);
 	}
 
 exit:
@@ -168,15 +165,20 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 	if(iph->protocol == IPPROTO_GMTP) {
 
 		gh = gmtp_hdr(skb);
+		if(gh->type != GMTP_PKT_DATA) {
+			gmtp_print_debug("GMTP packet: %s (%d)",
+					gmtp_packet_name(gh->type), gh->type);
+			print_packet(skb, false);
+			print_gmtp_packet(iph, gh);
+		}
 
 		switch(gh->type) {
 		case GMTP_PKT_DATA:
 			ret = gmtp_intra_data_out(skb);
 			break;
-		default:
-			gmtp_print_debug("GMTP packet: %s (%d)",
-					gmtp_packet_name(gh->type), gh->type);
-			print_packet(iph, false);
+		case GMTP_PKT_CLOSE:
+			ret = gmtp_intra_close_out(skb);
+			break;
 		}
 
 	}
@@ -199,6 +201,7 @@ int init_module()
 	gmtp.buffer = kmalloc(sizeof(struct sk_buff_head), GFP_ATOMIC);
 	skb_queue_head_init(gmtp.buffer);
 	gmtp.buffer_size = 0;
+	gmtp.next = NULL;
 
 	relay_hashtable = gmtp_intra_create_hashtable(64);
 	if(relay_hashtable == NULL) {
@@ -228,7 +231,6 @@ void cleanup_module()
 	gmtp_print_debug("Finishing GMTP-Intra");
 
 	skb_queue_purge(gmtp.buffer);
-
 	kfree_gmtp_intra_hashtable(relay_hashtable);
 
 	nf_unregister_hook(&nfho_in);

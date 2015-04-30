@@ -312,12 +312,7 @@ void gmtp_close(struct sock *sk, long timeout)
 		 * TX queue that are delayed by the CCID.
 		 */
 		gmtp_print_debug("TODO: Normal connection termination.");
-		/*
-		 * Drain queue at end of connection:
-		dccp_flush_write_queue(sk, &timeout);
-		*/
 		gmtp_terminate_connection(sk);
-
 	}
 
 	/*
@@ -518,10 +513,6 @@ verify_sock_status:
 
 		if(sk->sk_state == GMTP_CLOSED) {
 			if(!sock_flag(sk, SOCK_DONE)) {
-
-				if(ipv4_is_multicast(sk->sk_rcv_saddr))
-					goto found_ok_skb;
-
 				/* This occurs when user tries to read
 				 * from never connected socket.
 				 */

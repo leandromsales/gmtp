@@ -57,9 +57,6 @@ int gmtp_intra_request_rcv(struct sk_buff *skb)
 
 	gmtp_print_function();
 
-	/*set_current_state(TASK_INTERRUPTIBLE);
-	schedule_timeout (3*HZ);*/
-
 	media_info = gmtp_intra_lookup_media(relay_hashtable, gh->flowname);
 	if(media_info != NULL) {
 
@@ -72,6 +69,7 @@ int gmtp_intra_request_rcv(struct sk_buff *skb)
 					GMTP_REQNOTIFY_CODE_WAIT);
 			break;
 		case GMTP_INTRA_REGISTER_REPLY_RECEIVED:
+		case GMTP_INTRA_TRANSMITTING:
 			gh_reqnotify = gmtp_intra_make_request_notify_hdr(skb,
 					media_info, gh->dport, gh->sport,
 					GMTP_REQNOTIFY_CODE_OK);
@@ -84,7 +82,6 @@ int gmtp_intra_request_rcv(struct sk_buff *skb)
 			gh_reqnotify = gmtp_intra_make_request_notify_hdr(skb,
 					media_info, gh->dport, gh->sport,
 					GMTP_REQNOTIFY_CODE_ERROR);
-
 			ret = NF_DROP;
 		}
 
@@ -241,22 +238,6 @@ int gmtp_intra_feedback_rcv(struct sk_buff *skb)
 	return ret;
 }
 
-/*
- * FIXME Send close to multicast and delete entry later...
- * Treat close from servers
- */
-int gmtp_intra_close_rcv(struct sk_buff *skb)
-{
-	int ret = NF_ACCEPT;
-	struct gmtp_hdr *gh = gmtp_hdr(skb);
-
-	gmtp_print_function();
-
-	gmtp_intra_del_entry(relay_hashtable, gh->flowname);
-
-	return ret;
-}
-
 /**
  * begin
  * P = p.flowname
@@ -270,20 +251,21 @@ int gmtp_intra_data_rcv(struct sk_buff *skb)
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct gmtp_relay_entry *flow_info;
 
-	/**
-	 * FIXME If destiny is not me, just let it go!
-	 */
 	flow_info = gmtp_intra_lookup_media(relay_hashtable, gh->flowname);
 	if(flow_info == NULL) {
-		gmtp_print_warning("Failed to lookup media info in table...");
-		return NF_DROP;
+		gmtp_pr_info("Failed to lookup media info in table...");
+		goto out;
 	}
 
-	pr_info("IN (%u) - %s\n", gh->seq, skb->dev->name);
+	if(flow_info->state == GMTP_INTRA_REGISTER_REPLY_RECEIVED)
+		flow_info->state = GMTP_INTRA_TRANSMITTING;
 
-	/* Dont add repeated packets */
-	if(gh->seq > gmtp.seq)
+	/* Do not add repeated packets
+	 * Do not add packets if state != Transmitting
+	 */
+	if((gh->seq > gmtp.seq) && flow_info->state == GMTP_INTRA_TRANSMITTING)
 		gmtp_buffer_add(skb);
 
+out:
 	return NF_ACCEPT;
 }
