@@ -108,6 +108,8 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh;
 
+	ktime_t ts, now;
+
 	if(in == NULL)
 		goto exit;
 
@@ -123,6 +125,7 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 		}
 
 		switch(gh->type) {
+
 		case GMTP_PKT_REQUEST:
 			ret = gmtp_intra_request_rcv(skb);
 			break;

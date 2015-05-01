@@ -9,6 +9,7 @@
 
 #include <linux/types.h>
 #include <linux/skbuff.h>
+#include <linux/spinlock.h>
 #include <uapi/linux/ip.h>
 
 #include <linux/gmtp.h>
@@ -143,13 +144,18 @@ void gmtp_update_tx_rate(unsigned int h_user);
 /**
  * A very ugly delayer, to GMTP-Intra...
  *
- * We don't check delay correctness
+ * If we use schedule(), we get this error:  'BUG: scheduling while atomic'
+ *
+ * We cannot use schedule(), because hook functions are atomic,
+ * and sleeping in kernel code is not allowed in atomic context.
+ * (even with spin_lock_irqsave...)
  */
-static inline void gmtp_wait(unsigned long delay)
+static inline void gmtp_intra_wait_us(s64 delay)
 {
-	unsigned long timeout = jiffies + delay;
-	while(time_before(jiffies, timeout))
+	ktime_t timeout = ktime_add_us(ktime_get_real(), delay);
+	while(ktime_before(ktime_get_real(), timeout)) {
 		; /* Do nothing, just wait... */
+	}
 }
 
 

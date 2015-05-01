@@ -14,6 +14,7 @@
 #include "../gmtp/gmtp.h"
 
 #include "gmtp-intra.h"
+#include "mcc-intra.h"
 
 void gmtp_intra_add_relayid(struct sk_buff *skb)
 {
@@ -377,6 +378,8 @@ int gmtp_intra_data_out(struct sk_buff *skb)
 	ip_send_check(iph);
 	gh->dport = flow_info->channel_port;
 
+	/*gmtp_intra_mcc_delay(skb);*/
+
 out:
 	return NF_ACCEPT;
 }
@@ -413,7 +416,6 @@ int gmtp_intra_close_out(struct sk_buff *skb)
 		/** Continue... */
 	}
 
-	/* TODO Send data packets before send close... */
 	while(gmtp.buffer->qlen > 0) {
 		struct sk_buff *buffered = gmtp_buffer_dequeue();
 		if(buffered == NULL) {
