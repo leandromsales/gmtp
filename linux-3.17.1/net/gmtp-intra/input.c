@@ -177,7 +177,7 @@ int gmtp_intra_register_reply_rcv(struct sk_buff *skb)
 	data = gmtp_intra_lookup_media(relay_hashtable, gh->flowname);
 	pr_info("gmtp_lookup_media returned: %p\n", data);
 	if(data == NULL)
-		goto out;
+		return NF_ACCEPT;
 
 	/** Send ack back to server */
 	gh_rn = gmtp_intra_make_route_hdr(skb);
@@ -196,7 +196,6 @@ int gmtp_intra_register_reply_rcv(struct sk_buff *skb)
 			iph->saddr, gh->sport,
 			iph->daddr, gh->dport, GMTP_REQNOTIFY_CODE_OK);
 
-out:
 	return ret;
 }
 
@@ -219,7 +218,6 @@ int gmtp_intra_ack_rcv(struct sk_buff *skb)
 	return ret;
 }
 
-/* FIXME Treat acks from clients */
 int gmtp_intra_feedback_rcv(struct sk_buff *skb)
 {
 	int ret = NF_DROP;
@@ -227,7 +225,7 @@ int gmtp_intra_feedback_rcv(struct sk_buff *skb)
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct iphdr *iph = ip_hdr(skb);
 
-	gmtp_print_function();
+	gmtp_pr_func();
 
 	gmtp_pr_info("%s (%d) src=%pI4@%-5d dst=%pI4@%-5d transm_r: %u",
 			gmtp_packet_name(gh->type), gh->type,
@@ -235,6 +233,15 @@ int gmtp_intra_feedback_rcv(struct sk_buff *skb)
 			&iph->daddr, ntohs(gh->dport),
 			gh->transm_r);
 
+	if((gmtp.data_pkt_tx/gmtp.buffer_max) < 100) {
+		pr_info("Feedback discarded\n");
+		goto out; /* Discard early feedbacks */
+	}
+
+	if(gh->transm_r > 0)
+		gmtp.current_tx = (u64) gh->transm_r;
+
+out:
 	return ret;
 }
 

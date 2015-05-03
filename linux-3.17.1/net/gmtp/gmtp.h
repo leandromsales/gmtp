@@ -80,7 +80,7 @@ extern struct percpu_counter gmtp_orphan_count;
  * Units in usec (microseconds)
  */
 #define GMTP_SANE_RTT_MIN	100		    /* 0.1 ms */
-#define GMTP_FALLBACK_RTT	(USEC_PER_SEC / 5)  /* 200 ms */
+#define GMTP_FALLBACK_RTT	((GMTP_DEFAULT_RTT * USEC_PER_MSEC) / 5)
 #define GMTP_SANE_RTT_MAX	(3 * USEC_PER_SEC)  /* 3 s    */
 
 /* initial RTO value */

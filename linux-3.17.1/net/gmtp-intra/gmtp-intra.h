@@ -17,31 +17,38 @@
 #include "../gmtp/gmtp.h"
 
 /**
+ * TODO Negotiate buffer size with server
  * struct gmtp_intra: GMTP-Intra state variables
  *
- * @seq: received packets sequence number
- * @npackets: number of received packets
+ * @iseq: initial sequence number of received packets
+ * @seq: sequence number of last received packet
  * @nbytes: amount of received bytes
- * @current_tx: ?
+ * @total_rx: TODO describe it
+ * @data_pkt_tx: number of data packets transmitted
  * @mcst: control of granted multicast addresses
+ *
+ * @current_tx: Current max tx (via GMTP-MCC). 0 means unlimited.
  * @buffer: buffer of GMTP-Data packets
  * @buffer_size: size (in bytes) of GMTP-Data buffer.
- * @buffer_len: number of packets in GMTP-Data buffer
+ * @buffer_len: number of packets in GMTP-Data buffer]
+ * @buffer_size: max number of packets in buffer
  */
 struct gmtp_intra {
 	unsigned int		iseq;
 	unsigned int 		seq;
 	unsigned int 		nbytes;
-	unsigned int 		current_tx;
-
+	unsigned int 		total_rx;
+	unsigned int 		data_pkt_tx;
 	unsigned char		mcst[4];
 
-	struct sk_buff_head 	*buffer;
-	/* TODO Negotiate buffer size with server */
-	unsigned int 		buffer_size;
-#define buffer_len 		buffer->qlen
+	u64 			current_rx;
+	u64 			current_tx;
+	ktime_t 		last_rx_tstamp;
 
-	struct sk_buff		*next;
+	struct sk_buff_head 	*buffer;
+	unsigned int 		buffer_size;
+	unsigned int 		buffer_max;
+#define buffer_len 		buffer->qlen
 };
 
 extern struct gmtp_intra gmtp;
@@ -138,8 +145,8 @@ int gmtp_intra_close_out(struct sk_buff *skb);
 unsigned int gmtp_rtt_average(void);
 unsigned int gmtp_rx_rate(void);
 unsigned int gmtp_relay_queue_size(void);
-unsigned int gmtp_get_current_tx_rate(void);
-void gmtp_update_tx_rate(unsigned int h_user);
+unsigned int gmtp_get_current_rx_rate(void);
+void gmtp_update_rx_rate(unsigned int h_user);
 
 /**
  * A very ugly delayer, to GMTP-Intra...
@@ -148,16 +155,16 @@ void gmtp_update_tx_rate(unsigned int h_user);
  *
  * We cannot use schedule(), because hook functions are atomic,
  * and sleeping in kernel code is not allowed in atomic context.
- * (even with spin_lock_irqsave...)
+ *
+ * Calling cond_resched(), kernel call schedule() if where its possible...
  */
 static inline void gmtp_intra_wait_us(s64 delay)
 {
 	ktime_t timeout = ktime_add_us(ktime_get_real(), delay);
 	while(ktime_before(ktime_get_real(), timeout)) {
-		; /* Do nothing, just wait... */
+		cond_resched(); /* Do nothing, just wait... */
 	}
 }
-
 
 /* FIXME Make the real Relay ID */
 static const inline __u8 *gmtp_intra_relay_id(void)

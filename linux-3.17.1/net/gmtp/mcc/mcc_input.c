@@ -91,9 +91,14 @@ static void mcc_rx_send_feedback(struct sock *sk,
 	now = ktime_get_real();
 	hc->rx_tstamp_last_feedback = now;
 	hc->rx_bytes_recv	    = 0;
-	sample = jiffies_to_usecs(msecs_to_jiffies(hc->rx_rtt)); /* ms to us */
+	sample = hc->rx_rtt * USEC_PER_MSEC;
+
+	pr_info("Sample: %u us\n", sample);
+
 	if(sample != 0)
 		hc->rx_avg_rtt = mcc_ewma(hc->rx_avg_rtt, sample, 9);
+
+	pr_info("rx_avg_rtt: %u us\n", hc->rx_avg_rtt);
 
 	if(hc->rx_avg_rtt <= 0)
 		hc->rx_avg_rtt = GMTP_SANE_RTT_MIN;

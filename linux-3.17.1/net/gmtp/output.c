@@ -75,10 +75,12 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 
 		gh->version = GMTP_VERSION;
 		gh->type = gcb->type;
-		gh->server_rtt = TO_U8(gp->tx_rtt);
 		gh->sport = inet->inet_sport;
 		gh->dport = inet->inet_dport;
 		gh->hdrlen = gmtp_header_size;
+		gh->server_rtt = gp->role == GMTP_ROLE_SERVER ?
+				TO_U8(gp->tx_rtt) : TO_U8(gp->rx_rtt);
+
 		memcpy(gh->flowname, gp->flowname, GMTP_FLOWNAME_LEN);
 
 		if (gcb->type == GMTP_PKT_FEEDBACK)

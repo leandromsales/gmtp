@@ -364,9 +364,10 @@ int gmtp_intra_data_out(struct sk_buff *skb)
 	}
 
 	if(flow_info->state == GMTP_INTRA_TRANSMITTING) {
-		if(gmtp.buffer->qlen > 5) {
+		if(gmtp.buffer->qlen > gmtp.buffer_max) {
 			buffered = gmtp_buffer_dequeue();
 			if(buffered != NULL) {
+				gmtp.data_pkt_tx++;
 				gmtp_copy_hdr(skb, buffered);
 				gmtp_copy_data(skb, buffered);
 			}
@@ -378,7 +379,8 @@ int gmtp_intra_data_out(struct sk_buff *skb)
 	ip_send_check(iph);
 	gh->dport = flow_info->channel_port;
 
-	/*gmtp_intra_mcc_delay(skb);*/
+	/** TODO We really trust in declared tx rate from server ? */
+	gmtp_intra_mcc_delay(skb, (u64) gh->transm_r);
 
 out:
 	return NF_ACCEPT;

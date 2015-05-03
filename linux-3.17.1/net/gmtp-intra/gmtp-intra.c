@@ -4,6 +4,7 @@
 #include <linux/netfilter_ipv4.h>
 #include <linux/skbuff.h>
 #include <linux/ip.h>
+#include <linux/timer.h>
 
 #include <net/ip.h>
 #include <net/sock.h>
@@ -100,6 +101,14 @@ struct sk_buff *gmtp_buffer_dequeue()
 	return skb;
 }
 
+static struct timer_list my_timer;
+void my_timer_callback( unsigned long data )
+{
+     pr_info("GMTP-INTRA TIMER CALLBACK (%ld).\n", jiffies);
+     /*mod_timer(&my_timer, jiffies + msecs_to_jiffies(1000));*/
+}
+
+
 unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 		const struct net_device *in, const struct net_device *out,
 		int (*okfn)(struct sk_buff *))
@@ -107,8 +116,6 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 	int ret = NF_ACCEPT;
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh;
-
-	ktime_t ts, now;
 
 	if(in == NULL)
 		goto exit;
@@ -125,7 +132,6 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 		}
 
 		switch(gh->type) {
-
 		case GMTP_PKT_REQUEST:
 			ret = gmtp_intra_request_rcv(skb);
 			break;
@@ -136,10 +142,9 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 			ret = gmtp_intra_ack_rcv(skb);
 			break;
 		case GMTP_PKT_DATA:
-			/* Artificial loss (only for tests)
-			 if(gh->seq % 2)
-			 return NF_DROP;*/
-
+			/* Artificial loss (only for tests) */
+			 /*if(gh->seq % 2)
+				 return NF_DROP;*/
 			ret = gmtp_intra_data_rcv(skb);
 			break;
 		case GMTP_PKT_FEEDBACK:
@@ -193,18 +198,27 @@ exit:
 int init_module()
 {
 	int ret = 0;
-	gmtp_print_function();
+	gmtp_pr_func();
 	gmtp_print_debug("Starting GMTP-Intra");
+
+	/* setup your timer to call my_timer_callback */
+	/*setup_timer(&my_timer, my_timer_callback, 0);*/
+	/* setup timer interval to 1000 msecs */
+	/*mod_timer(&my_timer, jiffies + msecs_to_jiffies(1000));*/
 
 	gmtp.iseq = 0;
 	gmtp.seq = 0;
 	gmtp.nbytes = 0;
-	gmtp.current_tx = 1;
+	gmtp.data_pkt_tx = 0;
+	gmtp.total_rx = 1;
+
 	memset(&gmtp.mcst, 0, 4*sizeof(unsigned char));
 	gmtp.buffer = kmalloc(sizeof(struct sk_buff_head), GFP_ATOMIC);
 	skb_queue_head_init(gmtp.buffer);
 	gmtp.buffer_size = 0;
-	gmtp.next = NULL;
+	gmtp.buffer_max = 5;
+
+	gmtp.current_tx = 0; /* unlimited tx */
 
 	relay_hashtable = gmtp_intra_create_hashtable(64);
 	if(relay_hashtable == NULL) {
@@ -238,6 +252,8 @@ void cleanup_module()
 
 	nf_unregister_hook(&nfho_in);
 	nf_unregister_hook(&nfho_out);
+
+	/*del_timer_sync(&my_timer);*/
 }
 
 MODULE_LICENSE("GPL");

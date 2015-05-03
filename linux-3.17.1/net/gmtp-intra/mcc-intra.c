@@ -8,22 +8,31 @@
 #include "gmtp-intra.h"
 #include "mcc-intra.h"
 
-ktime_t before;
-
-void gmtp_intra_mcc_delay(struct sk_buff *skb)
+void gmtp_intra_mcc_delay(struct sk_buff *skb, u64 server_tx)
 {
-	ktime_t ts, now;
+	u64 delay;
+	s64 elapsed, delay2;
+	u64 tx = gmtp.current_tx;
 
 	gmtp_pr_func();
 
-	ts = skb->tstamp;
-	now = ktime_get_real();
+	if(tx == 0 || tx >= server_tx) {
+		pr_info("tx: %lld >= %lld || 0\n", tx, server_tx);
+		goto out;
+	}
 
-	pr_info("now->ts: %lld us\n", ktime_us_delta(now, ts));
-	pr_info("now->ts: %lld ms\n", ktime_to_ms(ktime_sub(now, ts)));
+	delay = DIV_ROUND_CLOSEST(skb->len * USEC_PER_SEC, tx);
+	elapsed = ktime_us_delta(skb->tstamp, gmtp.last_rx_tstamp);
+	delay2 = delay - elapsed;
 
-	pr_info("delta: %lld us\n", ktime_us_delta(ts, before));
-	pr_info("delta: %lld ms\n", ktime_to_ms(ktime_sub(ts, before)));
+	pr_info("delay = (1000000 * %u)/%llu = %llu us\n", skb->len, tx, delay);
+	pr_info("elapsed = %lld\n", elapsed);
+	pr_info("delay2 = %lld\n", delay2);
 
-	before = ts;
+	/* if delay2 <= 0, pass way... */
+	if(delay2 > 0)
+		gmtp_intra_wait_us(delay2);
+
+out:
+	gmtp.last_rx_tstamp = skb->tstamp;
 }
