@@ -45,6 +45,8 @@ __be32 get_mcst_v4_addr()
 	channel[3] += gmtp.mcst[3]++;
 
 	/**
+	 * FIXME We should start with 239.192.0.0
+	 *
 	 * From: base_channel (224. 0 . 0 . 1 )
 	 * to:   max_channel  (239.255.255.255)
 	 *                     L0  L1  L2  L3
@@ -178,7 +180,6 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 			ret = gmtp_intra_close_out(skb);
 			break;
 		}
-
 	}
 
 exit:

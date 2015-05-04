@@ -65,8 +65,8 @@ struct gmtp_hdr *gmtp_intra_make_route_hdr(struct sk_buff *skb)
 }
 
 struct gmtp_hdr *gmtp_intra_make_request_notify_hdr(struct sk_buff *skb,
-		struct gmtp_relay_entry *media_info, __be16 new_sport,
-		__be16 new_dport, __u8 error_code)
+		struct gmtp_relay_entry *entry, __be16 new_sport,
+		__be16 new_dport, __u8 code)
 {
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	__u8 *transport_header;
@@ -94,11 +94,11 @@ struct gmtp_hdr *gmtp_intra_make_request_notify_hdr(struct sk_buff *skb,
 	gh_rnotify = (struct gmtp_hdr_reqnotify*)(transport_header
 			+ sizeof(struct gmtp_hdr));
 
-	gh_rnotify->error_code = error_code;
+	gh_rnotify->error_code = code;
 
-	if(media_info != NULL && error_code != GMTP_REQNOTIFY_CODE_ERROR) {
-		gh_rnotify->mcst_addr = media_info->channel_addr;
-		gh_rnotify->mcst_port = media_info->channel_port;
+	if(entry != NULL && code != GMTP_REQNOTIFY_CODE_ERROR) {
+		gh_rnotify->mcst_addr = entry->channel_addr;
+		gh_rnotify->mcst_port = entry->channel_port;
 
 		gmtp_print_debug("ReqNotify => Channel: %pI4@%-5d | Error: %d",
 				&gh_rnotify->mcst_addr,
