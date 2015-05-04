@@ -27,18 +27,6 @@ static struct nf_hook_ops nfho_out;
 
 struct gmtp_intra gmtp;
 
-struct gmtp_intra_hashtable* relay_hashtable;
-EXPORT_SYMBOL_GPL(relay_hashtable);
-
-static inline void gmtp_update_stats(struct sk_buff *skb, struct gmtp_hdr *gh)
-{
-	if(gmtp.iseq == 0)
-		gmtp.iseq = gh->seq;
-	if(gh->seq > gmtp.seq)
-		gmtp.seq = gh->seq;
-	gmtp.nbytes += skb->len;
-}
-
 __be32 get_mcst_v4_addr()
 {
 	__be32 mcst_addr;
@@ -87,27 +75,31 @@ __be32 get_mcst_v4_addr()
 }
 EXPORT_SYMBOL_GPL(get_mcst_v4_addr);
 
-void gmtp_buffer_add(struct sk_buff *newsk)
+void gmtp_buffer_add(struct gmtp_flow_info *info, struct sk_buff *newsk)
 {
-	skb_queue_tail(gmtp.buffer, skb_copy(newsk, GFP_ATOMIC));
-	gmtp.buffer_size += newsk->len;
+	skb_queue_tail(info->buffer, skb_copy(newsk, GFP_ATOMIC));
+	info->buffer_size += newsk->len;
 }
 
-struct sk_buff *gmtp_buffer_dequeue()
+struct sk_buff *gmtp_buffer_dequeue(struct gmtp_flow_info *info)
 {
-	struct sk_buff *skb = skb_dequeue(gmtp.buffer);
+	struct sk_buff *skb = skb_dequeue(info->buffer);
 	if(skb != NULL)
-		gmtp.buffer_size -= skb->len;
+		info->buffer_size -= skb->len;
 	return skb;
 }
 
-static struct timer_list my_timer;
-void my_timer_callback( unsigned long data )
+struct gmtp_flow_info *gmtp_intra_get_info(
+		struct gmtp_intra_hashtable *hashtable, const __u8 *media)
 {
-     pr_info("GMTP-INTRA TIMER CALLBACK (%ld).\n", jiffies);
-     /*mod_timer(&my_timer, jiffies + msecs_to_jiffies(1000));*/
-}
+	struct gmtp_relay_entry *entry =
+			gmtp_intra_lookup_media(gmtp.hashtable, media);
 
+	if(entry != NULL)
+		return entry->info;
+
+	return NULL;
+}
 
 unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 		const struct net_device *in, const struct net_device *out,
@@ -115,16 +107,15 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 {
 	int ret = NF_ACCEPT;
 	struct iphdr *iph = ip_hdr(skb);
-	struct gmtp_hdr *gh;
 
 	if(in == NULL)
 		goto exit;
 
 	if(iph->protocol == IPPROTO_GMTP) {
 
-		gh = gmtp_hdr(skb);
+		struct gmtp_hdr *gh = gmtp_hdr(skb);
 
-		if(gh->type != GMTP_PKT_DATA) {
+		if(gh->type != GMTP_PKT_DATA && gh->type != GMTP_PKT_FEEDBACK) {
 			gmtp_print_debug("GMTP packet: %s (%d)",
 					gmtp_packet_name(gh->type), gh->type);
 			print_packet(skb, true);
@@ -133,6 +124,9 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 
 		switch(gh->type) {
 		case GMTP_PKT_REQUEST:
+			gmtp.nclients++;
+			if(gmtp.nclients > 1)
+				gmtp.sec_port = gh->sport;
 			ret = gmtp_intra_request_rcv(skb);
 			break;
 		case GMTP_PKT_REGISTER_REPLY:
@@ -152,7 +146,6 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 			break;
 		}
 
-		gmtp_update_stats(skb, gh);
 	}
 
 exit:
@@ -201,27 +194,13 @@ int init_module()
 	gmtp_pr_func();
 	gmtp_print_debug("Starting GMTP-Intra");
 
-	/* setup your timer to call my_timer_callback */
-	/*setup_timer(&my_timer, my_timer_callback, 0);*/
-	/* setup timer interval to 1000 msecs */
-	/*mod_timer(&my_timer, jiffies + msecs_to_jiffies(1000));*/
-
-	gmtp.iseq = 0;
-	gmtp.seq = 0;
-	gmtp.nbytes = 0;
-	gmtp.data_pkt_tx = 0;
+	gmtp.nclients = 0;
+	gmtp.sec_port = 0;
 	gmtp.total_rx = 1;
-
 	memset(&gmtp.mcst, 0, 4*sizeof(unsigned char));
-	gmtp.buffer = kmalloc(sizeof(struct sk_buff_head), GFP_ATOMIC);
-	skb_queue_head_init(gmtp.buffer);
-	gmtp.buffer_size = 0;
-	gmtp.buffer_max = 5;
 
-	gmtp.current_tx = 0; /* unlimited tx */
-
-	relay_hashtable = gmtp_intra_create_hashtable(64);
-	if(relay_hashtable == NULL) {
+	gmtp.hashtable = gmtp_intra_create_hashtable(64);
+	if(gmtp.hashtable == NULL) {
 		gmtp_print_error("Cannot create hashtable...");
 		ret = -ENOMEM;
 		goto out;
@@ -245,15 +224,13 @@ out:
 
 void cleanup_module()
 {
+	gmtp_pr_func();
 	gmtp_print_debug("Finishing GMTP-Intra");
 
-	skb_queue_purge(gmtp.buffer);
-	kfree_gmtp_intra_hashtable(relay_hashtable);
+	kfree_gmtp_intra_hashtable(gmtp.hashtable);
 
 	nf_unregister_hook(&nfho_in);
 	nf_unregister_hook(&nfho_out);
-
-	/*del_timer_sync(&my_timer);*/
 }
 
 MODULE_LICENSE("GPL");

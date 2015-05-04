@@ -16,34 +16,54 @@
 #include <uapi/linux/gmtp.h>
 #include "../gmtp/gmtp.h"
 
+#include "hash.h"
+
+#define H_USER 1024
+
 /**
  * TODO Negotiate buffer size with server
- * struct gmtp_intra: GMTP-Intra state variables
+ * struct gmtp_intra - GMTP-Intra state variables
+ *
+ * @total_bytes_rx: total data bytes received
+ * @total_rx: Current RX rate
+ * @mcst: control of granted multicast addresses
+ * @nclients: number of connected clients
+ *
+ * @hashtable: GMTP-Intra relay table
+ */
+struct gmtp_intra {
+	unsigned int 		total_bytes_rx;
+	unsigned int 		total_rx;
+	unsigned char		mcst[4];
+
+	int 			nclients;
+	__be16 			sec_port;
+
+	struct gmtp_intra_hashtable *hashtable;
+};
+
+/**
+ * struct gmtp_flow_info - Control information for media transmission
  *
  * @iseq: initial sequence number of received packets
  * @seq: sequence number of last received packet
  * @nbytes: amount of received bytes
- * @total_rx: TODO describe it
- * @data_pkt_tx: number of data packets transmitted
- * @mcst: control of granted multicast addresses
- *
  * @current_tx: Current max tx (via GMTP-MCC). 0 means unlimited.
+ * @last_rx_tstamp: time stamp of last received data packet
+ * @data_pkt_tx: number of data packets transmitted
  * @buffer: buffer of GMTP-Data packets
  * @buffer_size: size (in bytes) of GMTP-Data buffer.
  * @buffer_len: number of packets in GMTP-Data buffer]
  * @buffer_size: max number of packets in buffer
  */
-struct gmtp_intra {
+struct gmtp_flow_info {
 	unsigned int		iseq;
 	unsigned int 		seq;
 	unsigned int 		nbytes;
-	unsigned int 		total_rx;
-	unsigned int 		data_pkt_tx;
-	unsigned char		mcst[4];
 
-	u64 			current_rx;
 	u64 			current_tx;
 	ktime_t 		last_rx_tstamp;
+	unsigned int 		data_pkt_tx;
 
 	struct sk_buff_head 	*buffer;
 	unsigned int 		buffer_size;
@@ -53,69 +73,12 @@ struct gmtp_intra {
 
 extern struct gmtp_intra gmtp;
 
-#define GMTP_HASH_SIZE  16
-#define H_USER 1024
-
-/**
- * struct gmtp_relay_entry: entry in GMTP-Intra Relay Table
- *
- * @flowname: Name of dataflow
- * @server_addr: IP address of media server
- * @relay: list of relays
- * @media_port: port of media at server
- * @channel_addr: IP address of media multicast channel
- * @channel_port: Port of media multicast channel
- * @state: state of media transmission
- *
- * @next: pointer to next gmtp_relay_entry
- */
-struct gmtp_relay_entry {
-	__u8 flowname[GMTP_FLOWNAME_LEN];
-	__be32 server_addr;
-	__be32 *relay;
-	__be16 media_port;
-	__be32 channel_addr;
-	__be16 channel_port;
-	__u8 state :3;
-	struct gmtp_relay_entry *next;
-};
-
-/*
- * struct gmtp_intra_hashtable: GMTP-Intra Relay Table
- */
-struct gmtp_intra_hashtable {
-	int size;
-	struct gmtp_relay_entry **table;
-};
-
-/**
- * Transmitting
- */
-enum {
-	GMTP_INTRA_WAITING_REGISTER_REPLY,
-	GMTP_INTRA_REGISTER_REPLY_RECEIVED,
-	GMTP_INTRA_TRANSMITTING,
-	GMTP_INTRA_CLOSE_RECEIVED,
-	GMTP_INTRA_CLOSED
-};
-
-extern struct gmtp_intra_hashtable* relay_hashtable;
-
-/** hash.c */
-struct gmtp_intra_hashtable *gmtp_intra_create_hashtable(unsigned int size);
-struct gmtp_relay_entry *gmtp_intra_lookup_media(
-		struct gmtp_intra_hashtable *hashtable, const __u8 *media);
-int gmtp_intra_add_entry(struct gmtp_intra_hashtable *hashtable, __u8 *flowname,
-		__be32 server_addr, __be32 *relay, __be16 media_port,
-		__be32 channel_addr, __be16 channel_port);
-struct gmtp_relay_entry *gmtp_intra_del_entry(struct gmtp_intra_hashtable *hashtable, __u8 *media);
-void kfree_gmtp_intra_hashtable(struct gmtp_intra_hashtable *hashtable);
-
 /** gmtp-intra.c */
 __be32 get_mcst_v4_addr(void);
-void gmtp_buffer_add(struct sk_buff *newsk);
-struct sk_buff *gmtp_buffer_dequeue(void);
-
+void gmtp_buffer_add(struct gmtp_flow_info *info, struct sk_buff *newsk);
+struct sk_buff *gmtp_buffer_dequeue(struct gmtp_flow_info *info);
+struct gmtp_flow_info *gmtp_intra_get_info(
+		struct gmtp_intra_hashtable *hashtable, const __u8 *media);
 
 /** input.c */
 int gmtp_intra_request_rcv(struct sk_buff *skb);

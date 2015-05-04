@@ -10,6 +10,7 @@
 
 #include <linux/gmtp.h>
 
-void gmtp_intra_mcc_delay(struct sk_buff *skb, u64 server_tx);
+void gmtp_intra_mcc_delay(struct gmtp_flow_info *info, struct sk_buff *skb,
+		u64 server_tx);
 
 #endif /* MCC_INTRA_H_ */

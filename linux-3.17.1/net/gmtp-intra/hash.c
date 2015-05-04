@@ -11,31 +11,33 @@
 #include <linux/string.h>
 
 #include "gmtp-intra.h"
+#include "hash.h"
 
 struct gmtp_intra_hashtable *gmtp_intra_create_hashtable(unsigned int size)
 {
 	int i;
-	struct gmtp_intra_hashtable *nt;
+	struct gmtp_intra_hashtable *ht;
 
-	gmtp_print_function();
-	gmtp_print_debug("Size of gmtp_intra_hashtable = %d", size);
+	gmtp_pr_func();
+	gmtp_pr_info("Size of gmtp_intra_hashtable = %d", size);
 
 	if(size < 1)
 		return NULL;
 
-	nt = kmalloc(sizeof(struct gmtp_intra_hashtable), GFP_KERNEL);
-	if(nt == NULL)
+	ht = kmalloc(sizeof(struct gmtp_intra_hashtable), GFP_KERNEL);
+	if(ht == NULL)
 		return NULL;
 
-	nt->table = kmalloc(sizeof(struct gmtp_relay_entry*) *size, GFP_KERNEL);
-	if(nt->table == NULL)
+	ht->table = kmalloc(sizeof(struct gmtp_relay_entry*) *size, GFP_KERNEL);
+	if(ht->table == NULL)
 		return NULL;
 
 	for(i = 0; i < size; ++i)
-		nt->table[i] = NULL;
+		ht->table[i] = NULL;
 
-	nt->size = size;
-	return nt;
+	ht->size = size;
+
+	return ht;
 }
 
 unsigned int gmtp_intra_hash(struct gmtp_intra_hashtable *hashtable,
@@ -103,6 +105,20 @@ int gmtp_intra_add_entry(struct gmtp_intra_hashtable *hashtable, __u8 *flowname,
 		return 2; /* TODO Media already being transmitted by other
 								server? */
 
+	new_entry->info = kmalloc(sizeof(struct gmtp_flow_info), GFP_ATOMIC);
+	if(new_entry->info == NULL)
+		return 1;
+
+	new_entry->info->iseq = 0;
+	new_entry->info->seq = 0;
+	new_entry->info->nbytes = 0;
+	new_entry->info->data_pkt_tx = 0;
+	new_entry->info->buffer = kmalloc(sizeof(struct sk_buff_head), GFP_ATOMIC);
+	skb_queue_head_init(new_entry->info->buffer);
+	new_entry->info->buffer_size = 0;
+	new_entry->info->buffer_max = 5;
+	new_entry->info->current_tx = 0; /* unlimited tx */
+
 	memcpy(new_entry->flowname, flowname, GMTP_FLOWNAME_LEN);
 	new_entry->server_addr = server_addr;
 	new_entry->relay = relay; /* FIXME Add list */
@@ -145,12 +161,16 @@ struct gmtp_relay_entry *gmtp_intra_del_entry(
 		gmtp_print_debug("Media entry not found at %d", hashval);
 		return hashtable->table[hashval];
 	}
+
 	/* Remove the last entry of list */
 	if(previous_entry == NULL) {
 		hashtable->table[hashval] = current_entry->next;
 	} else { /* The list keeps another media with same hash value */
 		previous_entry->next = current_entry->next;
 	}
+
+	skb_queue_purge(current_entry->info->buffer);
+	kfree(current_entry->info);
 	kfree(current_entry);
 
 	gmtp_print_debug("Media entry removed successfully!");

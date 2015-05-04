@@ -33,7 +33,7 @@ unsigned int gmtp_rx_rate()
 
 unsigned int gmtp_relay_queue_size()
 {
-	return gmtp.nbytes;
+	return gmtp.total_bytes_rx;
 }
 
 /**
