@@ -124,9 +124,6 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 
 		switch(gh->type) {
 		case GMTP_PKT_REQUEST:
-			gmtp.nclients++;
-			if(gmtp.nclients > 1)
-				gmtp.sec_port = gh->sport;
 			ret = gmtp_intra_request_rcv(skb);
 			break;
 		case GMTP_PKT_REGISTER_REPLY:
@@ -194,8 +191,6 @@ int init_module()
 	gmtp_pr_func();
 	gmtp_print_debug("Starting GMTP-Intra");
 
-	gmtp.nclients = 0;
-	gmtp.sec_port = 0;
 	gmtp.total_rx = 1;
 	memset(&gmtp.mcst, 0, 4*sizeof(unsigned char));
 

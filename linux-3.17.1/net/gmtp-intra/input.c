@@ -51,41 +51,39 @@ int gmtp_intra_request_rcv(struct sk_buff *skb)
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct gmtp_hdr *gh_reqnotify;
-	struct gmtp_relay_entry *media_info;
+	struct gmtp_relay_entry *entry;
 	__be32 mcst_addr;
 
 	gmtp_print_function();
 
-	media_info = gmtp_intra_lookup_media(gmtp.hashtable, gh->flowname);
-	if(media_info != NULL) {
-
-		gmtp_print_debug("Media found... ");
-
-		switch(media_info->state) {
+	entry = gmtp_intra_lookup_media(gmtp.hashtable, gh->flowname);
+	if(entry != NULL) {
+		gmtp_pr_info("Media found. Sending RequestNotify.");
+		switch(entry->state) {
 		case GMTP_INTRA_WAITING_REGISTER_REPLY:
 			gh_reqnotify = gmtp_intra_make_request_notify_hdr(skb,
-					media_info, gh->dport, gh->sport,
+					entry, gh->dport, gh->sport,
 					GMTP_REQNOTIFY_CODE_WAIT);
 			break;
 		case GMTP_INTRA_REGISTER_REPLY_RECEIVED:
 		case GMTP_INTRA_TRANSMITTING:
 			gh_reqnotify = gmtp_intra_make_request_notify_hdr(skb,
-					media_info, gh->dport, gh->sport,
+					entry, gh->dport, gh->sport,
 					GMTP_REQNOTIFY_CODE_OK);
 			ret = NF_DROP;
 			break;
 		default:
-			gmtp_print_error("Inconsistent state at gmtp-intra: %d",
-					media_info->state);
-
+			gmtp_pr_error("Inconsistent state at gmtp-intra: %d",
+					entry->state);
 			gh_reqnotify = gmtp_intra_make_request_notify_hdr(skb,
-					media_info, gh->dport, gh->sport,
+					entry, gh->dport, gh->sport,
 					GMTP_REQNOTIFY_CODE_ERROR);
 			ret = NF_DROP;
+			goto err;
 		}
 
 	} else {
-		gmtp_print_debug("Adding new entry in Relay Table...");
+		gmtp_pr_info("Media not found. Adding new entry in Relay Table...");
 		mcst_addr = get_mcst_v4_addr();
 		err = gmtp_intra_add_entry(gmtp.hashtable, gh->flowname,
 				iph->daddr,
@@ -99,20 +97,26 @@ int gmtp_intra_request_rcv(struct sk_buff *skb)
 		if(err) {
 			gmtp_print_error("Failed to insert flow in table...");
 			gh_reqnotify = gmtp_intra_make_request_notify_hdr(skb,
-					media_info, gh->dport, gh->sport,
+					entry, gh->dport, gh->sport,
 					GMTP_REQNOTIFY_CODE_ERROR);
 			ret = NF_DROP;
+			goto err;
 		} else {
 			gh_reqnotify = gmtp_intra_make_request_notify_hdr(skb,
-					media_info, gh->dport, gh->sport,
+					entry, gh->dport, gh->sport,
 					GMTP_REQNOTIFY_CODE_WAIT);
 		}
 	}
+
+	entry = gmtp_intra_lookup_media(gmtp.hashtable, gh->flowname);
+	if(entry != NULL)
+		gmtp_list_add_client(iph->saddr, gh->sport, entry);
 
 	if(gh_reqnotify != NULL)
 		gmtp_intra_build_and_send_pkt(skb, iph->daddr,
 				iph->saddr, gh_reqnotify, true);
 
+err:
 	return ret;
 }
 

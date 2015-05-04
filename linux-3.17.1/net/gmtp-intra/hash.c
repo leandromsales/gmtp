@@ -9,6 +9,7 @@
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/string.h>
+#include <linux/list.h>
 
 #include "gmtp-intra.h"
 #include "hash.h"
@@ -80,6 +81,42 @@ struct gmtp_relay_entry *gmtp_intra_lookup_media(
 	return NULL;
 }
 
+struct gmtp_flow_info *__gmtp_intra_build_info(void)
+{
+	struct gmtp_flow_info *info = kmalloc(sizeof(struct gmtp_flow_info),
+			GFP_KERNEL);
+	if(info == NULL)
+		goto out;
+
+	info->iseq = 0;
+	info->seq = 0;
+	info->nbytes = 0;
+	info->data_pkt_tx = 0;
+
+	info->clients = kmalloc(sizeof(struct gmtp_client), GFP_KERNEL);
+	INIT_LIST_HEAD(&info->clients->list);
+	info->nclients = 0;
+
+	info->buffer = kmalloc(sizeof(struct sk_buff_head), GFP_KERNEL);
+	skb_queue_head_init(info->buffer);
+	info->buffer_size = 0;
+	info->buffer_max = 1;
+	info->current_tx = 0; /* unlimited tx */
+
+out:
+	return info;
+}
+
+struct gmtp_flow_info *gmtp_intra_build_info(unsigned int bmax)
+{
+	struct gmtp_flow_info *info = __gmtp_intra_build_info();
+
+	if(info != NULL)
+		info->buffer_max = bmax;
+
+	return info;
+}
+
 int gmtp_intra_add_entry(struct gmtp_intra_hashtable *hashtable, __u8 *flowname,
 		__be32 server_addr, __be32 *relay, __be16 media_port,
 		__be32 channel_addr, __be16 channel_port)
@@ -105,19 +142,9 @@ int gmtp_intra_add_entry(struct gmtp_intra_hashtable *hashtable, __u8 *flowname,
 		return 2; /* TODO Media already being transmitted by other
 								server? */
 
-	new_entry->info = kmalloc(sizeof(struct gmtp_flow_info), GFP_ATOMIC);
+	new_entry->info = gmtp_intra_build_info(5);
 	if(new_entry->info == NULL)
 		return 1;
-
-	new_entry->info->iseq = 0;
-	new_entry->info->seq = 0;
-	new_entry->info->nbytes = 0;
-	new_entry->info->data_pkt_tx = 0;
-	new_entry->info->buffer = kmalloc(sizeof(struct sk_buff_head), GFP_ATOMIC);
-	skb_queue_head_init(new_entry->info->buffer);
-	new_entry->info->buffer_size = 0;
-	new_entry->info->buffer_max = 5;
-	new_entry->info->current_tx = 0; /* unlimited tx */
 
 	memcpy(new_entry->flowname, flowname, GMTP_FLOWNAME_LEN);
 	new_entry->server_addr = server_addr;
@@ -133,6 +160,18 @@ int gmtp_intra_add_entry(struct gmtp_intra_hashtable *hashtable, __u8 *flowname,
 	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_intra_add_entry);
+
+void gmtp_intra_del_clients(struct gmtp_relay_entry *entry)
+{
+	struct gmtp_client *client, *temp;
+	gmtp_pr_func();
+	list_for_each_entry_safe(client, temp,
+			&(entry->info->clients->list), list)
+	{
+		list_del(&client->list);
+		kfree(client);
+	}
+}
 
 struct gmtp_relay_entry *gmtp_intra_del_entry(
 		struct gmtp_intra_hashtable *hashtable, __u8 *media)
@@ -163,12 +202,12 @@ struct gmtp_relay_entry *gmtp_intra_del_entry(
 	}
 
 	/* Remove the last entry of list */
-	if(previous_entry == NULL) {
+	if(previous_entry == NULL)
 		hashtable->table[hashval] = current_entry->next;
-	} else { /* The list keeps another media with same hash value */
+	else  /* The list keeps another media with same hash value */
 		previous_entry->next = current_entry->next;
-	}
 
+	gmtp_intra_del_clients(current_entry);
 	skb_queue_purge(current_entry->info->buffer);
 	kfree(current_entry->info);
 	kfree(current_entry);

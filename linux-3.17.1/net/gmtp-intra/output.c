@@ -393,11 +393,6 @@ int gmtp_intra_close_out(struct sk_buff *skb)
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct gmtp_relay_entry *entry;
 
-	struct sk_buff *copy;
-	struct iphdr *iph_copy;
-	struct gmtp_hdr *gh_copy;
-	unsigned char *addr =  "\xc0\xa8\x02\x03"; /* 192.168.2.3 */
-
 	gmtp_pr_func();
 
 	/**
@@ -409,23 +404,28 @@ int gmtp_intra_close_out(struct sk_buff *skb)
 
 	switch(entry->state) {
 	case GMTP_INTRA_TRANSMITTING:
+	{
+		struct gmtp_client *tmp;
+
 		pr_info("TRANSMITTING\n");
 		entry->state = GMTP_INTRA_CLOSE_RECEIVED;
 
-		gmtp_buffer_add(entry->info, skb);
+		list_for_each_entry(tmp, &(entry->info->clients->list), list)
+		{
+			struct sk_buff *copy = skb_copy(skb, GFP_ATOMIC);
+			if(copy != NULL) {
+				struct iphdr *iph_copy = ip_hdr(copy);
+				struct gmtp_hdr *gh_copy = gmtp_hdr(copy);
 
-		copy = skb_copy(skb, GFP_ATOMIC);
-		pr_info("Copy: %p\n", copy);
-		if(copy != NULL) {
-			iph_copy = ip_hdr(copy);
-			gh_copy = gmtp_hdr(copy);
-			iph_copy->daddr = *(unsigned int *)addr;
-			ip_send_check(iph_copy);
-			gh_copy->dport = gmtp.sec_port;
-			gmtp_buffer_add(entry->info, copy);
+				iph_copy->daddr = tmp->addr;
+				ip_send_check(iph_copy);
+				gh_copy->dport = tmp->port;
+
+				gmtp_buffer_add(entry->info, copy);
+			}
 		}
-
 		return NF_REPEAT;
+	}
 	case GMTP_INTRA_CLOSED:
 		pr_info("CLOSED\n");
 		gmtp_intra_del_entry(gmtp.hashtable, gh->flowname);

@@ -25,19 +25,75 @@
  * @next: pointer to next gmtp_relay_entry
  */
 struct gmtp_relay_entry {
-	__u8 		flowname[GMTP_FLOWNAME_LEN];
-	__be32 		server_addr;
-	__be32 		*relay;
-	__be16 		media_port;
-	__be32		channel_addr;
-	__be16 		channel_port;
-	__u8 		state :3;
+	__u8 flowname[GMTP_FLOWNAME_LEN];
+	__be32 server_addr;
+	__be32 *relay;
+	__be16 media_port;
+	__be32 channel_addr;
+	__be16 channel_port;
+	__u8 state :3;
 	struct gmtp_flow_info *info;
 
 	struct gmtp_relay_entry *next;
 };
 
-struct gmtp_flow_info;
+/**
+ * struct gmtp_flow_info - Control information for media transmission
+ *
+ * @iseq: initial sequence number of received packets
+ * @seq: sequence number of last received packet
+ * @nbytes: amount of received bytes
+ * @current_tx: Current max tx (via GMTP-MCC). 0 means unlimited.
+ * @last_rx_tstamp: time stamp of last received data packet
+ * @data_pkt_tx: number of data packets transmitted
+ * @buffer: buffer of GMTP-Data packets
+ * @buffer_size: size (in bytes) of GMTP-Data buffer.
+ * @buffer_len: number of packets in GMTP-Data buffer]
+ * @buffer_size: max number of packets in buffer
+ */
+struct gmtp_flow_info {
+	unsigned int 		iseq;
+	unsigned int 		seq;
+	unsigned int 		nbytes;
+
+	u64 			current_tx;
+	ktime_t 		last_rx_tstamp;
+	unsigned int 		data_pkt_tx;
+
+	struct gmtp_client 	*clients;
+	unsigned int 		nclients;
+
+	struct sk_buff_head 	*buffer;
+	unsigned int 		buffer_size;
+	unsigned int 		buffer_max;
+#define buffer_len 		buffer->qlen
+};
+
+/**
+ * struct gmtp_clients - A list of GMTP Clients
+ *
+ * @addr: ip address of client
+ * @port: reception port of client
+ */
+struct gmtp_client {
+	struct list_head 	list;
+	__be32 			addr;
+	__be16 			port;
+};
+
+static inline void gmtp_list_add_client(__be32 addr, __be16 port,
+		struct gmtp_relay_entry *entry)
+{
+	struct gmtp_client *new = kmalloc(sizeof(struct gmtp_client), GFP_KERNEL);
+
+	gmtp_pr_info("New client: ADDR=%pI4@%-5d\n", &addr, ntohs(port));
+	entry->info->nclients++;
+
+	new->addr = addr;
+	new->port = port;
+	INIT_LIST_HEAD(&new->list);
+	list_add_tail(&new->list, &entry->info->clients->list);
+}
 
 /**
  * State of a flow
