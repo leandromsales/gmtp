@@ -34,7 +34,6 @@ static void gmtp_fin(struct sock *sk, struct sk_buff *skb)
 
 static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
 {
-	struct gmtp_sock *gp = gmtp_sk(sk);
 	int queued = 0;
 
 	gmtp_print_function();
@@ -57,7 +56,7 @@ static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
 		 * This is ok as both ends are done with data transfer and each
 		 * end is just waiting for the other to acknowledge termination.
 		 */
-		if(gp->role != GMTP_ROLE_CLIENT)
+		if(gmtp_role_client(sk))
 			break;
 		/* fall through */
 	case GMTP_REQUESTING:
@@ -68,7 +67,7 @@ static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
 	case GMTP_OPEN:
 		/* Clear hash table */
 		/* FIXME: Implement gmtp_del_server_entry() */
-		/*if(gp->role == GMTP_ROLE_CLIENT)
+		/*if(gmtp_role_client(sk))
 			gmtp_del_client_entry(gmtp_hashtable, gp->flowname);
 		else if(gp->role == GMTP_ROLE_SERVER)
 			gmtp_print_error("FIXME: "
@@ -163,8 +162,12 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 
 			/* Obtain usec RTT sample from Request (used by CC). */
 			switch(gh_rnotify->error_code) {
+			case GMTP_REQNOTIFY_CODE_OK_REPORTER:
+				gp->role = GMTP_ROLE_REPORTER;
 			case GMTP_REQNOTIFY_CODE_OK: /* Process packet */
 				break;
+			case GMTP_REQNOTIFY_CODE_WAIT_REPORTER:
+				gp->role = GMTP_ROLE_REPORTER;
 			case GMTP_REQNOTIFY_CODE_WAIT:  /* Do nothing... */
 				return 0;
 			/* FIXME Del entry in table when receiving error... */
@@ -204,6 +207,12 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 		}
 
 		gmtp_set_state(sk, GMTP_OPEN);
+
+		if(gp->role == GMTP_ROLE_REPORTER) {
+			int ret = mcc_rx_init(sk);
+			if(ret)
+				goto err;
+		}
 
 		/* Make sure socket is routed, for correct metrics. */
 		icsk->icsk_af_ops->rebuild_header(sk);

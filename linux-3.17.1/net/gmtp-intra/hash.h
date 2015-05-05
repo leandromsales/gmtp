@@ -79,6 +79,7 @@ struct gmtp_client {
 	struct list_head 	list;
 	__be32 			addr;
 	__be16 			port;
+	unsigned int		id;
 };
 
 static inline void gmtp_list_add_client(__be32 addr, __be16 port,
@@ -86,11 +87,13 @@ static inline void gmtp_list_add_client(__be32 addr, __be16 port,
 {
 	struct gmtp_client *new = kmalloc(sizeof(struct gmtp_client), GFP_KERNEL);
 
-	gmtp_pr_info("New client: ADDR=%pI4@%-5d\n", &addr, ntohs(port));
-	entry->info->nclients++;
-
 	new->addr = addr;
 	new->port = port;
+	new->id	  = ++entry->info->nclients;
+
+	gmtp_pr_info("New client (%d): ADDR=%pI4@%-5d\n",
+			new->id, &addr, ntohs(port));
+
 	INIT_LIST_HEAD(&new->list);
 	list_add_tail(&new->list, &entry->info->clients->list);
 }

@@ -88,21 +88,21 @@ int gmtp_intra_request_rcv(struct sk_buff *skb)
 				mcst_addr,
 				gh->dport); /* Mcst port <- server port */
 
-		if(err != 0) {
+		if(!err) {
+			entry = gmtp_intra_lookup_media(gmtp.hashtable,
+					gh->flowname);
 			code = new_reporter(entry) ?
 					GMTP_REQNOTIFY_CODE_WAIT_REPORTER :
 					GMTP_REQNOTIFY_CODE_WAIT;
 			gh->type = GMTP_PKT_REGISTER;
 		} else {
-			gmtp_print_error("Failed to insert flow in table...");
+			gmtp_pr_error("Failed to insert flow in table (%d)", err);
 			ret = NF_DROP;
 			goto out;
 		}
 	}
 
-	entry = gmtp_intra_lookup_media(gmtp.hashtable, gh->flowname);
-	if(entry != NULL)
-		gmtp_list_add_client(iph->saddr, gh->sport, entry);
+	gmtp_list_add_client(iph->saddr, gh->sport, entry);
 
 out:
 	gh_reqnotify = gmtp_intra_make_request_notify_hdr(skb, entry,
@@ -187,12 +187,15 @@ int gmtp_intra_register_reply_rcv(struct sk_buff *skb)
 
 	/*
 	 * FIXME
-	 * (1) Send ReqNotify to every client.
+	 * (1) Send ReqNotify to every waiting client.
 	 * (2) Clear waiting client list
+	 *
+	 * Here, the first client is a REPORTER
 	 */
 	ret = gmtp_intra_make_request_notify(skb,
 			iph->saddr, gh->sport,
-			iph->daddr, gh->dport, GMTP_REQNOTIFY_CODE_OK);
+			iph->daddr, gh->dport,
+			GMTP_REQNOTIFY_CODE_OK_REPORTER);
 
 	return ret;
 }
@@ -221,18 +224,19 @@ int gmtp_intra_feedback_rcv(struct sk_buff *skb)
 	int ret = NF_DROP;
 
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
-	/*struct iphdr *iph = ip_hdr(skb);*/
 	struct gmtp_relay_entry *entry;
 
 	entry = gmtp_intra_lookup_media(gmtp.hashtable, gh->flowname);
 	if(entry == NULL)
 		goto out;
 
-	/*gmtp_pr_info("%s (%d) src=%pI4@%-5d dst=%pI4@%-5d transm_r: %u",
-			gmtp_packet_name(gh->type), gh->type,
-			&iph->saddr, ntohs(gh->sport),
-			&iph->daddr, ntohs(gh->dport),
-			gh->transm_r);*/
+	/*{
+		struct iphdr *iph = ip_hdr(skb);
+		gmtp_pr_info("%s (%d) src=%pI4@%-5d dst=%pI4@%-5d transm_r: %u",
+				gmtp_packet_name(gh->type), gh->type,
+				&iph->saddr, ntohs(gh->sport), &iph->daddr,
+				ntohs(gh->dport), gh->transm_r);
+	}*/
 
 	/* Discard early feedbacks */
 	if((entry->info->data_pkt_tx/entry->info->buffer_max) < 100)

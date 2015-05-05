@@ -426,15 +426,16 @@ void gmtp_send_close(struct sock *sk, const int active)
  *
  * To delay the send time in process context.
  */
-static void gmtp_wait_for_delay(struct sock *sk, unsigned long delay)
+static long gmtp_wait_for_delay(struct sock *sk, unsigned long delay)
 {
 	DEFINE_WAIT(wait);
+	long remaining;
 
 	prepare_to_wait(sk_sleep(sk), &wait, TASK_UNINTERRUPTIBLE);
 	sk->sk_write_pending++;
 	release_sock(sk);
 
-	schedule_timeout(delay);
+	remaining = schedule_timeout(delay);
 
 	lock_sock(sk);
 	sk->sk_write_pending--;
@@ -442,6 +443,7 @@ static void gmtp_wait_for_delay(struct sock *sk, unsigned long delay)
 
 	if (signal_pending(current) || sk->sk_err)
 		return -1;
+	return remaining;
 }
 
 static inline unsigned int packet_len(struct sk_buff *skb)

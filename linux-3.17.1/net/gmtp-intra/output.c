@@ -100,12 +100,12 @@ struct gmtp_hdr *gmtp_intra_make_request_notify_hdr(struct sk_buff *skb,
 		gh_rnotify->mcst_addr = entry->channel_addr;
 		gh_rnotify->mcst_port = entry->channel_port;
 
-		gmtp_print_debug("ReqNotify => Channel: %pI4@%-5d | Error: %d",
+		gmtp_print_debug("ReqNotify => Channel: %pI4@%-5d | Code: %d",
 				&gh_rnotify->mcst_addr,
 				ntohs(gh_rnotify->mcst_port),
 				gh_rnotify->error_code);
 	} else {
-		gmtp_print_debug("ReqNotify => Channel: NULL | Error: %d",
+		gmtp_print_debug("ReqNotify => Channel: NULL | Code: %d",
 				gh_rnotify->error_code);
 	}
 
@@ -143,7 +143,7 @@ struct gmtp_hdr *gmtp_intra_make_request_notify_hdr(struct sk_buff *skb,
  */
 int gmtp_intra_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
 		__be16 new_sport, __be32 new_daddr, __be16 new_dport,
-		__u8 error_code)
+		__u8 code)
 {
 	int ret = NF_ACCEPT;
 
@@ -179,17 +179,17 @@ int gmtp_intra_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
 	if(gh_rnotify == NULL)
 		goto fail;
 
-	if(entry != NULL && error_code != GMTP_REQNOTIFY_CODE_ERROR) {
-		gh_rnotify->error_code = error_code;
+	if(entry != NULL && code != GMTP_REQNOTIFY_CODE_ERROR) {
+		gh_rnotify->error_code = code;
 		gh_rnotify->mcst_addr = entry->channel_addr;
 		gh_rnotify->mcst_port = entry->channel_port;
 
-		gmtp_print_debug("ReqNotify => Channel: %pI4@%-5d | Error: %d",
+		gmtp_print_debug("ReqNotify => Channel: %pI4@%-5d | Code: %d",
 				&gh_rnotify->mcst_addr,
 				ntohs(gh_rnotify->mcst_port),
 				gh_rnotify->error_code);
 	} else {
-		gmtp_print_debug("ReqNotify => Channel: NULL | Error: %d",
+		gmtp_print_debug("ReqNotify => Channel: NULL | Code: %d",
 				gh_rnotify->error_code);
 	}
 
