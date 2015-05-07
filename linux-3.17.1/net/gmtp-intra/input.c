@@ -54,21 +54,23 @@ int gmtp_intra_request_rcv(struct sk_buff *skb)
 	struct gmtp_relay_entry *entry;
 
 	__u8 code = GMTP_REQNOTIFY_CODE_ERROR;
+	__u8 reporter = 0;
 
 	gmtp_pr_func();
 
 	entry = gmtp_intra_lookup_media(gmtp.hashtable, gh->flowname);
 	if(entry != NULL) {
 		gmtp_pr_info("Media found. Sending RequestNotify.");
+		reporter = new_reporter(entry);
 		switch(entry->state) {
 		case GMTP_INTRA_WAITING_REGISTER_REPLY:
-			code = new_reporter(entry) ?
+			code = reporter ?
 					GMTP_REQNOTIFY_CODE_WAIT_REPORTER :
 					GMTP_REQNOTIFY_CODE_WAIT;
 			break;
 		case GMTP_INTRA_REGISTER_REPLY_RECEIVED:
 		case GMTP_INTRA_TRANSMITTING:
-			code = new_reporter(entry) ?
+			code = reporter ?
 					GMTP_REQNOTIFY_CODE_OK_REPORTER:
 					GMTP_REQNOTIFY_CODE_OK;
 			ret = NF_DROP;
@@ -91,7 +93,8 @@ int gmtp_intra_request_rcv(struct sk_buff *skb)
 		if(!err) {
 			entry = gmtp_intra_lookup_media(gmtp.hashtable,
 					gh->flowname);
-			code = new_reporter(entry) ?
+			reporter = new_reporter(entry);
+			code = reporter ?
 					GMTP_REQNOTIFY_CODE_WAIT_REPORTER :
 					GMTP_REQNOTIFY_CODE_WAIT;
 			gh->type = GMTP_PKT_REGISTER;
@@ -102,7 +105,8 @@ int gmtp_intra_request_rcv(struct sk_buff *skb)
 		}
 	}
 
-	gmtp_list_add_client(iph->saddr, gh->sport, entry);
+	gmtp_list_add_client(++entry->info->nclients, iph->saddr, gh->sport,
+			reporter, &entry->info->clients->list);
 
 out:
 	gh_reqnotify = gmtp_intra_make_request_notify_hdr(skb, entry,

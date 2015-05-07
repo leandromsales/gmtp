@@ -6,10 +6,10 @@
  */
 
 #include <linux/kernel.h>
-#include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/string.h>
-#include "gmtp.h"
+
+#include "hash.h"
 
 struct gmtp_hashtable *gmtp_create_hashtable(unsigned int size)
 {
@@ -92,7 +92,7 @@ int gmtp_add_client_entry(struct gmtp_hashtable *hashtable, __u8 *flowname,
 	if(hashval < 0)
 		return hashval;
 
-	new_entry = kmalloc(sizeof(struct gmtp_client_entry), GFP_KERNEL);
+	new_entry = kmalloc(sizeof(struct gmtp_client_entry), GFP_ATOMIC);
 	if(new_entry == NULL)
 		return 1;
 
@@ -102,8 +102,14 @@ int gmtp_add_client_entry(struct gmtp_hashtable *hashtable, __u8 *flowname,
 								server? */
 
 	memcpy(new_entry->flowname, flowname, GMTP_FLOWNAME_LEN);
-	new_entry->local_addr = local_addr;
-	new_entry->local_port = local_port;
+
+	new_entry->clients = kmalloc(sizeof(struct gmtp_client), GFP_ATOMIC);
+	if(new_entry->clients == NULL)
+		return 3;
+	INIT_LIST_HEAD(&new_entry->clients->list);
+	gmtp_list_add_client(0, local_addr, local_port, 0,
+			&new_entry->clients->list);
+
 	new_entry->channel_addr = channel_addr;
 	new_entry->channel_port = channel_port;
 
@@ -113,6 +119,17 @@ int gmtp_add_client_entry(struct gmtp_hashtable *hashtable, __u8 *flowname,
 	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_add_client_entry);
+
+void gmtp_del_clients(struct gmtp_client_entry *entry)
+{
+	struct gmtp_client *client, *temp;
+	gmtp_pr_func();
+	list_for_each_entry_safe(client, temp, &(entry->clients->list), list)
+	{
+		list_del(&client->list);
+		kfree(client);
+	}
+}
 
 void gmtp_del_client_entry(struct gmtp_hashtable *hashtable, __u8 *media)
 {
@@ -127,8 +144,10 @@ void gmtp_del_client_entry(struct gmtp_hashtable *hashtable, __u8 *media)
 		return;
 
 	entry = hashtable->table[hashval].client_entry;
-	if(entry != NULL)
+	if(entry != NULL) {
+		gmtp_del_clients(entry);
 		kfree(entry);
+	}
 }
 
 struct gmtp_server_entry *gmtp_lookup_route(

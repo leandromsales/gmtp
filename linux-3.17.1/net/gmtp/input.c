@@ -92,27 +92,20 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 					       const struct gmtp_hdr *gh,
 					       const unsigned int len)
 {
+	struct gmtp_sock *gp = gmtp_sk(sk);
+
 	gmtp_print_function();
 	gmtp_print_debug("Packet received: %s", gmtp_packet_name(gh->type));
 
 	/*
-	 *  Step 4: Prepare sequence numbers in REQUEST
-	 *     If S.state == REQUEST,
-	 *	  If (P.type == REGISTER_REPLY or P.type == Reset)
-	 *		and S.AWL <= P.ackno <= S.AWH,
-	 *	     / * Set sequence number variables corresponding to the
-	 *		other endpoint, so P will pass the tests in Step 6 * /
-	 *	     Set S.GSR, S.ISR, S.SWL, S.SWH
-	 *	     / * Response processing continues in Step 10; Reset
-	 *		processing continues in Step 9 * /
-	 *
 	 * FIXME Clients must receive only GMTP_PKT_REQUESTNOTIFY
+	 * Accepting GMTP_PKT_REGISTER_REPLY temporarily
 	*/
 	if (gh->type == GMTP_PKT_REQUESTNOTIFY ||
-			gh->type == GMTP_PKT_REGISTER_REPLY /* Accept it temporarily */) {
+			gh->type == GMTP_PKT_REGISTER_REPLY) {
 
 		const struct inet_connection_sock *icsk = inet_csk(sk);
-		struct gmtp_sock *gp = gmtp_sk(sk);
+
 
 		/*** FIXME Check sequence numbers  ***/
 
@@ -160,10 +153,18 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 					ntohs(gh_rnotify->mcst_port),
 					gh_rnotify->error_code);
 
+			media_entry = gmtp_lookup_media(gmtp_hashtable,
+					gh->flowname);
+			if(media_entry == NULL)
+				goto out_invalid_packet;
+
 			/* Obtain usec RTT sample from Request (used by CC). */
 			switch(gh_rnotify->error_code) {
 			case GMTP_REQNOTIFY_CODE_OK_REPORTER:
 				gp->role = GMTP_ROLE_REPORTER;
+
+				/* TODO set witch client is a reporter */
+
 			case GMTP_REQNOTIFY_CODE_OK: /* Process packet */
 				break;
 			case GMTP_REQNOTIFY_CODE_WAIT_REPORTER:
@@ -176,11 +177,6 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 			default:
 				goto out_invalid_packet;
 			}
-
-			media_entry = gmtp_lookup_media(gmtp_hashtable,
-					gh->flowname);
-			if(media_entry == NULL)
-				goto out_invalid_packet;
 
 			/* Inserting information in client table */
 			media_entry->channel_addr = gh_rnotify->mcst_addr;
@@ -245,6 +241,7 @@ err:
  	 * We mark this socket as no longer usable, so that the loop in
  	 * gmtp_sendmsg() terminates and the application gets notified.
  	 */
+	gmtp_del_client_entry(gmtp_hashtable, gp->flowname);
  	gmtp_set_state(sk, GMTP_CLOSED);
  	sk->sk_err = ECOMM;
  	return 1;
@@ -299,8 +296,8 @@ static void gmtp_deliver_input_to_mcc(struct sock *sk, struct sk_buff *skb)
 	if (!(sk->sk_shutdown & RCV_SHUTDOWN))
 		mcc_rx_packet_recv(sk, skb);
 	/*
-	 * Until the TX queue has been drained, we can not honour SHUT_WR, since
-	 * we need received feedback as input to adjust congestion control.
+	 * FIXME Until the TX queue has been drained, we can not honour SHUT_WR,
+	 * since we need received feedback as input to adjust congestion control.
 	 */
 /*	if (sk->sk_write_queue.qlen > 0 || !(sk->sk_shutdown & SEND_SHUTDOWN))
 		mcc_tx_packet_recv(sk, skb);*/
@@ -362,7 +359,9 @@ int gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 	if(gmtp_check_seqno(sk, skb))
 		goto discard;
 
-	gmtp_deliver_input_to_mcc(sk, skb);
+	if(gp->role == GMTP_ROLE_REPORTER)
+		gmtp_deliver_input_to_mcc(sk, skb);
+
 	gp->gsr = gh->seq;
 
 	return __gmtp_rcv_established(sk, skb, gh, len);

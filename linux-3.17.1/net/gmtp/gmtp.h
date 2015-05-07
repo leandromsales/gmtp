@@ -11,20 +11,18 @@
 #include <net/inet_timewait_sock.h>
 #include <net/inet_hashtables.h>
 #include <uapi/asm-generic/errno.h>
-
-#include <net/netns/gmtp.h>
-
+#include <uapi/linux/ip.h>
 #include <linux/types.h>
 #include <linux/skbuff.h>
-#include <uapi/linux/ip.h>
 
+#include <net/netns/gmtp.h>
 #include <linux/gmtp.h>
 #include <uapi/linux/gmtp.h>
 
+#include "hash.h"
+
 extern struct inet_hashinfo gmtp_inet_hashinfo;
 extern struct percpu_counter gmtp_orphan_count;
-
-#define GMTP_HASH_SIZE  16
 
 /** GMTP Debugs */
 #define GMTP_INFO "[GMTP] %s:%d - "
@@ -97,58 +95,6 @@ extern struct percpu_counter gmtp_orphan_count;
 #define TO_U8(x) ((x) > UINT_MAX) ? UINT_MAX : (__u8)(x)
 #define SUB_U8(a, b) ((a-b) > UINT_MAX) ? UINT_MAX : (a-b)
 
-/**
- * struct gmtp_client_entry - An entry in client hash table
- *
- * flowname[GMTP_FLOWNAME_LEN];
- * local_addr:	local client IP address
- * local_port:	local client port
- * channel_addr: multicast channel to receive media
- * channel_port: multicast port to receive media
- */
-/** FIXME If a client requests a media in localhost, we get an error! */
-struct gmtp_client_entry {
-	struct gmtp_client_entry *next; /** It must be the first */
-
-	__u8 flowname[GMTP_FLOWNAME_LEN];
-	__be32 local_addr;
-	__be16 local_port;
-	__be32 channel_addr;
-	__be16 channel_port;
-};
-
-
-/**
- * struct gmtp_server_entry - An entry in server hash table
- *
- * @next: 	the next entry with the same key (hash)
- * @srelay: 	source of route (route[route->nrelays]).
- * 			the primary key at table is 'srelay->relayid'
- * @route:	the route stored in table
- */
-struct gmtp_server_entry {
-	struct gmtp_server_entry *next; /** It must be the first */
-
-	struct gmtp_relay *srelay;
-	__u8 flowname[GMTP_FLOWNAME_LEN];
-	struct gmtp_hdr_route route;
-};
-
-/**
- * struct gmtp_hashtable - The GMTP hash table
- *
- * @size: 	the max number of entries in hash table (fixed)
- * @table:	the array of table entries
- * 			(it can be a client or a server entry)
- */
-struct gmtp_hashtable {
-	int size;
-	union gmtp_entry {
-		struct gmtp_client_entry *client_entry;
-		struct gmtp_server_entry *server_entry;
-	} *table;
-};
-
 extern struct gmtp_hashtable* gmtp_hashtable;
 
 void gmtp_init_xmit_timers(struct sock *sk);
@@ -156,7 +102,6 @@ static inline void gmtp_clear_xmit_timers(struct sock *sk)
 {
 	inet_csk_clear_xmit_timers(sk);
 }
-
 
 /** proto.c */
 int gmtp_init_sock(struct sock *sk);
@@ -223,22 +168,6 @@ void gmtp_reqsk_send_ack(struct sock *sk, struct sk_buff *skb,
 /** ipv4.c */
 int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len);
 
-/** hash.c */
-struct gmtp_hashtable *gmtp_create_hashtable(unsigned int size);
-struct gmtp_client_entry *gmtp_lookup_media(
-		struct gmtp_hashtable *hashtable, const __u8 *media);
-int gmtp_add_client_entry(struct gmtp_hashtable *hashtable, __u8 *flowname,
-		__be32 local_addr, __be16 local_port,
-		__be32 channel_addr, __be16 channel_port);
-void gmtp_del_client_entry(struct gmtp_hashtable *hashtable, __u8 *media);
-
-struct gmtp_server_entry *gmtp_lookup_route(
-		struct gmtp_hashtable *hashtable, const __u8 *relayid);
-int gmtp_add_server_entry(struct gmtp_hashtable *hashtable, __u8 *relayid,
-		__u8 *flowname, struct gmtp_hdr_route *route);
-
-void kfree_gmtp_hashtable(struct gmtp_hashtable *hashtable);
-
 /**
  * This is the control buffer. It is free to use by any layer.
  * This is an opaque area used to store private information.
@@ -300,6 +229,47 @@ static inline int gmtp_data_packet(const struct sk_buff *skb)
 	return type == GMTP_PKT_DATA	 ||
 	       type == GMTP_PKT_DATAACK;
 }
+
+/**
+ * struct gmtp_clients - A list of GMTP Clients
+ *
+ * @addr: ip address of client
+ * @port: reception port of client
+ * @id: id of client
+ */
+struct gmtp_client {
+	struct list_head 	list;
+	unsigned int		id;
+	__be32 			addr;
+	__be16 			port;
+	__u8			reporter:1;
+};
+
+/**
+ * Create and add a client in the list of clients
+ */
+static inline void gmtp_list_add_client(unsigned int id, __be32 addr,
+		__be16 port, __u8 reporter, struct list_head *head)
+{
+	struct gmtp_client *new = kmalloc(sizeof(struct gmtp_client), GFP_ATOMIC);
+
+	if(new == NULL) {
+		gmtp_pr_error("Error while creating new gmtp_client...");
+		return;
+	}
+
+	new->id	  = id;
+	new->addr = addr;
+	new->port = port;
+	new->reporter = reporter;
+
+	gmtp_pr_info("New client (%u): ADDR=%pI4@%-5d\n",
+			new->id, &addr, ntohs(port));
+
+	INIT_LIST_HEAD(&new->list);
+	list_add_tail(&new->list, head);
+}
+
 
 #endif /* GMTP_H_ */
 

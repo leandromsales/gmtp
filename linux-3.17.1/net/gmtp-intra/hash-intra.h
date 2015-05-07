@@ -1,12 +1,12 @@
 /*
- * hash.h
+ * hash-intra.h
  *
  *  Created on: 03/05/2015
  *      Author: wendell
  */
 
-#ifndef HASH_H_
-#define HASH_H_
+#ifndef HASH_INTRA_H_
+#define HASH_INTRA_H_
 
 #define GMTP_HASH_SIZE  16
 
@@ -60,7 +60,7 @@ struct gmtp_flow_info {
 	ktime_t 		last_rx_tstamp;
 	unsigned int 		data_pkt_tx;
 
-	struct gmtp_client 	*clients;
+	struct gmtp_client	*clients;
 	unsigned int 		nclients;
 
 	struct sk_buff_head 	*buffer;
@@ -68,35 +68,6 @@ struct gmtp_flow_info {
 	unsigned int 		buffer_max;
 #define buffer_len 		buffer->qlen
 };
-
-/**
- * struct gmtp_clients - A list of GMTP Clients
- *
- * @addr: ip address of client
- * @port: reception port of client
- */
-struct gmtp_client {
-	struct list_head 	list;
-	__be32 			addr;
-	__be16 			port;
-	unsigned int		id;
-};
-
-static inline void gmtp_list_add_client(__be32 addr, __be16 port,
-		struct gmtp_relay_entry *entry)
-{
-	struct gmtp_client *new = kmalloc(sizeof(struct gmtp_client), GFP_KERNEL);
-
-	new->addr = addr;
-	new->port = port;
-	new->id	  = ++entry->info->nclients;
-
-	gmtp_pr_info("New client (%d): ADDR=%pI4@%-5d\n",
-			new->id, &addr, ntohs(port));
-
-	INIT_LIST_HEAD(&new->list);
-	list_add_tail(&new->list, &entry->info->clients->list);
-}
 
 /**
  * State of a flow
@@ -129,4 +100,4 @@ struct gmtp_relay_entry *gmtp_intra_del_entry(
 
 void kfree_gmtp_intra_hashtable(struct gmtp_intra_hashtable *hashtable);
 
-#endif /* HASH_H_ */
+#endif /* HASH_INTRA_H_ */

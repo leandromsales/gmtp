@@ -44,7 +44,7 @@ struct gmtp_hdr *gmtp_intra_make_route_hdr(struct sk_buff *skb)
 
 	gmtp_print_function();
 
-	transport_header = kmalloc(gmtp_hdr_len, GFP_ATOMIC);
+	transport_header = kmalloc(gmtp_hdr_len, gfp_any());
 	memset(transport_header, 0, gmtp_hdr_len);
 
 	gh_cpy = (struct gmtp_hdr *) transport_header;
@@ -79,7 +79,7 @@ struct gmtp_hdr *gmtp_intra_make_request_notify_hdr(struct sk_buff *skb,
 
 	gmtp_print_function();
 
-	transport_header = kmalloc(gmtp_hdr_len, GFP_ATOMIC);
+	transport_header = kmalloc(gmtp_hdr_len, gfp_any());
 	memset(transport_header, 0, gmtp_hdr_len);
 
 	gh_cpy = (struct gmtp_hdr *)transport_header;
@@ -215,7 +215,7 @@ struct sk_buff *gmtp_intra_build_pkt(struct sk_buff *skb_src, __be32 saddr,
 	struct net_device *dev = skb_src->dev;
 	struct ethhdr *eth_src = eth_hdr(skb_src);
 
-	struct sk_buff *skb = alloc_skb(gh_ref->hdrlen, GFP_ATOMIC);
+	struct sk_buff *skb = alloc_skb(gh_ref->hdrlen, gfp_any());
 	struct ethhdr *eth;
 	struct iphdr *iph;
 	struct gmtp_hdr *gh;
@@ -412,7 +412,7 @@ int gmtp_intra_close_out(struct sk_buff *skb)
 
 		list_for_each_entry(tmp, &(entry->info->clients->list), list)
 		{
-			struct sk_buff *copy = skb_copy(skb, GFP_ATOMIC);
+			struct sk_buff *copy = skb_copy(skb, gfp_any());
 			if(copy != NULL) {
 				struct iphdr *iph_copy = ip_hdr(copy);
 				struct gmtp_hdr *gh_copy = gmtp_hdr(copy);

@@ -9,6 +9,7 @@
 #define MCC_INTRA_H_
 
 #include <linux/gmtp.h>
+#include "gmtp-intra.h"
 
 #define GMTP_REPORTER_PROPORTION 6
 

@@ -1,18 +1,17 @@
 /*
- * hash.c
+ * hash-intra.c
  *
  *  Created on: 27/02/2015
  *      Author: wendell
  */
 
 #include <linux/kernel.h>
-#include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/string.h>
 #include <linux/list.h>
 
 #include "gmtp-intra.h"
-#include "hash.h"
+#include "hash-intra.h"
 
 struct gmtp_intra_hashtable *gmtp_intra_create_hashtable(unsigned int size)
 {

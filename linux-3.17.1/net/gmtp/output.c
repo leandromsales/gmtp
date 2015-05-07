@@ -291,13 +291,16 @@ int gmtp_send_reset(struct sock *sk, enum gmtp_reset_codes code)
 /*
  * Do all connect socket setups that can be done AF independent.
  */
-int gmtp_connect(struct sock *sk) {
-
+int gmtp_connect(struct sock *sk)
+{
 	struct sk_buff *skb;
 	struct gmtp_sock *gp = gmtp_sk(sk);
 	struct dst_entry *dst = __sk_dst_get(sk);
 	struct inet_sock *inet = inet_sk(sk);
 	struct inet_connection_sock *icsk = inet_csk(sk);
+
+	struct gmtp_client_entry *client_entry;
+	int err = 0;
 
 	gmtp_print_function();
 
@@ -317,26 +320,22 @@ int gmtp_connect(struct sock *sk) {
 	skb_reserve(skb, sk->sk_prot->max_header);
 	GMTP_SKB_CB(skb)->type = GMTP_PKT_REQUEST;
 
-	/** FIXME Treat two clients getting the same media at same server...
-	 *
-	 * Utilizar o mesmo sk para cada novo cliente conectado localmente para
-	 * o mesmo flowname.
-	 *
-	 * Pesquisar semáforos, para controlar o close() do socket.
-	 */
-	/** FIXME TODO - Keep only SK in hashtable... */
-	/** Maybe we dont need lookup sk... maybe... */
-	if(gp->flowname != NULL)
-		gmtp_add_client_entry(gmtp_hashtable, gp->flowname,
+	client_entry = gmtp_lookup_media(gmtp_hashtable, gp->flowname);
+	if(client_entry == NULL)
+		err = gmtp_add_client_entry(gmtp_hashtable, gp->flowname,
 				inet->inet_saddr, inet->inet_sport, 0, 0);
+	else
+		gmtp_list_add_client(0, inet->inet_saddr, inet->inet_sport, 0,
+				&client_entry->clients->list);
+
+	pr_info("Err: %d\n", err);
 
 	gmtp_transmit_skb(sk, gmtp_skb_entail(sk, skb));
 
-	/* FIXME Retransmit it  */
 	icsk->icsk_retransmits = 0;
 	inet_csk_reset_xmit_timer(sk, ICSK_TIME_RETRANS,
 					  icsk->icsk_rto, GMTP_RTO_MAX);
-	return 0;
+	return err;
 }
 EXPORT_SYMBOL_GPL(gmtp_connect);
 

@@ -5,7 +5,7 @@ KBUILD_EXTRA_SYMBOLS := $(PWD)/Module.symvers
 obj-m += gmtp.o gmtp_intra.o
 
 gmtp-y = ../gmtp/gmtp.o
-gmtp_intra-y := gmtp-ucc.o mcc-intra.o hash.o output.o input.o gmtp-intra.o
+gmtp_intra-y := gmtp-ucc.o mcc-intra.o hash-intra.o output.o input.o gmtp-intra.o
 
 all:
 	$(MAKE) -C $(KERNEL) M=$(PWD) modules

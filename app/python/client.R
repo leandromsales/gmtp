@@ -9,7 +9,6 @@ size <- client[3]
 
 summary(size)
 subset(table(size[,1]), table(size[,1]) == max(table(size[,1]))) # Moda
-quantile(size[,1], seq(0.10, 0.9, 0.1))
 var(size[,1]) # Variância
 sd(size[,1])  # Desvio padrão
 sd(size[,1])/mean(size[,1]) #  coef. de  variacao
@@ -21,7 +20,6 @@ inst_rate <- client[5]
 inst_rate <- rm.outlier(x=inst_rate)
 
 summary(inst_rate)
-quantile(inst_rate[,1], seq(0.10, 0.9, 0.1))
 var(inst_rate[,1]) # Variância
 sd(inst_rate[,1])  # Desvio padrão
 sd(inst_rate[,1])/mean(inst_rate[,1]) # coef. de  variacao
@@ -34,7 +32,6 @@ rate1000 <- rate1000[8]
 rate1000 <- rm.outlier(x=rate1000)
 
 summary(rate1000)
-quantile(rate1000[,1], seq(0.10, 0.9, 0.1))
 var(rate1000[,1]) # Variância
 sd(rate1000[,1])  # Desvio padrão
 sd(rate1000[,1])/mean(rate1000[,1]) # coef. de  variacao
@@ -47,7 +44,6 @@ rate <- rm.outlier(x=rate)
 
 summary(rate)
 subset(table(rate[,1]), table(rate[,1]) == max(table(rate[,1]))) # Moda
-quantile(rate[,1], seq(0.10, 0.9, 0.1))
 var(rate[,1]) # Variância
 sd(rate[,1])  # Desvio padrão
 sd(rate[,1])/mean(rate[,1]) # coef. de  variacao

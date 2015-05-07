@@ -16,7 +16,7 @@
 #include <uapi/linux/gmtp.h>
 #include "../gmtp/gmtp.h"
 
-#include "hash.h"
+#include "hash-intra.h"
 
 #define H_USER 1024
 
