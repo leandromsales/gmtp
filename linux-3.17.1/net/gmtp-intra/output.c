@@ -404,28 +404,7 @@ int gmtp_intra_close_out(struct sk_buff *skb)
 
 	switch(entry->state) {
 	case GMTP_INTRA_TRANSMITTING:
-	{
-		struct gmtp_client *tmp;
-
-		pr_info("TRANSMITTING\n");
-		entry->state = GMTP_INTRA_CLOSE_RECEIVED;
-
-		list_for_each_entry(tmp, &(entry->info->clients->list), list)
-		{
-			struct sk_buff *copy = skb_copy(skb, gfp_any());
-			if(copy != NULL) {
-				struct iphdr *iph_copy = ip_hdr(copy);
-				struct gmtp_hdr *gh_copy = gmtp_hdr(copy);
-
-				iph_copy->daddr = tmp->addr;
-				ip_send_check(iph_copy);
-				gh_copy->dport = tmp->port;
-
-				gmtp_buffer_add(entry->info, copy);
-			}
-		}
-		return NF_REPEAT;
-	}
+		return NF_ACCEPT;
 	case GMTP_INTRA_CLOSED:
 		pr_info("CLOSED\n");
 		gmtp_intra_del_entry(gmtp.hashtable, gh->flowname);

@@ -309,3 +309,65 @@ int gmtp_intra_data_rcv(struct sk_buff *skb)
 out:
 	return NF_ACCEPT;
 }
+
+int gmtp_intra_close_rcv(struct sk_buff *skb)
+{
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct iphdr *iph = ip_hdr(skb);
+	struct gmtp_relay_entry *entry;
+	struct gmtp_flow_info *info;
+
+	struct gmtp_client *client, *temp;
+
+	entry = gmtp_intra_lookup_media(gmtp.hashtable, gh->flowname);
+	if(entry == NULL) {
+		gmtp_pr_info("Failed to lookup media info in table...");
+		return NF_ACCEPT;
+	}
+	info = entry->info;
+
+	/* Close received from server.
+	 * Copy and buffer it for each client
+	 * We will send it later...
+	 */
+	if(iph->saddr == entry->server_addr) {
+		if(entry->state == GMTP_INTRA_TRANSMITTING) {
+			entry->state = GMTP_INTRA_CLOSE_RECEIVED;
+			list_for_each_entry(client, &info->clients->list, list)
+			{
+				struct sk_buff *copy = skb_copy(skb, gfp_any());
+				if(copy != NULL) {
+					struct iphdr *iph_copy = ip_hdr(copy);
+					struct gmtp_hdr *gh_copy =
+							gmtp_hdr(copy);
+
+					iph_copy->daddr = client->addr;
+					ip_send_check(iph_copy);
+					gh_copy->dport = client->port;
+
+					gmtp_buffer_add(info, copy);
+				}
+			}
+		}
+		return NF_ACCEPT;
+	}
+
+	/*
+	 * TODO Close received from client
+	 */
+	list_for_each_entry_safe(client, temp, &info->clients->list, list)
+	{
+		if(iph->saddr == client->addr && gh->sport == client->port) {
+			info->nclients--;
+			list_del(&client->list);
+			kfree(client);
+		}
+	}
+
+	if(info->nclients == 0)
+		gmtp_intra_del_entry(gmtp.hashtable, entry->flowname);
+
+	/* FIXME Broken pipe error when  close is called by clients */
+	/*return NF_DROP;*/
+	return NF_ACCEPT;
+}

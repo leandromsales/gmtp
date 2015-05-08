@@ -54,6 +54,7 @@ int gmtp_intra_register_reply_rcv(struct sk_buff *skb);
 int gmtp_intra_ack_rcv(struct sk_buff *skb);
 int gmtp_intra_data_rcv(struct sk_buff *skb);
 int gmtp_intra_feedback_rcv(struct sk_buff *skb);
+int gmtp_intra_close_rcv(struct sk_buff *skb);
 
 /** Output.c */
 void gmtp_intra_add_relayid(struct sk_buff *skb);

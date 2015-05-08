@@ -30,7 +30,7 @@ struct gmtp_intra gmtp;
 __be32 get_mcst_v4_addr()
 {
 	__be32 mcst_addr;
-	unsigned char *base_channel = "\xe0\x00\x00\x01"; /* 224.0.0.1 */
+	unsigned char *base_channel = "\xe0\xc0\x00\x00"; /* 224.192.0.0 */
 	unsigned char *channel = kmalloc(4 * sizeof(unsigned char), GFP_KERNEL);
 
 	gmtp_print_function();
@@ -45,13 +45,11 @@ __be32 get_mcst_v4_addr()
 	channel[3] += gmtp.mcst[3]++;
 
 	/**
-	 * FIXME We should start with 239.192.0.0
-	 *
-	 * From: base_channel (224. 0 . 0 . 1 )
+	 * From: base_channel (224.192. 0 . 0 )
 	 * to:   max_channel  (239.255.255.255)
 	 *                     L0  L1  L2  L3
 	 */
-	if(gmtp.mcst[3] > 254) {  /* L3 starts with 1 */
+	if(gmtp.mcst[3] > 255) {  /* L3 starts with 1 */
 		gmtp.mcst[3] = 0;
 		gmtp.mcst[2]++;
 	}
@@ -59,7 +57,7 @@ __be32 get_mcst_v4_addr()
 		gmtp.mcst[2] = 0;
 		gmtp.mcst[1]++;
 	}
-	if(gmtp.mcst[1] > 255) {
+	if(gmtp.mcst[1] > 63) { /* 255 - 192 */
 		gmtp.mcst[1] = 0;
 		gmtp.mcst[0]++;
 	}
@@ -135,13 +133,13 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 			ret = gmtp_intra_ack_rcv(skb);
 			break;
 		case GMTP_PKT_DATA:
-			/* Artificial loss (only for tests) */
-			 /*if(gh->seq % 2)
-				 return NF_DROP;*/
 			ret = gmtp_intra_data_rcv(skb);
 			break;
 		case GMTP_PKT_FEEDBACK:
 			ret = gmtp_intra_feedback_rcv(skb);
+			break;
+		case GMTP_PKT_CLOSE:
+			ret = gmtp_intra_close_rcv(skb);
 			break;
 		}
 
