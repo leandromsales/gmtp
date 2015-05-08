@@ -243,7 +243,7 @@ int gmtp_intra_feedback_rcv(struct sk_buff *skb)
 	}*/
 
 	/* Discard early feedbacks */
-	if((entry->info->data_pkt_tx/entry->info->buffer_max) < 100)
+	if((entry->info->data_pkt_tx/entry->info->buffer_min) < 100)
 		goto out;
 
 	if(gh->transm_r > 0)
@@ -294,9 +294,13 @@ int gmtp_intra_data_rcv(struct sk_buff *skb)
 	if(entry->state == GMTP_INTRA_REGISTER_REPLY_RECEIVED)
 		entry->state = GMTP_INTRA_TRANSMITTING;
 
-	/* Do not add repeated packets
-	 * Do not add packets if state != Transmitting
-	 */
+	/* FIXME It frozes clients due to GMTP-MCC (loss forever...) */
+	/*pr_info("buffer_len: %u\n", info->buffer_len);
+	if(info->buffer_len >= info->buffer_max) {
+		pr_warning("Buffer overflow! Max: %u\n", info->buffer_max);
+		return NF_DROP;
+	}*/
+
 	if((gh->seq > info->seq) && entry->state == GMTP_INTRA_TRANSMITTING)
 		gmtp_buffer_add(info, skb);
 

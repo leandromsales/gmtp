@@ -99,19 +99,19 @@ struct gmtp_flow_info *__gmtp_intra_build_info(void)
 	info->buffer = kmalloc(sizeof(struct sk_buff_head), GFP_KERNEL);
 	skb_queue_head_init(info->buffer);
 	info->buffer_size = 0;
-	info->buffer_max = 1;
+	gmtp_set_buffer_limits(info, 1);
 	info->current_tx = 0; /* unlimited tx */
 
 out:
 	return info;
 }
 
-struct gmtp_flow_info *gmtp_intra_build_info(unsigned int bmax)
+struct gmtp_flow_info *gmtp_intra_build_info(unsigned int bmin)
 {
 	struct gmtp_flow_info *info = __gmtp_intra_build_info();
 
 	if(info != NULL)
-		info->buffer_max = bmax;
+		gmtp_set_buffer_limits(info, bmin);
 
 	return info;
 }

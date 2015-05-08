@@ -65,9 +65,17 @@ struct gmtp_flow_info {
 
 	struct sk_buff_head 	*buffer;
 	unsigned int 		buffer_size;
-	unsigned int 		buffer_max;
+	unsigned int 		buffer_min;
+	unsigned int 		buffer_max;  /* buffer_min * 3 */
 #define buffer_len 		buffer->qlen
 };
+
+static inline void gmtp_set_buffer_limits(struct gmtp_flow_info *info,
+		unsigned int buffer_min)
+{
+	info->buffer_min = buffer_min;
+	info->buffer_max = info->buffer_min * 3;
+}
 
 /**
  * State of a flow

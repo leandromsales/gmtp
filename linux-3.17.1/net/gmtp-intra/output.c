@@ -362,7 +362,7 @@ int gmtp_intra_data_out(struct sk_buff *skb)
 
 	info = entry->info;
 	if(entry->state == GMTP_INTRA_TRANSMITTING) {
-		if(info->buffer_len > info->buffer_max) {
+		if(info->buffer_len > info->buffer_min) {
 			struct sk_buff *buffered = gmtp_buffer_dequeue(info);
 			if(buffered != NULL) {
 				info->data_pkt_tx++;
