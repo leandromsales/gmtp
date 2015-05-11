@@ -67,8 +67,8 @@ struct gmtp_net_device_addr {
 struct gmtp_net_device_addr gmtp_list;
 
 int init_module(){
-    //int  option = GET_IP_ADDRESS;
-    int  option = GET_MAC_ADDRESS;
+    int  option = GET_IP_ADDRESS;
+    //int  option = GET_MAC_ADDRESS;
 
     printk(KERN_INFO"\n\n\n");
     
@@ -117,7 +117,10 @@ int init_module(){
                     length += bytes_added(sprintf(buffer+length, str));
 
                 }
+
+                /** TODO Option == IP dá merda... */
                 printk(KERN_DEBUG"Concatenado = %s \n\n",buffer);
+
                 if(option ==  GET_IP_ADDRESS){    
                     
                     in_dev = (struct in_device * )dev->ip_ptr;
@@ -128,7 +131,7 @@ int init_module(){
                     if_info = in_dev->ifa_list;
                     for(;if_info;if_info = if_info->ifa_next){
                         if(if_info != NULL){
-                            printk("if_info->ifa_address=%032x\n",if_info->ifa_address);
+                            printk("if_info->ifa_address=%pI4\n", &if_info->ifa_address);
                             break;    
                         }
                     }   
@@ -141,6 +144,6 @@ int init_module(){
 }
 
 void cleanup_module(){
-    nf_unregister_hook(&nfho);
+    /*nf_unregister_hook(&nfho);*/
 }
 
