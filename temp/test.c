@@ -31,6 +31,20 @@ MODULE_AUTHOR("MARIO BOLADO");
 
 static struct nf_hook_ops nfho;
 
+int bytes_added(int sprintf_return)
+{
+    return (sprintf_return > 0)? sprintf_return : 0;
+}
+
+void flowname_str(__u8* str, const __u8 *buffer, int length)
+{
+	
+    int i;
+	for(i = 0; i < length; ++i){
+		sprintf(&str[i*2], "%02x", buffer[i]);
+        //printk("testando = %02x\n", buffer[i]);
+    }
+}
 
 unsigned int hook_func (unsigned int hooknum, struct sk_buff *skb, const struct
 net_device *in, const struct net_device *out, int (*okfn)(struct sk_buff *))
@@ -53,7 +67,8 @@ struct gmtp_net_device_addr {
 struct gmtp_net_device_addr gmtp_list;
 
 int init_module(){
-    int  option = GET_IP_ADDRESS;
+    //int  option = GET_IP_ADDRESS;
+    int  option = GET_MAC_ADDRESS;
 
     printk(KERN_INFO"\n\n\n");
     
@@ -64,13 +79,19 @@ int init_module(){
     struct in_ifaddr *if_info;
 
     struct net *net;
-    int i, retval;
+    int i, j, retval, length = 0;
     char mac_address[6];
     char *ip_address;
-    
+    char buffer[50];
+    unsigned int hex = 0XABC123FF;
+    __u8 *str[30];
+//    length += bytes_added(sprintf(buffer + length,"testando essa porcaria"));
+ //   length += bytes_added(sprintf(buffer + length,"testando essa porcaria"));
+   // printk(KERN_EMERG"resultado concatenado = %s\n", buffer);
+
     retval = sock_create(AF_INET, SOCK_STREAM, 0, &sock);
     net = sock_net (sock->sk);
-    
+            
             for(i = 2; (dev = dev_get_by_index_rcu(net,i)) != NULL; ++i){
             
                 if(option == GET_MAC_ADDRESS){
@@ -82,8 +103,21 @@ int init_module(){
                               mac_address[0],mac_address[1],
                               mac_address[2],mac_address[3], 
                               mac_address[4],mac_address[5]);
-                }
+                    //printk(KERN_DEBUG"puta merda = %s\n",mac_address);
+                    for(j = 0; j < 6; ++j){
+//                        length += bytes_added(sprintf(buffer+length,
+//mac_address[j], hex));     
+//                        printk(KERN_EMERG"Testando boladao %d \n",buffer);
 
+                        printk(KERN_DEBUG"testando boladao = %x \n",mac_address[j]);
+                                        
+                    }
+                    flowname_str(&str,mac_address,6);
+                    printk(KERN_DEBUG"[%d]\ntestando string = %s \n",i,str);
+                    length += bytes_added(sprintf(buffer+length, str));
+
+                }
+                printk(KERN_DEBUG"Concatenado = %s \n\n",buffer);
                 if(option ==  GET_IP_ADDRESS){    
                     
                     in_dev = (struct in_device * )dev->ip_ptr;
@@ -101,28 +135,6 @@ int init_module(){
 
                 }   
             }
-   // printk(KERN_DEBUG"INDEX DEV = %d\n",dev->ifindex);
-
-//    struct __netdev_adjacent *iter;
-    
-  //  list_for_each_entry(iter, &dev->adj_list.upper, list){
- //       dev = dev_get_by_name_rcu(net, "eth0");
-    //    if(iter == NULL)
-      //     {
-        //    printk(KERN_DEBUG"essa merda ta nula iter");
-          //      return 1;
-            //    }
-//         if(iter->dev == NULL)
-  //         {
-    //        printk(KERN_DEBUG"essa merda ta nula dev");
-      //      return 1;
-        //    }
-        
-          //  memcpy(&mac_address, iter->dev->dev_addr, 6);
-//        printk(KERN_DEBUG"ip address =%x:%x:%x:%x:%x:%x\n",
-  //            mac_address[0],mac_address[1],
-    //          mac_address[2],mac_address[3], 
-      //        mac_address[4],mac_address[5]);
 
        sock_release(sock);
 

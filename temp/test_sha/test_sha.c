@@ -13,14 +13,23 @@
 #include <linux/err.h>
 #include <linux/scatterlist.h>
  
-#define SHA1_LENGTH     50
- 
+#define SHA1_LENGTH    16
+
+void flowname_str(__u8* str, const __u8 *flowname)
+{
+	
+    int i;
+	for(i = 0; i < SHA1_LENGTH; ++i){
+		sprintf(&str[i*2], "%02x", flowname[i]);
+        printk("testando = %02x\n",flowname[i]);
+    }
+}
 static int __init sha1_init(void)
 {
     struct scatterlist sg;
     struct crypto_hash *tfm;
     struct hash_desc desc;
-    char output[SHA1_LENGTH];
+    unsigned char output[SHA1_LENGTH];
     //unsigned char buf[10];
     unsigned char buf[] = "README";
     size_t buf_size = sizeof(buf) - 1;
@@ -33,7 +42,7 @@ static int __init sha1_init(void)
   //  memset(buf, 'A', 10);
 //    memset(output, 0x00, SHA1_LENGTH);
  
-    tfm = crypto_alloc_hash("sha1", 0, CRYPTO_ALG_ASYNC);
+    tfm = crypto_alloc_hash("md5", 0, CRYPTO_ALG_ASYNC);
     if (IS_ERR(tfm)) {
         printk(KERN_ERR "daveti: tfm allocation failed\n");
     return 0;
@@ -59,7 +68,11 @@ static int __init sha1_init(void)
         printk(KERN_INFO "%x", output[i]);
     }
     printk(KERN_INFO "\n\n\n\n\n---------------\n");
-    memset(output, 0x00, SHA1_LENGTH);
+    //memset(output, 0x00, SHA1_LENGTH);
+
+    __u8 wendell[21];
+    flowname_str(wendell, output);
+    printk("saida do wendell = %s\n",wendell);
  //   }
  
     crypto_free_hash(tfm);
