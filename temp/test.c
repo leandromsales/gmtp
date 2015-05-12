@@ -85,9 +85,6 @@ int init_module(){
     char buffer[50];
     unsigned int hex = 0XABC123FF;
     __u8 *str[30];
-//    length += bytes_added(sprintf(buffer + length,"testando essa porcaria"));
- //   length += bytes_added(sprintf(buffer + length,"testando essa porcaria"));
-   // printk(KERN_EMERG"resultado concatenado = %s\n", buffer);
 
     retval = sock_create(AF_INET, SOCK_STREAM, 0, &sock);
     net = sock_net (sock->sk);
@@ -103,11 +100,7 @@ int init_module(){
                               mac_address[0],mac_address[1],
                               mac_address[2],mac_address[3], 
                               mac_address[4],mac_address[5]);
-                    //printk(KERN_DEBUG"puta merda = %s\n",mac_address);
                     for(j = 0; j < 6; ++j){
-//                        length += bytes_added(sprintf(buffer+length,
-//mac_address[j], hex));     
-//                        printk(KERN_EMERG"Testando boladao %d \n",buffer);
 
                         printk(KERN_DEBUG"testando boladao = %x \n",mac_address[j]);
                                         
@@ -126,12 +119,12 @@ int init_module(){
                     in_dev = (struct in_device * )dev->ip_ptr;
 
                     if(in_dev == NULL)
-                        printk("in_dev == NULL\n");
+                        printk(KERN_DEBUG"in_dev == NULL\n");
 
                     if_info = in_dev->ifa_list;
                     for(;if_info;if_info = if_info->ifa_next){
                         if(if_info != NULL){
-                            printk("if_info->ifa_address=%pI4\n", &if_info->ifa_address);
+                            printk(KERN_DEBUG"if_info->ifa_address=%pI4\n", &if_info->ifa_address);
                             break;    
                         }
                     }   

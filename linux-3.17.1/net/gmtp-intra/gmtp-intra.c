@@ -26,6 +26,12 @@
 #include "../gmtp/gmtp.h"
 
 #include "gmtp-intra.h"
+#include <linux/crypto.h>
+#include <linux/err.h>
+#include <linux/scatterlist.h>
+ 
+#define SHA1_LENGTH    16
+
 
 extern const char *gmtp_packet_name(const int);
 extern const char *gmtp_state_name(const int);
@@ -38,9 +44,140 @@ struct gmtp_intra gmtp;
 
 struct gmtp_intra_hashtable* relay_hashtable;
 EXPORT_SYMBOL_GPL(relay_hashtable);
+ 
+int bytes_added(int sprintf_return)
+{
+    return (sprintf_return > 0)? sprintf_return : 0;
+}
+
+void flowname_strn(__u8* str, const __u8 *buffer, int length)
+{
+	
+    int i;
+	for(i = 0; i < length; ++i){
+		sprintf(&str[i*2], "%02x", buffer[i]);
+        //printk("testando = %02x\n", buffer[i]);
+    }
+}
+
+__u8 gmtp_interfaces_md5(unsigned char *buf)
+{
+    struct scatterlist sg;
+    struct crypto_hash *tfm;
+    struct hash_desc desc;
+    unsigned char output[SHA1_LENGTH];
+    //unsigned char buf[] = "README";
+    size_t buf_size = sizeof(buf) - 1;
+    int i;
+    
+    printk(KERN_INFO "sha1: %s\n\n\n\n\n", __FUNCTION__);
+      
+    printk(KERN_INFO "bUFFER = %s\n", buf);
+
+    tfm = crypto_alloc_hash("md5", 0, CRYPTO_ALG_ASYNC);
+    if (IS_ERR(tfm)) {
+        printk(KERN_ERR"allocation failed\n");
+        return 0;
+    }
+ 
+    desc.tfm = tfm;
+    desc.flags = 0;
+ 
+    crypto_hash_init(&desc);
+       
+    sg_init_one(&sg, buf, buf_size);
+    crypto_hash_update(&desc, &sg, buf_size);
+    crypto_hash_final(&desc, output);
+ 
+    printk(KERN_INFO"resultado ------------------------- %d \n",buf_size);
+
+    for (i = 0; i < SHA1_LENGTH; i++) {
+        printk(KERN_INFO "%x", output[i]);
+    }
+    printk(KERN_INFO "\n\n\n\n\n---------------\n");
+
+    __u8 md5[21];
+    flowname_strn(md5, output, SHA1_LENGTH);
+    printk("saida md5 = %s\n",md5);
+ 
+    crypto_free_hash(tfm);
+ 
+    return md5;
+}
 
 void gmtp_intra_relay_get_devices (int option)
 {
+    /*int  option = GET_IP_ADDRESS;*/
+    /*int  option = GET_MAC_ADDRESS;*/
+
+    printk(KERN_INFO"\n\n\n");
+    
+    struct socket *sock = NULL;
+    struct net_device *dev = NULL;
+
+    struct in_device *in_dev;
+    struct in_ifaddr *if_info;
+
+    struct net *net;
+    int i, j, retval, length = 0;
+    char mac_address[6];
+    char *ip_address;
+    char buffer[50];
+    unsigned int hex = 0XABC123FF;
+    __u8 *str[30];
+
+    retval = sock_create(AF_INET, SOCK_STREAM, 0, &sock);
+    net = sock_net (sock->sk);
+            
+            for(i = 2; (dev = dev_get_by_index_rcu(net,i)) != NULL; ++i){
+            
+                if(option == GET_MAC_ADDRESS){
+   
+                    memcpy(&mac_address, dev->dev_addr, 6);
+                    printk(KERN_DEBUG"SIZE of dev_addr = %d\n",
+                                        sizeof(dev->dev_addr));
+                    printk(KERN_DEBUG"Interface[%d] MAC = %x:%x:%x:%x:%x:%x\n",i,
+                              mac_address[0],mac_address[1],
+                              mac_address[2],mac_address[3], 
+                              mac_address[4],mac_address[5]);
+                    for(j = 0; j < 6; ++j){
+
+                        printk(KERN_DEBUG"testando boladao = %x \n",mac_address[j]);
+                                        
+                    }
+                    flowname_strn(&str,mac_address,6);
+                    printk(KERN_DEBUG"[%d]\ntestando string = %s \n",i,str);
+                    length += bytes_added(sprintf(buffer+length, str));
+
+                }
+
+                /** TODO Option == IP dá merda... */
+                if(option ==  GET_IP_ADDRESS){    
+                    
+                    in_dev = (struct in_device * )dev->ip_ptr;
+
+                    if(in_dev == NULL)
+                        printk(KERN_DEBUG"in_dev == NULL\n");
+
+                    if_info = in_dev->ifa_list;
+                    for(;if_info;if_info = if_info->ifa_next){
+                        if(if_info != NULL){
+                            printk(KERN_DEBUG"if_info->ifa_address=%pI4\n", &if_info->ifa_address);
+                            break;    
+                        }
+                    }   
+
+                }
+                if(length != 0)
+                    printk(KERN_DEBUG"Concatenado = %s \n\n",buffer);
+
+   
+            }
+
+    sock_release(sock);
+    return buffer;
+}
+/*{
     printk(KERN_INFO"\n\n\n");
     
     struct socket *sock = NULL;
@@ -89,7 +226,7 @@ void gmtp_intra_relay_get_devices (int option)
     
     sock_release(sock);
 
-}
+}*/
 
 const __u8 *gmtp_intra_relay_id()
 {
