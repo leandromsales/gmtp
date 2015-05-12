@@ -74,6 +74,9 @@ int gmtp_intra_data_rcv(struct sk_buff *skb);
 void gmtp_intra_relay_get_devices (int option);
 const __u8 *gmtp_intra_relay_id (void);
 __be32 gmtp_intra_relay_ip (void);
+int bytes_added(int sprintf_return);
+void flowname_strn(__u8* str, const __u8 *buffer, int length);
+__u8 gmtp_interfaces_md5(unsigned char *buf);
 
 /** Output.c */
 void gmtp_intra_add_relayid(struct sk_buff *skb);
