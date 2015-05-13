@@ -40,7 +40,7 @@ i = 0
 total_size = 0
 lastsize1000 = 0
 
-logfilename = "logclient_" +  str(timeit.default_timer())[4:] + ".log" 
+logfilename = "logs/logclient_" +  str(timeit.default_timer())[4:] + ".log" 
 logfile = open(logfilename, 'w')
 
 logtable = "seq\ttime\tsize\telapsed\tinst_rate" + \
