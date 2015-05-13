@@ -100,9 +100,6 @@ __u8 gmtp_interfaces_md5(unsigned char *buf)
 
 void gmtp_inter_relay_get_devices (int option)
 {
-    /*int  option = GET_IP_ADDRESS;*/
-    /*int  option = GET_MAC_ADDRESS;*/
-
     printk(KERN_INFO"\n\n\n");
     
     struct socket *sock = NULL;
@@ -114,112 +111,64 @@ void gmtp_inter_relay_get_devices (int option)
     struct net *net;
     int i, j, retval, length = 0;
     char mac_address[6];
-    char *ip_address;
     char buffer[50];
-    unsigned int hex = 0XABC123FF;
     __u8 *str[30];
 
     retval = sock_create(AF_INET, SOCK_STREAM, 0, &sock);
     net = sock_net (sock->sk);
             
-            for(i = 2; (dev = dev_get_by_index_rcu(net,i)) != NULL; ++i){
-            
+                if(option != GET_MAC_ADDRESS || option != GET_IP_ADDRESS)
+                    goto error;
+        
                 if(option == GET_MAC_ADDRESS){
-   
-                    memcpy(&mac_address, dev->dev_addr, 6);
-                    printk(KERN_DEBUG"SIZE of dev_addr = %d\n",
-                                        sizeof(dev->dev_addr));
-                    printk(KERN_DEBUG"Interface[%d] MAC = %x:%x:%x:%x:%x:%x\n",i,
-                              mac_address[0],mac_address[1],
-                              mac_address[2],mac_address[3], 
-                              mac_address[4],mac_address[5]);
-                    for(j = 0; j < 6; ++j){
+                    
+                    for(i = 2; (dev = dev_get_by_index_rcu(net,i)) != NULL;
+                                                                       ++i){
 
-                        printk(KERN_DEBUG"testando boladao = %x \n",mac_address[j]);
-                                        
+                        memcpy(&mac_address, dev->dev_addr, 6);
+                        printk(KERN_DEBUG"SIZE of dev_addr = %d\n",
+                                          sizeof(dev->dev_addr));
+                        printk(KERN_DEBUG"Interface[%d]MAC=%x:%x:%x:%x:%x:%x\n",i,
+                                          mac_address[0],mac_address[1],
+                                          mac_address[2],mac_address[3], 
+                                          mac_address[4],mac_address[5]);
+                    
+                        flowname_strn(&str,mac_address,6);
+                        printk(KERN_DEBUG"[%d]\ntestando string = %s \n",i,str);
+                        length += bytes_added(sprintf(buffer+length, str));
                     }
-                    flowname_strn(&str,mac_address,6);
-                    printk(KERN_DEBUG"[%d]\ntestando string = %s \n",i,str);
-                    length += bytes_added(sprintf(buffer+length, str));
-
-                }
-
-                /** TODO Option == IP dá merda... */
-                if(option ==  GET_IP_ADDRESS){    
-                    
-                    in_dev = (struct in_device * )dev->ip_ptr;
-
-                    if(in_dev == NULL)
-                        printk(KERN_DEBUG"in_dev == NULL\n");
-
-                    if_info = in_dev->ifa_list;
-                    for(;if_info;if_info = if_info->ifa_next){
-                        if(if_info != NULL){
-                            printk(KERN_DEBUG"if_info->ifa_address=%pI4\n", &if_info->ifa_address);
-                            break;    
-                        }
-                    }   
-
-                }
-                if(length != 0)
                     printk(KERN_DEBUG"Concatenado = %s \n\n",buffer);
+                    sock_release(sock);
+                    return buffer;
 
-   
-            }
-
-    sock_release(sock);
-    return buffer;
-}
-/*{
-    printk(KERN_INFO"\n\n\n");
-    
-    struct socket *sock = NULL;
-    struct net_device *dev = NULL;
-
-    struct in_device *in_dev;
-    struct in_ifaddr *if_info;
-
-    struct net *net;
-    int i, retval;
-    char mac_address[6];
-    char *ip_address;
-    
-    retval = sock_create(AF_INET, SOCK_STREAM, 0, &sock);
-    net = sock_net (sock->sk);
-    
-            for(i = 2; (dev = dev_get_by_index_rcu(net,i)) != NULL; ++i){
-            
-                if(option == GET_MAC_ADDRESS){
-   
-                    memcpy(&mac_address, dev->dev_addr, 6);
-                    printk(KERN_DEBUG"size of dev_addr = %d\n",sizeof(dev->dev_addr));
-                    printk(KERN_DEBUG"Interface[%d] MAC = %x:%x:%x:%x:%x:%x\n",i,
-                              mac_address[0],mac_address[1],
-                              mac_address[2],mac_address[3], 
-                              mac_address[4],mac_address[5]);
                 }
 
                 if(option ==  GET_IP_ADDRESS){    
                     
-                    in_dev = (struct in_device * )dev->ip_ptr;
+                    for(i = 2; (dev = dev_get_by_index_rcu(net,i)) != NULL;
+                                                                       ++i){
+                    
+                        in_dev = (struct in_device * )dev->ip_ptr;
 
-                    if(in_dev == NULL)
-                        printk("in_dev == NULL\n");
-
-                    if_info = in_dev->ifa_list;
-                    for(;if_info;if_info = if_info->ifa_next){
-                        if(if_info != NULL){
-                            printk("if_info->ifa_address=%032x\n",if_info->ifa_address);
-                            break;    
-                        }
+                        if(in_dev == NULL)
+                            printk(KERN_DEBUG"in_dev == NULL\n");
+        
+                        if_info = in_dev->ifa_list;
+                        for(;if_info;if_info = if_info->ifa_next){
+                            printk(KERN_DEBUG"if_info->ifa_address=%pI4\n", &if_info->ifa_address);
+                            //just return the first entry for while
+                            sock_release(sock);
+                            return if_info->ifa_address;
+                        }       
+                    
                     }   
+                }
 
-                }   
-            }
-    
-    sock_release(sock);
+    error:
+        return -1;       
 
-}*/
+
+}
 
 const __u8 *gmtp_inter_relay_id()
 {
