@@ -481,15 +481,13 @@ EXPORT_SYMBOL_GPL(gmtp_v4_do_rcv);
  *	gmtp_check_packet  -  check for malformed packets
  *	Packets that fail these checks are ignored and do not receive Resets.
  */
-static int gmtp_check_packet(struct sk_buff *skb) {
+static int gmtp_check_packet(struct sk_buff *skb)
+{
 
-	const struct gmtp_hdr *gh;
+	const struct gmtp_hdr *gh = gmtp_hdr(skb);
 
 	/* TODO Verify each packet */
 	gmtp_print_function();
-	gmtp_print_debug("Starting packet checking");
-
-	gh = gmtp_hdr(skb);
 
 	/** Accept multicast only for Data packets */
 	if (skb->pkt_type != PACKET_HOST && gh->type != GMTP_PKT_DATA)
@@ -520,22 +518,72 @@ static int gmtp_check_packet(struct sk_buff *skb) {
 	 * (This step is completed in the AF-dependent functions.) */
 	skb->csum = skb_checksum(skb, 0, skb->len, 0);
 
-	gmtp_print_debug("The packet is valid! - OK!");
-
 	return 0;
 }
 
-/* this is called when real data arrives */
-static int gmtp_v4_rcv(struct sk_buff *skb) {
+static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
+{
+	const struct gmtp_hdr *gh = gmtp_hdr(skb);
 
+	if(sk == NULL) {
+		gmtp_print_error("failed to look up flow ID in table and "
+				"get corresponding socket\n");
+		goto no_gmtp_socket;
+	}
+
+	/*
+	 * Step 2:
+	 *	... or S.state == TIMEWAIT,
+	 *		Generate Reset(No Connection) unless P.type == Reset
+	 *		Drop packet and return
+	 */
+	if(sk->sk_state == GMTP_TIME_WAIT) {
+		inet_twsk_put(inet_twsk(sk));
+		goto no_gmtp_socket;
+	}
+
+	if(!xfrm4_policy_check(sk, XFRM_POLICY_IN, skb))
+		goto discard_and_relse;
+
+	nf_reset(skb);
+
+	return sk_receive_skb(sk, skb, 1);
+
+no_gmtp_socket:
+
+	if(!xfrm4_policy_check(NULL, XFRM_POLICY_IN, skb))
+		goto discard_it;
+	/*
+	 * Step 2:
+	 *	If no socket ...
+	 *		Generate Reset(No Connection) unless P.type == Reset
+	 *		Drop packet and return
+	 */
+	if(gh->type != GMTP_PKT_RESET) {
+		GMTP_SKB_CB(skb)->reset_code =
+				GMTP_RESET_CODE_NO_CONNECTION;
+		gmtp_v4_ctl_send_reset(sk, skb);
+	}
+
+discard_it:
+	kfree_skb(skb);
+	return 0;
+
+discard_and_relse:
+	sock_put(sk);
+	goto discard_it;
+
+}
+
+/* this is called when real data arrives */
+static int gmtp_v4_rcv(struct sk_buff *skb)
+{
 	const struct gmtp_hdr *gh;
 	const struct iphdr *iph;
 	struct sock *sk;
 	struct gmtp_client_entry *media_entry;
 
 	unsigned char flowname[GMTP_FLOWNAME_STR_LEN];
-	__be32 local_addr;
-	__be16 local_port;
 
 	gmtp_print_function();
 
@@ -561,93 +609,47 @@ static int gmtp_v4_rcv(struct sk_buff *skb) {
 
 	if(skb->pkt_type == PACKET_MULTICAST) {
 
-		/* TODO Check if multicast addr and port are correct and valid!
-		 * Look up flow ID in table and get corresponding socket
-		 */
-		gmtp_print_debug("Multicast packet received");
-
+		struct gmtp_client *tmp;
+		pr_info("Multicast packet\n");
 		media_entry = gmtp_lookup_media(gmtp_hashtable, gh->flowname);
 		if(media_entry == NULL) {
-			gmtp_print_error("failed to look up media flow in "
+			gmtp_print_error("Failed to look up media flow in "
 					"table");
 			goto discard_it;
 		}
-		/* Reading information from client table */
-		local_addr = media_entry->local_addr;
-		local_port = media_entry->local_port;
 
-		gmtp_print_debug("Lookup to: src=%pI4@%-5d dst=%pI4@%-5d",
-				&iph->saddr, ntohs(gh->sport),
-				&local_addr, ntohs(local_port));
+		list_for_each_entry(tmp, &(media_entry->clients->list), list)
+		{
 
-		sk = __inet_lookup(dev_net(skb_dst(skb)->dev),
-				&gmtp_inet_hashinfo, iph->saddr, gh->sport,
-				local_addr, local_port,
-				inet_iif(skb));
+			gmtp_print_debug("Lookup: src=%pI4@%-5d dst=%pI4@%-5d",
+					&iph->saddr, ntohs(gh->sport),
+					&tmp->addr, ntohs(tmp->port));
+
+			sk = __inet_lookup(dev_net(skb_dst(skb)->dev),
+					&gmtp_inet_hashinfo, iph->saddr,
+					gh->sport, tmp->addr, tmp->port,
+					inet_iif(skb));
+
+			/** FIXME Check errors at receive skb... */
+			gmtp_v4_sk_receive_skb(skb_copy(skb, GFP_ATOMIC), sk);
+		}
+		/** We made a copy of skb for each client. We can discard it */
+		goto discard_it;
 
 	} else {
 		/* Normal packet...
 		 * Look up flow ID in table and get corresponding socket
 		 */
+		pr_info("Unicast packet\n");
 		sk = __inet_lookup_skb(&gmtp_inet_hashinfo, skb, gh->sport,
 				gh->dport);
-	}
 
-	/*
-	 * Step 2:
-	 *	If no socket ...
-	 */
-	if (sk == NULL) {
-		gmtp_print_error("failed to look up flow ID in table and "
-					"get corresponding socket\n");
-		goto no_gmtp_socket;
-	}
-
-	gmtp_print_debug("sk_state: %s (%d)", gmtp_state_name(sk->sk_state),
-			sk->sk_state);
-
-	/*
-	 * Step 2:
-	 *	... or S.state == TIMEWAIT,
-	 *		Generate Reset(No Connection) unless P.type == Reset
-	 *		Drop packet and return
-	 */
-	if (sk->sk_state == GMTP_TIME_WAIT) {
-		inet_twsk_put(inet_twsk(sk));
-		goto no_gmtp_socket;
-	}
-
-	if (!xfrm4_policy_check(sk, XFRM_POLICY_IN, skb))
-		goto discard_and_relse;
-
-	nf_reset(skb);
-
-	gmtp_print_debug("Delivering...");
-	return sk_receive_skb(sk, skb, 1);
-
-no_gmtp_socket:
-	gmtp_print_debug("no_gmtp_socket");
-
-	if (!xfrm4_policy_check(NULL, XFRM_POLICY_IN, skb))
-		goto discard_it;
-	/*
-	 * Step 2:
-	 *	If no socket ...
-	 *		Generate Reset(No Connection) unless P.type == Reset
-	 *		Drop packet and return
-	 */
-	if (gh->type != GMTP_PKT_RESET) {
-		GMTP_SKB_CB(skb)->reset_code = GMTP_RESET_CODE_NO_CONNECTION;
-		gmtp_v4_ctl_send_reset(sk, skb);
+		return gmtp_v4_sk_receive_skb(skb, sk);
 	}
 
 discard_it:
 	kfree_skb(skb);
 	return 0;
-
-discard_and_relse:
-	sock_put(sk);
-	goto discard_it;
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_rcv);
 

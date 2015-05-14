@@ -30,7 +30,7 @@ flowname = getHash(address)
 server_socket.setsockopt(socket.SOL_GMTP, socket.GMTP_SOCKOPT_FLOWNAME, flowname)
 
 #tx_rate = "max_gmtp_rate"
-tx_rate = 25000 #bytes/s.  250000 bytes/s == 2 Mbps
+tx_rate = 50000 #bytes/s.  250000 bytes/s == 2 Mbps
 server_socket.setsockopt(socket.SOL_GMTP, socket.GMTP_SOCKOPT_MAX_TX_RATE, tx_rate)
 
 # Connect sockets
@@ -97,8 +97,10 @@ try:
         
 except (KeyboardInterrupt, SystemExit):
     print '\nReceived keyboard interrupt, quitting...\n'
-    server_output.send(out.encode('utf-8'))
+    #server_output.send(out.encode('utf-8'))
+    server_output.shutdown(socket.SHUT_WR)
     server_output.close()
+    server_socket.shutdown(socket.SHUT_WR)
     server_socket.close()
     
 

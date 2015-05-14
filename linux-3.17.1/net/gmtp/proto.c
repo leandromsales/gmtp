@@ -188,8 +188,6 @@ int gmtp_init_sock(struct sock *sk)
 	gp->tx_rtt		= GMTP_DEFAULT_RTT;
 	gp->relay_rtt		= 0;
 
-	ret = mcc_rx_init(sk);
-
 	gp->rx_max_rate 	= 0;
 
 	gp->tx_dpkts_sent 	= 0;
@@ -219,9 +217,10 @@ EXPORT_SYMBOL_GPL(gmtp_init_sock);
 
 void gmtp_destroy_sock(struct sock *sk)
 {
-	gmtp_print_function();
+	gmtp_pr_func();
 
-	mcc_rx_exit(sk);
+	if(gmtp_sk(sk)->role == GMTP_ROLE_REPORTER)
+		mcc_rx_exit(sk);
 
 	if (sk->sk_send_head != NULL) {
 		kfree_skb(sk->sk_send_head);
@@ -311,12 +310,7 @@ void gmtp_close(struct sock *sk, long timeout)
 		 * TX queue that are delayed by the CCID.
 		 */
 		gmtp_print_debug("TODO: Normal connection termination.");
-		/*
-		 * Drain queue at end of connection:
-		dccp_flush_write_queue(sk, &timeout);
-		*/
 		gmtp_terminate_connection(sk);
-
 	}
 
 	/*
@@ -517,10 +511,6 @@ verify_sock_status:
 
 		if(sk->sk_state == GMTP_CLOSED) {
 			if(!sock_flag(sk, SOCK_DONE)) {
-
-				if(ipv4_is_multicast(sk->sk_rcv_saddr))
-					goto found_ok_skb;
-
 				/* This occurs when user tries to read
 				 * from never connected socket.
 				 */

@@ -75,10 +75,12 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 
 		gh->version = GMTP_VERSION;
 		gh->type = gcb->type;
-		gh->server_rtt = TO_U8(gp->tx_rtt);
 		gh->sport = inet->inet_sport;
 		gh->dport = inet->inet_dport;
 		gh->hdrlen = gmtp_header_size;
+		gh->server_rtt = gp->role == GMTP_ROLE_SERVER ?
+				TO_U8(gp->tx_rtt) : TO_U8(gp->rx_rtt);
+
 		memcpy(gh->flowname, gp->flowname, GMTP_FLOWNAME_LEN);
 
 		if (gcb->type == GMTP_PKT_FEEDBACK)
@@ -289,13 +291,16 @@ int gmtp_send_reset(struct sock *sk, enum gmtp_reset_codes code)
 /*
  * Do all connect socket setups that can be done AF independent.
  */
-int gmtp_connect(struct sock *sk) {
-
+int gmtp_connect(struct sock *sk)
+{
 	struct sk_buff *skb;
 	struct gmtp_sock *gp = gmtp_sk(sk);
 	struct dst_entry *dst = __sk_dst_get(sk);
 	struct inet_sock *inet = inet_sk(sk);
 	struct inet_connection_sock *icsk = inet_csk(sk);
+
+	struct gmtp_client_entry *client_entry;
+	int err = 0;
 
 	gmtp_print_function();
 
@@ -315,26 +320,22 @@ int gmtp_connect(struct sock *sk) {
 	skb_reserve(skb, sk->sk_prot->max_header);
 	GMTP_SKB_CB(skb)->type = GMTP_PKT_REQUEST;
 
-	/** FIXME Treat two clients getting the same media at same server...
-	 *
-	 * Utilizar o mesmo sk para cada novo cliente conectado localmente para
-	 * o mesmo flowname.
-	 *
-	 * Pesquisar semáforos, para controlar o close() do socket.
-	 */
-	/** FIXME TODO - Keep only SK in hashtable... */
-	/** Maybe we dont need lookup sk... maybe... */
-	if(gp->flowname != NULL)
-		gmtp_add_client_entry(gmtp_hashtable, gp->flowname,
+	client_entry = gmtp_lookup_media(gmtp_hashtable, gp->flowname);
+	if(client_entry == NULL)
+		err = gmtp_add_client_entry(gmtp_hashtable, gp->flowname,
 				inet->inet_saddr, inet->inet_sport, 0, 0);
+	else
+		gmtp_list_add_client(0, inet->inet_saddr, inet->inet_sport, 0,
+				&client_entry->clients->list);
+
+	pr_info("Err: %d\n", err);
 
 	gmtp_transmit_skb(sk, gmtp_skb_entail(sk, skb));
 
-	/* FIXME Retransmit it  */
 	icsk->icsk_retransmits = 0;
 	inet_csk_reset_xmit_timer(sk, ICSK_TIME_RETRANS,
 					  icsk->icsk_rto, GMTP_RTO_MAX);
-	return 0;
+	return err;
 }
 EXPORT_SYMBOL_GPL(gmtp_connect);
 
@@ -424,12 +425,12 @@ void gmtp_send_close(struct sock *sk, const int active)
  *
  * To delay the send time in process context.
  */
-static int gmtp_wait_for_delay(struct sock *sk, unsigned long delay)
+static long gmtp_wait_for_delay(struct sock *sk, unsigned long delay)
 {
 	DEFINE_WAIT(wait);
 	long remaining;
 
-	prepare_to_wait(sk_sleep(sk), &wait, TASK_INTERRUPTIBLE);
+	prepare_to_wait(sk_sleep(sk), &wait, TASK_UNINTERRUPTIBLE);
 	sk->sk_write_pending++;
 	release_sock(sk);
 
@@ -547,7 +548,6 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 	int len = (int) packet_len(skb);
 	unsigned long elapsed = 0;
 	long delay = 0, delay2 = 0, delay_budget = 0;
-	int rc = 0;
 
 	/** TODO Continue tests with different scales... */
 	static const int scale = 1;
@@ -578,12 +578,8 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 
 wait:
 	delay2 += delay_budget;
-
-	/* We set LONG_MIN to indicate that byte_budget is over */
 	if(delay2 > 0)
-		rc = gmtp_wait_for_delay(sk, delay2);
-	if(rc < 0)
-		return;
+		gmtp_wait_for_delay(sk, delay2);
 
 	/*
 	 * TODO More tests with byte_budgets...

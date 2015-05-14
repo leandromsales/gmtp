@@ -4,6 +4,7 @@
 #include <linux/netfilter_ipv4.h>
 #include <linux/skbuff.h>
 #include <linux/ip.h>
+#include <linux/timer.h>
 
 #include <net/ip.h>
 #include <net/sock.h>
@@ -26,31 +27,10 @@ static struct nf_hook_ops nfho_out;
 
 struct gmtp_intra gmtp;
 
-struct gmtp_intra_hashtable* relay_hashtable;
-EXPORT_SYMBOL_GPL(relay_hashtable);
-
-static inline void increase_stats(struct iphdr *iph)
-{
-	gmtp.seq++;
-	gmtp.npackets++;
-	gmtp.nbytes += ntohs(iph->tot_len);
-}
-
-static inline void decrease_stats(struct iphdr *iph)
-{
-	if(gmtp.npackets > 0)
-		gmtp.npackets--;
-
-	if(gmtp.nbytes <= ntohs(iph->tot_len))
-		gmtp.nbytes = 0;
-	else
-		gmtp.nbytes -= ntohs(iph->tot_len);
-}
-
-__be32 get_mcst_v4_addr(void)
+__be32 get_mcst_v4_addr()
 {
 	__be32 mcst_addr;
-	unsigned char *base_channel = "\xe0\x00\x00\x01"; /* 224.0.0.1 */
+	unsigned char *base_channel = "\xe0\xc0\x00\x00"; /* 224.192.0.0 */
 	unsigned char *channel = kmalloc(4 * sizeof(unsigned char), GFP_KERNEL);
 
 	gmtp_print_function();
@@ -65,11 +45,11 @@ __be32 get_mcst_v4_addr(void)
 	channel[3] += gmtp.mcst[3]++;
 
 	/**
-	 * From: base_channel (224. 0 . 0 . 1 )
+	 * From: base_channel (224.192. 0 . 0 )
 	 * to:   max_channel  (239.255.255.255)
 	 *                     L0  L1  L2  L3
 	 */
-	if(gmtp.mcst[3] > 254) {  /* L3 starts with 1 */
+	if(gmtp.mcst[3] > 255) {  /* L3 starts with 1 */
 		gmtp.mcst[3] = 0;
 		gmtp.mcst[2]++;
 	}
@@ -77,7 +57,7 @@ __be32 get_mcst_v4_addr(void)
 		gmtp.mcst[2] = 0;
 		gmtp.mcst[1]++;
 	}
-	if(gmtp.mcst[1] > 255) {
+	if(gmtp.mcst[1] > 63) { /* 255 - 192 */
 		gmtp.mcst[1] = 0;
 		gmtp.mcst[0]++;
 	}
@@ -95,309 +75,30 @@ __be32 get_mcst_v4_addr(void)
 }
 EXPORT_SYMBOL_GPL(get_mcst_v4_addr);
 
-/**
- * Algorithm 1: registerRelay
- *
- * The node r (relay) executes this algorithm to send a register of
- * participation to a  * given node s (server).
- * If p (packet) is given, node c wants to receive the flow P, so notify s.
- *
- * begin
- * P = p.flowname
- * If P != NULL:
- *    client = p.client (ip:port)
- *    Check if P is already being received (via reception table)
- *    // Add client to an waiting list
- *    addClientWaitingFlow(c, P)
- *    If multicast channel exists:
- *        respondToClients(GMTPRequestReply(channel))
- *        return 0
- *    else:
- *        Send request to server and wait registration reply.
- *        When GMTP-Register-Reply is received, executes
- *        gmtp_intra_register_reply_received
- *        if state(P) != GMTP_INTRA_WAITING_REGISTER_REPLY:
- *            state(P) = GMTP_INTRA_WAITING_REGISTER_REPLY
- *            sendToServer(GMTP_PKT_REGISTER, P)
- *        else:
- *            // Ask client to wait registration reply for P
- *            respondToClients(GMTPRequestReply(P, "waiting_registration"));
- *        endif
- *        return 0
- *    endif
- *    if state(P) != GMTP_INTRA_WAITING_REGISTER_REPLY:
- *            state(P) = GMTP_INTRA_WAITING_REGISTER_REPLY
- *            sendToServer(GMTP_PKT_REGISTER)
- *    endif
- * endif
- * return 0
- * end
- */
-int gmtp_intra_request_rcv(struct sk_buff *skb)
+void gmtp_buffer_add(struct gmtp_flow_info *info, struct sk_buff *newsk)
 {
-	int ret = NF_ACCEPT;
-	int err = 0;
-	struct iphdr *iph = ip_hdr(skb);
-	struct gmtp_hdr *gh = gmtp_hdr(skb);
-	struct gmtp_hdr *gh_reqnotify;
-	struct gmtp_relay_entry *media_info;
-	__be32 mcst_addr;
-
-	gmtp_print_function();
-
-	media_info = gmtp_intra_lookup_media(relay_hashtable, gh->flowname);
-	if(media_info != NULL) {
-
-		gmtp_print_debug("Media found... ");
-
-		switch(media_info->state) {
-		case GMTP_INTRA_WAITING_REGISTER_REPLY:
-			gh_reqnotify = gmtp_intra_make_request_notify_hdr(skb,
-					media_info, gh->dport, gh->sport,
-					GMTP_REQNOTIFY_CODE_WAIT);
-			break;
-		case GMTP_INTRA_REGISTER_REPLY_RECEIVED:
-			gh_reqnotify = gmtp_intra_make_request_notify_hdr(skb,
-					media_info, gh->dport, gh->sport,
-					GMTP_REQNOTIFY_CODE_OK);
-			ret = NF_DROP;
-			break;
-		default:
-			gmtp_print_error("Inconsistent state at gmtp-intra: %d",
-					media_info->state);
-
-			gh_reqnotify = gmtp_intra_make_request_notify_hdr(skb,
-					media_info, gh->dport, gh->sport,
-					GMTP_REQNOTIFY_CODE_ERROR);
-
-			ret = NF_DROP;
-		}
-
-	} else {
-		gmtp_print_debug("Adding new entry in Relay Table...");
-		mcst_addr = get_mcst_v4_addr();
-		err = gmtp_intra_add_entry(relay_hashtable, gh->flowname,
-				iph->daddr,
-				NULL,
-				gh->sport,
-				mcst_addr,
-				gh->dport); /* Mcst port <- server port */
-
-		gh->type = GMTP_PKT_REGISTER;
-
-		if(err) {
-			gmtp_print_error("Failed to insert flow in table...");
-			gh_reqnotify = gmtp_intra_make_request_notify_hdr(skb,
-					media_info, gh->dport, gh->sport,
-					GMTP_REQNOTIFY_CODE_ERROR);
-			ret = NF_DROP;
-		} else {
-			gh_reqnotify = gmtp_intra_make_request_notify_hdr(skb,
-					media_info, gh->dport, gh->sport,
-					GMTP_REQNOTIFY_CODE_WAIT);
-		}
-	}
-
-	if(gh_reqnotify != NULL)
-		gmtp_intra_build_and_send_pkt(skb, iph->daddr,
-				iph->saddr, gh_reqnotify, true);
-
-	return ret;
+	skb_queue_tail(info->buffer, skb_copy(newsk, GFP_ATOMIC));
+	info->buffer_size += newsk->len;
 }
 
-/**
- * Algorithm 2:: onReceiveGMTPRegisterReply(p.type == GMTP-Register-Reply)
- *
- * The node r (relay) executes this algorithm when receives a packet of type
- * GMTP-Register-Reply, as response for a registration of participation
- * sent to a s(server) node.
- *
- * begin
- * state(P) = GMTP_INTRA_REGISTER_REPLY_RECEIVED
- * if (packet p is OK):
- *     W = p.way
- *     s = p.server (ip:port)
- *     P = p.flowname
- *     if P != NULL:
- *         if s enabled security layer:
- *             getAndStoreServerPublicKey(s)
- *         endif
- *         channel = createMulticastChannel(s, P)
- *         Update flow reception table with channel
- *         respondToClients(GMTPRequestReply(channel))
- *         startRelay(channel);
- *      endif
- *      updateFlowReceptionTable(s)
- *      Send ack to server (ack.w = W) //Send way back to server
- * else
- *      // s refused to accept the registration of participation.
- *      errorCode = p.error
- *      respondToClients(GMTPRequestReply(errorCode, P))
- * endif
- * end
- */
-int gmtp_intra_register_reply_rcv(struct sk_buff *skb)
+struct sk_buff *gmtp_buffer_dequeue(struct gmtp_flow_info *info)
 {
-	int ret = NF_ACCEPT;
-	struct gmtp_hdr *gh = gmtp_hdr(skb);
-	struct iphdr *iph = ip_hdr(skb);
-	struct gmtp_hdr *gh_rn;
-	struct gmtp_relay_entry *data;
-	/*unsigned int r;*/
-
-	gmtp_print_function();
-
-	/* Add relay information in REGISTER-REPLY packet) */
-	gmtp_intra_add_relayid(skb);
-
-	/* Update transmission rate (GMTP-UCC) */
-	/* gmtp_print_debug("UPDATING Tx Rate");
-	 gmtp_update_tx_rate(H_USER);
-	 r = gmtp_get_current_tx_rate();
-	 if(r < gh->transm_r)
-	 gh->transm_r = r;
-	 */
-
-	/*
-	 * FIXME
-	 * If RegisterReply is destined others, just let it go...
-	 */
-	data = gmtp_intra_lookup_media(relay_hashtable, gh->flowname);
-	pr_info("gmtp_lookup_media returned: %p\n", data);
-	if(data == NULL)
-		goto out;
-
-	/** Send ack back to server */
-	gh_rn = gmtp_intra_make_route_hdr(skb);
-	if(gh_rn != NULL)
-		gmtp_intra_build_and_send_pkt(skb, iph->daddr, iph->saddr,
-				gh_rn, true);
-
-	data->state = GMTP_INTRA_REGISTER_REPLY_RECEIVED;
-
-	/*
-	 * FIXME
-	 * (1) Send ReqNotify to every client.
-	 * (2) Clear waiting client list
-	 */
-	ret = gmtp_intra_make_request_notify(skb,
-			iph->saddr, gh->sport,
-			iph->daddr, gh->dport, GMTP_REQNOTIFY_CODE_OK);
-
-out:
-	return ret;
+	struct sk_buff *skb = skb_dequeue(info->buffer);
+	if(skb != NULL)
+		info->buffer_size -= skb->len;
+	return skb;
 }
 
-/* FIXME Treat acks from clients */
-int gmtp_intra_ack_rcv(struct sk_buff *skb)
+struct gmtp_flow_info *gmtp_intra_get_info(
+		struct gmtp_intra_hashtable *hashtable, const __u8 *media)
 {
-	int ret = NF_DROP;
+	struct gmtp_relay_entry *entry =
+			gmtp_intra_lookup_media(gmtp.hashtable, media);
 
-	struct gmtp_hdr *gh = gmtp_hdr(skb);
-	struct iphdr *iph = ip_hdr(skb);
+	if(entry != NULL)
+		return entry->info;
 
-	gmtp_print_function();
-
-	gmtp_pr_info("%s (%d) src=%pI4@%-5d dst=%pI4@%-5d transm_r: %u",
-			gmtp_packet_name(gh->type), gh->type,
-			&iph->saddr, ntohs(gh->sport),
-			&iph->daddr, ntohs(gh->dport),
-			gh->transm_r);
-
-	return ret;
-}
-
-/* FIXME Treat acks from clients */
-int gmtp_intra_feedback_rcv(struct sk_buff *skb)
-{
-	int ret = NF_DROP;
-
-	struct gmtp_hdr *gh = gmtp_hdr(skb);
-	struct iphdr *iph = ip_hdr(skb);
-
-	gmtp_print_function();
-
-	gmtp_pr_info("%s (%d) src=%pI4@%-5d dst=%pI4@%-5d transm_r: %u",
-			gmtp_packet_name(gh->type), gh->type,
-			&iph->saddr, ntohs(gh->sport),
-			&iph->daddr, ntohs(gh->dport),
-			gh->transm_r);
-
-	return ret;
-}
-
-/* Treat close from servers */
-int gmtp_intra_close_rcv(struct sk_buff *skb)
-{
-	int ret = NF_ACCEPT;
-	struct gmtp_hdr *gh = gmtp_hdr(skb);
-
-	gmtp_print_function();
-
-	gmtp_intra_del_entry(relay_hashtable, gh->flowname);
-
-	return ret;
-}
-
-/**
- * begin
- * P = p.flowname
- * If P != NULL:
- *     p.dest_address = get_multicast_channel(P)
- *     p.port = get_multicast_port(P)
- *     send(P)
- */
-int gmtp_intra_data_rcv(struct sk_buff *skb)
-{
-	int ret = NF_ACCEPT;
-	struct gmtp_hdr *gh = gmtp_hdr(skb);
-	struct iphdr *iph = ip_hdr(skb);
-	struct gmtp_relay_entry *flow_info;
-
-	/*gmtp_print_function();*/
-
-	/**
-	 * FIXME If destiny is not me, just let it go!
-	 */
-	flow_info = gmtp_intra_lookup_media(relay_hashtable, gh->flowname);
-	if(flow_info == NULL) {
-		gmtp_print_warning("Failed to lookup media info in table...");
-		ret = NF_DROP;
-		goto out;
-	}
-
-	iph->daddr = flow_info->channel_addr;
-	ip_send_check(iph);
-	gh->dport = flow_info->channel_port;
-
-	/*skb_queue_tail(gmtp.buffer, skb_copy(skb, GFP_ATOMIC));
-
-	pr_info("qlen: %u\n", gmtp.buffer->qlen);
-	pr_info("skb (%s): %p\n", skb->dev->name, skb);
-
-	if(gmtp.buffer->qlen >= 5) {
-		int i;
-		for(i=0; i<gmtp.data_buffer->qlen; ++i) {
-
-			struct sk_buff *buf_skb = skb_dequeue(gmtp.buffer);
-
-			struct gmtp_hdr *gh2 = gmtp_hdr(buf_skb);
-			struct iphdr *iph2 = ip_hdr(buf_skb);
-
-			iph2->daddr = flow_info->channel_addr;
-			ip_send_check(iph2);
-			gh2->dport = flow_info->channel_port;
-
-			pr_info("buf_skb (%s): %p\n", buf_skb->dev->name, buf_skb);
-			print_gmtp_packet(iph2, gh2);
-			gmtp_intra_build_and_send_pkt(buf_skb, iph2->saddr,
-					iph2->daddr, gh2, 0);
-		}
-
-	}*/
-
-out:
-	return ret;
+	return NULL;
 }
 
 unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
@@ -406,21 +107,18 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 {
 	int ret = NF_ACCEPT;
 	struct iphdr *iph = ip_hdr(skb);
-	struct gmtp_hdr *gh;
 
 	if(in == NULL)
-		goto out;
-
-	increase_stats(iph);
+		goto exit;
 
 	if(iph->protocol == IPPROTO_GMTP) {
 
-		gh = gmtp_hdr(skb);
+		struct gmtp_hdr *gh = gmtp_hdr(skb);
 
-		if(gh->type != GMTP_PKT_DATA) {
+		if(gh->type != GMTP_PKT_DATA && gh->type != GMTP_PKT_FEEDBACK) {
 			gmtp_print_debug("GMTP packet: %s (%d)",
 					gmtp_packet_name(gh->type), gh->type);
-			print_packet(iph, true);
+			print_packet(skb, true);
 			print_gmtp_packet(iph, gh);
 		}
 
@@ -434,6 +132,9 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 		case GMTP_PKT_ACK:
 			ret = gmtp_intra_ack_rcv(skb);
 			break;
+		case GMTP_PKT_DATA:
+			ret = gmtp_intra_data_rcv(skb);
+			break;
 		case GMTP_PKT_FEEDBACK:
 			ret = gmtp_intra_feedback_rcv(skb);
 			break;
@@ -441,9 +142,10 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 			ret = gmtp_intra_close_rcv(skb);
 			break;
 		}
+
 	}
 
-out:
+exit:
 	return ret;
 }
 
@@ -456,51 +158,43 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 	struct gmtp_hdr *gh;
 
 	if(out == NULL)
-		goto out;
-
-	decrease_stats(iph);
+		goto exit;
 
 	if(iph->protocol == IPPROTO_GMTP) {
 
 		gh = gmtp_hdr(skb);
+		if(gh->type != GMTP_PKT_DATA) {
+			gmtp_print_debug("GMTP packet: %s (%d)",
+					gmtp_packet_name(gh->type), gh->type);
+			print_packet(skb, false);
+			print_gmtp_packet(iph, gh);
+		}
 
 		switch(gh->type) {
 		case GMTP_PKT_DATA:
-			/* Artificial loss (only for tests)
-			if(gh->seq % 2)
-				return NF_DROP;*/
-
-			ret = gmtp_intra_data_rcv(skb);
+			ret = gmtp_intra_data_out(skb);
 			break;
-		default:
-			gmtp_print_debug("GMTP packet: %s (%d)",
-					gmtp_packet_name(gh->type), gh->type);
-			print_packet(iph, false);
+		case GMTP_PKT_CLOSE:
+			ret = gmtp_intra_close_out(skb);
+			break;
 		}
-
 	}
 
-out:
+exit:
 	return ret;
 }
 
 int init_module()
 {
 	int ret = 0;
-	gmtp_print_function();
+	gmtp_pr_func();
 	gmtp_print_debug("Starting GMTP-Intra");
 
+	gmtp.total_rx = 1;
 	memset(&gmtp.mcst, 0, 4*sizeof(unsigned char));
-	gmtp.npackets = 0;
-	gmtp.nbytes = 0;
-	gmtp.current_tx = 1;
-	gmtp.seq = 0;
-	gmtp.buffer = kmalloc(sizeof(struct sk_buff_head), GFP_ATOMIC);
-	skb_queue_head_init(gmtp.buffer);
-	gmtp.buffer_size = 0;
 
-	relay_hashtable = gmtp_intra_create_hashtable(64);
-	if(relay_hashtable == NULL) {
+	gmtp.hashtable = gmtp_intra_create_hashtable(64);
+	if(gmtp.hashtable == NULL) {
 		gmtp_print_error("Cannot create hashtable...");
 		ret = -ENOMEM;
 		goto out;
@@ -524,11 +218,10 @@ out:
 
 void cleanup_module()
 {
+	gmtp_pr_func();
 	gmtp_print_debug("Finishing GMTP-Intra");
 
-	skb_queue_purge(gmtp.buffer);
-
-	kfree_gmtp_intra_hashtable(relay_hashtable);
+	kfree_gmtp_intra_hashtable(gmtp.hashtable);
 
 	nf_unregister_hook(&nfho_in);
 	nf_unregister_hook(&nfho_out);
