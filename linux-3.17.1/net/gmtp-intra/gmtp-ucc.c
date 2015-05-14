@@ -33,26 +33,26 @@ unsigned int gmtp_rx_rate()
 
 unsigned int gmtp_relay_queue_size()
 {
-	return gmtp.nbytes;
+	return gmtp.total_bytes_rx;
 }
 
 /**
  * Get the last calculated TX
  */
-unsigned int gmtp_get_current_tx_rate()
+unsigned int gmtp_get_current_rx_rate()
 {
-	return gmtp.current_tx;
+	return gmtp.total_rx;
 }
-EXPORT_SYMBOL_GPL(gmtp_get_current_tx_rate);
+EXPORT_SYMBOL_GPL(gmtp_get_current_rx_rate);
 
 /**
  * Get TX rate, via RCP
  */
-void gmtp_update_tx_rate(unsigned int  h_user)
+void gmtp_update_rx_rate(unsigned int  h_user)
 {
 	unsigned int r = 0;
 	unsigned int H, h, y, q;
-	unsigned int r_prev = gmtp_get_current_tx_rate();
+	unsigned int r_prev = gmtp_get_current_rx_rate();
 	int up, delta;
 
 	gmtp_pr_func();
@@ -91,7 +91,7 @@ void gmtp_update_tx_rate(unsigned int  h_user)
 	r = (int)(r_prev) + delta;
 
 	gmtp_print_debug("new_r: %d", r);
-	gmtp.current_tx = r;
+	gmtp.total_rx = r;
 }
-EXPORT_SYMBOL_GPL(gmtp_update_tx_rate);
+EXPORT_SYMBOL_GPL(gmtp_update_rx_rate);
 

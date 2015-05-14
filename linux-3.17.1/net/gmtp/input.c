@@ -34,7 +34,6 @@ static void gmtp_fin(struct sock *sk, struct sk_buff *skb)
 
 static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
 {
-	struct gmtp_sock *gp = gmtp_sk(sk);
 	int queued = 0;
 
 	gmtp_print_function();
@@ -57,7 +56,7 @@ static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
 		 * This is ok as both ends are done with data transfer and each
 		 * end is just waiting for the other to acknowledge termination.
 		 */
-		if(gp->role != GMTP_ROLE_CLIENT)
+		if(gmtp_role_client(sk))
 			break;
 		/* fall through */
 	case GMTP_REQUESTING:
@@ -68,7 +67,7 @@ static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
 	case GMTP_OPEN:
 		/* Clear hash table */
 		/* FIXME: Implement gmtp_del_server_entry() */
-		/*if(gp->role == GMTP_ROLE_CLIENT)
+		/*if(gmtp_role_client(sk))
 			gmtp_del_client_entry(gmtp_hashtable, gp->flowname);
 		else if(gp->role == GMTP_ROLE_SERVER)
 			gmtp_print_error("FIXME: "
@@ -93,27 +92,20 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 					       const struct gmtp_hdr *gh,
 					       const unsigned int len)
 {
+	struct gmtp_sock *gp = gmtp_sk(sk);
+
 	gmtp_print_function();
 	gmtp_print_debug("Packet received: %s", gmtp_packet_name(gh->type));
 
 	/*
-	 *  Step 4: Prepare sequence numbers in REQUEST
-	 *     If S.state == REQUEST,
-	 *	  If (P.type == REGISTER_REPLY or P.type == Reset)
-	 *		and S.AWL <= P.ackno <= S.AWH,
-	 *	     / * Set sequence number variables corresponding to the
-	 *		other endpoint, so P will pass the tests in Step 6 * /
-	 *	     Set S.GSR, S.ISR, S.SWL, S.SWH
-	 *	     / * Response processing continues in Step 10; Reset
-	 *		processing continues in Step 9 * /
-	 *
 	 * FIXME Clients must receive only GMTP_PKT_REQUESTNOTIFY
+	 * Accepting GMTP_PKT_REGISTER_REPLY temporarily
 	*/
 	if (gh->type == GMTP_PKT_REQUESTNOTIFY ||
-			gh->type == GMTP_PKT_REGISTER_REPLY /* Accept it temporarily */) {
+			gh->type == GMTP_PKT_REGISTER_REPLY) {
 
 		const struct inet_connection_sock *icsk = inet_csk(sk);
-		struct gmtp_sock *gp = gmtp_sk(sk);
+
 
 		/*** FIXME Check sequence numbers  ***/
 
@@ -126,9 +118,11 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 		gp->gsr = gp->isr = GMTP_SKB_CB(skb)->seq;
 		gmtp_sync_mss(sk, icsk->icsk_pmtu_cookie);
 
-		if(gp->relay_rtt == 0)
+		/** First reply received and i have a relay */
+		if(gp->relay_rtt == 0 && gh->type == GMTP_PKT_REQUESTNOTIFY)
 			gp->relay_rtt = jiffies_to_msecs(jiffies - gp->req_stamp);
-		gp->rx_rtt = gh->server_rtt + gp->relay_rtt;
+
+		gp->rx_rtt = (__u32) gh->server_rtt + gp->relay_rtt;
 		gmtp_pr_debug("Relay RTT: %u ms", gp->relay_rtt);
 
 		/*
@@ -159,10 +153,22 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 					ntohs(gh_rnotify->mcst_port),
 					gh_rnotify->error_code);
 
+			media_entry = gmtp_lookup_media(gmtp_hashtable,
+					gh->flowname);
+			if(media_entry == NULL)
+				goto out_invalid_packet;
+
 			/* Obtain usec RTT sample from Request (used by CC). */
 			switch(gh_rnotify->error_code) {
+			case GMTP_REQNOTIFY_CODE_OK_REPORTER:
+				gp->role = GMTP_ROLE_REPORTER;
+
+				/* TODO set witch client is a reporter */
+
 			case GMTP_REQNOTIFY_CODE_OK: /* Process packet */
 				break;
+			case GMTP_REQNOTIFY_CODE_WAIT_REPORTER:
+				gp->role = GMTP_ROLE_REPORTER;
 			case GMTP_REQNOTIFY_CODE_WAIT:  /* Do nothing... */
 				return 0;
 			/* FIXME Del entry in table when receiving error... */
@@ -171,11 +177,6 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 			default:
 				goto out_invalid_packet;
 			}
-
-			media_entry = gmtp_lookup_media(gmtp_hashtable,
-					gh->flowname);
-			if(media_entry == NULL)
-				goto out_invalid_packet;
 
 			/* Inserting information in client table */
 			media_entry->channel_addr = gh_rnotify->mcst_addr;
@@ -202,6 +203,12 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 		}
 
 		gmtp_set_state(sk, GMTP_OPEN);
+
+		if(gp->role == GMTP_ROLE_REPORTER) {
+			int ret = mcc_rx_init(sk);
+			if(ret)
+				goto err;
+		}
 
 		/* Make sure socket is routed, for correct metrics. */
 		icsk->icsk_af_ops->rebuild_header(sk);
@@ -234,6 +241,7 @@ err:
  	 * We mark this socket as no longer usable, so that the loop in
  	 * gmtp_sendmsg() terminates and the application gets notified.
  	 */
+	gmtp_del_client_entry(gmtp_hashtable, gp->flowname);
  	gmtp_set_state(sk, GMTP_CLOSED);
  	sk->sk_err = ECOMM;
  	return 1;
@@ -288,8 +296,8 @@ static void gmtp_deliver_input_to_mcc(struct sock *sk, struct sk_buff *skb)
 	if (!(sk->sk_shutdown & RCV_SHUTDOWN))
 		mcc_rx_packet_recv(sk, skb);
 	/*
-	 * Until the TX queue has been drained, we can not honour SHUT_WR, since
-	 * we need received feedback as input to adjust congestion control.
+	 * FIXME Until the TX queue has been drained, we can not honour SHUT_WR,
+	 * since we need received feedback as input to adjust congestion control.
 	 */
 /*	if (sk->sk_write_queue.qlen > 0 || !(sk->sk_shutdown & SEND_SHUTDOWN))
 		mcc_tx_packet_recv(sk, skb);*/
@@ -314,7 +322,7 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 	case GMTP_PKT_DATAACK:
 	case GMTP_PKT_DATA:
 		if(gmtp_role_client(sk))
-			gp->rx_rtt = gh->server_rtt + gp->relay_rtt;
+			gp->rx_rtt = (__u32) gh->server_rtt + gp->relay_rtt;
 		gmtp_enqueue_skb(sk, skb);
 		return 0;
 	case GMTP_PKT_ACK:
@@ -351,7 +359,9 @@ int gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 	if(gmtp_check_seqno(sk, skb))
 		goto discard;
 
-	gmtp_deliver_input_to_mcc(sk, skb);
+	if(gp->role == GMTP_ROLE_REPORTER)
+		gmtp_deliver_input_to_mcc(sk, skb);
+
 	gp->gsr = gh->seq;
 
 	return __gmtp_rcv_established(sk, skb, gh, len);

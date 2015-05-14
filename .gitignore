@@ -2,6 +2,7 @@
 
 # Output files
 *.wav
+app/python/results/*
 
 # GitEye
 *.project

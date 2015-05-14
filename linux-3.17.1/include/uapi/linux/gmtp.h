@@ -112,9 +112,9 @@ enum gmtp_ack_codes {
  * struct gmtp_hdr_feedback - Data packets
  * @tstamp: time stamp of received data packet
  */
-/*struct gmtp_hdr_feedback {
-	__be32 rx_tstamp;
-};*/
+struct gmtp_hdr_feedback {
+	__be32 pkt_tstamp;
+};
 
 /**
  * struct gmtp_hdr_reset - Unconditionally shut down a connection
@@ -176,7 +176,9 @@ struct gmtp_hdr_reqnotify {
 
 enum gmtp_reqnotify_error_code {
 	GMTP_REQNOTIFY_CODE_OK = 0,
+	GMTP_REQNOTIFY_CODE_OK_REPORTER,
 	GMTP_REQNOTIFY_CODE_WAIT,
+	GMTP_REQNOTIFY_CODE_WAIT_REPORTER,
 	GMTP_REQNOTIFY_CODE_ERROR,
 	GMTP_REQNOTIFY_MAX_CODES
 };
@@ -241,9 +243,9 @@ static inline unsigned int gmtp_packet_hdr_variable_len(const __u8 type)
 	case GMTP_PKT_DATAACK:
 		len = sizeof(struct gmtp_hdr_data) + sizeof(struct gmtp_hdr_ack);
 		break;
-/*	case GMTP_PKT_FEEDBACK:
+	case GMTP_PKT_FEEDBACK:
 		len = sizeof(struct gmtp_hdr_feedback);
-		break;*/
+		break;
 	case GMTP_PKT_REGISTER_REPLY:
 		len = sizeof(struct gmtp_hdr_register_reply);
 		break;
@@ -260,12 +262,6 @@ static inline unsigned int gmtp_packet_hdr_variable_len(const __u8 type)
 	
 	return len;
 }
-
-/* GMTP priorities for outgoing/queued packets */
-enum gmtp_packet_dequeueing_policy {
-	GMTPQ_POLICY_SIMPLE,
-	GMTPQ_POLICY_MAX
-};
 
 /* GMTP socket options */
 enum gmtp_sockopt_codes {

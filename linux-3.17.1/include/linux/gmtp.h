@@ -296,6 +296,16 @@ static inline unsigned int gmtp_hdr_len(const struct sk_buff *skb)
 	return __gmtp_hdr_len(gmtp_hdr(skb));
 }
 
+static inline __u8 *gmtp_data(const struct sk_buff *skb)
+{
+	return (__u8*) (skb_transport_header(skb) + gmtp_hdr_len(skb));
+}
+
+static inline __u32 gmtp_data_len(const struct sk_buff *skb)
+{
+	return (__u32)(skb_tail_pointer(skb) - gmtp_data(skb));
+}
+
 #endif /* LINUX_GMTP_H_ */
 
 
