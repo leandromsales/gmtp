@@ -22,8 +22,8 @@
 
 #include <uapi/linux/gmtp.h>
 #include <linux/gmtp.h>
-#include "../gmtp/gmtp.h"
-#include "gmtp-intra.h"
+#include "../gmtp.h"
+#include "gmtp-inter.h"
  
 #define SHA1_LENGTH    16
 #define GET_MAC_ADDRESS  0
@@ -36,7 +36,7 @@ extern void flowname_str(__u8* str, const __u8* flowname);
 static struct nf_hook_ops nfho_in;
 static struct nf_hook_ops nfho_out;
 
-struct gmtp_intra gmtp;
+struct gmtp_inter gmtp;
  
 int bytes_added(int sprintf_return)
 {
@@ -98,7 +98,7 @@ __u8 gmtp_interfaces_md5(unsigned char *buf)
     return md5;
 }
 
-void gmtp_intra_relay_get_devices (int option)
+void gmtp_inter_relay_get_devices (int option)
 {
     /*int  option = GET_IP_ADDRESS;*/
     /*int  option = GET_MAC_ADDRESS;*/
@@ -221,17 +221,17 @@ void gmtp_intra_relay_get_devices (int option)
 
 }*/
 
-const __u8 *gmtp_intra_relay_id()
+const __u8 *gmtp_inter_relay_id()
 {
-	gmtp_intra_relay_get_devices(GET_MAC_ADDRESS);
+	gmtp_inter_relay_get_devices(GET_MAC_ADDRESS);
 
     /*just to keep the same return of previous implementation*/
 	return "777777777777777777777";
 
 }
-__be32 gmtp_intra_relay_ip()
+__be32 gmtp_inter_relay_ip()
 {
-	gmtp_intra_relay_get_devices(GET_IP_ADDRESS);
+	gmtp_inter_relay_get_devices(GET_IP_ADDRESS);
    
     /*just to keep the same return of previous implementation*/
 	unsigned char *ip = "\xc0\xa8\x02\x01"; /* 192.168.2.1 */
@@ -301,11 +301,11 @@ struct sk_buff *gmtp_buffer_dequeue(struct gmtp_flow_info *info)
 	return skb;
 }
 
-struct gmtp_flow_info *gmtp_intra_get_info(
-		struct gmtp_intra_hashtable *hashtable, const __u8 *media)
+struct gmtp_flow_info *gmtp_inter_get_info(
+		struct gmtp_inter_hashtable *hashtable, const __u8 *media)
 {
 	struct gmtp_relay_entry *entry =
-			gmtp_intra_lookup_media(gmtp.hashtable, media);
+			gmtp_inter_lookup_media(gmtp.hashtable, media);
 
 	if(entry != NULL)
 		return entry->info;
@@ -336,22 +336,22 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 
 		switch(gh->type) {
 		case GMTP_PKT_REQUEST:
-			ret = gmtp_intra_request_rcv(skb);
+			ret = gmtp_inter_request_rcv(skb);
 			break;
 		case GMTP_PKT_REGISTER_REPLY:
-			ret = gmtp_intra_register_reply_rcv(skb);
+			ret = gmtp_inter_register_reply_rcv(skb);
 			break;
 		case GMTP_PKT_ACK:
-			ret = gmtp_intra_ack_rcv(skb);
+			ret = gmtp_inter_ack_rcv(skb);
 			break;
 		case GMTP_PKT_DATA:
-			ret = gmtp_intra_data_rcv(skb);
+			ret = gmtp_inter_data_rcv(skb);
 			break;
 		case GMTP_PKT_FEEDBACK:
-			ret = gmtp_intra_feedback_rcv(skb);
+			ret = gmtp_inter_feedback_rcv(skb);
 			break;
 		case GMTP_PKT_CLOSE:
-			ret = gmtp_intra_close_rcv(skb);
+			ret = gmtp_inter_close_rcv(skb);
 			break;
 		}
 
@@ -384,10 +384,10 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 
 		switch(gh->type) {
 		case GMTP_PKT_DATA:
-			ret = gmtp_intra_data_out(skb);
+			ret = gmtp_inter_data_out(skb);
 			break;
 		case GMTP_PKT_CLOSE:
-			ret = gmtp_intra_close_out(skb);
+			ret = gmtp_inter_close_out(skb);
 			break;
 		}
 	}
@@ -400,12 +400,12 @@ int init_module()
 {
 	int ret = 0;
 	gmtp_pr_func();
-	gmtp_print_debug("Starting GMTP-Intra");
+	gmtp_print_debug("Starting GMTP-inter");
 
 	gmtp.total_rx = 1;
 	memset(&gmtp.mcst, 0, 4*sizeof(unsigned char));
 
-	gmtp.hashtable = gmtp_intra_create_hashtable(64);
+	gmtp.hashtable = gmtp_inter_create_hashtable(64);
 	if(gmtp.hashtable == NULL) {
 		gmtp_print_error("Cannot create hashtable...");
 		ret = -ENOMEM;
@@ -431,9 +431,9 @@ out:
 void cleanup_module()
 {
 	gmtp_pr_func();
-	gmtp_print_debug("Finishing GMTP-Intra");
+	gmtp_print_debug("Finishing GMTP-inter");
 
-	kfree_gmtp_intra_hashtable(gmtp.hashtable);
+	kfree_gmtp_inter_hashtable(gmtp.hashtable);
 
 	nf_unregister_hook(&nfho_in);
 	nf_unregister_hook(&nfho_out);

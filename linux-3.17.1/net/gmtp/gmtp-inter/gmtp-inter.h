@@ -1,11 +1,11 @@
- /* gmtp-intra.h
+ /* gmtp-inter.h
  *
  *  Created on: 17/02/2015
  *      Author: wendell
  */
 
-#ifndef GMTP_INTRA_H_
-#define GMTP_INTRA_H_
+#ifndef GMTP_INTER_H_
+#define GMTP_INTER_H_
 
 #include <linux/types.h>
 #include <linux/skbuff.h>
@@ -14,81 +14,74 @@
 
 #include <linux/gmtp.h>
 #include <uapi/linux/gmtp.h>
-#include "../gmtp/gmtp.h"
+#include "../gmtp.h"
 
-#include "hash-intra.h"
+#include "hash-inter.h"
 
 #define H_USER 1024
 
 /**
  * TODO Negotiate buffer size with server
- * struct gmtp_intra - GMTP-Intra state variables
+ * struct gmtp_inter - GMTP-inter state variables
  *
  * @total_bytes_rx: total data bytes received
  * @total_rx: Current RX rate
  * @mcst: control of granted multicast addresses
  * @nclients: number of connected clients
  *
- * @hashtable: GMTP-Intra relay table
+ * @hashtable: GMTP-inter relay table
  */
-struct gmtp_intra {
+struct gmtp_inter {
 	unsigned int 		total_bytes_rx;
 	unsigned int 		total_rx;
 	unsigned char		mcst[4];
 
-	struct gmtp_intra_hashtable *hashtable;
+	struct gmtp_inter_hashtable *hashtable;
 };
 
-extern struct gmtp_intra gmtp;
+extern struct gmtp_inter gmtp;
 
-/** gmtp-intra.c */
+/** gmtp-inter.c */
 __be32 get_mcst_v4_addr(void);
 void gmtp_buffer_add(struct gmtp_flow_info *info, struct sk_buff *newsk);
 struct sk_buff *gmtp_buffer_dequeue(struct gmtp_flow_info *info);
-struct gmtp_flow_info *gmtp_intra_get_info(
-		struct gmtp_intra_hashtable *hashtable, const __u8 *media);
+struct gmtp_flow_info *gmtp_inter_get_info(
+		struct gmtp_inter_hashtable *hashtable, const __u8 *media);
 
 /** input.c */
-int gmtp_intra_request_rcv(struct sk_buff *skb);
-int gmtp_intra_register_reply_rcv(struct sk_buff *skb);
-int gmtp_intra_ack_rcv(struct sk_buff *skb);
-int gmtp_intra_data_rcv(struct sk_buff *skb);
-int gmtp_intra_feedback_rcv(struct sk_buff *skb);
-int gmtp_intra_close_rcv(struct sk_buff *skb);
+int gmtp_inter_request_rcv(struct sk_buff *skb);
+int gmtp_inter_register_reply_rcv(struct sk_buff *skb);
+int gmtp_inter_ack_rcv(struct sk_buff *skb);
+int gmtp_inter_data_rcv(struct sk_buff *skb);
+int gmtp_inter_feedback_rcv(struct sk_buff *skb);
+int gmtp_inter_close_rcv(struct sk_buff *skb);
 
-void gmtp_intra_relay_get_devices (int option);
-const __u8 *gmtp_intra_relay_id (void);
-__be32 gmtp_intra_relay_ip (void);
+void gmtp_inter_relay_get_devices (int option);
+const __u8 *gmtp_inter_relay_id (void);
+__be32 gmtp_inter_relay_ip (void);
 int bytes_added(int sprintf_return);
 void flowname_strn(__u8* str, const __u8 *buffer, int length);
 __u8 gmtp_interfaces_md5(unsigned char *buf);
 
 /** Output.c */
-void gmtp_intra_add_relayid(struct sk_buff *skb);
-struct gmtp_hdr *gmtp_intra_make_route_hdr(struct sk_buff *skb);
-struct gmtp_hdr *gmtp_intra_make_request_notify_hdr(struct sk_buff *skb,
+void gmtp_inter_add_relayid(struct sk_buff *skb);
+struct gmtp_hdr *gmtp_inter_make_route_hdr(struct sk_buff *skb);
+struct gmtp_hdr *gmtp_inter_make_request_notify_hdr(struct sk_buff *skb,
 		struct gmtp_relay_entry *media_info, __be16 new_sport,
 		__be16 new_dport, __u8 error_code);
-int gmtp_intra_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
+int gmtp_inter_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
 		__be16 new_sport, __be32 new_daddr, __be16 new_dport,
 		__u8 error_code);
 
-void gmtp_intra_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
+void gmtp_inter_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
 		__be32 daddr, struct gmtp_hdr *gh_ref, bool backward);
-void gmtp_intra_build_and_send_skb(struct sk_buff *skb);
+void gmtp_inter_build_and_send_skb(struct sk_buff *skb);
 
-int gmtp_intra_data_out(struct sk_buff *skb);
-int gmtp_intra_close_out(struct sk_buff *skb);
-
-/** gmtp-ucc. */
-unsigned int gmtp_rtt_average(void);
-unsigned int gmtp_rx_rate(void);
-unsigned int gmtp_relay_queue_size(void);
-unsigned int gmtp_get_current_rx_rate(void);
-void gmtp_update_rx_rate(unsigned int h_user);
+int gmtp_inter_data_out(struct sk_buff *skb);
+int gmtp_inter_close_out(struct sk_buff *skb);
 
 /**
- * A very ugly delayer, to GMTP-Intra...
+ * A very ugly delayer, to GMTP-inter...
  *
  * If we use schedule(), we get this error:  'BUG: scheduling while atomic'
  *
@@ -97,7 +90,7 @@ void gmtp_update_rx_rate(unsigned int h_user);
  *
  * Calling cond_resched(), kernel call schedule() where it's possible...
  */
-static inline void gmtp_intra_wait_us(s64 delay)
+static inline void gmtp_inter_wait_us(s64 delay)
 {
 	ktime_t timeout = ktime_add_us(ktime_get_real(), delay);
 	while(ktime_before(ktime_get_real(), timeout)) {
@@ -157,4 +150,4 @@ static inline void print_gmtp_data(struct sk_buff *skb, char* label)
 	}
 }
 
-#endif /* GMTP_INTRA_H_ */
+#endif /* GMTP_INTER_H_ */
