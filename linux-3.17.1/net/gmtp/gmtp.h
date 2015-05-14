@@ -11,45 +11,52 @@
 #include <net/inet_timewait_sock.h>
 #include <net/inet_hashtables.h>
 #include <uapi/asm-generic/errno.h>
-
-#include <linux/gmtp.h>
-#include <net/netns/gmtp.h>
-
+#include <uapi/linux/ip.h>
 #include <linux/types.h>
 #include <linux/skbuff.h>
-#include <uapi/linux/ip.h>
 
+#include <net/netns/gmtp.h>
 #include <linux/gmtp.h>
 #include <uapi/linux/gmtp.h>
+
+#include "hash.h"
 
 extern struct inet_hashinfo gmtp_inet_hashinfo;
 extern struct percpu_counter gmtp_orphan_count;
 
-#define GMTP_HASH_SIZE  16
-
 /** GMTP Debugs */
-#define GMTP_INFO "[GMTP_INFO] %s:%d - "
+#define GMTP_INFO "[GMTP] %s:%d - "
+#define GMTP_DEBUG GMTP_INFO
 #define GMTP_WARNING "[GMTP_WARNING]  %s:%d at %s - "
 #define GMTP_ERROR "[GMTP_ERROR] %s:%d at %s - "
 
-#define gmtp_print_debug(fmt, args...) pr_info(GMTP_INFO fmt \
+/* TODO Improve debug func names */
+#define gmtp_print_debug(fmt, args...) pr_info(GMTP_DEBUG fmt \
 		"\n", __FUNCTION__, __LINE__, ##args)
-#define gmtp_print_warning(fmt, args...) pr_warning(GMTP_WARNING fmt\
+#define gmtp_print_warning(fmt, args...) pr_warning(GMTP_WARNING fmt \
 		"\n", __FUNCTION__, __LINE__, __FILE__, ##args)
 #define gmtp_print_error(fmt, args...) pr_err(GMTP_ERROR fmt \
 		"\n", __FUNCTION__, __LINE__, __FILE__, ##args)
 #define gmtp_print_function() pr_info("-------- %s --------\n" , __FUNCTION__)
 
+/* Better print names */
+#define gmtp_pr_func() pr_info("-------- %s --------\n" , __FUNCTION__)
+#define gmtp_pr_info(fmt, args...) pr_info(GMTP_DEBUG fmt \
+		"\n", __FUNCTION__, __LINE__, ##args)
+#define gmtp_pr_debug(fmt, args...) gmtp_pr_info(fmt, ##args);
+#define gmtp_pr_warning(fmt, args...) pr_warning(GMTP_WARNING fmt \
+		"\n", __FUNCTION__, __LINE__, __FILE__, ##args)
+#define gmtp_pr_error(fmt, args...) pr_err(GMTP_ERROR fmt \
+		"\n", __FUNCTION__, __LINE__, __FILE__, ##args)
+
+/** ---- */
 #define GMTP_MAX_HDR_LEN 2047  /* 2^11 - 1 */
 #define GMTP_FIXED_HDR_LEN 36  /* theoretically: 32 bytes, In fact: 36 bytes */
 #define GMTP_MAX_VARIABLE_HDR_LEN (GMTP_MAX_HDR_LEN - GMTP_FIXED_HDR_LEN)
 
-#define GMTP_MAX_TX  1512000 /* 1,512,000 bytes/s == 12Mbps */
-
 #define GMTP_MIN_SAMPLE_LEN 100 /* Minimal sample to measure 'instant' Tx rate*/
 #define GMTP_DEFAULT_SAMPLE_LEN 1000 /* Sample to measure 'instant' Tx rate */
 #define GMTP_MAX_SAMPLE_LEN 10000 /* Max sample to measure 'instant' Tx rate */
-
 
 /**
  * Based on TCP Default Maximum Segment Size calculation
@@ -64,6 +71,16 @@ extern struct percpu_counter gmtp_orphan_count;
  */
 #define GMTP_DEFAULT_MSS (576 - GMTP_FIXED_HDR_LEN - 20)
 
+
+#define GMTP_DEFAULT_RTT 64  /* milisseconds */
+/*
+ * RTT sampling: sanity bounds and fallback RTT value from RFC 4340, section 3.4
+ * Units in usec (microseconds)
+ */
+#define GMTP_SANE_RTT_MIN	100		    /* 0.1 ms */
+#define GMTP_FALLBACK_RTT	((GMTP_DEFAULT_RTT * USEC_PER_MSEC) / 5)
+#define GMTP_SANE_RTT_MAX	(3 * USEC_PER_SEC)  /* 3 s    */
+
 /* initial RTO value */
 #define GMTP_TIMEOUT_INIT ((unsigned int)(3 * HZ))
 /*
@@ -74,57 +91,9 @@ extern struct percpu_counter gmtp_orphan_count;
 #define GMTP_RTO_MAX ((unsigned int)(64 * HZ))
 #define GMTP_TIMEWAIT_LEN (60 * HZ)
 
-/**
- * struct gmtp_client_entry - An entry in client hash table
- *
- * flowname[GMTP_FLOWNAME_LEN];
- * local_addr:	local client IP address
- * local_port:	local client port
- * channel_addr: multicast channel to receive media
- * channel_port: multicast port to receive media
- */
-/** FIXME If a client requests a media in localhost, we get an error! */
-struct gmtp_client_entry {
-	struct gmtp_client_entry *next; /** It must be the first */
-
-	__u8 flowname[GMTP_FLOWNAME_LEN];
-	__be32 local_addr;
-	__be16 local_port;
-	__be32 channel_addr;
-	__be16 channel_port;
-};
-
-
-/**
- * struct gmtp_server_entry - An entry in server hash table
- *
- * @next: 	the next entry with the same key (hash)
- * @srelay: 	source of route (route[route->nrelays]).
- * 			the primary key at table is 'srelay->relayid'
- * @route:	the route stored in table
- */
-struct gmtp_server_entry {
-	struct gmtp_server_entry *next; /** It must be the first */
-
-	struct gmtp_relay *srelay;
-	__u8 flowname[GMTP_FLOWNAME_LEN];
-	struct gmtp_hdr_route route;
-};
-
-/**
- * struct gmtp_hashtable - The GMTP hash table
- *
- * @size: 	the max number of entries in hash table (fixed)
- * @table:	the array of table entries
- * 			(it can be a client or a server entry)
- */
-struct gmtp_hashtable {
-	int size;
-	union gmtp_entry {
-		struct gmtp_client_entry *client_entry;
-		struct gmtp_server_entry *server_entry;
-	} *table;
-};
+/* Int to __u8 operations */
+#define TO_U8(x) ((x) > UINT_MAX) ? UINT_MAX : (__u8)(x)
+#define SUB_U8(a, b) ((a-b) > UINT_MAX) ? UINT_MAX : (a-b)
 
 extern struct gmtp_hashtable* gmtp_hashtable;
 
@@ -133,7 +102,6 @@ static inline void gmtp_clear_xmit_timers(struct sock *sk)
 {
 	inet_csk_clear_xmit_timers(sk);
 }
-
 
 /** proto.c */
 int gmtp_init_sock(struct sock *sk);
@@ -168,7 +136,8 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 		struct gmtp_hdr *gh, unsigned int len);
 
 /** output.c */
-void gmtp_send_ack(struct sock *sk);
+void gmtp_send_ack(struct sock *sk,  __u8 ackcode);
+void gmtp_send_feedback(struct sock *sk);
 void gmtp_send_close(struct sock *sk, const int active);
 int gmtp_send_reset(struct sock *sk, enum gmtp_reset_codes code);
 void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb);
@@ -196,31 +165,8 @@ struct sock *gmtp_check_req(struct sock *sk, struct sk_buff *skb,
 void gmtp_reqsk_send_ack(struct sock *sk, struct sk_buff *skb,
 			 struct request_sock *rsk);
 
-/* qpolicy.c
- * Packet Dequeueing Interface */
-void gmtp_qpolicy_push(struct sock *sk, struct sk_buff *skb);
-bool gmtp_qpolicy_full(struct sock *sk);
-void gmtp_qpolicy_drop(struct sock *sk, struct sk_buff *skb);
-struct sk_buff *gmtp_qpolicy_top(struct sock *sk);
-struct sk_buff *gmtp_qpolicy_pop(struct sock *sk);
-
 /** ipv4.c */
 int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len);
-
-/** hash.c */
-struct gmtp_hashtable *gmtp_create_hashtable(unsigned int size);
-struct gmtp_client_entry *gmtp_lookup_media(
-		struct gmtp_hashtable *hashtable, const __u8 *media);
-int gmtp_add_client_entry(struct gmtp_hashtable *hashtable, __u8 *flowname,
-		__be32 local_addr, __be16 local_port,
-		__be32 channel_addr, __be16 channel_port);
-
-struct gmtp_server_entry *gmtp_lookup_route(
-		struct gmtp_hashtable *hashtable, const __u8 *relayid);
-int gmtp_add_server_entry(struct gmtp_hashtable *hashtable, __u8 *relayid,
-		__u8 *flowname, struct gmtp_hdr_route *route);
-
-void kfree_gmtp_hashtable(struct gmtp_hashtable *hashtable);
 
 /**
  * This is the control buffer. It is free to use by any layer.
@@ -234,6 +180,7 @@ void kfree_gmtp_hashtable(struct gmtp_hashtable *hashtable);
  * gmtp_skb_cb  -  GMTP per-packet control information
  *
  * @type: one of %gmtp_pkt_type (or unknown)
+ * @ackcode: ack code. One of sock, one of %gmtp_ack_codes
  * @reset_code: one of %gmtp_reset_codes
  * @reset_data: Data1..3 fields (depend on @gmtpd_reset_code)
  * @seq: sequence number
@@ -242,12 +189,87 @@ void kfree_gmtp_hashtable(struct gmtp_hashtable *hashtable);
  */
 struct gmtp_skb_cb {
 	__u8 type :5;
+	__u8 ackcode;
 	__u8 reset_code,
 		reset_data[3];
 	__be32 seq;
 };
 
 #define GMTP_SKB_CB(__skb) ((struct gmtp_skb_cb *)&((__skb)->cb[0]))
+
+/**
+ * gmtp_loss_count - Approximate the number of lost data packets in a burst loss
+ * @s1:  last known sequence number before the loss ('hole')
+ * @s2:  first sequence number seen after the 'hole'
+ */
+static inline __be32 gmtp_loss_count(const __be32 s1, const __be32 s2,
+		const __be32 ndp)
+{
+	__be32 delta = s2 - s1;
+
+	WARN_ON(delta < 0);
+	delta -= ndp + 1;
+
+	return delta > 0 ? delta : 0;
+}
+
+/**
+ * gmtp_loss_free - Evaluate condition for data loss from RFC 4340, 7.7.1
+ */
+static inline bool gmtp_loss_free(const __be32 s1, const __be32 s2,
+		const __be32 ndp)
+{
+	return gmtp_loss_count(s1, s2, ndp) == 0;
+}
+
+static inline int gmtp_data_packet(const struct sk_buff *skb)
+{
+	const __u8 type = GMTP_SKB_CB(skb)->type;
+
+	return type == GMTP_PKT_DATA	 ||
+	       type == GMTP_PKT_DATAACK;
+}
+
+/**
+ * struct gmtp_clients - A list of GMTP Clients
+ *
+ * @addr: ip address of client
+ * @port: reception port of client
+ * @id: id of client
+ */
+struct gmtp_client {
+	struct list_head 	list;
+	unsigned int		id;
+	__be32 			addr;
+	__be16 			port;
+	__u8			reporter:1;
+};
+
+/**
+ * Create and add a client in the list of clients
+ */
+static inline void gmtp_list_add_client(unsigned int id, __be32 addr,
+		__be16 port, __u8 reporter, struct list_head *head)
+{
+	struct gmtp_client *new = kmalloc(sizeof(struct gmtp_client), GFP_ATOMIC);
+
+	if(new == NULL) {
+		gmtp_pr_error("Error while creating new gmtp_client...");
+		return;
+	}
+
+	new->id	  = id;
+	new->addr = addr;
+	new->port = port;
+	new->reporter = reporter;
+
+	gmtp_pr_info("New client (%u): ADDR=%pI4@%-5d\n",
+			new->id, &addr, ntohs(port));
+
+	INIT_LIST_HEAD(&new->list);
+	list_add_tail(&new->list, head);
+}
+
 
 #endif /* GMTP_H_ */
 

@@ -5,7 +5,6 @@
 #include <net/inet_connection_sock.h>
 #include <net/tcp_states.h>
 #include <linux/types.h>
-
 #include <uapi/linux/gmtp.h>
 
 //TODO Study states
@@ -39,8 +38,51 @@ enum gmtp_role {
 	GMTP_ROLE_UNDEFINED,
 	GMTP_ROLE_LISTEN,
 	GMTP_ROLE_CLIENT,
+	GMTP_ROLE_REPORTER,
 	GMTP_ROLE_SERVER,
 	GMTP_ROLE_RELAY
+};
+
+/*
+ * Number of loss intervals (RFC 4342, 8.6.1). The history size is one more than
+ * NINTERVAL, since the `open' interval I_0 is always stored as the first entry.
+ */
+#define NINTERVAL	8
+#define LIH_SIZE	(NINTERVAL + 1)
+
+/* Number of packets to wait after a missing packet (RFC 4342, 6.1) */
+#define MCC_NDUPACK 3
+
+/* GMTP-MCC receiver states */
+enum mcc_rx_states {
+	MCC_RSTATE_NO_DATA = 1,
+	MCC_RSTATE_DATA,
+};
+
+/**
+ * mcc_rx_hist  -  RX history structure for TFRC-based protocols
+ * @ring:		Packet history for RTT sampling and loss detection
+ * @loss_count:		Number of entries in circular history
+ * @loss_start:		Movable index (for loss detection)
+ * @rtt_sample_prev:	Used during RTT sampling, points to candidate entry
+ */
+struct mcc_rx_hist {
+	struct mcc_rx_hist_entry *ring[MCC_NDUPACK + 1];
+	u8			  loss_count:2,
+				  loss_start:2;
+#define rtt_sample_prev		  loss_start
+};
+
+/**
+ *  tfrc_loss_hist  -  Loss record database
+ *  @ring:	Circular queue managed in LIFO manner
+ *  @counter:	Current count of entries (can be more than %LIH_SIZE)
+ *  @i_mean:	Current Average Loss Interval [RFC 3448, 5.4]
+ */
+struct mcc_loss_hist {
+	struct mcc_loss_interval	*ring[LIH_SIZE];
+	u8				counter;
+	u32				i_mean;
 };
 
 /**
@@ -78,24 +120,37 @@ static inline struct gmtp_request_sock *gmtp_rsk(const struct request_sock *req)
  * @gss: greatest sequence number sent
  * @gsr: greatest valid sequence number received
  * @mss: current value of MSS (path MTU minus header sizes)
- * FIXME Next two fields are unnecessary...
- * @qpolicy: Dequeueing policy, one of %gmtp_packet_dequeueing_policy
- * @qlen: maximum length of the queue
  * @role: role of this sock, one of %gmtp_role
+ * @req_stamp: time stamp of request sent
+ * @reply_stamp: time stamp of Request-Reply sent
+ * @tx_rtt: RTT from sender to relays
  * @server_timewait: server holds timewait state on close
- * @xmitlet: tasklet scheduled by the TX CCID to dequeue data packets
+ * @xmitlet: tasklet scheduled by the TX to dequeue data packets (???)
  * @xmit_timer: used to control the TX (rate-based pacing)
- * @pkt_sent: Number of packets (type == data) sent by socket
- * @data_sent: Number of bytes (only app data) sent by socket
- * @bytes_sent: Number of bytes (app data + headers) sent by socket
- * @sample_len: Size of the sample window (to measure 'instant' Tx Rate)
- * @t_sample: Elapsed time at sample window
- * @b_sample: Bytes sent at sample window
- * @first_tx_stamp: time stamp of first data packet sent
- * @tx_stamp: time stamp of last data packet sent
- * @max_tx: Maximum transmission rate (bytes/s)
- * byte_budget: the amount of bytes that can be sent immediately. It can be < 0.
- * adj_budget: memory of last adjustment in transmission rate.
+ * @rx_last_counter:	     Tracks window counter (RFC 4342, 8.1)
+ * @rx_state:		     Receiver state, one of %mcc_rx_states
+ * @rx_bytes_recv:	     Total sum of GMTP payload bytes
+ * @rx_x_recv:		     Receiver estimate of send rate (RFC 3448, sec. 4.3)
+ * @rx_max_rate:	Receiver max send rate calculated by TFRC Equation
+ * @rx_rtt:		RTT from receiver to sender
+ * @rx_avg_rtt:		Receiver estimate of RTT (average)
+ * @relay_rtt: 		     RTT from receiver to relay
+ * @rx_tstamp_last_feedback: Time at which last feedback was sent
+ * @rx_hist:		     Packet history (loss detection + RTT sampling)
+ * @rx_li_hist:		     Loss Interval database
+ * @rx_s:		     Received packet size in bytes
+ * @rx_pinv:		     Inverse of Loss Event Rate (RFC 4342, sec. 8.5)
+ * @pkt_sent: Number of data packets sent
+ * @data_sent: Amount of data sent (bytes)
+ * @bytes_sent: Amount of data+headers sent (bytes)
+ * @tx_sample_len: Length of the sample window (used to infer 'instant' Tx Rate)
+ * @tx_time_sample: Elapsed time at sample window (jiffies)
+ * @tx_byte_sample: Bytes sent at sample window
+ * @tx_first_stamp: time stamp of first sent data packet (jiffies)
+ * @tx_last_stamp: time stamp of last sent data packet (jiffies)
+ * @tx_max_rate: Max TX rate (bytes/s). 0 == no limits.
+ * tx_byte_budget: the amount of bytes that can be sent immediately.
+ * tx_adj_budget: memory of last adjustment in TX rate.
  * @flowname: name of the dataflow
  *
  */
@@ -110,31 +165,49 @@ struct gmtp_sock {
 	__u32				gsr;
 	
 	__u32				mss;
-	__u8				qpolicy;
-	__u32				qlen;
 
 	enum gmtp_role			role:3;
+
+	__u32				req_stamp;
+	__u32				reply_stamp;
 
 	__u8				server_timewait:1;
 	struct tasklet_struct		xmitlet;
 	struct timer_list		xmit_timer;
 
-	unsigned int 			pkt_sent;
-	unsigned long			data_sent;
-	unsigned long			bytes_sent;
+	/** Rx variables */
+	__be32				ndp_count;
+	enum mcc_rx_states		rx_state:8;
+	__u32				rx_bytes_recv;
+	__u32				rx_x_recv;
+	__be32				rx_max_rate;
+	__u32				rx_rtt;
+	__u32				rx_avg_rtt;
+	__u32				relay_rtt;
+	ktime_t				rx_tstamp_last_feedback;
+	struct mcc_rx_hist		rx_hist;
+	struct mcc_loss_hist		rx_li_hist;
+	__u16				rx_s;
+#define rx_pinv				rx_li_hist.i_mean
 
-	unsigned int 			sample_len;
-	unsigned long 			t_sample;
-	unsigned long 			b_sample;
+	/** Tx variables */
+	__u32 				tx_rtt;
+	__u32	 			tx_dpkts_sent;
+	__u32				tx_data_sent;
+	__u32				tx_bytes_sent;
 
-	unsigned long			sample_rate;
-	unsigned long			total_rate;
+	__u32	 			tx_sample_len;
+	unsigned long 			tx_time_sample; /* jiffies */
+	__u32	 			tx_byte_sample;
 
-	unsigned long			first_tx_stamp;
-	unsigned long 			tx_stamp;
-	unsigned long			max_tx;
-	long 				byte_budget;
-	int				adj_budget;
+	unsigned long			tx_sample_rate;
+	unsigned long			tx_total_rate;
+
+	unsigned long			tx_first_stamp;  /* jiffies */
+	unsigned long 			tx_last_stamp;	/* jiffies */
+	unsigned long			tx_max_rate;
+	int 				tx_byte_budget;
+	int				tx_adj_budget;
 
 	__u8 flowname[GMTP_FLOWNAME_LEN];
 };
@@ -151,9 +224,16 @@ static inline const char *gmtp_role_name(const struct sock *sk)
 	case GMTP_ROLE_LISTEN:	  return "listen";
 	case GMTP_ROLE_SERVER:	  return "server";
 	case GMTP_ROLE_CLIENT:	  return "client";
+	case GMTP_ROLE_REPORTER:  return "client (reporter)";
 	case GMTP_ROLE_RELAY:	  return "relay";
 	}
 	return NULL;
+}
+
+static inline int gmtp_role_client(const struct sock *sk)
+{
+	return (gmtp_sk(sk)->role == GMTP_ROLE_CLIENT ||
+		gmtp_sk(sk)->role == GMTP_ROLE_REPORTER);
 }
 
 static inline struct gmtp_hdr *gmtp_hdr(const struct sk_buff *skb)
@@ -166,6 +246,12 @@ static inline struct gmtp_hdr *gmtp_zeroed_hdr(struct sk_buff *skb, int headlen)
 	skb_push(skb, headlen);
 	skb_reset_transport_header(skb);
 	return memset(skb_transport_header(skb), 0, headlen);
+}
+
+static inline struct gmtp_hdr_data *gmtp_hdr_data(const struct sk_buff *skb)
+{
+	return (struct gmtp_hdr_data *)(skb_transport_header(skb) +
+						 sizeof(struct gmtp_hdr));
 }
 
 static inline struct gmtp_hdr_ack *gmtp_hdr_ack(const struct sk_buff *skb)
@@ -208,6 +294,16 @@ static inline unsigned int __gmtp_hdr_len(const struct gmtp_hdr *gh)
 static inline unsigned int gmtp_hdr_len(const struct sk_buff *skb)
 {
 	return __gmtp_hdr_len(gmtp_hdr(skb));
+}
+
+static inline __u8 *gmtp_data(const struct sk_buff *skb)
+{
+	return (__u8*) (skb_transport_header(skb) + gmtp_hdr_len(skb));
+}
+
+static inline __u32 gmtp_data_len(const struct sk_buff *skb)
+{
+	return (__u32)(skb_tail_pointer(skb) - gmtp_data(skb));
 }
 
 #endif /* LINUX_GMTP_H_ */

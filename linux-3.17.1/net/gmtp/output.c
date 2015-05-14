@@ -34,8 +34,6 @@ static struct sk_buff *gmtp_skb_entail(struct sock *sk, struct sk_buff *skb) {
  */
 static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 
-	gmtp_print_function();
-
 	if (likely(skb != NULL)) {
 
 		struct inet_sock *inet = inet_sk(sk);
@@ -46,8 +44,6 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 		const u32 gmtp_header_size = sizeof(struct gmtp_hdr) +
 				gmtp_packet_hdr_variable_len(gcb->type);
 		int err, set_ack = 1;
-
-		gmtp_print_debug("Packet: %s", gmtp_packet_name(gcb->type));
 
 		switch (gcb->type) {
 		case GMTP_PKT_DATA:
@@ -61,6 +57,7 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 			/* Use ISS on the first (non-retransmitted) Request. */
 			if (icsk->icsk_retransmits == 0)
 				gcb->seq = gp->iss;
+			gp->req_stamp = jiffies_to_msecs(jiffies);
 			/* fall through */
 		default:
 			/*
@@ -76,22 +73,36 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 
 		gh = gmtp_zeroed_hdr(skb, gmtp_header_size);
 
-		gh->version = 1;
+		gh->version = GMTP_VERSION;
 		gh->type = gcb->type;
 		gh->sport = inet->inet_sport;
 		gh->dport = inet->inet_dport;
 		gh->hdrlen = gmtp_header_size;
+		gh->server_rtt = gp->role == GMTP_ROLE_SERVER ?
+				TO_U8(gp->tx_rtt) : TO_U8(gp->rx_rtt);
+
 		memcpy(gh->flowname, gp->flowname, GMTP_FLOWNAME_LEN);
+
+		if (gcb->type == GMTP_PKT_FEEDBACK)
+			gh->transm_r = gp->rx_max_rate;
+		else
+			gh->transm_r = (__be32) gp->tx_max_rate;
 
 		if (gcb->type == GMTP_PKT_RESET)
 			gmtp_hdr_reset(skb)->reset_code = gcb->reset_code;
 
+		if(gcb->type == GMTP_PKT_DATA) {
+			struct gmtp_hdr_data *gh_data = gmtp_hdr_data(skb);
+			gh_data->tstamp = jiffies_to_msecs(jiffies);
+		}
+
 		gcb->seq = ++gp->gss;
 		if (set_ack) {
+			struct gmtp_hdr_ack *gack = gmtp_hdr_ack(skb);
+			gack->ackcode = gcb->ackcode;
 			gcb->seq = --gp->gss;
 			gmtp_event_ack_sent(sk);
 		}
-
 		gh->seq = gcb->seq;
 
 		err = icsk->icsk_af_ops->queue_xmit(sk, skb, &inet->cork.fl);
@@ -189,9 +200,11 @@ struct sk_buff *gmtp_make_register_reply(struct sock *sk, struct dst_entry *dst,
 	/* At this point, Register-Reply specific header is zeroed. */
 	gh->sport	= htons(inet_rsk(req)->ir_num);
 	gh->dport	= inet_rsk(req)->ir_rmt_port;
-	gh->hdrlen	= gmtp_header_size;
 	gh->type	= GMTP_PKT_REGISTER_REPLY;
 	gh->seq 	= greq->gss;
+	gh->server_rtt	= TO_U8(gmtp_sk(sk)->tx_rtt);
+	gh->transm_r	= (__be32) gmtp_sk(sk)->tx_max_rate;
+	gh->hdrlen	= gmtp_header_size;
 	memcpy(gh->flowname, greq->flowname, GMTP_FLOWNAME_LEN);
 
 	/* We use `acked' to remember that a Register-Reply was already sent. */
@@ -231,6 +244,8 @@ struct sk_buff *gmtp_ctl_make_reset(struct sock *sk, struct sk_buff *rcv_skb)
 	gh->dport	= rxgh->sport;
 	gh->hdrlen	= gmtp_hdr_reset_len;
 	gh->seq 	= gp->iss;
+	gh->server_rtt	= TO_U8(gp->tx_rtt);
+	gh->transm_r	= (__be32) gp->tx_max_rate;
 	memcpy(gh->flowname, gp->flowname, GMTP_FLOWNAME_LEN);
 
 	ghr = gmtp_hdr_reset(skb);
@@ -276,13 +291,16 @@ int gmtp_send_reset(struct sock *sk, enum gmtp_reset_codes code)
 /*
  * Do all connect socket setups that can be done AF independent.
  */
-int gmtp_connect(struct sock *sk) {
-
+int gmtp_connect(struct sock *sk)
+{
 	struct sk_buff *skb;
 	struct gmtp_sock *gp = gmtp_sk(sk);
 	struct dst_entry *dst = __sk_dst_get(sk);
 	struct inet_sock *inet = inet_sk(sk);
 	struct inet_connection_sock *icsk = inet_csk(sk);
+
+	struct gmtp_client_entry *client_entry;
+	int err = 0;
 
 	gmtp_print_function();
 
@@ -302,42 +320,36 @@ int gmtp_connect(struct sock *sk) {
 	skb_reserve(skb, sk->sk_prot->max_header);
 	GMTP_SKB_CB(skb)->type = GMTP_PKT_REQUEST;
 
-	/** FIXME Treat two clients getting the same media at same server...
-	 *
-	 * Utilizar o mesmo sk para cada novo cliente conectado localmente para
-	 * o mesmo flowname.
-	 *
-	 * Pesquisar semáforos, para controlar o close() do socket.
-	 */
-	/** FIXME TODO - Keep only SK in hashtable... */
-	/** Maybe we dont need lookup sk... maybe... */
-	if(gp->flowname != NULL)
-		gmtp_add_client_entry(gmtp_hashtable, gp->flowname,
+	client_entry = gmtp_lookup_media(gmtp_hashtable, gp->flowname);
+	if(client_entry == NULL)
+		err = gmtp_add_client_entry(gmtp_hashtable, gp->flowname,
 				inet->inet_saddr, inet->inet_sport, 0, 0);
+	else
+		gmtp_list_add_client(0, inet->inet_saddr, inet->inet_sport, 0,
+				&client_entry->clients->list);
+
+	pr_info("Err: %d\n", err);
 
 	gmtp_transmit_skb(sk, gmtp_skb_entail(sk, skb));
 
-	/* FIXME Retransmit it  */
 	icsk->icsk_retransmits = 0;
 	inet_csk_reset_xmit_timer(sk, ICSK_TIME_RETRANS,
 					  icsk->icsk_rto, GMTP_RTO_MAX);
-	return 0;
+	return err;
 }
 EXPORT_SYMBOL_GPL(gmtp_connect);
 
-void gmtp_send_ack(struct sock *sk)
+void gmtp_send_ack(struct sock *sk, __u8 ackcode)
 {
 	gmtp_print_function();
 
 	/* If we have been reset, we may not send again. */
 	if(sk->sk_state != GMTP_CLOSED) {
 
-		struct gmtp_sock *gs = gmtp_sk(sk);
 		struct sk_buff *skb = alloc_skb(sk->sk_prot->max_header,
 		GFP_ATOMIC);
 
-		struct gmtp_hdr_ack *gack;
-
+		/* FIXME How to define the ackcode in this case? */
 		if(skb == NULL) {
 			inet_csk_schedule_ack(sk);
 			inet_csk(sk)->icsk_ack.ato = TCP_ATO_MIN;
@@ -350,20 +362,29 @@ void gmtp_send_ack(struct sock *sk)
 		/* Reserve space for headers */
 		skb_reserve(skb, sk->sk_prot->max_header);
 		GMTP_SKB_CB(skb)->type = GMTP_PKT_ACK;
-
-		/* This works only for clients */
-		if(gs->role == GMTP_ROLE_CLIENT) {
-			gmtp_print_debug("Building ack header...");
-			gack = (struct gmtp_hdr_ack *)skb_put(skb,
-					sizeof(struct gmtp_hdr_ack));
-
-			/* Acked packet */
-			gack->ackcode = GMTP_PKT_REQUESTNOTIFY;
-		}
+		GMTP_SKB_CB(skb)->ackcode = ackcode;
 		gmtp_transmit_skb(sk, skb);
 	}
 }
 EXPORT_SYMBOL_GPL(gmtp_send_ack);
+
+
+void gmtp_send_feedback(struct sock *sk)
+{
+	gmtp_pr_func();
+
+	if(sk->sk_state != GMTP_CLOSED) {
+
+		struct sk_buff *skb = alloc_skb(sk->sk_prot->max_header,
+		GFP_ATOMIC);
+
+		/* Reserve space for headers */
+		skb_reserve(skb, sk->sk_prot->max_header);
+		GMTP_SKB_CB(skb)->type = GMTP_PKT_FEEDBACK;
+		gmtp_transmit_skb(sk, skb);
+	}
+}
+EXPORT_SYMBOL_GPL(gmtp_send_feedback);
 
 /*
  * Send a GMTP_PKT_CLOSE/CLOSEREQ. The caller locks the socket for us.
@@ -404,15 +425,12 @@ void gmtp_send_close(struct sock *sk, const int active)
  *
  * To delay the send time in process context.
  */
-static int gmtp_wait_for_delay(struct sock *sk, unsigned long delay)
+static long gmtp_wait_for_delay(struct sock *sk, unsigned long delay)
 {
 	DEFINE_WAIT(wait);
 	long remaining;
 
-	gmtp_print_function();
-	pr_info("Delay: %lu jiffies (%u ms)\n", delay, jiffies_to_msecs(delay));
-
-	prepare_to_wait(sk_sleep(sk), &wait, TASK_INTERRUPTIBLE);
+	prepare_to_wait(sk_sleep(sk), &wait, TASK_UNINTERRUPTIBLE);
 	sk->sk_write_pending++;
 	release_sock(sk);
 
@@ -427,89 +445,98 @@ static int gmtp_wait_for_delay(struct sock *sk, unsigned long delay)
 	return remaining;
 }
 
-static inline int pkt_len(int data_len)
+static inline unsigned int packet_len(struct sk_buff *skb)
 {
-	/* Data + GMTP + IP + MAC */
-	return data_len + sizeof(struct gmtp_hdr) + 20 + ETH_HLEN;
+	/* Total = Data + (GMTP + IP + MAC) */
+	return skb->len + (gmtp_hdr_len(skb) + 20 + ETH_HLEN);
 }
 
-static inline void packet_sent(struct gmtp_sock *gp, int data_len)
+static inline unsigned int payload_len(struct sk_buff *skb)
 {
-	unsigned long elapsed;
-	int len = pkt_len(data_len);
+	/* Data = Total - (GMTP + IP + MAC) */
+	return skb->len - (gmtp_hdr_len(skb) + 20 + ETH_HLEN);
+}
 
-	++gp->pkt_sent;
-	gp->data_sent += (unsigned long) data_len;
-	gp->bytes_sent += (unsigned long) len;
+/*static inline void packet_sent(struct gmtp_sock *gp, int data_len)*/
+static inline void packet_sent(struct sock *sk, struct sk_buff *skb)
+{
+	struct gmtp_sock *gp = gmtp_sk(sk);
+	unsigned long elapsed = 0;
+	int data_len = payload_len(skb);
 
-	gp->tx_stamp = jiffies;
-	if(gp->first_tx_stamp == 0) { /* This is the first sent */
-		gp->first_tx_stamp = gp->tx_stamp;
-		gp->t_sample = jiffies;
-		gp->b_sample = gp->bytes_sent;
+	if(gp->tx_dpkts_sent == 0)
+		gmtp_pr_info("Start sending data packets...");
+
+	++gp->tx_dpkts_sent;
+	gp->tx_data_sent += data_len;
+	gp->tx_bytes_sent += skb->len;
+
+	gp->tx_last_stamp = jiffies;
+	if(gp->tx_first_stamp == 0) { /* This is the first sent */
+		gp->tx_first_stamp = gp->tx_last_stamp;
+		gp->tx_time_sample = jiffies;
+		gp->tx_byte_sample = gp->tx_bytes_sent;
 	}
 
-	if(gp->byte_budget != LONG_MIN)
-		gp->byte_budget -= (long)(len);
+	if(gp->tx_byte_budget != INT_MIN)
+		gp->tx_byte_budget -= (int) skb->len;
 
-	elapsed = jiffies - gp->first_tx_stamp;
-	if(gp->first_tx_stamp != 0 && elapsed != 0)
-		gp->total_rate = (HZ * gp->bytes_sent) / elapsed;
+	elapsed = jiffies - gp->tx_first_stamp;
+	if(gp->tx_first_stamp != 0 && elapsed != 0)
+		gp->tx_total_rate = mult_frac(HZ, gp->tx_bytes_sent, elapsed);
 
-	if(gp->pkt_sent >= gp->sample_len) {
+	if(gp->tx_dpkts_sent >= gp->tx_sample_len) {
 
-		gp->t_sample = jiffies - gp->t_sample;
-		gp->b_sample = gp->bytes_sent - gp->b_sample;
+		gp->tx_time_sample = jiffies - gp->tx_time_sample;
+		gp->tx_byte_sample = gp->tx_bytes_sent - gp->tx_byte_sample;
 
-		if(gp->t_sample != 0 && gp->b_sample != 0)
-			gp->sample_rate = (HZ * gp->b_sample) / gp->t_sample;
+		if(gp->tx_time_sample != 0 && gp->tx_byte_sample != 0)
+			gp->tx_sample_rate = mult_frac(HZ,
+							gp->tx_byte_sample,
+							gp->tx_time_sample);
 	}
 }
 
 static void gmtp_xmit_packet(struct sock *sk, struct sk_buff *skb) {
 
-	int err, data_len;
-	struct gmtp_sock *gp = gmtp_sk(sk);
+	int err;
 
-	data_len = skb->len; /* Only data */
 	GMTP_SKB_CB(skb)->type = GMTP_PKT_DATA;
 
 	err = gmtp_transmit_skb(sk, skb);
 	if (err)
-		gmtp_print_debug("transmit_skb() returned err=%d\n", err);
+		gmtp_pr_error("transmit_skb() returned err=%d\n", err);
 
 	/*
 	 * Register this one as sent (even if an error occurred).
-	 * @data_len: only data (before gmtp_transmit_skb)
-	 * @skb->len: packet (after gmtp_transmit_skb)
 	 */
-	packet_sent(gp, data_len);
+	packet_sent(sk, skb);
 }
 
 /**
  * Return difference between actual tx_rate and max tx_rate
  * If return > 0, actual tx_rate is greater than max tx_rate
  */
-static int get_rate_gap(struct gmtp_sock *gp, int acum)
+static long get_rate_gap(struct gmtp_sock *gp, int acum)
 {
-	long rate = (long)gp->sample_rate;
-	long tx = (long)gp->max_tx;
-	int coef_adj = 0;
+	long rate = (long)gp->tx_sample_rate;
+	long tx = (long)gp->tx_max_rate;
+	long coef_adj = 0;
 
-	if(gp->pkt_sent < GMTP_MIN_SAMPLE_LEN)
+	if(gp->tx_dpkts_sent < GMTP_MIN_SAMPLE_LEN)
 		return 0;
 
-	if(rate <= gp->total_rate/2) /* Eliminate discrepancies */
-		rate = (long)gp->total_rate;
+	if(rate <= gp->tx_total_rate/2) /* Eliminate discrepancies */
+		rate = (long)gp->tx_total_rate;
 
-	coef_adj = (int) (((rate - tx) * 100) / tx);
+	coef_adj = mult_frac((rate - tx), 100, tx);
 
 	if(acum) {
-		coef_adj += gp->adj_budget;
+		coef_adj += gp->tx_adj_budget;
 		if(coef_adj > 110 || coef_adj < -90)
-			gp->adj_budget = 0;
+			gp->tx_adj_budget = 0;
 		else
-			gp->adj_budget += coef_adj;
+			gp->tx_adj_budget += coef_adj;
 	}
 
 	return coef_adj;
@@ -518,20 +545,15 @@ static int get_rate_gap(struct gmtp_sock *gp, int acum)
 void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 {
 	struct gmtp_sock *gp = gmtp_sk(sk);
-	unsigned long rest, elapsed;
-	long delay = 0;
-	long delay2 = 0;
-	long delay_budget = 0;
-	int len = pkt_len(skb->len);
-	int rc = 0;
+	int len = (int) packet_len(skb);
+	unsigned long elapsed = 0;
+	long delay = 0, delay2 = 0, delay_budget = 0;
 
-	/** TODO Continue tests with different factors... */
-	static const int factor = 1;
-	/*static const int factor = HZ/100;*/
+	/** TODO Continue tests with different scales... */
+	static const int scale = 1;
+	/*static const int scale = HZ/100;*/
 
-	gmtp_print_function();
-
-	if(gp->max_tx >= GMTP_MAX_TX)
+	if(gp->tx_max_rate == 0UL)
 		goto send;
 
 	/*
@@ -539,48 +561,34 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 	pr_info("[-] Tx rate (sample): %lu bytes/s\n", gp->sample_rate);
 	*/
 
-	elapsed = jiffies - gp->tx_stamp; /* time elapsed since last sent */
+	elapsed = jiffies - gp->tx_last_stamp; /* time elapsed since last sent */
 
-	if(gp->byte_budget >= (3*len)/4) {
+	if(gp->tx_byte_budget >= mult_frac(len, 3, 4)) {
 		goto send;
-	} else if(gp->byte_budget != LONG_MIN) {
-		delay_budget = factor;
+	} else if(gp->tx_byte_budget != INT_MIN) {
+		delay_budget = scale;
 		goto wait;
 	}
 
-	delay = (HZ * len) / gp->max_tx;
-	rest = (HZ * len) % gp->max_tx;
-	if(rest >= gp->max_tx/2)
-		++delay;
-
+	delay = DIV_ROUND_CLOSEST((HZ * len), gp->tx_max_rate);
 	delay2 = delay - elapsed;
 
-	if(delay2 > 0) {
-		long coef_adj = (long) get_rate_gap(gp, 1);
-		long delay_adjust = 0;
-		delay_adjust = (delay2 * coef_adj) / 100;
-		delay2 += delay_adjust;
-	}
+	if(delay2 > 0)
+		delay2 += mult_frac(delay2, get_rate_gap(gp, 1), 100);
 
 wait:
 	delay2 += delay_budget;
-
-	/* We set LONG_MIN to indicate that byte_budget is over */
 	if(delay2 > 0)
-		rc = gmtp_wait_for_delay(sk, delay2);
-	if(rc < 0)
-		return;
+		gmtp_wait_for_delay(sk, delay2);
 
-	/* Work fine!
+	/*
 	 * TODO More tests with byte_budgets...
 	 */
-	if(delay <= 0) {
-		long coef_adj = 0;
-		coef_adj = (long) get_rate_gap(gp, 0);
-		gp->byte_budget = factor * (gp->max_tx / HZ);
-		gp->byte_budget -= (gp->byte_budget * coef_adj) / 100;
-	} else
-		gp->byte_budget = LONG_MIN;
+	if(delay <= 0)
+		gp->tx_byte_budget = mult_frac(scale, gp->tx_max_rate, HZ) -
+			mult_frac(gp->tx_byte_budget, (int) get_rate_gap(gp, 0), 100);
+	else
+		gp->tx_byte_budget = INT_MIN;
 
 send:
 	gmtp_xmit_packet(sk, skb);

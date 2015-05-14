@@ -101,7 +101,7 @@ server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 flowname = getHash(address)
 server_socket.setsockopt(socket.SOL_GMTP, socket.GMTP_SOCKOPT_FLOWNAME, flowname)
 
-tx_rate = 150000 #bytes/s.  250000 bytes/s == 2 Mbps
+tx_rate = 50000 #bytes/s.  250000 bytes/s == 2 Mbps
 server_socket.setsockopt(socket.SOL_GMTP, socket.GMTP_SOCKOPT_MAX_TX_RATE, tx_rate)
 
 # Connect sockets
@@ -116,7 +116,7 @@ def join_threads(list):
 
 try:
     while True:
-        server_socket.listen(4)
+        server_socket.listen(20)
         client_input, client_addr = server_socket.accept()
         newthread = ClientThread(client_addr, client_input, msg)
         newthread.start()
@@ -127,5 +127,6 @@ except (KeyboardInterrupt, SystemExit):
         t.text = out
     join_threads(threads)
     server_socket.close()
+    sys.exit()
     
 

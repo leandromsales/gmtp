@@ -1,41 +1,43 @@
 /*
- * hash.c
+ * hash-intra.c
  *
  *  Created on: 27/02/2015
  *      Author: wendell
  */
 
 #include <linux/kernel.h>
-#include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/string.h>
+#include <linux/list.h>
 
 #include "gmtp-intra.h"
+#include "hash-intra.h"
 
 struct gmtp_intra_hashtable *gmtp_intra_create_hashtable(unsigned int size)
 {
 	int i;
-	struct gmtp_intra_hashtable *nt;
+	struct gmtp_intra_hashtable *ht;
 
-	gmtp_print_function();
-	gmtp_print_debug("Size of gmtp_intra_hashtable = %d", size);
+	gmtp_pr_func();
+	gmtp_pr_info("Size of gmtp_intra_hashtable = %d", size);
 
 	if(size < 1)
 		return NULL;
 
-	nt = kmalloc(sizeof(struct gmtp_intra_hashtable), GFP_KERNEL);
-	if(nt == NULL)
+	ht = kmalloc(sizeof(struct gmtp_intra_hashtable), GFP_KERNEL);
+	if(ht == NULL)
 		return NULL;
 
-	nt->table = kmalloc(sizeof(struct gmtp_relay_entry*) *size, GFP_KERNEL);
-	if(nt->table == NULL)
+	ht->table = kmalloc(sizeof(struct gmtp_relay_entry*) *size, GFP_KERNEL);
+	if(ht->table == NULL)
 		return NULL;
 
 	for(i = 0; i < size; ++i)
-		nt->table[i] = NULL;
+		ht->table[i] = NULL;
 
-	nt->size = size;
-	return nt;
+	ht->size = size;
+
+	return ht;
 }
 
 unsigned int gmtp_intra_hash(struct gmtp_intra_hashtable *hashtable,
@@ -64,8 +66,6 @@ struct gmtp_relay_entry *gmtp_intra_lookup_media(
 	struct gmtp_relay_entry *entry;
 	unsigned int hashval;
 
-	gmtp_print_function();
-
 	hashval = gmtp_intra_hash(hashtable, media);
 
 	/* Error */
@@ -78,6 +78,42 @@ struct gmtp_relay_entry *gmtp_intra_lookup_media(
 			return entry;
 
 	return NULL;
+}
+
+struct gmtp_flow_info *__gmtp_intra_build_info(void)
+{
+	struct gmtp_flow_info *info = kmalloc(sizeof(struct gmtp_flow_info),
+			GFP_KERNEL);
+	if(info == NULL)
+		goto out;
+
+	info->iseq = 0;
+	info->seq = 0;
+	info->nbytes = 0;
+	info->data_pkt_tx = 0;
+
+	info->clients = kmalloc(sizeof(struct gmtp_client), GFP_KERNEL);
+	INIT_LIST_HEAD(&info->clients->list);
+	info->nclients = 0;
+
+	info->buffer = kmalloc(sizeof(struct sk_buff_head), GFP_KERNEL);
+	skb_queue_head_init(info->buffer);
+	info->buffer_size = 0;
+	gmtp_set_buffer_limits(info, 1);
+	info->current_tx = 0; /* unlimited tx */
+
+out:
+	return info;
+}
+
+struct gmtp_flow_info *gmtp_intra_build_info(unsigned int bmin)
+{
+	struct gmtp_flow_info *info = __gmtp_intra_build_info();
+
+	if(info != NULL)
+		gmtp_set_buffer_limits(info, bmin);
+
+	return info;
 }
 
 int gmtp_intra_add_entry(struct gmtp_intra_hashtable *hashtable, __u8 *flowname,
@@ -105,6 +141,10 @@ int gmtp_intra_add_entry(struct gmtp_intra_hashtable *hashtable, __u8 *flowname,
 		return 2; /* TODO Media already being transmitted by other
 								server? */
 
+	new_entry->info = gmtp_intra_build_info(5);
+	if(new_entry->info == NULL)
+		return 1;
+
 	memcpy(new_entry->flowname, flowname, GMTP_FLOWNAME_LEN);
 	new_entry->server_addr = server_addr;
 	new_entry->relay = relay; /* FIXME Add list */
@@ -120,15 +160,28 @@ int gmtp_intra_add_entry(struct gmtp_intra_hashtable *hashtable, __u8 *flowname,
 }
 EXPORT_SYMBOL_GPL(gmtp_intra_add_entry);
 
+void gmtp_intra_del_clients(struct gmtp_relay_entry *entry)
+{
+	struct gmtp_client *client, *temp;
+	gmtp_pr_func();
+	list_for_each_entry_safe(client, temp,
+			&(entry->info->clients->list), list)
+	{
+		list_del(&client->list);
+		kfree(client);
+	}
+}
+
 struct gmtp_relay_entry *gmtp_intra_del_entry(
 		struct gmtp_intra_hashtable *hashtable, __u8 *media)
 {
-	int hashval = gmtp_intra_hash(hashtable, media);
 	struct gmtp_relay_entry *previous_entry;
 	struct gmtp_relay_entry *current_entry;
+	int hashval;
 
 	gmtp_print_function();
 
+	hashval = gmtp_intra_hash(hashtable, media);
 	if(hashval < 0)
 		return NULL;
 
@@ -146,12 +199,16 @@ struct gmtp_relay_entry *gmtp_intra_del_entry(
 		gmtp_print_debug("Media entry not found at %d", hashval);
 		return hashtable->table[hashval];
 	}
+
 	/* Remove the last entry of list */
-	if(previous_entry == NULL) {
+	if(previous_entry == NULL)
 		hashtable->table[hashval] = current_entry->next;
-	} else { /* The list keeps another media with same hash value */
+	else  /* The list keeps another media with same hash value */
 		previous_entry->next = current_entry->next;
-	}
+
+	gmtp_intra_del_clients(current_entry);
+	skb_queue_purge(current_entry->info->buffer);
+	kfree(current_entry->info);
 	kfree(current_entry);
 
 	gmtp_print_debug("Media entry removed successfully!");

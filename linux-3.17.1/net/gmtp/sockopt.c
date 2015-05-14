@@ -33,7 +33,7 @@ static int do_gmtp_setsockopt(struct sock *sk, int level, int optname,
 	switch (optname) {
         case GMTP_SOCKOPT_MAX_TX_RATE:
         	if(val > 0)
-        		gp->max_tx = (unsigned long) val;
+        		gp->tx_max_rate = (unsigned long) val;
         	else
         		err = -EINVAL;
         	break;
