@@ -95,8 +95,7 @@ static void gmtp_retransmit_timer(struct sock *sk)
 	 * total number of retransmissions of clones of original packets.
 	 */
 	if (icsk->icsk_retransmits == 0)
-/*		DCCP_INC_STATS_BH(DCCP_MIB_TIMEOUTS);*/
-		;
+		/* TODO Register some statistics */;
 
 	if (gmtp_retransmit_skb(sk) != 0) {
 		/*

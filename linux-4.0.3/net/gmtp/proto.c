@@ -491,7 +491,7 @@ int gmtp_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 		default:
 			gmtp_print_debug("packet_type=%s\n",
 					gmtp_packet_name(gh->type));
-			sk_eat_skb(sk, skb, false);
+			sk_eat_skb(sk, skb);
 		}
 verify_sock_status:
 		if(sock_flag(sk, SOCK_DONE)) {
@@ -539,7 +539,7 @@ found_ok_skb:
 		else if(len < skb->len)
 			msg->msg_flags |= MSG_TRUNC;
 
-		if(skb_copy_datagram_iovec(skb, 0, msg->msg_iov, len)) {
+		if(skb_copy_datagram_msg(skb, 0, msg, len)) {
 			/* Exception. Bailout! */
 			len = -EFAULT;
 			break;
@@ -548,7 +548,7 @@ found_ok_skb:
 			len = skb->len;
 found_fin_ok:
 		if(!(flags & MSG_PEEK))
-			sk_eat_skb(sk, skb, false);
+			sk_eat_skb(sk, skb);
 		break;
 	} while(1);
 out:
@@ -594,7 +594,7 @@ int gmtp_sendmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 		goto out_release;
 
 	skb_reserve(skb, sk->sk_prot->max_header);
-	rc = memcpy_fromiovec(skb_put(skb, len), msg->msg_iov, len);
+	rc = memcpy_from_msg(skb_put(skb, len), msg, len);
 	if (rc != 0)
 		goto out_discard;
 
@@ -790,7 +790,7 @@ static int __init gmtp_init(void)
 	if(rc)
 		goto out;
 
-	rc = percpu_counter_init(&gmtp_orphan_count, 0);
+	rc = percpu_counter_init(&gmtp_orphan_count, 0, GFP_KERNEL);
 	if(rc) {
 		percpu_counter_destroy(&gmtp_orphan_count);
 		goto out;
