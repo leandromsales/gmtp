@@ -23,8 +23,8 @@ void gmtp_inter_add_relayid(struct sk_buff *skb)
 
 	gmtp_print_function();
 
-	memcpy(relay.relay_id, gmtp_inter_relay_id(), GMTP_RELAY_ID_LEN);
-	relay.relay_ip =  gmtp_inter_relay_ip();
+	memcpy(relay.relay_id, gmtp.relay_id, GMTP_RELAY_ID_LEN);
+	relay.relay_ip =  gmtp_inter_relay_ip(skb->dev);
 
 	gh_rply->relay_list[gh_rply->nrelays] = relay;
 	++gh_rply->nrelays;

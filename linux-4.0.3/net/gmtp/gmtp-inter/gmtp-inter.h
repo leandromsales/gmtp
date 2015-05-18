@@ -18,7 +18,8 @@
 
 #include "hash-inter.h"
 
-#define H_USER 1024
+#define H_USER 	1024
+#define MD5_LEN GMTP_RELAY_ID_LEN
 
 /**
  * TODO Negotiate buffer size with server
@@ -32,6 +33,7 @@
  * @hashtable: GMTP-inter relay table
  */
 struct gmtp_inter {
+	unsigned char		relay_id[GMTP_RELAY_ID_LEN];
 	unsigned int 		total_bytes_rx;
 	unsigned int 		total_rx;
 	unsigned char		mcst[4];
@@ -47,6 +49,8 @@ void gmtp_buffer_add(struct gmtp_flow_info *info, struct sk_buff *newsk);
 struct sk_buff *gmtp_buffer_dequeue(struct gmtp_flow_info *info);
 struct gmtp_flow_info *gmtp_inter_get_info(
 		struct gmtp_inter_hashtable *hashtable, const __u8 *media);
+__be32 gmtp_inter_relay_ip(struct net_device *dev);
+unsigned char *gmtp_build_md5(unsigned char *buf);
 
 /** input.c */
 int gmtp_inter_request_rcv(struct sk_buff *skb);
@@ -55,13 +59,6 @@ int gmtp_inter_ack_rcv(struct sk_buff *skb);
 int gmtp_inter_data_rcv(struct sk_buff *skb);
 int gmtp_inter_feedback_rcv(struct sk_buff *skb);
 int gmtp_inter_close_rcv(struct sk_buff *skb);
-
-void gmtp_inter_relay_get_devices (int option);
-const __u8 *gmtp_inter_relay_id (void);
-__be32 gmtp_inter_relay_ip (void);
-int bytes_added(int sprintf_return);
-void flowname_strn(__u8* str, const __u8 *buffer, int length);
-__u8 gmtp_interfaces_md5(unsigned char *buf);
 
 /** Output.c */
 void gmtp_inter_add_relayid(struct sk_buff *skb);
@@ -80,6 +77,7 @@ void gmtp_inter_build_and_send_skb(struct sk_buff *skb);
 int gmtp_inter_data_out(struct sk_buff *skb);
 int gmtp_inter_close_out(struct sk_buff *skb);
 
+
 /**
  * A very ugly delayer, to GMTP-inter...
  *
@@ -97,8 +95,6 @@ static inline void gmtp_inter_wait_us(s64 delay)
 		cond_resched(); /* Do nothing, just wait... */
 	}
 }
-
-
 
 /*
  * Print IP packet basic information
@@ -147,6 +143,21 @@ static inline void print_gmtp_data(struct sk_buff *skb, char* label)
 		memcpy(data_str, data, data_len);
 		data_str[data_len] = '\0';
 		pr_info("%s: %s\n", lb, data_str);
+	}
+}
+
+static inline int bytes_added(int sprintf_return)
+{
+	return (sprintf_return > 0) ? sprintf_return : 0;
+}
+
+static inline void flowname_strn(__u8* str, const __u8 *buffer, int length)
+{
+
+	int i;
+	for(i = 0; i < length; ++i) {
+		sprintf(&str[i*2], "%02x", buffer[i]);
+		/*printk("testando = %02x\n", buffer[i]); */
 	}
 }
 
