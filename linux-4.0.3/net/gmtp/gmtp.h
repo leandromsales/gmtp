@@ -21,9 +21,6 @@
 
 #include "hash.h"
 
-extern struct inet_hashinfo gmtp_inet_hashinfo;
-extern struct percpu_counter gmtp_orphan_count;
-
 /** GMTP Debugs */
 #define GMTP_INFO "[GMTP] %s:%d - "
 #define GMTP_DEBUG GMTP_INFO
@@ -71,7 +68,6 @@ extern struct percpu_counter gmtp_orphan_count;
  */
 #define GMTP_DEFAULT_MSS (576 - GMTP_FIXED_HDR_LEN - 20)
 
-
 #define GMTP_DEFAULT_RTT 64  /* milisseconds */
 /*
  * RTT sampling: sanity bounds and fallback RTT value from RFC 4340, section 3.4
@@ -95,7 +91,14 @@ extern struct percpu_counter gmtp_orphan_count;
 #define TO_U8(x) ((x) > UINT_MAX) ? UINT_MAX : (__u8)(x)
 #define SUB_U8(a, b) ((a-b) > UINT_MAX) ? UINT_MAX : (a-b)
 
-extern struct gmtp_hashtable* gmtp_hashtable;
+extern struct inet_hashinfo gmtp_inet_hashinfo;
+extern struct percpu_counter gmtp_orphan_count;
+extern struct gmtp_hashtable *gmtp_hashtable;
+extern struct gmtp_info *gmtp_info;
+
+struct gmtp_info {
+	unsigned char 		relay_enabled:1;
+};
 
 void gmtp_init_xmit_timers(struct sock *sk);
 static inline void gmtp_clear_xmit_timers(struct sock *sk)
@@ -244,32 +247,6 @@ struct gmtp_client {
 	__be16 			port;
 	__u8			reporter:1;
 };
-
-/**
- * Create and add a client in the list of clients
- */
-static inline void gmtp_list_add_client(unsigned int id, __be32 addr,
-		__be16 port, __u8 reporter, struct list_head *head)
-{
-	struct gmtp_client *new = kmalloc(sizeof(struct gmtp_client), GFP_ATOMIC);
-
-	if(new == NULL) {
-		gmtp_pr_error("Error while creating new gmtp_client...");
-		return;
-	}
-
-	new->id	  = id;
-	new->addr = addr;
-	new->port = port;
-	new->reporter = reporter;
-
-	gmtp_pr_info("New client (%u): ADDR=%pI4@%-5d\n",
-			new->id, &addr, ntohs(port));
-
-	INIT_LIST_HEAD(&new->list);
-	list_add_tail(&new->list, head);
-}
-
 
 #endif /* GMTP_H_ */
 

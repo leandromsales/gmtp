@@ -24,218 +24,98 @@
 #include <linux/gmtp.h>
 #include "../gmtp.h"
 #include "gmtp-inter.h"
- 
-#define SHA1_LENGTH    16
-#define GET_MAC_ADDRESS  0
-#define GET_IP_ADDRESS   1
-
-extern const char *gmtp_packet_name(const int);
-extern const char *gmtp_state_name(const int);
-extern void flowname_str(__u8* str, const __u8* flowname);
 
 static struct nf_hook_ops nfho_in;
 static struct nf_hook_ops nfho_out;
 
-struct gmtp_inter gmtp;
- 
-int bytes_added(int sprintf_return)
+struct gmtp_inter gmtp_inter;
+
+unsigned char *gmtp_build_md5(unsigned char *buf)
 {
-    return (sprintf_return > 0)? sprintf_return : 0;
+	struct scatterlist sg;
+	struct crypto_hash *tfm;
+	struct hash_desc desc;
+	unsigned char *output;
+	 __u8 md5[21];
+	size_t buf_size = sizeof(buf) - 1;
+
+	gmtp_print_function();
+
+	output = kmalloc(MD5_LEN * sizeof(unsigned char), GFP_KERNEL);
+	tfm = crypto_alloc_hash("md5", 0, CRYPTO_ALG_ASYNC);
+	if(output == NULL || IS_ERR(tfm)) {
+		gmtp_pr_error("Allocation failed\n");
+		return NULL;
+	}
+
+	desc.tfm = tfm;
+	desc.flags = 0;
+
+	crypto_hash_init(&desc);
+
+	sg_init_one(&sg, buf, buf_size);
+	crypto_hash_update(&desc, &sg, buf_size);
+	crypto_hash_final(&desc, output);
+
+	flowname_strn(md5, output, MD5_LEN);
+	printk("Output md5 = %s\n", md5);
+
+	crypto_free_hash(tfm);
+
+	return output;
 }
 
-void flowname_strn(__u8* str, const __u8 *buffer, int length)
+unsigned char *gmtp_inter_build_relay_id(void)
 {
-	
-    int i;
-	for(i = 0; i < length; ++i){
-		sprintf(&str[i*2], "%02x", buffer[i]);
-        //printk("testando = %02x\n", buffer[i]);
-    }
+	struct socket *sock = NULL;
+	struct net_device *dev = NULL;
+	struct net *net;
+
+	int i, retval, length = 0;
+	char mac_address[6];
+
+	char buffer[50];
+	__u8 *str[30];
+
+	gmtp_print_function();
+
+	retval = sock_create(AF_INET, SOCK_STREAM, 0, &sock);
+	net = sock_net(sock->sk);
+
+	for(i = 2; (dev = dev_get_by_index_rcu(net, i)) != NULL; ++i) {
+		memcpy(&mac_address, dev->dev_addr, 6);
+		length += bytes_added(sprintf((char*)(buffer + length), str));
+	}
+
+	sock_release(sock);
+	return gmtp_build_md5(buffer);
 }
 
-__u8 gmtp_interfaces_md5(unsigned char *buf)
+__be32 gmtp_inter_relay_ip(struct net_device *dev)
 {
-    struct scatterlist sg;
-    struct crypto_hash *tfm;
-    struct hash_desc desc;
-    unsigned char output[SHA1_LENGTH];
-    //unsigned char buf[] = "README";
-    size_t buf_size = sizeof(buf) - 1;
-    int i;
-    
-    printk(KERN_INFO "sha1: %s\n\n\n\n\n", __FUNCTION__);
-      
-    printk(KERN_INFO "bUFFER = %s\n", buf);
+	struct in_device *in_dev;
+	struct in_ifaddr *if_info;
 
-    tfm = crypto_alloc_hash("md5", 0, CRYPTO_ALG_ASYNC);
-    if (IS_ERR(tfm)) {
-        printk(KERN_ERR"allocation failed\n");
-        return 0;
-    }
- 
-    desc.tfm = tfm;
-    desc.flags = 0;
- 
-    crypto_hash_init(&desc);
-       
-    sg_init_one(&sg, buf, buf_size);
-    crypto_hash_update(&desc, &sg, buf_size);
-    crypto_hash_final(&desc, output);
- 
-    printk(KERN_INFO"resultado ------------------------- %d \n",buf_size);
+	gmtp_pr_func();
 
-    for (i = 0; i < SHA1_LENGTH; i++) {
-        printk(KERN_INFO "%x", output[i]);
-    }
-    printk(KERN_INFO "\n\n\n\n\n---------------\n");
+	if(dev == NULL)
+		goto out;
 
-    __u8 md5[21];
-    flowname_strn(md5, output, SHA1_LENGTH);
-    printk("saida md5 = %s\n",md5);
- 
-    crypto_free_hash(tfm);
- 
-    return md5;
-}
+	in_dev = (struct in_device *)dev->ip_ptr;
+	if_info = in_dev->ifa_list;
+	for(; if_info; if_info = if_info->ifa_next) {
+		pr_info("if_info->ifa_address=%pI4\n", &if_info->ifa_address);
+		/* just return the first entry for while */
+		return if_info->ifa_address;
+	}
 
-void gmtp_inter_relay_get_devices (int option)
-{
-    /*int  option = GET_IP_ADDRESS;*/
-    /*int  option = GET_MAC_ADDRESS;*/
+out:
+	return 0;
 
-    printk(KERN_INFO"\n\n\n");
-    
-    struct socket *sock = NULL;
-    struct net_device *dev = NULL;
-
-    struct in_device *in_dev;
-    struct in_ifaddr *if_info;
-
-    struct net *net;
-    int i, j, retval, length = 0;
-    char mac_address[6];
-    char *ip_address;
-    char buffer[50];
-    unsigned int hex = 0XABC123FF;
-    __u8 *str[30];
-
-    retval = sock_create(AF_INET, SOCK_STREAM, 0, &sock);
-    net = sock_net (sock->sk);
-            
-            for(i = 2; (dev = dev_get_by_index_rcu(net,i)) != NULL; ++i){
-            
-                if(option == GET_MAC_ADDRESS){
-   
-                    memcpy(&mac_address, dev->dev_addr, 6);
-                    printk(KERN_DEBUG"SIZE of dev_addr = %d\n",
-                                        sizeof(dev->dev_addr));
-                    printk(KERN_DEBUG"Interface[%d] MAC = %x:%x:%x:%x:%x:%x\n",i,
-                              mac_address[0],mac_address[1],
-                              mac_address[2],mac_address[3], 
-                              mac_address[4],mac_address[5]);
-                    for(j = 0; j < 6; ++j){
-
-                        printk(KERN_DEBUG"testando boladao = %x \n",mac_address[j]);
-                                        
-                    }
-                    flowname_strn(&str,mac_address,6);
-                    printk(KERN_DEBUG"[%d]\ntestando string = %s \n",i,str);
-                    length += bytes_added(sprintf(buffer+length, str));
-
-                }
-
-                /** TODO Option == IP dá merda... */
-                if(option ==  GET_IP_ADDRESS){    
-                    
-                    in_dev = (struct in_device * )dev->ip_ptr;
-
-                    if(in_dev == NULL)
-                        printk(KERN_DEBUG"in_dev == NULL\n");
-
-                    if_info = in_dev->ifa_list;
-                    for(;if_info;if_info = if_info->ifa_next){
-                        if(if_info != NULL){
-                            printk(KERN_DEBUG"if_info->ifa_address=%pI4\n", &if_info->ifa_address);
-                            break;    
-                        }
-                    }   
-
-                }
-                if(length != 0)
-                    printk(KERN_DEBUG"Concatenado = %s \n\n",buffer);
-
-   
-            }
-
-    sock_release(sock);
-    return buffer;
-}
-/*{
-    printk(KERN_INFO"\n\n\n");
-    
-    struct socket *sock = NULL;
-    struct net_device *dev = NULL;
-
-    struct in_device *in_dev;
-    struct in_ifaddr *if_info;
-
-    struct net *net;
-    int i, retval;
-    char mac_address[6];
-    char *ip_address;
-    
-    retval = sock_create(AF_INET, SOCK_STREAM, 0, &sock);
-    net = sock_net (sock->sk);
-    
-            for(i = 2; (dev = dev_get_by_index_rcu(net,i)) != NULL; ++i){
-            
-                if(option == GET_MAC_ADDRESS){
-   
-                    memcpy(&mac_address, dev->dev_addr, 6);
-                    printk(KERN_DEBUG"size of dev_addr = %d\n",sizeof(dev->dev_addr));
-                    printk(KERN_DEBUG"Interface[%d] MAC = %x:%x:%x:%x:%x:%x\n",i,
-                              mac_address[0],mac_address[1],
-                              mac_address[2],mac_address[3], 
-                              mac_address[4],mac_address[5]);
-                }
-
-                if(option ==  GET_IP_ADDRESS){    
-                    
-                    in_dev = (struct in_device * )dev->ip_ptr;
-
-                    if(in_dev == NULL)
-                        printk("in_dev == NULL\n");
-
-                    if_info = in_dev->ifa_list;
-                    for(;if_info;if_info = if_info->ifa_next){
-                        if(if_info != NULL){
-                            printk("if_info->ifa_address=%032x\n",if_info->ifa_address);
-                            break;    
-                        }
-                    }   
-
-                }   
-            }
-    
-    sock_release(sock);
-
-}*/
-
-const __u8 *gmtp_inter_relay_id()
-{
-	gmtp_inter_relay_get_devices(GET_MAC_ADDRESS);
 
     /*just to keep the same return of previous implementation*/
-	return "777777777777777777777";
-
-}
-__be32 gmtp_inter_relay_ip()
-{
-	gmtp_inter_relay_get_devices(GET_IP_ADDRESS);
-   
-    /*just to keep the same return of previous implementation*/
-	unsigned char *ip = "\xc0\xa8\x02\x01"; /* 192.168.2.1 */
-	return *(unsigned int *)ip;
+	/*unsigned char *ip = "\xc0\xa8\x02\x01";  192.168.2.1
+	return *(unsigned int *)ip;*/
 
 }
 
@@ -254,32 +134,32 @@ __be32 get_mcst_v4_addr(void)
 
 	memcpy(channel, base_channel, 4 * sizeof(unsigned char));
 
-	channel[3] += gmtp.mcst[3]++;
+	channel[3] += gmtp_inter.mcst[3]++;
 
 	/**
 	 * From: base_channel (224.192. 0 . 0 )
 	 * to:   max_channel  (239.255.255.255)
 	 *                     L0  L1  L2  L3
 	 */
-	if(gmtp.mcst[3] > 255) {  /* L3 starts with 1 */
-		gmtp.mcst[3] = 0;
-		gmtp.mcst[2]++;
+	if(gmtp_inter.mcst[3] > 255) {  /* L3 starts with 1 */
+		gmtp_inter.mcst[3] = 0;
+		gmtp_inter.mcst[2]++;
 	}
-	if(gmtp.mcst[2] > 255) {
-		gmtp.mcst[2] = 0;
-		gmtp.mcst[1]++;
+	if(gmtp_inter.mcst[2] > 255) {
+		gmtp_inter.mcst[2] = 0;
+		gmtp_inter.mcst[1]++;
 	}
-	if(gmtp.mcst[1] > 63) { /* 255 - 192 */
-		gmtp.mcst[1] = 0;
-		gmtp.mcst[0]++;
+	if(gmtp_inter.mcst[1] > 63) { /* 255 - 192 */
+		gmtp_inter.mcst[1] = 0;
+		gmtp_inter.mcst[0]++;
 	}
-	if(gmtp.mcst[0] > 15) {  /* 239 - 224 */
+	if(gmtp_inter.mcst[0] > 15) {  /* 239 - 224 */
 		gmtp_print_error("Cannot assign requested multicast address");
 		return -EADDRNOTAVAIL;
 	}
-	channel[2] += gmtp.mcst[2];
-	channel[1] += gmtp.mcst[1];
-	channel[0] += gmtp.mcst[0];
+	channel[2] += gmtp_inter.mcst[2];
+	channel[1] += gmtp_inter.mcst[1];
+	channel[0] += gmtp_inter.mcst[0];
 
 	mcst_addr = *(unsigned int *)channel;
 	gmtp_print_debug("Channel addr: %pI4", &mcst_addr);
@@ -305,7 +185,7 @@ struct gmtp_flow_info *gmtp_inter_get_info(
 		struct gmtp_inter_hashtable *hashtable, const __u8 *media)
 {
 	struct gmtp_relay_entry *entry =
-			gmtp_inter_lookup_media(gmtp.hashtable, media);
+			gmtp_inter_lookup_media(gmtp_inter.hashtable, media);
 
 	if(entry != NULL)
 		return entry->info;
@@ -320,7 +200,7 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 	int ret = NF_ACCEPT;
 	struct iphdr *iph = ip_hdr(skb);
 
-	if(in == NULL)
+	if((gmtp_info->relay_enabled == 0) || (in == NULL))
 		goto exit;
 
 	if(iph->protocol == IPPROTO_GMTP) {
@@ -369,7 +249,7 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh;
 
-	if(out == NULL)
+	if((gmtp_info->relay_enabled == 0) || (out == NULL))
 		goto exit;
 
 	if(iph->protocol == IPPROTO_GMTP) {
@@ -402,11 +282,14 @@ int init_module()
 	gmtp_pr_func();
 	gmtp_print_debug("Starting GMTP-inter");
 
-	gmtp.total_rx = 1;
-	memset(&gmtp.mcst, 0, 4*sizeof(unsigned char));
+	gmtp_info->relay_enabled = 1; /* Enables gmtp-inter */
+	gmtp_inter.total_rx = 1;
+	memcpy(gmtp_inter.relay_id, gmtp_inter_build_relay_id(),
+			GMTP_RELAY_ID_LEN);
+	memset(&gmtp_inter.mcst, 0, 4*sizeof(unsigned char));
 
-	gmtp.hashtable = gmtp_inter_create_hashtable(64);
-	if(gmtp.hashtable == NULL) {
+	gmtp_inter.hashtable = gmtp_inter_create_hashtable(64);
+	if(gmtp_inter.hashtable == NULL) {
 		gmtp_print_error("Cannot create hashtable...");
 		ret = -ENOMEM;
 		goto out;
@@ -433,7 +316,7 @@ void cleanup_module()
 	gmtp_pr_func();
 	gmtp_print_debug("Finishing GMTP-inter");
 
-	kfree_gmtp_inter_hashtable(gmtp.hashtable);
+	kfree_gmtp_inter_hashtable(gmtp_inter.hashtable);
 
 	nf_unregister_hook(&nfho_in);
 	nf_unregister_hook(&nfho_out);

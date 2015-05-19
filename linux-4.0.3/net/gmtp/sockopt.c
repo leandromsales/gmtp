@@ -30,27 +30,44 @@ static int do_gmtp_setsockopt(struct sock *sk, int level, int optname,
 		return -EFAULT;
 
 	lock_sock(sk);
-	switch (optname) {
-        case GMTP_SOCKOPT_MAX_TX_RATE:
-        	if(val > 0)
-        		gp->tx_max_rate = (unsigned long) val;
-        	else
-        		err = -EINVAL;
-        	break;
+	switch(optname) {
 	case GMTP_SOCKOPT_FLOWNAME:
 		err = gmtp_setsockopt_flowname(gp, optval, optlen);
+		break;
+	case GMTP_SOCKOPT_MAX_TX_RATE:
+		if(val > 0)
+			gp->tx_max_rate = (unsigned long)val;
+		else
+			err = -EINVAL;
 		break;
 	case GMTP_SOCKOPT_SERVER_TIMEWAIT:
 		if(gp->role != GMTP_ROLE_SERVER)
 			err = -EOPNOTSUPP;
 		else
-			gp->server_timewait = (val != 0);
+			gp->server_timewait = (val != 0)? 1 : 0;
+		break;
+	case GMTP_SOCKOPT_ROLE_RELAY:
+		if(val != 0 && gp->role == GMTP_ROLE_UNDEFINED)
+			gp->role = GMTP_ROLE_RELAY;
+		else if(val == 0 && gp->role == GMTP_ROLE_RELAY)
+			gp->role = GMTP_ROLE_UNDEFINED;
+		else
+			err = -EOPNOTSUPP;
+		break;
+	case GMTP_SOCKOPT_RELAY_ENABLED:
+		if(gp->role != GMTP_ROLE_RELAY)
+			err = -EOPNOTSUPP;
+		else
+			gmtp_info->relay_enabled = (val != 0) ? 1 : 0;
 		break;
 	default:
 		err = -ENOPROTOOPT;
 		break;
 	}
 	release_sock(sk);
+
+	if(err != 0)
+		pr_warning("gmtp_setsockopt error: %d\n", err);
 
 	return err;
 }
@@ -114,6 +131,12 @@ static int do_gmtp_getsockopt(struct sock *sk, int level, int optname,
 		break;
 	case GMTP_SOCKOPT_SERVER_TIMEWAIT:
 		val = gp->server_timewait;
+		break;
+	case GMTP_SOCKOPT_ROLE_RELAY:
+		val = (gp->role == GMTP_ROLE_RELAY)? 1 : 0;
+		break;
+	case GMTP_SOCKOPT_RELAY_ENABLED:
+		val = gmtp_info->relay_enabled;
 		break;
 	default:
 		return -ENOPROTOOPT;

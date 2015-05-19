@@ -20,7 +20,7 @@
 
 #define C 1250 /* bytes/ms => 10 Mbit/s */
 
-extern struct gmtp_inter gmtp;
+extern struct gmtp_inter gmtp_inter;
 
 unsigned int gmtp_rtt_average()
 {
@@ -34,7 +34,7 @@ unsigned int gmtp_rx_rate()
 
 unsigned int gmtp_relay_queue_size()
 {
-	return gmtp.total_bytes_rx;
+	return gmtp_inter.total_bytes_rx;
 }
 
 /**
@@ -42,7 +42,7 @@ unsigned int gmtp_relay_queue_size()
  */
 unsigned int gmtp_get_current_rx_rate()
 {
-	return gmtp.total_rx;
+	return gmtp_inter.total_rx;
 }
 EXPORT_SYMBOL_GPL(gmtp_get_current_rx_rate);
 
@@ -92,7 +92,7 @@ void gmtp_update_rx_rate(unsigned int  h_user)
 	r = (int)(r_prev) + delta;
 
 	gmtp_print_debug("new_r: %d", r);
-	gmtp.total_rx = r;
+	gmtp_inter.total_rx = r;
 }
 EXPORT_SYMBOL_GPL(gmtp_update_rx_rate);
 

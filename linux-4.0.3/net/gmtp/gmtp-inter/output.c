@@ -23,8 +23,8 @@ void gmtp_inter_add_relayid(struct sk_buff *skb)
 
 	gmtp_print_function();
 
-	memcpy(relay.relay_id, gmtp_inter_relay_id(), GMTP_RELAY_ID_LEN);
-	relay.relay_ip =  gmtp_inter_relay_ip();
+	memcpy(relay.relay_id, gmtp_inter.relay_id, GMTP_RELAY_ID_LEN);
+	relay.relay_ip =  gmtp_inter_relay_ip(skb->dev);
 
 	gh_rply->relay_list[gh_rply->nrelays] = relay;
 	++gh_rply->nrelays;
@@ -157,7 +157,7 @@ int gmtp_inter_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
 
 	gmtp_pr_func();
 
-	entry = gmtp_inter_lookup_media(gmtp.hashtable, gh->flowname);
+	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry == NULL) {
 		gmtp_print_warning("Failed to lookup media info in table...");
 		goto fail;
@@ -354,7 +354,7 @@ int gmtp_inter_data_out(struct sk_buff *skb)
 	struct gmtp_relay_entry *entry;
 	struct gmtp_flow_info *info;
 
-	entry = gmtp_inter_lookup_media(gmtp.hashtable, gh->flowname);
+	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry == NULL) {
 		gmtp_pr_info("Failed to lookup media info in table...");
 		goto out;
@@ -398,7 +398,7 @@ int gmtp_inter_close_out(struct sk_buff *skb)
 	/**
 	 * If destiny is not me, just let it go!
 	 */
-	entry = gmtp_inter_lookup_media(gmtp.hashtable, gh->flowname);
+	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry == NULL)
 		return NF_ACCEPT;
 
@@ -407,7 +407,7 @@ int gmtp_inter_close_out(struct sk_buff *skb)
 		return NF_ACCEPT;
 	case GMTP_INTER_CLOSED:
 		pr_info("CLOSED\n");
-		gmtp_inter_del_entry(gmtp.hashtable, gh->flowname);
+		gmtp_inter_del_entry(gmtp_inter.hashtable, gh->flowname);
 		return NF_ACCEPT;
 	case GMTP_INTER_CLOSE_RECEIVED:
 		pr_info("CLOSE_RECEIVED\n");
