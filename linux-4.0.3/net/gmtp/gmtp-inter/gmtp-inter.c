@@ -25,11 +25,6 @@
 #include "../gmtp.h"
 #include "gmtp-inter.h"
 
-
-extern const char *gmtp_packet_name(const int);
-extern const char *gmtp_state_name(const int);
-extern void flowname_str(__u8* str, const __u8* flowname);
-
 static struct nf_hook_ops nfho_in;
 static struct nf_hook_ops nfho_out;
 
@@ -40,17 +35,17 @@ unsigned char *gmtp_build_md5(unsigned char *buf)
 	struct scatterlist sg;
 	struct crypto_hash *tfm;
 	struct hash_desc desc;
-	unsigned char output[MD5_LEN];
+	unsigned char *output;
 	 __u8 md5[21];
 	size_t buf_size = sizeof(buf) - 1;
-	int i;
 
 	gmtp_print_function();
 
+	output = kmalloc(MD5_LEN * sizeof(unsigned char), GFP_KERNEL);
 	tfm = crypto_alloc_hash("md5", 0, CRYPTO_ALG_ASYNC);
-	if(IS_ERR(tfm)) {
+	if(output == NULL || IS_ERR(tfm)) {
 		gmtp_pr_error("Allocation failed\n");
-		return 0;
+		return NULL;
 	}
 
 	desc.tfm = tfm;
@@ -74,16 +69,13 @@ unsigned char *gmtp_inter_build_relay_id(void)
 {
 	struct socket *sock = NULL;
 	struct net_device *dev = NULL;
-	struct in_device *in_dev;
-	struct in_ifaddr *if_info;
 	struct net *net;
 
-	int i, j, retval, length = 0;
+	int i, retval, length = 0;
 	char mac_address[6];
 
 	char buffer[50];
 	__u8 *str[30];
-	__u8 md5[21];
 
 	gmtp_print_function();
 
@@ -92,7 +84,7 @@ unsigned char *gmtp_inter_build_relay_id(void)
 
 	for(i = 2; (dev = dev_get_by_index_rcu(net, i)) != NULL; ++i) {
 		memcpy(&mac_address, dev->dev_addr, 6);
-		length += bytes_added(sprintf(buffer + length, str));
+		length += bytes_added(sprintf((char*)(buffer + length), str));
 	}
 
 	sock_release(sock);
@@ -208,7 +200,7 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 	int ret = NF_ACCEPT;
 	struct iphdr *iph = ip_hdr(skb);
 
-	if(in == NULL)
+	if((gmtp_info->relay_enabled == 0) || (in == NULL))
 		goto exit;
 
 	if(iph->protocol == IPPROTO_GMTP) {
@@ -257,7 +249,7 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh;
 
-	if(out == NULL)
+	if((gmtp_info->relay_enabled == 0) || (out == NULL))
 		goto exit;
 
 	if(iph->protocol == IPPROTO_GMTP) {

@@ -21,6 +21,12 @@
 #define H_USER 	1024
 #define MD5_LEN GMTP_RELAY_ID_LEN
 
+extern const char *gmtp_packet_name(const int);
+extern const char *gmtp_state_name(const int);
+extern void flowname_str(__u8* str, const __u8* flowname);
+extern void gmtp_list_add_client(unsigned int id, __be32 addr,
+		__be16 port, __u8 reporter, struct list_head *head);
+
 /**
  * TODO Negotiate buffer size with server
  * struct gmtp_inter - GMTP-inter state variables

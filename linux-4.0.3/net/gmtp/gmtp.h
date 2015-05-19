@@ -248,31 +248,5 @@ struct gmtp_client {
 	__u8			reporter:1;
 };
 
-/**
- * Create and add a client in the list of clients
- */
-static void gmtp_list_add_client(unsigned int id, __be32 addr,
-		__be16 port, __u8 reporter, struct list_head *head)
-{
-	struct gmtp_client *new = kmalloc(sizeof(struct gmtp_client), GFP_ATOMIC);
-
-	if(new == NULL) {
-		gmtp_pr_error("Error while creating new gmtp_client...");
-		return;
-	}
-
-	new->id	  = id;
-	new->addr = addr;
-	new->port = port;
-	new->reporter = reporter;
-
-	gmtp_pr_info("New client (%u): ADDR=%pI4@%-5d\n",
-			new->id, &addr, ntohs(port));
-
-	INIT_LIST_HEAD(&new->list);
-	list_add_tail(&new->list, head);
-}
-
-
 #endif /* GMTP_H_ */
 
