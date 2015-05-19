@@ -34,6 +34,7 @@
  */
 struct gmtp_inter {
 	unsigned char		relay_id[GMTP_RELAY_ID_LEN];
+
 	unsigned int 		total_bytes_rx;
 	unsigned int 		total_rx;
 	unsigned char		mcst[4];
@@ -41,7 +42,7 @@ struct gmtp_inter {
 	struct gmtp_inter_hashtable *hashtable;
 };
 
-extern struct gmtp_inter gmtp;
+extern struct gmtp_inter gmtp_inter;
 
 /** gmtp-inter.c */
 __be32 get_mcst_v4_addr(void);

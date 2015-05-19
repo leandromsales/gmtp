@@ -33,7 +33,7 @@ extern void flowname_str(__u8* str, const __u8* flowname);
 static struct nf_hook_ops nfho_in;
 static struct nf_hook_ops nfho_out;
 
-struct gmtp_inter gmtp;
+struct gmtp_inter gmtp_inter;
 
 unsigned char *gmtp_build_md5(unsigned char *buf)
 {
@@ -142,32 +142,32 @@ __be32 get_mcst_v4_addr(void)
 
 	memcpy(channel, base_channel, 4 * sizeof(unsigned char));
 
-	channel[3] += gmtp.mcst[3]++;
+	channel[3] += gmtp_inter.mcst[3]++;
 
 	/**
 	 * From: base_channel (224.192. 0 . 0 )
 	 * to:   max_channel  (239.255.255.255)
 	 *                     L0  L1  L2  L3
 	 */
-	if(gmtp.mcst[3] > 255) {  /* L3 starts with 1 */
-		gmtp.mcst[3] = 0;
-		gmtp.mcst[2]++;
+	if(gmtp_inter.mcst[3] > 255) {  /* L3 starts with 1 */
+		gmtp_inter.mcst[3] = 0;
+		gmtp_inter.mcst[2]++;
 	}
-	if(gmtp.mcst[2] > 255) {
-		gmtp.mcst[2] = 0;
-		gmtp.mcst[1]++;
+	if(gmtp_inter.mcst[2] > 255) {
+		gmtp_inter.mcst[2] = 0;
+		gmtp_inter.mcst[1]++;
 	}
-	if(gmtp.mcst[1] > 63) { /* 255 - 192 */
-		gmtp.mcst[1] = 0;
-		gmtp.mcst[0]++;
+	if(gmtp_inter.mcst[1] > 63) { /* 255 - 192 */
+		gmtp_inter.mcst[1] = 0;
+		gmtp_inter.mcst[0]++;
 	}
-	if(gmtp.mcst[0] > 15) {  /* 239 - 224 */
+	if(gmtp_inter.mcst[0] > 15) {  /* 239 - 224 */
 		gmtp_print_error("Cannot assign requested multicast address");
 		return -EADDRNOTAVAIL;
 	}
-	channel[2] += gmtp.mcst[2];
-	channel[1] += gmtp.mcst[1];
-	channel[0] += gmtp.mcst[0];
+	channel[2] += gmtp_inter.mcst[2];
+	channel[1] += gmtp_inter.mcst[1];
+	channel[0] += gmtp_inter.mcst[0];
 
 	mcst_addr = *(unsigned int *)channel;
 	gmtp_print_debug("Channel addr: %pI4", &mcst_addr);
@@ -193,7 +193,7 @@ struct gmtp_flow_info *gmtp_inter_get_info(
 		struct gmtp_inter_hashtable *hashtable, const __u8 *media)
 {
 	struct gmtp_relay_entry *entry =
-			gmtp_inter_lookup_media(gmtp.hashtable, media);
+			gmtp_inter_lookup_media(gmtp_inter.hashtable, media);
 
 	if(entry != NULL)
 		return entry->info;
@@ -290,12 +290,14 @@ int init_module()
 	gmtp_pr_func();
 	gmtp_print_debug("Starting GMTP-inter");
 
-	memcpy(gmtp.relay_id, gmtp_inter_build_relay_id(), GMTP_RELAY_ID_LEN);
-	gmtp.total_rx = 1;
-	memset(&gmtp.mcst, 0, 4*sizeof(unsigned char));
+	gmtp_info->relay_enabled = 1; /* Enables gmtp-inter */
+	gmtp_inter.total_rx = 1;
+	memcpy(gmtp_inter.relay_id, gmtp_inter_build_relay_id(),
+			GMTP_RELAY_ID_LEN);
+	memset(&gmtp_inter.mcst, 0, 4*sizeof(unsigned char));
 
-	gmtp.hashtable = gmtp_inter_create_hashtable(64);
-	if(gmtp.hashtable == NULL) {
+	gmtp_inter.hashtable = gmtp_inter_create_hashtable(64);
+	if(gmtp_inter.hashtable == NULL) {
 		gmtp_print_error("Cannot create hashtable...");
 		ret = -ENOMEM;
 		goto out;
@@ -322,7 +324,7 @@ void cleanup_module()
 	gmtp_pr_func();
 	gmtp_print_debug("Finishing GMTP-inter");
 
-	kfree_gmtp_inter_hashtable(gmtp.hashtable);
+	kfree_gmtp_inter_hashtable(gmtp_inter.hashtable);
 
 	nf_unregister_hook(&nfho_in);
 	nf_unregister_hook(&nfho_out);

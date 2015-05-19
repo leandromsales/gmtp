@@ -22,6 +22,9 @@ EXPORT_SYMBOL_GPL(gmtp_inet_hashinfo);
 struct gmtp_hashtable* gmtp_hashtable;
 EXPORT_SYMBOL_GPL(gmtp_hashtable);
 
+struct gmtp_info* gmtp_info;
+EXPORT_SYMBOL_GPL(gmtp_info);
+
 const char *gmtp_packet_name(const int type)
 {
 	static const char *const gmtp_packet_names[] = {
@@ -796,13 +799,22 @@ static int __init gmtp_init(void)
 		goto out;
 	}
 
+	gmtp_hashtable = gmtp_create_hashtable(ghash_entries);
+	if(gmtp_hashtable == NULL) {
+		rc = -ENOBUFS;
+		goto out;
+	}
+
+	gmtp_info = kmalloc(sizeof(struct gmtp_info), GFP_KERNEL);
+	if(gmtp_info == NULL) {
+		rc = -ENOBUFS;
+		goto out;
+	}
+	gmtp_info->relay_enabled = 0;
+
 	rc = gmtp_create_inet_hashinfo();
 	if(rc)
 		goto out;
-
-	gmtp_hashtable = gmtp_create_hashtable(ghash_entries);
-	if(gmtp_hashtable == NULL)
-		rc = ENOBUFS;
 
 out:
 	return rc;
@@ -812,6 +824,7 @@ static void __exit gmtp_exit(void)
 {
 	gmtp_print_function();
 	gmtp_print_debug("GMTP exit!");
+
 	free_pages((unsigned long)gmtp_inet_hashinfo.bhash,
 			get_order(gmtp_inet_hashinfo.bhash_size *
 					sizeof(struct inet_bind_hashbucket)));
@@ -821,6 +834,7 @@ static void __exit gmtp_exit(void)
 	inet_ehash_locks_free(&gmtp_inet_hashinfo);
 	kmem_cache_destroy(gmtp_inet_hashinfo.bind_bucket_cachep);
 
+	kfree(gmtp_info);
 	kfree_gmtp_hashtable(gmtp_hashtable);
 	percpu_counter_destroy(&gmtp_orphan_count);
 	mcc_lib_exit();

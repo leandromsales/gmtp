@@ -58,7 +58,7 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 
 	gmtp_pr_func();
 
-	entry = gmtp_inter_lookup_media(gmtp.hashtable, gh->flowname);
+	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry != NULL) {
 		gmtp_pr_info("Media found. Sending RequestNotify.");
 		reporter = new_reporter(entry);
@@ -83,7 +83,7 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 
 	} else {
 		__be32 mcst_addr = get_mcst_v4_addr();
-		int err = gmtp_inter_add_entry(gmtp.hashtable, gh->flowname,
+		int err = gmtp_inter_add_entry(gmtp_inter.hashtable, gh->flowname,
 				iph->daddr,
 				NULL,
 				gh->sport,
@@ -91,7 +91,7 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 				gh->dport); /* Mcst port <- server port */
 
 		if(!err) {
-			entry = gmtp_inter_lookup_media(gmtp.hashtable,
+			entry = gmtp_inter_lookup_media(gmtp_inter.hashtable,
 					gh->flowname);
 			reporter = new_reporter(entry);
 			code = reporter ?
@@ -176,7 +176,7 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
 	 * FIXME
 	 * If RegisterReply is destined others, just let it go...
 	 */
-	data = gmtp_inter_lookup_media(gmtp.hashtable, gh->flowname);
+	data = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	pr_info("gmtp_lookup_media returned: %p\n", data);
 	if(data == NULL)
 		return NF_ACCEPT;
@@ -230,7 +230,7 @@ int gmtp_inter_feedback_rcv(struct sk_buff *skb)
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct gmtp_relay_entry *entry;
 
-	entry = gmtp_inter_lookup_media(gmtp.hashtable, gh->flowname);
+	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry == NULL)
 		goto out;
 
@@ -264,7 +264,7 @@ static inline void gmtp_update_stats(struct gmtp_flow_info *info,
 	if(gh->seq > info->seq)
 		info->seq = gh->seq;
 	info->nbytes += skb->len + ETH_HLEN;
-	gmtp.total_bytes_rx += skb->len + ETH_HLEN;
+	gmtp_inter.total_bytes_rx += skb->len + ETH_HLEN;
 }
 
 /**
@@ -284,7 +284,7 @@ int gmtp_inter_data_rcv(struct sk_buff *skb)
 	struct gmtp_relay_entry *entry;
 	struct gmtp_flow_info *info;
 
-	entry = gmtp_inter_lookup_media(gmtp.hashtable, gh->flowname);
+	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry == NULL) {
 		gmtp_pr_info("Failed to lookup media info in table...");
 		goto out;
@@ -319,7 +319,7 @@ int gmtp_inter_close_rcv(struct sk_buff *skb)
 
 	struct gmtp_client *client, *temp;
 
-	entry = gmtp_inter_lookup_media(gmtp.hashtable, gh->flowname);
+	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry == NULL) {
 		gmtp_pr_info("Failed to lookup media info in table...");
 		return NF_ACCEPT;
@@ -365,7 +365,7 @@ int gmtp_inter_close_rcv(struct sk_buff *skb)
 	}
 
 	if(info->nclients == 0)
-		gmtp_inter_del_entry(gmtp.hashtable, entry->flowname);
+		gmtp_inter_del_entry(gmtp_inter.hashtable, entry->flowname);
 
 	/* FIXME Broken pipe error when  close is called by clients */
 	/*return NF_DROP;*/
