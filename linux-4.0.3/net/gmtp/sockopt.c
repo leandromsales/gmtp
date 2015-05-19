@@ -47,7 +47,6 @@ static int do_gmtp_setsockopt(struct sock *sk, int level, int optname,
 			gp->server_timewait = (val != 0)? 1 : 0;
 		break;
 	case GMTP_SOCKOPT_ROLE_RELAY:
-		pr_info("GMTP_SOCKOPT_ROLE_RELAY\n");
 		if(val != 0 && gp->role == GMTP_ROLE_UNDEFINED)
 			gp->role = GMTP_ROLE_RELAY;
 		else if(val == 0 && gp->role == GMTP_ROLE_RELAY)
