@@ -24,7 +24,7 @@ void gmtp_inter_add_relayid(struct sk_buff *skb)
 	gmtp_print_function();
 
 	memcpy(relay.relay_id, gmtp_inter.relay_id, GMTP_RELAY_ID_LEN);
-	relay.relay_ip =  gmtp_inter_relay_ip(skb->dev);
+	relay.relay_ip =  gmtp_inter_device_ip(skb->dev);
 
 	gh_rply->relay_list[gh_rply->nrelays] = relay;
 	++gh_rply->nrelays;
@@ -112,35 +112,7 @@ struct gmtp_hdr *gmtp_inter_make_request_notify_hdr(struct sk_buff *skb,
 	return gh_cpy;
 }
 
-/**
- * Algorithm 6: respondToClients(p.type = GMTP-RequestNotify)
- *
- * A r(relay) node executes this Algorithm to respond to clients waiting for
- * receiving a flow P.
- *
- * destAddress = getCtrlChannel(); // 238.255.255.250:1900
- * p.dest_address = destAddress
- * P = p.flowname
- * errorCode = p.error_code
- * if errorCode != NULL:
- *      removeClientsWaitingForFlow(P)
- *      sendPkt(p);
- * endif
- * channel = p.channel
- * if(channel != NULL):
- *     //Node r is already receiving P
- *     mediaDescription =  getMediaDescription(P);
- *     p.data = mediaDescription
- *     sendPkt(p)
- *     C = getClientsWaitingForFlow(P)
- *     waitAck(C)
- * else:
- *     p.waiting_registration = true
- *     sendPkt(p)
- * endif
- * return 0
- * end
- */
+
 int gmtp_inter_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
 		__be16 new_sport, __be32 new_daddr, __be16 new_dport,
 		__u8 code)
@@ -163,8 +135,7 @@ int gmtp_inter_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
 		goto fail;
 	}
 
-	/** Delete REQUEST or REGISTER-REPLY specific header */
-	gmtp_print_debug("Deleting specific headers...");
+	/* Delete REQUEST or REGISTER-REPLY specific header */
 	skb_trim(skb, (skb_len - gmtp_packet_hdr_variable_len(gh->type)));
 
 	gh->version = GMTP_VERSION;
@@ -321,6 +292,71 @@ void gmtp_copy_hdr(struct sk_buff *skb, struct sk_buff *src_skb)
 		memcpy(gh, gh_src, gh_src->hdrlen);
 }
 
+int gmtp_inter_register_out(struct sk_buff *skb)
+{
+	struct iphdr *iph = ip_hdr(skb);
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct gmtp_relay_entry *entry;
+
+	gmtp_pr_func();
+
+	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
+	if(entry == NULL)
+		return NF_DROP;
+
+	/* FIXME Get a valid and unused port */
+	entry->info->my_addr = gmtp_inter_device_ip(skb->dev);
+	entry->info->my_port = gh->sport;
+
+	iph->saddr = entry->info->my_addr;
+	ip_send_check(iph);
+
+	return NF_ACCEPT;
+}
+
+int gmtp_inter_request_notify_out(struct sk_buff *skb)
+{
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct iphdr *iph = ip_hdr(skb);
+	struct gmtp_hdr *gh_req_n;
+	struct gmtp_relay_entry *entry;
+
+	struct gmtp_client *client;
+	__u8 code = GMTP_REQNOTIFY_CODE_OK;
+
+	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
+	if(entry == NULL)
+		return NF_ACCEPT;
+
+	list_for_each_entry(client, &entry->info->clients->list, list)
+	{
+		struct sk_buff *copy = skb_copy(skb, gfp_any());
+
+		pr_info("Client: %pI4@%-5d, Rep: %d\n", &client->addr,
+				client->port, client->reporter);
+
+		code = client->reporter == 1 ?
+				GMTP_REQNOTIFY_CODE_OK_REPORTER :
+				GMTP_REQNOTIFY_CODE_OK;
+		if(copy != NULL) {
+			struct iphdr *iph_copy = ip_hdr(copy);
+			struct gmtp_hdr *gh_copy = gmtp_hdr(copy);
+
+			iph_copy->daddr = client->addr;
+			ip_send_check(iph_copy);
+			gh_copy->dport = client->port;
+
+			gh_req_n = gmtp_inter_make_request_notify_hdr(copy,
+					entry, gh->sport, client->port, code);
+			if(gh_req_n != NULL)
+				gmtp_inter_build_and_send_pkt(skb, iph->saddr,
+						client->addr, gh_req_n, false);
+		}
+	}
+
+	return NF_ACCEPT;
+}
+
 void gmtp_copy_data(struct sk_buff *skb, struct sk_buff *src_skb)
 {
 	__u8* data = gmtp_data(skb);
@@ -340,12 +376,12 @@ void gmtp_copy_data(struct sk_buff *skb, struct sk_buff *src_skb)
 }
 
 /**
- * begin
+ * Read p in buffer
  * P = p.flowname
  * If P != NULL:
  *     p.dest_address = get_multicast_channel(P)
  *     p.port = get_multicast_port(P)
- *     send(P)
+ *     send(p)
  */
 int gmtp_inter_data_out(struct sk_buff *skb)
 {
@@ -355,10 +391,8 @@ int gmtp_inter_data_out(struct sk_buff *skb)
 	struct gmtp_flow_info *info;
 
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
-	if(entry == NULL) {
-		gmtp_pr_info("Failed to lookup media info in table...");
+	if(entry == NULL) /* Failed to lookup media info in table... */
 		goto out;
-	}
 
 	info = entry->info;
 	if(entry->state == GMTP_INTER_TRANSMITTING) {

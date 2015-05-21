@@ -526,7 +526,7 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 	const struct gmtp_hdr *gh = gmtp_hdr(skb);
 
 	if(sk == NULL) {
-		gmtp_print_error("failed to look up flow ID in table and "
+		gmtp_pr_error("failed to look up flow ID in table and "
 				"get corresponding socket\n");
 		goto no_gmtp_socket;
 	}
@@ -572,7 +572,6 @@ discard_it:
 discard_and_relse:
 	sock_put(sk);
 	goto discard_it;
-
 }
 
 /* this is called when real data arrives */

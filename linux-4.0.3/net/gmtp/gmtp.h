@@ -248,5 +248,15 @@ struct gmtp_client {
 	__u8			reporter:1;
 };
 
+static inline struct gmtp_client* gmtp_get_first_client(struct list_head *head)
+{
+	struct gmtp_client *client;
+	list_for_each_entry(client, head, list)
+	{
+		return client;
+	}
+	return NULL;
+}
+
 #endif /* GMTP_H_ */
 
