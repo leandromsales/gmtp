@@ -418,6 +418,53 @@ out:
 	return NF_ACCEPT;
 }
 
+static int gmtp_inter_close_from_client(struct sk_buff *skb,
+		struct gmtp_relay_entry *entry)
+{
+	struct iphdr *iph = ip_hdr(skb);
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct gmtp_flow_info *info = entry->info;
+
+	struct gmtp_client *client, *temp;
+
+	gmtp_pr_func();
+
+	pr_info("N Clients: %u\n", info->nclients);
+
+
+	list_for_each_entry_safe(client, temp, &info->clients->list, list)
+	{
+		if(iph->saddr == client->addr && gh->sport == client->port) {
+			pr_info("Deleting client: %pI4@%-5d\n", &client->addr,
+					ntohs(client->port));
+			info->nclients--;
+			list_del(&client->list);
+			kfree(client);
+		}
+	}
+
+
+	if(info->nclients == 0) {
+		pr_info("0 Clients...\n");
+
+		gh->sport = info->my_port;
+		iph->saddr = info->my_addr;
+		ip_send_check(iph);
+
+		/*pr_info("Calling 'gmtp_inter_build_and_send_pkt'\n");
+		gmtp_inter_build_and_send_pkt(skb, info->my_addr, iph->daddr,
+				gh, false);*/
+
+		gmtp_inter_del_entry(gmtp_inter.hashtable, entry->flowname);
+
+		pr_info("Going to ACCEPT:\n");
+		print_gmtp_packet(iph, gh);
+
+		return NF_ACCEPT;
+	}
+	return NF_DROP;
+}
+
 /*
  * FIXME Send close to multicast (or foreach client) and delete entry later...
  * Treat close from servers
@@ -429,16 +476,13 @@ int gmtp_inter_close_out(struct sk_buff *skb)
 
 	gmtp_pr_func();
 
-	/**
-	 * If destiny is not me, just let it go!
-	 */
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry == NULL)
 		return NF_ACCEPT;
 
 	switch(entry->state) {
 	case GMTP_INTER_TRANSMITTING:
-		return NF_ACCEPT;
+		return gmtp_inter_close_from_client(skb, entry);
 	case GMTP_INTER_CLOSED:
 		pr_info("CLOSED\n");
 		gmtp_inter_del_entry(gmtp_inter.hashtable, gh->flowname);

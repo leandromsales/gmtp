@@ -347,13 +347,13 @@ int gmtp_inter_close_rcv(struct sk_buff *skb)
 	struct gmtp_relay_entry *entry;
 	struct gmtp_flow_info *info;
 
-	struct gmtp_client *client, *temp;
+	struct gmtp_client *client;
 
 	gmtp_pr_func();
 
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry == NULL)
-		return NF_ACCEPT;
+		goto out;
 	info = entry->info;
 
 	if(iph->saddr == entry->server_addr) {
@@ -366,8 +366,8 @@ int gmtp_inter_close_rcv(struct sk_buff *skb)
 				struct sk_buff *copy = skb_copy(skb, gfp_any());
 				if(copy != NULL) {
 					struct iphdr *iph_copy = ip_hdr(copy);
-					struct gmtp_hdr *gh_copy =
-							gmtp_hdr(copy);
+					struct gmtp_hdr *gh_copy = gmtp_hdr(
+							copy);
 
 					iph_copy->daddr = client->addr;
 					ip_send_check(iph_copy);
@@ -377,35 +377,8 @@ int gmtp_inter_close_rcv(struct sk_buff *skb)
 				}
 			}
 		}
-		return NF_ACCEPT;
 	}
 
-	/*
-	 * FIXME Close received from client
-	 */
-	list_for_each_entry_safe(client, temp, &info->clients->list, list)
-	{
-		if(iph->saddr == client->addr && gh->sport == client->port) {
-			info->nclients--;
-			list_del(&client->list);
-			kfree(client);
-		}
-	}
-
-	pr_info("N Clients: %u\n", info->nclients);
-	pr_info("Myself: %pI4@%-5d\n", &info->my_addr, ntohs(info->my_port));
-
-	if(info->nclients == 0) {
-		gh->sport = info->my_port;
-		iph->saddr = info->my_addr;
-		ip_send_check(iph);
-		gmtp_inter_del_entry(gmtp_inter.hashtable, entry->flowname);
-
-		pr_info("Going to ACCEPT:\n");
-		print_gmtp_packet(iph, gh);
-
-		return NF_ACCEPT;
-	}
-
-	return NF_DROP;
+out:
+	return NF_ACCEPT;
 }
