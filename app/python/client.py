@@ -127,10 +127,9 @@ try:
         if(i>1000):
             logfile.write(logtext)
         
-except (KeyboardInterrupt, SystemExit):
+except (KeyboardInterrupt):
     print '\nReceived keyboard interrupt, quitting...\n'
+finally:
     logfile.close()
     client_socket.close()
     
-logfile.close()
-client_socket.close()

@@ -153,7 +153,7 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 					ntohs(gh_rnotify->mcst_port),
 					gh_rnotify->error_code);
 
-			media_entry = gmtp_lookup_media(gmtp_hashtable,
+			media_entry = gmtp_lookup_client(gmtp_hashtable,
 					gh->flowname);
 			if(media_entry == NULL)
 				goto out_invalid_packet;

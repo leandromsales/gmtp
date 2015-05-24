@@ -26,18 +26,25 @@ struct gmtp_hashtable *gmtp_create_hashtable(unsigned int size)
 	if(nt == NULL)
 		return NULL;
 
-	nt->table = kmalloc(sizeof(union gmtp_entry) * size, GFP_KERNEL);
-	if(nt->table == NULL)
+	nt->client_table = kmalloc(sizeof(struct gmtp_client_entry*) * size,
+			GFP_KERNEL);
+
+	nt->server_table = kmalloc(sizeof(struct gmtp_server_entry*) * size,
+			GFP_KERNEL);
+
+	if((nt->client_table == NULL) || (nt->server_table == NULL))
 		return NULL;
 
-	for(i = 0; i < size; ++i)
-		nt->table[i].client_entry = NULL; /* serve_entry <- null */
+	for(i = 0; i < size; ++i) {
+		nt->client_table[i] = NULL;
+		nt->server_table[i] = NULL;
+	}
 
 	nt->size = size;
 	return nt;
 }
 
-unsigned int gmtp_hash(struct gmtp_hashtable *hashtable, const __u8 *flowname)
+unsigned int gmtp_hash(struct gmtp_hashtable *hashtable, const __u8 *key)
 {
 	unsigned int hashval;
 	int i;
@@ -45,35 +52,35 @@ unsigned int gmtp_hash(struct gmtp_hashtable *hashtable, const __u8 *flowname)
 	if(hashtable == NULL)
 		return -EINVAL;
 
-	if(flowname == NULL)
+	if(key == NULL)
 		return -ENOKEY;
 
 	hashval = 0;
 	for(i=0; i<GMTP_FLOWNAME_LEN; ++i)
-		hashval = flowname[i] + (hashval << 5) - hashval;
+		hashval = key[i] + (hashval << 5) - hashval;
 
 	return hashval % hashtable->size;
 }
 
-struct gmtp_client_entry *gmtp_lookup_media(
-		struct gmtp_hashtable *hashtable, const __u8 *media)
+struct gmtp_client_entry *gmtp_lookup_client(
+		struct gmtp_hashtable *hashtable, const __u8 *flowname)
 {
 	struct gmtp_client_entry *entry;
 	unsigned int hashval;
 
-	hashval = gmtp_hash(hashtable, media);
+	hashval = gmtp_hash(hashtable, flowname);
 
 	/* Error */
 	if(hashval < 0)
 		return NULL;
 
-	entry = hashtable->table[hashval].client_entry;
+	entry = hashtable->client_table[hashval];
 	for(; entry != NULL; entry = entry->next)
-		if(memcmp(media, entry->flowname, GMTP_FLOWNAME_LEN) == 0)
+		if(memcmp(flowname, entry->flowname, GMTP_FLOWNAME_LEN) == 0)
 			return entry;
 	return NULL;
 }
-EXPORT_SYMBOL_GPL(gmtp_lookup_media);
+EXPORT_SYMBOL_GPL(gmtp_lookup_client);
 
 /**
  * Create and add a client in the list of clients
@@ -122,7 +129,7 @@ int gmtp_add_client_entry(struct gmtp_hashtable *hashtable, __u8 *flowname,
 	if(new_entry == NULL)
 		return 1;
 
-	cur_entry = gmtp_lookup_media(hashtable, flowname);
+	cur_entry = gmtp_lookup_client(hashtable, flowname);
 	if(cur_entry != NULL)
 		return 2; /* TODO Media already being transmitted by other
 								server? */
@@ -139,14 +146,14 @@ int gmtp_add_client_entry(struct gmtp_hashtable *hashtable, __u8 *flowname,
 	new_entry->channel_addr = channel_addr;
 	new_entry->channel_port = channel_port;
 
-	new_entry->next = hashtable->table[hashval].client_entry;
-	hashtable->table[hashval].client_entry = new_entry;
+	new_entry->next = hashtable->client_table[hashval];
+	hashtable->client_table[hashval] = new_entry;
 
 	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_add_client_entry);
 
-void gmtp_del_clients(struct gmtp_client_entry *entry)
+void gmtp_del_client_list(struct gmtp_client_entry *entry)
 {
 	struct gmtp_client *client, *temp;
 	gmtp_pr_func();
@@ -169,12 +176,14 @@ void gmtp_del_client_entry(struct gmtp_hashtable *hashtable, __u8 *media)
 	if(hashval < 0)
 		return;
 
-	entry = hashtable->table[hashval].client_entry;
+	entry = hashtable->client_table[hashval];
 	if(entry != NULL) {
-		gmtp_del_clients(entry);
+		gmtp_del_client_list(entry);
 		kfree(entry);
 	}
 }
+
+/* Server Table functions */
 
 struct gmtp_server_entry *gmtp_lookup_route(
 		struct gmtp_hashtable *hashtable, const __u8 *relayid)
@@ -188,7 +197,7 @@ struct gmtp_server_entry *gmtp_lookup_route(
 	if(hashval < 0)
 		return NULL;
 
-	entry = hashtable->table[hashval].server_entry;
+	entry = hashtable->server_table[hashval];
 	for(; entry != NULL; entry = entry->next)
 		if(!memcmp(relayid, entry->srelay->relay_id, GMTP_RELAY_ID_LEN))
 			return entry;
@@ -225,8 +234,8 @@ int gmtp_add_server_entry(struct gmtp_hashtable *hashtable, __u8 *relayid,
 	memcpy(&new_entry->route, route, sizeof(*route));
 	new_entry->srelay = &new_entry->route.relay_list[nrelays];
 
-	new_entry->next = hashtable->table[hashval].server_entry;
-	hashtable->table[hashval].server_entry = new_entry;
+	new_entry->next = hashtable->server_table[hashval];
+	hashtable->server_table[hashval] = new_entry;
 
 	return 0;
 }
@@ -235,7 +244,8 @@ EXPORT_SYMBOL_GPL(gmtp_add_server_entry);
 void kfree_gmtp_hashtable(struct gmtp_hashtable *hashtable)
 {
 	int i;
-	struct gmtp_client_entry *entry, *tmp;
+	struct gmtp_client_entry *c_entry, *ctmp;
+	struct gmtp_server_entry *s_entry, *stmp;
 
 	gmtp_print_function();
 
@@ -243,14 +253,25 @@ void kfree_gmtp_hashtable(struct gmtp_hashtable *hashtable)
 		return;
 
 	for(i = 0; i < hashtable->size; ++i) {
-		entry = hashtable->table[i].client_entry;
-		while(entry != NULL) {
-			tmp = entry;
-			entry = entry->next;
-			kfree(tmp);
+		c_entry = hashtable->client_table[i];
+		while(c_entry != NULL) {
+			ctmp = c_entry;
+			gmtp_del_client_list(ctmp);
+			c_entry = c_entry->next;
+			kfree(ctmp);
 		}
 	}
 
-	kfree(hashtable->table);
+	for(i = 0; i < hashtable->size; ++i) {
+		s_entry = hashtable->server_table[i];
+		while(s_entry != NULL) {
+			stmp = s_entry;
+			s_entry = s_entry->next;
+			kfree(stmp);
+		}
+	}
+
+	kfree(hashtable->client_table);
+	kfree(hashtable->server_table);
 	kfree(hashtable);
 }
