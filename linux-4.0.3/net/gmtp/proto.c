@@ -178,6 +178,7 @@ int gmtp_init_sock(struct sock *sk)
 
 	gmtp_print_function();
 
+	gmtp_init_xmit_timers(sk);
 	icsk->icsk_rto		= GMTP_TIMEOUT_INIT;
 	icsk->icsk_syn_retries	= TCP_SYN_RETRIES;
 	sk->sk_state		= GMTP_CLOSED;
@@ -188,6 +189,7 @@ int gmtp_init_sock(struct sock *sk)
 	gp->role		= GMTP_ROLE_UNDEFINED;
 
 	gp->req_stamp		= 0;
+	gp->ack_rcv_tstamp	= 0;
 	gp->tx_rtt		= GMTP_DEFAULT_RTT;
 	gp->relay_rtt		= 0;
 
@@ -211,8 +213,6 @@ int gmtp_init_sock(struct sock *sk)
 	gp->tx_adj_budget	= 0;
 
 	memset(gp->flowname, 0, GMTP_FLOWNAME_LEN);
-
-	gmtp_init_xmit_timers(sk);
 
 	return ret;
 }

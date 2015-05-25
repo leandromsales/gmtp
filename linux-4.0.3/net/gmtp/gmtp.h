@@ -81,19 +81,17 @@
 #define GMTP_TIMEOUT_INIT ((unsigned int)(3 * HZ))
 /*
  * The maximum back-off value for retransmissions. This is needed for
- *  - retransmitting client-Requests
+ *  - retransmitting Client-Requests
  *  - retransmitting Close/CloseReq when closing
  */
 #define GMTP_RTO_MAX ((unsigned int)(64 * HZ))
 #define GMTP_TIMEWAIT_LEN (60 * HZ)
 
-#define GMTP_KEEPALIVE_TIME	(120*60*HZ)	/* two hours */
+/*#define GMTP_KEEPALIVE_TIME	(120*60*HZ)	*//* two hours */
+#define GMTP_KEEPALIVE_TIME	(10*HZ)
+/*#define TCP_KEEPALIVE_INTVL	(75*HZ)*/
+#define TCP_KEEPALIVE_INTVL	(5*HZ)
 #define GMTP_KEEPALIVE_PROBES	9		/* Max of 9 keepalive probes	*/
-
-/* GMTP timestamps are only 32-bits, like TCP (see: /include/net/tcp.h)
- * We hide the ugly casts with the following macro.
- */
-#define gmtp_time_stamp		((__u32)(jiffies))
 
 /* Int to __u8 operations */
 #define TO_U8(x) ((x) > UINT_MAX) ? UINT_MAX : (__u8)(x)
@@ -104,6 +102,7 @@ extern struct inet_hashinfo gmtp_inet_hashinfo;
 extern struct percpu_counter gmtp_orphan_count;
 extern struct gmtp_hashtable *gmtp_hashtable;
 extern int sysctl_gmtp_keepalive_time;
+extern int sysctl_gmtp_keepalive_intvl;
 extern int sysctl_gmtp_keepalive_probes;
 
 void gmtp_init_xmit_timers(struct sock *sk);
@@ -112,12 +111,17 @@ static inline void gmtp_clear_xmit_timers(struct sock *sk)
 	inet_csk_clear_xmit_timers(sk);
 }
 
+static inline int gmtp_keepalive_intvl_when(const struct gmtp_sock *gp)
+{
+	return gp->keepalive_intvl ? : sysctl_tcp_keepalive_intvl;
+}
+
 static inline int gmtp_keepalive_time_when(const struct gmtp_sock *gp)
 {
 	return gp->keepalive_time ? : sysctl_gmtp_keepalive_time;
 }
 
-static inline int gmtp_keepalive_probes(const struct gmtp_sock *tp)
+static inline int gmtp_keepalive_probes(const struct gmtp_sock *gp)
 {
 	return gp->keepalive_probes ? : sysctl_gmtp_keepalive_probes;
 }
@@ -126,8 +130,8 @@ static inline u32 gmtp_keepalive_time_elapsed(const struct gmtp_sock *gp)
 {
 	const struct inet_connection_sock *icsk = &gp->gmtps_inet_connection;
 
-	return min_t(u32, gmtp_time_stamp - icsk->icsk_ack.lrcvtime,
-			gmtp_time_stamp - gp->ack_rcv_tstamp);
+	return min_t(u32, jiffies_to_msecs(jiffies) - icsk->icsk_ack.lrcvtime,
+			jiffies_to_msecs(jiffies) - gp->ack_rcv_tstamp);
 }
 
 /** proto.c */

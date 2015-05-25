@@ -57,7 +57,6 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 			/* Use ISS on the first (non-retransmitted) Request. */
 			if (icsk->icsk_retransmits == 0)
 				gcb->seq = gp->iss;
-			gp->req_stamp = jiffies_to_msecs(jiffies);
 			/* fall through */
 		default:
 			/*
@@ -309,9 +308,6 @@ int gmtp_connect(struct sock *sk)
 
 	gmtp_sync_mss(sk, dst_mtu(dst));
 
-	/** First transmission: gss <- iss */
-	gp->gss = gp->iss;
-
 	skb = alloc_skb(sk->sk_prot->max_header, sk->sk_allocation);
 	if (unlikely(skb == NULL))
 		return -ENOBUFS;
@@ -328,7 +324,10 @@ int gmtp_connect(struct sock *sk)
 		gmtp_list_add_client(0, inet->inet_saddr, inet->inet_sport, 0,
 				&client_entry->clients->list);
 
-	pr_info("Err: %d\n", err);
+	/** First transmission: gss <- iss */
+	gp->gss = gp->iss;
+	gp->req_stamp = jiffies_to_msecs(jiffies);
+	gp->ack_rcv_tstamp = jiffies_to_msecs(jiffies);
 
 	gmtp_transmit_skb(sk, gmtp_skb_entail(sk, skb));
 
@@ -465,7 +464,7 @@ static inline void packet_sent(struct sock *sk, struct sk_buff *skb)
 	int data_len = payload_len(skb);
 
 	if(gp->tx_dpkts_sent == 0)
-		gmtp_pr_info("Start sending data packets...");
+		gmtp_pr_info("Start sending data packets...\n\n");
 
 	++gp->tx_dpkts_sent;
 	gp->tx_data_sent += data_len;
