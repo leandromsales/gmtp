@@ -263,7 +263,7 @@ static void gmtp_terminate_connection(struct sock *sk)
 
 void gmtp_close(struct sock *sk, long timeout)
 {
-	struct gmtp_sock *gp = gmtp_sk(sk);
+	/*struct gmtp_sock *gp = gmtp_sk(sk);*/
 	struct sk_buff *skb;
 	u32 data_was_unread = 0;
 	int state;
@@ -284,8 +284,6 @@ void gmtp_close(struct sock *sk, long timeout)
 
 		goto adjudge_to_death;
 	}
-	gmtp_print_debug("Stopping timers...");
-	sk_stop_timer(sk, &gp->xmit_timer);
 
 	/*
 	 * We need to flush the recv. buffs.  We do this only on the

@@ -13,6 +13,9 @@
 #include <linux/gmtp.h>
 #include "gmtp.h"
 
+int sysctl_gmtp_keepalive_time __read_mostly = GMTP_KEEPALIVE_TIME;
+int sysctl_gmtp_keepalive_probes __read_mostly = GMTP_KEEPALIVE_PROBES;
+
 static void gmtp_write_err(struct sock *sk)
 {
 	gmtp_print_function();
@@ -160,9 +163,8 @@ out:
 /*
  *	Timer for listening sockets
  */
-static void gmtp_response_timer(struct sock *sk)
+static void gmtp_register_ack_timer(struct sock *sk)
 {
-    gmtp_print_function();
 	inet_csk_reqsk_queue_prune(sk, TCP_SYNQ_INTERVAL, GMTP_TIMEOUT_INIT,
 				   GMTP_RTO_MAX);
 }
@@ -170,6 +172,9 @@ static void gmtp_response_timer(struct sock *sk)
 static void gmtp_keepalive_timer(unsigned long data)
 {
 	struct sock *sk = (struct sock *)data;
+	struct inet_connection_sock *icsk = inet_csk(sk);
+	struct gmtp_sock *gp = gmtp_sk(sk);
+	u32 elapsed;
 
 	gmtp_print_function();
 
@@ -182,9 +187,41 @@ static void gmtp_keepalive_timer(unsigned long data)
 	}
 
 	if (sk->sk_state == GMTP_LISTEN) {
-		gmtp_response_timer(sk);
+		gmtp_register_ack_timer(sk);
 		goto out;
 	}
+
+	elapsed = gmtp_keepalive_time_when(gp);
+
+	/* It is alive without keepalive 8) */
+	if(sk->sk_send_head;)
+		goto resched;
+
+	elapsed = gmtp_keepalive_time_elapsed(gp);
+
+	if (elapsed >= gmtp_keepalive_time_when(gp)) {
+		/* If the TCP_USER_TIMEOUT option is enabled, use that
+		 * to determine when to timeout instead.
+		 */
+		if((icsk->icsk_user_timeout != 0 &&
+		    elapsed >= icsk->icsk_user_timeout &&
+		    icsk->icsk_probes_out > 0) ||
+		    (icsk->icsk_user_timeout == 0 &&
+		    icsk->icsk_probes_out >= gmtp_keepalive_probes(gp))) {
+
+			gmtp_send_reset(sk, GMTP_RESET_CODE_ABORTED);
+			gmtp_write_err(sk);
+			goto out;
+		}
+	} else {
+		/* It is gp->ack_rcv_tstamp + keepalive_time_when(gp) */
+		elapsed = gmtp_keepalive_time_when(gp) - elapsed;
+	}
+
+	sk_mem_reclaim(sk);
+
+resched:
+	inet_csk_reset_keepalive_timer(sk, elapsed);
 out:
 	bh_unlock_sock(sk);
 	sock_put(sk);
@@ -238,42 +275,14 @@ out:
 	sock_put(sk);
 }
 
-/**
- * gmtp_write_xmitlet  -  Workhorse for CCID packet dequeueing interface
- * See the comments above %ccid_dequeueing_decision for supported modes.
- */
-static void gmtp_write_xmitlet(unsigned long data)
-{
-	struct sock *sk = (struct sock *)data;
-
-	gmtp_print_function();
-
-	bh_lock_sock(sk);
-	if(sock_owned_by_user(sk))
-		sk_reset_timer(sk, &gmtp_sk(sk)->xmit_timer, jiffies + 1);
-	/*
-	 * FIXME Treat it
-	 else
-	 gmtp_write_xmit(sk);
-	 */
-	bh_unlock_sock(sk);
-}
-
-static void gmtp_write_xmit_timer(unsigned long data)
-{
-	gmtp_print_function();
-	gmtp_write_xmitlet(data);
-	sock_put((struct sock *)data);
-}
-
 void gmtp_init_xmit_timers(struct sock *sk)
 {
-	struct gmtp_sock *gp = gmtp_sk(sk);
+	/*struct gmtp_sock *gp = gmtp_sk(sk);*/
 
 	gmtp_print_function();
 
-	tasklet_init(&gp->xmitlet, gmtp_write_xmitlet, (unsigned long)sk);
-	setup_timer(&gp->xmit_timer, gmtp_write_xmit_timer, (unsigned long )sk);
+	/*tasklet_init(&gp->xmitlet, gmtp_write_xmitlet, (unsigned long)sk);
+	setup_timer(&gp->xmit_timer, gmtp_write_xmit_timer, (unsigned long )sk);*/
 	inet_csk_init_xmit_timers(sk, &gmtp_write_timer, &gmtp_delack_timer,
 			&gmtp_keepalive_timer);
 }
