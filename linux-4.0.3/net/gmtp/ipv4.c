@@ -526,8 +526,14 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 	const struct gmtp_hdr *gh = gmtp_hdr(skb);
 
 	if(sk == NULL) {
-		gmtp_print_error("failed to look up flow ID in table and "
-				"get corresponding socket\n");
+
+		if(gmtp_info->relay_enabled && gh->type == GMTP_PKT_CLOSE) {
+			gmtp_pr_error("Relay enabled...");
+			goto ignore_it;
+		}
+
+		gmtp_pr_error("failed to look up flow ID in table and "
+				"get corresponding socket.");
 		goto no_gmtp_socket;
 	}
 
@@ -573,6 +579,8 @@ discard_and_relse:
 	sock_put(sk);
 	goto discard_it;
 
+ignore_it:
+	return 0;
 }
 
 /* this is called when real data arrives */
@@ -611,7 +619,7 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 
 		struct gmtp_client *tmp;
 		pr_info("Multicast packet\n");
-		media_entry = gmtp_lookup_media(gmtp_hashtable, gh->flowname);
+		media_entry = gmtp_lookup_client(gmtp_hashtable, gh->flowname);
 		if(media_entry == NULL) {
 			gmtp_print_error("Failed to look up media flow in "
 					"table");

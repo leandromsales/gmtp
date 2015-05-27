@@ -77,33 +77,60 @@
 #define GMTP_FALLBACK_RTT	((GMTP_DEFAULT_RTT * USEC_PER_MSEC) / 5)
 #define GMTP_SANE_RTT_MAX	(3 * USEC_PER_SEC)  /* 3 s    */
 
-/* initial RTO value */
-#define GMTP_TIMEOUT_INIT ((unsigned int)(3 * HZ))
-/*
- * The maximum back-off value for retransmissions. This is needed for
- *  - retransmitting client-Requests
+/* initial RTO value
+ * The back-off value for retransmissions. This is needed for
+ *  - retransmitting Client-Requests
  *  - retransmitting Close/CloseReq when closing
  */
+#define GMTP_TIMEOUT_INIT ((unsigned int)(3 * HZ))
 #define GMTP_RTO_MAX ((unsigned int)(64 * HZ))
 #define GMTP_TIMEWAIT_LEN (60 * HZ)
+
+#define GMTP_KEEPALIVE_TIME	(120*60*HZ)	/* two hours */
+/*#define GMTP_KEEPALIVE_TIME	(10*HZ)*/
+#define GMTP_KEEPALIVE_INTVL	(75*HZ)
+/*#define GMTP_KEEPALIVE_INTVL	(5*HZ)*/
+#define GMTP_KEEPALIVE_PROBES	9		/* Max of 9 keepalive probes	*/
 
 /* Int to __u8 operations */
 #define TO_U8(x) ((x) > UINT_MAX) ? UINT_MAX : (__u8)(x)
 #define SUB_U8(a, b) ((a-b) > UINT_MAX) ? UINT_MAX : (a-b)
 
+extern struct gmtp_info *gmtp_info;
 extern struct inet_hashinfo gmtp_inet_hashinfo;
 extern struct percpu_counter gmtp_orphan_count;
 extern struct gmtp_hashtable *gmtp_hashtable;
-extern struct gmtp_info *gmtp_info;
-
-struct gmtp_info {
-	unsigned char 		relay_enabled:1;
-};
+extern int sysctl_gmtp_keepalive_time;
+extern int sysctl_gmtp_keepalive_intvl;
+extern int sysctl_gmtp_keepalive_probes;
 
 void gmtp_init_xmit_timers(struct sock *sk);
 static inline void gmtp_clear_xmit_timers(struct sock *sk)
 {
 	inet_csk_clear_xmit_timers(sk);
+}
+
+static inline int gmtp_keepalive_intvl_when(const struct gmtp_sock *gp)
+{
+	return gp->keepalive_intvl ? : sysctl_gmtp_keepalive_intvl;
+}
+
+static inline int gmtp_keepalive_time_when(const struct gmtp_sock *gp)
+{
+	return gp->keepalive_time ? : sysctl_gmtp_keepalive_time;
+}
+
+static inline int gmtp_keepalive_probes(const struct gmtp_sock *gp)
+{
+	return gp->keepalive_probes ? : sysctl_gmtp_keepalive_probes;
+}
+
+static inline u32 gmtp_keepalive_time_elapsed(const struct gmtp_sock *gp)
+{
+	const struct inet_connection_sock *icsk = &gp->gmtps_inet_connection;
+
+	return min_t(u32, jiffies_to_msecs(jiffies) - icsk->icsk_ack.lrcvtime,
+			jiffies_to_msecs(jiffies) - gp->ack_rcv_tstamp);
 }
 
 /** proto.c */
@@ -170,6 +197,12 @@ void gmtp_reqsk_send_ack(struct sock *sk, struct sk_buff *skb,
 
 /** ipv4.c */
 int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len);
+
+
+/** GMTP structs and etc **/
+struct gmtp_info {
+	unsigned char 		relay_enabled:1;
+};
 
 /**
  * This is the control buffer. It is free to use by any layer.
@@ -247,6 +280,16 @@ struct gmtp_client {
 	__be16 			port;
 	__u8			reporter:1;
 };
+
+static inline struct gmtp_client* gmtp_get_first_client(struct list_head *head)
+{
+	struct gmtp_client *client;
+	list_for_each_entry(client, head, list)
+	{
+		return client;
+	}
+	return NULL;
+}
 
 #endif /* GMTP_H_ */
 

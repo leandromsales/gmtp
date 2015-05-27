@@ -56,7 +56,7 @@ void gmtp_buffer_add(struct gmtp_flow_info *info, struct sk_buff *newsk);
 struct sk_buff *gmtp_buffer_dequeue(struct gmtp_flow_info *info);
 struct gmtp_flow_info *gmtp_inter_get_info(
 		struct gmtp_inter_hashtable *hashtable, const __u8 *media);
-__be32 gmtp_inter_relay_ip(struct net_device *dev);
+__be32 gmtp_inter_device_ip(struct net_device *dev);
 unsigned char *gmtp_build_md5(unsigned char *buf);
 
 /** input.c */
@@ -81,6 +81,8 @@ void gmtp_inter_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
 		__be32 daddr, struct gmtp_hdr *gh_ref, bool backward);
 void gmtp_inter_build_and_send_skb(struct sk_buff *skb);
 
+int gmtp_inter_register_out(struct sk_buff *skb);
+int gmtp_inter_request_notify_out(struct sk_buff *skb);
 int gmtp_inter_data_out(struct sk_buff *skb);
 int gmtp_inter_close_out(struct sk_buff *skb);
 

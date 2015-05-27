@@ -102,7 +102,7 @@ void flowname_str(__u8* str, const __u8 *flowname)
 	for(i = 0; i < GMTP_FLOWNAME_LEN; ++i)
 		sprintf(&str[i*2], "%02x", flowname[i]);
 }
-EXPORT_SYMBOL(flowname_str);
+EXPORT_SYMBOL_GPL(flowname_str);
 
 /**
  * @str size MUST HAVE len >= GMTP_FLOWNAME_STR_LEN
@@ -127,7 +127,7 @@ void print_route(struct gmtp_hdr_route *route)
 	for(i=0; i < route->nrelays; ++i)
 		pr_info("Route[%d]: %s :: %pI4\n", i, relayid, &gr->relay_ip);
 }
-EXPORT_SYMBOL(print_route);
+EXPORT_SYMBOL_GPL(print_route);
 
 void gmtp_set_state(struct sock *sk, const int state)
 {
@@ -178,6 +178,7 @@ int gmtp_init_sock(struct sock *sk)
 
 	gmtp_print_function();
 
+	gmtp_init_xmit_timers(sk);
 	icsk->icsk_rto		= GMTP_TIMEOUT_INIT;
 	icsk->icsk_syn_retries	= TCP_SYN_RETRIES;
 	sk->sk_state		= GMTP_CLOSED;
@@ -188,6 +189,7 @@ int gmtp_init_sock(struct sock *sk)
 	gp->role		= GMTP_ROLE_UNDEFINED;
 
 	gp->req_stamp		= 0;
+	gp->ack_rcv_tstamp	= 0;
 	gp->tx_rtt		= GMTP_DEFAULT_RTT;
 	gp->relay_rtt		= 0;
 
@@ -211,8 +213,6 @@ int gmtp_init_sock(struct sock *sk)
 	gp->tx_adj_budget	= 0;
 
 	memset(gp->flowname, 0, GMTP_FLOWNAME_LEN);
-
-	gmtp_init_xmit_timers(sk);
 
 	return ret;
 }
@@ -263,7 +263,7 @@ static void gmtp_terminate_connection(struct sock *sk)
 
 void gmtp_close(struct sock *sk, long timeout)
 {
-	struct gmtp_sock *gp = gmtp_sk(sk);
+	/*struct gmtp_sock *gp = gmtp_sk(sk);*/
 	struct sk_buff *skb;
 	u32 data_was_unread = 0;
 	int state;
@@ -284,8 +284,6 @@ void gmtp_close(struct sock *sk, long timeout)
 
 		goto adjudge_to_death;
 	}
-	gmtp_print_debug("Stopping timers...");
-	sk_stop_timer(sk, &gp->xmit_timer);
 
 	/*
 	 * We need to flush the recv. buffs.  We do this only on the
