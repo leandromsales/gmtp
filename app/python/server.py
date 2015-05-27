@@ -67,7 +67,8 @@ try:
         size = getPacketSize(text)
         total_size = total_size + size
         
-        #server_output.send(text.encode('utf-8'))
+        server_output.send(text.encode('utf-8'))
+        i = i + 1
         
         if(i%25 == 0):
             sys.stdout.write("=>")
@@ -93,8 +94,6 @@ try:
             print "\tSend rate (last 1000):", rate, "bytes/s"
             print "\tSend rate (total): ", total_rate, "bytes/s\n\n"
             print "Sending... "
-        
-        #i = i + 1
         
 except (KeyboardInterrupt, SystemExit):
     print '\nReceived keyboard interrupt, quitting...\n'
