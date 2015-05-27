@@ -233,8 +233,6 @@ EXPORT_SYMBOL_GPL(gmtp_reqsk_send_ack);
 int gmtp_reqsk_init(struct request_sock *req,
 		    struct gmtp_sock const *gp, struct sk_buff const *skb)
 {
-/*	struct gmtp_request_sock *greq = gmtp_rsk(req);*/
-
 	gmtp_print_function();
 
 	inet_rsk(req)->ir_rmt_port = gmtp_hdr(skb)->sport;

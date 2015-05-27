@@ -43,7 +43,7 @@ server_socket.listen(4)
 server_output, client_addr = server_socket.accept()
 print "[+] Client connected:", client_addr[0], ":", str(client_addr[1])
 
-i = 0
+i = 1
 total_size = 0
 last_size = 0;
         
@@ -58,8 +58,7 @@ try:
     while True:
         
         #time.sleep(0.001); # App controls Tx    0,001 ~ 100.000 bytes/s
-                  
-        i = i + 1
+        
         if(i == 1):
             start_time = timeit.default_timer()
             last_time = timeit.default_timer()
@@ -69,6 +68,7 @@ try:
         total_size = total_size + size
         
         server_output.send(text.encode('utf-8'))
+        i = i + 1
         
         if(i%25 == 0):
             sys.stdout.write("=>")

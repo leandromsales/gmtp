@@ -115,6 +115,7 @@ static inline struct gmtp_request_sock *gmtp_rsk(const struct request_sock *req)
 /**
  * struct gmtp_sock - GMTP socket state
  *
+ * @flowname: name of the dataflow
  * @iss: initial sequence number sent
  * @isr: initial sequence number received
  * @gss: greatest sequence number sent
@@ -122,11 +123,13 @@ static inline struct gmtp_request_sock *gmtp_rsk(const struct request_sock *req)
  * @mss: current value of MSS (path MTU minus header sizes)
  * @role: role of this sock, one of %gmtp_role
  * @req_stamp: time stamp of request sent
- * @reply_stamp: time stamp of Request-Reply sent
+ * @reply_stamp: time stamp of Register-Reply (or Request-Reply) sent
+ * @ack_rcv_tstamp: timestamp of last received ACK (for keepalives)
+ * @keepalive_time: time before keep alive takes place
+ * @keepalive_intvl: time interval between keep alive probes
+ * @keepalive_probes: num of allowed keep alive probes
  * @tx_rtt: RTT from sender to relays
  * @server_timewait: server holds timewait state on close
- * @xmitlet: tasklet scheduled by the TX to dequeue data packets (???)
- * @xmit_timer: used to control the TX (rate-based pacing)
  * @rx_last_counter:	     Tracks window counter (RFC 4342, 8.1)
  * @rx_state:		     Receiver state, one of %mcc_rx_states
  * @rx_bytes_recv:	     Total sum of GMTP payload bytes
@@ -151,7 +154,6 @@ static inline struct gmtp_request_sock *gmtp_rsk(const struct request_sock *req)
  * @tx_max_rate: Max TX rate (bytes/s). 0 == no limits.
  * tx_byte_budget: the amount of bytes that can be sent immediately.
  * tx_adj_budget: memory of last adjustment in TX rate.
- * @flowname: name of the dataflow
  *
  */
 struct gmtp_sock {
@@ -159,31 +161,35 @@ struct gmtp_sock {
 	struct inet_connection_sock gmtps_inet_connection;
 #define gmtps_syn_rtt 	gmtps_inet_connection.icsk_ack.lrcvtime
 
-	__u32				iss;
-	__u32				isr;
-	__u32				gss;
-	__u32				gsr;
+	u8 				flowname[GMTP_FLOWNAME_LEN];
+
+	u32				iss;
+	u32				isr;
+	u32				gss;
+	u32				gsr;
 	
-	__u32				mss;
+	u32				mss;
 
 	enum gmtp_role			role:3;
 
-	__u32				req_stamp;
-	__u32				reply_stamp;
+	u32				req_stamp;
+	u32				reply_stamp;
+	u32				ack_rcv_tstamp;
+	unsigned int			keepalive_time;
+	unsigned int			keepalive_intvl;
+	u8				keepalive_probes;
 
-	__u8				server_timewait:1;
-	struct tasklet_struct		xmitlet;
-	struct timer_list		xmit_timer;
+	u8				server_timewait:1;
 
 	/** Rx variables */
 	__be32				ndp_count;
 	enum mcc_rx_states		rx_state:8;
-	__u32				rx_bytes_recv;
-	__u32				rx_x_recv;
+	u32				rx_bytes_recv;
+	u32				rx_x_recv;
 	__be32				rx_max_rate;
-	__u32				rx_rtt;
-	__u32				rx_avg_rtt;
-	__u32				relay_rtt;
+	u32				rx_rtt;
+	u32				rx_avg_rtt;
+	u32				relay_rtt;
 	ktime_t				rx_tstamp_last_feedback;
 	struct mcc_rx_hist		rx_hist;
 	struct mcc_loss_hist		rx_li_hist;
@@ -191,14 +197,14 @@ struct gmtp_sock {
 #define rx_pinv				rx_li_hist.i_mean
 
 	/** Tx variables */
-	__u32 				tx_rtt;
-	__u32	 			tx_dpkts_sent;
-	__u32				tx_data_sent;
-	__u32				tx_bytes_sent;
+	u32 				tx_rtt;
+	u32	 			tx_dpkts_sent;
+	u32				tx_data_sent;
+	u32				tx_bytes_sent;
 
-	__u32	 			tx_sample_len;
+	u32	 			tx_sample_len;
 	unsigned long 			tx_time_sample; /* jiffies */
-	__u32	 			tx_byte_sample;
+	u32	 			tx_byte_sample;
 
 	unsigned long			tx_sample_rate;
 	unsigned long			tx_total_rate;
@@ -208,8 +214,6 @@ struct gmtp_sock {
 	unsigned long			tx_max_rate;
 	int 				tx_byte_budget;
 	int				tx_adj_budget;
-
-	__u8 flowname[GMTP_FLOWNAME_LEN];
 };
 
 static inline struct gmtp_sock *gmtp_sk(const struct sock *sk)

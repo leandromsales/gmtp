@@ -94,7 +94,7 @@ unsigned char *gmtp_inter_build_relay_id(void)
 	return gmtp_build_md5(buffer);
 }
 
-__be32 gmtp_inter_relay_ip(struct net_device *dev)
+__be32 gmtp_inter_device_ip(struct net_device *dev)
 {
 	struct in_device *in_dev;
 	struct in_ifaddr *if_info;
@@ -102,7 +102,7 @@ __be32 gmtp_inter_relay_ip(struct net_device *dev)
 	gmtp_pr_func();
 
 	if(dev == NULL)
-		goto out;
+		return 0;
 
 	in_dev = (struct in_device *)dev->ip_ptr;
 	if_info = in_dev->ifa_list;
@@ -112,14 +112,7 @@ __be32 gmtp_inter_relay_ip(struct net_device *dev)
 		return if_info->ifa_address;
 	}
 
-out:
 	return 0;
-
-
-    /*just to keep the same return of previous implementation*/
-	/*unsigned char *ip = "\xc0\xa8\x02\x01";  192.168.2.1
-	return *(unsigned int *)ip;*/
-
 }
 
 __be32 get_mcst_v4_addr(void)
@@ -204,7 +197,7 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 	struct iphdr *iph = ip_hdr(skb);
 
 	if((gmtp_info->relay_enabled == 0) || (in == NULL))
-		goto exit;
+		return ret;
 
 	/** Calculates new rate */
 	/* gmtp_update_rx_rate(UINT_MAX); */
@@ -243,7 +236,6 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 
 	}
 
-exit:
 	return ret;
 }
 
@@ -256,7 +248,7 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 	struct gmtp_hdr *gh;
 
 	if((gmtp_info->relay_enabled == 0) || (out == NULL))
-		goto exit;
+		return ret;
 
 	if(iph->protocol == IPPROTO_GMTP) {
 
@@ -269,6 +261,9 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 		}
 
 		switch(gh->type) {
+		case GMTP_PKT_REGISTER:
+			ret = gmtp_inter_register_out(skb);
+			break;
 		case GMTP_PKT_DATA:
 			ret = gmtp_inter_data_out(skb);
 			break;
@@ -278,7 +273,6 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 		}
 	}
 
-exit:
 	return ret;
 }
 
@@ -288,8 +282,17 @@ int init_module()
 	gmtp_pr_func();
 	gmtp_print_debug("Starting GMTP-inter");
 
+	if(gmtp_info == NULL) {
+		gmtp_print_error("gmtp_info is NULL...");
+		ret = -ENOBUFS;
+		goto out;
+	}
+
 	gmtp_info->relay_enabled = 1; /* Enables gmtp-inter */
+
+	/* FIXME Setup a better default value for Rate */
 	gmtp_inter.total_rx = 50000;
+
 	memcpy(gmtp_inter.relay_id, gmtp_inter_build_relay_id(),
 			GMTP_RELAY_ID_LEN);
 	memset(&gmtp_inter.mcst, 0, 4*sizeof(unsigned char));

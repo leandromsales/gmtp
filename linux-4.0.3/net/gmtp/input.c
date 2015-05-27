@@ -153,7 +153,7 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 					ntohs(gh_rnotify->mcst_port),
 					gh_rnotify->error_code);
 
-			media_entry = gmtp_lookup_media(gmtp_hashtable,
+			media_entry = gmtp_lookup_client(gmtp_hashtable,
 					gh->flowname);
 			if(media_entry == NULL)
 				goto out_invalid_packet;
@@ -382,13 +382,13 @@ int gmtp_rcv_route_notify(struct sock *sk, struct sk_buff *skb,
 	print_route(route);
 
 	if(nrelays <= 0)
-		goto out;
+		return 0;
 
 	relay = &route->relay_list[nrelays-1];
 
 	gmtp_add_server_entry(gmtp_hashtable, relay->relay_id,
 			(__u8*)gh->flowname, route);
-out:
+
 	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_rcv_route_notify);

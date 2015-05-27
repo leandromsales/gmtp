@@ -52,6 +52,9 @@ struct gmtp_relay_entry {
  * @buffer_size: max number of packets in buffer
  */
 struct gmtp_flow_info {
+	__be32			my_addr;
+	__be16			my_port;
+
 	unsigned int 		iseq;
 	unsigned int 		seq;
 	unsigned int 		nbytes;
