@@ -24,6 +24,7 @@
 #include <linux/gmtp.h>
 #include "../gmtp.h"
 #include "gmtp-inter.h"
+#include "ucc.h"
 
 static struct nf_hook_ops nfho_in;
 static struct nf_hook_ops nfho_out;
@@ -203,6 +204,10 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 	if((gmtp_info->relay_enabled == 0) || (in == NULL))
 		goto exit;
 
+    /*addes for debug*/
+    gmtp_update_rx_rate(0);
+
+
 	if(iph->protocol == IPPROTO_GMTP) {
 
 		struct gmtp_hdr *gh = gmtp_hdr(skb);
@@ -283,7 +288,7 @@ int init_module()
 	gmtp_print_debug("Starting GMTP-inter");
 
 	gmtp_info->relay_enabled = 1; /* Enables gmtp-inter */
-	gmtp_inter.total_rx = 1;
+	gmtp_inter.total_rx = 50000;
 	memcpy(gmtp_inter.relay_id, gmtp_inter_build_relay_id(),
 			GMTP_RELAY_ID_LEN);
 	memset(&gmtp_inter.mcst, 0, 4*sizeof(unsigned char));

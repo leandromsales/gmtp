@@ -52,10 +52,12 @@ EXPORT_SYMBOL_GPL(gmtp_get_current_rx_rate);
 void gmtp_update_rx_rate(unsigned int  h_user)
 {
 	unsigned int r = 0;
-	unsigned int H, h, y, q;
+	unsigned int H, h, y, q,Nt;
+    unsigned int rt;
 	unsigned int r_prev = gmtp_get_current_rx_rate();
 	int up, delta;
-
+    int flag_aux = 0;
+    
 	gmtp_pr_func();
 
 	gmtp_print_debug("r_prev: %d", r_prev);
@@ -93,6 +95,19 @@ void gmtp_update_rx_rate(unsigned int  h_user)
 
 	gmtp_print_debug("new_r: %d", r);
 	gmtp_inter.total_rx = r;
+   
+    if(flag_aux){
+        /* 4.1 */
+        Nt = C*r_prev;
+        rt = r_prev + (up/Nt); 
+        gmtp_print_debug("rt equacao 4.1 = %d", rt);
+    }
+    else{
+        /* 4.2 */
+        rt = r_prev*(1 + ((H/h)*(ALPHA(GHAMA(C) - y) - BETA(q/h)))/GHAMA(C));
+        gmtp_print_debug("rt equacao 4.2 = %d", rt);
+    }
+
 }
 EXPORT_SYMBOL_GPL(gmtp_update_rx_rate);
 
