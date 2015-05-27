@@ -18,7 +18,7 @@
 
 #define MOD(X)   ((X > 0) ? (X) : -(X))
 
-#define C 1250 /* bytes/ms => 10 Mbit/s */
+#define C 1250000 /* bytes/s => 10 Mbit/s */
 
 extern struct gmtp_inter gmtp_inter;
 
@@ -49,12 +49,14 @@ EXPORT_SYMBOL_GPL(gmtp_get_current_rx_rate);
 /**
  * Get TX rate, via RCP
  */
-void gmtp_update_rx_rate(unsigned int  h_user)
+void gmtp_update_rx_rate(unsigned int h_user)
 {
 	unsigned int r = 0;
-	unsigned int H, h, y, q;
+	unsigned int H, h, y, q, Nt;
+	unsigned int rt;
 	unsigned int r_prev = gmtp_get_current_rx_rate();
 	int up, delta;
+	int flag_aux = 0;
 
 	gmtp_pr_func();
 
@@ -66,33 +68,61 @@ void gmtp_update_rx_rate(unsigned int  h_user)
 
 	gmtp_print_debug("h_user: %u", h_user);
 	gmtp_print_debug("h0: %u", h);
-	gmtp_print_debug("y(t): %u", y);
-	gmtp_print_debug("q(t): %u", q);
 
 	H = (h < h_user) ? h : h_user;
+	gmtp_print_debug("H: %u\n", H);
 
-	up = (H/h) * (ALPHA(GHAMA(C)-y) - BETA(q/h));
+	gmtp_print_debug("C: %u", C);
+	gmtp_print_debug("y(t): %u", y);
+	gmtp_print_debug("q(t): %u\n", q);
 
-	gmtp_print_debug("H/h0: %u", (H/h));
+	up = (H / h) * (ALPHA(GHAMA(C)-y) - BETA(q / h));
+
+	gmtp_print_debug("H/h0: %u", (H / h));
+	gmtp_print_debug("GHAMA(C): %u", GHAMA(C));
 	gmtp_print_debug("ALPHA(GHAMA(C)-y): %u", ALPHA(GHAMA(C)-y));
+	gmtp_print_debug("q/h: %u", q/h);
 	gmtp_print_debug("BETA(q/h): %u", BETA(q/h));
-	gmtp_print_debug("ALPHA(GHAMA(C)-y) - BETA(q/h): %d", ALPHA(GHAMA(C)-y) - BETA(q/h));
+	gmtp_print_debug("ALPHA(GHAMA(C)-y) - BETA(q/h):");
+	gmtp_print_debug("%u - %u: %d\n", ALPHA(GHAMA(C)-y), BETA(q/h), (ALPHA(GHAMA(C)-y) - BETA(q/h)));
 
-	gmtp_print_debug("up: %d", up);
+	gmtp_print_debug("up = ((H / h) * [ALPHA(GHAMA(C)-y) - BETA(q / h)])");
+	gmtp_print_debug("up = %u * [%u - %u]", H/h, ALPHA(GHAMA(C)-y),  BETA(q / h));
+	gmtp_print_debug("up = %d\n", up);
 
-	delta = ((int)(r_prev) * up)/GHAMA(C);
+	delta = ((int)(r_prev) * up) / GHAMA(C);
 
-	gmtp_print_debug("delta = ((r_prev * up)/GHAMA(C)): %d", delta);
+	gmtp_print_debug("delta = ((r_prev * up)/GHAMA(C))");
+	gmtp_print_debug("delta = (%d * %u)/%u", (int)(r_prev), up, GHAMA(C));
+	gmtp_print_debug("delta = %d\n", delta);
 
 	/**
 	 * r = r_prev * (1 + up/GHAMA(C)) =>
-	 * r = r_prev + r_prev * up/GHAMA(C) =>
+	 * r = r_prev + r_pc
+	 * rev * up/GHAMA(C) =>
 	 * r = r_prev + delta
 	 */
 	r = (int)(r_prev) + delta;
 
-	gmtp_print_debug("new_r: %d", r);
+	gmtp_print_debug("new_r = (int)(r_prev) + delta");
+	gmtp_print_debug("new_r = %d + %d", r_prev, delta);
+	gmtp_print_debug("new_r = %d\n", r);
 	gmtp_inter.total_rx = r;
+
+	pr_info("-----------------------\n");
+
+	if(flag_aux){
+		/* 4.1 */
+		Nt = C*r_prev;
+		rt = r_prev + (up/Nt);
+		gmtp_print_debug("rt equacao 4.1 = %d", rt);
+	} else {
+		/* 4.2 */
+		rt = r_prev*(1 + ((H/h)*(ALPHA(GHAMA(C) - y) - BETA(q/h)))/GHAMA(C));
+		gmtp_print_debug("rt equacao 4.2 = %d", rt);
+	}
+	pr_info("-----------------------\n");
+
 }
 EXPORT_SYMBOL_GPL(gmtp_update_rx_rate);
 

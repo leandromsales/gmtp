@@ -6,6 +6,8 @@
 
 #include "gmtp-inter.h"
 #include "mcc-inter.h"
+#include "ucc.h"c
+
 
 /**
  * Algorithm 1: registerRelay
@@ -173,12 +175,10 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh_route_n;
 	struct gmtp_relay_entry *entry;
-
 	struct gmtp_hdr *gh_req_n;
 	struct gmtp_client *client, *first_client;
 	__u8 code = GMTP_REQNOTIFY_CODE_OK;
-
-	/*unsigned int r;*/
+	unsigned int rate;
 
 	gmtp_print_function();
 
@@ -186,12 +186,12 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
 	gmtp_inter_add_relayid(skb);
 
 	/* Update transmission rate (GMTP-UCC) */
-	/* gmtp_print_debug("UPDATING Tx Rate");
-	 gmtp_update_tx_rate(H_USER);
-	 r = gmtp_get_current_tx_rate();
-	 if(r < gh->transm_r)
-	 gh->transm_r = r;
-	 */
+	gmtp_print_debug("UPDATING Tx Rate");
+	gmtp_inter.total_rx = gh->transm_r;
+	gmtp_update_rx_rate(UINT_MAX);
+	rate = gmtp_get_current_rx_rate();
+	if(rate < gh->transm_r)
+		gh->transm_r = rate;
 
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry == NULL)

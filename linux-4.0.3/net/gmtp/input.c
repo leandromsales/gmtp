@@ -382,13 +382,13 @@ int gmtp_rcv_route_notify(struct sock *sk, struct sk_buff *skb,
 	print_route(route);
 
 	if(nrelays <= 0)
-		goto out;
+		return 0;
 
 	relay = &route->relay_list[nrelays-1];
 
 	gmtp_add_server_entry(gmtp_hashtable, relay->relay_id,
 			(__u8*)gh->flowname, route);
-out:
+
 	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_rcv_route_notify);

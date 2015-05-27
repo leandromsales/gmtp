@@ -17,6 +17,7 @@
 #include "../gmtp.h"
 
 #include "hash-inter.h"
+#include "ucc.h"
 
 #define H_USER 	1024
 #define MD5_LEN GMTP_RELAY_ID_LEN
