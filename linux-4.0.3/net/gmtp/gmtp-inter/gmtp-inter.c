@@ -207,7 +207,7 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 		goto exit;
 
 	/** Calculates new rate */
-	gmtp_update_rx_rate(UINT_MAX);
+	/* gmtp_update_rx_rate(UINT_MAX); */
 
 	if(iph->protocol == IPPROTO_GMTP) {
 
