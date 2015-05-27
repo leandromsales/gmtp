@@ -225,7 +225,8 @@ static void gmtp_keepalive_timer(unsigned long data)
 			gmtp_write_err(sk);
 			goto out;
 		}
-		if(tcp_write_wakeup(sk) <= 0) {
+		if(/*tcp_write_wakeup(sk) <= 0*/ 1) {
+			pr_info("sending wakeup\n");
 			icsk->icsk_probes_out++;
 			elapsed = gmtp_keepalive_intvl_when(gp);
 		} else {
@@ -253,7 +254,10 @@ out:
 	sock_put(sk);
 }
 
-/* This is the same as tcp_delack_timer, sans prequeue & mem_reclaim stuff */
+/* This is the same as tcp_delack_timer, sans prequeue & mem_reclaim stuff
+ * FIXME This function is probably not necessary.
+ * Maybe we can keep it empty, just to avoid null pointers.
+ **/
 static void gmtp_delack_timer(unsigned long data)
 {
 	struct sock *sk = (struct sock *)data;
@@ -306,7 +310,7 @@ void gmtp_init_xmit_timers(struct sock *sk)
 	gmtp_pr_func();
 	inet_csk_init_xmit_timers(sk, &gmtp_write_timer, &gmtp_delack_timer,
 			&gmtp_keepalive_timer);
-	inet_csk_reset_keepalive_timer(sk, 10*HZ);
+	/*inet_csk_reset_keepalive_timer(sk, 10*HZ);*/
 }
 
 

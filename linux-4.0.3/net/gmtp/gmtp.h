@@ -77,20 +77,19 @@
 #define GMTP_FALLBACK_RTT	((GMTP_DEFAULT_RTT * USEC_PER_MSEC) / 5)
 #define GMTP_SANE_RTT_MAX	(3 * USEC_PER_SEC)  /* 3 s    */
 
-/* initial RTO value */
-#define GMTP_TIMEOUT_INIT ((unsigned int)(3 * HZ))
-/*
- * The maximum back-off value for retransmissions. This is needed for
+/* initial RTO value
+ * The back-off value for retransmissions. This is needed for
  *  - retransmitting Client-Requests
  *  - retransmitting Close/CloseReq when closing
  */
+#define GMTP_TIMEOUT_INIT ((unsigned int)(3 * HZ))
 #define GMTP_RTO_MAX ((unsigned int)(64 * HZ))
 #define GMTP_TIMEWAIT_LEN (60 * HZ)
 
-/*#define GMTP_KEEPALIVE_TIME	(120*60*HZ)	*//* two hours */
-#define GMTP_KEEPALIVE_TIME	(10*HZ)
-/*#define TCP_KEEPALIVE_INTVL	(75*HZ)*/
-#define TCP_KEEPALIVE_INTVL	(5*HZ)
+#define GMTP_KEEPALIVE_TIME	(120*60*HZ)	/* two hours */
+/*#define GMTP_KEEPALIVE_TIME	(10*HZ)*/
+#define GMTP_KEEPALIVE_INTVL	(75*HZ)
+/*#define GMTP_KEEPALIVE_INTVL	(5*HZ)*/
 #define GMTP_KEEPALIVE_PROBES	9		/* Max of 9 keepalive probes	*/
 
 /* Int to __u8 operations */
@@ -113,7 +112,7 @@ static inline void gmtp_clear_xmit_timers(struct sock *sk)
 
 static inline int gmtp_keepalive_intvl_when(const struct gmtp_sock *gp)
 {
-	return gp->keepalive_intvl ? : sysctl_tcp_keepalive_intvl;
+	return gp->keepalive_intvl ? : sysctl_gmtp_keepalive_intvl;
 }
 
 static inline int gmtp_keepalive_time_when(const struct gmtp_sock *gp)

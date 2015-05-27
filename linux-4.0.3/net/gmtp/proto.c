@@ -102,7 +102,7 @@ void flowname_str(__u8* str, const __u8 *flowname)
 	for(i = 0; i < GMTP_FLOWNAME_LEN; ++i)
 		sprintf(&str[i*2], "%02x", flowname[i]);
 }
-EXPORT_SYMBOL(flowname_str);
+EXPORT_SYMBOL_GPL(flowname_str);
 
 /**
  * @str size MUST HAVE len >= GMTP_FLOWNAME_STR_LEN
@@ -127,7 +127,7 @@ void print_route(struct gmtp_hdr_route *route)
 	for(i=0; i < route->nrelays; ++i)
 		pr_info("Route[%d]: %s :: %pI4\n", i, relayid, &gr->relay_ip);
 }
-EXPORT_SYMBOL(print_route);
+EXPORT_SYMBOL_GPL(print_route);
 
 void gmtp_set_state(struct sock *sk, const int state)
 {
