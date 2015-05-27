@@ -25,6 +25,8 @@
 #include "../gmtp.h"
 #include "gmtp-inter.h"
 
+#include "ucc.h"
+
 static struct nf_hook_ops nfho_in;
 static struct nf_hook_ops nfho_out;
 
@@ -199,6 +201,7 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 {
 	int ret = NF_ACCEPT;
 	struct iphdr *iph = ip_hdr(skb);
+	unsigned int rate = 0;
 
 	if((gmtp_info->relay_enabled == 0) || (in == NULL))
 		goto exit;
@@ -206,6 +209,10 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 	if(iph->protocol == IPPROTO_GMTP) {
 
 		struct gmtp_hdr *gh = gmtp_hdr(skb);
+
+		gmtp_update_rx_rate(0);
+		rate = gmtp_get_current_rx_rate();
+		pr_info("Rate: %u\n", rate);
 
 		if(gh->type != GMTP_PKT_DATA && gh->type != GMTP_PKT_FEEDBACK) {
 			gmtp_print_debug("GMTP packet: %s (%d)",

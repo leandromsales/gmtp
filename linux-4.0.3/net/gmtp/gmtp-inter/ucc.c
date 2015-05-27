@@ -86,7 +86,8 @@ void gmtp_update_rx_rate(unsigned int  h_user)
 
 	/**
 	 * r = r_prev * (1 + up/GHAMA(C)) =>
-	 * r = r_prev + r_prev * up/GHAMA(C) =>
+	 * r = r_prev + r_pc
+	 * rev * up/GHAMA(C) =>
 	 * r = r_prev + delta
 	 */
 	r = (int)(r_prev) + delta;
