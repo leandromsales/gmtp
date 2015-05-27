@@ -169,7 +169,7 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
 	/* Update transmission rate (GMTP-UCC) */
 	gmtp_print_debug("UPDATING Tx Rate");
 	gmtp_inter.total_rx = gh->transm_r;
-	gmtp_update_rx_rate(0);
+	gmtp_update_rx_rate(UINT_MAX);
 	rate = gmtp_get_current_rx_rate();
 	if(rate < gh->transm_r)
 		gh->transm_r = rate;
