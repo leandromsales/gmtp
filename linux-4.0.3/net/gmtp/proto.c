@@ -481,6 +481,7 @@ int gmtp_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 		case GMTP_PKT_DATAACK:
 			goto found_ok_skb;
 		case GMTP_PKT_CLOSE:
+			pr_info("CLOSE received!\n");
 			if(!(flags & MSG_PEEK))
 				gmtp_finish_passive_close(sk);
 			/* fall through */

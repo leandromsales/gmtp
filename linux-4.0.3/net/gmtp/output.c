@@ -234,8 +234,6 @@ struct sk_buff *gmtp_ctl_make_reset(struct sock *sk, struct sk_buff *rcv_skb)
 
 	skb_reserve(skb, sk->sk_prot->max_header);
 
-	/* FIXME Insert reset data in GMTP header (variable part) */
-
 	/* Swap the send and the receive. */
 	gh = gmtp_zeroed_hdr(skb, gmtp_hdr_reset_len);
 	gh->type	= GMTP_PKT_RESET;

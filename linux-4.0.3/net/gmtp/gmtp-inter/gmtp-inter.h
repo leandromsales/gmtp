@@ -69,6 +69,12 @@ int gmtp_inter_feedback_rcv(struct sk_buff *skb);
 int gmtp_inter_close_rcv(struct sk_buff *skb);
 
 /** Output.c */
+int gmtp_inter_register_out(struct sk_buff *skb);
+int gmtp_inter_request_notify_out(struct sk_buff *skb);
+int gmtp_inter_data_out(struct sk_buff *skb);
+int gmtp_inter_close_out(struct sk_buff *skb);
+
+/** build.c */
 void gmtp_inter_add_relayid(struct sk_buff *skb);
 struct gmtp_hdr *gmtp_inter_make_route_hdr(struct sk_buff *skb);
 struct gmtp_hdr *gmtp_inter_make_request_notify_hdr(struct sk_buff *skb,
@@ -77,16 +83,11 @@ struct gmtp_hdr *gmtp_inter_make_request_notify_hdr(struct sk_buff *skb,
 int gmtp_inter_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
 		__be16 new_sport, __be32 new_daddr, __be16 new_dport,
 		__u8 error_code);
-
+struct gmtp_hdr *gmtp_inter_make_reset_hdr(struct sk_buff *skb, __u8 code);
 void gmtp_inter_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
 		__be32 daddr, struct gmtp_hdr *gh_ref, bool backward);
 void gmtp_inter_build_and_send_skb(struct sk_buff *skb);
-
-int gmtp_inter_register_out(struct sk_buff *skb);
-int gmtp_inter_request_notify_out(struct sk_buff *skb);
-int gmtp_inter_data_out(struct sk_buff *skb);
-int gmtp_inter_close_out(struct sk_buff *skb);
-
+void gmtp_copy_hdr(struct sk_buff *skb, struct sk_buff *src_skb);
 
 /**
  * A very ugly delayer, to GMTP-inter...

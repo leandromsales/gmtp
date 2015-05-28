@@ -6,7 +6,7 @@
 
 #include "gmtp-inter.h"
 #include "mcc-inter.h"
-#include "ucc.h"c
+#include "ucc.h"
 
 
 /**
@@ -207,13 +207,15 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
 			iph->daddr, gh->dport, GMTP_REQNOTIFY_CODE_OK_REPORTER);
 	entry->state = GMTP_INTER_REGISTER_REPLY_RECEIVED;
 
+	/* FIXME After it, clean list of clients and keep only reporters */
+
 	/* Send to first client */
 	first_client = jump_over_gmtp_intra(skb, &entry->info->clients->list);
-
-	/* Send to others */
 	list_for_each_entry(client, &entry->info->clients->list, list)
 	{
 		struct sk_buff *copy = skb_copy(skb, gfp_any());
+
+		/* Send to other clients (not first) */
 		if(client == first_client)
 			continue;
 
@@ -346,20 +348,36 @@ int gmtp_inter_close_rcv(struct sk_buff *skb)
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_relay_entry *entry;
 	struct gmtp_flow_info *info;
-
 	struct gmtp_client *client;
 
 	gmtp_pr_func();
 
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry == NULL)
-		goto out;
+		return NF_ACCEPT;
+
+	if(entry->state == GMTP_INTER_CLOSED)
+		return NF_ACCEPT;
+
 	info = entry->info;
 
 	if(iph->saddr == entry->server_addr) {
 		if(entry->state == GMTP_INTER_TRANSMITTING) {
+
+			struct gmtp_hdr *gh_reset;
+
 			entry->state = GMTP_INTER_CLOSE_RECEIVED;
 
+			gh_reset = gmtp_inter_make_reset_hdr(skb,
+					GMTP_RESET_CODE_CLOSED);
+			if(gh_reset != NULL)
+				gmtp_inter_build_and_send_pkt(skb, iph->daddr,
+						iph->saddr, gh_reset, true);
+			gmtp_pr_debug("Reset: src=%pI4@%-5d, dst=%pI4@%-5d",
+					&iph->daddr, ntohs(gh_reset->sport),
+					&iph->saddr, ntohs(gh_reset->dport));
+
+			/* FIXME Send close for each REPORTER */
 			jump_over_gmtp_intra(skb, &info->clients->list);
 			list_for_each_entry(client, &info->clients->list, list)
 			{
@@ -376,9 +394,9 @@ int gmtp_inter_close_rcv(struct sk_buff *skb)
 					gmtp_buffer_add(info, copy);
 				}
 			}
+			gmtp_buffer_add(info, skb);
 		}
 	}
 
-out:
 	return NF_ACCEPT;
 }
