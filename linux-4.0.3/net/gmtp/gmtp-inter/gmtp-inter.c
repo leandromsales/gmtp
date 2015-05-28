@@ -24,6 +24,9 @@
 #include <linux/gmtp.h>
 #include "../gmtp.h"
 #include "gmtp-inter.h"
+#include "ucc.h"
+
+#include "ucc.h"
 
 static struct nf_hook_ops nfho_in;
 static struct nf_hook_ops nfho_out;
@@ -99,7 +102,7 @@ __be32 gmtp_inter_device_ip(struct net_device *dev)
 	gmtp_pr_func();
 
 	if(dev == NULL)
-		goto out;
+		return 0;
 
 	in_dev = (struct in_device *)dev->ip_ptr;
 	if_info = in_dev->ifa_list;
@@ -109,7 +112,6 @@ __be32 gmtp_inter_device_ip(struct net_device *dev)
 		return if_info->ifa_address;
 	}
 
-out:
 	return 0;
 }
 
@@ -195,7 +197,10 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 	struct iphdr *iph = ip_hdr(skb);
 
 	if((gmtp_info->relay_enabled == 0) || (in == NULL))
-		goto exit;
+		return ret;
+
+	/** Calculates new rate */
+	/* gmtp_update_rx_rate(UINT_MAX); */
 
 	if(iph->protocol == IPPROTO_GMTP) {
 
@@ -231,7 +236,6 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 
 	}
 
-exit:
 	return ret;
 }
 
@@ -244,7 +248,7 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 	struct gmtp_hdr *gh;
 
 	if((gmtp_info->relay_enabled == 0) || (out == NULL))
-		goto exit;
+		return ret;
 
 	if(iph->protocol == IPPROTO_GMTP) {
 
@@ -269,7 +273,6 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 		}
 	}
 
-exit:
 	return ret;
 }
 
@@ -286,7 +289,10 @@ int init_module()
 	}
 
 	gmtp_info->relay_enabled = 1; /* Enables gmtp-inter */
-	gmtp_inter.total_rx = 1;
+
+	/* FIXME Setup a better default value for Rate */
+	gmtp_inter.total_rx = 50000;
+
 	memcpy(gmtp_inter.relay_id, gmtp_inter_build_relay_id(),
 			GMTP_RELAY_ID_LEN);
 	memset(&gmtp_inter.mcst, 0, 4*sizeof(unsigned char));
