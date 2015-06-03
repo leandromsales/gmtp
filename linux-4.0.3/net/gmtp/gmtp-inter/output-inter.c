@@ -140,21 +140,38 @@ out:
 	return NF_ACCEPT;
 }
 
+static int gmtp_delete_clients(struct list_head *list, __be32 addr, __be16 port)
+{
+	struct gmtp_client *client, *temp;
+	int ret = 0;
+
+	list_for_each_entry_safe(client, temp, list, list)
+	{
+		if(addr == client->addr && port == client->port) {
+			pr_info("Deleting client: %pI4@%-5d\n", &client->addr,
+					ntohs(client->port));
+			list_del(&client->list);
+			kfree(client);
+			++ret;
+		}
+	}
+	return ret;
+}
+
 static int gmtp_inter_close_from_client(struct sk_buff *skb,
 		struct gmtp_relay_entry *entry)
 {
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct gmtp_flow_info *info = entry->info;
-
-	struct gmtp_client *client, *temp;
+	/*struct gmtp_client *client, *temp;*/
+	struct gmtp_hdr *gh_reset;
+	unsigned int skb_len = skb->len;
+	int del = 0;
 
 	gmtp_pr_func();
 
-	pr_info("N Clients: %u\n", info->nclients);
-
-
-	list_for_each_entry_safe(client, temp, &info->clients->list, list)
+	/*list_for_each_entry_safe(client, temp, &info->clients->list, list)
 	{
 		if(iph->saddr == client->addr && gh->sport == client->port) {
 			pr_info("Deleting client: %pI4@%-5d\n", &client->addr,
@@ -163,33 +180,53 @@ static int gmtp_inter_close_from_client(struct sk_buff *skb,
 			list_del(&client->list);
 			kfree(client);
 		}
-	}
+	}*/
+	del = gmtp_delete_clients(&info->clients->list, iph->saddr, gh->sport);
+	info->nclients -= del;
 
+	gh_reset = gmtp_inter_make_reset_hdr(skb, GMTP_RESET_CODE_CLOSED);
+	if(gh_reset == NULL)
+		return NF_DROP;
 
-	if(info->nclients == 0) {
-		pr_info("0 Clients...\n");
+	/*
+	 * Here, we have no clients. So, we can send 'close' to server
+	 * and send a 'reset' to client.
+	 */
+	if(info->nclients <= 0) {
 
+		/* Build and send back 'reset' */
+		gmtp_inter_build_and_send_pkt(skb, iph->daddr, iph->saddr,
+				gh_reset, true);
+
+		/* Forwarding 'close' */
 		gh->sport = info->my_port;
 		iph->saddr = info->my_addr;
 		ip_send_check(iph);
 
-		/*pr_info("Calling 'gmtp_inter_build_and_send_pkt'\n");
-		gmtp_inter_build_and_send_pkt(skb, info->my_addr, iph->daddr,
-				gh, false);*/
-
 		gmtp_inter_del_entry(gmtp_inter.hashtable, entry->flowname);
 
-		pr_info("Going to ACCEPT:\n");
-		print_gmtp_packet(iph, gh);
+	} else {
+		__u8 *transport_header;
+		/* Only send 'reset' to clients, discarding 'close' */
+		skb_trim(skb, (skb_len - sizeof(struct gmtp_hdr)));
+		transport_header = skb_put(skb, gh_reset->hdrlen);
+		skb_reset_transport_header(skb);
+		memcpy(transport_header, gh_reset, gh_reset->hdrlen);
 
-		return NF_ACCEPT;
+		iph = ip_hdr(skb);
+		swap((iph->saddr), (iph->daddr));
+		ip_send_check(iph);
 	}
-	return NF_DROP;
+
+	gmtp_pr_debug("Reset: src=%pI4@%-5d, dst=%pI4@%-5d", &iph->saddr,
+			ntohs(gh_reset->sport), &iph->daddr,
+			ntohs(gh_reset->dport));
+
+	return NF_ACCEPT;
 }
 
 /*
- * FIXME Send close to multicast (or foreach client) and delete entry later...
- * Treat close from servers
+ * FIXME Send close to multicast (or foreach reporter) and delete entry later...
  */
 int gmtp_inter_close_out(struct sk_buff *skb)
 {

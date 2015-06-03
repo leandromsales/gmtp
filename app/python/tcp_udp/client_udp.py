@@ -25,14 +25,7 @@ else:
     address = default_address
 
 # Create sockets
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_GMTP, socket.IPPROTO_GMTP)
-
-flowname = getHash(address)
-client_socket.setsockopt(socket.SOL_GMTP, socket.GMTP_SOCKOPT_FLOWNAME, flowname)
-
-print 'Connecting to ', address
-client_socket.connect(address)
-print 'Connected!'
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 print '\nCaution! Client is printing only each 1.000 messages!\n'
 
@@ -40,7 +33,7 @@ i = 0
 total_size = 0
 lastsize1000 = 0
 
-logfilename = "logs/logclient_" +  str(timeit.default_timer())[4:] + ".log" 
+logfilename = "../logs/logclient_" +  str(timeit.default_timer())[4:] + ".log" 
 logfile = open(logfilename, 'w')
 
 logtable = "seq\ttime\tsize\telapsed\tinst_rate" + \
@@ -57,6 +50,7 @@ message = ' '
 out = "sair"
  
 try:
+    client_socket.sendto(message.encode('utf-8'), address)
     while message != out and len(message) > 0:
     
         message = client_socket.recv(1024).decode('utf-8')
@@ -129,9 +123,7 @@ try:
         
 except (KeyboardInterrupt):
     print '\nReceived keyboard interrupt, quitting...\n'
-    logfile.close()
-    client_socket.shutdown(socket.SHUT_RD)
 finally:
+    logfile.close()
     client_socket.close()
-
     

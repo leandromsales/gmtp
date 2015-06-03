@@ -486,9 +486,6 @@ static int gmtp_check_packet(struct sk_buff *skb)
 
 	const struct gmtp_hdr *gh = gmtp_hdr(skb);
 
-	/* TODO Verify each packet */
-	gmtp_print_function();
-
 	/** Accept multicast only for Data packets */
 	if (skb->pkt_type != PACKET_HOST && gh->type != GMTP_PKT_DATA)
 		return 1;
@@ -593,8 +590,6 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 
 	unsigned char flowname[GMTP_FLOWNAME_STR_LEN];
 
-	gmtp_print_function();
-
 	/* Step 1: Check header basics */
 	if (gmtp_check_packet(skb))
 		goto discard_it;
@@ -606,33 +601,26 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 	GMTP_SKB_CB(skb)->type = gh->type;
 
 	flowname_str(flowname, gh->flowname);
-	gmtp_print_debug("%s(%d) src=%pI4@%-5d dst=%pI4@%-5d seq=%llu "
-			"RTT=%u ms, transm_r=%u, flow=%s",
-			gmtp_packet_name(gh->type), gh->type,
-			&iph->saddr, ntohs(gh->sport),
-			&iph->daddr, ntohs(gh->dport),
-			(unsigned long long) GMTP_SKB_CB(skb)->seq,
-			gh->server_rtt, gh->transm_r,
-			flowname);
+
+	if(gh->type != GMTP_PKT_DATA)
+		gmtp_print_debug("%s(%d) src=%pI4@%-5d dst=%pI4@%-5d seq=%llu "
+				"RTT=%u ms, transm_r=%u, flow=%s",
+				gmtp_packet_name(gh->type), gh->type,
+				&iph->saddr, ntohs(gh->sport),
+				&iph->daddr, ntohs(gh->dport),
+				(unsigned long long) GMTP_SKB_CB(skb)->seq,
+				gh->server_rtt, gh->transm_r,
+				flowname);
 
 	if(skb->pkt_type == PACKET_MULTICAST) {
 
 		struct gmtp_client *tmp;
-		pr_info("Multicast packet\n");
 		media_entry = gmtp_lookup_client(gmtp_hashtable, gh->flowname);
-		if(media_entry == NULL) {
-			gmtp_print_error("Failed to look up media flow in "
-					"table");
+		if(media_entry == NULL)
 			goto discard_it;
-		}
 
 		list_for_each_entry(tmp, &(media_entry->clients->list), list)
 		{
-
-			gmtp_print_debug("Lookup: src=%pI4@%-5d dst=%pI4@%-5d",
-					&iph->saddr, ntohs(gh->sport),
-					&tmp->addr, ntohs(tmp->port));
-
 			sk = __inet_lookup(dev_net(skb_dst(skb)->dev),
 					&gmtp_inet_hashinfo, iph->saddr,
 					gh->sport, tmp->addr, tmp->port,
@@ -648,7 +636,6 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 		/* Normal packet...
 		 * Look up flow ID in table and get corresponding socket
 		 */
-		pr_info("Unicast packet\n");
 		sk = __inet_lookup_skb(&gmtp_inet_hashinfo, skb, gh->sport,
 				gh->dport);
 

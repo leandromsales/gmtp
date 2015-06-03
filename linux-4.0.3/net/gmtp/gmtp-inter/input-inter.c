@@ -370,12 +370,15 @@ int gmtp_inter_close_rcv(struct sk_buff *skb)
 
 			gh_reset = gmtp_inter_make_reset_hdr(skb,
 					GMTP_RESET_CODE_CLOSED);
-			if(gh_reset != NULL)
+			if(gh_reset != NULL) {
 				gmtp_inter_build_and_send_pkt(skb, iph->daddr,
 						iph->saddr, gh_reset, true);
-			gmtp_pr_debug("Reset: src=%pI4@%-5d, dst=%pI4@%-5d",
-					&iph->daddr, ntohs(gh_reset->sport),
-					&iph->saddr, ntohs(gh_reset->dport));
+				gmtp_pr_debug("Reset: src=%pI4@%-5d, dst=%pI4@%-5d",
+						&iph->daddr,
+						ntohs(gh_reset->sport),
+						&iph->saddr,
+						ntohs(gh_reset->dport));
+			}
 
 			/* FIXME Send close for each REPORTER */
 			jump_over_gmtp_intra(skb, &info->clients->list);

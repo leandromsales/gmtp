@@ -48,7 +48,7 @@ class ClientThread(threading.Thread):
         
         while True: 
             
-        #time.sleep(0.00175); # App controls Tx    0,001 ~ 100.000 bytes/s
+            time.sleep(0.00175); # App controls Tx    0,001 ~ 100.000 bytes/s
                   
             if(self.text != out):
                 self.i = self.i + 1
@@ -95,14 +95,12 @@ class ClientThread(threading.Thread):
         print "Client disconnected..."
         
 # Create sockets
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_GMTP, socket.IPPROTO_GMTP)
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-flowname = getHash(address)
-server_socket.setsockopt(socket.SOL_GMTP, socket.GMTP_SOCKOPT_FLOWNAME, flowname)
 
 tx_rate = 50000 #bytes/s.  250000 bytes/s == 2 Mbps
-server_socket.setsockopt(socket.SOL_GMTP, socket.GMTP_SOCKOPT_MAX_TX_RATE, tx_rate)
+#server_socket.setsockopt(socket.SOL_GMTP, socket.GMTP_SOCKOPT_MAX_TX_RATE, tx_rate)
 
 # Connect sockets
 server_socket.bind(address)

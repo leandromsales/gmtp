@@ -28,8 +28,7 @@ class ClientThread(threading.Thread):
     def __init__(self, address, socket, text):
         threading.Thread.__init__(self)
         self.i = 0
-        self.ip = address[0]
-        self.port = address[1]
+        self.client_addr = address
         self.socket = socket
         self.text = text
         
@@ -40,7 +39,7 @@ class ClientThread(threading.Thread):
         self.start_time = 0
         self.last_time = 0
         
-        print "[+] New thread started for", self.ip, ":", str(self.port)
+        print "[+] New thread started for", self.client_addr
 
     def run(self):
         print "Sending text: '" + self.text + "' at " +  str(tx_rate) + " bytes/s\n"
@@ -48,7 +47,7 @@ class ClientThread(threading.Thread):
         
         while True: 
             
-        #time.sleep(0.00175); # App controls Tx    0,001 ~ 100.000 bytes/s
+            time.sleep(0.00165); # App controls Tx    0,001 ~ 100.000 bytes/s
                   
             if(self.text != out):
                 self.i = self.i + 1
@@ -60,7 +59,7 @@ class ClientThread(threading.Thread):
                 size = getPacketSize(text)
                 self.total_size = self.total_size + size
                 
-                self.socket.send(text.encode('utf-8'))
+                self.socket.sendto(self.text.encode('utf-8'), self.client_addr)
                 
                 if(self.i%25 == 0):
                     sys.stdout.write("=>")
@@ -88,21 +87,19 @@ class ClientThread(threading.Thread):
                     print "Sending... "
         
             else:
-                self.socket.send(self.text.encode('utf-8'))
+                self.socket.sendto(self.text.encode('utf-8'), self.client_addr)
                 self.socket.close()
                 break
 
         print "Client disconnected..."
         
 # Create sockets
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_GMTP, socket.IPPROTO_GMTP)
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-flowname = getHash(address)
-server_socket.setsockopt(socket.SOL_GMTP, socket.GMTP_SOCKOPT_FLOWNAME, flowname)
 
 tx_rate = 50000 #bytes/s.  250000 bytes/s == 2 Mbps
-server_socket.setsockopt(socket.SOL_GMTP, socket.GMTP_SOCKOPT_MAX_TX_RATE, tx_rate)
+#server_socket.setsockopt(socket.SOL_GMTP, socket.GMTP_SOCKOPT_MAX_TX_RATE, tx_rate)
 
 # Connect sockets
 server_socket.bind(address)
@@ -116,9 +113,9 @@ def join_threads(list):
 
 try:
     while True:
-        server_socket.listen(20)
-        client_input, client_addr = server_socket.accept()
-        newthread = ClientThread(client_addr, client_input, msg)
+        client_req, client_addr = server_socket.recvfrom(1024)
+        print "Message received from ", client_addr, ":", client_req
+        newthread = ClientThread(client_addr, server_socket, msg)
         newthread.start()
         threads.append(newthread)
 except (KeyboardInterrupt, SystemExit):

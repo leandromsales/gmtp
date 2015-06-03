@@ -186,6 +186,8 @@ struct gmtp_hdr *gmtp_inter_make_reset_hdr(struct sk_buff *skb, __u8 code)
 	int gmtp_hdr_len = sizeof(struct gmtp_hdr)
 			+ sizeof(struct gmtp_hdr_reset);
 
+	__be16 tmp;
+
 	gmtp_pr_func();
 
 	transport_header = kmalloc(gmtp_hdr_len, gfp_any());
@@ -197,8 +199,7 @@ struct gmtp_hdr *gmtp_inter_make_reset_hdr(struct sk_buff *skb, __u8 code)
 	gh_cpy->version = GMTP_VERSION;
 	gh_cpy->type = GMTP_PKT_RESET;
 	gh_cpy->hdrlen = gmtp_hdr_len;
-	gh_cpy->sport = gh->dport;
-	gh_cpy->dport = gh->sport;
+	swap(gh_cpy->sport, gh_cpy->dport);
 
 	gh_reset = (struct gmtp_hdr_reset*)(transport_header
 			+ sizeof(struct gmtp_hdr));
