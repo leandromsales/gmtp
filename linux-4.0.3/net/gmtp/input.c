@@ -17,7 +17,8 @@
 
 static void gmtp_enqueue_skb(struct sock *sk, struct sk_buff *skb)
 {
-	gmtp_print_function();
+	gmtp_pr_func();
+	pr_info("\n");
 	__skb_pull(skb, gmtp_hdr(skb)->hdrlen);
 	__skb_queue_tail(&sk->sk_receive_queue, skb);
 	skb_set_owner_r(skb, sk);
@@ -43,7 +44,6 @@ static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
 	 * We ignore Close when received in one of the following states:
 	 *  - CLOSED		(may be a late or duplicate packet)
 	 *  - PASSIVE_CLOSEREQ	(the peer has sent a CloseReq earlier)
-	 *  - RESPOND		(already handled by dccp_check_req)
 	 */
 	case GMTP_CLOSING:
 		/*
@@ -271,9 +271,6 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 			switch(gh_rnotify->rn_code) {
 			case GMTP_REQNOTIFY_CODE_OK_REPORTER:
 				gp->role = GMTP_ROLE_REPORTER;
-
-				/* TODO set witch client is a reporter */
-
 			case GMTP_REQNOTIFY_CODE_OK: /* Process packet */
 				break;
 			case GMTP_REQNOTIFY_CODE_WAIT_REPORTER:
@@ -285,6 +282,12 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 				goto err;
 			default:
 				goto out_invalid_packet;
+			}
+
+			if(gp->role != GMTP_ROLE_REPORTER) {
+				gp->reporter = gmtp_create_client(
+						gh_rnotify->reporter_addr,
+						gh_rnotify->reporter_port, 1);
 			}
 
 			/* Inserting information in client table */

@@ -129,9 +129,9 @@ try:
         
 except (KeyboardInterrupt):
     print '\nReceived keyboard interrupt, quitting...\n'
+finally:
     logfile.close()
     client_socket.shutdown(socket.SHUT_RD)
-finally:
     client_socket.close()
 
     

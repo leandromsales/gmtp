@@ -386,7 +386,7 @@ int gmtp_inter_close_rcv(struct sk_buff *skb)
 						ntohs(gh_reset->dport));
 			}
 
-			/* FIXME Send close for each REPORTER */
+			/* FIXME Send close/reset for each REPORTER */
 			jump_over_gmtp_intra(skb, &info->clients->list);
 			list_for_each_entry(client, &info->clients->list, list)
 			{

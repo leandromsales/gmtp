@@ -154,7 +154,6 @@ static inline struct gmtp_request_sock *gmtp_rsk(const struct request_sock *req)
  * @tx_max_rate: Max TX rate (bytes/s). 0 == no limits.
  * tx_byte_budget: the amount of bytes that can be sent immediately.
  * tx_adj_budget: memory of last adjustment in TX rate.
- *
  */
 struct gmtp_sock {
 	/* inet_connection_sock has to be the first member of gmtp_sock */
@@ -171,6 +170,7 @@ struct gmtp_sock {
 	u32				mss;
 
 	enum gmtp_role			role:3;
+	struct gmtp_client		*reporter;
 
 	u32				req_stamp;
 	u32				reply_stamp;

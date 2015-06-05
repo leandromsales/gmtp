@@ -270,24 +270,20 @@ static inline int gmtp_data_packet(const struct sk_buff *skb)
 	       type == GMTP_PKT_DATAACK;
 }
 
-/**
- * struct gmtp_clients - A list of GMTP Clients
- *
- * @list: The list_head
- * @id: a number to intentify and count clients
- * @addr: ip address of client
- * @port: reception port of client
- * @reporter: a flag to indicate reporters
- * @slots: number of occuped slots at a reporter
- */
-struct gmtp_client {
-	struct list_head 	list;
-	unsigned int		id;
-	__be32 			addr;
-	__be16 			port;
-	__u8			reporter:1;
-	__u8			slots;
-};
+
+static inline struct gmtp_client *gmtp_create_client(__be32 addr, __be16 port,
+		__u8 reporter)
+{
+	struct gmtp_client *new = kmalloc(sizeof(struct gmtp_client),
+	GFP_ATOMIC);
+
+	if(new != NULL) {
+		new->addr = addr;
+		new->port = port;
+		new->reporter = reporter;
+	}
+	return new;
+}
 
 /**
  * Create and add a client in the list of clients
@@ -295,8 +291,7 @@ struct gmtp_client {
 static inline struct gmtp_client *gmtp_list_add_client(unsigned int id,
 		__be32 addr, __be16 port, __u8 reporter, struct list_head *head)
 {
-	struct gmtp_client *new = kmalloc(sizeof(struct gmtp_client),
-			GFP_ATOMIC);
+	struct gmtp_client *new = gmtp_create_client(addr, port);
 
 	if(new == NULL) {
 		gmtp_pr_error("Error while creating new gmtp_client...");
@@ -304,10 +299,6 @@ static inline struct gmtp_client *gmtp_list_add_client(unsigned int id,
 	}
 
 	new->id	  = id;
-	new->addr = addr;
-	new->port = port;
-	new->reporter = reporter;
-
 	gmtp_pr_info("New client (%u): ADDR=%pI4@%-5d\n",
 			new->id, &addr, ntohs(port));
 
@@ -336,6 +327,24 @@ static inline struct gmtp_client* gmtp_get_client(struct list_head *head,
 			return client;
 	}
 	return NULL;
+}
+
+static inline int gmtp_delete_clients(struct list_head *list, __be32 addr, __be16 port)
+{
+	struct gmtp_client *client, *temp;
+	int ret = 0;
+
+	list_for_each_entry_safe(client, temp, list, list)
+	{
+		if(addr == client->addr && port == client->port) {
+			pr_info("Deleting client: %pI4@%-5d\n", &client->addr,
+					ntohs(client->port));
+			list_del(&client->list);
+			kfree(client);
+			++ret;
+		}
+	}
+	return ret;
 }
 
 #endif /* GMTP_H_ */

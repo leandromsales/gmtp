@@ -297,8 +297,7 @@ void gmtp_close(struct sock *sk, long timeout)
 
 	if(data_was_unread) {
 		/* Unread data was tossed, send an appropriate Reset Code */
-		gmtp_print_warning("ABORT with %u bytes unread\n",
-				data_was_unread);
+		gmtp_pr_warning("ABORT with %u bytes unread", data_was_unread);
 		gmtp_send_reset(sk, GMTP_RESET_CODE_ABORTED);
 		gmtp_set_state(sk, GMTP_CLOSED);
 	} else if(sock_flag(sk, SOCK_LINGER) && !sk->sk_lingertime) {
@@ -306,11 +305,9 @@ void gmtp_close(struct sock *sk, long timeout)
 		sk->sk_prot->disconnect(sk, 0);
 	} else if(sk->sk_state != GMTP_CLOSED) {
 		/*
-		 * TODO Normal connection termination.
 		 * May need to wait if there are still packets in the
 		 * TX queue that are delayed by the CCID.
 		 */
-		gmtp_print_debug("TODO: Normal connection termination.");
 		gmtp_terminate_connection(sk);
 	}
 

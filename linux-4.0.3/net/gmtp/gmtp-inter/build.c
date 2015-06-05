@@ -150,35 +150,6 @@ int gmtp_inter_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
 	skb_put(skb, sizeof(struct gmtp_hdr_reqnotify));
 	memcpy(gh, new_gh, gmtp_hdr_len);
 
-	/*gh->version = GMTP_VERSION;
-	gh->type = GMTP_PKT_REQUESTNOTIFY;
-	gh->hdrlen = gmtp_hdr_len;
-	gh->relay = 1;
-	gh->sport = new_sport;
-	gh->dport = new_dport;
-
-	gh_rnotify = (struct gmtp_hdr_reqnotify*)
-			skb_put(skb, sizeof(struct gmtp_hdr_reqnotify));
-
-	if(gh_rnotify == NULL)
-		goto fail;
-
-	if(entry != NULL && code != GMTP_REQNOTIFY_CODE_ERROR) {
-		gh_rnotify->rn_code = code;
-		gh_rnotify->mcst_addr = entry->channel_addr;
-		gh_rnotify->mcst_port = entry->channel_port;
-
-		gmtp_print_debug("ReqNotify => Channel: %pI4@%-5d | Code: %d",
-				&gh_rnotify->mcst_addr,
-				ntohs(gh_rnotify->mcst_port),
-				gh_rnotify->rn_code);
-	} else {
-		gmtp_print_debug("ReqNotify => Channel: NULL | Code: %d",
-				gh_rnotify->rn_code);
-	}*/
-
-
-
 	iph->saddr = new_saddr;
 	iph->daddr = new_daddr;
 	iph->tot_len = htons(skb->len);

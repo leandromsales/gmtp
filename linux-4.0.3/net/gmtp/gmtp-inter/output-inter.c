@@ -98,22 +98,15 @@ out:
 	return NF_ACCEPT;
 }
 
-static int gmtp_delete_clients(struct list_head *list, __be32 addr, __be16 port)
+static void gmtp_intra_convert_to_close(struct sk_buff *skb)
 {
-	struct gmtp_client *client, *temp;
-	int ret = 0;
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	unsigned int skb_len = skb->len;
 
-	list_for_each_entry_safe(client, temp, list, list)
-	{
-		if(addr == client->addr && port == client->port) {
-			pr_info("Deleting client: %pI4@%-5d\n", &client->addr,
-					ntohs(client->port));
-			list_del(&client->list);
-			kfree(client);
-			++ret;
-		}
-	}
-	return ret;
+	skb_trim(skb, (skb_len - gmtp_packet_hdr_variable_len(gh->type)));
+
+	gh->type = GMTP_PKT_CLOSE;
+	gh->hdrlen = __gmtp_hdr_len(gh);
 }
 
 static int gmtp_inter_close_from_client(struct sk_buff *skb,
@@ -122,7 +115,6 @@ static int gmtp_inter_close_from_client(struct sk_buff *skb,
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct gmtp_flow_info *info = entry->info;
-	/*struct gmtp_client *client, *temp;*/
 	struct gmtp_hdr *gh_reset;
 	unsigned int skb_len = skb->len;
 	int del = 0;
@@ -137,16 +129,20 @@ static int gmtp_inter_close_from_client(struct sk_buff *skb,
 		return NF_DROP;
 
 	/*
-	 * Here, we have no clients. So, we can send 'close' to server
+	 * Here, we have no clients.
+	 * So, we can send 'close' to server
 	 * and send a 'reset' to client.
 	 */
 	if(info->nclients <= 0) {
 
 		/* Build and send back 'reset' */
+		pr_info("Sending RESET back to client");
 		gmtp_inter_build_and_send_pkt(skb, iph->daddr, iph->saddr,
 				gh_reset, true);
 
 		/* Forwarding 'close' */
+		if(gh->type == GMTP_PKT_RESET)
+			gmtp_intra_convert_to_close(skb);
 		gh->relay = 1;
 		gh->sport = info->my_port;
 		iph->saddr = info->my_addr;
@@ -169,9 +165,10 @@ static int gmtp_inter_close_from_client(struct sk_buff *skb,
 		ip_send_check(iph);
 	}
 
-	gmtp_pr_debug("Reset: src=%pI4@%-5d, dst=%pI4@%-5d", &iph->saddr,
-			ntohs(gh_reset->sport), &iph->daddr,
-			ntohs(gh_reset->dport));
+	gmtp_pr_debug("%s: src=%pI4@%-5d, dst=%pI4@%-5d",
+			gmtp_packet_name(gh->type),
+			&iph->saddr, ntohs(gh_reset->sport),
+			&iph->daddr, ntohs(gh_reset->dport));
 
 	return NF_ACCEPT;
 }
@@ -194,11 +191,9 @@ int gmtp_inter_close_out(struct sk_buff *skb)
 	case GMTP_INTER_TRANSMITTING:
 		return gmtp_inter_close_from_client(skb, entry);
 	case GMTP_INTER_CLOSED:
-		pr_info("CLOSED\n");
 		gmtp_inter_del_entry(gmtp_inter.hashtable, gh->flowname);
 		return NF_ACCEPT;
 	case GMTP_INTER_CLOSE_RECEIVED:
-		pr_info("CLOSE_RECEIVED\n");
 		entry->state = GMTP_INTER_CLOSED;
 		break;
 	}

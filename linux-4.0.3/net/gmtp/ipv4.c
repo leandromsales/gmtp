@@ -437,10 +437,8 @@ static struct sock *gmtp_v4_hnd_req(struct sock *sk, struct sk_buff *skb) {
 int gmtp_v4_do_rcv(struct sock *sk, struct sk_buff *skb) {
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 
-	gmtp_print_function();
-	gmtp_print_debug("sk_state: %s (%d)",
-					gmtp_state_name(sk->sk_state),
-					sk->sk_state);
+	gmtp_pr_debug("sk_state: %s (%d)", gmtp_state_name(sk->sk_state),
+			sk->sk_state);
 
 	if (sk->sk_state == GMTP_OPEN) { /* Fast path */
 
@@ -605,6 +603,8 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 
 	unsigned char flowname[GMTP_FLOWNAME_STR_LEN];
 
+	gmtp_pr_func();
+
 	/* Step 1: Check header basics */
 	if (gmtp_check_packet(skb))
 		goto discard_it;
@@ -618,7 +618,7 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 	flowname_str(flowname, gh->flowname);
 
 	if(gh->type != GMTP_PKT_DATA)
-		gmtp_print_debug("%s(%d) src=%pI4@%-5d dst=%pI4@%-5d seq=%llu "
+		pr_info("%s(%d) src=%pI4@%-5d dst=%pI4@%-5d seq=%llu "
 				"RTT=%u ms, transm_r=%u, flow=%s",
 				gmtp_packet_name(gh->type), gh->type,
 				&iph->saddr, ntohs(gh->sport),

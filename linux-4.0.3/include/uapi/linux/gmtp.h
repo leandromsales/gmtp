@@ -280,5 +280,24 @@ enum gmtp_sockopt_codes {
 };
 
 
+/**
+ * struct gmtp_clients - A list of GMTP Clients
+ *
+ * @list: The list_head
+ * @id: a number to intentify and count clients
+ * @addr: ip address of client
+ * @port: reception port of client
+ * @reporter: a flag to indicate reporters
+ * @slots: number of occuped slots at a reporter
+ */
+struct gmtp_client {
+	struct list_head 	list;
+	unsigned int		id;
+	__be32 			addr;
+	__be16 			port;
+	__u8			reporter:1;
+	__u8			slots;
+};
+
 
 #endif /* UAPI_LINUX_GMTP_H */
