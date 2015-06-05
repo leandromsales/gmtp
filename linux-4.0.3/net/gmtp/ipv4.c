@@ -31,7 +31,7 @@ static inline __u32 gmtp_v4_init_sequence(const struct sk_buff *skb) {
 			gmtp_hdr(skb)->dport);
 }
 
-struct sock* gmtp_build_control_sk(struct sock *sk)
+struct sock* gmtp_v4_build_control_sk(struct sock *sk)
 {
 	struct sockaddr_in *local;
 	unsigned char *channel = "\xee\xff\xff\xfa"; /* 238.255.255.250 */
@@ -141,7 +141,7 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len) {
 	if (err != 0)
 		goto failure;
 
-	gmtp_info->control_sk = gmtp_build_control_sk(sk);
+	gmtp_info->control_sk = gmtp_v4_build_control_sk(sk);
 
 out:
 	return err;
@@ -496,12 +496,16 @@ EXPORT_SYMBOL_GPL(gmtp_v4_do_rcv);
  */
 static int gmtp_check_packet(struct sk_buff *skb)
 {
-
+	const struct iphdr *iph = ip_hdr(skb);
 	const struct gmtp_hdr *gh = gmtp_hdr(skb);
 
-	/** Accept multicast only for Data packets */
-	if (skb->pkt_type != PACKET_HOST && gh->type != GMTP_PKT_DATA)
+	/** Accept multicast only for Data, Close and Reset packets */
+	if (skb->pkt_type != PACKET_HOST &&
+			gh->type != GMTP_PKT_DATA &&
+			gh->type != GMTP_PKT_CLOSE &&
+			gh->type != GMTP_PKT_RESET) {
 		return 1;
+	}
 
 	/* If the packet is shorter than sizeof(struct gmtp_hdr),
 	 * drop packet and return */
@@ -537,7 +541,7 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 
 	if(sk == NULL) {
 
-		if(gmtp_info->relay_enabled && gh->type == GMTP_PKT_CLOSE) {
+		if(gmtp_info->relay_enabled) {
 			gmtp_pr_error("Relay enabled...");
 			goto ignore_it;
 		}

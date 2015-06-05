@@ -362,8 +362,12 @@ int gmtp_inter_close_rcv(struct sk_buff *skb)
 	if(entry == NULL)
 		return NF_ACCEPT;
 
+	pr_info("Passou o 1\n");
+
 	if(entry->state == GMTP_INTER_CLOSED)
 		return NF_ACCEPT;
+
+	pr_info("Passou o 2\n");
 
 	info = entry->info;
 
@@ -371,6 +375,8 @@ int gmtp_inter_close_rcv(struct sk_buff *skb)
 		if(entry->state == GMTP_INTER_TRANSMITTING) {
 
 			struct gmtp_hdr *gh_reset;
+
+			pr_info("Passou o 3\n");
 
 			entry->state = GMTP_INTER_CLOSE_RECEIVED;
 
@@ -386,26 +392,13 @@ int gmtp_inter_close_rcv(struct sk_buff *skb)
 						ntohs(gh_reset->dport));
 			}
 
-			/* FIXME Send close/reset for each REPORTER */
 			jump_over_gmtp_intra(skb, &info->clients->list);
-			list_for_each_entry(client, &info->clients->list, list)
-			{
-				struct sk_buff *copy = skb_copy(skb, gfp_any());
-				if(copy != NULL) {
-					struct iphdr *iph_copy = ip_hdr(copy);
-					struct gmtp_hdr *gh_copy = gmtp_hdr(
-							copy);
-
-					iph_copy->daddr = client->addr;
-					ip_send_check(iph_copy);
-					gh_copy->dport = client->port;
-
-					gmtp_buffer_add(info, copy);
-				}
-			}
+			print_gmtp_packet(iph, gh);
 			gmtp_buffer_add(info, skb);
 		}
 	}
+
+	pr_info("Passou o 4\n");
 
 	return NF_ACCEPT;
 }

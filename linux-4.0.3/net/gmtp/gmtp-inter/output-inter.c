@@ -82,8 +82,9 @@ int gmtp_inter_data_out(struct sk_buff *skb)
 				gmtp_copy_hdr(skb, buffered);
 				gmtp_copy_data(skb, buffered);
 			}
-		} else
+		} else {
 			return NF_DROP;
+		}
 	}
 
 	iph->daddr = entry->channel_addr;
@@ -98,17 +99,6 @@ out:
 	return NF_ACCEPT;
 }
 
-static void gmtp_intra_convert_to_close(struct sk_buff *skb)
-{
-	struct gmtp_hdr *gh = gmtp_hdr(skb);
-	unsigned int skb_len = skb->len;
-
-	skb_trim(skb, (skb_len - gmtp_packet_hdr_variable_len(gh->type)));
-
-	gh->type = GMTP_PKT_CLOSE;
-	gh->hdrlen = __gmtp_hdr_len(gh);
-}
-
 static int gmtp_inter_close_from_client(struct sk_buff *skb,
 		struct gmtp_relay_entry *entry)
 {
@@ -117,6 +107,7 @@ static int gmtp_inter_close_from_client(struct sk_buff *skb,
 	struct gmtp_flow_info *info = entry->info;
 	struct gmtp_hdr *gh_reset;
 	unsigned int skb_len = skb->len;
+	__u8 *transport_header = NULL;
 	int del = 0;
 
 	gmtp_pr_func();
@@ -140,9 +131,19 @@ static int gmtp_inter_close_from_client(struct sk_buff *skb,
 		gmtp_inter_build_and_send_pkt(skb, iph->daddr, iph->saddr,
 				gh_reset, true);
 
-		/* Forwarding 'close' */
-		if(gh->type == GMTP_PKT_RESET)
-			gmtp_intra_convert_to_close(skb);
+		/* FIXME Transform 'reset' into 'close' before forwarding */
+		/*if(gh->type == GMTP_PKT_RESET) {
+			gh_close = gmtp_inter_make_close_hdr(skb);
+			skb_trim(skb, (skb_len - gh->hdrlen));
+			skb_reset_transport_header(skb);
+			pr_info("gh: %p\n", gh);
+			pr_info("gh->hdrlen: %u\n", gh->hdrlen);
+			skb_put(skb, gh_close->hdrlen);
+			gh = gmtp_hdr(skb);
+			memcpy(gh, gh_close, gh_close->hdrlen);
+			iph = ip_hdr(skb);
+			iph->tot_len = ntohs(skb->len);
+		}*/
 		gh->relay = 1;
 		gh->sport = info->my_port;
 		iph->saddr = info->my_addr;
@@ -151,7 +152,6 @@ static int gmtp_inter_close_from_client(struct sk_buff *skb,
 		gmtp_inter_del_entry(gmtp_inter.hashtable, entry->flowname);
 
 	} else {
-		__u8 *transport_header;
 		/* Only send 'reset' to clients, discarding 'close' */
 		skb_trim(skb, (skb_len - sizeof(struct gmtp_hdr)));
 		transport_header = skb_put(skb, gh_reset->hdrlen);
@@ -165,10 +165,10 @@ static int gmtp_inter_close_from_client(struct sk_buff *skb,
 		ip_send_check(iph);
 	}
 
-	gmtp_pr_debug("%s: src=%pI4@%-5d, dst=%pI4@%-5d",
-			gmtp_packet_name(gh->type),
-			&iph->saddr, ntohs(gh_reset->sport),
-			&iph->daddr, ntohs(gh_reset->dport));
+	gmtp_pr_debug("%s (%u): src=%pI4@%-5d, dst=%pI4@%-5d",
+			gmtp_packet_name(gh->type), gh->type,
+			&iph->saddr, ntohs(gh->sport),
+			&iph->daddr, ntohs(gh->dport));
 
 	return NF_ACCEPT;
 }
@@ -178,6 +178,7 @@ static int gmtp_inter_close_from_client(struct sk_buff *skb,
  */
 int gmtp_inter_close_out(struct sk_buff *skb)
 {
+	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct gmtp_relay_entry *entry;
 
@@ -191,9 +192,15 @@ int gmtp_inter_close_out(struct sk_buff *skb)
 	case GMTP_INTER_TRANSMITTING:
 		return gmtp_inter_close_from_client(skb, entry);
 	case GMTP_INTER_CLOSED:
+		pr_info("GMTP_INTER_CLOSED\n");
+		gh->relay = 1;
+		gh->dport = entry->channel_port;
+		iph->daddr = entry->channel_addr;
+		ip_send_check(iph);
 		gmtp_inter_del_entry(gmtp_inter.hashtable, gh->flowname);
 		return NF_ACCEPT;
 	case GMTP_INTER_CLOSE_RECEIVED:
+		pr_info("GMTP_INTER_CLOSE_RECEIVED\n");
 		entry->state = GMTP_INTER_CLOSED;
 		break;
 	}

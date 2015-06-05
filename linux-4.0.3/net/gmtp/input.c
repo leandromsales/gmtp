@@ -168,6 +168,29 @@ out:
 EXPORT_SYMBOL_GPL(gmtp_v4_reporter);
 */
 
+
+struct sock* gmtp_sock_connect(struct sock *sk, __be32 addr, __be16 port)
+{
+	struct sock *newsk;
+
+	gmtp_pr_func();
+
+	newsk = sk_clone_lock(sk, GFP_ATOMIC);
+	if(newsk == NULL)
+		return NULL;
+
+	newsk->sk_protocol = sk->sk_protocol;
+	newsk->sk_reuse = true; /* SO_REUSEADDR */
+	newsk->sk_reuseport = true;
+	newsk->sk_daddr = addr;
+	newsk->sk_dport = port;
+	gmtp_set_state(newsk, GMTP_OPEN);
+
+	return newsk;
+
+}
+EXPORT_SYMBOL_GPL(gmtp_sock_connect);
+
 struct sock* gmtp_multicast_connect(struct sock *sk, __be32 addr, __be16 port)
 {
 	struct sock *newsk;
@@ -285,9 +308,18 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 			}
 
 			if(gp->role != GMTP_ROLE_REPORTER) {
+				struct sock *rsock;
+
+				rsock = gmtp_sock_connect(sk,
+						gh_rnotify->reporter_addr,
+						gh_rnotify->reporter_port);
+
 				gp->reporter = gmtp_create_client(
 						gh_rnotify->reporter_addr,
 						gh_rnotify->reporter_port, 1);
+
+				/*gmtp_send_ack(rsock, 0);*/
+				gmtp_send_close(rsock, 10);
 			}
 
 			/* Inserting information in client table */

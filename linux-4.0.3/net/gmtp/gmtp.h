@@ -159,12 +159,16 @@ int gmtp_getsockopt(struct sock *sk, int level, int optname,
 int gmtp_setsockopt(struct sock *sk, int level, int optname,
 		char __user *optval, unsigned int optlen);
 
+/** ipv4.c */
+int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len);
+
 /** input.c */
+struct sock* gmtp_multicast_connect(struct sock *sk, __be32 addr, __be16 port);
+struct sock* gmtp_sock_connect(struct sock *sk, __be32 addr, __be16 port);
 int gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 		const struct gmtp_hdr *dh, const unsigned int len);
 int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 		struct gmtp_hdr *gh, unsigned int len);
-struct sock* gmtp_multicast_connect(struct sock *sk, __be32 addr, __be16 port);
 
 /** output.c */
 void gmtp_send_ack(struct sock *sk,  __u8 ackcode);
@@ -195,9 +199,6 @@ struct sock *gmtp_check_req(struct sock *sk, struct sk_buff *skb,
 			    struct request_sock **prev);
 void gmtp_reqsk_send_ack(struct sock *sk, struct sk_buff *skb,
 			 struct request_sock *rsk);
-
-/** ipv4.c */
-int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len);
 
 
 /** GMTP structs and etc **/
@@ -291,7 +292,7 @@ static inline struct gmtp_client *gmtp_create_client(__be32 addr, __be16 port,
 static inline struct gmtp_client *gmtp_list_add_client(unsigned int id,
 		__be32 addr, __be16 port, __u8 reporter, struct list_head *head)
 {
-	struct gmtp_client *new = gmtp_create_client(addr, port);
+	struct gmtp_client *new = gmtp_create_client(addr, port, reporter);
 
 	if(new == NULL) {
 		gmtp_pr_error("Error while creating new gmtp_client...");

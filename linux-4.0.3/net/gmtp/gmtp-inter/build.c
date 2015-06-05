@@ -125,7 +125,6 @@ int gmtp_inter_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
 
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct iphdr *iph = ip_hdr(skb);
-	struct gmtp_hdr_reqnotify *gh_rnotify;
 	struct gmtp_relay_entry *entry;
 	unsigned int skb_len = skb->len;
 	struct gmtp_hdr *new_gh;
@@ -173,8 +172,6 @@ struct gmtp_hdr *gmtp_inter_make_reset_hdr(struct sk_buff *skb, __u8 code)
 	int gmtp_hdr_len = sizeof(struct gmtp_hdr)
 			+ sizeof(struct gmtp_hdr_reset);
 
-	__be16 tmp;
-
 	gmtp_pr_func();
 
 	transport_header = kmalloc(gmtp_hdr_len, gfp_any());
@@ -183,7 +180,6 @@ struct gmtp_hdr *gmtp_inter_make_reset_hdr(struct sk_buff *skb, __u8 code)
 	gh_cpy = (struct gmtp_hdr *)transport_header;
 	memcpy(gh_cpy, gh, sizeof(struct gmtp_hdr));
 
-	gh_cpy->version = GMTP_VERSION;
 	gh_cpy->type = GMTP_PKT_RESET;
 	gh_cpy->hdrlen = gmtp_hdr_len;
 	gh_cpy->relay = 1;
@@ -201,6 +197,32 @@ struct gmtp_hdr *gmtp_inter_make_reset_hdr(struct sk_buff *skb, __u8 code)
 	default:
 		break;
 	}
+
+	return gh_cpy;
+}
+
+struct gmtp_hdr *gmtp_inter_make_close_hdr(struct sk_buff *skb)
+{
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	__u8 *transport_header;
+
+	struct gmtp_hdr *gh_cpy;
+
+	int gmtp_hdr_len = sizeof(struct gmtp_hdr);
+
+	gmtp_pr_func();
+
+	transport_header = kmalloc(gmtp_hdr_len, gfp_any());
+	memset(transport_header, 0, gmtp_hdr_len);
+
+	gh_cpy = (struct gmtp_hdr *)transport_header;
+	memcpy(gh_cpy, gh, gmtp_hdr_len);
+
+	gh_cpy->type = GMTP_PKT_CLOSE;
+	gh_cpy->hdrlen = gmtp_hdr_len;
+	gh_cpy->relay = 1;
+
+	pr_info("%s (%u)\n", gmtp_packet_name(gh_cpy->type), gh_cpy->type);
 
 	return gh_cpy;
 }

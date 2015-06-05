@@ -365,6 +365,27 @@ void gmtp_send_ack(struct sock *sk, __u8 ackcode)
 }
 EXPORT_SYMBOL_GPL(gmtp_send_ack);
 
+/*void gmtp_send_ack_to_reporter(struct sock *sk, __u8 ackcode)
+{
+	gmtp_pr_func();
+
+	 If we have been reset, we may not send again.
+	if(sk->sk_state != GMTP_CLOSED) {
+
+		struct sk_buff *skb = alloc_skb(sk->sk_prot->max_header,
+		GFP_ATOMIC);
+
+		if(skb == NULL)
+			return;
+
+		 Reserve space for headers
+		skb_reserve(skb, sk->sk_prot->max_header);
+		GMTP_SKB_CB(skb)->type = GMTP_PKT_ACK;
+		GMTP_SKB_CB(skb)->ackcode = ackcode;
+		gmtp_transmit_skb(sk, skb);
+	}
+}
+EXPORT_SYMBOL_GPL(gmtp_send_ack_to_reporter);*/
 
 void gmtp_send_feedback(struct sock *sk)
 {
