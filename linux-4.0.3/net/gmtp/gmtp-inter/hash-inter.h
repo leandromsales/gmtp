@@ -65,6 +65,7 @@ struct gmtp_flow_info {
 
 	struct gmtp_client	*clients;
 	unsigned int 		nclients;
+	struct gmtp_client 	*cur_reporter;
 
 	struct sk_buff_head 	*buffer;
 	unsigned int 		buffer_size;

@@ -82,8 +82,6 @@ struct gmtp_client_entry *gmtp_lookup_client(
 }
 EXPORT_SYMBOL_GPL(gmtp_lookup_client);
 
-
-
 int gmtp_add_client_entry(struct gmtp_hashtable *hashtable, __u8 *flowname,
 		__be32 local_addr, __be16 local_port,
 		__be32 channel_addr, __be16 channel_port)

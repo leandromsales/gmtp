@@ -254,10 +254,13 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 			struct gmtp_client_entry *media_entry;
 
 			gh_rnotify = gmtp_hdr_reqnotify(skb);
-			gmtp_pr_debug("RequestNotify => Channel: %pI4@%-5d | Error: %d",
+			pr_info("ReqNotify => Channel: %pI4@%-5d | Code: %d | ",
 					&gh_rnotify->mcst_addr,
 					ntohs(gh_rnotify->mcst_port),
 					gh_rnotify->rn_code);
+			pr_info("Reporter: %pI4@%-5d\n",
+					&gh_rnotify->reporter_addr,
+					ntohs(gh_rnotify->reporter_port));
 
 			media_entry = gmtp_lookup_client(gmtp_hashtable,
 					gh->flowname);

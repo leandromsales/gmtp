@@ -36,49 +36,6 @@ int gmtp_inter_register_out(struct sk_buff *skb)
 	return NF_ACCEPT;
 }
 
-int gmtp_inter_request_notify_out(struct sk_buff *skb)
-{
-	struct gmtp_hdr *gh = gmtp_hdr(skb);
-	struct iphdr *iph = ip_hdr(skb);
-	struct gmtp_hdr *gh_req_n;
-	struct gmtp_relay_entry *entry;
-
-	struct gmtp_client *client;
-	__u8 code = GMTP_REQNOTIFY_CODE_OK;
-
-	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
-	if(entry == NULL)
-		return NF_ACCEPT;
-
-	list_for_each_entry(client, &entry->info->clients->list, list)
-	{
-		struct sk_buff *copy = skb_copy(skb, gfp_any());
-
-		pr_info("Client: %pI4@%-5d, Rep: %d\n", &client->addr,
-				client->port, client->reporter);
-
-		code = client->reporter == 1 ?
-				GMTP_REQNOTIFY_CODE_OK_REPORTER :
-				GMTP_REQNOTIFY_CODE_OK;
-		if(copy != NULL) {
-			struct iphdr *iph_copy = ip_hdr(copy);
-			struct gmtp_hdr *gh_copy = gmtp_hdr(copy);
-
-			iph_copy->daddr = client->addr;
-			ip_send_check(iph_copy);
-			gh_copy->dport = client->port;
-
-			gh_req_n = gmtp_inter_make_request_notify_hdr(copy,
-					entry, gh->sport, client->port, code);
-			if(gh_req_n != NULL)
-				gmtp_inter_build_and_send_pkt(skb, iph->saddr,
-						client->addr, gh_req_n, false);
-		}
-	}
-
-	return NF_ACCEPT;
-}
-
 void gmtp_copy_data(struct sk_buff *skb, struct sk_buff *src_skb)
 {
 	__u8* data = gmtp_data(skb);

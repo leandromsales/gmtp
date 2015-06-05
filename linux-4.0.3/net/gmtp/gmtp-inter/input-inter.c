@@ -54,7 +54,6 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct gmtp_hdr *gh_reqnotify;
 	struct gmtp_relay_entry *entry;
-	struct gmtp_client *cur_reporter = NULL;
 
 	__u8 code = GMTP_REQNOTIFY_CODE_ERROR;
 	__u8 reporter = 0;
@@ -109,9 +108,9 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 	}
 
 	if(reporter)
-		cur_reporter = gmtp_list_add_client(++entry->info->nclients,
-				iph->saddr, gh->sport, reporter,
-				&entry->info->clients->list);
+		entry->info->cur_reporter = gmtp_list_add_client(
+				++entry->info->nclients, iph->saddr, gh->sport,
+				reporter, &entry->info->clients->list);
 	else
 		gmtp_list_add_client(++entry->info->nclients, iph->saddr,
 				gh->sport, reporter,
@@ -119,7 +118,7 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 
 out:
 	gh_reqnotify = gmtp_inter_make_request_notify_hdr(skb, entry,
-			gh->dport, gh->sport, cur_reporter, code);
+			gh->dport, gh->sport, entry->info->cur_reporter, code);
 
 	if(gh_reqnotify != NULL)
 		gmtp_inter_build_and_send_pkt(skb, iph->daddr,

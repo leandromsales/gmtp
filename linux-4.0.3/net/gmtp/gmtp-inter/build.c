@@ -96,18 +96,13 @@ struct gmtp_hdr *gmtp_inter_make_request_notify_hdr(struct sk_buff *skb,
 			+ sizeof(struct gmtp_hdr));
 
 	gh_rnotify->rn_code = code;
+	gh_rnotify->mcst_addr = entry->channel_addr;
+	gh_rnotify->mcst_port = entry->channel_port;
+	memcpy(gh_rnotify->relay_id, gmtp_inter.relay_id, GMTP_RELAY_ID_LEN);
 
-	switch(code) {
-	case GMTP_REQNOTIFY_CODE_OK_REPORTER:
-	case GMTP_REQNOTIFY_CODE_WAIT_REPORTER:
-		gh_rnotify->mcst_addr = entry->channel_addr;
-		gh_rnotify->mcst_port = entry->channel_port;
-		memcpy(gh_rnotify->relay_id, gmtp_inter->relay_id, GMTP_RELAY_ID_LEN);
-		break;
-	case GMTP_REQNOTIFY_CODE_OK:
-	case GMTP_REQNOTIFY_CODE_WAIT:
-		gh_rnotify->raddr = reporter->addr;
-		gh_rnotify->rport = reporter->port;
+	if(reporter != NULL) {
+		gh_rnotify->reporter_addr = reporter->addr;
+		gh_rnotify->reporter_port = reporter->port;
 		reporter->slots++;
 	}
 
@@ -151,6 +146,8 @@ int gmtp_inter_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
 	new_gh = kmalloc(gmtp_hdr_len, GFP_ATOMIC);
 	new_gh = gmtp_inter_make_request_notify_hdr(skb, entry, new_sport,
 			new_dport, reporter, code);
+
+	skb_put(skb, sizeof(struct gmtp_hdr_reqnotify));
 	memcpy(gh, new_gh, gmtp_hdr_len);
 
 	/*gh->version = GMTP_VERSION;

@@ -25,8 +25,6 @@
 extern const char *gmtp_packet_name(const int);
 extern const char *gmtp_state_name(const int);
 extern void flowname_str(__u8* str, const __u8* flowname);
-extern void gmtp_list_add_client(unsigned int id, __be32 addr,
-		__be16 port, __u8 reporter, struct list_head *head);
 
 /**
  * TODO Negotiate buffer size with server
@@ -79,10 +77,10 @@ void gmtp_inter_add_relayid(struct sk_buff *skb);
 struct gmtp_hdr *gmtp_inter_make_route_hdr(struct sk_buff *skb);
 struct gmtp_hdr *gmtp_inter_make_request_notify_hdr(struct sk_buff *skb,
 		struct gmtp_relay_entry *media_info, __be16 new_sport,
-		__be16 new_dport, __u8 error_code);
+		__be16 new_dport, struct gmtp_client *reporter, __u8 error_code);
 int gmtp_inter_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
 		__be16 new_sport, __be32 new_daddr, __be16 new_dport,
-		__u8 error_code);
+		struct gmtp_client *reporter, __u8 error_code);
 struct gmtp_hdr *gmtp_inter_make_reset_hdr(struct sk_buff *skb, __u8 code);
 void gmtp_inter_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
 		__be32 daddr, struct gmtp_hdr *gh_ref, bool backward);
