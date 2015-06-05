@@ -131,9 +131,10 @@ int gmtp_inter_data_out(struct sk_buff *skb)
 
 	iph->daddr = entry->channel_addr;
 	ip_send_check(iph);
+	gh->relay = 1;
 	gh->dport = entry->channel_port;
 
-	/** TODO We really trust in declared tx rate from server ? */
+	/** FIXME We really trust in declared tx rate from server ? */
 	gmtp_inter_mcc_delay(info, skb, (u64) gh->transm_r);
 
 out:
@@ -171,16 +172,6 @@ static int gmtp_inter_close_from_client(struct sk_buff *skb,
 
 	gmtp_pr_func();
 
-	/*list_for_each_entry_safe(client, temp, &info->clients->list, list)
-	{
-		if(iph->saddr == client->addr && gh->sport == client->port) {
-			pr_info("Deleting client: %pI4@%-5d\n", &client->addr,
-					ntohs(client->port));
-			info->nclients--;
-			list_del(&client->list);
-			kfree(client);
-		}
-	}*/
 	del = gmtp_delete_clients(&info->clients->list, iph->saddr, gh->sport);
 	info->nclients -= del;
 
@@ -199,6 +190,7 @@ static int gmtp_inter_close_from_client(struct sk_buff *skb,
 				gh_reset, true);
 
 		/* Forwarding 'close' */
+		gh->relay = 1;
 		gh->sport = info->my_port;
 		iph->saddr = info->my_addr;
 		ip_send_check(iph);
@@ -213,6 +205,8 @@ static int gmtp_inter_close_from_client(struct sk_buff *skb,
 		skb_reset_transport_header(skb);
 		memcpy(transport_header, gh_reset, gh_reset->hdrlen);
 
+		gh = gmtp_hdr(skb);
+		gh->relay = 1;
 		iph = ip_hdr(skb);
 		swap((iph->saddr), (iph->daddr));
 		ip_send_check(iph);
@@ -259,6 +253,7 @@ int gmtp_inter_close_out(struct sk_buff *skb)
 			return NF_ACCEPT;
 		}
 
+		gmtp_hdr(buffered)->relay = 1;
 		buffered->dev = skb->dev;
 		gmtp_inter_build_and_send_skb(buffered);
 	}

@@ -52,6 +52,7 @@ struct gmtp_hdr *gmtp_inter_make_route_hdr(struct sk_buff *skb)
 	gh_cpy->version = GMTP_VERSION;
 	gh_cpy->type = GMTP_PKT_ROUTE_NOTIFY;
 	gh_cpy->hdrlen = gmtp_hdr_len;
+	gh_cpy->relay = 1;
 	gh_cpy->dport = gh->sport;
 	gh_cpy->sport = gh->dport;
 
@@ -65,7 +66,7 @@ struct gmtp_hdr *gmtp_inter_make_route_hdr(struct sk_buff *skb)
 
 struct gmtp_hdr *gmtp_inter_make_request_notify_hdr(struct sk_buff *skb,
 		struct gmtp_relay_entry *entry, __be16 new_sport,
-		__be16 new_dport, __u8 code)
+		__be16 new_dport, struct gmtp_client *reporter, __u8 code)
 {
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	__u8 *transport_header;
@@ -87,26 +88,35 @@ struct gmtp_hdr *gmtp_inter_make_request_notify_hdr(struct sk_buff *skb,
 	gh_cpy->version = GMTP_VERSION;
 	gh_cpy->type = GMTP_PKT_REQUESTNOTIFY;
 	gh_cpy->hdrlen = gmtp_hdr_len;
+	gh_cpy->relay = 1;
 	gh_cpy->sport = new_sport;
 	gh_cpy->dport = new_dport;
 
 	gh_rnotify = (struct gmtp_hdr_reqnotify*)(transport_header
 			+ sizeof(struct gmtp_hdr));
 
-	gh_rnotify->error_code = code;
+	gh_rnotify->rn_code = code;
 
-	if(entry != NULL && code != GMTP_REQNOTIFY_CODE_ERROR) {
+	switch(code) {
+	case GMTP_REQNOTIFY_CODE_OK_REPORTER:
+	case GMTP_REQNOTIFY_CODE_WAIT_REPORTER:
 		gh_rnotify->mcst_addr = entry->channel_addr;
 		gh_rnotify->mcst_port = entry->channel_port;
-
-		gmtp_print_debug("ReqNotify => Channel: %pI4@%-5d | Code: %d",
-				&gh_rnotify->mcst_addr,
-				ntohs(gh_rnotify->mcst_port),
-				gh_rnotify->error_code);
-	} else {
-		gmtp_print_debug("ReqNotify => Channel: NULL | Code: %d",
-				gh_rnotify->error_code);
+		memcpy(gh_rnotify->relay_id, gmtp_inter->relay_id, GMTP_RELAY_ID_LEN);
+		break;
+	case GMTP_REQNOTIFY_CODE_OK:
+	case GMTP_REQNOTIFY_CODE_WAIT:
+		gh_rnotify->raddr = reporter->addr;
+		gh_rnotify->rport = reporter->port;
+		reporter->slots++;
 	}
+
+	pr_info("ReqNotify => Channel: %pI4@%-5d | Code: %d | ",
+					&gh_rnotify->mcst_addr,
+					ntohs(gh_rnotify->mcst_port),
+					gh_rnotify->rn_code);
+	pr_info("Reporter: %pI4@%-5d\n", &gh_rnotify->reporter_addr,
+			ntohs(gh_rnotify->reporter_port));
 
 	return gh_cpy;
 }
@@ -114,7 +124,7 @@ struct gmtp_hdr *gmtp_inter_make_request_notify_hdr(struct sk_buff *skb,
 
 int gmtp_inter_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
 		__be16 new_sport, __be32 new_daddr, __be16 new_dport,
-		__u8 code)
+		struct gmtp_client *reporter, __u8 code)
 {
 	int ret = NF_ACCEPT;
 
@@ -123,6 +133,7 @@ int gmtp_inter_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
 	struct gmtp_hdr_reqnotify *gh_rnotify;
 	struct gmtp_relay_entry *entry;
 	unsigned int skb_len = skb->len;
+	struct gmtp_hdr *new_gh;
 	int gmtp_hdr_len = sizeof(struct gmtp_hdr)
 			+ sizeof(struct gmtp_hdr_reqnotify);
 
@@ -137,9 +148,15 @@ int gmtp_inter_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
 	/* Delete REQUEST or REGISTER-REPLY specific header */
 	skb_trim(skb, (skb_len - gmtp_packet_hdr_variable_len(gh->type)));
 
-	gh->version = GMTP_VERSION;
+	new_gh = kmalloc(gmtp_hdr_len, GFP_ATOMIC);
+	new_gh = gmtp_inter_make_request_notify_hdr(skb, entry, new_sport,
+			new_dport, reporter, code);
+	memcpy(gh, new_gh, gmtp_hdr_len);
+
+	/*gh->version = GMTP_VERSION;
 	gh->type = GMTP_PKT_REQUESTNOTIFY;
 	gh->hdrlen = gmtp_hdr_len;
+	gh->relay = 1;
 	gh->sport = new_sport;
 	gh->dport = new_dport;
 
@@ -150,18 +167,20 @@ int gmtp_inter_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
 		goto fail;
 
 	if(entry != NULL && code != GMTP_REQNOTIFY_CODE_ERROR) {
-		gh_rnotify->error_code = code;
+		gh_rnotify->rn_code = code;
 		gh_rnotify->mcst_addr = entry->channel_addr;
 		gh_rnotify->mcst_port = entry->channel_port;
 
 		gmtp_print_debug("ReqNotify => Channel: %pI4@%-5d | Code: %d",
 				&gh_rnotify->mcst_addr,
 				ntohs(gh_rnotify->mcst_port),
-				gh_rnotify->error_code);
+				gh_rnotify->rn_code);
 	} else {
 		gmtp_print_debug("ReqNotify => Channel: NULL | Code: %d",
-				gh_rnotify->error_code);
-	}
+				gh_rnotify->rn_code);
+	}*/
+
+
 
 	iph->saddr = new_saddr;
 	iph->daddr = new_daddr;
@@ -199,6 +218,7 @@ struct gmtp_hdr *gmtp_inter_make_reset_hdr(struct sk_buff *skb, __u8 code)
 	gh_cpy->version = GMTP_VERSION;
 	gh_cpy->type = GMTP_PKT_RESET;
 	gh_cpy->hdrlen = gmtp_hdr_len;
+	gh_cpy->relay = 1;
 	swap(gh_cpy->sport, gh_cpy->dport);
 
 	gh_reset = (struct gmtp_hdr_reset*)(transport_header

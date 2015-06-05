@@ -31,6 +31,24 @@ static inline __u32 gmtp_v4_init_sequence(const struct sk_buff *skb) {
 			gmtp_hdr(skb)->dport);
 }
 
+struct sock* gmtp_build_control_sk(struct sock *sk)
+{
+	struct sockaddr_in *local;
+	unsigned char *channel = "\xee\xff\xff\xfa"; /* 238.255.255.250 */
+
+	gmtp_pr_func();
+
+	local = kmalloc(sizeof(struct sockaddr_in), GFP_KERNEL);
+	local->sin_family = AF_INET;
+	local->sin_port = htons(1900);
+	local->sin_addr.s_addr = *(unsigned int *)channel;
+	memset(&local->sin_zero, 0, sizeof(local->sin_zero));
+	gmtp_info->ctrl_addr = local;
+
+	return gmtp_multicast_connect(sk, local->sin_addr.s_addr,
+			local->sin_port);
+}
+
 int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len) {
 
 	const struct sockaddr_in *usin = (struct sockaddr_in *) uaddr;
@@ -123,6 +141,8 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len) {
 	if (err != 0)
 		goto failure;
 
+	gmtp_info->control_sk = gmtp_build_control_sk(sk);
+
 out:
 	return err;
 failure:
@@ -136,6 +156,7 @@ failure:
 	goto out;
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_connect);
+
 
 static void gmtp_do_redirect(struct sk_buff *skb, struct sock *sk)
 {
@@ -336,7 +357,6 @@ static int gmtp_v4_send_register_reply(struct sock *sk,
 	}
 
 out:
-	gmtp_print_debug("%s returned: %d", __FUNCTION__, err);
 	dst_release(dst);
 	return err;
 }
@@ -382,29 +402,24 @@ out:
 	dst_release(dst);
 }
 
-#define AF_INET_FAMILY(fam) 1
-
 static struct sock *gmtp_v4_hnd_req(struct sock *sk, struct sk_buff *skb) {
 	const struct gmtp_hdr *gh = gmtp_hdr(skb);
 	const struct iphdr *iph = ip_hdr(skb);
 	struct sock *nsk;
 	struct request_sock **prev;
 
-	/* FIXME req is always null... */
 	/* Find possible connection requests. */
 	struct request_sock *req = inet_csk_search_req(sk, &prev, gh->sport,
 			iph->saddr, iph->daddr);
 
-	gmtp_print_function();
+	gmtp_pr_func();
 
-	if (req != NULL)
+	if(req != NULL)
 		return gmtp_check_req(sk, skb, req, prev);
 
-	/* FIXME nsk is always null... */
-	nsk = inet_lookup_established(sock_net(sk), &gmtp_inet_hashinfo, iph->saddr,
-			gh->sport, iph->daddr, gh->dport, inet_iif(skb));
-
-	gmtp_print_function();
+	nsk = inet_lookup_established(sock_net(sk), &gmtp_inet_hashinfo,
+			iph->saddr, gh->sport, iph->daddr, gh->dport,
+			inet_iif(skb));
 
 	if (nsk != NULL) {
 		if (nsk->sk_state != GMTP_TIME_WAIT) {
@@ -612,7 +627,10 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 				gh->server_rtt, gh->transm_r,
 				flowname);
 
-	if(skb->pkt_type == PACKET_MULTICAST) {
+	/**
+	 * Only accept multicast packets from relays
+	 */
+	if(skb->pkt_type == PACKET_MULTICAST && gh->relay == 1) {
 
 		struct gmtp_client *tmp;
 		media_entry = gmtp_lookup_client(gmtp_hashtable, gh->flowname);
@@ -726,10 +744,11 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb) {
 	greq->isr	   = gcb->seq;
 	greq->gsr	   = greq->isr;
 	greq->iss	   = greq->isr;
-	greq->gss     = greq->iss;
-	memcpy(greq->flowname, gp->flowname, GMTP_FLOWNAME_LEN);
+	greq->gss     	   = greq->iss;
 	if(memcmp(gh->flowname, gp->flowname, GMTP_FLOWNAME_LEN))
 		goto reset;
+
+	memcpy(greq->flowname, gp->flowname, GMTP_FLOWNAME_LEN);
 
 	if (gmtp_v4_send_register_reply(sk, req))
 		goto drop_and_free;
@@ -859,30 +878,30 @@ static int gmtp_v4_init_sock(struct sock *sk) {
  * transport -> network interface is defined by (struct inet_proto)
  */
 static struct proto gmtp_v4_prot = {
-	.name = "GMTP",
-	.owner = THIS_MODULE,
-	.close = gmtp_close,
-	.connect = gmtp_v4_connect,
-	.disconnect = gmtp_disconnect,
-	.ioctl = gmtp_ioctl,
-	.init = gmtp_v4_init_sock,
-	.setsockopt		= gmtp_setsockopt,
-	.getsockopt		= gmtp_getsockopt,
-	.sendmsg		= gmtp_sendmsg,
-	.recvmsg = gmtp_recvmsg,
-	.backlog_rcv = gmtp_v4_do_rcv,
-	.hash =	inet_hash,
-	.unhash = inet_unhash,
-	.accept = inet_csk_accept,
-	.get_port = inet_csk_get_port,
-	.shutdown		= gmtp_shutdown,
-	.destroy		= gmtp_destroy_sock,
-	.orphan_count		= &gmtp_orphan_count,
-	.max_header = GMTP_MAX_HDR_LEN,
-	.obj_size = sizeof(struct gmtp_sock),
-	.slab_flags = SLAB_DESTROY_BY_RCU,
-	.rsk_prot = &gmtp_request_sock_ops,
-	.h.hashinfo = &gmtp_inet_hashinfo,
+	.name 		= "GMTP",
+	.owner 		= THIS_MODULE,
+	.close 		= gmtp_close,
+	.connect 	= gmtp_v4_connect,
+	.disconnect 	= gmtp_disconnect,
+	.ioctl 		= gmtp_ioctl,
+	.init 		= gmtp_v4_init_sock,
+	.setsockopt	= gmtp_setsockopt,
+	.getsockopt	= gmtp_getsockopt,
+	.sendmsg	= gmtp_sendmsg,
+	.recvmsg 	= gmtp_recvmsg,
+	.backlog_rcv 	= gmtp_v4_do_rcv,
+	.hash 		= inet_hash,
+	.unhash 	= inet_unhash,
+	.accept 	= inet_csk_accept,
+	.get_port	= inet_csk_get_port,
+	.shutdown	= gmtp_shutdown,
+	.destroy	= gmtp_destroy_sock,
+	.orphan_count	= &gmtp_orphan_count,
+	.max_header 	= GMTP_MAX_HDR_LEN,
+	.obj_size 	= sizeof(struct gmtp_sock),
+	.slab_flags 	= SLAB_DESTROY_BY_RCU,
+	.rsk_prot 	= &gmtp_request_sock_ops,
+	.h.hashinfo 	= &gmtp_inet_hashinfo,
 };
 
 /**

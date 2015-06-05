@@ -87,6 +87,119 @@ static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
 	return queued;
 }
 
+/*
+ * TODO reporter announces themselves to control channel
+int gmtp_v4_reporter(struct sock *sk, struct sockaddr *uaddr, int addr_len) {
+
+	const struct sockaddr_in *usin = (struct sockaddr_in *) uaddr;
+	struct inet_sock *inet = inet_sk(sk);
+	struct gmtp_sock *gp = gmtp_sk(sk);
+	__be16 orig_sport, orig_dport;
+	__be32 daddr, nexthop;
+	struct flowi4 *fl4;
+	struct rtable *rt;
+	int err;
+	struct ip_options_rcu *inet_opt;
+
+	gmtp_print_function();
+
+	if (addr_len < sizeof(struct sockaddr_in))
+		return -EINVAL;
+
+	if (usin->sin_family != AF_INET)
+		return -EAFNOSUPPORT;
+
+	nexthop = daddr = usin->sin_addr.s_addr;
+
+	inet_opt = rcu_dereference_protected(inet->inet_opt,
+			sock_owned_by_user(sk));
+	if (inet_opt != NULL && inet_opt->opt.srr) {
+		if (daddr == 0)
+			return -EINVAL;
+		nexthop = inet_opt->opt.faddr;
+	}
+
+	orig_sport = inet->inet_sport;
+	orig_dport = usin->sin_port;
+	fl4 = &inet->cork.fl.u.ip4;
+
+	rt = ip_route_connect(fl4, nexthop, inet->inet_saddr, RT_CONN_FLAGS(sk),
+			sk->sk_bound_dev_if,
+			IPPROTO_GMTP, orig_sport, orig_dport, sk);
+	if (IS_ERR(rt))
+		return PTR_ERR(rt);
+
+	if (rt->rt_flags & (RTCF_MULTICAST | RTCF_BROADCAST)) {
+		ip_rt_put(rt);
+		return -ENETUNREACH;
+	}
+
+	if (inet_opt == NULL || !inet_opt->opt.srr)
+		daddr = fl4->daddr;
+
+	if (inet->inet_saddr == 0)
+		inet->inet_saddr = fl4->saddr;
+	inet->inet_rcv_saddr = inet->inet_saddr;
+
+	inet->inet_dport = usin->sin_port;
+	inet->inet_daddr = daddr;
+
+	inet_csk(sk)->icsk_ext_hdr_len = 0;
+	if (inet_opt)
+		inet_csk(sk)->icsk_ext_hdr_len = inet_opt->opt.optlen;
+
+	rt = ip_route_newports(fl4, rt, orig_sport, orig_dport,
+			inet->inet_sport, inet->inet_dport, sk);
+
+	if (IS_ERR(rt)) {
+		err = PTR_ERR(rt);
+		rt = NULL;
+		return err;
+	}
+	 OK, now commit destination to socket.
+	sk_setup_caps(sk, &rt->dst);
+
+	gmtp_send_ack(sk, 0);
+
+
+out:
+	return 0;
+}
+EXPORT_SYMBOL_GPL(gmtp_v4_reporter);
+*/
+
+struct sock* gmtp_multicast_connect(struct sock *sk, __be32 addr, __be16 port)
+{
+	struct sock *newsk;
+	struct ip_mreqn mreq;
+
+	gmtp_pr_func();
+
+	newsk = sk_clone_lock(sk, GFP_ATOMIC);
+	if(newsk == NULL)
+		return NULL;
+
+	/* FIXME Validate received multicast channel */
+	newsk->sk_protocol = sk->sk_protocol;
+	newsk->sk_reuse = true; /* SO_REUSEADDR */
+	newsk->sk_reuseport = true;
+	newsk->sk_rcv_saddr = htonl(INADDR_ANY);
+
+	mreq.imr_multiaddr.s_addr = addr;
+	mreq.imr_address.s_addr = htonl(INADDR_ANY);
+	/* FIXME Interface index must be filled ? */
+	mreq.imr_ifindex = 0;
+
+	gmtp_pr_debug("Joining the multicast group in %pI4@%-5d",
+			&addr, ntohs(port));
+	ip_mc_join_group(newsk, &mreq);
+	__inet_hash_nolisten(newsk, NULL);
+	gmtp_set_state(newsk, GMTP_OPEN);
+
+	return newsk;
+}
+EXPORT_SYMBOL_GPL(gmtp_multicast_connect);
+
 static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 					       struct sk_buff *skb,
 					       const struct gmtp_hdr *gh,
@@ -98,9 +211,18 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 	gmtp_print_debug("Packet received: %s", gmtp_packet_name(gh->type));
 
 	/*
-	 * FIXME Clients must receive only GMTP_PKT_REQUESTNOTIFY
-	 * Accepting GMTP_PKT_REGISTER_REPLY temporarily
-	*/
+	 *    Step 10: Process REQUEST state (second part)
+	 *       If S.state == REQUESTING,
+	 *	  If we get here, P is a valid Response from the
+	 *	      relay, and we should move to
+	 *	      OPEN state.
+	 *
+	 *	 Connect to mcst channel (if it received GMTP_PKT_REQUESTNOTIFY)
+	 *
+	 *	  S.state := OPEN
+	 *	  / * Step 12 will send the Ack completing the
+	 *	      three-way handshake * /
+	 */
 	if (gh->type == GMTP_PKT_REQUESTNOTIFY ||
 			gh->type == GMTP_PKT_REGISTER_REPLY) {
 
@@ -123,35 +245,19 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 			gp->relay_rtt = jiffies_to_msecs(jiffies - gp->req_stamp);
 
 		gp->rx_rtt = (__u32) gh->server_rtt + gp->relay_rtt;
-		gmtp_pr_debug("Relay RTT: %u ms", gp->relay_rtt);
+		gmtp_pr_debug("RTT: %u ms", gp->rx_rtt);
 
-		/*
-		 *    Step 10: Process REQUEST state (second part)
-		 *       If S.state == REQUESTING,
-		 *	  If we get here, P is a valid Response from the
-		 *	      relay, and we should move to
-		 *	      OPEN state.
-		 *
-		 *	 Connect to multicast channel
-		 *
-		 *	  S.state := OPEN
-		 *	  / * Step 12 will send the Ack completing the
-		 *	      three-way handshake * /
-		 */
 		if (gh->type == GMTP_PKT_REQUESTNOTIFY)
 		{
-			struct sock *newsk;
+			struct sock *channel_sk;
 			struct gmtp_hdr_reqnotify *gh_rnotify;
-			struct ip_mreqn mreq;
 			struct gmtp_client_entry *media_entry;
 
 			gh_rnotify = gmtp_hdr_reqnotify(skb);
-			gmtp_print_debug("Processing RequestNotify packet...");
-			gmtp_print_debug("RequestNotify => Channel: %pI4@%-5d "
-					"| Error: %d",
+			gmtp_pr_debug("RequestNotify => Channel: %pI4@%-5d | Error: %d",
 					&gh_rnotify->mcst_addr,
 					ntohs(gh_rnotify->mcst_port),
-					gh_rnotify->error_code);
+					gh_rnotify->rn_code);
 
 			media_entry = gmtp_lookup_client(gmtp_hashtable,
 					gh->flowname);
@@ -159,7 +265,7 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 				goto out_invalid_packet;
 
 			/* Obtain usec RTT sample from Request (used by CC). */
-			switch(gh_rnotify->error_code) {
+			switch(gh_rnotify->rn_code) {
 			case GMTP_REQNOTIFY_CODE_OK_REPORTER:
 				gp->role = GMTP_ROLE_REPORTER;
 
@@ -182,24 +288,12 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 			media_entry->channel_addr = gh_rnotify->mcst_addr;
 			media_entry->channel_port = gh_rnotify->mcst_port;
 
-			newsk = sk_clone_lock(sk, GFP_ATOMIC);
-			if(newsk == NULL)
+			channel_sk = gmtp_multicast_connect(sk,
+							gh_rnotify->mcst_addr,
+							gh_rnotify->mcst_port);
+			if(channel_sk == NULL)
 				goto err;
 
-			/* FIXME Validate received multicast channel */
-			newsk->sk_reuse = true;  /* SO_REUSEADDR */
-			newsk->sk_reuseport = true;
-			newsk->sk_rcv_saddr =  htonl(INADDR_ANY);
-
-			mreq.imr_multiaddr.s_addr = gh_rnotify->mcst_addr;
-			mreq.imr_address.s_addr = htonl(INADDR_ANY);
-			/* FIXME Interface index must be filled */
-			mreq.imr_ifindex = 0;
-
-			gmtp_print_debug("Joining the multicast group...");
-			ip_mc_join_group(newsk, &mreq);
-			__inet_hash_nolisten(newsk, NULL);
-			gmtp_set_state(newsk, GMTP_OPEN);
 		}
 
 		gmtp_set_state(sk, GMTP_OPEN);
@@ -227,6 +321,7 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 			return 0;
 		}
 		gmtp_send_ack(sk, GMTP_ACK_REQUESTNOTIFY);
+
 		return -1;
  	}
 

@@ -62,7 +62,7 @@
  * @hdrlen: header length (bytes)
  * @server_rtt: server RTT
  * @pull:  'P' (Pull) field
- * @relay:  'R' (Relay) field
+ * @relay:  'R' (Relay) field. It is activated when a relay send packets
  * @res: reserved to future
  * @src_port: source port
  * @dest_port: destiny port
@@ -72,18 +72,18 @@
  * @varpart: Variable part, depends of the 'Packet type' field
  */
 struct gmtp_hdr {
-	__u8 version:3;
-	__u8 type:5;
-	__be16 hdrlen:11;
-	__u8 server_rtt;
-	__u8 pull:1;
-	__u8 relay:1;
-	__u8 res:3;
-	__be16 sport; //source port
-	__be16 dport; //dest port
-	__be32 seq;
-	__be32 transm_r;
-	__u8 flowname[GMTP_FLOWNAME_LEN]; //128 bits
+	__u8 	version:3;
+	__u8 	type:5;
+	__be16 	hdrlen:11;
+	__u8 	server_rtt;
+	__u8 	pull:1;
+	__u8 	relay:1;
+	__u8 	res:3;
+	__be16 	sport; //source port
+	__be16 	dport; //dest port
+	__be32 	seq;
+	__be32 	transm_r;
+	__u8 	flowname[GMTP_FLOWNAME_LEN]; //128 bits
 };
 
 /**
@@ -113,7 +113,8 @@ enum gmtp_ack_codes {
  * @tstamp: time stamp of received data packet
  */
 struct gmtp_hdr_feedback {
-	__be32 pkt_tstamp;
+	__be32 	pkt_tstamp;
+	__u8	nclients;
 };
 
 /**
@@ -124,7 +125,7 @@ struct gmtp_hdr_feedback {
  */
 struct gmtp_hdr_reset {
 	__u8	reset_code,
-			reset_data[3];
+		reset_data[3];
 };
 
 /**
@@ -135,8 +136,8 @@ struct gmtp_hdr_reset {
  * @relay_ip: IP address of relay
  */
 struct gmtp_relay {
-	__u8 relay_id[GMTP_RELAY_ID_LEN];
-	__be32 relay_ip;
+	__u8 			relay_id[GMTP_RELAY_ID_LEN];
+	__be32 			relay_ip;
 };
 
 /**
@@ -146,8 +147,8 @@ struct gmtp_relay {
  * @relay_list:	list of relays in path
  */
 struct gmtp_hdr_register_reply {
-	__u8 nrelays;
-	struct gmtp_relay relay_list[GMTP_MAX_RELAY_NUM];
+	__u8 			nrelays;
+	struct gmtp_relay 	relay_list[GMTP_MAX_RELAY_NUM];
 };
 
 /**
@@ -157,8 +158,8 @@ struct gmtp_hdr_register_reply {
  * @relay_list - list of relays in path
  */
 struct gmtp_hdr_route {
-	__u8 nrelays;
-	struct gmtp_relay relay_list[GMTP_MAX_RELAY_NUM];
+	__u8 			nrelays;
+	struct gmtp_relay 	relay_list[GMTP_MAX_RELAY_NUM];
 };
 
 /**
@@ -169,9 +170,12 @@ struct gmtp_hdr_route {
  * @mcst_port: multicast channel port
  */
 struct gmtp_hdr_reqnotify {
-	__u8	error_code;
-	__be32	mcst_addr;
-	__be16  mcst_port; 
+	__u8			rn_code;
+	__be32			mcst_addr;
+	__be16  		mcst_port;
+	__u8 			relay_id[GMTP_RELAY_ID_LEN];
+	__be32			reporter_addr;
+	__be16  		reporter_port;
 };
 
 enum gmtp_reqnotify_error_code {

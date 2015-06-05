@@ -164,6 +164,7 @@ int gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 		const struct gmtp_hdr *dh, const unsigned int len);
 int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 		struct gmtp_hdr *gh, unsigned int len);
+struct sock* gmtp_multicast_connect(struct sock *sk, __be32 addr, __be16 port);
 
 /** output.c */
 void gmtp_send_ack(struct sock *sk,  __u8 ackcode);
@@ -202,6 +203,9 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len);
 /** GMTP structs and etc **/
 struct gmtp_info {
 	unsigned char 		relay_enabled:1;
+
+	struct sock		*control_sk;
+	struct sockaddr_in	*ctrl_addr;
 };
 
 /**
@@ -269,9 +273,12 @@ static inline int gmtp_data_packet(const struct sk_buff *skb)
 /**
  * struct gmtp_clients - A list of GMTP Clients
  *
+ * @list: The list_head
+ * @id: a number to intentify and count clients
  * @addr: ip address of client
  * @port: reception port of client
- * @id: id of client
+ * @reporter: a flag to indicate reporters
+ * @slots: number of occuped slots at a reporter
  */
 struct gmtp_client {
 	struct list_head 	list;
@@ -279,7 +286,35 @@ struct gmtp_client {
 	__be32 			addr;
 	__be16 			port;
 	__u8			reporter:1;
+	__u8			slots;
 };
+
+/**
+ * Create and add a client in the list of clients
+ */
+static inline struct gmtp_client *gmtp_list_add_client(unsigned int id,
+		__be32 addr, __be16 port, __u8 reporter, struct list_head *head)
+{
+	struct gmtp_client *new = kmalloc(sizeof(struct gmtp_client),
+			GFP_ATOMIC);
+
+	if(new == NULL) {
+		gmtp_pr_error("Error while creating new gmtp_client...");
+		return NULL;
+	}
+
+	new->id	  = id;
+	new->addr = addr;
+	new->port = port;
+	new->reporter = reporter;
+
+	gmtp_pr_info("New client (%u): ADDR=%pI4@%-5d\n",
+			new->id, &addr, ntohs(port));
+
+	INIT_LIST_HEAD(&new->list);
+	list_add_tail(&new->list, head);
+	return new;
+}
 
 static inline struct gmtp_client* gmtp_get_first_client(struct list_head *head)
 {
@@ -287,6 +322,18 @@ static inline struct gmtp_client* gmtp_get_first_client(struct list_head *head)
 	list_for_each_entry(client, head, list)
 	{
 		return client;
+	}
+	return NULL;
+}
+
+static inline struct gmtp_client* gmtp_get_client(struct list_head *head,
+		__be32 addr, __be16 port)
+{
+	struct gmtp_client *client;
+	list_for_each_entry(client, head, list)
+	{
+		if(client->addr == addr && client->port == port)
+			return client;
 	}
 	return NULL;
 }
