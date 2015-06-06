@@ -58,7 +58,7 @@ struct gmtp_flow_info {
 	unsigned int 		iseq;
 	unsigned int 		seq;
 	unsigned int 		nbytes;
-
+    unsigned int        total_bytes;
 	u64 			current_tx;
 	ktime_t 		last_rx_tstamp;
 	unsigned int 		data_pkt_tx;

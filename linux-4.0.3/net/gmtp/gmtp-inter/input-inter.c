@@ -6,7 +6,7 @@
 
 #include "gmtp-inter.h"
 #include "mcc-inter.h"
-#include "ucc.h"c
+#include "ucc.h"
 
 
 /**
@@ -188,7 +188,7 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
 	/* Update transmission rate (GMTP-UCC) */
 	gmtp_print_debug("UPDATING Tx Rate");
 	gmtp_inter.total_rx = gh->transm_r;
-	gmtp_update_rx_rate(UINT_MAX);
+	gmtp_update_rx_rate(UINT_MAX, entry);
 	rate = gmtp_get_current_rx_rate();
 	if(rate < gh->transm_r)
 		gh->transm_r = rate;
@@ -320,6 +320,9 @@ int gmtp_inter_data_rcv(struct sk_buff *skb)
 	struct gmtp_flow_info *info;
 
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
+    /*alterado por mim*/
+    entry->info->total_bytes += skb->len;
+
 	if(entry == NULL) /* Failed to lookup media info in table... */
 		return NF_ACCEPT;
 
