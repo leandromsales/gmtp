@@ -230,8 +230,8 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 {
 	struct gmtp_sock *gp = gmtp_sk(sk);
 
-	gmtp_print_function();
-	gmtp_print_debug("Packet received: %s", gmtp_packet_name(gh->type));
+	gmtp_pr_func();
+	gmtp_pr_debug("Packet received: %s", gmtp_packet_name(gh->type));
 
 	/*
 	 *    Step 10: Process REQUEST state (second part)
@@ -240,7 +240,8 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 	 *	      relay, and we should move to
 	 *	      OPEN state.
 	 *
-	 *	 Connect to mcst channel (if it received GMTP_PKT_REQUESTNOTIFY)
+	 *	 Connect to mcst channel (if we received GMTP_PKT_REQUESTNOTIFY)
+	 *	 Connect to reporter (if i'm not a reporter)
 	 *
 	 *	  S.state := OPEN
 	 *	  / * Step 12 will send the Ack completing the
@@ -290,14 +291,18 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 			if(media_entry == NULL)
 				goto out_invalid_packet;
 
+			/* Indentify relay of client */
+			memcpy(gp->relay_id, gh_rnotify->relay_id, GMTP_RELAY_ID_LEN);
+
 			/* Obtain usec RTT sample from Request (used by CC). */
-			switch(gh_rnotify->rn_code) {
-			case GMTP_REQNOTIFY_CODE_OK_REPORTER:
+
+			gp->max_nclients = gh_rnotify->max_nclients;
+			if(gp->max_nclients > 0)
 				gp->role = GMTP_ROLE_REPORTER;
+
+			switch(gh_rnotify->rn_code) {
 			case GMTP_REQNOTIFY_CODE_OK: /* Process packet */
 				break;
-			case GMTP_REQNOTIFY_CODE_WAIT_REPORTER:
-				gp->role = GMTP_ROLE_REPORTER;
 			case GMTP_REQNOTIFY_CODE_WAIT:  /* Do nothing... */
 				return 0;
 			/* FIXME Del entry in table when receiving error... */
@@ -308,17 +313,19 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 			}
 
 			if(gp->role != GMTP_ROLE_REPORTER) {
-				struct sock *rsock;
 
-				rsock = gmtp_sock_connect(sk,
+				gp->rsock = gmtp_sock_connect(sk,
 						gh_rnotify->reporter_addr,
 						gh_rnotify->reporter_port);
+
+				if(gp->rsock == NULL)
+					goto err;
 
 				gp->reporter = gmtp_create_client(
 						gh_rnotify->reporter_addr,
 						gh_rnotify->reporter_port, 1);
 
-				gmtp_send_ack(rsock, 0);
+				gmtp_send_ack(gp->rsock, 0);
 			}
 
 			/* Inserting information in client table */
@@ -439,7 +446,8 @@ static void gmtp_deliver_input_to_mcc(struct sock *sk, struct sk_buff *skb)
 /* TODO Implement check sequence number */
 static int gmtp_check_seqno(struct sock *sk, struct sk_buff *skb)
 {
-	gmtp_print_function();
+	gmtp_pr_func();
+	/*pr_info("TODO: Implement check sequence number\n");*/
 	return 0;
 }
 

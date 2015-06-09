@@ -176,7 +176,7 @@ int gmtp_init_sock(struct sock *sk)
 	struct inet_connection_sock *icsk = inet_csk(sk);
 	int ret = 0;
 
-	gmtp_print_function();
+	gmtp_pr_func();
 
 	gmtp_init_xmit_timers(sk);
 	icsk->icsk_rto		= GMTP_TIMEOUT_INIT;
@@ -185,8 +185,12 @@ int gmtp_init_sock(struct sock *sk)
 	sk->sk_write_space	= gmtp_write_space;
 	icsk->icsk_sync_mss	= gmtp_sync_mss;
 
+	memset(gp->flowname, 0, GMTP_FLOWNAME_LEN);
+
 	gp->mss			= GMTP_DEFAULT_MSS;
 	gp->role		= GMTP_ROLE_UNDEFINED;
+	gp->max_nclients	= 0;
+	gp->nclients		= 0;
 
 	gp->req_stamp		= 0;
 	gp->ack_rcv_tstamp	= 0;
@@ -211,8 +215,6 @@ int gmtp_init_sock(struct sock *sk)
 	gp->tx_max_rate		= 0UL; /* Unlimited */
 	gp->tx_byte_budget	= INT_MIN;
 	gp->tx_adj_budget	= 0;
-
-	memset(gp->flowname, 0, GMTP_FLOWNAME_LEN);
 
 	return ret;
 }

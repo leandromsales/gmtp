@@ -116,12 +116,17 @@ static inline struct gmtp_request_sock *gmtp_rsk(const struct request_sock *req)
  * struct gmtp_sock - GMTP socket state
  *
  * @flowname: name of the dataflow
+ * @flowname: id of my relay (for clients)
  * @iss: initial sequence number sent
  * @isr: initial sequence number received
  * @gss: greatest sequence number sent
  * @gsr: greatest valid sequence number received
  * @mss: current value of MSS (path MTU minus header sizes)
  * @role: role of this sock, one of %gmtp_role
+ * @reporter: reporter of a client
+ * @rsock: socket connected to reporter
+ * @max_nclients: limit of clients in a reporter
+ * @nclients: number of clients of a reporter
  * @req_stamp: time stamp of request sent
  * @reply_stamp: time stamp of Register-Reply (or Request-Reply) sent
  * @ack_rcv_tstamp: timestamp of last received ACK (for keepalives)
@@ -161,6 +166,7 @@ struct gmtp_sock {
 #define gmtps_syn_rtt 	gmtps_inet_connection.icsk_ack.lrcvtime
 
 	u8 				flowname[GMTP_FLOWNAME_LEN];
+	u8 				relay_id[GMTP_RELAY_ID_LEN];
 
 	u32				iss;
 	u32				isr;
@@ -171,6 +177,9 @@ struct gmtp_sock {
 
 	enum gmtp_role			role:3;
 	struct gmtp_client		*reporter;
+	struct sock 			*rsock;
+	u8				max_nclients;
+	u8				nclients;
 
 	u32				req_stamp;
 	u32				reply_stamp;
@@ -281,6 +290,13 @@ static inline struct gmtp_hdr_reqnotify *gmtp_hdr_reqnotify(
 		const struct sk_buff *skb)
 {
 	return (struct gmtp_hdr_reqnotify *)(skb_transport_header(skb) +
+						 sizeof(struct gmtp_hdr));
+}
+
+static inline struct gmtp_hdr_elect_request *gmtp_hdr_elect_request(
+		const struct sk_buff *skb)
+{
+	return (struct gmtp_hdr_elect_request *)(skb_transport_header(skb) +
 						 sizeof(struct gmtp_hdr));
 }
 

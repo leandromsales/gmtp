@@ -15,7 +15,8 @@
 
 static inline int new_reporter(struct gmtp_relay_entry *entry)
 {
-	return (entry->info->nclients % GMTP_REPORTER_PROPORTION) == 0 ? 1 : 0;
+	return (entry->info->nclients % GMTP_REPORTER_PROPORTION) == 0 ?
+			gmtp_inter.kreporter : 0;
 }
 
 void gmtp_inter_mcc_delay(struct gmtp_flow_info *info, struct sk_buff *skb,

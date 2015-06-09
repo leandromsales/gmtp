@@ -172,6 +172,7 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 
 /** output.c */
 void gmtp_send_ack(struct sock *sk,  __u8 ackcode);
+void gmtp_send_elect_request(struct sock *sk);
 void gmtp_send_feedback(struct sock *sk);
 void gmtp_send_close(struct sock *sk, const int active);
 int gmtp_send_reset(struct sock *sk, enum gmtp_reset_codes code);
@@ -273,7 +274,7 @@ static inline int gmtp_data_packet(const struct sk_buff *skb)
 
 
 static inline struct gmtp_client *gmtp_create_client(__be32 addr, __be16 port,
-		__u8 reporter)
+		__u8 max_nclients)
 {
 	struct gmtp_client *new = kmalloc(sizeof(struct gmtp_client),
 	GFP_ATOMIC);
@@ -281,7 +282,8 @@ static inline struct gmtp_client *gmtp_create_client(__be32 addr, __be16 port,
 	if(new != NULL) {
 		new->addr = addr;
 		new->port = port;
-		new->reporter = reporter;
+		new->max_nclients = max_nclients;
+		new->nclients = 0;
 	}
 	return new;
 }
@@ -290,9 +292,9 @@ static inline struct gmtp_client *gmtp_create_client(__be32 addr, __be16 port,
  * Create and add a client in the list of clients
  */
 static inline struct gmtp_client *gmtp_list_add_client(unsigned int id,
-		__be32 addr, __be16 port, __u8 reporter, struct list_head *head)
+		__be32 addr, __be16 port, __u8 max_nclients, struct list_head *head)
 {
-	struct gmtp_client *new = gmtp_create_client(addr, port, reporter);
+	struct gmtp_client *new = gmtp_create_client(addr, port, max_nclients);
 
 	if(new == NULL) {
 		gmtp_pr_error("Error while creating new gmtp_client...");
@@ -325,6 +327,18 @@ static inline struct gmtp_client* gmtp_get_client(struct list_head *head,
 	list_for_each_entry(client, head, list)
 	{
 		if(client->addr == addr && client->port == port)
+			return client;
+	}
+	return NULL;
+}
+
+static inline struct gmtp_client* gmtp_get_client_by_id(struct list_head *head,
+		unsigned int id)
+{
+	struct gmtp_client *client;
+	list_for_each_entry(client, head, list)
+	{
+		if(client->id == id)
 			return client;
 	}
 	return NULL;

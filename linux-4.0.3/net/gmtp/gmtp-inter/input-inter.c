@@ -56,25 +56,21 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 	struct gmtp_relay_entry *entry;
 
 	__u8 code = GMTP_REQNOTIFY_CODE_ERROR;
-	__u8 reporter = 0;
+	__u8 max_nclients = 0;
 
 	gmtp_pr_func();
 
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry != NULL) {
 		gmtp_pr_info("Media found. Sending RequestNotify.");
-		reporter = new_reporter(entry);
+		max_nclients = new_reporter(entry);
 		switch(entry->state) {
 		case GMTP_INTER_WAITING_REGISTER_REPLY:
-			code = reporter ?
-					GMTP_REQNOTIFY_CODE_WAIT_REPORTER :
-					GMTP_REQNOTIFY_CODE_WAIT;
+			code = 	GMTP_REQNOTIFY_CODE_WAIT;
 			break;
 		case GMTP_INTER_REGISTER_REPLY_RECEIVED:
 		case GMTP_INTER_TRANSMITTING:
-			code = reporter ?
-					GMTP_REQNOTIFY_CODE_OK_REPORTER:
-					GMTP_REQNOTIFY_CODE_OK;
+			code = GMTP_REQNOTIFY_CODE_OK;
 			ret = NF_DROP;
 			break;
 		default:
@@ -95,10 +91,8 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 		if(!err) {
 			entry = gmtp_inter_lookup_media(gmtp_inter.hashtable,
 					gh->flowname);
-			reporter = new_reporter(entry);
-			code = reporter ?
-					GMTP_REQNOTIFY_CODE_WAIT_REPORTER :
-					GMTP_REQNOTIFY_CODE_WAIT;
+			max_nclients = new_reporter(entry);
+			code = GMTP_REQNOTIFY_CODE_WAIT;
 			gh->type = GMTP_PKT_REGISTER;
 		} else {
 			gmtp_pr_error("Failed to insert flow in table (%d)", err);
@@ -107,13 +101,13 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 		}
 	}
 
-	if(reporter)
+	if(max_nclients > 0)
 		entry->info->cur_reporter = gmtp_list_add_client(
 				++entry->info->nclients, iph->saddr, gh->sport,
-				reporter, &entry->info->clients->list);
+				max_nclients, &entry->info->clients->list);
 	else
 		gmtp_list_add_client(++entry->info->nclients, iph->saddr,
-				gh->sport, reporter,
+				gh->sport, max_nclients,
 				&entry->info->clients->list);
 
 out:
@@ -212,10 +206,7 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
 
 	/* Send it to first client */
 	first_client = gmtp_get_first_client(&entry->info->clients->list);
-	code = first_client->reporter == 1 ?
-			GMTP_REQNOTIFY_CODE_OK_REPORTER :
-			GMTP_REQNOTIFY_CODE_OK;
-	if(first_client->reporter)
+	if(first_client->max_nclients > 0)
 		cur_reporter = first_client;
 	ret = gmtp_inter_make_request_notify(skb, iph->saddr, gh->sport,
 			first_client->addr, first_client->port, cur_reporter,
@@ -230,9 +221,6 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
 		if(client == first_client)
 			continue;
 
-		code = client->reporter == 1 ?
-				GMTP_REQNOTIFY_CODE_OK_REPORTER :
-				GMTP_REQNOTIFY_CODE_OK;
 		if(client->reporter)
 				cur_reporter = client;
 		if(copy != NULL) {

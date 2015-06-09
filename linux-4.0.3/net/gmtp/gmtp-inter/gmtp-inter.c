@@ -294,6 +294,7 @@ int init_module()
 
 	/* FIXME Setup a better default value for Rate */
 	gmtp_inter.total_rx = 50000;
+	gmtp_inter.kreporter = 5;
 
 	memcpy(gmtp_inter.relay_id, gmtp_inter_build_relay_id(),
 			GMTP_RELAY_ID_LEN);

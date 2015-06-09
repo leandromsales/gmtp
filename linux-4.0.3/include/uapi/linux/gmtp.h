@@ -170,22 +170,33 @@ struct gmtp_hdr_route {
  * @mcst_port: multicast channel port
  */
 struct gmtp_hdr_reqnotify {
-	__u8			rn_code;
+	__u8			rn_code:3;
 	__be32			mcst_addr;
 	__be16  		mcst_port;
 	__u8 			relay_id[GMTP_RELAY_ID_LEN];
 	__be32			reporter_addr;
 	__be16  		reporter_port;
+	__u8 			max_nclients;
 };
 
 enum gmtp_reqnotify_error_code {
 	GMTP_REQNOTIFY_CODE_OK = 0,
-	GMTP_REQNOTIFY_CODE_OK_REPORTER,
 	GMTP_REQNOTIFY_CODE_WAIT,
-	GMTP_REQNOTIFY_CODE_WAIT_REPORTER,
 	GMTP_REQNOTIFY_CODE_ERROR,
 	GMTP_REQNOTIFY_MAX_CODES
 };
+
+/**
+ * struct gmtp_hdr_elect_request - Elect request to reporters
+ *
+ * @relay_id: relay from where request come from
+ * @max_nclients: Max number of clients of a reporter
+ */
+struct gmtp_hdr_elect_request {
+	__u8 			relay_id[GMTP_RELAY_ID_LEN];
+	__u8 			max_nclients;
+};
+
 
 /**
  * see www.gmtp-protocol.org
@@ -259,6 +270,9 @@ static inline unsigned int gmtp_packet_hdr_variable_len(const __u8 type)
 	case GMTP_PKT_REQUESTNOTIFY:
 		len = sizeof(struct gmtp_hdr_reqnotify);
 		break;
+	case GMTP_PKT_ELECT_REQUEST:
+		len = sizeof(struct gmtp_hdr_elect_request);
+		break;
 	case GMTP_PKT_RESET:
 		len = sizeof(struct gmtp_hdr_reset);
 		break;
@@ -287,16 +301,18 @@ enum gmtp_sockopt_codes {
  * @id: a number to intentify and count clients
  * @addr: ip address of client
  * @port: reception port of client
- * @reporter: a flag to indicate reporters
- * @slots: number of occuped slots at a reporter
+ * @max_clients: for reporters, the max ammount of clients.
+ * 			0 means that clients is not a reporter
+ * @nclients: number of occuped slots at a reporter.
+ * 			It must be less or equal %max_clients
  */
 struct gmtp_client {
 	struct list_head 	list;
 	unsigned int		id;
 	__be32 			addr;
 	__be16 			port;
-	__u8			reporter:1;
-	__u8			slots;
+	__u8			max_nclients;
+	__u8			nclients;
 };
 
 

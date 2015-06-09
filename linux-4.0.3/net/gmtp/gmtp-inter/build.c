@@ -103,13 +103,16 @@ struct gmtp_hdr *gmtp_inter_make_request_notify_hdr(struct sk_buff *skb,
 	if(reporter != NULL) {
 		gh_rnotify->reporter_addr = reporter->addr;
 		gh_rnotify->reporter_port = reporter->port;
-		reporter->slots++;
+		gh_rnotify->max_nclients = reporter->max_nclients;
+		reporter->nclients++;
 	}
 
-	pr_info("ReqNotify => Channel: %pI4@%-5d | Code: %d | ",
+	pr_info("ReqNotify => Channel: %pI4@%-5d | Code: %u | max_nclients: %u",
 					&gh_rnotify->mcst_addr,
 					ntohs(gh_rnotify->mcst_port),
-					gh_rnotify->rn_code);
+					gh_rnotify->rn_code,
+					gh_rnotify->max_nclients);
+
 	pr_info("Reporter: %pI4@%-5d\n", &gh_rnotify->reporter_addr,
 			ntohs(gh_rnotify->reporter_port));
 

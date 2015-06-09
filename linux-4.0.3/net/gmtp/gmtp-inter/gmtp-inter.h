@@ -28,13 +28,15 @@ extern void flowname_str(__u8* str, const __u8* flowname);
 
 /**
  * TODO Negotiate buffer size with server
+ * TODO Make kreporter configurable
+ *
  * struct gmtp_inter - GMTP-inter state variables
  *
+ * @relay_id: Relay unique id
  * @total_bytes_rx: total data bytes received
  * @total_rx: Current RX rate
  * @mcst: control of granted multicast addresses
- * @nclients: number of connected clients
- *
+ * @kreporter: number of clients per reporter.
  * @hashtable: GMTP-inter relay table
  */
 struct gmtp_inter {
@@ -43,6 +45,8 @@ struct gmtp_inter {
 	unsigned int 		total_bytes_rx;
 	unsigned int 		total_rx;
 	unsigned char		mcst[4];
+
+	unsigned char		kreporter;
 
 	struct gmtp_inter_hashtable *hashtable;
 };
