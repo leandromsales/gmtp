@@ -318,8 +318,7 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 						gh_rnotify->reporter_addr,
 						gh_rnotify->reporter_port, 1);
 
-				/*gmtp_send_ack(rsock, 0);*/
-				gmtp_send_close(rsock, 10);
+				gmtp_send_ack(rsock, 0);
 			}
 
 			/* Inserting information in client table */

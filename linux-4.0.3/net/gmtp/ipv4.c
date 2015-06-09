@@ -504,19 +504,20 @@ static int gmtp_check_packet(struct sk_buff *skb)
 			gh->type != GMTP_PKT_DATA &&
 			gh->type != GMTP_PKT_CLOSE &&
 			gh->type != GMTP_PKT_RESET) {
+		gmtp_pr_warning("invalid packet destiny\n");
 		return 1;
 	}
 
 	/* If the packet is shorter than sizeof(struct gmtp_hdr),
 	 * drop packet and return */
 	if (!pskb_may_pull(skb, sizeof(struct gmtp_hdr))) {
-		gmtp_print_warning("pskb_may_pull failed\n");
+		gmtp_pr_warning("pskb_may_pull failed\n");
 		return 1;
 	}
 
 	/* If P.type is not understood, drop packet and return */
 	if (gh->type >= GMTP_PKT_INVALID) {
-		gmtp_print_warning("invalid packet type\n");
+		gmtp_pr_warning("invalid packet type\n");
 		return 1;
 	}
 
@@ -524,7 +525,7 @@ static int gmtp_check_packet(struct sk_buff *skb)
 	 * If P.hdrlen is too small for packet type, drop packet and return
 	 */
 	if (gh->hdrlen < gmtp_hdr_len(skb) / sizeof(u32)) {
-		gmtp_print_debug("P.hdrlen(%u) too small\n", gh->hdrlen);
+		gmtp_pr_warning("P.hdrlen(%u) too small\n", gh->hdrlen);
 		return 1;
 	}
 
@@ -607,6 +608,10 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 
 	unsigned char flowname[GMTP_FLOWNAME_STR_LEN];
 
+	unsigned char *cl = "\xc0\xa8\x02\x03"; /* 192.168.2.3 */
+	__be32 cl_ip = *(unsigned int *)cl;
+
+
 	gmtp_pr_func();
 
 	/* Step 1: Check header basics */
@@ -615,6 +620,11 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 
 	gh = gmtp_hdr(skb);
 	iph = ip_hdr(skb);
+
+	if(iph->saddr == cl_ip) {
+		pr_info("Packet received from %pI4\n", &iph->saddr);
+	}
+
 
 	GMTP_SKB_CB(skb)->seq = gh->seq;
 	GMTP_SKB_CB(skb)->type = gh->type;
