@@ -166,27 +166,15 @@ EXPORT_SYMBOL_GPL(get_mcst_v4_addr);
 void gmtp_buffer_add(struct gmtp_flow_info *info, struct sk_buff *newsk)
 {
 	skb_queue_tail(info->buffer, skb_copy(newsk, GFP_ATOMIC));
-	info->buffer_size += newsk->len;
+	info->buffer_max_size += newsk->len;
 }
 
 struct sk_buff *gmtp_buffer_dequeue(struct gmtp_flow_info *info)
 {
 	struct sk_buff *skb = skb_dequeue(info->buffer);
 	if(skb != NULL)
-		info->buffer_size -= skb->len;
+		info->buffer_max_size -= skb->len;
 	return skb;
-}
-
-struct gmtp_flow_info *gmtp_inter_get_info(
-		struct gmtp_inter_hashtable *hashtable, const __u8 *media)
-{
-	struct gmtp_relay_entry *entry =
-			gmtp_inter_lookup_media(gmtp_inter.hashtable, media);
-
-	if(entry != NULL)
-		return entry->info;
-
-	return NULL;
 }
 
 unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
@@ -199,21 +187,12 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 	if((gmtp_info->relay_enabled == 0) || (in == NULL))
 		return ret;
 
-	/** Calculates new rate */
-    /*gmtp_update_rx_rate(UINT_MAX, entry_info);*/
-
 	if(iph->protocol == IPPROTO_GMTP) {
 
-       	/** Calculates new rate */
-       	struct gmtp_hdr *gh = gmtp_hdr(skb);
-        struct gmtp_flow_info *entry_info = gmtp_inter_get_info(
-		gmtp_inter.hashtable, gh->flowname);
-        if(entry_info != NULL)
-            gmtp_update_rx_rate(UINT_MAX, entry_info);
-
+		struct gmtp_hdr *gh = gmtp_hdr(skb);
 
 		if(gh->type != GMTP_PKT_DATA && gh->type != GMTP_PKT_FEEDBACK) {
-			gmtp_print_debug("GMTP packet: %s (%d)",
+			gmtp_pr_debug("GMTP packet: %s (%d)",
 					gmtp_packet_name(gh->type), gh->type);
 			print_packet(skb, true);
 			print_gmtp_packet(iph, gh);
@@ -298,6 +277,7 @@ int init_module()
 
 	/* FIXME Setup a better default value for Rate */
 	gmtp_inter.total_rx = 50000;
+	gmtp_inter.capacity = CAPACITY_DEFAULT;
 
 	memcpy(gmtp_inter.relay_id, gmtp_inter_build_relay_id(),
 			GMTP_RELAY_ID_LEN);

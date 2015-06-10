@@ -42,10 +42,17 @@ struct gmtp_relay_entry {
  *
  * @iseq: initial sequence number of received packets
  * @seq: sequence number of last received packet
- * @nbytes: amount of received bytes
- * @current_tx: Current max tx (via GMTP-MCC). 0 means unlimited.
- * @last_rx_tstamp: time stamp of last received data packet
+ * @total_bytes: amount of received bytes
+ * @last_rx_tstamp: time stamp of last received data packet (using milliseconds instead ktime_t)
+ *
+ * @ucc_bytes: bytes received since last GMTP-UCC execution
+ * @ucc_rx_tstamp: time stamp of last GMTP-UCC execution
+ * @current_rx: current rx_rate calculated from gmtp-ucc
+ * @required_rx: ideal (max) rx_rate calculated from gmtp-ucc
+ *
+ * @required_tx: Max tx (via GMTP-MCC). 0 means unlimited.
  * @data_pkt_tx: number of data packets transmitted
+ *
  * @buffer: buffer of GMTP-Data packets
  * @buffer_size: size (in bytes) of GMTP-Data buffer.
  * @buffer_len: number of packets in GMTP-Data buffer]
@@ -55,19 +62,27 @@ struct gmtp_flow_info {
 	__be32			my_addr;
 	__be16			my_port;
 
+	/* General counters (per packet) */
 	unsigned int 		iseq;
 	unsigned int 		seq;
-	unsigned int 		nbytes;
-    unsigned int        total_bytes;
-	u64 			current_tx;
-	ktime_t 		last_rx_tstamp;
-	unsigned int 		data_pkt_tx;
+	unsigned int 		total_bytes;
+	unsigned long  		last_rx_tstamp; /* milliseconds from skb->tstamp */
+
+	/* Counters to GMTP-UCC (per RTT)*/
+	unsigned int        	ucc_bytes;
+	unsigned long  		ucc_rx_tstamp;
+	unsigned int 		current_rx;
+	unsigned int 		required_rx;
+
+	/* GMTP-MCC */
+	unsigned int 		required_tx;
+	unsigned int 		data_pkt_out;
 
 	struct gmtp_client	*clients;
 	unsigned int 		nclients;
 
 	struct sk_buff_head 	*buffer;
-	unsigned int 		buffer_size;
+	unsigned int 		buffer_max_size;
 	unsigned int 		buffer_min;
 	unsigned int 		buffer_max;  /* buffer_min * 3 */
 #define buffer_len 		buffer->qlen

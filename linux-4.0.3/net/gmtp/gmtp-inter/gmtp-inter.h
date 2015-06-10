@@ -22,6 +22,8 @@
 #define H_USER 	1024
 #define MD5_LEN GMTP_RELAY_ID_LEN
 
+#define CAPACITY_DEFAULT 1250000 /* bytes/s => 10 Mbit/s */
+
 extern const char *gmtp_packet_name(const int);
 extern const char *gmtp_state_name(const int);
 extern void flowname_str(__u8* str, const __u8* flowname);
@@ -41,6 +43,8 @@ extern void gmtp_list_add_client(unsigned int id, __be32 addr,
  */
 struct gmtp_inter {
 	unsigned char		relay_id[GMTP_RELAY_ID_LEN];
+
+	unsigned int 		capacity;
 
 	unsigned int 		total_bytes_rx;
 	unsigned int 		total_rx;
@@ -104,6 +108,20 @@ static inline void gmtp_inter_wait_us(s64 delay)
 	while(ktime_before(ktime_get_real(), timeout)) {
 		cond_resched(); /* Do nothing, just wait... */
 	}
+}
+
+static inline unsigned long ktime_to_jiffies(ktime_t value)
+{
+	struct timespec ts = ktime_to_timespec(value);
+
+	return timespec_to_jiffies(&ts);
+}
+
+static inline void jiffies_to_ktime(const unsigned long jiffies, ktime_t *value)
+{
+	struct timespec ts;
+	jiffies_to_timespec(jiffies, &ts);
+	*value = timespec_to_ktime(ts);
 }
 
 /*

@@ -178,24 +178,22 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
 	struct gmtp_hdr *gh_req_n;
 	struct gmtp_client *client, *first_client;
 	__u8 code = GMTP_REQNOTIFY_CODE_OK;
-	unsigned int rate;
 
 	gmtp_print_function();
 
 	/* Add relay information in REGISTER-REPLY packet) */
 	gmtp_inter_add_relayid(skb);
 
-	/* Update transmission rate (GMTP-UCC) */
-	gmtp_print_debug("UPDATING Tx Rate");
-	gmtp_inter.total_rx = gh->transm_r;
-	gmtp_update_rx_rate(UINT_MAX, entry);
-	rate = gmtp_get_current_rx_rate();
-	if(rate < gh->transm_r)
-		gh->transm_r = rate;
-
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry == NULL)
 		return NF_ACCEPT;
+
+	/* Update transmission rate (GMTP-UCC) */
+	gmtp_print_debug("UPDATING Tx Rate");
+	gmtp_inter.total_rx = gh->transm_r;
+	gmtp_ucc(UINT_MAX, entry->info);
+	if(entry->info->current_rx < gh->transm_r)
+		gh->transm_r = (__be32) entry->info->current_rx;
 
 	gh_route_n = gmtp_inter_make_route_hdr(skb);
 	if(gh_route_n != NULL)
@@ -279,11 +277,11 @@ int gmtp_inter_feedback_rcv(struct sk_buff *skb)
 	}*/
 
 	/* Discard early feedbacks */
-	if((entry->info->data_pkt_tx/entry->info->buffer_min) < 100)
+	if((entry->info->data_pkt_out/entry->info->buffer_min) < 100)
 		goto out;
 
 	if(gh->transm_r > 0)
-		entry->info->current_tx = (u64) gh->transm_r;
+		entry->info->required_tx = (unsigned int) gh->transm_r;
 
 out:
 	return ret;
@@ -299,8 +297,10 @@ static inline void gmtp_update_stats(struct gmtp_flow_info *info,
 		info->iseq = gh->seq;
 	if(gh->seq > info->seq)
 		info->seq = gh->seq;
-	info->nbytes += skb->len + ETH_HLEN;
+	info->total_bytes += skb->len + ETH_HLEN;
 	gmtp_inter.total_bytes_rx += skb->len + ETH_HLEN;
+
+	info->ucc_bytes += skb->len + ETH_HLEN;
 }
 
 /**
@@ -320,9 +320,6 @@ int gmtp_inter_data_rcv(struct sk_buff *skb)
 	struct gmtp_flow_info *info;
 
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
-    /*alterado por mim*/
-    entry->info->total_bytes += skb->len;
-
 	if(entry == NULL) /* Failed to lookup media info in table... */
 		return NF_ACCEPT;
 
@@ -338,6 +335,9 @@ int gmtp_inter_data_rcv(struct sk_buff *skb)
 		gmtp_buffer_add(info, skb);
 
 	gmtp_update_stats(info, skb, gh);
+
+	if(gh->seq % 1000 == 0)
+		gmtp_ucc(UINT_MAX, info);
 
 out:
 	return NF_ACCEPT;
