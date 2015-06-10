@@ -24,20 +24,6 @@
 
 extern struct gmtp_inter gmtp_inter;
 
-unsigned long ktime_to_jiffies(ktime_t *value)
-{
-    struct timespec ts = ktime_to_timespec(*value);
-
-    return timespec_to_jiffies(&ts);
-}
-
-void jiffies_to_ktime(const unsigned long jiffies, ktime_t *value)
-{
-    struct timespec ts;
-    jiffies_to_timespec(jiffies, &ts);
-    *value = timespec_to_ktime(ts);
-}
-
 unsigned int gmtp_rtt_average()
 {
 	return 1;
@@ -65,69 +51,35 @@ EXPORT_SYMBOL_GPL(gmtp_get_current_rx_rate);
 /**
  * Get TX rate, via RCP
  */
-void gmtp_update_rx_rate(unsigned int h_user,struct gmtp_relay_entry *entry)
+void gmtp_update_rx_rate(unsigned int h_user,struct gmtp_flow_info *info)
 {
    	unsigned int r = 0;
 	unsigned int H, h, y, q, Nt;
 	unsigned int rt;
    	unsigned int r_prev = gmtp_get_current_rx_rate();
     unsigned long elapsed;
-    /*guarda o tempo quando a funcao foi chamda pela primeira vez*/
-    ktime_t *stamp; /*time elapsed since last update*/
+    ktime_t stamp;
+    ktime_t current_time; 
     unsigned int total_bytes;
 	int up, delta;
 	int flag_aux = 0;
 
-    /*struct gmtp_flow_info {
-	__be32			my_addr;
-	__be16			my_port;
-
-	unsigned int 		iseq;
-	unsigned int 		seq;
-	unsigned int 		nbytes;
-    unsigned int        total_bytes;
-	u64 			current_tx;
-	ktime_t 		last_rx_tstamp;
-	unsigned int 		data_pkt_tx;
-
-	struct gmtp_client	*clients;
-	unsigned int 		nclients;
-
-	struct sk_buff_head 	*buffer;
-	unsigned int 		buffer_size;
-	unsigned int 		buffer_min;*/
-//	unsigned int 		buffer_max;  /* buffer_min * 3 */
-    //#define buffer_len 		buffer->qlen
-//};
-
-
-    /*falta saber o tipo de info*/
-    struct gmtp_flow_info *info = entry->info;
-    //q = info->buffer_len;
     q = info->buffer->qlen;
     
-    *stamp = info->last_rx_tstamp; // tempo qunado chamou update ultima vez
-    
-    unsigned long j;
-    j = jiffies;
-    ktime_t *value;
-    jiffies_to_ktime(j, value); 
-    unsigned long aux = ktime_to_jiffies(stamp); 
-    elapsed = j - aux;
+    stamp = info->last_rx_tstamp;     
+    current_time = ktime_get_real();
+    elapsed = ktime_ms_delta(current_time, stamp);
 
     total_bytes = info->total_bytes;
 
     y = total_bytes/elapsed;
     
     /*atualiza o valor da variavel para a proxima chamada da funcao*/
-    
-    info->last_rx_tstamp = *value;
+    info->last_rx_tstamp = current_time;
 
     /*depois a variavel de total bytes sera zerada*/
-    entry->info->total_bytes = 0;
+    info->total_bytes = 0;
    
-    /*final*/
-
 	gmtp_pr_func();
 
 	gmtp_print_debug("r_prev: %d", r_prev);

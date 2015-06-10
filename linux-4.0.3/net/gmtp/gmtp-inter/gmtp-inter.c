@@ -200,11 +200,17 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 		return ret;
 
 	/** Calculates new rate */
-	/* gmtp_update_rx_rate(UINT_MAX); */
+    /*gmtp_update_rx_rate(UINT_MAX, entry_info);*/
 
 	if(iph->protocol == IPPROTO_GMTP) {
 
-		struct gmtp_hdr *gh = gmtp_hdr(skb);
+       	/** Calculates new rate */
+       	struct gmtp_hdr *gh = gmtp_hdr(skb);
+        struct gmtp_flow_info *entry_info = gmtp_inter_get_info(
+		gmtp_inter.hashtable, gh->flowname);
+        if(entry_info != NULL)
+            gmtp_update_rx_rate(UINT_MAX, entry_info);
+
 
 		if(gh->type != GMTP_PKT_DATA && gh->type != GMTP_PKT_FEEDBACK) {
 			gmtp_print_debug("GMTP packet: %s (%d)",
