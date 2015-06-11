@@ -32,39 +32,34 @@ unsigned int gmtp_relay_queue_size()
 
 /**
  * Get TX rate, via RCP
+ *
+ * FIXME Work with MSEC in RTT and TX.
+ * After convert to SEC...
  */
-void gmtp_ucc(unsigned int h_user, struct gmtp_flow_info *info)
+void gmtp_ucc(unsigned int h_user)
 {
-   	unsigned int r = 0;
-	unsigned int H, h, q = 0;
-   	unsigned int r_prev, y;
-   	unsigned int C = gmtp_inter.capacity;
-
 	int up, delta;
+	unsigned int r = 0, H, h;
 
-	unsigned long elapsed;
+	unsigned int r_prev = gmtp_inter.ucc_rx;
+	unsigned int C = gmtp_inter.capacity;
+	unsigned int q = gmtp_inter.buffer_len;
+   	unsigned int y = gmtp_inter.total_rx;
+
 	unsigned long current_time = ktime_to_ms(ktime_get_real());
+	unsigned long elapsed = current_time - gmtp_inter.ucc_rx_tstamp;
 
 	pr_info("\n");
 	gmtp_pr_func();
 
-	if(info == NULL) {
-		gmtp_pr_debug("info is NULL!\n");
-		return;
-	}
-
-	r_prev = info->required_rx > 0 ? info->required_rx : gmtp_inter.total_rx;
-	elapsed = current_time - info->ucc_rx_tstamp;
-
 	pr_info("r_prev: %d bytes/s\n", r_prev);
 	gmtp_pr_debug("Current time: %lu ms", current_time);
-	gmtp_pr_debug("Stamp: %lu ms", info->ucc_rx_tstamp);
+	gmtp_pr_debug("Stamp: %lu ms", gmtp_inter.ucc_rx_tstamp);
 	gmtp_pr_debug("Elapsed: %lu ms", elapsed);
-	gmtp_pr_debug("Received bytes at interval: %u bytes\n", info->ucc_bytes);
+	gmtp_pr_debug("Received bytes at interval: %u bytes\n", gmtp_inter.ucc_bytes);
 
-	y = info->current_rx;
 	if(elapsed != 0)
-		y = DIV_ROUND_CLOSEST(info->ucc_bytes * MSEC_PER_SEC, elapsed);
+		y = DIV_ROUND_CLOSEST(gmtp_inter.ucc_bytes * MSEC_PER_SEC, elapsed);
 
 	h = gmtp_rtt_average();
 
@@ -76,10 +71,7 @@ void gmtp_ucc(unsigned int h_user, struct gmtp_flow_info *info)
 
 	gmtp_pr_debug("C: %u bytes/s", C);
 	gmtp_pr_debug("y(t): %u bytes/s", y);
-
-	if(info->buffer)
-		q = info->buffer->qlen;
-	gmtp_pr_debug("q(t): %u packets\n", q);
+	gmtp_pr_debug("q(t): %u bytes\n", q);
 
 	up = (H / h) * (ALPHA(GHAMA(C)-y) - BETA(q / h));
 
@@ -112,15 +104,15 @@ void gmtp_ucc(unsigned int h_user, struct gmtp_flow_info *info)
 	gmtp_pr_debug("new_r = (int)(r_prev) + delta");
 	gmtp_pr_debug("new_r = %d + %d", r_prev, delta);
 	gmtp_pr_debug("new_r = %d bytes/s\n", r);
-	info->required_rx = r;
+	gmtp_inter.ucc_rx = r;
 
 	/* Reset GMTP-UCC variables */
-	info->ucc_bytes = 0;
-	info->ucc_rx_tstamp = ktime_to_ms(ktime_get_real());
-	info->current_rx = y;
+	gmtp_inter.ucc_bytes = 0;
+	gmtp_inter.ucc_rx_tstamp = ktime_to_ms(ktime_get_real());
+	gmtp_inter.total_rx = y;
 
 	pr_info("-----------------------\n");
-	pr_info("GMTP-UCC execution time: %lu ms\n", info->ucc_rx_tstamp - current_time);
+	pr_info("GMTP-UCC execution time: %lu ms\n", gmtp_inter.ucc_rx_tstamp - current_time);
 	pr_info("-----------------------\n");
 
 }

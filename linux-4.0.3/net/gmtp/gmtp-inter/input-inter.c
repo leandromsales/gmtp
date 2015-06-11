@@ -184,16 +184,14 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
 	/* Add relay information in REGISTER-REPLY packet) */
 	gmtp_inter_add_relayid(skb);
 
+	gmtp_print_debug("UPDATING Tx Rate");
+	gmtp_ucc(UINT_MAX);
+	if(gmtp_inter.ucc_rx < gh->transm_r)
+		gh->transm_r = (__be32) gmtp_inter.ucc_rx;
+
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry == NULL)
 		return NF_ACCEPT;
-
-	/* Update transmission rate (GMTP-UCC) */
-	gmtp_print_debug("UPDATING Tx Rate");
-	gmtp_inter.total_rx = gh->transm_r;
-	gmtp_ucc(UINT_MAX, entry->info);
-	if(entry->info->current_rx < gh->transm_r)
-		gh->transm_r = (__be32) entry->info->current_rx;
 
 	gh_route_n = gmtp_inter_make_route_hdr(skb);
 	if(gh_route_n != NULL)
@@ -268,14 +266,6 @@ int gmtp_inter_feedback_rcv(struct sk_buff *skb)
 	if(entry == NULL)
 		goto out;
 
-	/*{
-		struct iphdr *iph = ip_hdr(skb);
-		gmtp_pr_info("%s (%d) src=%pI4@%-5d dst=%pI4@%-5d transm_r: %u",
-				gmtp_packet_name(gh->type), gh->type,
-				&iph->saddr, ntohs(gh->sport), &iph->daddr,
-				ntohs(gh->dport), gh->transm_r);
-	}*/
-
 	/* Discard early feedbacks */
 	if((entry->info->data_pkt_out/entry->info->buffer_min) < 100)
 		goto out;
@@ -287,20 +277,34 @@ out:
 	return ret;
 }
 
+#define skblen(skb) ((*skb).len) + ETH_HLEN
+
 /**
  * Update GMTP-inter statistics
  */
 static inline void gmtp_update_stats(struct gmtp_flow_info *info,
 		struct sk_buff *skb, struct gmtp_hdr *gh)
 {
-	if(info->iseq == 0)
-		info->iseq = gh->seq;
-	if(gh->seq > info->seq)
-		info->seq = gh->seq;
-	info->total_bytes += skb->len + ETH_HLEN;
-	gmtp_inter.total_bytes_rx += skb->len + ETH_HLEN;
+	info->total_bytes += skblen(skb);
+	info->recent_bytes += skblen(skb);
+	info->seq = (unsigned int) gh->seq;
 
-	info->ucc_bytes += skb->len + ETH_HLEN;
+	if(gh->seq % gmtp_inter.rx_rate_wnd == 0) {
+		unsigned long current_time = ktime_to_ms(ktime_get_real());
+		unsigned long elapsed = current_time - info->recent_rx_tstamp;
+		if(elapsed != 0)
+			info->current_rx = DIV_ROUND_CLOSEST(
+					info->recent_bytes * MSEC_PER_SEC,
+					elapsed);
+
+		info->recent_rx_tstamp = ktime_to_ms(skb->tstamp);
+		info->recent_bytes = 0;
+
+		pr_info("Flow RX: %u bytes/s\n", info->current_rx);
+	}
+
+	gmtp_inter.total_bytes_rx += skblen(skb);
+	gmtp_inter.ucc_bytes += skblen(skb);
 }
 
 /**
@@ -327,7 +331,7 @@ int gmtp_inter_data_rcv(struct sk_buff *skb)
 		entry->state = GMTP_INTER_TRANSMITTING;
 
 	info = entry->info;
-	if(info->buffer_len >= info->buffer_max)
+	if(info->buffer->qlen >= info->buffer_max)
 		goto out; /* Dont add it to buffer (equivalent to drop) */
 
 	jump_over_gmtp_intra(skb, &info->clients->list);
@@ -337,7 +341,7 @@ int gmtp_inter_data_rcv(struct sk_buff *skb)
 	gmtp_update_stats(info, skb, gh);
 
 	if(gh->seq % 1000 == 0)
-		gmtp_ucc(UINT_MAX, info);
+		gmtp_ucc(UINT_MAX);
 
 out:
 	return NF_ACCEPT;

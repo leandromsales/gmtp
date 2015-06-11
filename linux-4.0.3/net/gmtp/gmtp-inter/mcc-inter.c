@@ -26,7 +26,7 @@ void gmtp_inter_mcc_delay(struct gmtp_flow_info *info, struct sk_buff *skb,
 
 	/*pr_info("delay = (1000000 * %u)/%llu = %llu us\n", len, tx, delay);*/
 	/*pr_info("elapsed = %lld\n", elapsed);*/
-	/*pr_info("delay2 = %lld us (%lld ms)\n", delay2, (delay2/1000)); */
+	pr_info("delay2 = %lld us (%lld ms)\n", delay2, (delay2/1000));
 
 	/* if delay2 <= 0, pass way... */
 	if(delay2 > 0)

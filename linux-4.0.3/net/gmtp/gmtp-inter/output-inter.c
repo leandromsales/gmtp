@@ -398,7 +398,7 @@ int gmtp_inter_data_out(struct sk_buff *skb)
 
 	info = entry->info;
 	if(entry->state == GMTP_INTER_TRANSMITTING) {
-		if(info->buffer_len > info->buffer_min) {
+		if(info->buffer->qlen > info->buffer_min) {
 			struct sk_buff *buffered = gmtp_buffer_dequeue(info);
 			if(buffered != NULL) {
 				info->data_pkt_out++;
@@ -414,7 +414,7 @@ int gmtp_inter_data_out(struct sk_buff *skb)
 	gh->dport = entry->channel_port;
 
 	server_tx = info->current_rx <= 0 ?
-			(unsigned int)gh->transm_r : info->current_rx;
+			(unsigned int) gh->transm_r : info->current_rx;
 
 	gmtp_inter_mcc_delay(info, skb, (u64) server_tx);
 
@@ -497,7 +497,7 @@ int gmtp_inter_close_out(struct sk_buff *skb)
 		break;
 	}
 
-	while(entry->info->buffer_len > 0) {
+	while(entry->info->buffer->qlen > 0) {
 		struct sk_buff *buffered = gmtp_buffer_dequeue(entry->info);
 		if(buffered == NULL) {
 			gmtp_pr_error("Buffered is NULL...");
