@@ -1,0 +1,28 @@
+
+
+
+
+Network Working Group             Leandro Melo de Sales and Wendell Silva Soares
+
+Request for Comments: DRAFT                                                 NRI
+
+                                                                      June, 2015
+
+
+
+          Global Media Transmission Protocol (GMTP)
+
+
+
+References
+
+
+
+[dS14] Leandro Melo de Sales.  GMTP: Distribuic"ao de Midias Ao Vivo atraves de
+
+       uma Rede de Favores Constituida entre Roteadores.  PhD thesis, Centro de
+
+       Engenharia Eletrica e Informatica - Universidade Federal de Campina Gran*
+ *de,
+
+       Campina Grande, PB, Brasil, 2014.
