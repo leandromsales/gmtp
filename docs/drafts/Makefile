@@ -1,19 +1,21 @@
-SRC += 01-gmtp
+#
+# Makefile for the GMTP drafts
+#
+# 12 Jun 2015, Wendell Soares <wss@ic.ufal.br>
+#
 
-all :  pdf
+DRAFTS += gmtp
 
-txt : latex
-	dvi2tty -a $(SRC).dvi > $(SRC).txt
+all: pdf txt
+
+pdf: 
+	make -C $(DRAFTS) pdf
 	
-pdf : latex
-	pdflatex $(SRC).tex
+txt: 
+	make -C $(DRAFTS) txt
 
-latex :
-	latex $(SRC).tex
-#	makeindex -s $(SRC).ist -t $(SRC).glg -o $(SRC).gls $(SRC).glo
-	bibtex $(SRC)
-	latex $(SRC).tex
-	latex $(SRC).tex
-
-clean :
+clean: 
+	make -C $(DRAFTS) clean
 	rm -rf *.txt *.pdf *.aux *.bbl *.blg *.dvi *.log *.ps *.toc *~ *.lof *.glo *.gls *.ilg *.ist *.glg *.synctex.gz *.brf *.idx
+
+
