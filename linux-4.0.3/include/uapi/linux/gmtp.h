@@ -189,7 +189,7 @@ struct gmtp_hdr_elect_request {
  * @elect_code: One of %gmtp_ack_codes
  */
 struct gmtp_hdr_elect_response {
-	__u8 	elect_code:3;
+	__u8 	elect_code:2;
 };
 
 enum gmtp_elect_codes {
@@ -301,6 +301,7 @@ enum gmtp_sockopt_codes {
  * @nclients: number of occupied slots at a reporter.
  * 			It must be less or equal %max_clients
  * @clients: clients of a reporter.
+ * @reporter: reporter of a client
  */
 struct gmtp_client {
 	struct list_head 	list;
@@ -311,6 +312,8 @@ struct gmtp_client {
 	__u8			nclients;
 
 	struct gmtp_client	*clients;
+	struct gmtp_client	*reporter;
+	struct sock 		*rsock;
 };
 
 

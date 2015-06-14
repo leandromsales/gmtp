@@ -176,8 +176,7 @@ struct gmtp_sock {
 	u32				mss;
 
 	enum gmtp_role			role:3;
-	struct gmtp_client		*reporter;
-	struct sock 			*rsock;
+	struct gmtp_client		*myself;
 
 	u32				req_stamp;
 	u32				reply_stamp;
@@ -265,12 +264,6 @@ static inline struct gmtp_hdr_data *gmtp_hdr_data(const struct sk_buff *skb)
 						 sizeof(struct gmtp_hdr));
 }
 
-/*static inline struct gmtp_hdr_ack *gmtp_hdr_ack(const struct sk_buff *skb)
-{
-	return (struct gmtp_hdr_ack *)(skb_transport_header(skb) +
-						 sizeof(struct gmtp_hdr));
-}*/
-
 static inline struct gmtp_hdr_register_reply *gmtp_hdr_register_reply(
 		const struct sk_buff *skb)
 {
@@ -295,6 +288,13 @@ static inline struct gmtp_hdr_elect_request *gmtp_hdr_elect_request(
 		const struct sk_buff *skb)
 {
 	return (struct gmtp_hdr_elect_request *)(skb_transport_header(skb) +
+						 sizeof(struct gmtp_hdr));
+}
+
+static inline struct gmtp_hdr_elect_response *gmtp_hdr_elect_response(
+		const struct sk_buff *skb)
+{
+	return (struct gmtp_hdr_elect_response *)(skb_transport_header(skb) +
 						 sizeof(struct gmtp_hdr));
 }
 

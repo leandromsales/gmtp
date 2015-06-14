@@ -206,8 +206,6 @@ int gmtp_init_sock(struct sock *sk)
 
 	gp->mss			= GMTP_DEFAULT_MSS;
 	gp->role		= GMTP_ROLE_UNDEFINED;
-	gp->max_nclients	= 0;
-	gp->nclients		= 0;
 
 	gp->req_stamp		= 0;
 	gp->ack_rcv_tstamp	= 0;

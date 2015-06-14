@@ -360,7 +360,14 @@ out:
 	return err;
 }
 
-static void gmtp_v4_ctl_send_reset(struct sock *sk, struct sk_buff *rxskb) {
+static void gmtp_v4_ctl_send_reset(struct sock *sk, struct sk_buff *rxskb)
+{
+	gmtp_v4_ctl_send_packet(sk, rxskb, GMTP_PKT_RESET);
+}
+
+void gmtp_v4_ctl_send_packet(struct sock *sk, struct sk_buff *rxskb,
+		enum gmtp_pkt_type type)
+{
 	int err;
 	const struct iphdr *rxiph;
 	struct sk_buff *skb;
@@ -370,10 +377,6 @@ static void gmtp_v4_ctl_send_reset(struct sock *sk, struct sk_buff *rxskb) {
 
 	gmtp_print_function();
 
-	/* Never send a reset in response to a reset. */
-	if (gmtp_hdr(rxskb)->type == GMTP_PKT_RESET)
-		return;
-
 	if (skb_rtable(rxskb)->rt_type != RTN_LOCAL)
 		return;
 
@@ -381,7 +384,18 @@ static void gmtp_v4_ctl_send_reset(struct sock *sk, struct sk_buff *rxskb) {
 	if (dst == NULL)
 		return;
 
-	skb = gmtp_ctl_make_reset(ctl_sk, rxskb);
+	switch(type){
+	case GMTP_PKT_RESET:
+		/* Never send a reset in response to a reset. */
+		if(gmtp_hdr(rxskb)->type == GMTP_PKT_RESET)
+			return;
+		skb = gmtp_ctl_make_reset(ctl_sk, rxskb);
+		break;
+	case GMTP_PKT_ELECT_RESPONSE:
+		skb = gmtp_ctl_make_elect_response(ctl_sk, rxskb);
+		break;
+	}
+
 	if (skb == NULL)
 		goto out;
 
@@ -400,6 +414,7 @@ static void gmtp_v4_ctl_send_reset(struct sock *sk, struct sk_buff *rxskb) {
 out:
 	dst_release(dst);
 }
+EXPORT_SYMBOL_GPL(gmtp_v4_ctl_send_packet);
 
 static struct sock *gmtp_v4_hnd_req(struct sock *sk, struct sk_buff *skb) {
 	const struct gmtp_hdr *gh = gmtp_hdr(skb);
@@ -534,92 +549,6 @@ static int gmtp_check_packet(struct sk_buff *skb)
 	return 0;
 }
 
-static int gmtp_v4_reporter_receive_elect_request(struct sk_buff *skb)
-{
-	const struct iphdr *iph = ip_hdr(skb);
-	const struct gmtp_hdr *gh = gmtp_hdr(skb);
-	struct gmtp_client_entry *media_entry;
-	struct gmtp_client *r;
-
-	gmtp_pr_func();
-
-	media_entry = gmtp_lookup_client(gmtp_hashtable, gh->flowname);
-	if(media_entry == NULL)
-		return 1;
-
-	r = gmtp_get_client(&media_entry->clients->list, iph->daddr, gh->dport);
-	if(r == NULL)
-		return 1;
-
-	if(r->max_nclients <= 0 || r->nclients <= r->max_nclients)
-		return 1;
-
-	r->nclients++;
-	gmtp_list_add_client(0, iph->daddr, gh->dport, 0, &r->clients->list);
-
-	return 0;
-}
-
-static int gmtp_v4_reporter_receive_ack(struct sk_buff *skb)
-{
-	const struct iphdr *iph = ip_hdr(skb);
-	const struct gmtp_hdr *gh = gmtp_hdr(skb);
-	struct gmtp_client_entry *media_entry;
-	struct gmtp_client *r;
-	struct gmtp_client *c;
-
-	gmtp_pr_func();
-
-	media_entry = gmtp_lookup_client(gmtp_hashtable, gh->flowname);
-	if(media_entry == NULL)
-		return 1;
-
-	r = gmtp_get_client(&media_entry->clients->list, iph->daddr, gh->dport);
-	if(r == NULL)
-		return 1;
-
-	if(r->max_nclients <= 0)
-		return 1;
-
-	c = gmtp_get_client(&r->clients->list, iph->saddr, gh->sport);
-	if(c == NULL)
-		return 1;
-
-	pr_info("ACK received from client %pI4@%-5d\n", &c->addr, ntohs(c->port));
-
-	return 0;
-}
-
-static int gmtp_v4_reporter_receive_close(struct sk_buff *skb)
-{
-	const struct iphdr *iph = ip_hdr(skb);
-	const struct gmtp_hdr *gh = gmtp_hdr(skb);
-	struct gmtp_client_entry *media_entry;
-	struct gmtp_client *r;
-	struct gmtp_client *c;
-
-	gmtp_pr_func();
-
-	media_entry = gmtp_lookup_client(gmtp_hashtable, gh->flowname);
-	if(media_entry == NULL)
-		return 1;
-
-	r = gmtp_get_client(&media_entry->clients->list, iph->daddr, gh->dport);
-	if(r == NULL)
-		return 1;
-
-	if(r->max_nclients <= 0)
-		return 1;
-
-	c = gmtp_get_client(&r->clients->list, iph->saddr, gh->sport);
-	if(c == NULL)
-		return 1;
-
-	pr_info("CLOSE received from client %pI4@%-5d\n", &c->addr, ntohs(c->port));
-
-	return 0;
-}
-
 static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 {
 	const struct gmtp_hdr *gh = gmtp_hdr(skb);
@@ -635,35 +564,28 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 
 		switch(gh->type) {
 		case GMTP_PKT_ELECT_REQUEST:
-			pr_info("Elect request received!\n");
-
-			if(gmtp_v4_reporter_receive_elect_request(skb))
+			pr_info("ELECT received!\n");
+			if(gmtp_reporter_rcv_elect_request(skb))
 				goto no_gmtp_socket;
-
-			goto discard_it;
+			break;
 		case GMTP_PKT_ACK:
 			pr_info("ACK received!\n");
-
-			if(gmtp_v4_reporter_receive_ack(skb))
+			if(gmtp_reporter_rcv_ack(skb))
 				goto no_gmtp_socket;
-
-			goto discard_it;
+			break;
 		case GMTP_PKT_CLOSE:
 			pr_info("CLOSE received!\n");
-
-			if(gmtp_v4_reporter_receive_close(skb))
+			if(gmtp_reporter_rcv_close(skb) )
 				goto no_gmtp_socket;
-
-			goto discard_it;
-		}
-		}
-
-
-		gmtp_pr_error("Failed to look up flow ID in table and "
+			break;
+		default:
+			gmtp_pr_error("Failed to look up flow ID in table and "
 				"get corresponding socket for this packet: ");
-		print_gmtp_packet(iph, gh);
+			print_gmtp_packet(iph, gh);
+			goto no_gmtp_socket;
+		}
 
-		goto no_gmtp_socket;
+		goto discard_it;
 	}
 
 	/*
@@ -720,8 +642,10 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 	struct sock *sk;
 
 	/* Step 1: Check header basics */
-	if (gmtp_check_packet(skb))
+	if (gmtp_check_packet(skb)) {
+		gmtp_pr_error("gmtp_check_packet returned with an error!");
 		goto discard_it;
+	}
 
 	gh = gmtp_hdr(skb);
 	iph = ip_hdr(skb);

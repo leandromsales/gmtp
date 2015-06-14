@@ -83,7 +83,7 @@ struct gmtp_client_entry *gmtp_lookup_client(
 EXPORT_SYMBOL_GPL(gmtp_lookup_client);
 
 int gmtp_add_client_entry(struct gmtp_hashtable *hashtable, __u8 *flowname,
-		__be32 local_addr, __be16 local_port,
+		struct sock *sk, __be32 local_addr, __be16 local_port,
 		__be32 channel_addr, __be16 channel_port)
 {
 	struct gmtp_client_entry *new_entry;
@@ -114,7 +114,7 @@ int gmtp_add_client_entry(struct gmtp_hashtable *hashtable, __u8 *flowname,
 	if(new_entry->clients == NULL)
 		return 3;
 	INIT_LIST_HEAD(&new_entry->clients->list);
-	gmtp_list_add_client(0, local_addr, local_port, 0,
+	gmtp_sk(sk)->myself = gmtp_list_add_client(0, local_addr, local_port, 0,
 			&new_entry->clients->list);
 
 	new_entry->channel_addr = channel_addr;

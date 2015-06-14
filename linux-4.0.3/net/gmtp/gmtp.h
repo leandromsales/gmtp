@@ -162,6 +162,8 @@ int gmtp_setsockopt(struct sock *sk, int level, int optname,
 
 /** ipv4.c */
 int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len);
+void gmtp_v4_ctl_send_packet(struct sock *sk, struct sk_buff *rxskb,
+		enum gmtp_pkt_type type);
 
 /** input.c */
 struct sock* gmtp_multicast_connect(struct sock *sk, __be32 addr, __be16 port);
@@ -170,6 +172,9 @@ int gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 		const struct gmtp_hdr *dh, const unsigned int len);
 int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 		struct gmtp_hdr *gh, unsigned int len);
+int gmtp_reporter_rcv_elect_request(struct sk_buff *skb);
+int gmtp_reporter_rcv_ack(struct sk_buff *skb);
+int gmtp_reporter_rcv_close(struct sk_buff *skb);
 
 /** output.c */
 void gmtp_send_ack(struct sock *sk);
@@ -301,7 +306,7 @@ static inline struct gmtp_client *gmtp_list_add_client(unsigned int id,
 	}
 
 	new->id	  = id;
-	gmtp_pr_info("New client (%u): ADDR=%pI4@%-5d\n",
+	gmtp_pr_info("New client (%u): ADDR=%pI4@%-5d",
 			new->id, &addr, ntohs(port));
 
 	INIT_LIST_HEAD(&new->list);

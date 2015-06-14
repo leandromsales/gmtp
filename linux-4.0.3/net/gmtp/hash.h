@@ -68,7 +68,7 @@ struct gmtp_hashtable *gmtp_create_hashtable(unsigned int size);
 struct gmtp_client_entry *gmtp_lookup_client(
 		struct gmtp_hashtable *hashtable, const __u8 *media);
 int gmtp_add_client_entry(struct gmtp_hashtable *hashtable, __u8 *flowname,
-		__be32 local_addr, __be16 local_port,
+		struct sock *sk, __be32 local_addr, __be16 local_port,
 		__be32 channel_addr, __be16 channel_port);
 void gmtp_del_client_entry(struct gmtp_hashtable *hashtable, __u8 *media);
 
