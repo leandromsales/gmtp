@@ -133,7 +133,6 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len) {
 
 	gp->iss = secure_gmtp_sequence_number(inet->inet_saddr,
 			inet->inet_daddr, inet->inet_sport, inet->inet_dport);
-	gmtp_print_debug("gp->iss: %u", gp->iss);
 	inet->inet_id = gp->iss ^ jiffies;
 
 	err = gmtp_connect(sk);
@@ -535,6 +534,92 @@ static int gmtp_check_packet(struct sk_buff *skb)
 	return 0;
 }
 
+static int gmtp_v4_reporter_receive_elect_request(struct sk_buff *skb)
+{
+	const struct iphdr *iph = ip_hdr(skb);
+	const struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct gmtp_client_entry *media_entry;
+	struct gmtp_client *r;
+
+	gmtp_pr_func();
+
+	media_entry = gmtp_lookup_client(gmtp_hashtable, gh->flowname);
+	if(media_entry == NULL)
+		return 1;
+
+	r = gmtp_get_client(&media_entry->clients->list, iph->daddr, gh->dport);
+	if(r == NULL)
+		return 1;
+
+	if(r->max_nclients <= 0 || r->nclients <= r->max_nclients)
+		return 1;
+
+	r->nclients++;
+	gmtp_list_add_client(0, iph->daddr, gh->dport, 0, &r->clients->list);
+
+	return 0;
+}
+
+static int gmtp_v4_reporter_receive_ack(struct sk_buff *skb)
+{
+	const struct iphdr *iph = ip_hdr(skb);
+	const struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct gmtp_client_entry *media_entry;
+	struct gmtp_client *r;
+	struct gmtp_client *c;
+
+	gmtp_pr_func();
+
+	media_entry = gmtp_lookup_client(gmtp_hashtable, gh->flowname);
+	if(media_entry == NULL)
+		return 1;
+
+	r = gmtp_get_client(&media_entry->clients->list, iph->daddr, gh->dport);
+	if(r == NULL)
+		return 1;
+
+	if(r->max_nclients <= 0)
+		return 1;
+
+	c = gmtp_get_client(&r->clients->list, iph->saddr, gh->sport);
+	if(c == NULL)
+		return 1;
+
+	pr_info("ACK received from client %pI4@%-5d\n", &c->addr, ntohs(c->port));
+
+	return 0;
+}
+
+static int gmtp_v4_reporter_receive_close(struct sk_buff *skb)
+{
+	const struct iphdr *iph = ip_hdr(skb);
+	const struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct gmtp_client_entry *media_entry;
+	struct gmtp_client *r;
+	struct gmtp_client *c;
+
+	gmtp_pr_func();
+
+	media_entry = gmtp_lookup_client(gmtp_hashtable, gh->flowname);
+	if(media_entry == NULL)
+		return 1;
+
+	r = gmtp_get_client(&media_entry->clients->list, iph->daddr, gh->dport);
+	if(r == NULL)
+		return 1;
+
+	if(r->max_nclients <= 0)
+		return 1;
+
+	c = gmtp_get_client(&r->clients->list, iph->saddr, gh->sport);
+	if(c == NULL)
+		return 1;
+
+	pr_info("CLOSE received from client %pI4@%-5d\n", &c->addr, ntohs(c->port));
+
+	return 0;
+}
+
 static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 {
 	const struct gmtp_hdr *gh = gmtp_hdr(skb);
@@ -552,9 +637,27 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 		case GMTP_PKT_ELECT_REQUEST:
 			pr_info("Elect request received!\n");
 
-/*			gmtp_v4_
-			goto discard_it;*/
+			if(gmtp_v4_reporter_receive_elect_request(skb))
+				goto no_gmtp_socket;
+
+			goto discard_it;
+		case GMTP_PKT_ACK:
+			pr_info("ACK received!\n");
+
+			if(gmtp_v4_reporter_receive_ack(skb))
+				goto no_gmtp_socket;
+
+			goto discard_it;
+		case GMTP_PKT_CLOSE:
+			pr_info("CLOSE received!\n");
+
+			if(gmtp_v4_reporter_receive_close(skb))
+				goto no_gmtp_socket;
+
+			goto discard_it;
 		}
+		}
+
 
 		gmtp_pr_error("Failed to look up flow ID in table and "
 				"get corresponding socket for this packet: ");
@@ -615,7 +718,6 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 	const struct gmtp_hdr *gh;
 	const struct iphdr *iph;
 	struct sock *sk;
-	struct gmtp_client_entry *media_entry;
 
 	/* Step 1: Check header basics */
 	if (gmtp_check_packet(skb))
@@ -638,7 +740,9 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 	if(skb->pkt_type == PACKET_MULTICAST && gh->relay == 1) {
 
 		struct gmtp_client *tmp;
-		media_entry = gmtp_lookup_client(gmtp_hashtable, gh->flowname);
+		struct gmtp_client_entry *media_entry = gmtp_lookup_client(
+				gmtp_hashtable, gh->flowname);
+
 		if(media_entry == NULL)
 			goto discard_it;
 

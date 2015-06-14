@@ -293,13 +293,14 @@ enum gmtp_sockopt_codes {
  * struct gmtp_clients - A list of GMTP Clients
  *
  * @list: The list_head
- * @id: a number to intentify and count clients
- * @addr: ip address of client
+ * @id: a number to identify and count clients
+ * @addr: IP address of client
  * @port: reception port of client
- * @max_clients: for reporters, the max ammount of clients.
+ * @max_clients: for reporters, the max amount of clients.
  * 			0 means that clients is not a reporter
- * @nclients: number of occuped slots at a reporter.
+ * @nclients: number of occupied slots at a reporter.
  * 			It must be less or equal %max_clients
+ * @clients: clients of a reporter.
  */
 struct gmtp_client {
 	struct list_head 	list;
@@ -308,6 +309,8 @@ struct gmtp_client {
 	__be16 			port;
 	__u8			max_nclients;
 	__u8			nclients;
+
+	struct gmtp_client	*clients;
 };
 
 

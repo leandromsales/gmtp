@@ -178,8 +178,6 @@ struct gmtp_sock {
 	enum gmtp_role			role:3;
 	struct gmtp_client		*reporter;
 	struct sock 			*rsock;
-	u8				max_nclients;
-	u8				nclients;
 
 	u32				req_stamp;
 	u32				reply_stamp;

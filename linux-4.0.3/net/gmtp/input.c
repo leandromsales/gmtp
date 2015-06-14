@@ -149,7 +149,6 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 	struct gmtp_sock *gp = gmtp_sk(sk);
 
 	gmtp_pr_func();
-	gmtp_pr_debug("Packet received: %s", gmtp_packet_name(gh->type));
 
 	/*
 	 *    Step 10: Process REQUEST state (second part)
@@ -165,128 +164,138 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 	 *	  / * Step 12 will send the Ack completing the
 	 *	      three-way handshake * /
 	 */
-	if (gh->type == GMTP_PKT_REQUESTNOTIFY ||
-			gh->type == GMTP_PKT_REGISTER_REPLY) {
 
-		const struct inet_connection_sock *icsk = inet_csk(sk);
+	if (gh->type != GMTP_PKT_REQUESTNOTIFY &&
+				gh->type != GMTP_PKT_REGISTER_REPLY) {
+		goto out_invalid_packet;
+	}
+	gmtp_pr_debug("Packet received: %s", gmtp_packet_name(gh->type));
 
+	const struct inet_connection_sock *icsk = inet_csk(sk);
+	struct iphdr *iph = ip_hdr(skb);
+	struct gmtp_client_entry *media_entry;
+	struct gmtp_client *client;
 
-		/*** FIXME Check sequence numbers  ***/
+	media_entry = gmtp_lookup_client(gmtp_hashtable, gh->flowname);
+	if(media_entry == NULL)
+		goto out_invalid_packet;
 
-		/* Stop the REQUEST timer */
-		inet_csk_clear_xmit_timer(sk, ICSK_TIME_RETRANS);
-		WARN_ON(sk->sk_send_head == NULL);
-		kfree_skb(sk->sk_send_head);
-		sk->sk_send_head = NULL;
+	client = gmtp_get_client(&media_entry->clients->list, iph->daddr,
+			gh->dport);
+	if(client == NULL)
+		goto out_invalid_packet;
 
-		gp->gsr = gp->isr = GMTP_SKB_CB(skb)->seq;
-		gmtp_sync_mss(sk, icsk->icsk_pmtu_cookie);
+	/*** FIXME Check sequence numbers  ***/
 
-		/** First reply received and i have a relay */
-		if(gp->relay_rtt == 0 && gh->type == GMTP_PKT_REQUESTNOTIFY)
-			gp->relay_rtt = jiffies_to_msecs(jiffies - gp->req_stamp);
+	/* Stop the REQUEST timer */
+	inet_csk_clear_xmit_timer(sk, ICSK_TIME_RETRANS);
+	WARN_ON(sk->sk_send_head == NULL);
+	kfree_skb(sk->sk_send_head);
+	sk->sk_send_head = NULL;
 
-		gp->rx_rtt = (__u32) gh->server_rtt + gp->relay_rtt;
-		gmtp_pr_debug("RTT: %u ms", gp->rx_rtt);
+	gp->gsr = gp->isr = GMTP_SKB_CB(skb)->seq;
+	gmtp_sync_mss(sk, icsk->icsk_pmtu_cookie);
 
-		if (gh->type == GMTP_PKT_REQUESTNOTIFY)
-		{
-			struct sock *channel_sk;
-			struct gmtp_hdr_reqnotify *gh_rnotify;
-			struct gmtp_client_entry *media_entry;
+	/** First reply received and i have a relay */
+	if(gp->relay_rtt == 0 && gh->type == GMTP_PKT_REQUESTNOTIFY)
+		gp->relay_rtt = jiffies_to_msecs(jiffies - gp->req_stamp);
 
-			gh_rnotify = gmtp_hdr_reqnotify(skb);
-			pr_info("ReqNotify => Channel: %pI4@%-5d | Code: %d | Cl: %u",
-					&gh_rnotify->mcst_addr,
-					ntohs(gh_rnotify->mcst_port),
-					gh_rnotify->rn_code,
-					gh_rnotify->max_nclients);
-			pr_info("Reporter: %pI4@%-5d\n",
-					&gh_rnotify->reporter_addr,
-					ntohs(gh_rnotify->reporter_port));
+	gp->rx_rtt = (__u32) gh->server_rtt + gp->relay_rtt;
+	gmtp_pr_debug("RTT: %u ms", gp->rx_rtt);
 
-			media_entry = gmtp_lookup_client(gmtp_hashtable,
-					gh->flowname);
-			if(media_entry == NULL)
-				goto out_invalid_packet;
+	if(gh->type == GMTP_PKT_REQUESTNOTIFY) {
+		struct sock *channel_sk;
+		struct gmtp_hdr_reqnotify *gh_rnotify;
 
-			/* Indentify relay of client */
-			memcpy(gp->relay_id, gh_rnotify->relay_id, GMTP_RELAY_ID_LEN);
+		gh_rnotify = gmtp_hdr_reqnotify(skb);
+		pr_info("ReqNotify => Channel: %pI4@%-5d | Code: %d | Cl: %u",
+				&gh_rnotify->mcst_addr,
+				ntohs(gh_rnotify->mcst_port),
+				gh_rnotify->rn_code,
+				gh_rnotify->max_nclients);
 
-			/* Obtain usec RTT sample from Request (used by CC). */
+		pr_info("Reporter: %pI4@%-5d\n", &gh_rnotify->reporter_addr,
+				ntohs(gh_rnotify->reporter_port));
 
-			gp->max_nclients = gh_rnotify->max_nclients;
-			if(gp->max_nclients > 0)
-				gp->role = GMTP_ROLE_REPORTER;
+		/* Indentify relay of client */
+		memcpy(gp->relay_id, gh_rnotify->relay_id, GMTP_RELAY_ID_LEN);
 
-			switch(gh_rnotify->rn_code) {
-			case GMTP_REQNOTIFY_CODE_OK: /* Process packet */
-				break;
-			case GMTP_REQNOTIFY_CODE_WAIT:  /* Do nothing... */
-				return 0;
-			/* FIXME Del entry in table when receiving error... */
-			case GMTP_REQNOTIFY_CODE_ERROR:
-				goto err;
-			default:
-				goto out_invalid_packet;
-			}
+		/* Obtain usec RTT sample from Request (used by CC). */
 
-			if(gp->role != GMTP_ROLE_REPORTER) {
-
-				gp->rsock = gmtp_sock_connect(sk,
-						gh_rnotify->reporter_addr,
-						gh_rnotify->reporter_port);
-
-				if(gp->rsock == NULL)
-					goto err;
-
-				gp->reporter = gmtp_create_client(
-						gh_rnotify->reporter_addr,
-						gh_rnotify->reporter_port, 1);
-
-				gmtp_send_elect_request(sk);
-			}
-
-			/* Inserting information in client table */
-			media_entry->channel_addr = gh_rnotify->mcst_addr;
-			media_entry->channel_port = gh_rnotify->mcst_port;
-
-			channel_sk = gmtp_multicast_connect(sk,
-							gh_rnotify->mcst_addr,
-							gh_rnotify->mcst_port);
-			if(channel_sk == NULL)
-				goto err;
-
+		client->max_nclients = gh_rnotify->max_nclients;
+		if(client->max_nclients > 0) {
+			gp->role = GMTP_ROLE_REPORTER;
+			client->clients = kmalloc(sizeof(struct gmtp_client),
+								GFP_ATOMIC);
+			INIT_LIST_HEAD(&client->clients->list);
 		}
 
-		gmtp_set_state(sk, GMTP_OPEN);
-
-		if(gp->role == GMTP_ROLE_REPORTER) {
-			int ret = mcc_rx_init(sk);
-			if(ret)
-				goto err;
-		}
-
-		/* Make sure socket is routed, for correct metrics. */
-		icsk->icsk_af_ops->rebuild_header(sk);
-
-		if (!sock_flag(sk, SOCK_DEAD)) {
-			sk->sk_state_change(sk);
-			sk_wake_async(sk, SOCK_WAKE_IO, POLL_OUT);
-		}
-
-		if (sk->sk_write_pending || icsk->icsk_ack.pingpong ||
-		    icsk->icsk_accept_queue.rskq_defer_accept) {
-			/* Save one ACK. Data will be ready after
-			 * several ticks, if write_pending is set.
-			 */
-			__kfree_skb(skb);
+		switch(gh_rnotify->rn_code) {
+		case GMTP_REQNOTIFY_CODE_OK: /* Process packet */
+			break;
+		case GMTP_REQNOTIFY_CODE_WAIT: /* Do nothing... */
 			return 0;
+			/* FIXME Del entry in table when receiving error... */
+		case GMTP_REQNOTIFY_CODE_ERROR:
+			goto err;
+		default:
+			goto out_invalid_packet;
 		}
-		gmtp_send_ack(sk);
 
-		return -1;
- 	}
+		if(gp->role != GMTP_ROLE_REPORTER) {
+
+			gp->rsock = gmtp_sock_connect(sk,
+					gh_rnotify->reporter_addr,
+					gh_rnotify->reporter_port);
+
+			if(gp->rsock == NULL)
+				goto err;
+
+			gp->reporter = gmtp_create_client(
+					gh_rnotify->reporter_addr,
+					gh_rnotify->reporter_port, 1);
+
+			gmtp_send_elect_request(sk);
+		}
+
+		/* Inserting information in client table */
+		media_entry->channel_addr = gh_rnotify->mcst_addr;
+		media_entry->channel_port = gh_rnotify->mcst_port;
+
+		channel_sk = gmtp_multicast_connect(sk, gh_rnotify->mcst_addr,
+				gh_rnotify->mcst_port);
+		if(channel_sk == NULL)
+			goto err;
+
+	}
+
+	gmtp_set_state(sk, GMTP_OPEN);
+
+	/* Make sure socket is routed, for correct metrics. */
+	icsk->icsk_af_ops->rebuild_header(sk);
+
+	if(!sock_flag(sk, SOCK_DEAD)) {
+		sk->sk_state_change(sk);
+		sk_wake_async(sk, SOCK_WAKE_IO, POLL_OUT);
+	}
+
+	if(sk->sk_write_pending || icsk->icsk_ack.pingpong
+			|| icsk->icsk_accept_queue.rskq_defer_accept) {
+		/* Save one ACK. Data will be ready after
+		 * several ticks, if write_pending is set.
+		 */
+		__kfree_skb(skb);
+		return 0;
+	}
+	gmtp_send_ack(sk);
+
+	if(gp->role == GMTP_ROLE_REPORTER) {
+		int ret = mcc_rx_init(sk);
+		if(ret)
+			goto err;
+	}
+
+	return -1;
 
 	/* FIXME Treat invalid responses */
 out_invalid_packet:

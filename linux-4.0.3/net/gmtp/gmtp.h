@@ -272,7 +272,6 @@ static inline int gmtp_data_packet(const struct sk_buff *skb)
 	       type == GMTP_PKT_DATAACK;
 }
 
-
 static inline struct gmtp_client *gmtp_create_client(__be32 addr, __be16 port,
 		__u8 max_nclients)
 {
