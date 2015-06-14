@@ -82,10 +82,9 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 
 		memcpy(gh->flowname, gp->flowname, GMTP_FLOWNAME_LEN);
 
+		gh->transm_r = (__be32) gp->tx_max_rate;
 		if (gcb->type == GMTP_PKT_FEEDBACK)
 			gh->transm_r = gp->rx_max_rate;
-		else
-			gh->transm_r = (__be32) gp->tx_max_rate;
 
 		if (gcb->type == GMTP_PKT_RESET)
 			gmtp_hdr_reset(skb)->reset_code = gcb->reset_code;
@@ -97,8 +96,6 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 
 		gcb->seq = ++gp->gss;
 		if (set_ack) {
-			struct gmtp_hdr_ack *gack = gmtp_hdr_ack(skb);
-			gack->ackcode = gcb->ackcode;
 			gcb->seq = --gp->gss;
 			gmtp_event_ack_sent(sk);
 		}
@@ -336,7 +333,7 @@ int gmtp_connect(struct sock *sk)
 }
 EXPORT_SYMBOL_GPL(gmtp_connect);
 
-void gmtp_send_ack(struct sock *sk, __u8 ackcode)
+void gmtp_send_ack(struct sock *sk)
 {
 	gmtp_print_function();
 
@@ -359,7 +356,6 @@ void gmtp_send_ack(struct sock *sk, __u8 ackcode)
 		/* Reserve space for headers */
 		skb_reserve(skb, sk->sk_prot->max_header);
 		GMTP_SKB_CB(skb)->type = GMTP_PKT_ACK;
-		GMTP_SKB_CB(skb)->ackcode = ackcode;
 		gmtp_transmit_skb(sk, skb);
 	}
 }
@@ -371,16 +367,22 @@ void gmtp_send_elect_request(struct sock *sk)
 
 	if(sk->sk_state != GMTP_CLOSED) {
 
+		struct gmtp_sock *gp = gmtp_sk(sk);
 		struct sk_buff *skb = alloc_skb(sk->sk_prot->max_header,
 		GFP_ATOMIC);
+		struct gmtp_hdr_elect_request *gh_ereq;
 
-		if(skb == NULL)
+		if(skb == NULL || gp->rsock == NULL)
 			return;
 
 		/* Reserve space for headers */
 		skb_reserve(skb, sk->sk_prot->max_header);
 		GMTP_SKB_CB(skb)->type = GMTP_PKT_ELECT_REQUEST;
-		gmtp_transmit_skb(sk, skb);
+		gh_ereq = gmtp_hdr_elect_request(skb);
+		memcpy(gh_ereq->relay_id, gp->relay_id, GMTP_RELAY_ID_LEN);
+		gh_ereq->max_nclients = gp->max_nclients;
+
+		gmtp_transmit_skb(gp->rsock, skb);
 	}
 }
 EXPORT_SYMBOL_GPL(gmtp_send_elect_request);

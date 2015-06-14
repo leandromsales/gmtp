@@ -112,7 +112,8 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 
 out:
 	gh_reqnotify = gmtp_inter_make_request_notify_hdr(skb, entry,
-			gh->dport, gh->sport, entry->info->cur_reporter, code);
+			gh->dport, gh->sport, entry->info->cur_reporter,
+			max_nclients, code);
 
 	if(gh_reqnotify != NULL)
 		gmtp_inter_build_and_send_pkt(skb, iph->daddr,
@@ -210,7 +211,7 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
 		cur_reporter = first_client;
 	ret = gmtp_inter_make_request_notify(skb, iph->saddr, gh->sport,
 			first_client->addr, first_client->port, cur_reporter,
-			code);
+			first_client->max_nclients, code);
 
 	/* FIXME After it, clean list of clients and keep only reporters */
 	list_for_each_entry(client, &entry->info->clients->list, list)
@@ -221,7 +222,7 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
 		if(client == first_client)
 			continue;
 
-		if(client->reporter)
+		if(client->max_nclients > 0)
 				cur_reporter = client;
 		if(copy != NULL) {
 			struct iphdr *iph_copy = ip_hdr(copy);
@@ -233,7 +234,8 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
 
 			gh_req_n = gmtp_inter_make_request_notify_hdr(copy,
 					entry, gh->sport, client->port,
-					cur_reporter, code);
+					cur_reporter, client->max_nclients,
+					code);
 			if(gh_req_n != NULL)
 				gmtp_inter_build_and_send_pkt(skb, iph->saddr,
 						client->addr, gh_req_n, false);
@@ -253,11 +255,7 @@ int gmtp_inter_ack_rcv(struct sk_buff *skb)
 
 	gmtp_print_function();
 
-	gmtp_pr_info("%s (%d) src=%pI4@%-5d dst=%pI4@%-5d transm_r: %u",
-			gmtp_packet_name(gh->type), gh->type,
-			&iph->saddr, ntohs(gh->sport),
-			&iph->daddr, ntohs(gh->dport),
-			gh->transm_r);
+	print_gmtp_packet(iph, gh);
 
 	return ret;
 }
@@ -350,22 +348,13 @@ int gmtp_inter_close_rcv(struct sk_buff *skb)
 	if(entry == NULL)
 		return NF_ACCEPT;
 
-	pr_info("Passou o 1\n");
-
 	if(entry->state == GMTP_INTER_CLOSED)
 		return NF_ACCEPT;
-
-	pr_info("Passou o 2\n");
-
 	info = entry->info;
 
 	if(iph->saddr == entry->server_addr) {
 		if(entry->state == GMTP_INTER_TRANSMITTING) {
-
 			struct gmtp_hdr *gh_reset;
-
-			pr_info("Passou o 3\n");
-
 			entry->state = GMTP_INTER_CLOSE_RECEIVED;
 
 			gh_reset = gmtp_inter_make_reset_hdr(skb,
@@ -385,8 +374,6 @@ int gmtp_inter_close_rcv(struct sk_buff *skb)
 			gmtp_buffer_add(info, skb);
 		}
 	}
-
-	pr_info("Passou o 4\n");
 
 	return NF_ACCEPT;
 }

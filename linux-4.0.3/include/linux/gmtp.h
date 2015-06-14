@@ -267,11 +267,11 @@ static inline struct gmtp_hdr_data *gmtp_hdr_data(const struct sk_buff *skb)
 						 sizeof(struct gmtp_hdr));
 }
 
-static inline struct gmtp_hdr_ack *gmtp_hdr_ack(const struct sk_buff *skb)
+/*static inline struct gmtp_hdr_ack *gmtp_hdr_ack(const struct sk_buff *skb)
 {
 	return (struct gmtp_hdr_ack *)(skb_transport_header(skb) +
 						 sizeof(struct gmtp_hdr));
-}
+}*/
 
 static inline struct gmtp_hdr_register_reply *gmtp_hdr_register_reply(
 		const struct sk_buff *skb)

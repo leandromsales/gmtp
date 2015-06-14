@@ -297,7 +297,7 @@ static void gmtp_delack_timer(unsigned long data)
 			icsk->icsk_ack.pingpong = 0;
 			icsk->icsk_ack.ato = TCP_ATO_MIN;
 		}
-		gmtp_send_ack(sk, GMTP_ACK_NO_CODE);
+		gmtp_send_ack(sk);
 		NET_INC_STATS_BH(sock_net(sk), LINUX_MIB_DELAYEDACKS);
 	}
 out:

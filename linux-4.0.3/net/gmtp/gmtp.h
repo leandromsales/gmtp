@@ -24,16 +24,16 @@
 /** GMTP Debugs */
 #define GMTP_INFO "[GMTP] %s:%d - "
 #define GMTP_DEBUG GMTP_INFO
-#define GMTP_WARNING "[GMTP_WARNING]  %s:%d at %s - "
-#define GMTP_ERROR "[GMTP_ERROR] %s:%d at %s - "
+#define GMTP_WARNING "[GMTP_WARNING]  %s:%d - "
+#define GMTP_ERROR "[GMTP_ERROR] %s:%d - "
 
 /* TODO Improve debug func names */
 #define gmtp_print_debug(fmt, args...) pr_info(GMTP_DEBUG fmt \
 		"\n", __FUNCTION__, __LINE__, ##args)
 #define gmtp_print_warning(fmt, args...) pr_warning(GMTP_WARNING fmt \
-		"\n", __FUNCTION__, __LINE__, __FILE__, ##args)
+		"\n", __FUNCTION__, __LINE__, ##args)
 #define gmtp_print_error(fmt, args...) pr_err(GMTP_ERROR fmt \
-		"\n", __FUNCTION__, __LINE__, __FILE__, ##args)
+		"\n", __FUNCTION__, __LINE__, ##args)
 #define gmtp_print_function() pr_info("-------- %s --------\n" , __FUNCTION__)
 
 /* Better print names */
@@ -42,9 +42,9 @@
 		"\n", __FUNCTION__, __LINE__, ##args)
 #define gmtp_pr_debug(fmt, args...) gmtp_pr_info(fmt, ##args);
 #define gmtp_pr_warning(fmt, args...) pr_warning(GMTP_WARNING fmt \
-		"\n", __FUNCTION__, __LINE__, __FILE__, ##args)
+		"\n", __FUNCTION__, __LINE__, ##args)
 #define gmtp_pr_error(fmt, args...) pr_err(GMTP_ERROR fmt \
-		"\n", __FUNCTION__, __LINE__, __FILE__, ##args)
+		"\n", __FUNCTION__, __LINE__, ##args)
 
 /** ---- */
 #define GMTP_MAX_HDR_LEN 2047  /* 2^11 - 1 */
@@ -151,6 +151,7 @@ int inet_gmtp_listen(struct socket *sock, int backlog);
 const char *gmtp_packet_name(const int);
 const char *gmtp_state_name(const int);
 void flowname_str(__u8* str, const __u8 *flowname);
+void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh);
 void print_route(struct gmtp_hdr_route *route);
 
 /** sockopt.c */
@@ -171,7 +172,7 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 		struct gmtp_hdr *gh, unsigned int len);
 
 /** output.c */
-void gmtp_send_ack(struct sock *sk,  __u8 ackcode);
+void gmtp_send_ack(struct sock *sk);
 void gmtp_send_elect_request(struct sock *sk);
 void gmtp_send_feedback(struct sock *sk);
 void gmtp_send_close(struct sock *sk, const int active);
@@ -231,7 +232,6 @@ struct gmtp_info {
  */
 struct gmtp_skb_cb {
 	__u8 type :5;
-	__u8 ackcode;
 	__u8 reset_code,
 		reset_data[3];
 	__be32 seq;

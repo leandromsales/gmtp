@@ -496,7 +496,6 @@ EXPORT_SYMBOL_GPL(gmtp_v4_do_rcv);
  */
 static int gmtp_check_packet(struct sk_buff *skb)
 {
-	const struct iphdr *iph = ip_hdr(skb);
 	const struct gmtp_hdr *gh = gmtp_hdr(skb);
 
 	/** Accept multicast only for Data, Close and Reset packets */
@@ -542,13 +541,25 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 
 	if(sk == NULL) {
 
+		const struct iphdr *iph = ip_hdr(skb);
+
 		if(gmtp_info->relay_enabled) {
 			gmtp_pr_error("Relay enabled...");
 			goto ignore_it;
 		}
 
-		gmtp_pr_error("failed to look up flow ID in table and "
-				"get corresponding socket.");
+		switch(gh->type) {
+		case GMTP_PKT_ELECT_REQUEST:
+			pr_info("Elect request received!\n");
+
+/*			gmtp_v4_
+			goto discard_it;*/
+		}
+
+		gmtp_pr_error("Failed to look up flow ID in table and "
+				"get corresponding socket for this packet: ");
+		print_gmtp_packet(iph, gh);
+
 		goto no_gmtp_socket;
 	}
 
@@ -606,14 +617,6 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 	struct sock *sk;
 	struct gmtp_client_entry *media_entry;
 
-	unsigned char flowname[GMTP_FLOWNAME_STR_LEN];
-
-	unsigned char *cl = "\xc0\xa8\x02\x03"; /* 192.168.2.3 */
-	__be32 cl_ip = *(unsigned int *)cl;
-
-
-	gmtp_pr_func();
-
 	/* Step 1: Check header basics */
 	if (gmtp_check_packet(skb))
 		goto discard_it;
@@ -621,27 +624,15 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 	gh = gmtp_hdr(skb);
 	iph = ip_hdr(skb);
 
-	if(iph->saddr == cl_ip) {
-		pr_info("Packet received from %pI4\n", &iph->saddr);
-	}
-
-
 	GMTP_SKB_CB(skb)->seq = gh->seq;
 	GMTP_SKB_CB(skb)->type = gh->type;
 
-	flowname_str(flowname, gh->flowname);
-
 	if(gh->type != GMTP_PKT_DATA)
-		pr_info("%s(%d) src=%pI4@%-5d dst=%pI4@%-5d seq=%llu "
-				"RTT=%u ms, transm_r=%u, flow=%s",
-				gmtp_packet_name(gh->type), gh->type,
-				&iph->saddr, ntohs(gh->sport),
-				&iph->daddr, ntohs(gh->dport),
-				(unsigned long long) GMTP_SKB_CB(skb)->seq,
-				gh->server_rtt, gh->transm_r,
-				flowname);
+		print_gmtp_packet(iph, gh);
 
 	/**
+	 * FIXME Change Election algorithm to fully distributed using multicast
+	 *
 	 * Only accept multicast packets from relays
 	 */
 	if(skb->pkt_type == PACKET_MULTICAST && gh->relay == 1) {
@@ -658,14 +649,17 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 					gh->sport, tmp->addr, tmp->port,
 					inet_iif(skb));
 
-			/** FIXME Check errors at receive skb... */
+			/** FIXME Check warnings at receive skb... */
 			gmtp_v4_sk_receive_skb(skb_copy(skb, GFP_ATOMIC), sk);
 		}
-		/** We made a copy of skb for each client. We can discard it */
+		/*
+		 * We made a copy of skb for each client.
+		 * So, we can discard the original skb.
+		 */
 		goto discard_it;
 
 	} else {
-		/* Normal packet...
+		/* Unicast packet...
 		 * Look up flow ID in table and get corresponding socket
 		 */
 		sk = __inet_lookup_skb(&gmtp_inet_hashinfo, skb, gh->sport,

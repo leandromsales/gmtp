@@ -246,14 +246,15 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 {
 	int ret = NF_ACCEPT;
 	struct iphdr *iph = ip_hdr(skb);
-	struct gmtp_hdr *gh;
+
 
 	if((gmtp_info->relay_enabled == 0) || (out == NULL))
 		return ret;
 
 	if(iph->protocol == IPPROTO_GMTP) {
 
-		gh = gmtp_hdr(skb);
+		struct gmtp_hdr *gh = gmtp_hdr(skb);
+
 		if(gh->type != GMTP_PKT_DATA) {
 			gmtp_print_debug("GMTP packet: %s (%d)",
 					gmtp_packet_name(gh->type), gh->type);

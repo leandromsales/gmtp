@@ -13,19 +13,19 @@
  * MSS: 1444
  *
  * GMTP fixed header: 36
- * GMTP Ack Header: 8
+ * GMTP Ack Header: 0
  * ----------------------
  *
  * GMTP Register-Reply header:
- * 1444 - 36 - 8 = 1400
+ * 1444 - 36 = 1408
  * ---------------------
  * Register-Reply->nrelays: 8
- * Register-Reply->relay_list 1392
+ * Register-Reply->relay_list 1400
  *
- * 1392/20 = 69, rest: 12
+ * 1400/20 = 70
  *
  */
-#define GMTP_MAX_RELAY_NUM 69
+#define GMTP_MAX_RELAY_NUM 70
 
 /**
  * GMTP packet header
@@ -92,20 +92,6 @@ struct gmtp_hdr {
  */
 struct gmtp_hdr_data {
 	__be32 tstamp;
-};
-
-/**
- * struct gmtp_hdr_ack - Acknowledgment packets
- * @ackcode: One of gmtp_ack_codes
- */
-struct gmtp_hdr_ack {
-	__u8 ackcode;
-};
-
-enum gmtp_ack_codes {
-	GMTP_ACK_NO_CODE = 0,
-	GMTP_ACK_REQUESTNOTIFY,
-	GMTP_ACK_MAX_CODES
 };
 
 /**
@@ -197,6 +183,20 @@ struct gmtp_hdr_elect_request {
 	__u8 			max_nclients;
 };
 
+/**
+ * struct gmtp_hdr_elect_request - Elect request to reporters
+ *
+ * @elect_code: One of %gmtp_ack_codes
+ */
+struct gmtp_hdr_elect_response {
+	__u8 	elect_code:3;
+};
+
+enum gmtp_elect_codes {
+	GMTP_ELECT_ACCEPT = 0,
+	GMTP_ELECT_REJECT,
+	GMTP_ELECT_MAX_CODES
+};
 
 /**
  * see www.gmtp-protocol.org
@@ -250,13 +250,8 @@ static inline unsigned int gmtp_packet_hdr_variable_len(const __u8 type)
 	switch(type)
 	{
 	case GMTP_PKT_DATA:
-		len = sizeof(struct gmtp_hdr_data);
-		break;
-	case GMTP_PKT_ACK:
-		len = sizeof(struct gmtp_hdr_ack);
-		break;
 	case GMTP_PKT_DATAACK:
-		len = sizeof(struct gmtp_hdr_data) + sizeof(struct gmtp_hdr_ack);
+		len = sizeof(struct gmtp_hdr_data);
 		break;
 	case GMTP_PKT_FEEDBACK:
 		len = sizeof(struct gmtp_hdr_feedback);

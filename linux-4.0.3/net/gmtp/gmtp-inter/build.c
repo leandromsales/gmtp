@@ -66,7 +66,8 @@ struct gmtp_hdr *gmtp_inter_make_route_hdr(struct sk_buff *skb)
 
 struct gmtp_hdr *gmtp_inter_make_request_notify_hdr(struct sk_buff *skb,
 		struct gmtp_relay_entry *entry, __be16 new_sport,
-		__be16 new_dport, struct gmtp_client *reporter, __u8 code)
+		__be16 new_dport, struct gmtp_client *my_reporter,
+		__u8 max_nclients, __u8 code)
 {
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	__u8 *transport_header;
@@ -100,11 +101,11 @@ struct gmtp_hdr *gmtp_inter_make_request_notify_hdr(struct sk_buff *skb,
 	gh_rnotify->mcst_port = entry->channel_port;
 	memcpy(gh_rnotify->relay_id, gmtp_inter.relay_id, GMTP_RELAY_ID_LEN);
 
-	if(reporter != NULL) {
-		gh_rnotify->reporter_addr = reporter->addr;
-		gh_rnotify->reporter_port = reporter->port;
-		gh_rnotify->max_nclients = reporter->max_nclients;
-		reporter->nclients++;
+	if(my_reporter != NULL) {
+		gh_rnotify->reporter_addr = my_reporter->addr;
+		gh_rnotify->reporter_port = my_reporter->port;
+		gh_rnotify->max_nclients = max_nclients;
+		my_reporter->nclients++;
 	}
 
 	pr_info("ReqNotify => Channel: %pI4@%-5d | Code: %u | max_nclients: %u",
@@ -122,7 +123,7 @@ struct gmtp_hdr *gmtp_inter_make_request_notify_hdr(struct sk_buff *skb,
 
 int gmtp_inter_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
 		__be16 new_sport, __be32 new_daddr, __be16 new_dport,
-		struct gmtp_client *reporter, __u8 code)
+		struct gmtp_client *reporter, __u8 max_nclients, __u8 code)
 {
 	int ret = NF_ACCEPT;
 
@@ -147,7 +148,7 @@ int gmtp_inter_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
 
 	new_gh = kmalloc(gmtp_hdr_len, GFP_ATOMIC);
 	new_gh = gmtp_inter_make_request_notify_hdr(skb, entry, new_sport,
-			new_dport, reporter, code);
+			new_dport, reporter, max_nclients, code);
 
 	skb_put(skb, sizeof(struct gmtp_hdr_reqnotify));
 	memcpy(gh, new_gh, gmtp_hdr_len);

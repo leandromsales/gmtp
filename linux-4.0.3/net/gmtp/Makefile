@@ -3,7 +3,7 @@ KERNEL:= /lib/modules/`uname -r`/build
 
 KBUILD_EXTRA_SYMBOLS := $(PWD)/Module.symvers
 
-obj-$(CONFIG_GMTP) += gmtp.o gmtp_ipv4.o
+#obj-$(CONFIG_GMTP) += gmtp.o gmtp_ipv4.o
 obj-m += gmtp.o gmtp_ipv4.o
 
 gmtp-y += hash.o input.o minisocks.o output.o sockopt.o proto.o timer.o

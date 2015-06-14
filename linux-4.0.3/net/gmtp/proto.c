@@ -104,6 +104,23 @@ void flowname_str(__u8* str, const __u8 *flowname)
 }
 EXPORT_SYMBOL_GPL(flowname_str);
 
+/*
+ * Print GMTP packet basic information
+ */
+void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh)
+{
+	__u8 flowname[GMTP_FLOWNAME_STR_LEN];
+	flowname_str(flowname, gh->flowname);
+	pr_info("%s (%d) src=%pI4@%-5d, dst=%pI4@%-5d, seq=%u, rtt=%u ms, "
+			"transm_r=%u bytes/s, flow=%s\n",
+				gmtp_packet_name(gh->type), gh->type,
+				&iph->saddr, ntohs(gh->sport),
+				&iph->daddr, ntohs(gh->dport),
+				gh->seq, gh->server_rtt, gh->transm_r,
+				flowname);
+}
+EXPORT_SYMBOL_GPL(print_gmtp_packet);
+
 /**
  * @str size MUST HAVE len >= GMTP_FLOWNAME_STR_LEN
  */

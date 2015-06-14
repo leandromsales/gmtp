@@ -25,6 +25,7 @@
 extern const char *gmtp_packet_name(const int);
 extern const char *gmtp_state_name(const int);
 extern void flowname_str(__u8* str, const __u8* flowname);
+extern void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh);
 
 /**
  * TODO Negotiate buffer size with server
@@ -79,12 +80,17 @@ int gmtp_inter_close_out(struct sk_buff *skb);
 /** build.c */
 void gmtp_inter_add_relayid(struct sk_buff *skb);
 struct gmtp_hdr *gmtp_inter_make_route_hdr(struct sk_buff *skb);
+
 struct gmtp_hdr *gmtp_inter_make_request_notify_hdr(struct sk_buff *skb,
 		struct gmtp_relay_entry *media_info, __be16 new_sport,
-		__be16 new_dport, struct gmtp_client *reporter, __u8 error_code);
+		__be16 new_dport, struct gmtp_client *reporter,
+		__u8 max_nclients, __u8 error_code);
+
 int gmtp_inter_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
 		__be16 new_sport, __be32 new_daddr, __be16 new_dport,
-		struct gmtp_client *reporter, __u8 error_code);
+		struct gmtp_client *reporter, __u8 max_nclients,
+		__u8 error_code);
+
 struct gmtp_hdr *gmtp_inter_make_reset_hdr(struct sk_buff *skb, __u8 code);
 struct gmtp_hdr *gmtp_inter_make_close_hdr(struct sk_buff *skb);
 void gmtp_inter_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
@@ -122,25 +128,6 @@ static inline void print_packet(struct sk_buff *skb, bool in)
 			&iph->saddr, &iph->daddr,
 			iph->protocol,
 			ntohs(iph->tot_len));
-}
-
-/*
- * Print GMTP packet basic information
- */
-static inline void print_gmtp_packet(struct iphdr *iph, struct gmtp_hdr *gh)
-{
-	__u8 flowname[GMTP_FLOWNAME_STR_LEN];
-	flowname_str(flowname, gh->flowname);
-	pr_info("%s (%d) src=%pI4@%-5d dst=%pI4@%-5d seq=%u rtt=%u ms "
-			" tx=%u flow=%s\n",
-				gmtp_packet_name(gh->type),
-				gh->type,
-				&iph->saddr, ntohs(gh->sport),
-				&iph->daddr, ntohs(gh->dport),
-				gh->seq,
-				gh->server_rtt,
-				gh->transm_r,
-				flowname);
 }
 
 /*
