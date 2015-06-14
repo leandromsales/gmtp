@@ -389,7 +389,6 @@ void gmtp_send_elect_request(struct sock *sk)
 }
 EXPORT_SYMBOL_GPL(gmtp_send_elect_request);
 
-/* answer offending packet in @rcv_skb with Reset from control socket @ctl */
 struct sk_buff *gmtp_ctl_make_elect_response(struct sock *sk,
 		struct sk_buff *rcv_skb)
 {
