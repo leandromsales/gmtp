@@ -18,7 +18,6 @@ enum gmtp_state {
 	GMTP_CLOSING	     = TCP_CLOSING,
 	GMTP_TIME_WAIT	     = TCP_TIME_WAIT,
 	GMTP_CLOSED	     = TCP_CLOSE,
-	GMTP_ELECT_SENT,
 	GMTP_MAX_STATES
 };
 
@@ -43,6 +42,14 @@ enum gmtp_role {
 	GMTP_ROLE_SERVER,
 	GMTP_ROLE_RELAY
 };
+
+enum gmtp_sock_type {
+	GMTP_SOCK_TYPE_REGULAR,
+	GMTP_SOCK_TYPE_REPORTER,
+	GMTP_SOCK_TYPE_CONTROL_CHANNEL,
+	GMTP_SOCK_TYPE_DATA_CHANNEL
+};
+
 
 /*
  * Number of loss intervals (RFC 4342, 8.6.1). The history size is one more than
@@ -173,8 +180,10 @@ struct gmtp_sock {
 	
 	u32				mss;
 
+	enum gmtp_sock_type		type:3;
 	enum gmtp_role			role:3;
 	struct gmtp_client		*myself;
+	struct sock 			*channel_sk;
 
 	u32				req_stamp;
 	u32				reply_stamp;

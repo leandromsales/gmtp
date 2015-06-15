@@ -99,6 +99,8 @@ void gmtp_init_xmit_timers(struct sock *sk);
 static inline void gmtp_clear_xmit_timers(struct sock *sk)
 {
 	inet_csk_clear_xmit_timers(sk);
+	if(gmtp_sk(sk)->role == GMTP_ROLE_CLIENT)
+		inet_csk_clear_xmit_timers(gmtp_sk(sk)->myself->rsock);
 }
 
 static inline u32 gmtp_get_elect_timeout(struct gmtp_sock *gp)

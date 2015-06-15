@@ -205,6 +205,7 @@ int gmtp_init_sock(struct sock *sk)
 	memset(gp->flowname, 0, GMTP_FLOWNAME_LEN);
 
 	gp->mss			= GMTP_DEFAULT_MSS;
+	gp->type 		= GMTP_SOCK_TYPE_REGULAR;
 	gp->role		= GMTP_ROLE_UNDEFINED;
 
 	gp->req_stamp		= 0;

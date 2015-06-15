@@ -87,7 +87,8 @@ static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
 	return queued;
 }
 
-struct sock* gmtp_sock_connect(struct sock *sk, __be32 addr, __be16 port)
+struct sock* gmtp_sock_connect(struct sock *sk, enum gmtp_sock_type type,
+		__be32 addr, __be16 port)
 {
 	struct sock *newsk;
 
@@ -103,16 +104,18 @@ struct sock* gmtp_sock_connect(struct sock *sk, __be32 addr, __be16 port)
 	newsk->sk_daddr = addr;
 	newsk->sk_dport = port;
 	gmtp_set_state(newsk, GMTP_CLOSED);
+	gmtp_init_xmit_timers(sk);
 
 	flowname_str(flowname, gmtp_sk(newsk)->flowname);
-	pr_info("newsk->flowname: %s", flowname);
+	gmtp_sk(newsk)->type = type;
 
 	return newsk;
 
 }
 EXPORT_SYMBOL_GPL(gmtp_sock_connect);
 
-struct sock* gmtp_multicast_connect(struct sock *sk, __be32 addr, __be16 port)
+struct sock* gmtp_multicast_connect(struct sock *sk, enum gmtp_sock_type type,
+		__be32 addr, __be16 port)
 {
 	struct sock *newsk;
 	struct ip_mreqn mreq;
@@ -138,6 +141,7 @@ struct sock* gmtp_multicast_connect(struct sock *sk, __be32 addr, __be16 port)
 			&addr, ntohs(port));
 	ip_mc_join_group(newsk, &mreq);
 	__inet_hash_nolisten(newsk, NULL);
+	gmtp_sk(newsk)->type = type;
 	gmtp_set_state(newsk, GMTP_OPEN);
 
 	return newsk;
@@ -199,7 +203,6 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 	gmtp_pr_debug("RTT: %u ms", gp->rx_rtt);
 
 	if(gh->type == GMTP_PKT_REQUESTNOTIFY) {
-		struct sock *channel_sk;
 		struct gmtp_hdr_reqnotify *gh_rnotify;
 
 		gh_rnotify = gmtp_hdr_reqnotify(skb);
@@ -240,13 +243,13 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 					gh_rnotify->reporter_port, 1);
 
 			myself->rsock = gmtp_sock_connect(sk,
+					GMTP_SOCK_TYPE_REPORTER,
 					gh_rnotify->reporter_addr,
 					gh_rnotify->reporter_port);
 
 			if(myself->rsock == NULL || myself->reporter == NULL)
 				goto err;
 
-			gmtp_init_xmit_timers(myself->rsock);
 			gmtp_send_elect_request(myself->rsock);
 		}
 
@@ -254,9 +257,10 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 		media_entry->channel_addr = gh_rnotify->mcst_addr;
 		media_entry->channel_port = gh_rnotify->mcst_port;
 
-		channel_sk = gmtp_multicast_connect(sk, gh_rnotify->mcst_addr,
-				gh_rnotify->mcst_port);
-		if(channel_sk == NULL)
+		gp->channel_sk = gmtp_multicast_connect(sk,
+				GMTP_SOCK_TYPE_DATA_CHANNEL,
+				gh_rnotify->mcst_addr, gh_rnotify->mcst_port);
+		if(gp->channel_sk == NULL)
 			goto err;
 
 	}

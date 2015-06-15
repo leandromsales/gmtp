@@ -169,6 +169,7 @@ static void gmtp_register_reply_timer(struct sock *sk)
 static void gmtp_keepalive_timer(unsigned long data)
 {
 	struct sock *sk = (struct sock *)data;
+	struct gmtp_sock *gp = gmtp_sk(sk);
 	u32 timeout;
 
 	gmtp_pr_func();
@@ -186,15 +187,17 @@ static void gmtp_keepalive_timer(unsigned long data)
 		goto out;
 	}
 
-	if(sk->sk_state == GMTP_ELECT_SENT) {
+	if(sk->sk_state == GMTP_REQUESTING
+			&& gp->type == GMTP_SOCK_TYPE_REPORTER) {
+
 		pr_info("Cool socket GMTP_ELECT_SENT!\n");
-		timeout = gmtp_get_elect_timeout(gmtp_sk(sk));
+		timeout = gmtp_get_elect_timeout(gp);
 		inet_csk_reset_keepalive_timer(sk, msecs_to_jiffies(timeout));
 	}
 
-	if(sk->sk_state == GMTP_OPEN) {
+	if(sk->sk_state == GMTP_OPEN && gp->type == GMTP_SOCK_TYPE_REPORTER) {
 		pr_info("Cool socket OPEN!\n");
-		inet_csk_reset_keepalive_timer(sk, HZ/20);
+		inet_csk_reset_keepalive_timer(sk, HZ / 20);
 	}
 out:
 	bh_unlock_sock(sk);

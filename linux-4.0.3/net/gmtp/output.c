@@ -373,7 +373,7 @@ void gmtp_send_elect_request(struct sock *sk)
 	gmtp_pr_func();
 
 	if(skb == NULL)
-		goto out;
+		return;
 
 	/* Reserve space for headers */
 	skb_reserve(skb, sk->sk_prot->max_header);
@@ -382,11 +382,11 @@ void gmtp_send_elect_request(struct sock *sk)
 	memcpy(gh_ereq->relay_id, gp->relay_id, GMTP_RELAY_ID_LEN);
 	gh_ereq->max_nclients = 0;
 
-	gmtp_set_state(sk, GMTP_ELECT_SENT);
+	gmtp_set_state(sk, GMTP_REQUESTING);
 	gmtp_transmit_skb(sk, skb);
 
-out:
 	timeout = gmtp_get_elect_timeout(gp);
+	pr_info("Timeout: %u ms\n", timeout);
 	inet_csk_reset_keepalive_timer(sk, msecs_to_jiffies(timeout));
 
 }
