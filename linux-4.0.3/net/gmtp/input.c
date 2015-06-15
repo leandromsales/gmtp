@@ -91,6 +91,8 @@ struct sock* gmtp_sock_connect(struct sock *sk, __be32 addr, __be16 port)
 {
 	struct sock *newsk;
 
+	__u8 flowname[GMTP_FLOWNAME_STR_LEN];
+
 	gmtp_pr_func();
 
 	newsk = sk_clone_lock(sk, GFP_ATOMIC);
@@ -98,11 +100,12 @@ struct sock* gmtp_sock_connect(struct sock *sk, __be32 addr, __be16 port)
 		return NULL;
 
 	newsk->sk_protocol = sk->sk_protocol;
-	newsk->sk_reuse = true; /* SO_REUSEADDR */
-	newsk->sk_reuseport = true;
 	newsk->sk_daddr = addr;
 	newsk->sk_dport = port;
-	gmtp_set_state(newsk, GMTP_OPEN);
+	gmtp_set_state(newsk, GMTP_CLOSED);
+
+	flowname_str(flowname, gmtp_sk(newsk)->flowname);
+	pr_info("newsk->flowname: %s", flowname);
 
 	return newsk;
 
@@ -209,10 +212,7 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 		pr_info("Reporter: %pI4@%-5d\n", &gh_rnotify->reporter_addr,
 				ntohs(gh_rnotify->reporter_port));
 
-		/* Indentify relay of client */
 		memcpy(gp->relay_id, gh_rnotify->relay_id, GMTP_RELAY_ID_LEN);
-
-		/* Obtain usec RTT sample from Request (used by CC). */
 
 		myself->max_nclients = gh_rnotify->max_nclients;
 		if(myself->max_nclients > 0) {
@@ -246,6 +246,7 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 			if(myself->rsock == NULL || myself->reporter == NULL)
 				goto err;
 
+			gmtp_init_xmit_timers(myself->rsock);
 			gmtp_send_elect_request(myself->rsock);
 		}
 

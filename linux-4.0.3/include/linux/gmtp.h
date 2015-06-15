@@ -18,6 +18,7 @@ enum gmtp_state {
 	GMTP_CLOSING	     = TCP_CLOSING,
 	GMTP_TIME_WAIT	     = TCP_TIME_WAIT,
 	GMTP_CLOSED	     = TCP_CLOSE,
+	GMTP_ELECT_SENT,
 	GMTP_MAX_STATES
 };
 
@@ -130,9 +131,6 @@ static inline struct gmtp_request_sock *gmtp_rsk(const struct request_sock *req)
  * @req_stamp: time stamp of request sent
  * @reply_stamp: time stamp of Register-Reply (or Request-Reply) sent
  * @ack_rcv_tstamp: timestamp of last received ACK (for keepalives)
- * @keepalive_time: time before keep alive takes place
- * @keepalive_intvl: time interval between keep alive probes
- * @keepalive_probes: num of allowed keep alive probes
  * @tx_rtt: RTT from sender to relays
  * @server_timewait: server holds timewait state on close
  * @rx_last_counter:	     Tracks window counter (RFC 4342, 8.1)
@@ -181,9 +179,6 @@ struct gmtp_sock {
 	u32				req_stamp;
 	u32				reply_stamp;
 	u32				ack_rcv_tstamp;
-	unsigned int			keepalive_time;
-	unsigned int			keepalive_intvl;
-	u8				keepalive_probes;
 
 	u8				server_timewait:1;
 

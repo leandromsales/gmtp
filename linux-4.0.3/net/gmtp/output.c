@@ -365,27 +365,30 @@ EXPORT_SYMBOL_GPL(gmtp_send_ack);
 
 void gmtp_send_elect_request(struct sock *sk)
 {
+	struct gmtp_sock *gp = gmtp_sk(sk);
+	struct sk_buff *skb = alloc_skb(sk->sk_prot->max_header, GFP_ATOMIC);
+	struct gmtp_hdr_elect_request *gh_ereq;
+	int timeout;
+
 	gmtp_pr_func();
 
-	if(sk->sk_state != GMTP_CLOSED) {
+	if(skb == NULL)
+		goto out;
 
-		struct gmtp_sock *gp = gmtp_sk(sk);
-		struct sk_buff *skb = alloc_skb(sk->sk_prot->max_header,
-		GFP_ATOMIC);
-		struct gmtp_hdr_elect_request *gh_ereq;
+	/* Reserve space for headers */
+	skb_reserve(skb, sk->sk_prot->max_header);
+	GMTP_SKB_CB(skb)->type = GMTP_PKT_ELECT_REQUEST;
+	gh_ereq = gmtp_hdr_elect_request(skb);
+	memcpy(gh_ereq->relay_id, gp->relay_id, GMTP_RELAY_ID_LEN);
+	gh_ereq->max_nclients = 0;
 
-		if(skb == NULL)
-			return;
+	gmtp_set_state(sk, GMTP_ELECT_SENT);
+	gmtp_transmit_skb(sk, skb);
 
-		/* Reserve space for headers */
-		skb_reserve(skb, sk->sk_prot->max_header);
-		GMTP_SKB_CB(skb)->type = GMTP_PKT_ELECT_REQUEST;
-		gh_ereq = gmtp_hdr_elect_request(skb);
-		memcpy(gh_ereq->relay_id, gp->relay_id, GMTP_RELAY_ID_LEN);
-		gh_ereq->max_nclients = 0;
+out:
+	timeout = gmtp_get_elect_timeout(gp);
+	inet_csk_reset_keepalive_timer(sk, msecs_to_jiffies(timeout));
 
-		gmtp_transmit_skb(sk, skb);
-	}
 }
 EXPORT_SYMBOL_GPL(gmtp_send_elect_request);
 

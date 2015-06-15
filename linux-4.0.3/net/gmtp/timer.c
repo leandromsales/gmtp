@@ -13,10 +13,6 @@
 #include <linux/gmtp.h>
 #include "gmtp.h"
 
-int sysctl_gmtp_keepalive_time __read_mostly = GMTP_KEEPALIVE_TIME;
-int sysctl_gmtp_keepalive_intvl __read_mostly = GMTP_KEEPALIVE_INTVL;
-int sysctl_gmtp_keepalive_probes __read_mostly = GMTP_KEEPALIVE_PROBES;
-
 static void gmtp_write_err(struct sock *sk)
 {
 	gmtp_print_function();
@@ -164,7 +160,7 @@ out:
 /*
  *	Timer for listening sockets
  */
-static void gmtp_register_ack_timer(struct sock *sk)
+static void gmtp_register_reply_timer(struct sock *sk)
 {
 	inet_csk_reqsk_queue_prune(sk, TCP_SYNQ_INTERVAL, GMTP_TIMEOUT_INIT,
 				   GMTP_RTO_MAX);
@@ -173,9 +169,7 @@ static void gmtp_register_ack_timer(struct sock *sk)
 static void gmtp_keepalive_timer(unsigned long data)
 {
 	struct sock *sk = (struct sock *)data;
-	struct inet_connection_sock *icsk = inet_csk(sk);
-	struct gmtp_sock *gp = gmtp_sk(sk);
-	u32 elapsed;
+	u32 timeout;
 
 	gmtp_pr_func();
 
@@ -188,68 +182,21 @@ static void gmtp_keepalive_timer(unsigned long data)
 	}
 
 	if (sk->sk_state == GMTP_LISTEN) {
-		gmtp_register_ack_timer(sk);
+		gmtp_register_reply_timer(sk);
 		goto out;
 	}
 
-	elapsed = gmtp_keepalive_time_when(gp);
-
-	pr_info("elapsed (gmtp_keepalive_time_when): %u\n", elapsed);
-
-	/* It is alive without keepalive 8) */
-	if(sk->sk_send_head)
-		goto resched;
-
-	elapsed = gmtp_keepalive_time_elapsed(gp);
-	pr_info("elapsed (gmtp_keepalive_time_elapsed): %u\n", elapsed);
-
-	if (elapsed >= gmtp_keepalive_time_when(gp)) {
-
-		pr_info("if (elapsed >= gmtp_keepalive_time_when(gp))\n");
-
-		pr_info("icsk->icsk_user_timeout: %u\n", icsk->icsk_user_timeout);
-		pr_info("icsk->icsk_probes_out: %u\n", icsk->icsk_probes_out);
-		pr_info("gmtp_keepalive_probes(gp): %u\n", gmtp_keepalive_probes(gp));
-
-		/* If the TCP_USER_TIMEOUT option is enabled, use that
-		 * to determine when to timeout instead.
-		 */
-		if((icsk->icsk_user_timeout != 0 &&
-		    elapsed >= icsk->icsk_user_timeout &&
-		    icsk->icsk_probes_out > 0) ||
-		    (icsk->icsk_user_timeout == 0 &&
-		    icsk->icsk_probes_out >= gmtp_keepalive_probes(gp))) {
-
-			pr_info("sending reset\n");
-			gmtp_send_reset(sk, GMTP_RESET_CODE_ABORTED);
-			gmtp_write_err(sk);
-			goto out;
-		}
-		if(/*tcp_write_wakeup(sk) <= 0*/ 1) {
-			pr_info("sending wakeup\n");
-			icsk->icsk_probes_out++;
-			elapsed = gmtp_keepalive_intvl_when(gp);
-		} else {
-			/* If keepalive was lost due to local congestion,
-			 * try harder.
-			 */
-			elapsed = TCP_RESOURCE_PROBE_INTERVAL;
-		}
-	} else {
-		pr_info("else\n");
-		/* It is gp->ack_rcv_tstamp + keepalive_time_when(gp) */
-		elapsed = gmtp_keepalive_time_when(gp) - elapsed;
-		pr_info("new elapsed: %u\n", elapsed);
+	if(sk->sk_state == GMTP_ELECT_SENT) {
+		pr_info("Cool socket GMTP_ELECT_SENT!\n");
+		timeout = gmtp_get_elect_timeout(gmtp_sk(sk));
+		inet_csk_reset_keepalive_timer(sk, msecs_to_jiffies(timeout));
 	}
 
-	sk_mem_reclaim(sk);
-	pr_info("sk_mem_reclaim\n");
-
-resched:
-	pr_info("resched to %u\n", elapsed);
-	inet_csk_reset_keepalive_timer(sk, elapsed);
+	if(sk->sk_state == GMTP_OPEN) {
+		pr_info("Cool socket OPEN!\n");
+		inet_csk_reset_keepalive_timer(sk, HZ/20);
+	}
 out:
-	pr_info("out\n");
 	bh_unlock_sock(sk);
 	sock_put(sk);
 }
@@ -310,7 +257,6 @@ void gmtp_init_xmit_timers(struct sock *sk)
 	gmtp_pr_func();
 	inet_csk_init_xmit_timers(sk, &gmtp_write_timer, &gmtp_delack_timer,
 			&gmtp_keepalive_timer);
-	/*inet_csk_reset_keepalive_timer(sk, 10*HZ);*/
 }
 
 
