@@ -92,22 +92,20 @@ struct sock* gmtp_sock_connect(struct sock *sk, enum gmtp_sock_type type,
 {
 	struct sock *newsk;
 
-	__u8 flowname[GMTP_FLOWNAME_STR_LEN];
-
 	gmtp_pr_func();
 
-	newsk = sk_clone_lock(sk, GFP_ATOMIC);
+	newsk = sk_clone_lock(sk, GFP_KERNEL);
+
 	if(newsk == NULL)
 		return NULL;
 
 	newsk->sk_protocol = sk->sk_protocol;
 	newsk->sk_daddr = addr;
 	newsk->sk_dport = port;
-	gmtp_set_state(newsk, GMTP_CLOSED);
-	gmtp_init_xmit_timers(sk);
 
-	flowname_str(flowname, gmtp_sk(newsk)->flowname);
+	/*gmtp_set_state(newsk, GMTP_OPEN);*/
 	gmtp_sk(newsk)->type = type;
+	gmtp_init_xmit_timers(newsk);
 
 	return newsk;
 
@@ -122,7 +120,7 @@ struct sock* gmtp_multicast_connect(struct sock *sk, enum gmtp_sock_type type,
 
 	gmtp_pr_func();
 
-	newsk = sk_clone_lock(sk, GFP_ATOMIC);
+	newsk = sk_clone_lock(sk, GFP_KERNEL);
 	if(newsk == NULL)
 		return NULL;
 
@@ -141,6 +139,7 @@ struct sock* gmtp_multicast_connect(struct sock *sk, enum gmtp_sock_type type,
 			&addr, ntohs(port));
 	ip_mc_join_group(newsk, &mreq);
 	__inet_hash_nolisten(newsk, NULL);
+
 	gmtp_sk(newsk)->type = type;
 	gmtp_set_state(newsk, GMTP_OPEN);
 

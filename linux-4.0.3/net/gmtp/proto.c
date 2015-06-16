@@ -146,13 +146,40 @@ void print_route(struct gmtp_hdr_route *route)
 }
 EXPORT_SYMBOL_GPL(print_route);
 
+const char *gmtp_sock_type_name(const int type)
+{
+	static const char *const gmtp_sock_type_names[] = {
+	[GMTP_SOCK_TYPE_REGULAR]	 = "REGULAR",
+	[GMTP_SOCK_TYPE_REPORTER]	 = "TO_REPORTER",
+	[GMTP_SOCK_TYPE_CONTROL_CHANNEL] = "CONTROL_CHANNEL",
+	[GMTP_SOCK_TYPE_DATA_CHANNEL]	 = "DATA_CHANNEL"
+	};
+
+	if(type > GMTP_SOCK_TYPE_DATA_CHANNEL)
+		return "INVALID TYPE!";
+	else
+		return gmtp_sock_type_names[type];
+}
+EXPORT_SYMBOL_GPL(gmtp_sock_type_name);
+
+/*
+ * Print GMTP sock basic information
+ */
+void print_gmtp_sock(struct sock *sk)
+{
+	pr_info("Socket (%s) to %pI4@%-5d [%s]\n",
+			gmtp_sock_type_name(gmtp_sk(sk)->type), &sk->sk_daddr,
+			ntohs(sk->sk_dport), gmtp_state_name(sk->sk_state));
+}
+EXPORT_SYMBOL_GPL(print_gmtp_sock);
+
 void gmtp_set_state(struct sock *sk, const int state)
 {
 	const int oldstate = sk->sk_state;
 
-	gmtp_print_function();
-	gmtp_print_debug("%s --> %s\n", gmtp_state_name(oldstate),
-			gmtp_state_name(state));
+	print_gmtp_sock(sk);
+	gmtp_pr_info("(%s --> %s)", gmtp_state_name(oldstate),
+				gmtp_state_name(state));
 
 	if(state == oldstate)
 		gmtp_print_warning("new state == old state!");
@@ -287,9 +314,8 @@ void gmtp_close(struct sock *sk, long timeout)
 	int state;
 
 	gmtp_pr_func();
-	gmtp_pr_info("Closing connection...");
-	gmtp_pr_info("Timeout: %ld", timeout);
-	gmtp_pr_info("sk->st_state: %s", gmtp_state_name(sk->sk_state));
+
+	pr_info("state: %s, timeout: %ld", gmtp_state_name(sk->sk_state), timeout);
 
 	lock_sock(sk);
 

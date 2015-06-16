@@ -45,8 +45,8 @@ struct sock* gmtp_v4_build_control_sk(struct sock *sk)
 	memset(&local->sin_zero, 0, sizeof(local->sin_zero));
 	gmtp_info->ctrl_addr = local;
 
-	return gmtp_multicast_connect(sk, local->sin_addr.s_addr,
-			local->sin_port);
+	return gmtp_multicast_connect(sk, GMTP_SOCK_TYPE_CONTROL_CHANNEL,
+			local->sin_addr.s_addr, local->sin_port);
 }
 
 int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len) {
@@ -318,8 +318,6 @@ static struct dst_entry* gmtp_v4_route_skb(struct net *net, struct sock *sk,
 			.fl4_sport = gmtp_hdr(skb)->dport,
 			.fl4_dport = gmtp_hdr(skb)->sport,
 	};
-
-	gmtp_print_function();
 
 	security_skb_classify_flow(skb, flowi4_to_flowi(&fl4));
 	rt = ip_route_output_flow(net, &fl4, sk);
@@ -593,6 +591,41 @@ static int gmtp_v4_reporter_rcv_elect_request(struct sk_buff *skb)
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_reporter_rcv_elect_request);
 
+static int gmtp_v4_reporter_rcv_elect_response(struct sk_buff *skb)
+{
+	const struct iphdr *iph = ip_hdr(skb);
+	const struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct gmtp_client_entry *media_entry;
+	struct gmtp_client *client;
+
+	gmtp_pr_func();
+
+	media_entry = gmtp_lookup_client(gmtp_hashtable, gh->flowname);
+	if(media_entry == NULL) {
+		pr_info("Media entry == NULL\n");
+		return 1;
+	}
+
+	client = gmtp_get_client(&media_entry->clients->list,
+			iph->daddr, gh->dport);
+	if(client == NULL) {
+		pr_info("Client == NULL\n");
+		return 1;
+	}
+
+	pr_info("Client: ADDR=%pI4@%-5d\n", &client->addr, ntohs(client->port));
+	if(client->rsock == NULL) {
+		pr_info("client->rsock == NULL\n");
+		return 1;
+	}
+	/* FIXME Verify if reporter accepetd client and send back an ACK*/
+	gmtp_set_state(client->rsock, GMTP_OPEN);
+
+	/*gmtp_v4_ctl_send_packet(0, skb, GMTP_PKT_ELECT_RESPONSE);*/
+	return 0;
+}
+EXPORT_SYMBOL_GPL(gmtp_v4_reporter_rcv_elect_response);
+
 static int gmtp_v4_reporter_rcv_ack(struct sk_buff *skb)
 {
 	const struct iphdr *iph = ip_hdr(skb);
@@ -686,6 +719,11 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 		case GMTP_PKT_ELECT_REQUEST:
 			pr_info("ELECT received!\n");
 			if(gmtp_v4_reporter_rcv_elect_request(skb))
+				goto no_gmtp_socket;
+			break;
+		case GMTP_PKT_ELECT_RESPONSE:
+			pr_info("ELECT-RESPONSE received!\n");
+			if(gmtp_v4_reporter_rcv_elect_response(skb))
 				goto no_gmtp_socket;
 			break;
 		case GMTP_PKT_ACK:

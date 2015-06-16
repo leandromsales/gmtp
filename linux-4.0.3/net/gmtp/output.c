@@ -101,6 +101,18 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 		}
 		gh->seq = gcb->seq;
 
+		if(gh->type == GMTP_PKT_ELECT_REQUEST) {
+			__u8 flowname[GMTP_FLOWNAME_STR_LEN];
+			gmtp_pr_debug("%s", gmtp_packet_name(gh->type));
+			flowname_str(flowname, gh->flowname);
+			pr_info("%s (%d) dst=%pI4@%-5d, seq=%u, rtt=%u ms, "
+					"transm_r=%u bytes/s, flow=%s\n",
+				gmtp_packet_name(gh->type), gh->type,
+				&sk->sk_daddr, ntohs(gh->dport),
+				gh->seq, gh->server_rtt, gh->transm_r,
+				flowname);
+		}
+
 		err = icsk->icsk_af_ops->queue_xmit(sk, skb, &inet->cork.fl);
 		return net_xmit_eval(err);
 	}
@@ -217,13 +229,11 @@ struct sk_buff *gmtp_ctl_make_reset(struct sock *sk, struct sk_buff *rcv_skb)
 	struct gmtp_hdr *rxgh = gmtp_hdr(rcv_skb), *gh;
 	struct gmtp_sock *gp = gmtp_sk(sk);
 	struct gmtp_skb_cb *gcb = GMTP_SKB_CB(rcv_skb);
-	const u32 gmtp_hdr_reset_len = sizeof(struct gmtp_hdr) +
+	const u32 gmtp_hdr_len = sizeof(struct gmtp_hdr) +
 			sizeof(struct gmtp_hdr_reset);
 
 	struct gmtp_hdr_reset *ghr;
 	struct sk_buff *skb;
-
-	gmtp_print_function();
 
 	skb = alloc_skb(sk->sk_prot->max_header, GFP_ATOMIC);
 	if (skb == NULL)
@@ -232,15 +242,15 @@ struct sk_buff *gmtp_ctl_make_reset(struct sock *sk, struct sk_buff *rcv_skb)
 	skb_reserve(skb, sk->sk_prot->max_header);
 
 	/* Swap the send and the receive. */
-	gh = gmtp_zeroed_hdr(skb, gmtp_hdr_reset_len);
+	gh = gmtp_zeroed_hdr(skb, gmtp_hdr_len);
 	gh->type	= GMTP_PKT_RESET;
 	gh->sport	= rxgh->dport;
 	gh->dport	= rxgh->sport;
-	gh->hdrlen	= gmtp_hdr_reset_len;
-	gh->seq 	= gp->iss;
-	gh->server_rtt	= TO_U8(gp->tx_rtt);
-	gh->transm_r	= (__be32) gp->tx_max_rate;
-	memcpy(gh->flowname, gp->flowname, GMTP_FLOWNAME_LEN);
+	gh->hdrlen	= gmtp_hdr_len;
+	gh->seq 	= rxgh->seq;
+	gh->server_rtt	= rxgh->server_rtt;
+	gh->transm_r	= rxgh->transm_r;
+	memcpy(gh->flowname, rxgh->flowname, GMTP_FLOWNAME_LEN);
 
 	ghr = gmtp_hdr_reset(skb);
 	ghr->reset_code = gcb->reset_code;
@@ -365,9 +375,9 @@ EXPORT_SYMBOL_GPL(gmtp_send_ack);
 
 void gmtp_send_elect_request(struct sock *sk)
 {
-	struct gmtp_sock *gp = gmtp_sk(sk);
 	struct sk_buff *skb = alloc_skb(sk->sk_prot->max_header, GFP_ATOMIC);
 	struct gmtp_hdr_elect_request *gh_ereq;
+	struct gmtp_sock *gp = gmtp_sk(sk);
 	int timeout;
 
 	gmtp_pr_func();
@@ -378,6 +388,7 @@ void gmtp_send_elect_request(struct sock *sk)
 	/* Reserve space for headers */
 	skb_reserve(skb, sk->sk_prot->max_header);
 	GMTP_SKB_CB(skb)->type = GMTP_PKT_ELECT_REQUEST;
+
 	gh_ereq = gmtp_hdr_elect_request(skb);
 	memcpy(gh_ereq->relay_id, gp->relay_id, GMTP_RELAY_ID_LEN);
 	gh_ereq->max_nclients = 0;
@@ -385,20 +396,23 @@ void gmtp_send_elect_request(struct sock *sk)
 	gmtp_set_state(sk, GMTP_REQUESTING);
 	gmtp_transmit_skb(sk, skb);
 
-	timeout = gmtp_get_elect_timeout(gp);
+	timeout = msecs_to_jiffies(gmtp_get_elect_timeout(gp));
+	timeout = HZ;
 	pr_info("Timeout: %u ms\n", timeout);
-	inet_csk_reset_keepalive_timer(sk, msecs_to_jiffies(timeout));
+	pr_info("Reseting keep_alive\n");
+	inet_csk_reset_keepalive_timer(sk, (timeout));
 
 }
 EXPORT_SYMBOL_GPL(gmtp_send_elect_request);
 
+/** FIXME: CTL elect response does not know flowname... */
 struct sk_buff *gmtp_ctl_make_elect_response(struct sock *sk,
 		struct sk_buff *rcv_skb)
 {
 	struct gmtp_hdr *rxgh = gmtp_hdr(rcv_skb), *gh;
 	struct gmtp_sock *gp = gmtp_sk(sk);
 	struct gmtp_skb_cb *gcb = GMTP_SKB_CB(rcv_skb);
-	const u32 gmtp_hdr_reset_len = sizeof(struct gmtp_hdr) +
+	const u32 gmtp_hdr_len = sizeof(struct gmtp_hdr) +
 			sizeof(struct gmtp_hdr_elect_response);
 
 	struct gmtp_hdr_elect_response *ghr;
@@ -413,15 +427,15 @@ struct sk_buff *gmtp_ctl_make_elect_response(struct sock *sk,
 	skb_reserve(skb, sk->sk_prot->max_header);
 
 	/* Swap the send and the receive. */
-	gh = gmtp_zeroed_hdr(skb, gmtp_hdr_reset_len);
+	gh = gmtp_zeroed_hdr(skb, gmtp_hdr_len);
 	gh->type	= GMTP_PKT_ELECT_RESPONSE;
 	gh->sport	= rxgh->dport;
 	gh->dport	= rxgh->sport;
-	gh->hdrlen	= gmtp_hdr_reset_len;
-	gh->seq 	= gp->iss;
-	gh->server_rtt	= TO_U8(gp->tx_rtt);
-	gh->transm_r	= (__be32) gp->tx_max_rate;
-	memcpy(gh->flowname, gp->flowname, GMTP_FLOWNAME_LEN);
+	gh->hdrlen	= gmtp_hdr_len;
+	gh->seq 	= rxgh->seq;
+	gh->server_rtt	= rxgh->server_rtt;
+	gh->transm_r	= rxgh->transm_r;
+	memcpy(gh->flowname, rxgh->flowname, GMTP_FLOWNAME_LEN);
 
 	ghr = gmtp_hdr_elect_response(skb);
 	ghr->elect_code = gcb->elect_code;

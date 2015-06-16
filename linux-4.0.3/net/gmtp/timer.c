@@ -175,31 +175,43 @@ static void gmtp_keepalive_timer(unsigned long data)
 	gmtp_pr_func();
 
 	/* Only process if socket is not in use. */
+
+	pr_info("Locking socket... ");
+	print_gmtp_sock(sk);
+
 	bh_lock_sock(sk);
 	if (sock_owned_by_user(sk)) {
 		/* Try again later. */
+		pr_info("sock_owned_by_user(sk)\n");
 		inet_csk_reset_keepalive_timer(sk, HZ / 20);
 		goto out;
 	}
 
+	pr_info("Checking if socket is at 'listen' state\n");
 	if (sk->sk_state == GMTP_LISTEN) {
+		pr_info("GMTP_LISTEN\n");
 		gmtp_register_reply_timer(sk);
 		goto out;
 	}
 
+	pr_info("Checking if socket is at 'requesting' state\n");
 	if(sk->sk_state == GMTP_REQUESTING
 			&& gp->type == GMTP_SOCK_TYPE_REPORTER) {
-
-		pr_info("Cool socket GMTP_ELECT_SENT!\n");
-		timeout = gmtp_get_elect_timeout(gp);
-		inet_csk_reset_keepalive_timer(sk, msecs_to_jiffies(timeout));
+		pr_info("Requesting a reporter!\n");
+		timeout = msecs_to_jiffies(gmtp_get_elect_timeout(gp));
+		timeout = HZ;
+		pr_info("New timeout: %u ms\n", timeout);
+		/*pr_info("Reseting keep_alive\n");*/
+		/*inet_csk_reset_keepalive_timer(sk, timeout);*/
 	}
 
 	if(sk->sk_state == GMTP_OPEN && gp->type == GMTP_SOCK_TYPE_REPORTER) {
-		pr_info("Cool socket OPEN!\n");
-		inet_csk_reset_keepalive_timer(sk, HZ / 20);
+		pr_info("Cool socket OPEN! (TODO: send an ACK)\n");
+		/*inet_csk_reset_keepalive_timer(sk, HZ / 20);*/
 	}
+	pr_info("Nobody cares about me!\n");
 out:
+	pr_info("Unlocking socket (out)\n");
 	bh_unlock_sock(sk);
 	sock_put(sk);
 }

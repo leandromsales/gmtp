@@ -99,7 +99,8 @@ void gmtp_init_xmit_timers(struct sock *sk);
 static inline void gmtp_clear_xmit_timers(struct sock *sk)
 {
 	inet_csk_clear_xmit_timers(sk);
-	if(gmtp_sk(sk)->role == GMTP_ROLE_CLIENT)
+	if(gmtp_sk(sk)->type == GMTP_SOCK_TYPE_REGULAR
+			&& gmtp_sk(sk)->role == GMTP_ROLE_CLIENT)
 		inet_csk_clear_xmit_timers(gmtp_sk(sk)->myself->rsock);
 }
 
@@ -128,6 +129,7 @@ const char *gmtp_state_name(const int);
 void flowname_str(__u8* str, const __u8 *flowname);
 void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh);
 void print_route(struct gmtp_hdr_route *route);
+void print_gmtp_sock(struct sock *sk);
 
 /** sockopt.c */
 int gmtp_getsockopt(struct sock *sk, int level, int optname,
@@ -139,8 +141,10 @@ int gmtp_setsockopt(struct sock *sk, int level, int optname,
 int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len);
 
 /** input.c */
-struct sock* gmtp_multicast_connect(struct sock *sk, __be32 addr, __be16 port);
-struct sock* gmtp_sock_connect(struct sock *sk, __be32 addr, __be16 port);
+struct sock* gmtp_multicast_connect(struct sock *sk, enum gmtp_sock_type type,
+		__be32 addr, __be16 port);
+struct sock* gmtp_sock_connect(struct sock *sk, enum gmtp_sock_type type,
+		__be32 addr, __be16 port);
 int gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 		const struct gmtp_hdr *dh, const unsigned int len);
 int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
