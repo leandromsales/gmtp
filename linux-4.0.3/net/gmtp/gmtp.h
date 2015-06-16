@@ -15,6 +15,7 @@
 #include <linux/types.h>
 #include <linux/skbuff.h>
 
+#include <net/tcp.h>
 #include <net/netns/gmtp.h>
 #include <linux/gmtp.h>
 #include <uapi/linux/gmtp.h>
@@ -85,6 +86,7 @@
 #define GMTP_TIMEOUT_INIT ((unsigned int)(3 * HZ))
 #define GMTP_RTO_MAX ((unsigned int)(64 * HZ))
 #define GMTP_TIMEWAIT_LEN (60 * HZ)
+#define GMTP_REQ_INTERVAL (TCP_SYNQ_INTERVAL)
 
 /* Int to __u8 operations */
 #define TO_U8(x) ((x) > UINT_MAX) ? UINT_MAX : (__u8)(x)
@@ -152,7 +154,7 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 
 /** output.c */
 void gmtp_send_ack(struct sock *sk);
-void gmtp_send_elect_request(struct sock *sk);
+void gmtp_send_elect_request(struct sock *sk, unsigned long interval);
 void gmtp_send_feedback(struct sock *sk);
 void gmtp_send_close(struct sock *sk, const int active);
 int gmtp_send_reset(struct sock *sk, enum gmtp_reset_codes code);

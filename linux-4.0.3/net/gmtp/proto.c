@@ -167,7 +167,7 @@ EXPORT_SYMBOL_GPL(gmtp_sock_type_name);
  */
 void print_gmtp_sock(struct sock *sk)
 {
-	pr_info("Socket (%s) to %pI4@%-5d [%s]\n",
+	pr_info("Socket (%s) - dst=%pI4@%-5d [%s]\n",
 			gmtp_sock_type_name(gmtp_sk(sk)->type), &sk->sk_daddr,
 			ntohs(sk->sk_dport), gmtp_state_name(sk->sk_state));
 }
@@ -266,6 +266,9 @@ EXPORT_SYMBOL_GPL(gmtp_init_sock);
 void gmtp_destroy_sock(struct sock *sk)
 {
 	gmtp_pr_func();
+
+	if(gmtp_role_client(sk))
+		gmtp_clear_xmit_timers(sk);
 
 	if(gmtp_sk(sk)->role == GMTP_ROLE_REPORTER)
 		mcc_rx_exit(sk);

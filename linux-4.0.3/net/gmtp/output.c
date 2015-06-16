@@ -373,12 +373,11 @@ void gmtp_send_ack(struct sock *sk)
 }
 EXPORT_SYMBOL_GPL(gmtp_send_ack);
 
-void gmtp_send_elect_request(struct sock *sk)
+void gmtp_send_elect_request(struct sock *sk, unsigned long interval)
 {
 	struct sk_buff *skb = alloc_skb(sk->sk_prot->max_header, GFP_ATOMIC);
 	struct gmtp_hdr_elect_request *gh_ereq;
 	struct gmtp_sock *gp = gmtp_sk(sk);
-	int timeout;
 
 	gmtp_pr_func();
 
@@ -396,12 +395,8 @@ void gmtp_send_elect_request(struct sock *sk)
 	gmtp_set_state(sk, GMTP_REQUESTING);
 	gmtp_transmit_skb(sk, skb);
 
-	timeout = msecs_to_jiffies(gmtp_get_elect_timeout(gp));
-	timeout = HZ;
-	pr_info("Timeout: %u ms\n", timeout);
-	pr_info("Reseting keep_alive\n");
-	inet_csk_reset_keepalive_timer(sk, (timeout));
-
+	if(interval > 0)
+		inet_csk_reset_keepalive_timer(sk, interval);
 }
 EXPORT_SYMBOL_GPL(gmtp_send_elect_request);
 
@@ -627,12 +622,14 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 	long delay = 0, delay2 = 0, delay_budget = 0;
 
 	/** TODO Continue tests with different scales... */
-	static const int scale = 1;
-	/*static const int scale = HZ/100;*/
+		static const int scale = 1;
+		/*static const int scale = HZ/100;*/
+
+	if(unlikely(sk == NULL || skb == NULL))
+		return;
 
 	if(gp->tx_max_rate == 0UL)
 		goto send;
-
 	/*
 	pr_info("[%d] Tx rate: %lu bytes/s\n", gp->pkt_sent, gp->total_rate);
 	pr_info("[-] Tx rate (sample): %lu bytes/s\n", gp->sample_rate);

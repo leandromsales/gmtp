@@ -95,7 +95,6 @@ struct sock* gmtp_sock_connect(struct sock *sk, enum gmtp_sock_type type,
 	gmtp_pr_func();
 
 	newsk = sk_clone_lock(sk, GFP_KERNEL);
-
 	if(newsk == NULL)
 		return NULL;
 
@@ -103,8 +102,9 @@ struct sock* gmtp_sock_connect(struct sock *sk, enum gmtp_sock_type type,
 	newsk->sk_daddr = addr;
 	newsk->sk_dport = port;
 
-	/*gmtp_set_state(newsk, GMTP_OPEN);*/
 	gmtp_sk(newsk)->type = type;
+
+	bh_unlock_sock(newsk);
 	gmtp_init_xmit_timers(newsk);
 
 	return newsk;
@@ -141,6 +141,8 @@ struct sock* gmtp_multicast_connect(struct sock *sk, enum gmtp_sock_type type,
 	__inet_hash_nolisten(newsk, NULL);
 
 	gmtp_sk(newsk)->type = type;
+
+	bh_unlock_sock(newsk);
 	gmtp_set_state(newsk, GMTP_OPEN);
 
 	return newsk;
@@ -249,7 +251,7 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 			if(myself->rsock == NULL || myself->reporter == NULL)
 				goto err;
 
-			gmtp_send_elect_request(myself->rsock);
+			gmtp_send_elect_request(myself->rsock, GMTP_REQ_INTERVAL);
 		}
 
 		/* Inserting information in client table */

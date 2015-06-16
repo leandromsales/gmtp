@@ -162,7 +162,7 @@ out:
  */
 static void gmtp_register_reply_timer(struct sock *sk)
 {
-	inet_csk_reqsk_queue_prune(sk, TCP_SYNQ_INTERVAL, GMTP_TIMEOUT_INIT,
+	inet_csk_reqsk_queue_prune(sk, GMTP_REQ_INTERVAL, GMTP_TIMEOUT_INIT,
 				   GMTP_RTO_MAX);
 }
 
@@ -170,48 +170,42 @@ static void gmtp_keepalive_timer(unsigned long data)
 {
 	struct sock *sk = (struct sock *)data;
 	struct gmtp_sock *gp = gmtp_sk(sk);
-	u32 timeout;
 
 	gmtp_pr_func();
 
-	/* Only process if socket is not in use. */
-
-	pr_info("Locking socket... ");
+	pr_info("Locking socket (%p) \n", sk);
 	print_gmtp_sock(sk);
 
 	bh_lock_sock(sk);
+	/* Only process if socket is not in use. */
 	if (sock_owned_by_user(sk)) {
 		/* Try again later. */
-		pr_info("sock_owned_by_user(sk)\n");
 		inet_csk_reset_keepalive_timer(sk, HZ / 20);
 		goto out;
 	}
 
-	pr_info("Checking if socket is at 'listen' state\n");
 	if (sk->sk_state == GMTP_LISTEN) {
-		pr_info("GMTP_LISTEN\n");
 		gmtp_register_reply_timer(sk);
 		goto out;
 	}
 
-	pr_info("Checking if socket is at 'requesting' state\n");
 	if(sk->sk_state == GMTP_REQUESTING
 			&& gp->type == GMTP_SOCK_TYPE_REPORTER) {
+
+		/* FIXME Use a timout do giveup request and autopromote reporter */
+
 		pr_info("Requesting a reporter!\n");
-		timeout = msecs_to_jiffies(gmtp_get_elect_timeout(gp));
-		timeout = HZ;
-		pr_info("New timeout: %u ms\n", timeout);
-		/*pr_info("Reseting keep_alive\n");*/
-		/*inet_csk_reset_keepalive_timer(sk, timeout);*/
+		gmtp_send_elect_request(sk, GMTP_REQ_INTERVAL);
+		goto out;
 	}
 
 	if(sk->sk_state == GMTP_OPEN && gp->type == GMTP_SOCK_TYPE_REPORTER) {
-		pr_info("Cool socket OPEN! (TODO: send an ACK)\n");
-		/*inet_csk_reset_keepalive_timer(sk, HZ / 20);*/
+		pr_info("Socket OPEN! (TODO: send an ACK)\n");
+		inet_csk_reset_keepalive_timer(sk, HZ);
+		goto out;
 	}
-	pr_info("Nobody cares about me!\n");
 out:
-	pr_info("Unlocking socket (out)\n");
+	pr_info("Unlocking socket (%p)\n", sk);
 	bh_unlock_sock(sk);
 	sock_put(sk);
 }
