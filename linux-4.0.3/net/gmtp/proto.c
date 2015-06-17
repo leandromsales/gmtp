@@ -236,7 +236,8 @@ int gmtp_init_sock(struct sock *sk)
 	gp->role		= GMTP_ROLE_UNDEFINED;
 
 	gp->req_stamp		= 0;
-	gp->ack_rcv_tstamp	= 0;
+	gp->ack_rx_tstamp	= 0;
+	gp->ack_tx_tstamp	= 0;
 	gp->tx_rtt		= GMTP_DEFAULT_RTT;
 	gp->relay_rtt		= 0;
 
@@ -266,9 +267,6 @@ EXPORT_SYMBOL_GPL(gmtp_init_sock);
 void gmtp_destroy_sock(struct sock *sk)
 {
 	gmtp_pr_func();
-
-	if(gmtp_role_client(sk))
-		gmtp_clear_xmit_timers(sk);
 
 	if(gmtp_sk(sk)->role == GMTP_ROLE_REPORTER)
 		mcc_rx_exit(sk);

@@ -586,7 +586,7 @@ static int gmtp_v4_reporter_rcv_elect_request(struct sk_buff *skb)
 		GMTP_SKB_CB(skb)->elect_code = GMTP_ELECT_ACCEPT;
 	}
 
-	/*gmtp_v4_ctl_send_packet(0, skb, GMTP_PKT_ELECT_RESPONSE);*/
+	gmtp_v4_ctl_send_packet(0, skb, GMTP_PKT_ELECT_RESPONSE);
 	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_reporter_rcv_elect_request);
@@ -626,6 +626,7 @@ static int gmtp_v4_reporter_rcv_elect_response(struct sk_buff *skb)
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_reporter_rcv_elect_response);
 
+/*
 static int gmtp_v4_reporter_rcv_ack(struct sk_buff *skb)
 {
 	const struct iphdr *iph = ip_hdr(skb);
@@ -663,6 +664,7 @@ static int gmtp_v4_reporter_rcv_ack(struct sk_buff *skb)
 
 	return 0;
 }
+*/
 
 /*
 
@@ -729,11 +731,11 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 			if(gmtp_v4_reporter_rcv_elect_response(skb))
 				goto no_gmtp_socket;
 			break;
-		case GMTP_PKT_ACK:
+		/*case GMTP_PKT_ACK:
 			pr_info("ACK received!\n");
 			if(gmtp_v4_reporter_rcv_ack(skb))
 				goto no_gmtp_socket;
-			break;
+			break;*/
 			/* FIXME Manage close from server... */
 		/*case GMTP_PKT_CLOSE:
 			pr_info("CLOSE received!\n");

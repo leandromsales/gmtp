@@ -215,7 +215,6 @@ EXPORT_SYMBOL_GPL(gmtp_make_register_reply);
 struct sk_buff *gmtp_ctl_make_reset(struct sock *sk, struct sk_buff *rcv_skb)
 {
 	struct gmtp_hdr *rxgh = gmtp_hdr(rcv_skb), *gh;
-	struct gmtp_sock *gp = gmtp_sk(sk);
 	struct gmtp_skb_cb *gcb = GMTP_SKB_CB(rcv_skb);
 	const u32 gmtp_hdr_len = sizeof(struct gmtp_hdr) +
 			sizeof(struct gmtp_hdr_reset);
@@ -322,7 +321,7 @@ int gmtp_connect(struct sock *sk)
 	/** First transmission: gss <- iss */
 	gp->gss = gp->iss;
 	gp->req_stamp = jiffies_to_msecs(jiffies);
-	gp->ack_rcv_tstamp = jiffies_to_msecs(jiffies);
+	gp->ack_rx_tstamp = jiffies_to_msecs(jiffies);
 
 	gmtp_transmit_skb(sk, gmtp_skb_entail(sk, skb));
 
