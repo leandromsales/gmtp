@@ -708,6 +708,14 @@ void gmtp_shutdown(struct sock *sk, int how)
 }
 EXPORT_SYMBOL_GPL(gmtp_shutdown);
 
+void kfree_gmtp_info(struct gmtp_info *gmtp)
+{
+	kfree(gmtp_info->control_sk);
+	kfree(gmtp_info->ctrl_addr);
+	kfree(gmtp_info);
+}
+
+
 /* TODO Study thash_entries... This is from DCCP thash_entries */
 static int thash_entries;
 module_param(thash_entries, int, 0444);
@@ -829,7 +837,6 @@ MODULE_PARM_DESC(ghash_entries, "Number of GMTP hash entries");
 static int __init gmtp_init(void)
 {
 	int rc = 0;
-	gmtp_print_debug("GMTP init!");
 	gmtp_print_function();
 
 	rc = mcc_lib_init();
@@ -866,7 +873,6 @@ out:
 static void __exit gmtp_exit(void)
 {
 	gmtp_print_function();
-	gmtp_print_debug("GMTP exit!");
 
 	free_pages((unsigned long)gmtp_inet_hashinfo.bhash,
 			get_order(gmtp_inet_hashinfo.bhash_size *
@@ -877,7 +883,7 @@ static void __exit gmtp_exit(void)
 	inet_ehash_locks_free(&gmtp_inet_hashinfo);
 	kmem_cache_destroy(gmtp_inet_hashinfo.bind_bucket_cachep);
 
-	kfree(gmtp_info);
+	kfree_gmtp_info(gmtp_info);
 	kfree_gmtp_hashtable(gmtp_hashtable);
 	percpu_counter_destroy(&gmtp_orphan_count);
 	mcc_lib_exit();

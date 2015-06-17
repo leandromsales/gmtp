@@ -101,18 +101,6 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 		}
 		gh->seq = gcb->seq;
 
-		if(gh->type == GMTP_PKT_ELECT_REQUEST) {
-			__u8 flowname[GMTP_FLOWNAME_STR_LEN];
-			gmtp_pr_debug("%s", gmtp_packet_name(gh->type));
-			flowname_str(flowname, gh->flowname);
-			pr_info("%s (%d) dst=%pI4@%-5d, seq=%u, rtt=%u ms, "
-					"transm_r=%u bytes/s, flow=%s\n",
-				gmtp_packet_name(gh->type), gh->type,
-				&sk->sk_daddr, ntohs(gh->dport),
-				gh->seq, gh->server_rtt, gh->transm_r,
-				flowname);
-		}
-
 		err = icsk->icsk_af_ops->queue_xmit(sk, skb, &inet->cork.fl);
 		return net_xmit_eval(err);
 	}
@@ -379,10 +367,14 @@ void gmtp_send_elect_request(struct sock *sk, unsigned long interval)
 	struct gmtp_hdr_elect_request *gh_ereq;
 	struct gmtp_sock *gp = gmtp_sk(sk);
 
+
 	gmtp_pr_func();
 
 	if(skb == NULL)
 		return;
+
+	if(gp->req_stamp == 0)
+		gp->req_stamp = jiffies_to_msecs(jiffies);
 
 	/* Reserve space for headers */
 	skb_reserve(skb, sk->sk_prot->max_header);
@@ -392,7 +384,6 @@ void gmtp_send_elect_request(struct sock *sk, unsigned long interval)
 	memcpy(gh_ereq->relay_id, gp->relay_id, GMTP_RELAY_ID_LEN);
 	gh_ereq->max_nclients = 0;
 
-	gmtp_set_state(sk, GMTP_REQUESTING);
 	gmtp_transmit_skb(sk, skb);
 
 	if(interval > 0)
@@ -622,8 +613,8 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 	long delay = 0, delay2 = 0, delay_budget = 0;
 
 	/** TODO Continue tests with different scales... */
-		static const int scale = 1;
-		/*static const int scale = HZ/100;*/
+	static const int scale = 1;
+	/*static const int scale = HZ/100;*/
 
 	if(unlikely(sk == NULL || skb == NULL))
 		return;

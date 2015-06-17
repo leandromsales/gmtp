@@ -586,7 +586,7 @@ static int gmtp_v4_reporter_rcv_elect_request(struct sk_buff *skb)
 		GMTP_SKB_CB(skb)->elect_code = GMTP_ELECT_ACCEPT;
 	}
 
-	gmtp_v4_ctl_send_packet(0, skb, GMTP_PKT_ELECT_RESPONSE);
+	/*gmtp_v4_ctl_send_packet(0, skb, GMTP_PKT_ELECT_RESPONSE);*/
 	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_reporter_rcv_elect_request);
@@ -664,6 +664,8 @@ static int gmtp_v4_reporter_rcv_ack(struct sk_buff *skb)
 	return 0;
 }
 
+/*
+
 static int gmtp_v4_reporter_rcv_close(struct sk_buff *skb)
 {
 	const struct iphdr *iph = ip_hdr(skb);
@@ -701,6 +703,7 @@ static int gmtp_v4_reporter_rcv_close(struct sk_buff *skb)
 
 	return 0;
 }
+*/
 
 static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 {
@@ -1050,16 +1053,12 @@ static const struct inet_connection_sock_af_ops gmtp_ipv4_af_ops = {
 
 static int gmtp_v4_init_sock(struct sock *sk) {
 
-/*	static __u8 gmtp_v4_ctl_sock_initialized;*/
 	int err = 0;
 
 	gmtp_print_function();
 
 	err = gmtp_init_sock(sk);
 	if (err == 0) {
-/*		if (unlikely(!gmtp_v4_ctl_sock_initialized))
-			gmtp_v4_ctl_sock_initialized = 1;*/
-
 		/* Setting AF options */
 		inet_csk(sk)->icsk_af_ops = &gmtp_ipv4_af_ops;
 	}
@@ -1196,22 +1195,17 @@ static int __init gmtp_v4_init(void) {
 	int err = 0;
 
 	gmtp_print_function();
-	gmtp_print_debug("GMTP IPv4 init!");
 
 	inet_hashinfo_init(&gmtp_inet_hashinfo);
 
-	/* PROTOCOL REGISTER */
-	gmtp_print_debug("GMTP IPv4 proto_register");
 	err = proto_register(&gmtp_v4_prot, 1);
 	if (err != 0)
 		goto out;
 
-	gmtp_print_debug("GMTP IPv4 inet_add_protocol");
 	err = inet_add_protocol(&gmtp_protocol, IPPROTO_GMTP);
 	if (err != 0)
 		goto out_proto_unregister;
 
-	gmtp_print_debug("GMTP IPv4 inet_register_protosw");
 	inet_register_protosw(&gmtp_protosw);
 
 	err = register_pernet_subsys(&gmtp_v4_ops);
@@ -1221,14 +1215,11 @@ static int __init gmtp_v4_init(void) {
 	return err;
 
 out_destroy_ctl_sock:
-	gmtp_print_error("inet_unregister_protosw GMTP IPv4");
 	inet_unregister_protosw(&gmtp_protosw);
-	gmtp_print_error("inet_del_protocol GMTP IPv4");
 	inet_del_protocol(&gmtp_protocol, IPPROTO_GMTP);
 	return err;
 
 out_proto_unregister:
-	gmtp_print_error("proto_unregister GMTP IPv4");
 	proto_unregister(&gmtp_v4_prot);
 
 out:
@@ -1238,7 +1229,6 @@ out:
 static void __exit gmtp_v4_exit(void) {
 
 	gmtp_print_function();
-	gmtp_print_debug("GMTP IPv4 exit!");
 
 	unregister_pernet_subsys(&gmtp_v4_ops);
 	inet_unregister_protosw(&gmtp_protosw);

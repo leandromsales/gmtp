@@ -102,8 +102,10 @@ static inline void gmtp_clear_xmit_timers(struct sock *sk)
 {
 	inet_csk_clear_xmit_timers(sk);
 	if(gmtp_sk(sk)->type == GMTP_SOCK_TYPE_REGULAR
-			&& gmtp_sk(sk)->role == GMTP_ROLE_CLIENT)
-		inet_csk_clear_xmit_timers(gmtp_sk(sk)->myself->rsock);
+			&& gmtp_sk(sk)->role == GMTP_ROLE_CLIENT) {
+		if(gmtp_sk(sk)->myself->rsock != NULL)
+			inet_csk_clear_xmit_timers(gmtp_sk(sk)->myself->rsock);
+	}
 }
 
 static inline u32 gmtp_get_elect_timeout(struct gmtp_sock *gp)
@@ -192,7 +194,11 @@ struct gmtp_info {
 
 	struct sock		*control_sk;
 	struct sockaddr_in	*ctrl_addr;
+
+
 };
+
+void kfree_gmtp_info(struct gmtp_info *gmtp);
 
 /**
  * This is the control buffer. It is free to use by any layer.

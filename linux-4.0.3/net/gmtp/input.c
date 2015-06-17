@@ -103,6 +103,7 @@ struct sock* gmtp_sock_connect(struct sock *sk, enum gmtp_sock_type type,
 	newsk->sk_dport = port;
 
 	gmtp_sk(newsk)->type = type;
+	gmtp_sk(newsk)->req_stamp = 0;
 
 	bh_unlock_sock(newsk);
 	gmtp_init_xmit_timers(newsk);
@@ -198,7 +199,7 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 
 	/** First reply received and i have a relay */
 	if(gp->relay_rtt == 0 && gh->type == GMTP_PKT_REQUESTNOTIFY)
-		gp->relay_rtt = jiffies_to_msecs(jiffies - gp->req_stamp);
+		gp->relay_rtt = jiffies_to_msecs(jiffies) - gp->req_stamp;
 
 	gp->rx_rtt = (__u32) gh->server_rtt + gp->relay_rtt;
 	gmtp_pr_debug("RTT: %u ms", gp->rx_rtt);
@@ -251,6 +252,7 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 			if(myself->rsock == NULL || myself->reporter == NULL)
 				goto err;
 
+			gmtp_set_state(myself->rsock, GMTP_REQUESTING);
 			gmtp_send_elect_request(myself->rsock, GMTP_REQ_INTERVAL);
 		}
 

@@ -189,20 +189,21 @@ static void gmtp_keepalive_timer(unsigned long data)
 		goto out;
 	}
 
-	if(sk->sk_state == GMTP_REQUESTING
-			&& gp->type == GMTP_SOCK_TYPE_REPORTER) {
+	if(gp->type == GMTP_SOCK_TYPE_REPORTER) {
+		unsigned int timeout = 0;
+		if(sk->sk_state == GMTP_REQUESTING) {
+			timeout = jiffies_to_msecs(jiffies) - gp->req_stamp;
+			if(timeout <= GMTP_TIMEOUT_INIT)
+				gmtp_send_elect_request(sk, GMTP_REQ_INTERVAL);
+			goto out;
+		}
 
-		/* FIXME Use a timout do giveup request and autopromote reporter */
+		if(sk->sk_state == GMTP_OPEN) {
+			pr_info("Socket OPEN! (TODO: send an ACK)\n");
+			inet_csk_reset_keepalive_timer(sk, HZ);
+			goto out;
+		}
 
-		pr_info("Requesting a reporter!\n");
-		gmtp_send_elect_request(sk, GMTP_REQ_INTERVAL);
-		goto out;
-	}
-
-	if(sk->sk_state == GMTP_OPEN && gp->type == GMTP_SOCK_TYPE_REPORTER) {
-		pr_info("Socket OPEN! (TODO: send an ACK)\n");
-		inet_csk_reset_keepalive_timer(sk, HZ);
-		goto out;
 	}
 out:
 	pr_info("Unlocking socket (%p)\n", sk);
