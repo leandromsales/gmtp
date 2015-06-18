@@ -387,6 +387,9 @@ static void gmtp_v4_ctl_send_packet(struct sock *sk, struct sk_buff *rxskb,
 	case GMTP_PKT_ELECT_RESPONSE:
 		skb = gmtp_ctl_make_elect_response(ctl_sk, rxskb);
 		break;
+	case GMTP_PKT_ACK:
+		skb = gmtp_ctl_make_ack(ctl_sk, rxskb);
+		break;
 	}
 
 	if (skb == NULL)
@@ -631,6 +634,11 @@ static int gmtp_v4_client_rcv_reporter_ack(struct sk_buff *skb,
 
 	gmtp_pr_func();
 
+	if(c == NULL) {
+		gmtp_pr_error("NULL!");
+		return 1;
+	}
+
 	if(c->reporter == NULL || c->rsock == NULL) {
 		gmtp_pr_warning("Reporter %pI4@%-5d null!", &iph->saddr,
 				ntohs(gh->sport));
@@ -642,12 +650,11 @@ static int gmtp_v4_client_rcv_reporter_ack(struct sk_buff *skb,
 						ntohs(gh->sport));
 		return 1;
 	}
-
 	c->ack_rx_tstamp = jiffies_to_msecs(jiffies);
 	gmtp_sk(c->rsock)->ack_rx_tstamp = c->ack_rx_tstamp;
 
 	pr_info("ACK received from reporter %pI4@%-5d\n", iph->saddr,
-			ntohs(gh->sport));
+				ntohs(gh->sport));
 
 	return 0;
 }
@@ -686,11 +693,13 @@ static int gmtp_v4_reporter_rcv_ack(struct sk_buff *skb)
 				ntohs(gh->sport));
 		return 1;
 	}
-
 	c->ack_rx_tstamp = jiffies_to_msecs(jiffies);
 
 	pr_info("ACK received from client %pI4@%-5d\n", &iph->saddr,
 			ntohs(gh->sport));
+
+	/** FIXME When reporter send an ACK, client crashes */
+	/*gmtp_v4_ctl_send_packet(0, skb, GMTP_PKT_ACK);*/
 
 	return 0;
 }

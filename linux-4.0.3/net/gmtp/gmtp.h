@@ -175,6 +175,7 @@ void gmtp_write_space(struct sock *sk);
 int gmtp_retransmit_skb(struct sock *sk);
 struct sk_buff *gmtp_ctl_make_elect_response(struct sock *sk,
 		struct sk_buff *rcv_skb);
+struct sk_buff *gmtp_ctl_make_ack(struct sock *sk, struct sk_buff *rcv_skb);
 
 /** minisocks.c */
 void gmtp_time_wait(struct sock *sk, int state, int timeo);
@@ -288,20 +289,20 @@ static inline struct gmtp_client *gmtp_create_client(__be32 addr, __be16 port,
 static inline struct gmtp_client *gmtp_list_add_client(unsigned int id,
 		__be32 addr, __be16 port, __u8 max_nclients, struct list_head *head)
 {
-	struct gmtp_client *new = gmtp_create_client(addr, port, max_nclients);
+	struct gmtp_client *newc = gmtp_create_client(addr, port, max_nclients);
 
-	if(new == NULL) {
+	if(newc == NULL) {
 		gmtp_pr_error("Error while creating new gmtp_client...");
 		return NULL;
 	}
 
-	new->id	  = id;
+	newc->id = id;
 	gmtp_pr_info("New client (%u): ADDR=%pI4@%-5d",
-			new->id, &addr, ntohs(port));
+			newc->id, &addr, ntohs(port));
 
-	INIT_LIST_HEAD(&new->list);
-	list_add_tail(&new->list, head);
-	return new;
+	INIT_LIST_HEAD(&newc->list);
+	list_add_tail(&newc->list, head);
+	return newc;
 }
 
 static inline struct gmtp_client* gmtp_get_first_client(struct list_head *head)

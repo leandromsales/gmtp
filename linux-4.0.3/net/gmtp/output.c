@@ -290,9 +290,7 @@ int gmtp_connect(struct sock *sk)
 	struct dst_entry *dst = __sk_dst_get(sk);
 	struct inet_sock *inet = inet_sk(sk);
 	struct inet_connection_sock *icsk = inet_csk(sk);
-
 	struct gmtp_client_entry *client_entry;
-
 	int err = 0;
 
 	gmtp_print_function();
@@ -312,11 +310,13 @@ int gmtp_connect(struct sock *sk)
 
 	client_entry = gmtp_lookup_client(gmtp_hashtable, gp->flowname);
 	if(client_entry == NULL)
-		err = gmtp_add_client_entry(gmtp_hashtable, gp->flowname, sk,
+		err = gmtp_add_client_entry(gmtp_hashtable, gp->flowname,
 				inet->inet_saddr, inet->inet_sport, 0, 0);
 
-	if(err)
+	client_entry = gmtp_lookup_client(gmtp_hashtable, gp->flowname);
+	if(err != 0 || client_entry == NULL) {
 		return -ENOBUFS;
+	}
 
 	gp->myself = gmtp_list_add_client(0, inet->inet_saddr, inet->inet_sport,
 			0, &client_entry->clients->list);
@@ -397,7 +397,6 @@ void gmtp_send_elect_request(struct sock *sk, unsigned long interval)
 }
 EXPORT_SYMBOL_GPL(gmtp_send_elect_request);
 
-/** FIXME: CTL elect response does not know flowname... */
 struct sk_buff *gmtp_ctl_make_elect_response(struct sock *sk,
 		struct sk_buff *rcv_skb)
 {
@@ -436,6 +435,35 @@ struct sk_buff *gmtp_ctl_make_elect_response(struct sock *sk,
 	return skb;
 }
 EXPORT_SYMBOL_GPL(gmtp_ctl_make_elect_response);
+
+struct sk_buff *gmtp_ctl_make_ack(struct sock *sk, struct sk_buff *rcv_skb)
+{
+	struct gmtp_hdr *rxgh = gmtp_hdr(rcv_skb), *gh;
+	const u32 gmtp_hdr_len = sizeof(struct gmtp_hdr);
+	struct sk_buff *skb;
+
+	gmtp_print_function();
+
+	skb = alloc_skb(sk->sk_prot->max_header, GFP_ATOMIC);
+	if(skb == NULL)
+		return NULL;
+
+	skb_reserve(skb, sk->sk_prot->max_header);
+
+	/* Swap the send and the receive. */
+	gh = gmtp_zeroed_hdr(skb, gmtp_hdr_len);
+	gh->type = GMTP_PKT_ACK;
+	gh->sport = rxgh->dport;
+	gh->dport = rxgh->sport;
+	gh->hdrlen = gmtp_hdr_len;
+	gh->seq = rxgh->seq;
+	gh->server_rtt = rxgh->server_rtt;
+	gh->transm_r = rxgh->transm_r;
+	memcpy(gh->flowname, rxgh->flowname, GMTP_FLOWNAME_LEN);
+
+	return skb;
+}
+EXPORT_SYMBOL_GPL(gmtp_ctl_make_ack);
 
 void gmtp_send_feedback(struct sock *sk)
 {
