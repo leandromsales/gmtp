@@ -449,9 +449,6 @@ static struct sock *gmtp_v4_hnd_req(struct sock *sk, struct sk_buff *skb) {
 int gmtp_v4_do_rcv(struct sock *sk, struct sk_buff *skb) {
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 
-	gmtp_pr_debug("sk_state: %s (%d)", gmtp_state_name(sk->sk_state),
-			sk->sk_state);
-
 	if (sk->sk_state == GMTP_OPEN) { /* Fast path */
 
 		if (gmtp_rcv_established(sk, skb, gh, skb->len))
@@ -581,7 +578,7 @@ static int gmtp_v4_reporter_rcv_elect_request(struct sk_buff *skb)
 		GMTP_SKB_CB(skb)->elect_code = GMTP_ELECT_REJECT;
 	} else {
 		r->nclients++;
-		c = gmtp_list_add_client(0, iph->daddr, gh->dport, 0,
+		c = gmtp_list_add_client(0, iph->saddr, gh->sport, 0,
 				&r->clients->list);
 		GMTP_SKB_CB(skb)->elect_code = GMTP_ELECT_ACCEPT;
 	}
@@ -618,15 +615,43 @@ static int gmtp_v4_reporter_rcv_elect_response(struct sk_buff *skb)
 		pr_info("client->rsock == NULL\n");
 		return 1;
 	}
-	/* FIXME Verify if reporter accepetd client and send back an ACK*/
-	gmtp_set_state(client->rsock, GMTP_OPEN);
 
-	/*gmtp_v4_ctl_send_packet(0, skb, GMTP_PKT_ELECT_RESPONSE);*/
+	gmtp_set_state(client->rsock, GMTP_OPEN);
+	gmtp_send_ack(client->rsock);
+
 	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_reporter_rcv_elect_response);
 
-/*
+static int gmtp_v4_client_rcv_reporter_ack(struct sk_buff *skb,
+		struct gmtp_client *c)
+{
+	const struct iphdr *iph = ip_hdr(skb);
+	const struct gmtp_hdr *gh = gmtp_hdr(skb);
+
+	gmtp_pr_func();
+
+	if(c->reporter == NULL || c->rsock == NULL) {
+		gmtp_pr_warning("Reporter %pI4@%-5d null!", &iph->saddr,
+				ntohs(gh->sport));
+		return 1;
+	}
+
+	if(iph->saddr != c->reporter->addr || gh->sport != c->reporter->port) {
+		gmtp_pr_warning("Reporter %pI4@%-5d invalid!", &iph->saddr,
+						ntohs(gh->sport));
+		return 1;
+	}
+
+	c->ack_rx_tstamp = jiffies_to_msecs(jiffies);
+	gmtp_sk(c->rsock)->ack_rx_tstamp = c->ack_rx_tstamp;
+
+	pr_info("ACK received from reporter %pI4@%-5d\n", iph->saddr,
+			ntohs(gh->sport));
+
+	return 0;
+}
+
 static int gmtp_v4_reporter_rcv_ack(struct sk_buff *skb)
 {
 	const struct iphdr *iph = ip_hdr(skb);
@@ -645,26 +670,30 @@ static int gmtp_v4_reporter_rcv_ack(struct sk_buff *skb)
 
 	r = gmtp_get_client(&media_entry->clients->list, iph->daddr, gh->dport);
 	if(r == NULL) {
-		pr_info("Reporter == NULL\n");
+		gmtp_pr_warning("Reporter %pI4@%-5d not found!", &iph->daddr,
+				ntohs(gh->dport));
 		return 1;
 	}
 
+	/* If i'm a client, check ack from reporter */
 	if(r->max_nclients <= 0) {
-		pr_info("r->max_nclients <= 0\n");
-		return 1;
+		return gmtp_v4_client_rcv_reporter_ack(skb, r);
 	}
 
 	c = gmtp_get_client(&r->clients->list, iph->saddr, gh->sport);
 	if(c == NULL) {
-		pr_info("client == NULL\n");
+		gmtp_pr_warning("Client %pI4@%-5d not found!", &iph->saddr,
+				ntohs(gh->sport));
 		return 1;
 	}
 
-	pr_info("ACK received from client %pI4@%-5d\n", &c->addr, ntohs(c->port));
+	c->ack_rx_tstamp = jiffies_to_msecs(jiffies);
+
+	pr_info("ACK received from client %pI4@%-5d\n", &iph->saddr,
+			ntohs(gh->sport));
 
 	return 0;
 }
-*/
 
 /*
 
@@ -720,22 +749,20 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 			goto ignore_it;
 		}
 
+		/* TODO Make a reset code for each error here! */
 		switch(gh->type) {
 		case GMTP_PKT_ELECT_REQUEST:
-			pr_info("ELECT received!\n");
 			if(gmtp_v4_reporter_rcv_elect_request(skb))
 				goto no_gmtp_socket;
 			break;
 		case GMTP_PKT_ELECT_RESPONSE:
-			pr_info("ELECT-RESPONSE received!\n");
 			if(gmtp_v4_reporter_rcv_elect_response(skb))
 				goto no_gmtp_socket;
 			break;
-		/*case GMTP_PKT_ACK:
-			pr_info("ACK received!\n");
+		case GMTP_PKT_ACK:
 			if(gmtp_v4_reporter_rcv_ack(skb))
 				goto no_gmtp_socket;
-			break;*/
+			break;
 			/* FIXME Manage close from server... */
 		/*case GMTP_PKT_CLOSE:
 			pr_info("CLOSE received!\n");

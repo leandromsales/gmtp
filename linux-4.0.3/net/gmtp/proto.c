@@ -268,6 +268,11 @@ void gmtp_destroy_sock(struct sock *sk)
 {
 	gmtp_pr_func();
 
+	if(gmtp_sk(sk)->role == GMTP_ROLE_CLIENT && gmtp_sk(sk)->myself != NULL) {
+		if(gmtp_sk(sk)->myself->rsock != NULL)
+			inet_csk_clear_xmit_timers(gmtp_sk(sk)->myself->rsock);
+	}
+
 	if(gmtp_sk(sk)->role == GMTP_ROLE_REPORTER)
 		mcc_rx_exit(sk);
 

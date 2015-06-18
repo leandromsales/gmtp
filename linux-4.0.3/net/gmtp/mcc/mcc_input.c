@@ -57,7 +57,6 @@ static void mcc_rx_send_feedback(struct sock *sk,
 
 	switch (fbtype) {
 	case MCC_FBACK_INITIAL:
-		pr_info("MCC_FBACK_INITIAL\n");
 		hc->rx_x_recv = 0;
 		hc->rx_pinv   = ~0U;   /* see RFC 4342, 8.5 */
 		break;
@@ -72,12 +71,10 @@ static void mcc_rx_send_feedback(struct sock *sk,
 		 * the number of bytes since last feedback.
 		 * This is a safe fallback, since X is bounded above by X_calc.
 		 */
-		pr_info("MCC_FBACK_PARAM_CHANGE\n");
 		if (hc->rx_x_recv > 0)
 			break;
 		/* fall through */
 	case MCC_FBACK_PERIODIC:
-		pr_info("MCC_FBACK_PERIODIC\n");
 		delta = ktime_us_delta(now, hc->rx_tstamp_last_feedback);
 		if (delta <= 0)
 			gmtp_pr_error("delta (%ld) <= 0", (long)delta);
@@ -93,12 +90,8 @@ static void mcc_rx_send_feedback(struct sock *sk,
 	hc->rx_bytes_recv	    = 0;
 	sample = hc->rx_rtt * USEC_PER_MSEC;
 
-	pr_info("Sample: %u us\n", sample);
-
 	if(sample != 0)
 		hc->rx_avg_rtt = mcc_ewma(hc->rx_avg_rtt, sample, 9);
-
-	pr_info("rx_avg_rtt: %u us\n", hc->rx_avg_rtt);
 
 	if(hc->rx_avg_rtt <= 0)
 		hc->rx_avg_rtt = GMTP_SANE_RTT_MIN;
@@ -106,7 +99,6 @@ static void mcc_rx_send_feedback(struct sock *sk,
 	p = mcc_invert_loss_event_rate(hc->rx_pinv);
 	if(p > 0) {
 		u32 new_rate = mcc_calc_x(hc->rx_s, hc->rx_avg_rtt, p);
-		gmtp_pr_info("new_rate = %u bytes/s", new_rate);
 		/*
 		 * Change only if the value is valid!
 		 */
@@ -120,9 +112,8 @@ static void mcc_rx_send_feedback(struct sock *sk,
 		hc->rx_max_rate = ~0U;
 	}
 
-	mcc_pr_debug("RESULT: %s, RTT=%u us (sample=%u us), s=%u, "
-			       "p=%u, X_calc=%u, X_recv=%u",
-			       gmtp_role_name(sk),
+	mcc_pr_debug("REPORT: RTT=%u us (sample=%u us), s=%u, "
+			       "p=%u, X_calc=%u bytes/s, X_recv=%u bytes/s",
 			       hc->rx_avg_rtt, sample,
 			       hc->rx_s, p,
 			       hc->rx_max_rate,
@@ -185,8 +176,6 @@ void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 	const bool is_data_packet = gmtp_data_packet(skb);
 	ktime_t now = ktime_get_real();
 	s64 delta = 0;
-
-	gmtp_pr_func();
 
 	if(unlikely(hc->rx_state == MCC_RSTATE_NO_DATA)) {
 		if(is_data_packet) {

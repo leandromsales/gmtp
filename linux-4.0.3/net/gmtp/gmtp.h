@@ -88,6 +88,10 @@
 #define GMTP_TIMEWAIT_LEN (60 * HZ)
 #define GMTP_REQ_INTERVAL (TCP_SYNQ_INTERVAL)
 
+/* For reporters and servers keep_alive */
+#define GMTP_ACK_TIMEOUT  ((unsigned int)(4 * HZ))
+#define GMTP_ACK_INTERVAL ((unsigned int)(HZ))
+
 /* Int to __u8 operations */
 #define TO_U8(x) ((x) > UINT_MAX) ? UINT_MAX : (__u8)(x)
 #define SUB_U8(a, b) ((a-b) > UINT_MAX) ? UINT_MAX : (a-b)
@@ -273,6 +277,7 @@ static inline struct gmtp_client *gmtp_create_client(__be32 addr, __be16 port,
 		new->port = port;
 		new->max_nclients = max_nclients;
 		new->nclients = 0;
+		new->ack_rx_tstamp = 0;
 	}
 	return new;
 }

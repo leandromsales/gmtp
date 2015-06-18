@@ -310,6 +310,7 @@ struct gmtp_client {
 	__be16 			port;
 	__u8			max_nclients;
 	__u8			nclients;
+	__u32			ack_rx_tstamp;
 
 	struct gmtp_client	*clients;
 	struct gmtp_client	*reporter;

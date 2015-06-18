@@ -17,8 +17,6 @@
 
 static void gmtp_enqueue_skb(struct sock *sk, struct sk_buff *skb)
 {
-	gmtp_pr_func();
-	pr_info("\n");
 	__skb_pull(skb, gmtp_hdr(skb)->hdrlen);
 	__skb_queue_tail(&sk->sk_receive_queue, skb);
 	skb_set_owner_r(skb, sk);
@@ -104,6 +102,8 @@ struct sock* gmtp_sock_connect(struct sock *sk, enum gmtp_sock_type type,
 
 	gmtp_sk(newsk)->type = type;
 	gmtp_sk(newsk)->req_stamp = 0;
+	gmtp_sk(newsk)->ack_rx_tstamp = 0;
+	gmtp_sk(newsk)->ack_tx_tstamp = 0;
 
 	bh_unlock_sock(newsk);
 	gmtp_init_xmit_timers(newsk);
@@ -356,8 +356,6 @@ static void gmtp_deliver_input_to_mcc(struct sock *sk, struct sk_buff *skb)
 {
 	/*const struct gmtp_sock *gp = gmtp_sk(sk);*/
 
-	gmtp_print_function();
-
 	/* Don't deliver to RX MCC when node has shut down read end. */
 	if (!(sk->sk_shutdown & RCV_SHUTDOWN))
 		mcc_rx_packet_recv(sk, skb);
@@ -373,8 +371,7 @@ static void gmtp_deliver_input_to_mcc(struct sock *sk, struct sk_buff *skb)
 /* TODO Implement check sequence number */
 static int gmtp_check_seqno(struct sock *sk, struct sk_buff *skb)
 {
-	gmtp_pr_func();
-	/*pr_info("TODO: Implement check sequence number\n");*/
+	/* TODO: Implement check sequence number */
 	return 0;
 }
 
@@ -382,8 +379,6 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 		const struct gmtp_hdr *gh, const unsigned int len)
 {
 	struct gmtp_sock *gp = gmtp_sk(sk);
-
-	gmtp_print_function();
 
 	switch (gh->type) {
 	case GMTP_PKT_DATAACK:
@@ -419,8 +414,6 @@ int gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 			 const struct gmtp_hdr *gh, const unsigned int len)
 {
 	struct gmtp_sock *gp = gmtp_sk(sk);
-
-	gmtp_print_function();
 
 	/* Check sequence numbers... */
 	if(gmtp_check_seqno(sk, skb))

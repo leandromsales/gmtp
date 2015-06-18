@@ -15,6 +15,7 @@
 
 static inline void gmtp_event_ack_sent(struct sock *sk)
 {
+	gmtp_sk(sk)->ack_tx_tstamp = jiffies_to_msecs(jiffies);
 	inet_csk_clear_xmit_timer(sk, ICSK_TIME_DACK);
 }
 
@@ -313,22 +314,28 @@ int gmtp_connect(struct sock *sk)
 	if(client_entry == NULL)
 		err = gmtp_add_client_entry(gmtp_hashtable, gp->flowname, sk,
 				inet->inet_saddr, inet->inet_sport, 0, 0);
-	else
-		gp->myself = gmtp_list_add_client(0, inet->inet_saddr,
-				inet->inet_sport, 0,
-				&client_entry->clients->list);
+
+	if(err)
+		return -ENOBUFS;
+
+	gp->myself = gmtp_list_add_client(0, inet->inet_saddr, inet->inet_sport,
+			0, &client_entry->clients->list);
+
+	if(gp->myself == NULL)
+		return -ENOBUFS;
 
 	/** First transmission: gss <- iss */
 	gp->gss = gp->iss;
 	gp->req_stamp = jiffies_to_msecs(jiffies);
 	gp->ack_rx_tstamp = jiffies_to_msecs(jiffies);
+	gp->myself->ack_rx_tstamp = gp->ack_rx_tstamp;
 
 	gmtp_transmit_skb(sk, gmtp_skb_entail(sk, skb));
 
 	icsk->icsk_retransmits = 0;
 	inet_csk_reset_xmit_timer(sk, ICSK_TIME_RETRANS,
 					  icsk->icsk_rto, GMTP_RTO_MAX);
-	return err;
+	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_connect);
 
@@ -395,7 +402,6 @@ struct sk_buff *gmtp_ctl_make_elect_response(struct sock *sk,
 		struct sk_buff *rcv_skb)
 {
 	struct gmtp_hdr *rxgh = gmtp_hdr(rcv_skb), *gh;
-	struct gmtp_sock *gp = gmtp_sk(sk);
 	struct gmtp_skb_cb *gcb = GMTP_SKB_CB(rcv_skb);
 	const u32 gmtp_hdr_len = sizeof(struct gmtp_hdr) +
 			sizeof(struct gmtp_hdr_elect_response);
@@ -433,8 +439,6 @@ EXPORT_SYMBOL_GPL(gmtp_ctl_make_elect_response);
 
 void gmtp_send_feedback(struct sock *sk)
 {
-	gmtp_pr_func();
-
 	if(sk->sk_state != GMTP_CLOSED) {
 
 		struct sk_buff *skb = alloc_skb(sk->sk_prot->max_header,
