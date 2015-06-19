@@ -421,6 +421,7 @@ void gmtp_send_elect_response(struct sock *sk, __u8 code)
 
 		pr_info("Turning a client into a Reporter\n");
 
+		/* We dont need init mcc, because mcc is already started */
 		gp->role = GMTP_ROLE_REPORTER;
 		gp->myself->max_nclients =
 				GMTP_REPORTER_DEFAULT_PROPORTION - 1;

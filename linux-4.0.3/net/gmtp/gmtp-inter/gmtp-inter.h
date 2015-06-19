@@ -69,6 +69,7 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb);
 int gmtp_inter_ack_rcv(struct sk_buff *skb);
 int gmtp_inter_data_rcv(struct sk_buff *skb);
 int gmtp_inter_feedback_rcv(struct sk_buff *skb);
+int gmtp_inter_elect_resp_rcv(struct sk_buff *skb);
 int gmtp_inter_close_rcv(struct sk_buff *skb);
 
 /** Output.c */

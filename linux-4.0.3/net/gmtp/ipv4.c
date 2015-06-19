@@ -593,7 +593,7 @@ static int gmtp_v4_reporter_rcv_elect_request(struct sk_buff *skb)
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_reporter_rcv_elect_request);
 
-static int gmtp_v4_reporter_rcv_elect_response(struct sk_buff *skb)
+static int gmtp_v4_client_rcv_elect_response(struct sk_buff *skb)
 {
 	const struct iphdr *iph = ip_hdr(skb);
 	const struct gmtp_hdr *gh = gmtp_hdr(skb);
@@ -626,7 +626,7 @@ static int gmtp_v4_reporter_rcv_elect_response(struct sk_buff *skb)
 
 	return 0;
 }
-EXPORT_SYMBOL_GPL(gmtp_v4_reporter_rcv_elect_response);
+EXPORT_SYMBOL_GPL(gmtp_v4_client_rcv_elect_response);
 
 static int gmtp_v4_client_rcv_reporter_ack(struct sk_buff *skb,
 		struct gmtp_client *c)
@@ -701,7 +701,7 @@ static int gmtp_v4_reporter_rcv_ack(struct sk_buff *skb)
 	pr_info("ACK received from client %pI4@%-5d\n", &iph->saddr,
 			ntohs(gh->sport));
 
-	/*gmtp_v4_ctl_send_packet(0, skb, GMTP_PKT_ACK);*/
+	gmtp_v4_ctl_send_packet(0, skb, GMTP_PKT_ACK);
 
 	return 0;
 }
@@ -767,7 +767,7 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 				goto no_gmtp_socket;
 			break;
 		case GMTP_PKT_ELECT_RESPONSE:
-			if(gmtp_v4_reporter_rcv_elect_response(skb))
+			if(gmtp_v4_client_rcv_elect_response(skb))
 				goto no_gmtp_socket;
 			break;
 		case GMTP_PKT_ACK:

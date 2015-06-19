@@ -229,6 +229,9 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 		case GMTP_PKT_FEEDBACK:
 			ret = gmtp_inter_feedback_rcv(skb);
 			break;
+		case GMTP_PKT_ELECT_RESPONSE:
+			ret = gmtp_inter_elect_resp_rcv(skb);
+			break;
 		case GMTP_PKT_RESET:
 		case GMTP_PKT_CLOSE:
 			ret = gmtp_inter_close_rcv(skb);

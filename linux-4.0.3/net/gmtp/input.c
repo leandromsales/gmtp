@@ -292,11 +292,11 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 	gmtp_send_ack(sk);
 
 	if(gp->role == GMTP_ROLE_REPORTER) {
-		int ret = mcc_rx_init(sk);
-		if(ret)
+		if(mcc_rx_init(sk))
 			goto err;
 		inet_csk_reset_keepalive_timer(sk, GMTP_ACK_TIMEOUT);
 	}
+
 
 	return -1;
 

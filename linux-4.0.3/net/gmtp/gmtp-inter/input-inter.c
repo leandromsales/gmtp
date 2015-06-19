@@ -260,27 +260,48 @@ int gmtp_inter_ack_rcv(struct sk_buff *skb)
 	return ret;
 }
 
+/**
+ * FIXME Take the average of feedbacks in an window
+ */
 int gmtp_inter_feedback_rcv(struct sk_buff *skb)
 {
-	int ret = NF_DROP;
-
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct gmtp_relay_entry *entry;
 
-
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry == NULL)
-		goto out;
+		return NF_ACCEPT;
 
 	/* Discard early feedbacks */
 	if((entry->info->data_pkt_tx/entry->info->buffer_min) < 100)
-		goto out;
+		return NF_DROP;
 
-	if(gh->transm_r > 0)
+	if(likely(gh->transm_r > 0))
 		entry->info->current_tx = (u64) gh->transm_r;
 
-out:
-	return ret;
+	return NF_DROP;
+}
+
+/**
+ * FIXME This works only with auto promoted reporters
+ */
+int gmtp_inter_elect_resp_rcv(struct sk_buff *skb)
+{
+	struct iphdr *iph = ip_hdr(skb);
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct gmtp_relay_entry *entry;
+
+	gmtp_pr_func();
+
+	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
+	if(entry == NULL)
+		return NF_ACCEPT;
+
+	gmtp_list_add_client(++entry->info->nclients, iph->saddr,
+					gh->sport, gmtp_inter.kreporter,
+					&entry->info->clients->list);
+
+	return NF_DROP;
 }
 
 /**

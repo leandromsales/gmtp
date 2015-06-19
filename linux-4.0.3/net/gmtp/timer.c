@@ -258,6 +258,9 @@ static void gmtp_keepalive_timer(unsigned long data)
 			timeout = jiffies_to_msecs(jiffies) - gp->req_stamp;
 			if(likely(timeout <= GMTP_TIMEOUT_INIT))
 				gmtp_send_elect_request(sk, GMTP_REQ_INTERVAL);
+			else
+				gmtp_send_elect_response(gp->myself->mysock,
+						GMTP_ELECT_AUTO);
 			break;
 		case GMTP_OPEN:
 			gmtp_client_sendack_timer(sk);

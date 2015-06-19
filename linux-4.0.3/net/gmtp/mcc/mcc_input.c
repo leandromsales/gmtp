@@ -47,7 +47,7 @@ static void mcc_rx_send_feedback(struct sock *sk,
 				      const struct sk_buff *skb,
 				      enum mcc_fback_type fbtype)
 {
-	struct gmtp_sock *hc = gmtp_sk(sk);
+	struct gmtp_sock *gp = gmtp_sk(sk);
 	ktime_t now = ktime_get_real();
 	u32 sample;
 	s64 delta = 0;
@@ -55,8 +55,8 @@ static void mcc_rx_send_feedback(struct sock *sk,
 
 	switch (fbtype) {
 	case MCC_FBACK_INITIAL:
-		hc->rx_x_recv = 0;
-		hc->rx_pinv   = ~0U;   /* see RFC 4342, 8.5 */
+		gp->rx_x_recv = 0;
+		gp->rx_pinv   = ~0U;   /* see RFC 4342, 8.5 */
 		break;
 	case MCC_FBACK_PARAM_CHANGE:
 		/*
@@ -69,55 +69,58 @@ static void mcc_rx_send_feedback(struct sock *sk,
 		 * the number of bytes since last feedback.
 		 * This is a safe fallback, since X is bounded above by X_calc.
 		 */
-		if (hc->rx_x_recv > 0)
+		if (gp->rx_x_recv > 0)
 			break;
 		/* fall through */
 	case MCC_FBACK_PERIODIC:
-		delta = ktime_us_delta(now, hc->rx_tstamp_last_feedback);
+		delta = ktime_us_delta(now, gp->rx_tstamp_last_feedback);
 		if (delta <= 0)
 			gmtp_pr_error("delta (%ld) <= 0", (long)delta);
 		else
-			hc->rx_x_recv = scaled_div32(hc->rx_bytes_recv, delta);
+			gp->rx_x_recv = scaled_div32(gp->rx_bytes_recv, delta);
 		break;
 	default:
 		return;
 	}
 
 	now = ktime_get_real();
-	hc->rx_tstamp_last_feedback = now;
-	hc->rx_bytes_recv	    = 0;
-	sample = hc->rx_rtt * USEC_PER_MSEC;
+	gp->rx_tstamp_last_feedback = now;
+	gp->rx_bytes_recv	    = 0;
+	sample = gp->rx_rtt * USEC_PER_MSEC;
 
 	if(sample != 0)
-		hc->rx_avg_rtt = mcc_ewma(hc->rx_avg_rtt, sample, 9);
+		gp->rx_avg_rtt = mcc_ewma(gp->rx_avg_rtt, sample, 9);
 
-	if(hc->rx_avg_rtt <= 0)
-		hc->rx_avg_rtt = GMTP_SANE_RTT_MIN;
+	if(gp->rx_avg_rtt <= 0)
+		gp->rx_avg_rtt = GMTP_SANE_RTT_MIN;
 
-	p = mcc_invert_loss_event_rate(hc->rx_pinv);
+	p = mcc_invert_loss_event_rate(gp->rx_pinv);
 	if(p > 0) {
-		u32 new_rate = mcc_calc_x(hc->rx_s, hc->rx_avg_rtt, p);
+		u32 new_rate = mcc_calc_x(gp->rx_s, gp->rx_avg_rtt, p);
 		/*
 		 * Change only if the value is valid!
 		 */
 		if(new_rate > 0)
-			hc->rx_max_rate = new_rate;
+			gp->rx_max_rate = new_rate;
 	} else {
 		/*
 		 * No loss events. Returning max X_calc.
 		 * Sender will ignore feedback and keep last TX
 		 */
-		hc->rx_max_rate = ~0U;
+		gp->rx_max_rate = ~0U;
 	}
 
-	mcc_pr_debug("REPORT: RTT=%u us (sample=%u us), s=%u, "
-			       "p=%u, X_calc=%u bytes/s, X_recv=%u bytes/s",
-			       hc->rx_avg_rtt, sample,
-			       hc->rx_s, p,
-			       hc->rx_max_rate,
-			       hc->rx_x_recv);
+	if(likely(gp->role == GMTP_ROLE_REPORTER)) {
 
-	gmtp_send_feedback(sk);
+		mcc_pr_debug("REPORT: RTT=%u us (sample=%u us), s=%u, "
+			       "p=%u, X_calc=%u bytes/s, X_recv=%u bytes/s",
+			       gp->rx_avg_rtt, sample,
+			       gp->rx_s, p,
+			       gp->rx_max_rate,
+			       gp->rx_x_recv);
+
+		gmtp_send_feedback(sk);
+	}
 }
 
 
