@@ -283,6 +283,12 @@ static inline struct gmtp_hdr_route *gmtp_hdr_route(const struct sk_buff *skb)
 						 sizeof(struct gmtp_hdr));
 }
 
+static inline struct gmtp_hdr_feedback *gmtp_hdr_feedback(const struct sk_buff *skb)
+{
+	return (struct gmtp_hdr_feedback *)(skb_transport_header(skb)
+			+ sizeof(struct gmtp_hdr));
+}
+
 static inline struct gmtp_hdr_reqnotify *gmtp_hdr_reqnotify(
 		const struct sk_buff *skb)
 {

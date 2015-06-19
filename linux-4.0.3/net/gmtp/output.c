@@ -85,8 +85,12 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 		memcpy(gh->flowname, gp->flowname, GMTP_FLOWNAME_LEN);
 
 		gh->transm_r = (__be32) gp->tx_max_rate;
-		if (gcb->type == GMTP_PKT_FEEDBACK)
+		if (gcb->type == GMTP_PKT_FEEDBACK) {
+			struct gmtp_hdr_feedback *fh = gmtp_hdr_feedback(skb);
 			gh->transm_r = gp->rx_max_rate;
+			fh->pkt_tstamp = gcb->server_tstamp;
+			fh->nclients = gp->myself->nclients;
+		}
 
 		if (gcb->type == GMTP_PKT_RESET)
 			gmtp_hdr_reset(skb)->reset_code = gcb->reset_code;
@@ -502,7 +506,7 @@ struct sk_buff *gmtp_ctl_make_ack(struct sock *sk, struct sk_buff *rcv_skb)
 }
 EXPORT_SYMBOL_GPL(gmtp_ctl_make_ack);
 
-void gmtp_send_feedback(struct sock *sk)
+void gmtp_send_feedback(struct sock *sk, struct sk_buff *rcv_skb)
 {
 	if(sk->sk_state != GMTP_CLOSED) {
 
@@ -512,6 +516,9 @@ void gmtp_send_feedback(struct sock *sk)
 		/* Reserve space for headers */
 		skb_reserve(skb, sk->sk_prot->max_header);
 		GMTP_SKB_CB(skb)->type = GMTP_PKT_FEEDBACK;
+		GMTP_SKB_CB(skb)->server_tstamp =
+				GMTP_SKB_CB(rcv_skb)->server_tstamp;
+
 		gmtp_transmit_skb(sk, skb);
 	}
 }
