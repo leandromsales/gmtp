@@ -104,7 +104,8 @@ struct sock* gmtp_sock_connect(struct sock *sk, enum gmtp_sock_type type,
 	gmtp_sk(newsk)->req_stamp = 0;
 	gmtp_sk(newsk)->ack_rx_tstamp = jiffies_to_msecs(jiffies);
 	gmtp_sk(newsk)->ack_tx_tstamp = 0;
-	gmtp_sk(newsk)->rx_rtt = gmtp_sk(sk)->rx_rtt;
+
+	pr_info("myself: %p == %p\n", gmtp_sk(newsk), gmtp_sk(sk));
 
 	bh_unlock_sock(newsk);
 	gmtp_init_xmit_timers(newsk);
@@ -173,7 +174,6 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 	struct gmtp_sock *gp = gmtp_sk(sk);
 	const struct inet_connection_sock *icsk = inet_csk(sk);
 	struct gmtp_client_entry *media_entry;
-	struct gmtp_client *myself = gp->myself;
 
 	gmtp_pr_func();
 
@@ -220,12 +220,12 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 
 		memcpy(gp->relay_id, gh_rnotify->relay_id, GMTP_RELAY_ID_LEN);
 
-		myself->max_nclients = gh_rnotify->max_nclients;
-		if(myself->max_nclients > 0) {
+		gp->myself->max_nclients = gh_rnotify->max_nclients;
+		if(gp->myself->max_nclients > 0) {
 			gp->role = GMTP_ROLE_REPORTER;
-			myself->clients = kmalloc(sizeof(struct gmtp_client),
+			gp->myself->clients = kmalloc(sizeof(struct gmtp_client),
 								GFP_ATOMIC);
-			INIT_LIST_HEAD(&myself->clients->list);
+			INIT_LIST_HEAD(&gp->myself->clients->list);
 		}
 
 		switch(gh_rnotify->rn_code) {
@@ -241,20 +241,22 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 		}
 
 		if(gp->role != GMTP_ROLE_REPORTER) {
-			myself->reporter = gmtp_create_client(
+			gp->myself->reporter = gmtp_create_client(
 					gh_rnotify->reporter_addr,
 					gh_rnotify->reporter_port, 1);
 
-			myself->rsock = gmtp_sock_connect(sk,
+			gp->myself->rsock = gmtp_sock_connect(sk,
 					GMTP_SOCK_TYPE_REPORTER,
 					gh_rnotify->reporter_addr,
 					gh_rnotify->reporter_port);
 
-			if(myself->rsock == NULL || myself->reporter == NULL)
+			if(gp->myself->rsock == NULL
+					|| gp->myself->reporter == NULL)
 				goto err;
 
-			gmtp_set_state(myself->rsock, GMTP_REQUESTING);
-			gmtp_send_elect_request(myself->rsock, GMTP_REQ_INTERVAL);
+			gmtp_set_state(gp->myself->rsock, GMTP_REQUESTING);
+			gmtp_send_elect_request(gp->myself->rsock,
+					GMTP_REQ_INTERVAL);
 		}
 
 		/* Inserting information in client table */

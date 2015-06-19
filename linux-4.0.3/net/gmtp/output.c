@@ -329,6 +329,7 @@ int gmtp_connect(struct sock *sk)
 	gp->req_stamp = jiffies_to_msecs(jiffies);
 	gp->ack_rx_tstamp = jiffies_to_msecs(jiffies);
 	gp->myself->ack_rx_tstamp = gp->ack_rx_tstamp;
+	gp->myself->mysock = sk;
 
 	gmtp_transmit_skb(sk, gmtp_skb_entail(sk, skb));
 
@@ -373,7 +374,6 @@ void gmtp_send_elect_request(struct sock *sk, unsigned long interval)
 	struct gmtp_hdr_elect_request *gh_ereq;
 	struct gmtp_sock *gp = gmtp_sk(sk);
 
-
 	gmtp_pr_func();
 
 	if(skb == NULL)
@@ -396,6 +396,28 @@ void gmtp_send_elect_request(struct sock *sk, unsigned long interval)
 		inet_csk_reset_keepalive_timer(sk, interval);
 }
 EXPORT_SYMBOL_GPL(gmtp_send_elect_request);
+
+void gmtp_send_elect_response(struct sock *sk, __u8 code)
+{
+	struct sk_buff *skb = alloc_skb(sk->sk_prot->max_header, GFP_ATOMIC);
+	struct gmtp_hdr_elect_response *gh_eresp;
+
+	gmtp_pr_func();
+
+	if(skb == NULL)
+		return;
+
+	/* Reserve space for headers */
+	skb_reserve(skb, sk->sk_prot->max_header);
+	GMTP_SKB_CB(skb)->type = GMTP_PKT_ELECT_RESPONSE;
+	GMTP_SKB_CB(skb)->elect_code = code;
+
+	gh_eresp = gmtp_hdr_elect_response(skb);
+	gh_eresp->elect_code = GMTP_SKB_CB(skb)->elect_code;
+
+	gmtp_transmit_skb(sk, skb);
+}
+EXPORT_SYMBOL_GPL(gmtp_send_elect_response);
 
 struct sk_buff *gmtp_ctl_make_elect_response(struct sock *sk,
 		struct sk_buff *rcv_skb)

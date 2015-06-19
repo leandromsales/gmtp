@@ -207,7 +207,8 @@ static void gmtp_client_sendack_timer(struct sock *sk)
 
 	r_ack_interval = (int)(now - gp->ack_rx_tstamp);
 	if(r_ack_interval > jiffies_to_msecs(GMTP_ACK_TIMEOUT)) {
-		/** TODO auto promote to reporter */ ;
+		gmtp_send_elect_response(gp->myself->mysock, GMTP_ELECT_AUTO);
+		return;
 	}
 
 	factor = DIV_ROUND_CLOSEST(r_ack_interval, GMTP_ACK_INTERVAL);

@@ -319,6 +319,7 @@ struct gmtp_client {
 	struct gmtp_client	*clients;
 	struct gmtp_client	*reporter;
 	struct sock 		*rsock;
+	struct sock 		*mysock;
 };
 
 

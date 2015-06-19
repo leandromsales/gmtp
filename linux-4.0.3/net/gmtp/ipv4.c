@@ -143,8 +143,10 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 
 	gmtp_info->control_sk = gmtp_v4_build_control_sk(sk);
 
-	out: return err;
-	failure:
+out:
+	return err;
+
+failure:
 	/*
 	 * This unhashes the socket and releases the local port, if necessary.
 	 */
@@ -299,7 +301,7 @@ void gmtp_v4_err(struct sk_buff *skb, u32 info)
 	} else
 		/* Only an error on timeout */
 		sk->sk_err_soft = err;
-	out:
+out:
 	bh_unlock_sock(sk);
 	sock_put(sk);
 }
@@ -354,7 +356,8 @@ static int gmtp_v4_send_register_reply(struct sock *sk,
 		err = net_xmit_eval(err);
 	}
 
-	out: dst_release(dst);
+out:
+	dst_release(dst);
 	return err;
 }
 
@@ -408,7 +411,8 @@ static void gmtp_v4_ctl_send_packet(struct sock *sk, struct sk_buff *rxskb,
 		 DCCP_INC_STATS_BH(DCCP_MIB_OUTRSTS);*/
 	}
 
-	out: dst_release(dst);
+out:
+	dst_release(dst);
 }
 
 static void gmtp_v4_ctl_send_reset(struct sock *sk, struct sk_buff *rxskb)
@@ -493,8 +497,10 @@ int gmtp_v4_do_rcv(struct sock *sk, struct sk_buff *skb)
 
 	return 0;
 
-	reset: gmtp_v4_ctl_send_reset(sk, skb);
-	discard: kfree_skb(skb);
+reset:
+	gmtp_v4_ctl_send_reset(sk, skb);
+discard:
+	kfree_skb(skb);
 	return 0;
 
 }
@@ -795,8 +801,11 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 		goto no_gmtp_socket;
 	}
 
-	if(!xfrm4_policy_check(sk, XFRM_POLICY_IN, skb))
-		goto discard_and_relse;
+	if(!xfrm4_policy_check(sk, XFRM_POLICY_IN, skb)) {
+		sock_put(sk);
+		goto discard_it;
+	}
+
 
 	nf_reset(skb);
 
@@ -818,13 +827,12 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 		gmtp_v4_ctl_send_reset(sk, skb);
 	}
 
-	discard_it: kfree_skb(skb);
+discard_it:
+	kfree_skb(skb);
 	return 0;
 
-	discard_and_relse: sock_put(sk);
-	goto discard_it;
-
-	ignore_it: return 0;
+ignore_it:
+	return 0;
 }
 
 /* this is called when real data arrives */
@@ -889,7 +897,8 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 		return gmtp_v4_sk_receive_skb(skb, sk);
 	}
 
-	discard_it: kfree_skb(skb);
+discard_it:
+	kfree_skb(skb);
 	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_rcv);
@@ -989,10 +998,14 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
 
 	return 0;
 
-	reset: gcb->reset_code = GMTP_RESET_CODE_BAD_FLOWNAME;
+reset:
+	gcb->reset_code = GMTP_RESET_CODE_BAD_FLOWNAME;
 	gmtp_v4_ctl_send_reset(sk, skb);
-	drop_and_free: reqsk_free(req);
-	drop: return 0;
+
+drop_and_free:
+	reqsk_free(req);
+drop:
+	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_conn_request);
 
@@ -1044,13 +1057,15 @@ struct sock *gmtp_v4_request_recv_sock(struct sock *sk, struct sk_buff *skb,
 
 	return newsk;
 
-	exit_overflow:
+exit_overflow:
 	NET_INC_STATS_BH(sock_net(sk), LINUX_MIB_LISTENOVERFLOWS);
-	exit_nonewsk: dst_release(dst);
-	exit:
+exit_nonewsk:
+	dst_release(dst);
+exit:
 	NET_INC_STATS_BH(sock_net(sk), LINUX_MIB_LISTENDROPS);
 	return NULL;
-	put_and_exit: inet_csk_prepare_forced_close(newsk);
+put_and_exit:
+	inet_csk_prepare_forced_close(newsk);
 	gmtp_done(newsk);
 	goto exit;
 }
@@ -1217,8 +1232,10 @@ static void __net_exit gmtp_v4_exit_net(struct net *net)
 	inet_ctl_sock_destroy(net->gmtp.v4_ctl_sk);
 }
 
-static struct pernet_operations gmtp_v4_ops = {.init = gmtp_v4_init_net, .exit =
-		gmtp_v4_exit_net, };
+static struct pernet_operations gmtp_v4_ops = {
+		.init = gmtp_v4_init_net,
+		.exit = gmtp_v4_exit_net,
+};
 
 /*************************************************************/
 static int __init gmtp_v4_init(void)
@@ -1245,13 +1262,16 @@ static int __init gmtp_v4_init(void)
 
 	return err;
 
-	out_destroy_ctl_sock: inet_unregister_protosw(&gmtp_protosw);
+out_destroy_ctl_sock:
+	inet_unregister_protosw(&gmtp_protosw);
 	inet_del_protocol(&gmtp_protocol, IPPROTO_GMTP);
 	return err;
 
-	out_proto_unregister: proto_unregister(&gmtp_v4_prot);
+out_proto_unregister:
+	proto_unregister(&gmtp_v4_prot);
 
-	out: return err;
+out:
+	return err;
 }
 
 static void __exit gmtp_v4_exit(void)
