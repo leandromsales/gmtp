@@ -195,6 +195,7 @@ struct gmtp_hdr_elect_response {
 enum gmtp_elect_codes {
 	GMTP_ELECT_ACCEPT = 0,
 	GMTP_ELECT_REJECT,
+	GMTP_ELECT_AUTO,
 	GMTP_ELECT_MAX_CODES
 };
 
@@ -267,6 +268,9 @@ static inline unsigned int gmtp_packet_hdr_variable_len(const __u8 type)
 		break;
 	case GMTP_PKT_ELECT_REQUEST:
 		len = sizeof(struct gmtp_hdr_elect_request);
+		break;
+	case GMTP_PKT_ELECT_RESPONSE:
+		len = sizeof(struct gmtp_hdr_elect_response);
 		break;
 	case GMTP_PKT_RESET:
 		len = sizeof(struct gmtp_hdr_reset);

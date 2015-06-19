@@ -166,6 +166,60 @@ static void gmtp_register_reply_timer(struct sock *sk)
 				   GMTP_RTO_MAX);
 }
 
+static void gmtp_reporter_ackrcv_timer(struct sock *sk)
+{
+	struct gmtp_sock *gp = gmtp_sk(sk);
+	struct gmtp_client *client, *temp;
+
+	gmtp_pr_func();
+
+	if(gp->myself == NULL)
+		return;
+
+	pr_info("Reporter has %u clients\n", gp->myself->nclients);
+	list_for_each_entry_safe(client, temp, &gp->myself->clients->list, list)
+	{
+		unsigned int now = jiffies_to_msecs(jiffies);
+		int interval = (int) (now - client->ack_rx_tstamp);
+
+		pr_info("Client found: %pI4@%-5d\n", &client->addr,
+				ntohs(client->port));
+
+		if(unlikely(interval > jiffies_to_msecs(GMTP_ACK_TIMEOUT))) {
+			pr_info("Deleting client.\n");
+			list_del(&client->list);
+			kfree(client);
+			gp->myself->nclients--;
+		} else
+			pr_info("Client ok!\n");
+	}
+	inet_csk_reset_keepalive_timer(sk, GMTP_ACK_TIMEOUT);
+}
+
+static void gmtp_client_sendack_timer(struct sock *sk)
+{
+	struct gmtp_sock *gp = gmtp_sk(sk);
+	unsigned int now = jiffies_to_msecs(jiffies);
+	unsigned int factor, next_ack_time = GMTP_ACK_INTERVAL;
+	int r_ack_interval = 0;
+
+	gmtp_pr_func();
+
+	r_ack_interval = (int)(now - gp->ack_rx_tstamp);
+	if(r_ack_interval > jiffies_to_msecs(GMTP_ACK_TIMEOUT)) {
+		/** TODO auto promote to reporter */ ;
+	}
+
+	factor = DIV_ROUND_CLOSEST(r_ack_interval, GMTP_ACK_INTERVAL);
+	if(factor > 0) {
+		next_ack_time = DIV_ROUND_UP(GMTP_ACK_INTERVAL, factor);
+		next_ack_time = max(next_ack_time, gp->rx_rtt);
+	}
+
+	gmtp_send_ack(sk);
+	inet_csk_reset_keepalive_timer(sk, next_ack_time);
+}
+
 static void gmtp_keepalive_timer(unsigned long data)
 {
 	struct sock *sk = (struct sock *)data;
@@ -189,23 +243,27 @@ static void gmtp_keepalive_timer(unsigned long data)
 		goto out;
 	}
 
+	if(gp->role == GMTP_ROLE_REPORTER) {
+		if(sk->sk_state == GMTP_OPEN) {
+			gmtp_reporter_ackrcv_timer(sk);
+			goto out;
+		}
+	}
+
 	if(gp->type == GMTP_SOCK_TYPE_REPORTER) {
 		unsigned int timeout = 0;
 		switch(sk->sk_state) {
 		case GMTP_REQUESTING:
 			timeout = jiffies_to_msecs(jiffies) - gp->req_stamp;
-			if(timeout <= GMTP_TIMEOUT_INIT)
+			if(likely(timeout <= GMTP_TIMEOUT_INIT))
 				gmtp_send_elect_request(sk, GMTP_REQ_INTERVAL);
 			break;
 		case GMTP_OPEN:
-			pr_info("Socket OPEN! (sending an ACK)\n");
-			gmtp_send_ack(sk);
-			inet_csk_reset_keepalive_timer(sk, GMTP_ACK_INTERVAL);
+			gmtp_client_sendack_timer(sk);
 			break;
 		}
 	}
 out:
-	pr_info("Unlocking socket (%p)\n", sk);
 	bh_unlock_sock(sk);
 	sock_put(sk);
 }

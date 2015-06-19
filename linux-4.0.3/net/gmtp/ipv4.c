@@ -695,8 +695,7 @@ static int gmtp_v4_reporter_rcv_ack(struct sk_buff *skb)
 	pr_info("ACK received from client %pI4@%-5d\n", &iph->saddr,
 			ntohs(gh->sport));
 
-	/** FIXME When reporter send an ACK, client crashes */
-	gmtp_v4_ctl_send_packet(0, skb, GMTP_PKT_ACK);
+	/*gmtp_v4_ctl_send_packet(0, skb, GMTP_PKT_ACK);*/
 
 	return 0;
 }
