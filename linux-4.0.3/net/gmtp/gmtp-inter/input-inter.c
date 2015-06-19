@@ -276,6 +276,10 @@ int gmtp_inter_feedback_rcv(struct sk_buff *skb)
 	if((entry->info->data_pkt_tx/entry->info->buffer_min) < 100)
 		return NF_DROP;
 
+	struct gmtp_hdr_feedback *fh = gmtp_hdr_feedback(skb);
+	pr_info("[Feedback] pkt_tstamp=%u, nclients=%u\n", fh->pkt_tstamp,
+			fh->nclients);
+
 	if(likely(gh->transm_r > 0))
 		entry->info->current_tx = (u64) gh->transm_r;
 
