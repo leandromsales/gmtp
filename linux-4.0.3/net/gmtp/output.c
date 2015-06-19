@@ -12,6 +12,7 @@
 #include <uapi/linux/gmtp.h>
 #include <linux/gmtp.h>
 #include "gmtp.h"
+#include "mcc.h"
 
 static inline void gmtp_event_ack_sent(struct sock *sk)
 {
@@ -401,6 +402,7 @@ void gmtp_send_elect_response(struct sock *sk, __u8 code)
 {
 	struct sk_buff *skb = alloc_skb(sk->sk_prot->max_header, GFP_ATOMIC);
 	struct gmtp_hdr_elect_response *gh_eresp;
+	struct gmtp_sock *gp = gmtp_sk(sk);
 
 	gmtp_pr_func();
 
@@ -414,6 +416,20 @@ void gmtp_send_elect_response(struct sock *sk, __u8 code)
 
 	gh_eresp = gmtp_hdr_elect_response(skb);
 	gh_eresp->elect_code = GMTP_SKB_CB(skb)->elect_code;
+
+	if(code == GMTP_ELECT_AUTO) {
+
+		pr_info("Turning a client into a Reporter\n");
+
+		gp->role = GMTP_ROLE_REPORTER;
+		gp->myself->max_nclients =
+				GMTP_REPORTER_DEFAULT_PROPORTION - 1;
+		gp->myself->clients = kmalloc(sizeof(struct gmtp_client),
+		GFP_ATOMIC);
+		INIT_LIST_HEAD(&gp->myself->clients->list);
+		mcc_rx_init(sk);
+		inet_csk_reset_keepalive_timer(sk, GMTP_ACK_TIMEOUT);
+	}
 
 	gmtp_transmit_skb(sk, skb);
 }
@@ -451,8 +467,6 @@ struct sk_buff *gmtp_ctl_make_elect_response(struct sock *sk,
 
 	ghr = gmtp_hdr_elect_response(skb);
 	ghr->elect_code = gcb->elect_code;
-
-	gmtp_pr_info("elect_code = %u", ghr->elect_code);
 
 	return skb;
 }

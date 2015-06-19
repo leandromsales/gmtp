@@ -3,11 +3,14 @@
 
 #include <linux/types.h>
 
-#define GMTP_VERSION 1
-#define GMTP_FLOWNAME_LEN 16 /* bytes */
+#define GMTP_VERSION (1)
+#define GMTP_FLOWNAME_LEN (16) /* bytes */
 #define GMTP_FLOWNAME_STR_LEN ((GMTP_FLOWNAME_LEN * 2) + 1)
 
-#define GMTP_RELAY_ID_LEN 16 /* bytes */
+#define GMTP_RELAY_ID_LEN (16) /* bytes */
+
+#define GMTP_REPORTER_DEFAULT_PROPORTION (6)
+
 
 /**
  * MSS: 1444

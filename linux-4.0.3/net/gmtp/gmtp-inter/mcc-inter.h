@@ -8,14 +8,13 @@
 #ifndef MCC_INTER_H_
 #define MCC_INTER_H_
 
+#include <uapi/linux/gmtp.h>
 #include <linux/gmtp.h>
 #include "gmtp-inter.h"
 
-#define GMTP_REPORTER_PROPORTION 6
-
 static inline int new_reporter(struct gmtp_relay_entry *entry)
 {
-	return (entry->info->nclients % GMTP_REPORTER_PROPORTION) == 0 ?
+	return (entry->info->nclients % GMTP_REPORTER_DEFAULT_PROPORTION) == 0 ?
 			gmtp_inter.kreporter : 0;
 }
 

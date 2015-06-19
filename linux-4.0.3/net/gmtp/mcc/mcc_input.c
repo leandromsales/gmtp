@@ -53,8 +53,6 @@ static void mcc_rx_send_feedback(struct sock *sk,
 	s64 delta = 0;
 	u32 p;
 
-	gmtp_pr_func();
-
 	switch (fbtype) {
 	case MCC_FBACK_INITIAL:
 		hc->rx_x_recv = 0;

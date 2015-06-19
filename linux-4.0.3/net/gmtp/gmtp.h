@@ -161,6 +161,7 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 /** output.c */
 void gmtp_send_ack(struct sock *sk);
 void gmtp_send_elect_request(struct sock *sk, unsigned long interval);
+void gmtp_send_elect_response(struct sock *sk, __u8 code);
 void gmtp_send_feedback(struct sock *sk);
 void gmtp_send_close(struct sock *sk, const int active);
 int gmtp_send_reset(struct sock *sk, enum gmtp_reset_codes code);
