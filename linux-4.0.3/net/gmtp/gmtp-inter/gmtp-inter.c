@@ -166,27 +166,18 @@ EXPORT_SYMBOL_GPL(get_mcst_v4_addr);
 void gmtp_buffer_add(struct gmtp_flow_info *info, struct sk_buff *newsk)
 {
 	skb_queue_tail(info->buffer, skb_copy(newsk, GFP_ATOMIC));
-	info->buffer_size += newsk->len;
+	info->buffer_len += newsk->len + ETH_HLEN;
+	gmtp_inter.buffer_len += newsk->len + ETH_HLEN;
 }
 
 struct sk_buff *gmtp_buffer_dequeue(struct gmtp_flow_info *info)
 {
 	struct sk_buff *skb = skb_dequeue(info->buffer);
-	if(skb != NULL)
-		info->buffer_size -= skb->len;
+	if(skb != NULL) {
+		info->buffer_len -= (skb->len + ETH_HLEN);
+		gmtp_inter.buffer_len -= (skb->len + ETH_HLEN);
+	}
 	return skb;
-}
-
-struct gmtp_flow_info *gmtp_inter_get_info(
-		struct gmtp_inter_hashtable *hashtable, const __u8 *media)
-{
-	struct gmtp_relay_entry *entry =
-			gmtp_inter_lookup_media(gmtp_inter.hashtable, media);
-
-	if(entry != NULL)
-		return entry->info;
-
-	return NULL;
 }
 
 unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
@@ -199,15 +190,12 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 	if((gmtp_info->relay_enabled == 0) || (in == NULL))
 		return ret;
 
-	/** Calculates new rate */
-	/*gmtp_update_rx_rate(UINT_MAX);*/
-
 	if(iph->protocol == IPPROTO_GMTP) {
 
 		struct gmtp_hdr *gh = gmtp_hdr(skb);
 
 		if(gh->type != GMTP_PKT_DATA && gh->type != GMTP_PKT_FEEDBACK) {
-			gmtp_print_debug("GMTP packet: %s (%d)",
+			gmtp_pr_debug("GMTP packet: %s (%d)",
 					gmtp_packet_name(gh->type), gh->type);
 			print_packet(skb, true);
 			print_gmtp_packet(iph, gh);
@@ -294,11 +282,18 @@ int init_module()
 		goto out;
 	}
 
-	gmtp_info->relay_enabled = 1; /* Enables gmtp-inter */
-
-	/* FIXME Setup a better default value for Rate */
-	gmtp_inter.total_rx = 50000;
+	gmtp_inter.capacity = CAPACITY_DEFAULT;
+	gmtp_inter.buffer_len = 0;
 	gmtp_inter.kreporter = GMTP_REPORTER_DEFAULT_PROPORTION - 1;
+
+	/* TODO Why initial rx per flow is 10% of capacity of channel? */
+	gmtp_inter.ucc_rx = DIV_ROUND_CLOSEST(gmtp_inter.capacity * 10, 100);
+
+	gmtp_inter.total_bytes_rx = 0;
+	gmtp_inter.total_rx = 0;
+	gmtp_inter.ucc_bytes = 0;
+	gmtp_inter.ucc_rx_tstamp = 0;
+	gmtp_inter.rx_rate_wnd = 1000;
 
 	memcpy(gmtp_inter.relay_id, gmtp_inter_build_relay_id(),
 			GMTP_RELAY_ID_LEN);
@@ -310,6 +305,8 @@ int init_module()
 		ret = -ENOMEM;
 		goto out;
 	}
+
+	gmtp_info->relay_enabled = 1; /* Enables gmtp-inter */
 
 	nfho_in.hook = hook_func_in;
 	nfho_in.hooknum = NF_INET_PRE_ROUTING;
@@ -332,6 +329,7 @@ void cleanup_module()
 	gmtp_pr_func();
 	gmtp_print_debug("Finishing GMTP-inter");
 
+	gmtp_info->relay_enabled = 0;
 	kfree_gmtp_inter_hashtable(gmtp_inter.hashtable);
 
 	nf_unregister_hook(&nfho_in);

@@ -69,16 +69,18 @@ int gmtp_inter_data_out(struct sk_buff *skb)
 	struct gmtp_relay_entry *entry;
 	struct gmtp_flow_info *info;
 
+	unsigned int server_tx;
+
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry == NULL) /* Failed to lookup media info in table... */
 		goto out;
 
 	info = entry->info;
 	if(entry->state == GMTP_INTER_TRANSMITTING) {
-		if(info->buffer_len > info->buffer_min) {
+		if(info->buffer->qlen > info->buffer_min) {
 			struct sk_buff *buffered = gmtp_buffer_dequeue(info);
 			if(buffered != NULL) {
-				info->data_pkt_tx++;
+				info->data_pkt_out++;
 				gmtp_copy_hdr(skb, buffered);
 				gmtp_copy_data(skb, buffered);
 			}
@@ -92,8 +94,9 @@ int gmtp_inter_data_out(struct sk_buff *skb)
 	gh->relay = 1;
 	gh->dport = entry->channel_port;
 
-	/** FIXME We really trust in declared tx rate from server ? */
-	gmtp_inter_mcc_delay(info, skb, (u64) gh->transm_r);
+	server_tx = info->current_rx <= 0 ?
+			(unsigned int) gh->transm_r : info->current_rx;
+	gmtp_inter_mcc_delay(info, skb, (u64) server_tx);
 
 out:
 	return NF_ACCEPT;
@@ -205,7 +208,7 @@ int gmtp_inter_close_out(struct sk_buff *skb)
 		break;
 	}
 
-	while(entry->info->buffer_len > 0) {
+	while(entry->info->buffer->qlen > 0) {
 		struct sk_buff *buffered = gmtp_buffer_dequeue(entry->info);
 		if(buffered == NULL) {
 			gmtp_pr_error("Buffered is NULL...");

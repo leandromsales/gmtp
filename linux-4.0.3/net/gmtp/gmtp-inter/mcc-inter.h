@@ -19,6 +19,6 @@ static inline int new_reporter(struct gmtp_relay_entry *entry)
 }
 
 void gmtp_inter_mcc_delay(struct gmtp_flow_info *info, struct sk_buff *skb,
-		u64 server_tx);
+		unsigned int server_tx);
 
 #endif /* MCC_INTER_H_ */
