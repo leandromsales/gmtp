@@ -40,37 +40,44 @@ struct gmtp_relay_entry {
 /**
  * struct gmtp_flow_info - Control information for media transmission
  *
- * @iseq: initial sequence number of received packets
  * @seq: sequence number of last received packet
- * @nbytes: amount of received bytes
- * @current_tx: Current max tx (via GMTP-MCC). 0 means unlimited.
- * @last_rx_tstamp: time stamp of last received data packet
+ * @total_bytes: amount of received bytes
+ * @last_rx_tstamp: time stamp of last received data packet (milliseconds)
+ *
+ * @recent_bytes: amount of received bytes in last window for calcs of RX
+ * @recent_rx_tstamp: time stamp of received data packet in calcs of RX
+ * @current_rx: current rx_rate calculated
+ * @required_tx: Max tx (via GMTP-MCC). 0 means unlimited.
  * @data_pkt_tx: number of data packets transmitted
+ *
  * @buffer: buffer of GMTP-Data packets
  * @buffer_size: size (in bytes) of GMTP-Data buffer.
  * @buffer_len: number of packets in GMTP-Data buffer]
  * @buffer_size: max number of packets in buffer
+ * @buffer_len: buffer length in bytes
  */
 struct gmtp_flow_info {
 	__be32			my_addr;
 	__be16			my_port;
 
-	unsigned int 		iseq;
-	unsigned int 		seq;
-	unsigned int 		nbytes;
+	unsigned int		seq;
+	unsigned int 		total_bytes;
+	unsigned long  		last_rx_tstamp; /* milliseconds */
 
-	u64 			current_tx;
-	ktime_t 		last_rx_tstamp;
-	unsigned int 		data_pkt_tx;
+	/* GMTP-MCC */
+	unsigned int        	recent_bytes;
+	unsigned long  		recent_rx_tstamp;
+	unsigned int 		current_rx;
+	unsigned int 		required_tx;
+	unsigned int 		data_pkt_out;
 
 	struct gmtp_client	*clients;
 	unsigned int 		nclients;
 
 	struct sk_buff_head 	*buffer;
-	unsigned int 		buffer_size;
 	unsigned int 		buffer_min;
 	unsigned int 		buffer_max;  /* buffer_min * 3 */
-#define buffer_len 		buffer->qlen
+	unsigned int 		buffer_len; /* in bytes */
 };
 
 static inline void gmtp_set_buffer_limits(struct gmtp_flow_info *info,

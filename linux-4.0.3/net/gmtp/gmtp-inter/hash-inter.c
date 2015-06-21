@@ -87,10 +87,14 @@ struct gmtp_flow_info *__gmtp_inter_build_info(void)
 	if(info == NULL)
 		goto out;
 
-	info->iseq = 0;
-	info->seq = 0;
-	info->nbytes = 0;
-	info->data_pkt_tx = 0;
+	info->total_bytes = 0;
+	info->last_rx_tstamp = 0;
+
+	info->recent_bytes = UINT_MAX;
+	info->recent_rx_tstamp = 0;
+	info->current_rx = 0;
+	info->required_tx = 0;
+	info->data_pkt_out = 0;
 
 	info->clients = kmalloc(sizeof(struct gmtp_client), GFP_KERNEL);
 	INIT_LIST_HEAD(&info->clients->list);
@@ -98,10 +102,8 @@ struct gmtp_flow_info *__gmtp_inter_build_info(void)
 
 	info->buffer = kmalloc(sizeof(struct sk_buff_head), GFP_KERNEL);
 	skb_queue_head_init(info->buffer);
-	info->buffer_size = 0;
+	info->buffer_len = 0;
 	gmtp_set_buffer_limits(info, 1);
-	info->current_tx = 0; /* unlimited tx */
-
 out:
 	return info;
 }
