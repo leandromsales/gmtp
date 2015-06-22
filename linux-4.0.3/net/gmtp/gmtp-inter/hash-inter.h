@@ -32,8 +32,8 @@ struct gmtp_relay_entry {
 	__be32 channel_addr;
 	__be16 channel_port;
 	__u8 state :3;
-	struct gmtp_flow_info *info;
 
+	struct gmtp_flow_info *info;
 	struct gmtp_relay_entry *next;
 };
 
@@ -44,11 +44,19 @@ struct gmtp_relay_entry {
  * @total_bytes: amount of received bytes
  * @last_rx_tstamp: time stamp of last received data packet (milliseconds)
  *
+ * @nfeedbacks: number of received feedbacks at last window
+ * @sum_feedbacks: sum of all feedbacks tx rates received at last window
  * @recent_bytes: amount of received bytes in last window for calcs of RX
  * @recent_rx_tstamp: time stamp of received data packet in calcs of RX
  * @current_rx: current rx_rate calculated
  * @required_tx: Max tx (via GMTP-MCC). 0 means unlimited.
- * @data_pkt_tx: number of data packets transmitted
+ * @data_pkt_out: number of data packets transmitted
+ * @RTT: RTT from server to client (available in data packets)
+ * @mcc_timer: Timer to control mcc tx reduction
+ *
+ * @clients: list of reporters connected to relay
+ * @nclients: number of clients connected to relay
+ * @cur_reporter: current reporter (to connect new clients)
  *
  * @buffer: buffer of GMTP-Data packets
  * @buffer_size: size (in bytes) of GMTP-Data buffer.
@@ -65,11 +73,15 @@ struct gmtp_flow_info {
 	unsigned long  		last_rx_tstamp; /* milliseconds */
 
 	/* GMTP-MCC */
+	unsigned int		nfeedbacks;
+	unsigned int		sum_feedbacks;
 	unsigned int        	recent_bytes;
 	unsigned long  		recent_rx_tstamp;
 	unsigned int 		current_rx;
 	unsigned int 		required_tx;
 	unsigned int 		data_pkt_out;
+	unsigned int 		rtt;
+	struct timer_list 	mcc_timer;
 
 	struct gmtp_client	*clients;
 	unsigned int 		nclients;

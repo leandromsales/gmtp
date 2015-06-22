@@ -190,8 +190,7 @@ static void gmtp_reporter_ackrcv_timer(struct sock *sk)
 			list_del(&client->list);
 			kfree(client);
 			gp->myself->nclients--;
-		} else
-			pr_info("Client ok!\n");
+		}
 	}
 	inet_csk_reset_keepalive_timer(sk, GMTP_ACK_TIMEOUT);
 }

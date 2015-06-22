@@ -89,8 +89,8 @@
 #define GMTP_REQ_INTERVAL (TCP_SYNQ_INTERVAL)
 
 /* For reporters and servers keep_alive */
-#define GMTP_ACK_TIMEOUT  ((unsigned int)(4 * HZ))
 #define GMTP_ACK_INTERVAL ((unsigned int)(HZ))
+#define GMTP_ACK_TIMEOUT  (4 * GMTP_ACK_INTERVAL)
 
 /* Int to __u8 operations */
 #define TO_U8(x) ((x) > UINT_MAX) ? UINT_MAX : (__u8)(x)

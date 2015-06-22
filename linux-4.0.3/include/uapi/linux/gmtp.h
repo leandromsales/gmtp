@@ -307,6 +307,9 @@ enum gmtp_sockopt_codes {
  * 			0 means that clients is not a reporter
  * @nclients: number of occupied slots at a reporter.
  * 			It must be less or equal %max_clients
+ *
+ * @ack_rx_tstamp: time stamp of last received ack (or feedback)
+ *
  * @clients: clients of a reporter.
  * @reporter: reporter of a client
  */

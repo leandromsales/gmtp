@@ -4,7 +4,6 @@
 #include <linux/netfilter_ipv4.h>
 #include <linux/skbuff.h>
 #include <linux/ip.h>
-#include <linux/timer.h>
 #include <linux/inet.h>
 #include <linux/dirent.h>
 #include <linux/inetdevice.h>
@@ -23,9 +22,9 @@
 #include <uapi/linux/gmtp.h>
 #include <linux/gmtp.h>
 #include "../gmtp.h"
-#include "gmtp-inter.h"
-#include "ucc.h"
 
+#include "gmtp-inter.h"
+#include "mcc-inter.h"
 #include "ucc.h"
 
 static struct nf_hook_ops nfho_in;
@@ -297,7 +296,7 @@ int init_module()
 
 	memcpy(gmtp_inter.relay_id, gmtp_inter_build_relay_id(),
 			GMTP_RELAY_ID_LEN);
-	memset(&gmtp_inter.mcst, 0, 4*sizeof(unsigned char));
+	memset(&gmtp_inter.mcst, 0, 4 * sizeof(unsigned char));
 
 	gmtp_inter.hashtable = gmtp_inter_create_hashtable(64);
 	if(gmtp_inter.hashtable == NULL) {

@@ -363,8 +363,7 @@ void gmtp_send_ack(struct sock *sk)
 			inet_csk_schedule_ack(sk);
 			inet_csk(sk)->icsk_ack.ato = TCP_ATO_MIN;
 			inet_csk_reset_xmit_timer(sk, ICSK_TIME_DACK,
-			TCP_DELACK_MAX,
-			GMTP_RTO_MAX);
+					TCP_DELACK_MAX, GMTP_RTO_MAX);
 			return;
 		}
 

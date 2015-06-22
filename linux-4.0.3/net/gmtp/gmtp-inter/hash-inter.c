@@ -9,9 +9,11 @@
 #include <linux/slab.h>
 #include <linux/string.h>
 #include <linux/list.h>
+#include <linux/timer.h>
 
 #include "gmtp-inter.h"
 #include "hash-inter.h"
+#include "mcc-inter.h"
 
 struct gmtp_inter_hashtable *gmtp_inter_create_hashtable(unsigned int size)
 {
@@ -90,11 +92,14 @@ struct gmtp_flow_info *__gmtp_inter_build_info(void)
 	info->total_bytes = 0;
 	info->last_rx_tstamp = 0;
 
+	info->nfeedbacks = 0;
+	info->sum_feedbacks = 0;
 	info->recent_bytes = UINT_MAX;
 	info->recent_rx_tstamp = 0;
 	info->current_rx = 0;
 	info->required_tx = 0;
 	info->data_pkt_out = 0;
+	info->rtt = 0;
 
 	info->clients = kmalloc(sizeof(struct gmtp_client), GFP_KERNEL);
 	INIT_LIST_HEAD(&info->clients->list);
@@ -104,6 +109,10 @@ struct gmtp_flow_info *__gmtp_inter_build_info(void)
 	skb_queue_head_init(info->buffer);
 	info->buffer_len = 0;
 	gmtp_set_buffer_limits(info, 1);
+
+	setup_timer(&info->mcc_timer, mcc_timer_callback, (unsigned long) info);
+	mod_timer(&info->mcc_timer, gmtp_mcc_interval(info->rtt));
+
 out:
 	return info;
 }
@@ -164,10 +173,12 @@ EXPORT_SYMBOL_GPL(gmtp_inter_add_entry);
 
 void gmtp_inter_del_clients(struct gmtp_relay_entry *entry)
 {
+	struct gmtp_flow_info *info = entry->info;
 	struct gmtp_client *client, *temp;
+
 	gmtp_pr_func();
-	list_for_each_entry_safe(client, temp,
-			&(entry->info->clients->list), list)
+
+	list_for_each_entry_safe(client, temp, &info->clients->list, list)
 	{
 		list_del(&client->list);
 		kfree(client);
@@ -210,6 +221,7 @@ struct gmtp_relay_entry *gmtp_inter_del_entry(
 
 	gmtp_inter_del_clients(current_entry);
 	skb_queue_purge(current_entry->info->buffer);
+	del_timer_sync(&current_entry->info->mcc_timer);
 	kfree(current_entry->info);
 	kfree(current_entry);
 
