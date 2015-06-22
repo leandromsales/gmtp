@@ -118,7 +118,7 @@ try:
             print "\tRate (total):  ", total_rate, "bytes/s\n\n"
             print "Receiving... "
     
-            logtext = str(i) + "\t" + nowstr + "\t" + \
+        logtext = str(i) + "\t" + nowstr + "\t" + \
                 str(size) + "\t" + str(elapsed) + "\t" + instant_rate + \
                 "\t" + strsize1000 + "\t" + strtime1000 + "\t" + strrate1000 + \
                 "\t" + str(total_size) + "\t" + str(total_time) + \
@@ -132,4 +132,5 @@ except (KeyboardInterrupt):
 finally:
     logfile.close()
     client_socket.close()
+
     

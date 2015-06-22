@@ -8,6 +8,8 @@
 #include "gmtp-inter.h"
 #include "mcc-inter.h"
 
+struct timer_list mcc_timer;
+
 void gmtp_inter_mcc_delay(struct gmtp_flow_info *info, struct sk_buff *skb,
 		unsigned int server_tx)
 {
@@ -26,7 +28,7 @@ void gmtp_inter_mcc_delay(struct gmtp_flow_info *info, struct sk_buff *skb,
 
 	/*pr_info("delay = (1000000 * %u)/%llu = %llu us\n", len, tx, delay);*/
 	/*pr_info("elapsed = %lld\n", elapsed);*/
-	pr_info("delay2 = %lld us (%lld ms)\n", delay2, (delay2/1000));
+	/*pr_info("delay2 = %lld us (%lld ms)\n", delay2, (delay2/1000));*/
 
 	/* if delay2 <= 0, pass way... */
 	if(delay2 > 0)
@@ -36,14 +38,63 @@ out:
 	info->last_rx_tstamp = ktime_to_ms(skb->tstamp);
 }
 
-/*static struct timer_list my_timer;
-void my_timer_callback(unsigned long data)
+/**
+ * TODO update_stats RTT through feedbacks
+ *
+ * If the GMTP-MCC sender receives no reports from the Reporters for (4 RTTs)*,
+ * the sending rate is cut in half.
+ * TODO In addition, if the sender receives no reports from the Reporter for at
+ * least (12 RTTs)*, it assumes that the Reporter crashed or left the group.
+ * A new reporter is selected, sending an elect-request to control channel.
+ * The first client to respond will be the new Reporter.
+ * If no one respond... There no clients... Close-Connection
+ *
+ * TODO Undo temporally changes:
+ *   * Change from 4 RTTs to GMTP_ACK_INTERVAL
+ *   ** Change from 10 RTTs to GMTP_ACK_TIMEOUT
+ *
+ */
+void mcc_timer_callback(unsigned long data)
 {
-	pr_info("GMTP-inter TIMER CALLBACK (%ld).\n", jiffies);
-	mod_timer(&my_timer, jiffies + msecs_to_jiffies(1000));
-}*/
-/* setup your timer to call my_timer_callback */
-/*setup_timer(&my_timer, my_timer_callback, 0);*/
-/* setup timer interval to 1000 msecs */
-/*mod_timer(&my_timer, jiffies + msecs_to_jiffies(1000));*/
-/*del_timer_sync(&my_timer);*/
+	struct gmtp_flow_info *info = (struct gmtp_flow_info*) data;
+	struct gmtp_client *reporter, *temp;
+
+	if(likely(info->nfeedbacks > 0))
+		info->required_tx = DIV_ROUND_CLOSEST(info->sum_feedbacks,
+				info->nfeedbacks);
+	else
+		info->required_tx /= 2;
+
+	/*pr_info("n_feedbacks: %u\n", info->nfeedbacks);
+	pr_info("Required_tx=%u bytes/s\n", info->required_tx);*/
+
+	list_for_each_entry_safe(reporter, temp, &info->clients->list, list)
+	{
+		unsigned int now = jiffies_to_msecs(jiffies);
+		int interval = (int)(now - reporter->ack_rx_tstamp);
+
+		/** Deleting non-reporters */
+		if(unlikely(reporter->max_nclients <= 0)) {
+			list_del(&reporter->list);
+			kfree(reporter);
+			continue;
+		}
+
+		if(unlikely(interval > jiffies_to_msecs(GMTP_ACK_TIMEOUT))) {
+			pr_info("Timeout: Reporter %pI4@%-5d\n",
+					&reporter->addr, ntohs(reporter->port));
+			pr_info("TODO: select new reporter and delete this.\n");
+		}
+	}
+
+	info->nfeedbacks = 0;
+	info->sum_feedbacks = 0;
+
+	/*pr_info("RTT: %u ms, Next interval: %lu ms\n", info->rtt,
+			(gmtp_mcc_interval(info->rtt) - jiffies));*/
+
+	/* TODO Send here an ack to server */
+
+	mod_timer(&info->mcc_timer, gmtp_mcc_interval(info->rtt));
+}
+

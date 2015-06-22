@@ -13,10 +13,6 @@
 #include <linux/gmtp.h>
 #include "gmtp.h"
 
-int sysctl_gmtp_keepalive_time __read_mostly = GMTP_KEEPALIVE_TIME;
-int sysctl_gmtp_keepalive_intvl __read_mostly = GMTP_KEEPALIVE_INTVL;
-int sysctl_gmtp_keepalive_probes __read_mostly = GMTP_KEEPALIVE_PROBES;
-
 static void gmtp_write_err(struct sock *sk)
 {
 	gmtp_print_function();
@@ -164,23 +160,78 @@ out:
 /*
  *	Timer for listening sockets
  */
-static void gmtp_register_ack_timer(struct sock *sk)
+static void gmtp_register_reply_timer(struct sock *sk)
 {
-	inet_csk_reqsk_queue_prune(sk, TCP_SYNQ_INTERVAL, GMTP_TIMEOUT_INIT,
+	inet_csk_reqsk_queue_prune(sk, GMTP_REQ_INTERVAL, GMTP_TIMEOUT_INIT,
 				   GMTP_RTO_MAX);
+}
+
+static void gmtp_reporter_ackrcv_timer(struct sock *sk)
+{
+	struct gmtp_sock *gp = gmtp_sk(sk);
+	struct gmtp_client *client, *temp;
+
+	gmtp_pr_func();
+
+	if(gp->myself == NULL)
+		return;
+
+	pr_info("Reporter has %u clients\n", gp->myself->nclients);
+	list_for_each_entry_safe(client, temp, &gp->myself->clients->list, list)
+	{
+		unsigned int now = jiffies_to_msecs(jiffies);
+		int interval = (int) (now - client->ack_rx_tstamp);
+
+		pr_info("Client found: %pI4@%-5d\n", &client->addr,
+				ntohs(client->port));
+
+		if(unlikely(interval > jiffies_to_msecs(GMTP_ACK_TIMEOUT))) {
+			pr_info("Deleting client.\n");
+			list_del(&client->list);
+			kfree(client);
+			gp->myself->nclients--;
+		}
+	}
+	inet_csk_reset_keepalive_timer(sk, GMTP_ACK_TIMEOUT);
+}
+
+static void gmtp_client_sendack_timer(struct sock *sk)
+{
+	struct gmtp_sock *gp = gmtp_sk(sk);
+	unsigned int now = jiffies_to_msecs(jiffies);
+	unsigned int factor, next_ack_time = GMTP_ACK_INTERVAL;
+	int r_ack_interval = 0;
+
+	gmtp_pr_func();
+
+	r_ack_interval = (int)(now - gp->ack_rx_tstamp);
+	if(r_ack_interval > jiffies_to_msecs(GMTP_ACK_TIMEOUT)) {
+		gmtp_send_elect_response(gp->myself->mysock, GMTP_ELECT_AUTO);
+		return;
+	}
+
+	factor = DIV_ROUND_CLOSEST(r_ack_interval, GMTP_ACK_INTERVAL);
+	if(factor > 0) {
+		next_ack_time = DIV_ROUND_UP(GMTP_ACK_INTERVAL, factor);
+		next_ack_time = max(next_ack_time, gp->rx_rtt);
+	}
+
+	gmtp_send_ack(sk);
+	inet_csk_reset_keepalive_timer(sk, next_ack_time);
 }
 
 static void gmtp_keepalive_timer(unsigned long data)
 {
 	struct sock *sk = (struct sock *)data;
-	struct inet_connection_sock *icsk = inet_csk(sk);
 	struct gmtp_sock *gp = gmtp_sk(sk);
-	u32 elapsed;
 
 	gmtp_pr_func();
 
-	/* Only process if socket is not in use. */
+	pr_info("Locking socket (%p) \n", sk);
+	print_gmtp_sock(sk);
+
 	bh_lock_sock(sk);
+	/* Only process if socket is not in use. */
 	if (sock_owned_by_user(sk)) {
 		/* Try again later. */
 		inet_csk_reset_keepalive_timer(sk, HZ / 20);
@@ -188,68 +239,34 @@ static void gmtp_keepalive_timer(unsigned long data)
 	}
 
 	if (sk->sk_state == GMTP_LISTEN) {
-		gmtp_register_ack_timer(sk);
+		gmtp_register_reply_timer(sk);
 		goto out;
 	}
 
-	elapsed = gmtp_keepalive_time_when(gp);
-
-	pr_info("elapsed (gmtp_keepalive_time_when): %u\n", elapsed);
-
-	/* It is alive without keepalive 8) */
-	if(sk->sk_send_head)
-		goto resched;
-
-	elapsed = gmtp_keepalive_time_elapsed(gp);
-	pr_info("elapsed (gmtp_keepalive_time_elapsed): %u\n", elapsed);
-
-	if (elapsed >= gmtp_keepalive_time_when(gp)) {
-
-		pr_info("if (elapsed >= gmtp_keepalive_time_when(gp))\n");
-
-		pr_info("icsk->icsk_user_timeout: %u\n", icsk->icsk_user_timeout);
-		pr_info("icsk->icsk_probes_out: %u\n", icsk->icsk_probes_out);
-		pr_info("gmtp_keepalive_probes(gp): %u\n", gmtp_keepalive_probes(gp));
-
-		/* If the TCP_USER_TIMEOUT option is enabled, use that
-		 * to determine when to timeout instead.
-		 */
-		if((icsk->icsk_user_timeout != 0 &&
-		    elapsed >= icsk->icsk_user_timeout &&
-		    icsk->icsk_probes_out > 0) ||
-		    (icsk->icsk_user_timeout == 0 &&
-		    icsk->icsk_probes_out >= gmtp_keepalive_probes(gp))) {
-
-			pr_info("sending reset\n");
-			gmtp_send_reset(sk, GMTP_RESET_CODE_ABORTED);
-			gmtp_write_err(sk);
+	if(gp->role == GMTP_ROLE_REPORTER) {
+		if(sk->sk_state == GMTP_OPEN) {
+			gmtp_reporter_ackrcv_timer(sk);
 			goto out;
 		}
-		if(/*tcp_write_wakeup(sk) <= 0*/ 1) {
-			pr_info("sending wakeup\n");
-			icsk->icsk_probes_out++;
-			elapsed = gmtp_keepalive_intvl_when(gp);
-		} else {
-			/* If keepalive was lost due to local congestion,
-			 * try harder.
-			 */
-			elapsed = TCP_RESOURCE_PROBE_INTERVAL;
-		}
-	} else {
-		pr_info("else\n");
-		/* It is gp->ack_rcv_tstamp + keepalive_time_when(gp) */
-		elapsed = gmtp_keepalive_time_when(gp) - elapsed;
-		pr_info("new elapsed: %u\n", elapsed);
 	}
 
-	sk_mem_reclaim(sk);
-	pr_info("sk_mem_reclaim\n");
-
-resched:
-	pr_info("resched to %u\n", elapsed);
-	inet_csk_reset_keepalive_timer(sk, elapsed);
+	if(gp->type == GMTP_SOCK_TYPE_REPORTER) {
+		unsigned int timeout = 0;
+		switch(sk->sk_state) {
+		case GMTP_REQUESTING:
+			timeout = jiffies_to_msecs(jiffies) - gp->req_stamp;
+			if(likely(timeout <= GMTP_TIMEOUT_INIT))
+				gmtp_send_elect_request(sk, GMTP_REQ_INTERVAL);
+			else
+				gmtp_send_elect_response(gp->myself->mysock,
+						GMTP_ELECT_AUTO);
+			break;
+		case GMTP_OPEN:
+			gmtp_client_sendack_timer(sk);
+			break;
+		}
+	}
 out:
-	pr_info("out\n");
 	bh_unlock_sock(sk);
 	sock_put(sk);
 }
@@ -297,7 +314,7 @@ static void gmtp_delack_timer(unsigned long data)
 			icsk->icsk_ack.pingpong = 0;
 			icsk->icsk_ack.ato = TCP_ATO_MIN;
 		}
-		gmtp_send_ack(sk, GMTP_ACK_NO_CODE);
+		gmtp_send_ack(sk);
 		NET_INC_STATS_BH(sock_net(sk), LINUX_MIB_DELAYEDACKS);
 	}
 out:
@@ -310,7 +327,6 @@ void gmtp_init_xmit_timers(struct sock *sk)
 	gmtp_pr_func();
 	inet_csk_init_xmit_timers(sk, &gmtp_write_timer, &gmtp_delack_timer,
 			&gmtp_keepalive_timer);
-	/*inet_csk_reset_keepalive_timer(sk, 10*HZ);*/
 }
 
 

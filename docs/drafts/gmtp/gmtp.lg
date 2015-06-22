@@ -1,0 +1,11 @@
+htfcss: cmti  font-style: italic;
+htfcss: cmbx  font-weight: bold;
+htfcss: cmbxsl  font-weight: bold; font-style: oblique;
+htfcss: cmbx  font-weight: bold;
+htfcss: cmbxsl  font-weight: bold; font-style: oblique;
+File: gmtp.html
+--- characters ---
+Font("cmr","12","12","100")
+Font("cmbx","12","12","120")
+Font("cmbx","12","12","144")
+Font("cmti","12","12","100")

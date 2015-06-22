@@ -15,6 +15,7 @@
 #include <linux/types.h>
 #include <linux/skbuff.h>
 
+#include <net/tcp.h>
 #include <net/netns/gmtp.h>
 #include <linux/gmtp.h>
 #include <uapi/linux/gmtp.h>
@@ -24,16 +25,16 @@
 /** GMTP Debugs */
 #define GMTP_INFO "[GMTP] %s:%d - "
 #define GMTP_DEBUG GMTP_INFO
-#define GMTP_WARNING "[GMTP_WARNING]  %s:%d at %s - "
-#define GMTP_ERROR "[GMTP_ERROR] %s:%d at %s - "
+#define GMTP_WARNING "[GMTP_WARNING]  %s:%d - "
+#define GMTP_ERROR "[GMTP_ERROR] %s:%d - "
 
 /* TODO Improve debug func names */
 #define gmtp_print_debug(fmt, args...) pr_info(GMTP_DEBUG fmt \
 		"\n", __FUNCTION__, __LINE__, ##args)
 #define gmtp_print_warning(fmt, args...) pr_warning(GMTP_WARNING fmt \
-		"\n", __FUNCTION__, __LINE__, __FILE__, ##args)
+		"\n", __FUNCTION__, __LINE__, ##args)
 #define gmtp_print_error(fmt, args...) pr_err(GMTP_ERROR fmt \
-		"\n", __FUNCTION__, __LINE__, __FILE__, ##args)
+		"\n", __FUNCTION__, __LINE__, ##args)
 #define gmtp_print_function() pr_info("-------- %s --------\n" , __FUNCTION__)
 
 /* Better print names */
@@ -42,9 +43,9 @@
 		"\n", __FUNCTION__, __LINE__, ##args)
 #define gmtp_pr_debug(fmt, args...) gmtp_pr_info(fmt, ##args);
 #define gmtp_pr_warning(fmt, args...) pr_warning(GMTP_WARNING fmt \
-		"\n", __FUNCTION__, __LINE__, __FILE__, ##args)
+		"\n", __FUNCTION__, __LINE__, ##args)
 #define gmtp_pr_error(fmt, args...) pr_err(GMTP_ERROR fmt \
-		"\n", __FUNCTION__, __LINE__, __FILE__, ##args)
+		"\n", __FUNCTION__, __LINE__, ##args)
 
 /** ---- */
 #define GMTP_MAX_HDR_LEN 2047  /* 2^11 - 1 */
@@ -85,12 +86,11 @@
 #define GMTP_TIMEOUT_INIT ((unsigned int)(3 * HZ))
 #define GMTP_RTO_MAX ((unsigned int)(64 * HZ))
 #define GMTP_TIMEWAIT_LEN (60 * HZ)
+#define GMTP_REQ_INTERVAL (TCP_SYNQ_INTERVAL)
 
-#define GMTP_KEEPALIVE_TIME	(120*60*HZ)	/* two hours */
-/*#define GMTP_KEEPALIVE_TIME	(10*HZ)*/
-#define GMTP_KEEPALIVE_INTVL	(75*HZ)
-/*#define GMTP_KEEPALIVE_INTVL	(5*HZ)*/
-#define GMTP_KEEPALIVE_PROBES	9		/* Max of 9 keepalive probes	*/
+/* For reporters and servers keep_alive */
+#define GMTP_ACK_INTERVAL ((unsigned int)(HZ))
+#define GMTP_ACK_TIMEOUT  (4 * GMTP_ACK_INTERVAL)
 
 /* Int to __u8 operations */
 #define TO_U8(x) ((x) > UINT_MAX) ? UINT_MAX : (__u8)(x)
@@ -100,37 +100,21 @@ extern struct gmtp_info *gmtp_info;
 extern struct inet_hashinfo gmtp_inet_hashinfo;
 extern struct percpu_counter gmtp_orphan_count;
 extern struct gmtp_hashtable *gmtp_hashtable;
-extern int sysctl_gmtp_keepalive_time;
-extern int sysctl_gmtp_keepalive_intvl;
-extern int sysctl_gmtp_keepalive_probes;
 
 void gmtp_init_xmit_timers(struct sock *sk);
 static inline void gmtp_clear_xmit_timers(struct sock *sk)
 {
 	inet_csk_clear_xmit_timers(sk);
+	if(gmtp_sk(sk)->type == GMTP_SOCK_TYPE_REGULAR
+			&& gmtp_sk(sk)->role == GMTP_ROLE_CLIENT) {
+		if(gmtp_sk(sk)->myself->rsock != NULL)
+			inet_csk_clear_xmit_timers(gmtp_sk(sk)->myself->rsock);
+	}
 }
 
-static inline int gmtp_keepalive_intvl_when(const struct gmtp_sock *gp)
+static inline u32 gmtp_get_elect_timeout(struct gmtp_sock *gp)
 {
-	return gp->keepalive_intvl ? : sysctl_gmtp_keepalive_intvl;
-}
-
-static inline int gmtp_keepalive_time_when(const struct gmtp_sock *gp)
-{
-	return gp->keepalive_time ? : sysctl_gmtp_keepalive_time;
-}
-
-static inline int gmtp_keepalive_probes(const struct gmtp_sock *gp)
-{
-	return gp->keepalive_probes ? : sysctl_gmtp_keepalive_probes;
-}
-
-static inline u32 gmtp_keepalive_time_elapsed(const struct gmtp_sock *gp)
-{
-	const struct inet_connection_sock *icsk = &gp->gmtps_inet_connection;
-
-	return min_t(u32, jiffies_to_msecs(jiffies) - icsk->icsk_ack.lrcvtime,
-			jiffies_to_msecs(jiffies) - gp->ack_rcv_tstamp);
+	return (gp->rx_rtt > 0 ? gp->rx_rtt : GMTP_DEFAULT_RTT);
 }
 
 /** proto.c */
@@ -151,7 +135,9 @@ int inet_gmtp_listen(struct socket *sock, int backlog);
 const char *gmtp_packet_name(const int);
 const char *gmtp_state_name(const int);
 void flowname_str(__u8* str, const __u8 *flowname);
+void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh);
 void print_route(struct gmtp_hdr_route *route);
+void print_gmtp_sock(struct sock *sk);
 
 /** sockopt.c */
 int gmtp_getsockopt(struct sock *sk, int level, int optname,
@@ -159,15 +145,24 @@ int gmtp_getsockopt(struct sock *sk, int level, int optname,
 int gmtp_setsockopt(struct sock *sk, int level, int optname,
 		char __user *optval, unsigned int optlen);
 
+/** ipv4.c */
+int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len);
+
 /** input.c */
+struct sock* gmtp_multicast_connect(struct sock *sk, enum gmtp_sock_type type,
+		__be32 addr, __be16 port);
+struct sock* gmtp_sock_connect(struct sock *sk, enum gmtp_sock_type type,
+		__be32 addr, __be16 port);
 int gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 		const struct gmtp_hdr *dh, const unsigned int len);
 int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 		struct gmtp_hdr *gh, unsigned int len);
 
 /** output.c */
-void gmtp_send_ack(struct sock *sk,  __u8 ackcode);
-void gmtp_send_feedback(struct sock *sk);
+void gmtp_send_ack(struct sock *sk);
+void gmtp_send_elect_request(struct sock *sk, unsigned long interval);
+void gmtp_send_elect_response(struct sock *sk, __u8 code);
+void gmtp_send_feedback(struct sock *sk, __be32 server_tstamp);
 void gmtp_send_close(struct sock *sk, const int active);
 int gmtp_send_reset(struct sock *sk, enum gmtp_reset_codes code);
 void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb);
@@ -179,6 +174,9 @@ struct sk_buff *gmtp_ctl_make_reset(struct sock *sk,
 /** output.c - Packet Output and Timers  */
 void gmtp_write_space(struct sock *sk);
 int gmtp_retransmit_skb(struct sock *sk);
+struct sk_buff *gmtp_ctl_make_elect_response(struct sock *sk,
+		struct sk_buff *rcv_skb);
+struct sk_buff *gmtp_ctl_make_ack(struct sock *sk, struct sk_buff *rcv_skb);
 
 /** minisocks.c */
 void gmtp_time_wait(struct sock *sk, int state, int timeo);
@@ -195,14 +193,18 @@ struct sock *gmtp_check_req(struct sock *sk, struct sk_buff *skb,
 void gmtp_reqsk_send_ack(struct sock *sk, struct sk_buff *skb,
 			 struct request_sock *rsk);
 
-/** ipv4.c */
-int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len);
-
 
 /** GMTP structs and etc **/
 struct gmtp_info {
 	unsigned char 		relay_enabled:1;
+
+	struct sock		*control_sk;
+	struct sockaddr_in	*ctrl_addr;
+
+
 };
+
+void kfree_gmtp_info(struct gmtp_info *gmtp);
 
 /**
  * This is the control buffer. It is free to use by any layer.
@@ -225,10 +227,11 @@ struct gmtp_info {
  */
 struct gmtp_skb_cb {
 	__u8 type :5;
-	__u8 ackcode;
 	__u8 reset_code,
 		reset_data[3];
+	__u8 elect_code:2;
 	__be32 seq;
+	__be32 server_tstamp;
 };
 
 #define GMTP_SKB_CB(__skb) ((struct gmtp_skb_cb *)&((__skb)->cb[0]))
@@ -266,20 +269,43 @@ static inline int gmtp_data_packet(const struct sk_buff *skb)
 	       type == GMTP_PKT_DATAACK;
 }
 
+static inline struct gmtp_client *gmtp_create_client(__be32 addr, __be16 port,
+		__u8 max_nclients)
+{
+	struct gmtp_client *new = kmalloc(sizeof(struct gmtp_client),
+	GFP_ATOMIC);
+
+	if(new != NULL) {
+		new->addr = addr;
+		new->port = port;
+		new->max_nclients = max_nclients;
+		new->nclients = 0;
+		new->ack_rx_tstamp = 0;
+	}
+	return new;
+}
+
 /**
- * struct gmtp_clients - A list of GMTP Clients
- *
- * @addr: ip address of client
- * @port: reception port of client
- * @id: id of client
+ * Create and add a client in the list of clients
  */
-struct gmtp_client {
-	struct list_head 	list;
-	unsigned int		id;
-	__be32 			addr;
-	__be16 			port;
-	__u8			reporter:1;
-};
+static inline struct gmtp_client *gmtp_list_add_client(unsigned int id,
+		__be32 addr, __be16 port, __u8 max_nclients, struct list_head *head)
+{
+	struct gmtp_client *newc = gmtp_create_client(addr, port, max_nclients);
+
+	if(newc == NULL) {
+		gmtp_pr_error("Error while creating new gmtp_client...");
+		return NULL;
+	}
+
+	newc->id = id;
+	gmtp_pr_info("New client (%u): ADDR=%pI4@%-5d",
+			newc->id, &addr, ntohs(port));
+
+	INIT_LIST_HEAD(&newc->list);
+	list_add_tail(&newc->list, head);
+	return newc;
+}
 
 static inline struct gmtp_client* gmtp_get_first_client(struct list_head *head)
 {
@@ -289,6 +315,48 @@ static inline struct gmtp_client* gmtp_get_first_client(struct list_head *head)
 		return client;
 	}
 	return NULL;
+}
+
+static inline struct gmtp_client* gmtp_get_client(struct list_head *head,
+		__be32 addr, __be16 port)
+{
+	struct gmtp_client *client;
+	list_for_each_entry(client, head, list)
+	{
+		if(client->addr == addr && client->port == port)
+			return client;
+	}
+	return NULL;
+}
+
+static inline struct gmtp_client* gmtp_get_client_by_id(struct list_head *head,
+		unsigned int id)
+{
+	struct gmtp_client *client;
+	list_for_each_entry(client, head, list)
+	{
+		if(client->id == id)
+			return client;
+	}
+	return NULL;
+}
+
+static inline int gmtp_delete_clients(struct list_head *list, __be32 addr, __be16 port)
+{
+	struct gmtp_client *client, *temp;
+	int ret = 0;
+
+	list_for_each_entry_safe(client, temp, list, list)
+	{
+		if(addr == client->addr && port == client->port) {
+			pr_info("Deleting client: %pI4@%-5d\n", &client->addr,
+					ntohs(client->port));
+			list_del(&client->list);
+			kfree(client);
+			++ret;
+		}
+	}
+	return ret;
 }
 
 #endif /* GMTP_H_ */

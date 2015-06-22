@@ -27,13 +27,17 @@
 extern const char *gmtp_packet_name(const int);
 extern const char *gmtp_state_name(const int);
 extern void flowname_str(__u8* str, const __u8* flowname);
-extern void gmtp_list_add_client(unsigned int id, __be32 addr,
-		__be16 port, __u8 reporter, struct list_head *head);
+extern void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh);
 
 /**
  * TODO Negotiate buffer size with server
+ * TODO Make kreporter configurable
+ *
  * struct gmtp_inter - GMTP-inter state variables
  *
+ * @relay_id: Relay unique id
+ *
+ * @buffer_len: relay buffer occupation (total)
  * @capacity: channel capacity of transmission (bytes/s)
  * @total_bytes_rx: total data bytes received
  * @total_rx: Current total RX rate (bytes/s)
@@ -43,6 +47,8 @@ extern void gmtp_list_add_client(unsigned int id, __be32 addr,
  * @rx_rate_wnd: size of window to calculate rx rates
  *
  * @mcst: control of granted multicast addresses
+ * @kreporter: number of clients per reporter.
+ *
  * @hashtable: GMTP-inter relay table
  */
 struct gmtp_inter {
@@ -59,6 +65,8 @@ struct gmtp_inter {
 	unsigned int 		rx_rate_wnd;
 
 	unsigned char		mcst[4];
+
+	unsigned char		kreporter;
 
 	struct gmtp_inter_hashtable *hashtable;
 };
@@ -80,27 +88,35 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb);
 int gmtp_inter_ack_rcv(struct sk_buff *skb);
 int gmtp_inter_data_rcv(struct sk_buff *skb);
 int gmtp_inter_feedback_rcv(struct sk_buff *skb);
+int gmtp_inter_elect_resp_rcv(struct sk_buff *skb);
 int gmtp_inter_close_rcv(struct sk_buff *skb);
 
 /** Output.c */
-void gmtp_inter_add_relayid(struct sk_buff *skb);
-struct gmtp_hdr *gmtp_inter_make_route_hdr(struct sk_buff *skb);
-struct gmtp_hdr *gmtp_inter_make_request_notify_hdr(struct sk_buff *skb,
-		struct gmtp_relay_entry *media_info, __be16 new_sport,
-		__be16 new_dport, __u8 error_code);
-int gmtp_inter_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
-		__be16 new_sport, __be32 new_daddr, __be16 new_dport,
-		__u8 error_code);
-
-void gmtp_inter_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
-		__be32 daddr, struct gmtp_hdr *gh_ref, bool backward);
-void gmtp_inter_build_and_send_skb(struct sk_buff *skb);
-
 int gmtp_inter_register_out(struct sk_buff *skb);
 int gmtp_inter_request_notify_out(struct sk_buff *skb);
 int gmtp_inter_data_out(struct sk_buff *skb);
 int gmtp_inter_close_out(struct sk_buff *skb);
 
+/** build.c */
+void gmtp_inter_add_relayid(struct sk_buff *skb);
+struct gmtp_hdr *gmtp_inter_make_route_hdr(struct sk_buff *skb);
+
+struct gmtp_hdr *gmtp_inter_make_request_notify_hdr(struct sk_buff *skb,
+		struct gmtp_relay_entry *media_info, __be16 new_sport,
+		__be16 new_dport, struct gmtp_client *reporter,
+		__u8 max_nclients, __u8 error_code);
+
+int gmtp_inter_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
+		__be16 new_sport, __be32 new_daddr, __be16 new_dport,
+		struct gmtp_client *reporter, __u8 max_nclients,
+		__u8 error_code);
+
+struct gmtp_hdr *gmtp_inter_make_reset_hdr(struct sk_buff *skb, __u8 code);
+struct gmtp_hdr *gmtp_inter_make_close_hdr(struct sk_buff *skb);
+void gmtp_inter_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
+		__be32 daddr, struct gmtp_hdr *gh_ref, bool backward);
+void gmtp_inter_build_and_send_skb(struct sk_buff *skb);
+void gmtp_copy_hdr(struct sk_buff *skb, struct sk_buff *src_skb);
 
 /**
  * A very ugly delayer, to GMTP-inter...
@@ -149,25 +165,6 @@ static inline void print_packet(struct sk_buff *skb, bool in)
 }
 
 /*
- * Print GMTP packet basic information
- */
-static inline void print_gmtp_packet(struct iphdr *iph, struct gmtp_hdr *gh)
-{
-	__u8 flowname[GMTP_FLOWNAME_STR_LEN];
-	flowname_str(flowname, gh->flowname);
-	pr_info("%s (%d) src=%pI4@%-5d dst=%pI4@%-5d seq=%u rtt=%u ms "
-			" tx=%u flow=%s\n",
-				gmtp_packet_name(gh->type),
-				gh->type,
-				&iph->saddr, ntohs(gh->sport),
-				&iph->daddr, ntohs(gh->dport),
-				gh->seq,
-				gh->server_rtt,
-				gh->transm_r,
-				flowname);
-}
-
-/*
  * Print Data of GMTP-Data packets
  */
 static inline void print_gmtp_data(struct sk_buff *skb, char* label)
@@ -176,7 +173,7 @@ static inline void print_gmtp_data(struct sk_buff *skb, char* label)
 	__u32 data_len = gmtp_data_len(skb);
 
 	if(data_len > 0) {
-		char *lb = label != NULL ? label : "Data";
+		char *lb = (label != NULL) ? label : "Data";
 		unsigned char *data_str = kmalloc(data_len+1, GFP_KERNEL);
 		memcpy(data_str, data, data_len);
 		data_str[data_len] = '\0';
@@ -191,12 +188,9 @@ static inline int bytes_added(int sprintf_return)
 
 static inline void flowname_strn(__u8* str, const __u8 *buffer, int length)
 {
-
 	int i;
-	for(i = 0; i < length; ++i) {
+	for(i = 0; i < length; ++i)
 		sprintf(&str[i*2], "%02x", buffer[i]);
-		/*printk("testando = %02x\n", buffer[i]); */
-	}
 }
 
 #endif /* GMTP_INTER_H_ */

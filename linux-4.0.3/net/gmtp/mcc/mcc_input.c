@@ -47,19 +47,16 @@ static void mcc_rx_send_feedback(struct sock *sk,
 				      const struct sk_buff *skb,
 				      enum mcc_fback_type fbtype)
 {
-	struct gmtp_sock *hc = gmtp_sk(sk);
+	struct gmtp_sock *gp = gmtp_sk(sk);
 	ktime_t now = ktime_get_real();
 	u32 sample;
 	s64 delta = 0;
 	u32 p;
 
-	gmtp_pr_func();
-
 	switch (fbtype) {
 	case MCC_FBACK_INITIAL:
-		pr_info("MCC_FBACK_INITIAL\n");
-		hc->rx_x_recv = 0;
-		hc->rx_pinv   = ~0U;   /* see RFC 4342, 8.5 */
+		gp->rx_x_recv = 0;
+		gp->rx_pinv   = ~0U;   /* see RFC 4342, 8.5 */
 		break;
 	case MCC_FBACK_PARAM_CHANGE:
 		/*
@@ -72,63 +69,58 @@ static void mcc_rx_send_feedback(struct sock *sk,
 		 * the number of bytes since last feedback.
 		 * This is a safe fallback, since X is bounded above by X_calc.
 		 */
-		pr_info("MCC_FBACK_PARAM_CHANGE\n");
-		if (hc->rx_x_recv > 0)
+		if (gp->rx_x_recv > 0)
 			break;
 		/* fall through */
 	case MCC_FBACK_PERIODIC:
-		pr_info("MCC_FBACK_PERIODIC\n");
-		delta = ktime_us_delta(now, hc->rx_tstamp_last_feedback);
+		delta = ktime_us_delta(now, gp->rx_tstamp_last_feedback);
 		if (delta <= 0)
 			gmtp_pr_error("delta (%ld) <= 0", (long)delta);
 		else
-			hc->rx_x_recv = scaled_div32(hc->rx_bytes_recv, delta);
+			gp->rx_x_recv = scaled_div32(gp->rx_bytes_recv, delta);
 		break;
 	default:
 		return;
 	}
 
 	now = ktime_get_real();
-	hc->rx_tstamp_last_feedback = now;
-	hc->rx_bytes_recv	    = 0;
-	sample = hc->rx_rtt * USEC_PER_MSEC;
-
-	pr_info("Sample: %u us\n", sample);
+	gp->rx_tstamp_last_feedback = now;
+	gp->rx_bytes_recv	    = 0;
+	sample = gp->rx_rtt * USEC_PER_MSEC;
 
 	if(sample != 0)
-		hc->rx_avg_rtt = mcc_ewma(hc->rx_avg_rtt, sample, 9);
+		gp->rx_avg_rtt = mcc_ewma(gp->rx_avg_rtt, sample, 9);
 
-	pr_info("rx_avg_rtt: %u us\n", hc->rx_avg_rtt);
+	if(gp->rx_avg_rtt <= 0)
+		gp->rx_avg_rtt = GMTP_SANE_RTT_MIN;
 
-	if(hc->rx_avg_rtt <= 0)
-		hc->rx_avg_rtt = GMTP_SANE_RTT_MIN;
-
-	p = mcc_invert_loss_event_rate(hc->rx_pinv);
+	p = mcc_invert_loss_event_rate(gp->rx_pinv);
 	if(p > 0) {
-		u32 new_rate = mcc_calc_x(hc->rx_s, hc->rx_avg_rtt, p);
-		gmtp_pr_info("new_rate = %u bytes/s", new_rate);
+		u32 new_rate = mcc_calc_x(gp->rx_s, gp->rx_avg_rtt, p);
 		/*
 		 * Change only if the value is valid!
 		 */
 		if(new_rate > 0)
-			hc->rx_max_rate = new_rate;
+			gp->rx_max_rate = new_rate;
 	} else {
 		/*
 		 * No loss events. Returning max X_calc.
 		 * Sender will ignore feedback and keep last TX
 		 */
-		hc->rx_max_rate = ~0U;
+		gp->rx_max_rate = ~0U;
 	}
 
-	mcc_pr_debug("RESULT: %s, RTT=%u us (sample=%u us), s=%u, "
-			       "p=%u, X_calc=%u, X_recv=%u",
-			       gmtp_role_name(sk),
-			       hc->rx_avg_rtt, sample,
-			       hc->rx_s, p,
-			       hc->rx_max_rate,
-			       hc->rx_x_recv);
+	if(likely(gp->role == GMTP_ROLE_REPORTER)) {
 
-	gmtp_send_feedback(sk);
+		mcc_pr_debug("REPORT: RTT=%u us (sample=%u us), s=%u, "
+			       "p=%u, X_calc=%u bytes/s, X_recv=%u bytes/s",
+			       gp->rx_avg_rtt, sample,
+			       gp->rx_s, p,
+			       gp->rx_max_rate,
+			       gp->rx_x_recv);
+
+		gmtp_send_feedback(sk, GMTP_SKB_CB(skb)->server_tstamp);
+	}
 }
 
 
@@ -179,22 +171,20 @@ static u32 mcc_first_li(struct sock *sk)
 
 void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 {
-	struct gmtp_sock *hc = gmtp_sk(sk);
+	struct gmtp_sock *gp = gmtp_sk(sk);
 	enum mcc_fback_type do_feedback = MCC_FBACK_NONE;
 	const __be32 ndp = gmtp_sk(sk)->ndp_count;
 	const bool is_data_packet = gmtp_data_packet(skb);
 	ktime_t now = ktime_get_real();
 	s64 delta = 0;
 
-	gmtp_pr_func();
-
-	if(unlikely(hc->rx_state == MCC_RSTATE_NO_DATA)) {
+	if(unlikely(gp->rx_state == MCC_RSTATE_NO_DATA)) {
 		if(is_data_packet) {
 			const u32 payload = skb->len
 					- gmtp_hdr(skb)->hdrlen * 4;
 			do_feedback = MCC_FBACK_INITIAL;
 			mcc_rx_set_state(sk, MCC_RSTATE_DATA);
-			hc->rx_s = payload;
+			gp->rx_s = payload;
 			/*
 			 * Not necessary to update rx_bytes_recv here,
 			 * since X_recv = 0 for the first feedback packet (cf.
@@ -204,28 +194,31 @@ void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 		goto update_records;
 	}
 
-	if(mcc_rx_hist_duplicate(&hc->rx_hist, skb))
+	if(mcc_rx_hist_duplicate(&gp->rx_hist, skb))
 		return;  /* done receiving */
 
 	if(is_data_packet) {
 		const u32 payload = skb->len - gmtp_hdr(skb)->hdrlen;
+		struct gmtp_hdr_data *dh = gmtp_hdr_data(skb);
+
 		/*
 		 * Update moving-average of s and the sum of received payload bytes
 		 */
-		hc->rx_s = mcc_ewma(hc->rx_s, payload, 9);
-		hc->rx_bytes_recv += payload;
+		gp->rx_s = mcc_ewma(gp->rx_s, payload, 9);
+		gp->rx_bytes_recv += payload;
+		GMTP_SKB_CB(skb)->server_tstamp = dh->tstamp;
 	}
 
 	/*
 	 * Perform loss detection and handle pending losses
 	 */
-	if(mcc_rx_handle_loss(&hc->rx_hist, &hc->rx_li_hist,
+	if(mcc_rx_handle_loss(&gp->rx_hist, &gp->rx_li_hist,
 			skb, ndp, mcc_first_li, sk)) {
 		do_feedback = MCC_FBACK_PARAM_CHANGE;
 		goto done_receiving;
 	}
 
-	if(mcc_rx_hist_loss_pending(&hc->rx_hist))
+	if(mcc_rx_hist_loss_pending(&gp->rx_hist))
 		return;  /* done receiving */
 
 	/*
@@ -234,18 +227,18 @@ void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 	if(unlikely(!is_data_packet))
 		goto update_records;
 
-	if(!mcc_lh_is_initialised(&hc->rx_li_hist)) {
+	if(!mcc_lh_is_initialised(&gp->rx_li_hist)) {
 		/* ms to us */
-		const u32 sample = jiffies_to_usecs(msecs_to_jiffies(hc->rx_rtt));
+		const u32 sample = jiffies_to_usecs(msecs_to_jiffies(gp->rx_rtt));
 		/*
 		 * Empty loss history: no loss so far, hence p stays 0.
 		 * Sample RTT values, since an RTT estimate is required for the
 		 * computation of p when the first loss occurs; RFC 3448, 6.3.1.
 		 */
 		if(sample != 0)
-			hc->rx_avg_rtt = mcc_ewma(hc->rx_avg_rtt, sample, 9);
+			gp->rx_avg_rtt = mcc_ewma(gp->rx_avg_rtt, sample, 9);
 
-	} else if(mcc_lh_update_i_mean(&hc->rx_li_hist, skb)) {
+	} else if(mcc_lh_update_i_mean(&gp->rx_li_hist, skb)) {
 		/*
 		 * Step (3) of [RFC 3448, 6.1]: Recompute I_mean and, if I_mean
 		 * has decreased (resp. p has increased), send feedback now.
@@ -256,14 +249,14 @@ void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 	/*
 	 * Check if the periodic once-per-RTT feedback is due; RFC 4342, 10.3
 	 */
-	delta = ktime_us_delta(now, hc->rx_tstamp_last_feedback);
+	delta = ktime_us_delta(now, gp->rx_tstamp_last_feedback);
 	if(delta <= 0)
 		gmtp_pr_error("delta (%ld) <= 0", (long )delta);
-	else if(delta >= hc->rx_avg_rtt)
+	else if(delta >= gp->rx_avg_rtt)
 		do_feedback = MCC_FBACK_PERIODIC;
 
 update_records:
-	mcc_rx_hist_add_packet(&hc->rx_hist, skb, ndp);
+	mcc_rx_hist_add_packet(&gp->rx_hist, skb, ndp);
 
 done_receiving:
 	if(do_feedback)
