@@ -3,29 +3,32 @@
 
 #include <linux/types.h>
 
-#define GMTP_VERSION 1
-#define GMTP_FLOWNAME_LEN 16 /* bytes */
+#define GMTP_VERSION (1)
+#define GMTP_FLOWNAME_LEN (16) /* bytes */
 #define GMTP_FLOWNAME_STR_LEN ((GMTP_FLOWNAME_LEN * 2) + 1)
 
-#define GMTP_RELAY_ID_LEN 16 /* bytes */
+#define GMTP_RELAY_ID_LEN (16) /* bytes */
+
+#define GMTP_REPORTER_DEFAULT_PROPORTION (6)
+
 
 /**
  * MSS: 1444
  *
  * GMTP fixed header: 36
- * GMTP Ack Header: 8
+ * GMTP Ack Header: 0
  * ----------------------
  *
  * GMTP Register-Reply header:
- * 1444 - 36 - 8 = 1400
+ * 1444 - 36 = 1408
  * ---------------------
  * Register-Reply->nrelays: 8
- * Register-Reply->relay_list 1392
+ * Register-Reply->relay_list 1400
  *
- * 1392/20 = 69, rest: 12
+ * 1400/20 = 70
  *
  */
-#define GMTP_MAX_RELAY_NUM 69
+#define GMTP_MAX_RELAY_NUM 70
 
 /**
  * GMTP packet header
@@ -62,7 +65,7 @@
  * @hdrlen: header length (bytes)
  * @server_rtt: server RTT
  * @pull:  'P' (Pull) field
- * @relay:  'R' (Relay) field
+ * @relay:  'R' (Relay) field. It is activated when a relay send packets
  * @res: reserved to future
  * @src_port: source port
  * @dest_port: destiny port
@@ -72,18 +75,18 @@
  * @varpart: Variable part, depends of the 'Packet type' field
  */
 struct gmtp_hdr {
-	__u8 version:3;
-	__u8 type:5;
-	__be16 hdrlen:11;
-	__u8 server_rtt;
-	__u8 pull:1;
-	__u8 relay:1;
-	__u8 res:3;
-	__be16 sport; //source port
-	__be16 dport; //dest port
-	__be32 seq;
-	__be32 transm_r;
-	__u8 flowname[GMTP_FLOWNAME_LEN]; //128 bits
+	__u8 	version:3;
+	__u8 	type:5;
+	__be16 	hdrlen:11;
+	__u8 	server_rtt;
+	__u8 	pull:1;
+	__u8 	relay:1;
+	__u8 	res:3;
+	__be16 	sport; //source port
+	__be16 	dport; //dest port
+	__be32 	seq;
+	__be32 	transm_r;
+	__u8 	flowname[GMTP_FLOWNAME_LEN]; //128 bits
 };
 
 /**
@@ -95,25 +98,12 @@ struct gmtp_hdr_data {
 };
 
 /**
- * struct gmtp_hdr_ack - Acknowledgment packets
- * @ackcode: One of gmtp_ack_codes
- */
-struct gmtp_hdr_ack {
-	__u8 ackcode;
-};
-
-enum gmtp_ack_codes {
-	GMTP_ACK_NO_CODE = 0,
-	GMTP_ACK_REQUESTNOTIFY,
-	GMTP_ACK_MAX_CODES
-};
-
-/**
  * struct gmtp_hdr_feedback - Data packets
  * @tstamp: time stamp of received data packet
  */
 struct gmtp_hdr_feedback {
-	__be32 pkt_tstamp;
+	__be32 	pkt_tstamp;
+	__u8	nclients;
 };
 
 /**
@@ -124,7 +114,7 @@ struct gmtp_hdr_feedback {
  */
 struct gmtp_hdr_reset {
 	__u8	reset_code,
-			reset_data[3];
+		reset_data[3];
 };
 
 /**
@@ -135,8 +125,8 @@ struct gmtp_hdr_reset {
  * @relay_ip: IP address of relay
  */
 struct gmtp_relay {
-	__u8 relay_id[GMTP_RELAY_ID_LEN];
-	__be32 relay_ip;
+	__u8 			relay_id[GMTP_RELAY_ID_LEN];
+	__be32 			relay_ip;
 };
 
 /**
@@ -146,8 +136,8 @@ struct gmtp_relay {
  * @relay_list:	list of relays in path
  */
 struct gmtp_hdr_register_reply {
-	__u8 nrelays;
-	struct gmtp_relay relay_list[GMTP_MAX_RELAY_NUM];
+	__u8 			nrelays;
+	struct gmtp_relay 	relay_list[GMTP_MAX_RELAY_NUM];
 };
 
 /**
@@ -157,8 +147,8 @@ struct gmtp_hdr_register_reply {
  * @relay_list - list of relays in path
  */
 struct gmtp_hdr_route {
-	__u8 nrelays;
-	struct gmtp_relay relay_list[GMTP_MAX_RELAY_NUM];
+	__u8 			nrelays;
+	struct gmtp_relay 	relay_list[GMTP_MAX_RELAY_NUM];
 };
 
 /**
@@ -169,18 +159,47 @@ struct gmtp_hdr_route {
  * @mcst_port: multicast channel port
  */
 struct gmtp_hdr_reqnotify {
-	__u8	error_code;
-	__be32	mcst_addr;
-	__be16  mcst_port; 
+	__u8			rn_code:3;
+	__be32			mcst_addr;
+	__be16  		mcst_port;
+	__u8 			relay_id[GMTP_RELAY_ID_LEN];
+	__be32			reporter_addr;
+	__be16  		reporter_port;
+	__u8 			max_nclients;
 };
 
 enum gmtp_reqnotify_error_code {
 	GMTP_REQNOTIFY_CODE_OK = 0,
-	GMTP_REQNOTIFY_CODE_OK_REPORTER,
 	GMTP_REQNOTIFY_CODE_WAIT,
-	GMTP_REQNOTIFY_CODE_WAIT_REPORTER,
 	GMTP_REQNOTIFY_CODE_ERROR,
 	GMTP_REQNOTIFY_MAX_CODES
+};
+
+/**
+ * struct gmtp_hdr_elect_request - Elect request to reporters
+ *
+ * @relay_id: relay from where request come from
+ * @max_nclients: Max number of clients of a reporter
+ */
+struct gmtp_hdr_elect_request {
+	__u8 			relay_id[GMTP_RELAY_ID_LEN];
+	__u8 			max_nclients;
+};
+
+/**
+ * struct gmtp_hdr_elect_request - Elect request to reporters
+ *
+ * @elect_code: One of %gmtp_ack_codes
+ */
+struct gmtp_hdr_elect_response {
+	__u8 	elect_code:2;
+};
+
+enum gmtp_elect_codes {
+	GMTP_ELECT_ACCEPT = 0,
+	GMTP_ELECT_REJECT,
+	GMTP_ELECT_AUTO,
+	GMTP_ELECT_MAX_CODES
 };
 
 /**
@@ -235,13 +254,8 @@ static inline unsigned int gmtp_packet_hdr_variable_len(const __u8 type)
 	switch(type)
 	{
 	case GMTP_PKT_DATA:
-		len = sizeof(struct gmtp_hdr_data);
-		break;
-	case GMTP_PKT_ACK:
-		len = sizeof(struct gmtp_hdr_ack);
-		break;
 	case GMTP_PKT_DATAACK:
-		len = sizeof(struct gmtp_hdr_data) + sizeof(struct gmtp_hdr_ack);
+		len = sizeof(struct gmtp_hdr_data);
 		break;
 	case GMTP_PKT_FEEDBACK:
 		len = sizeof(struct gmtp_hdr_feedback);
@@ -254,6 +268,12 @@ static inline unsigned int gmtp_packet_hdr_variable_len(const __u8 type)
 		break;
 	case GMTP_PKT_REQUESTNOTIFY:
 		len = sizeof(struct gmtp_hdr_reqnotify);
+		break;
+	case GMTP_PKT_ELECT_REQUEST:
+		len = sizeof(struct gmtp_hdr_elect_request);
+		break;
+	case GMTP_PKT_ELECT_RESPONSE:
+		len = sizeof(struct gmtp_hdr_elect_response);
 		break;
 	case GMTP_PKT_RESET:
 		len = sizeof(struct gmtp_hdr_reset);
@@ -275,6 +295,38 @@ enum gmtp_sockopt_codes {
 	GMTP_SOCKOPT_RELAY_ENABLED
 };
 
+
+/**
+ * struct gmtp_clients - A list of GMTP Clients
+ *
+ * @list: The list_head
+ * @id: a number to identify and count clients
+ * @addr: IP address of client
+ * @port: reception port of client
+ * @max_clients: for reporters, the max amount of clients.
+ * 			0 means that clients is not a reporter
+ * @nclients: number of occupied slots at a reporter.
+ * 			It must be less or equal %max_clients
+ *
+ * @ack_rx_tstamp: time stamp of last received ack (or feedback)
+ *
+ * @clients: clients of a reporter.
+ * @reporter: reporter of a client
+ */
+struct gmtp_client {
+	struct list_head 	list;
+	unsigned int		id;
+	__be32 			addr;
+	__be16 			port;
+	__u8			max_nclients;
+	__u8			nclients;
+	__u32			ack_rx_tstamp;
+
+	struct gmtp_client	*clients;
+	struct gmtp_client	*reporter;
+	struct sock 		*rsock;
+	struct sock 		*mysock;
+};
 
 
 #endif /* UAPI_LINUX_GMTP_H */

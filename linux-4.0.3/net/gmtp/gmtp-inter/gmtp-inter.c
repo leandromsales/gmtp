@@ -4,7 +4,6 @@
 #include <linux/netfilter_ipv4.h>
 #include <linux/skbuff.h>
 #include <linux/ip.h>
-#include <linux/timer.h>
 #include <linux/inet.h>
 #include <linux/dirent.h>
 #include <linux/inetdevice.h>
@@ -23,9 +22,9 @@
 #include <uapi/linux/gmtp.h>
 #include <linux/gmtp.h>
 #include "../gmtp.h"
-#include "gmtp-inter.h"
-#include "ucc.h"
 
+#include "gmtp-inter.h"
+#include "mcc-inter.h"
 #include "ucc.h"
 
 static struct nf_hook_ops nfho_in;
@@ -217,6 +216,10 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 		case GMTP_PKT_FEEDBACK:
 			ret = gmtp_inter_feedback_rcv(skb);
 			break;
+		case GMTP_PKT_ELECT_RESPONSE:
+			ret = gmtp_inter_elect_resp_rcv(skb);
+			break;
+		case GMTP_PKT_RESET:
 		case GMTP_PKT_CLOSE:
 			ret = gmtp_inter_close_rcv(skb);
 			break;
@@ -233,14 +236,15 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 {
 	int ret = NF_ACCEPT;
 	struct iphdr *iph = ip_hdr(skb);
-	struct gmtp_hdr *gh;
+
 
 	if((gmtp_info->relay_enabled == 0) || (out == NULL))
 		return ret;
 
 	if(iph->protocol == IPPROTO_GMTP) {
 
-		gh = gmtp_hdr(skb);
+		struct gmtp_hdr *gh = gmtp_hdr(skb);
+
 		if(gh->type != GMTP_PKT_DATA) {
 			gmtp_print_debug("GMTP packet: %s (%d)",
 					gmtp_packet_name(gh->type), gh->type);
@@ -255,6 +259,7 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 		case GMTP_PKT_DATA:
 			ret = gmtp_inter_data_out(skb);
 			break;
+		case GMTP_PKT_RESET:
 		case GMTP_PKT_CLOSE:
 			ret = gmtp_inter_close_out(skb);
 			break;
@@ -278,8 +283,9 @@ int init_module()
 
 	gmtp_inter.capacity = CAPACITY_DEFAULT;
 	gmtp_inter.buffer_len = 0;
+	gmtp_inter.kreporter = GMTP_REPORTER_DEFAULT_PROPORTION - 1;
 
-	/* TODO Initial rx per flow is the max capacity of channel */
+	/* TODO Why initial rx per flow is 10% of capacity of channel? */
 	gmtp_inter.ucc_rx = DIV_ROUND_CLOSEST(gmtp_inter.capacity * 10, 100);
 
 	gmtp_inter.total_bytes_rx = 0;
@@ -290,7 +296,7 @@ int init_module()
 
 	memcpy(gmtp_inter.relay_id, gmtp_inter_build_relay_id(),
 			GMTP_RELAY_ID_LEN);
-	memset(&gmtp_inter.mcst, 0, 4*sizeof(unsigned char));
+	memset(&gmtp_inter.mcst, 0, 4 * sizeof(unsigned char));
 
 	gmtp_inter.hashtable = gmtp_inter_create_hashtable(64);
 	if(gmtp_inter.hashtable == NULL) {

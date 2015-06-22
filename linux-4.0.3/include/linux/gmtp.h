@@ -43,6 +43,14 @@ enum gmtp_role {
 	GMTP_ROLE_RELAY
 };
 
+enum gmtp_sock_type {
+	GMTP_SOCK_TYPE_REGULAR,
+	GMTP_SOCK_TYPE_REPORTER,
+	GMTP_SOCK_TYPE_CONTROL_CHANNEL,
+	GMTP_SOCK_TYPE_DATA_CHANNEL
+};
+
+
 /*
  * Number of loss intervals (RFC 4342, 8.6.1). The history size is one more than
  * NINTERVAL, since the `open' interval I_0 is always stored as the first entry.
@@ -116,18 +124,21 @@ static inline struct gmtp_request_sock *gmtp_rsk(const struct request_sock *req)
  * struct gmtp_sock - GMTP socket state
  *
  * @flowname: name of the dataflow
+ * @flowname: id of my relay (for clients)
  * @iss: initial sequence number sent
  * @isr: initial sequence number received
  * @gss: greatest sequence number sent
  * @gsr: greatest valid sequence number received
  * @mss: current value of MSS (path MTU minus header sizes)
  * @role: role of this sock, one of %gmtp_role
+ * @reporter: reporter of a client
+ * @rsock: socket connected to reporter
+ * @max_nclients: limit of clients in a reporter
+ * @nclients: number of clients of a reporter
  * @req_stamp: time stamp of request sent
  * @reply_stamp: time stamp of Register-Reply (or Request-Reply) sent
- * @ack_rcv_tstamp: timestamp of last received ACK (for keepalives)
- * @keepalive_time: time before keep alive takes place
- * @keepalive_intvl: time interval between keep alive probes
- * @keepalive_probes: num of allowed keep alive probes
+ * @ack_rx_tstamp: timestamp of last received ACK (for keepalives)
+ * @ack_tx_tstamp: timestamp of last received ACK (for keepalives)
  * @tx_rtt: RTT from sender to relays
  * @server_timewait: server holds timewait state on close
  * @rx_last_counter:	     Tracks window counter (RFC 4342, 8.1)
@@ -154,7 +165,6 @@ static inline struct gmtp_request_sock *gmtp_rsk(const struct request_sock *req)
  * @tx_max_rate: Max TX rate (bytes/s). 0 == no limits.
  * tx_byte_budget: the amount of bytes that can be sent immediately.
  * tx_adj_budget: memory of last adjustment in TX rate.
- *
  */
 struct gmtp_sock {
 	/* inet_connection_sock has to be the first member of gmtp_sock */
@@ -162,6 +172,7 @@ struct gmtp_sock {
 #define gmtps_syn_rtt 	gmtps_inet_connection.icsk_ack.lrcvtime
 
 	u8 				flowname[GMTP_FLOWNAME_LEN];
+	u8 				relay_id[GMTP_RELAY_ID_LEN];
 
 	u32				iss;
 	u32				isr;
@@ -170,14 +181,15 @@ struct gmtp_sock {
 	
 	u32				mss;
 
+	enum gmtp_sock_type		type:3;
 	enum gmtp_role			role:3;
+	struct gmtp_client		*myself;
+	struct sock 			*channel_sk;
 
 	u32				req_stamp;
 	u32				reply_stamp;
-	u32				ack_rcv_tstamp;
-	unsigned int			keepalive_time;
-	unsigned int			keepalive_intvl;
-	u8				keepalive_probes;
+	u32				ack_rx_tstamp;
+	u32				ack_tx_tstamp;
 
 	u8				server_timewait:1;
 
@@ -258,12 +270,6 @@ static inline struct gmtp_hdr_data *gmtp_hdr_data(const struct sk_buff *skb)
 						 sizeof(struct gmtp_hdr));
 }
 
-static inline struct gmtp_hdr_ack *gmtp_hdr_ack(const struct sk_buff *skb)
-{
-	return (struct gmtp_hdr_ack *)(skb_transport_header(skb) +
-						 sizeof(struct gmtp_hdr));
-}
-
 static inline struct gmtp_hdr_register_reply *gmtp_hdr_register_reply(
 		const struct sk_buff *skb)
 {
@@ -277,10 +283,30 @@ static inline struct gmtp_hdr_route *gmtp_hdr_route(const struct sk_buff *skb)
 						 sizeof(struct gmtp_hdr));
 }
 
+static inline struct gmtp_hdr_feedback *gmtp_hdr_feedback(const struct sk_buff *skb)
+{
+	return (struct gmtp_hdr_feedback *)(skb_transport_header(skb)
+			+ sizeof(struct gmtp_hdr));
+}
+
 static inline struct gmtp_hdr_reqnotify *gmtp_hdr_reqnotify(
 		const struct sk_buff *skb)
 {
 	return (struct gmtp_hdr_reqnotify *)(skb_transport_header(skb) +
+						 sizeof(struct gmtp_hdr));
+}
+
+static inline struct gmtp_hdr_elect_request *gmtp_hdr_elect_request(
+		const struct sk_buff *skb)
+{
+	return (struct gmtp_hdr_elect_request *)(skb_transport_header(skb) +
+						 sizeof(struct gmtp_hdr));
+}
+
+static inline struct gmtp_hdr_elect_response *gmtp_hdr_elect_response(
+		const struct sk_buff *skb)
+{
+	return (struct gmtp_hdr_elect_response *)(skb_transport_header(skb) +
 						 sizeof(struct gmtp_hdr));
 }
 

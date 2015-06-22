@@ -1,0 +1,23 @@
+# Ignored files
+*.txt
+*.aux
+*.bbl
+*.blg
+*.dvi
+*.log
+*.ps
+*.toc
+*.lof
+*.lot
+*.out
+*.glo
+*.gls
+*.ilg
+*.ist
+*.ind
+*.glg
+*.synctex.gz
+*.brf
+*.idx
+/.project
+*~

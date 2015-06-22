@@ -98,9 +98,9 @@ try:
 except (KeyboardInterrupt, SystemExit):
     print '\nReceived keyboard interrupt, quitting...\n'
     #server_output.send(out.encode('utf-8'))
-    server_output.shutdown(socket.SHUT_WR)
+    server_output.shutdown(socket.SHUT_RDWR)
     server_output.close()
-    server_socket.shutdown(socket.SHUT_WR)
+    server_socket.shutdown(socket.SHUT_RDWR)
     server_socket.close()
     
 

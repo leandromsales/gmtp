@@ -56,25 +56,21 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 	struct gmtp_relay_entry *entry;
 
 	__u8 code = GMTP_REQNOTIFY_CODE_ERROR;
-	__u8 reporter = 0;
+	__u8 max_nclients = 0;
 
 	gmtp_pr_func();
 
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry != NULL) {
 		gmtp_pr_info("Media found. Sending RequestNotify.");
-		reporter = new_reporter(entry);
+		max_nclients = new_reporter(entry);
 		switch(entry->state) {
 		case GMTP_INTER_WAITING_REGISTER_REPLY:
-			code = reporter ?
-					GMTP_REQNOTIFY_CODE_WAIT_REPORTER :
-					GMTP_REQNOTIFY_CODE_WAIT;
+			code = 	GMTP_REQNOTIFY_CODE_WAIT;
 			break;
 		case GMTP_INTER_REGISTER_REPLY_RECEIVED:
 		case GMTP_INTER_TRANSMITTING:
-			code = reporter ?
-					GMTP_REQNOTIFY_CODE_OK_REPORTER:
-					GMTP_REQNOTIFY_CODE_OK;
+			code = GMTP_REQNOTIFY_CODE_OK;
 			ret = NF_DROP;
 			break;
 		default:
@@ -95,10 +91,8 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 		if(!err) {
 			entry = gmtp_inter_lookup_media(gmtp_inter.hashtable,
 					gh->flowname);
-			reporter = new_reporter(entry);
-			code = reporter ?
-					GMTP_REQNOTIFY_CODE_WAIT_REPORTER :
-					GMTP_REQNOTIFY_CODE_WAIT;
+			max_nclients = new_reporter(entry);
+			code = GMTP_REQNOTIFY_CODE_WAIT;
 			gh->type = GMTP_PKT_REGISTER;
 		} else {
 			gmtp_pr_error("Failed to insert flow in table (%d)", err);
@@ -107,12 +101,19 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 		}
 	}
 
-	gmtp_list_add_client(++entry->info->nclients, iph->saddr, gh->sport,
-			reporter, &entry->info->clients->list);
+	if(max_nclients > 0)
+		entry->info->cur_reporter = gmtp_list_add_client(
+				++entry->info->nclients, iph->saddr, gh->sport,
+				max_nclients, &entry->info->clients->list);
+	else
+		gmtp_list_add_client(++entry->info->nclients, iph->saddr,
+				gh->sport, max_nclients,
+				&entry->info->clients->list);
 
 out:
 	gh_reqnotify = gmtp_inter_make_request_notify_hdr(skb, entry,
-			gh->dport, gh->sport, code);
+			gh->dport, gh->sport, entry->info->cur_reporter,
+			max_nclients, code);
 
 	if(gh_reqnotify != NULL)
 		gmtp_inter_build_and_send_pkt(skb, iph->daddr,
@@ -175,8 +176,9 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh_route_n;
 	struct gmtp_relay_entry *entry;
+	struct gmtp_flow_info *info;
 	struct gmtp_hdr *gh_req_n;
-	struct gmtp_client *client, *first_client;
+	struct gmtp_client *client, *temp, *first_client, *cur_reporter = NULL;
 	__u8 code = GMTP_REQNOTIFY_CODE_OK;
 
 	gmtp_print_function();
@@ -185,37 +187,42 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
 	gmtp_inter_add_relayid(skb);
 
 	gmtp_print_debug("UPDATING Tx Rate");
-	gmtp_ucc(UINT_MAX);
+	gmtp_ucc(UINT_MAX, 1);
 	if(gmtp_inter.ucc_rx < gh->transm_r)
 		gh->transm_r = (__be32) gmtp_inter.ucc_rx;
 
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry == NULL)
 		return NF_ACCEPT;
+	info = entry->info;
 
 	gh_route_n = gmtp_inter_make_route_hdr(skb);
 	if(gh_route_n != NULL)
 		gmtp_inter_build_and_send_pkt(skb, iph->daddr, iph->saddr,
 				gh_route_n, true);
 
-	/* Convert packet to RequestNotify and send it to all clients */
-	ret = gmtp_inter_make_request_notify(skb, iph->saddr, gh->sport,
-			iph->daddr, gh->dport, GMTP_REQNOTIFY_CODE_OK_REPORTER);
 	entry->state = GMTP_INTER_REGISTER_REPLY_RECEIVED;
 
-	/* Send to first client */
-	first_client = jump_over_gmtp_intra(skb, &entry->info->clients->list);
+	/* Send it to first client */
+	first_client = gmtp_get_first_client(&info->clients->list);
+	if(first_client->max_nclients > 0)
+		cur_reporter = first_client;
+	ret = gmtp_inter_make_request_notify(skb, iph->saddr, gh->sport,
+			first_client->addr, first_client->port, cur_reporter,
+			first_client->max_nclients, code);
 
-	/* Send to others */
-	list_for_each_entry(client, &entry->info->clients->list, list)
+	/* Clean list of clients and keep only reporters */
+	list_for_each_entry_safe(client, temp, &info->clients->list, list)
 	{
 		struct sk_buff *copy = skb_copy(skb, gfp_any());
+
+		/* Send to other clients (not first) */
 		if(client == first_client)
 			continue;
 
-		code = client->reporter == 1 ?
-				GMTP_REQNOTIFY_CODE_OK_REPORTER :
-				GMTP_REQNOTIFY_CODE_OK;
+		if(client->max_nclients > 0)
+			cur_reporter = client;
+
 		if(copy != NULL) {
 			struct iphdr *iph_copy = ip_hdr(copy);
 			struct gmtp_hdr *gh_copy = gmtp_hdr(copy);
@@ -225,56 +232,100 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
 			gh_copy->dport = client->port;
 
 			gh_req_n = gmtp_inter_make_request_notify_hdr(copy,
-					entry, gh->sport, client->port, code);
+					entry, gh->sport, client->port,
+					cur_reporter, client->max_nclients,
+					code);
 			if(gh_req_n != NULL)
 				gmtp_inter_build_and_send_pkt(skb, iph->saddr,
 						client->addr, gh_req_n, false);
+		}
+
+		/** Deleting non-reporters */
+		if(client->max_nclients <= 0) {
+			list_del(&client->list);
+			kfree(client);
 		}
 	}
 
 	return NF_ACCEPT;
 }
 
-/* FIXME Treat acks from clients */
+/* Treat acks from clients */
 int gmtp_inter_ack_rcv(struct sk_buff *skb)
 {
-	int ret = NF_DROP;
-
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct iphdr *iph = ip_hdr(skb);
+	struct gmtp_relay_entry *entry;
+	struct gmtp_flow_info *info;
+	struct gmtp_client *reporter;
 
 	gmtp_print_function();
 
-	gmtp_pr_info("%s (%d) src=%pI4@%-5d dst=%pI4@%-5d transm_r: %u",
-			gmtp_packet_name(gh->type), gh->type,
-			&iph->saddr, ntohs(gh->sport),
-			&iph->daddr, ntohs(gh->dport),
-			gh->transm_r);
+	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
+	if(entry == NULL)
+		return NF_ACCEPT;
 
-	return ret;
+	info = entry->info;
+	reporter = gmtp_get_client(&info->clients->list, iph->saddr, gh->sport);
+	if(reporter != NULL) {
+		print_gmtp_packet(iph, gh);
+		reporter->ack_rx_tstamp = jiffies_to_msecs(jiffies);
+	}
+
+	return NF_DROP;
 }
 
+/**
+ * FIXME Take the average of feedbacks in an window
+ */
 int gmtp_inter_feedback_rcv(struct sk_buff *skb)
 {
-	int ret = NF_DROP;
-
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_relay_entry *entry;
+	struct gmtp_flow_info *info;
+	struct gmtp_client *reporter;
 
+/*	print_gmtp_packet(iph, gh);*/
 
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry == NULL)
-		goto out;
+		return NF_ACCEPT;
+	info = entry->info;
 
-	/* Discard early feedbacks */
-	if((entry->info->data_pkt_out/entry->info->buffer_min) < 100)
-		goto out;
+	reporter = gmtp_get_client(&info->clients->list, iph->saddr, gh->sport);
+	if(reporter == NULL)
+		return NF_DROP;
 
-	if(gh->transm_r > 0)
-		entry->info->required_tx = (unsigned int) gh->transm_r;
+	if(likely(gh->transm_r > 0)) {
+		info->nfeedbacks++;
+		info->sum_feedbacks += (unsigned int) gh->transm_r;
+		reporter->ack_rx_tstamp = jiffies_to_msecs(jiffies);
+	}
 
-out:
-	return ret;
+	return NF_DROP;
+}
+
+/**
+ * FIXME This works only with auto promoted reporters
+ */
+int gmtp_inter_elect_resp_rcv(struct sk_buff *skb)
+{
+	struct iphdr *iph = ip_hdr(skb);
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct gmtp_relay_entry *entry;
+
+	gmtp_pr_func();
+
+	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
+	if(entry == NULL)
+		return NF_ACCEPT;
+
+	gmtp_list_add_client(++entry->info->nclients, iph->saddr,
+					gh->sport, gmtp_inter.kreporter,
+					&entry->info->clients->list);
+
+	return NF_DROP;
 }
 
 #define skblen(skb) ((*skb).len) + ETH_HLEN
@@ -288,6 +339,7 @@ static inline void gmtp_update_stats(struct gmtp_flow_info *info,
 	info->total_bytes += skblen(skb);
 	info->recent_bytes += skblen(skb);
 	info->seq = (unsigned int) gh->seq;
+	info->rtt = (unsigned int) gh->server_rtt;
 
 	if(gh->seq % gmtp_inter.rx_rate_wnd == 0) {
 		unsigned long current_time = ktime_to_ms(ktime_get_real());
@@ -299,8 +351,6 @@ static inline void gmtp_update_stats(struct gmtp_flow_info *info,
 
 		info->recent_rx_tstamp = ktime_to_ms(skb->tstamp);
 		info->recent_bytes = 0;
-
-		pr_info("Flow RX: %u bytes/s\n", info->current_rx);
 	}
 
 	gmtp_inter.total_bytes_rx += skblen(skb);
@@ -341,7 +391,7 @@ int gmtp_inter_data_rcv(struct sk_buff *skb)
 	gmtp_update_stats(info, skb, gh);
 
 	if(gh->seq % 1000 == 0)
-		gmtp_ucc(UINT_MAX);
+		gmtp_ucc(UINT_MAX, 0);
 
 out:
 	return NF_ACCEPT;
@@ -352,40 +402,36 @@ int gmtp_inter_close_rcv(struct sk_buff *skb)
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_relay_entry *entry;
-	struct gmtp_flow_info *info;
-
-	struct gmtp_client *client;
 
 	gmtp_pr_func();
 
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry == NULL)
-		goto out;
-	info = entry->info;
+		return NF_ACCEPT;
 
-	if(iph->saddr == entry->server_addr) {
-		if(entry->state == GMTP_INTER_TRANSMITTING) {
-			entry->state = GMTP_INTER_CLOSE_RECEIVED;
+	if(iph->saddr != entry->server_addr
+			|| entry->state == GMTP_INTER_CLOSED)
+		return NF_ACCEPT;
 
-			jump_over_gmtp_intra(skb, &info->clients->list);
-			list_for_each_entry(client, &info->clients->list, list)
-			{
-				struct sk_buff *copy = skb_copy(skb, gfp_any());
-				if(copy != NULL) {
-					struct iphdr *iph_copy = ip_hdr(copy);
-					struct gmtp_hdr *gh_copy = gmtp_hdr(
-							copy);
 
-					iph_copy->daddr = client->addr;
-					ip_send_check(iph_copy);
-					gh_copy->dport = client->port;
+	if(entry->state == GMTP_INTER_TRANSMITTING) {
+		struct gmtp_hdr *gh_reset;
+		entry->state = GMTP_INTER_CLOSE_RECEIVED;
 
-					gmtp_buffer_add(info, copy);
-				}
-			}
+		gh_reset = gmtp_inter_make_reset_hdr(skb,
+				GMTP_RESET_CODE_CLOSED);
+		if(gh_reset != NULL) {
+			gmtp_inter_build_and_send_pkt(skb, iph->daddr,
+					iph->saddr, gh_reset, true);
+			gmtp_pr_debug("Reset: src=%pI4@%-5d, dst=%pI4@%-5d",
+					&iph->daddr, ntohs(gh_reset->sport),
+					&iph->saddr, ntohs(gh_reset->dport));
 		}
+
+		jump_over_gmtp_intra(skb, &entry->info->clients->list);
+		print_gmtp_packet(iph, gh);
+		gmtp_buffer_add(entry->info, skb);
 	}
 
-out:
 	return NF_ACCEPT;
 }

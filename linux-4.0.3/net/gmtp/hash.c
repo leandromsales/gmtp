@@ -82,32 +82,6 @@ struct gmtp_client_entry *gmtp_lookup_client(
 }
 EXPORT_SYMBOL_GPL(gmtp_lookup_client);
 
-/**
- * Create and add a client in the list of clients
- */
-void gmtp_list_add_client(unsigned int id, __be32 addr,
-		__be16 port, __u8 reporter, struct list_head *head)
-{
-	struct gmtp_client *new = kmalloc(sizeof(struct gmtp_client), GFP_ATOMIC);
-
-	if(new == NULL) {
-		gmtp_pr_error("Error while creating new gmtp_client...");
-		return;
-	}
-
-	new->id	  = id;
-	new->addr = addr;
-	new->port = port;
-	new->reporter = reporter;
-
-	gmtp_pr_info("New client (%u): ADDR=%pI4@%-5d\n",
-			new->id, &addr, ntohs(port));
-
-	INIT_LIST_HEAD(&new->list);
-	list_add_tail(&new->list, head);
-}
-EXPORT_SYMBOL_GPL(gmtp_list_add_client);
-
 int gmtp_add_client_entry(struct gmtp_hashtable *hashtable, __u8 *flowname,
 		__be32 local_addr, __be16 local_port,
 		__be32 channel_addr, __be16 channel_port)
@@ -140,8 +114,6 @@ int gmtp_add_client_entry(struct gmtp_hashtable *hashtable, __u8 *flowname,
 	if(new_entry->clients == NULL)
 		return 3;
 	INIT_LIST_HEAD(&new_entry->clients->list);
-	gmtp_list_add_client(0, local_addr, local_port, 0,
-			&new_entry->clients->list);
 
 	new_entry->channel_addr = channel_addr;
 	new_entry->channel_port = channel_port;

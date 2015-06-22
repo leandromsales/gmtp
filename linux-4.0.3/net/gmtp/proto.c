@@ -104,6 +104,23 @@ void flowname_str(__u8* str, const __u8 *flowname)
 }
 EXPORT_SYMBOL_GPL(flowname_str);
 
+/*
+ * Print GMTP packet basic information
+ */
+void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh)
+{
+	__u8 flowname[GMTP_FLOWNAME_STR_LEN];
+	flowname_str(flowname, gh->flowname);
+	pr_info("%s (%d) src=%pI4@%-5d, dst=%pI4@%-5d, seq=%u, rtt=%u ms, "
+			"transm_r=%u bytes/s, flow=%s\n",
+				gmtp_packet_name(gh->type), gh->type,
+				&iph->saddr, ntohs(gh->sport),
+				&iph->daddr, ntohs(gh->dport),
+				gh->seq, gh->server_rtt, gh->transm_r,
+				flowname);
+}
+EXPORT_SYMBOL_GPL(print_gmtp_packet);
+
 /**
  * @str size MUST HAVE len >= GMTP_FLOWNAME_STR_LEN
  */
@@ -129,13 +146,40 @@ void print_route(struct gmtp_hdr_route *route)
 }
 EXPORT_SYMBOL_GPL(print_route);
 
+const char *gmtp_sock_type_name(const int type)
+{
+	static const char *const gmtp_sock_type_names[] = {
+	[GMTP_SOCK_TYPE_REGULAR]	 = "REGULAR",
+	[GMTP_SOCK_TYPE_REPORTER]	 = "TO_REPORTER",
+	[GMTP_SOCK_TYPE_CONTROL_CHANNEL] = "CONTROL_CHANNEL",
+	[GMTP_SOCK_TYPE_DATA_CHANNEL]	 = "DATA_CHANNEL"
+	};
+
+	if(type > GMTP_SOCK_TYPE_DATA_CHANNEL)
+		return "INVALID TYPE!";
+	else
+		return gmtp_sock_type_names[type];
+}
+EXPORT_SYMBOL_GPL(gmtp_sock_type_name);
+
+/*
+ * Print GMTP sock basic information
+ */
+void print_gmtp_sock(struct sock *sk)
+{
+	pr_info("Socket (%s) - dst=%pI4@%-5d [%s]\n",
+			gmtp_sock_type_name(gmtp_sk(sk)->type), &sk->sk_daddr,
+			ntohs(sk->sk_dport), gmtp_state_name(sk->sk_state));
+}
+EXPORT_SYMBOL_GPL(print_gmtp_sock);
+
 void gmtp_set_state(struct sock *sk, const int state)
 {
 	const int oldstate = sk->sk_state;
 
-	gmtp_print_function();
-	gmtp_print_debug("%s --> %s\n", gmtp_state_name(oldstate),
-			gmtp_state_name(state));
+	print_gmtp_sock(sk);
+	gmtp_pr_info("(%s --> %s)", gmtp_state_name(oldstate),
+				gmtp_state_name(state));
 
 	if(state == oldstate)
 		gmtp_print_warning("new state == old state!");
@@ -176,7 +220,7 @@ int gmtp_init_sock(struct sock *sk)
 	struct inet_connection_sock *icsk = inet_csk(sk);
 	int ret = 0;
 
-	gmtp_print_function();
+	gmtp_pr_func();
 
 	gmtp_init_xmit_timers(sk);
 	icsk->icsk_rto		= GMTP_TIMEOUT_INIT;
@@ -185,11 +229,15 @@ int gmtp_init_sock(struct sock *sk)
 	sk->sk_write_space	= gmtp_write_space;
 	icsk->icsk_sync_mss	= gmtp_sync_mss;
 
+	memset(gp->flowname, 0, GMTP_FLOWNAME_LEN);
+
 	gp->mss			= GMTP_DEFAULT_MSS;
+	gp->type 		= GMTP_SOCK_TYPE_REGULAR;
 	gp->role		= GMTP_ROLE_UNDEFINED;
 
 	gp->req_stamp		= 0;
-	gp->ack_rcv_tstamp	= 0;
+	gp->ack_rx_tstamp	= 0;
+	gp->ack_tx_tstamp	= 0;
 	gp->tx_rtt		= GMTP_DEFAULT_RTT;
 	gp->relay_rtt		= 0;
 
@@ -212,8 +260,6 @@ int gmtp_init_sock(struct sock *sk)
 	gp->tx_byte_budget	= INT_MIN;
 	gp->tx_adj_budget	= 0;
 
-	memset(gp->flowname, 0, GMTP_FLOWNAME_LEN);
-
 	return ret;
 }
 EXPORT_SYMBOL_GPL(gmtp_init_sock);
@@ -221,6 +267,11 @@ EXPORT_SYMBOL_GPL(gmtp_init_sock);
 void gmtp_destroy_sock(struct sock *sk)
 {
 	gmtp_pr_func();
+
+	if(gmtp_sk(sk)->role == GMTP_ROLE_CLIENT && gmtp_sk(sk)->myself != NULL) {
+		if(gmtp_sk(sk)->myself->rsock != NULL)
+			inet_csk_clear_xmit_timers(gmtp_sk(sk)->myself->rsock);
+	}
 
 	if(gmtp_sk(sk)->role == GMTP_ROLE_REPORTER)
 		mcc_rx_exit(sk);
@@ -269,9 +320,8 @@ void gmtp_close(struct sock *sk, long timeout)
 	int state;
 
 	gmtp_pr_func();
-	gmtp_pr_info("Closing connection...");
-	gmtp_pr_info("Timeout: %ld", timeout);
-	gmtp_pr_info("sk->st_state: %s", gmtp_state_name(sk->sk_state));
+
+	pr_info("state: %s, timeout: %ld", gmtp_state_name(sk->sk_state), timeout);
 
 	lock_sock(sk);
 
@@ -297,8 +347,7 @@ void gmtp_close(struct sock *sk, long timeout)
 
 	if(data_was_unread) {
 		/* Unread data was tossed, send an appropriate Reset Code */
-		gmtp_print_warning("ABORT with %u bytes unread\n",
-				data_was_unread);
+		gmtp_pr_warning("ABORT with %u bytes unread", data_was_unread);
 		gmtp_send_reset(sk, GMTP_RESET_CODE_ABORTED);
 		gmtp_set_state(sk, GMTP_CLOSED);
 	} else if(sock_flag(sk, SOCK_LINGER) && !sk->sk_lingertime) {
@@ -306,11 +355,9 @@ void gmtp_close(struct sock *sk, long timeout)
 		sk->sk_prot->disconnect(sk, 0);
 	} else if(sk->sk_state != GMTP_CLOSED) {
 		/*
-		 * TODO Normal connection termination.
 		 * May need to wait if there are still packets in the
 		 * TX queue that are delayed by the CCID.
 		 */
-		gmtp_print_debug("TODO: Normal connection termination.");
 		gmtp_terminate_connection(sk);
 	}
 
@@ -481,6 +528,7 @@ int gmtp_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 		case GMTP_PKT_DATAACK:
 			goto found_ok_skb;
 		case GMTP_PKT_CLOSE:
+			pr_info("CLOSE received!\n");
 			if(!(flags & MSG_PEEK))
 				gmtp_finish_passive_close(sk);
 			/* fall through */
@@ -663,6 +711,14 @@ void gmtp_shutdown(struct sock *sk, int how)
 }
 EXPORT_SYMBOL_GPL(gmtp_shutdown);
 
+void kfree_gmtp_info(struct gmtp_info *gmtp)
+{
+	kfree(gmtp_info->control_sk);
+	kfree(gmtp_info->ctrl_addr);
+	kfree(gmtp_info);
+}
+
+
 /* TODO Study thash_entries... This is from DCCP thash_entries */
 static int thash_entries;
 module_param(thash_entries, int, 0444);
@@ -784,7 +840,6 @@ MODULE_PARM_DESC(ghash_entries, "Number of GMTP hash entries");
 static int __init gmtp_init(void)
 {
 	int rc = 0;
-	gmtp_print_debug("GMTP init!");
 	gmtp_print_function();
 
 	rc = mcc_lib_init();
@@ -821,7 +876,6 @@ out:
 static void __exit gmtp_exit(void)
 {
 	gmtp_print_function();
-	gmtp_print_debug("GMTP exit!");
 
 	free_pages((unsigned long)gmtp_inet_hashinfo.bhash,
 			get_order(gmtp_inet_hashinfo.bhash_size *
@@ -832,7 +886,7 @@ static void __exit gmtp_exit(void)
 	inet_ehash_locks_free(&gmtp_inet_hashinfo);
 	kmem_cache_destroy(gmtp_inet_hashinfo.bind_bucket_cachep);
 
-	kfree(gmtp_info);
+	kfree_gmtp_info(gmtp_info);
 	kfree_gmtp_hashtable(gmtp_hashtable);
 	percpu_counter_destroy(&gmtp_orphan_count);
 	mcc_lib_exit();

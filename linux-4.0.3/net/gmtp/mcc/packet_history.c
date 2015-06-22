@@ -96,8 +96,6 @@ int mcc_rx_hist_duplicate(struct mcc_rx_hist *h, struct sk_buff *skb)
 	struct mcc_rx_hist_entry *loss_prev = mcc_rx_hist_loss_prev(h);
 	int i;
 
-	gmtp_pr_func();
-
 	if(loss_prev == NULL) {
 		gmtp_pr_warning("loss_prev is NULL");
 		return 1;

@@ -1,17 +1,4 @@
 menuconfig GMTP
 	tristate "The GMTP Protocol"
 	depends on INET
-	---help---
-      Some text about it here ..
-	  If in doubt, say N.
-if GMTP
-
-menu "GMTP Kernel Hacking"
-config GMTP_PRI
-	tristate "GMTP-Pri"
-	default y
-	---help---
-      Some text about it here..
-endmenu
-endif # GMTP
 

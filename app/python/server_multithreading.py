@@ -48,7 +48,7 @@ class ClientThread(threading.Thread):
         
         while True: 
             
-            #time.sleep(0.001); # App controls Tx    0,001 ~ 100.000 bytes/s
+        #time.sleep(0.00175); # App controls Tx    0,001 ~ 100.000 bytes/s
                   
             if(self.text != out):
                 self.i = self.i + 1
