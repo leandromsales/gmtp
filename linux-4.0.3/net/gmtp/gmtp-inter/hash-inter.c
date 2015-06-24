@@ -82,6 +82,25 @@ struct gmtp_relay_entry *gmtp_inter_lookup_media(
 	return NULL;
 }
 
+void ack_timer_callback(struct gmtp_inter_hashtable *hashtable)
+{
+	struct gmtp_relay_entry *entry;
+	unsigned int hashval;
+
+    for(hashval = 0; hashtable->table[hashval] != NULL; ++hashval){
+
+        for(entry = hashtable->table[hashval]; 
+            entry != NULL; entry = entry->next){
+
+            gmtp_print_debug("Media entry founded at index %d", hashval);
+            gmtp_print_debug("Server Founded with addr %x",
+                            entry->server_addr);
+            /*TODO send ACK to servers*/
+        }
+    }
+}
+
+
 struct gmtp_flow_info *__gmtp_inter_build_info(void)
 {
 	struct gmtp_flow_info *info = kmalloc(sizeof(struct gmtp_flow_info),
@@ -112,6 +131,10 @@ struct gmtp_flow_info *__gmtp_inter_build_info(void)
 
 	setup_timer(&info->mcc_timer, mcc_timer_callback, (unsigned long) info);
 	mod_timer(&info->mcc_timer, gmtp_mcc_interval(info->rtt));
+
+    setup_timer(&info->ack_timer, ack_timer_callback, gmtp_inter.hashtable);
+	mod_timer(&info->mcc_timer, jiffies + msecs_to_jiffies(1000));
+
 
 out:
 	return info;
@@ -222,6 +245,7 @@ struct gmtp_relay_entry *gmtp_inter_del_entry(
 	gmtp_inter_del_clients(current_entry);
 	skb_queue_purge(current_entry->info->buffer);
 	del_timer_sync(&current_entry->info->mcc_timer);
+    del_timer_sync(&current_entry->info->ack_timer);
 	kfree(current_entry->info);
 	kfree(current_entry);
 
