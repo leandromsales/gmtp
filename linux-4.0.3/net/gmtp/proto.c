@@ -19,8 +19,11 @@ EXPORT_SYMBOL_GPL(gmtp_orphan_count);
 struct inet_hashinfo gmtp_inet_hashinfo;
 EXPORT_SYMBOL_GPL(gmtp_inet_hashinfo);
 
-struct gmtp_hashtable* gmtp_hashtable;
-EXPORT_SYMBOL_GPL(gmtp_hashtable);
+struct gmtp_hashtable* client_hashtable;
+EXPORT_SYMBOL_GPL(client_hashtable);
+
+struct gmtp_hashtable* server_hashtable;
+EXPORT_SYMBOL_GPL(server_hashtable);
 
 struct gmtp_info* gmtp_info;
 EXPORT_SYMBOL_GPL(gmtp_info);
@@ -832,7 +835,7 @@ out_fail:
 	return rc;
 }
 
-static int ghash_entries = 256;
+static int ghash_entries = 1024;
 module_param(ghash_entries, int, 0444);
 MODULE_PARM_DESC(ghash_entries, "Number of GMTP hash entries");
 
@@ -852,8 +855,11 @@ static int __init gmtp_init(void)
 		goto out;
 	}
 
-	gmtp_hashtable = gmtp_create_hashtable(ghash_entries);
-	if(gmtp_hashtable == NULL) {
+	client_hashtable = gmtp_build_hashtable(ghash_entries,
+			gmtp_client_hash_ops);
+	server_hashtable = gmtp_build_hashtable(ghash_entries,
+			gmtp_server_hash_ops);
+	if(client_hashtable == NULL || server_hashtable == NULL) {
 		rc = -ENOBUFS;
 		goto out;
 	}
@@ -887,7 +893,9 @@ static void __exit gmtp_exit(void)
 	kmem_cache_destroy(gmtp_inet_hashinfo.bind_bucket_cachep);
 
 	kfree_gmtp_info(gmtp_info);
-	kfree_gmtp_hashtable(gmtp_hashtable);
+	kfree_gmtp_hashtable(client_hashtable);
+	kfree_gmtp_hashtable(server_hashtable);
+
 	percpu_counter_destroy(&gmtp_orphan_count);
 	mcc_lib_exit();
 }

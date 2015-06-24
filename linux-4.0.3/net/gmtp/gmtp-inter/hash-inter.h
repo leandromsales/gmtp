@@ -8,7 +8,7 @@
 #ifndef HASH_INTER_H_
 #define HASH_INTER_H_
 
-#define GMTP_HASH_SIZE  16
+#define GMTP_HASH_KEY_LEN  16
 
 /**
  * struct gmtp_relay_entry: entry in GMTP-inter Relay Table

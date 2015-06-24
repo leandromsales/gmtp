@@ -11,58 +11,28 @@
 
 #include "hash.h"
 
-struct gmtp_server_entry *gmtp_lookup_route(
-		struct gmtp_hashtable *hashtable, const __u8 *relayid)
-{
-	struct gmtp_server_entry *entry;
-	unsigned int hashval;
-
-	hashval = gmtp_hash(hashtable, relayid);
-
-	/* Error */
-	if(hashval < 0)
-		return NULL;
-
-	entry = hashtable->server_table[hashval];
-	for(; entry != NULL; entry = entry->next)
-		if(!memcmp(relayid, entry->srelay->relay_id, GMTP_RELAY_ID_LEN))
-			return entry;
-	return NULL;
-}
-EXPORT_SYMBOL_GPL(gmtp_lookup_route);
-
-int gmtp_add_server_entry(struct gmtp_hashtable *hashtable, __u8 *relayid,
+int gmtp_add_server_entry(struct gmtp_hashtable *table, const __u8 *relayid,
 		__u8 *flowname, struct gmtp_hdr_route *route)
 {
 	struct gmtp_server_entry *new_entry;
-	struct gmtp_server_entry *cur_entry;
-	unsigned int hashval;
-	__u8 nrelays = route->nrelays;
-
-	gmtp_print_function();
-
-	hashval = gmtp_hash(hashtable, relayid);
-
-	/* Error */
-	if(hashval < 0)
-		return hashval;
 
 	new_entry = kmalloc(sizeof(struct gmtp_server_entry), GFP_KERNEL);
 	if(new_entry == NULL)
 		return 1;
 
-	/* TODO Relay already registered */
-	cur_entry = gmtp_lookup_route(hashtable, relayid);
-	if(cur_entry != NULL)
-		return 2;
-
-	memcpy(new_entry->flowname, flowname, GMTP_FLOWNAME_LEN);
+	memcpy(new_entry->entry.key, flowname, GMTP_FLOWNAME_LEN);
 	memcpy(&new_entry->route, route, sizeof(*route));
-	new_entry->srelay = &new_entry->route.relay_list[nrelays];
+	new_entry->srelay = &new_entry->route.relay_list[route->nrelays];
 
-	new_entry->next = hashtable->server_table[hashval];
-	hashtable->server_table[hashval] = new_entry;
-
-	return 0;
+	return table->hash_ops.add_entry(table,
+			(struct gmtp_hash_entry*) new_entry);
 }
 EXPORT_SYMBOL_GPL(gmtp_add_server_entry);
+
+const struct gmtp_hash_ops gmtp_server_hash_ops = {
+		.hash = gmtp_hash,
+		.lookup = gmtp_lookup_entry,
+		.add_entry = gmtp_add_entry,
+		/*.del_entry = ,*/  /* FIXME Del server entry */
+		.destroy = destroy_gmtp_hashtable,
+};

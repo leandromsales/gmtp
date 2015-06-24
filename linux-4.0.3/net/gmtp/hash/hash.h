@@ -10,27 +10,86 @@
 
 #include "../gmtp.h"
 
-#define GMTP_HASH_SIZE  16
+#define GMTP_HASH_KEY_LEN  16
+
+struct gmtp_hashtable;
+
+/**
+ * struct gmtp_hash_ops - The GMTP hash table operations
+ */
+struct gmtp_hash_ops {
+	unsigned int (*hash)(struct gmtp_hashtable *table, const __u8 *key);
+	struct gmtp_hash_entry *(*lookup)(struct gmtp_hashtable *table,
+			const __u8 *key);
+	int (*add_entry)(struct gmtp_hashtable *table,
+			struct gmtp_hash_entry *entry);
+	void (*del_entry)(struct gmtp_hashtable *table, const __u8 *key);
+	void (*destroy)(struct gmtp_hashtable *table);
+};
+
+/**
+ * struct gmtp_hash_entry - The GMTP hash table entry
+ *
+ * @flowname:	the key of hash table entry
+ * @next: 	the next entry with the same key (hash)
+ */
+struct gmtp_hash_entry {
+	__u8 				key[GMTP_HASH_KEY_LEN];
+	struct gmtp_hash_entry		*next;
+};
+
+/**
+ * struct gmtp_hashtable - The GMTP hash table
+ *
+ * @size: 		the max number of entries in hash table (fixed)
+ * @gmtp_hash_ops: 	the operations of hashtable
+ * @table:		the array of table entries
+ * 			(it can be a client or a server entry)
+ */
+struct gmtp_hashtable {
+	int 				size;
+
+	struct gmtp_hash_entry		**entry;
+	struct gmtp_hash_ops		hash_ops;
+};
+
+/** hash.c */
+struct gmtp_hashtable *gmtp_build_hashtable(unsigned int size,
+		struct gmtp_hash_ops hash_ops);
+unsigned int gmtp_hash(struct gmtp_hashtable *table, const __u8 *key);
+struct gmtp_hash_entry *gmtp_lookup_entry(struct gmtp_hashtable *table,
+		const __u8 *key);
+int gmtp_add_entry(struct gmtp_hashtable *table, struct gmtp_hash_entry *entry);
+void destroy_gmtp_hashtable(struct gmtp_hashtable *table);
+void kfree_gmtp_hashtable(struct gmtp_hashtable *table);
 
 /**
  * struct gmtp_client_entry - An entry in client hash table
  *
- * flowname[GMTP_FLOWNAME_LEN];
- * local_addr:	local client IP address
- * local_port:	local client port
+ * clients: clients connected to flowname
  * channel_addr: multicast channel to receive media
  * channel_port: multicast port to receive media
  */
 struct gmtp_client_entry {
-	__u8 				flowname[GMTP_FLOWNAME_LEN];
+	/* gmtp_hash_entry has to be the first member of gmtp_client_entry */
+	struct gmtp_hash_entry		entry;
 
 	struct gmtp_client 		*clients;
 	__be32 				channel_addr;
 	__be16 				channel_port;
-
-	struct gmtp_client_entry 	*next;
 };
 
+
+int gmtp_add_client_entry(struct gmtp_hashtable *table,
+		const __u8 *flowname, __be32 local_addr, __be16 local_port,
+		__be32 channel_addr, __be16 channel_port);
+struct gmtp_client_entry *gmtp_lookup_client(struct gmtp_hashtable *table,
+		const __u8 *key);
+void gmtp_del_client_entry(struct gmtp_hashtable *table, const __u8 *key);
+
+extern const struct gmtp_hash_ops gmtp_client_hash_ops;
+
+/** Servers **/
 
 /**
  * struct gmtp_server_entry - An entry in server hash table
@@ -41,65 +100,40 @@ struct gmtp_client_entry {
  * @next: 	the next entry with the same key (hash)
  */
 struct gmtp_server_entry {
-	__u8 				flowname[GMTP_FLOWNAME_LEN];
+	/* gmtp_hash_entry has to be the first member of gmtp_client_entry */
+	struct gmtp_hash_entry		entry;
 
 	struct gmtp_relay 		*srelay;
 	struct gmtp_hdr_route	 	route;
-
-	struct gmtp_server_entry 	*next;
 };
 
 /**
- * struct gmtp_hashtable - The GMTP hash table
+ * struct gmtp_relay_table_entry - An entry in relays hash table (in server)
+ * @list:	the list head
+ * @next: 	the next entry with the same key (hash)
  *
- * @size: 	the max number of entries in hash table (fixed)
- * @table:	the array of table entries
- * 			(it can be a client or a server entry)
+ * @relay: the relay info
+ * @nextRelay: 	the next relay in path
+ * @relay_id: the relay id (key)
+ * @relay_ip: the relay ip
  */
-/* TODO Make routes_entry and relays_entry
- * Make a list of relays instead a array... */
-struct gmtp_hashtable {
-	int 				size;
-	struct gmtp_client_entry 	**client_table;
-	struct gmtp_server_entry 	**server_table;
+struct gmtp_relay_table_entry {
+	struct list_head 		list;
+
+	struct gmtp_relay 		relay;
+	struct gmtp_relay_table_entry	*nextRelay;
+	struct gmtp_relay_table_entry	*prevRelayList;
 };
 
-/** hash.c */
-struct gmtp_hashtable *gmtp_create_hashtable(unsigned int size);
-void kfree_gmtp_hashtable(struct gmtp_hashtable *hashtable);
+struct gmtp_relays_hashtable {
+	int 				size;
+	struct gmtp_relay_table_entry	**table;
+};
 
-static inline unsigned int gmtp_hash(struct gmtp_hashtable *hashtable,
-		const __u8 *key)
-{
-	unsigned int hashval;
-	int i;
-
-	if(hashtable == NULL)
-		return -EINVAL;
-
-	if(key == NULL)
-		return -ENOKEY;
-
-	hashval = 0;
-	for(i=0; i<GMTP_HASH_SIZE; ++i)
-		hashval = key[i] + (hashval << 5) - hashval;
-
-	return hashval % hashtable->size;
-}
-
-/** hash_client.c */
-struct gmtp_client_entry *gmtp_lookup_client(
-		struct gmtp_hashtable *hashtable, const __u8 *media);
-int gmtp_add_client_entry(struct gmtp_hashtable *hashtable, __u8 *flowname,
-		__be32 local_addr, __be16 local_port,
-		__be32 channel_addr, __be16 channel_port);
-void gmtp_del_client_entry(struct gmtp_hashtable *hashtable, __u8 *media);
-
-/** hash_server.c */
-struct gmtp_server_entry *gmtp_lookup_route(
-		struct gmtp_hashtable *hashtable, const __u8 *relayid);
-int gmtp_add_server_entry(struct gmtp_hashtable *hashtable, __u8 *relayid,
+int gmtp_add_server_entry(struct gmtp_hashtable *table, const __u8 *relayid,
 		__u8 *flowname, struct gmtp_hdr_route *route);
+
+extern const struct gmtp_hash_ops gmtp_server_hash_ops;
 
 
 

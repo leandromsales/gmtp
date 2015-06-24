@@ -563,7 +563,7 @@ static int gmtp_v4_reporter_rcv_elect_request(struct sk_buff *skb)
 
 	gmtp_pr_func();
 
-	media_entry = gmtp_lookup_client(gmtp_hashtable, gh->flowname);
+	media_entry = gmtp_lookup_client(client_hashtable, gh->flowname);
 	if(media_entry == NULL) {
 		pr_info("Media entry == NULL\n");
 		return 1;
@@ -602,7 +602,7 @@ static int gmtp_v4_client_rcv_elect_response(struct sk_buff *skb)
 
 	gmtp_pr_func();
 
-	media_entry = gmtp_lookup_client(gmtp_hashtable, gh->flowname);
+	media_entry = gmtp_lookup_client(client_hashtable, gh->flowname);
 	if(media_entry == NULL) {
 		pr_info("Media entry == NULL\n");
 		return 1;
@@ -672,7 +672,7 @@ static int gmtp_v4_reporter_rcv_ack(struct sk_buff *skb)
 
 	gmtp_pr_func();
 
-	media_entry = gmtp_lookup_client(gmtp_hashtable, gh->flowname);
+	media_entry = gmtp_lookup_client(client_hashtable, gh->flowname);
 	if(media_entry == NULL) {
 		pr_info("Media entry == NULL\n");
 		return 1;
@@ -866,7 +866,7 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 
 		struct gmtp_client *tmp;
 		struct gmtp_client_entry *media_entry = gmtp_lookup_client(
-				gmtp_hashtable, gh->flowname);
+				client_hashtable, gh->flowname);
 
 		if(media_entry == NULL)
 			goto discard_it;

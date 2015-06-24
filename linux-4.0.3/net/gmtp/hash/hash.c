@@ -11,12 +11,11 @@
 
 #include "hash.h"
 
-extern void gmtp_del_client_list(struct gmtp_client_entry *entry);
-
-struct gmtp_hashtable *gmtp_create_hashtable(unsigned int size)
+struct gmtp_hashtable *gmtp_build_hashtable(unsigned int size,
+		struct gmtp_hash_ops hash_ops)
 {
 	int i;
-	struct gmtp_hashtable *nt;
+	struct gmtp_hashtable *new_table;
 
 	gmtp_print_function();
 	gmtp_print_debug("Size of gmtp_hashtable: %d", size);
@@ -24,59 +23,108 @@ struct gmtp_hashtable *gmtp_create_hashtable(unsigned int size)
 	if(size < 1)
 		return NULL;
 
-	nt = kmalloc(sizeof(struct gmtp_hashtable), GFP_KERNEL);
-	if(nt == NULL)
+	new_table = kmalloc(sizeof(struct gmtp_hashtable), GFP_KERNEL);
+	if(new_table == NULL)
 		return NULL;
 
-	nt->client_table = kmalloc(sizeof(struct gmtp_client_entry*) * size,
-			GFP_KERNEL);
+	new_table->entry = kmalloc(sizeof(void*) * size, GFP_KERNEL);
 
-	nt->server_table = kmalloc(sizeof(struct gmtp_server_entry*) * size,
-			GFP_KERNEL);
-
-	if((nt->client_table == NULL) || (nt->server_table == NULL))
+	if(new_table->entry == NULL)
 		return NULL;
 
-	for(i = 0; i < size; ++i) {
-		nt->client_table[i] = NULL;
-		nt->server_table[i] = NULL;
-	}
+	for(i = 0; i < size; ++i)
+		new_table->entry[i] = NULL;
 
-	nt->size = size;
-	return nt;
+	new_table->size = size;
+	new_table->hash_ops = hash_ops;
+
+	return new_table;
+}
+EXPORT_SYMBOL_GPL(gmtp_build_hashtable);
+
+void kfree_gmtp_hashtable(struct gmtp_hashtable *table)
+{
+	table->hash_ops.destroy(table);
+}
+EXPORT_SYMBOL_GPL(kfree_gmtp_hashtable);
+
+unsigned int gmtp_hash(struct gmtp_hashtable *table, const __u8 *key)
+{
+	unsigned int hashval;
+	int i;
+
+	if(unlikely(table == NULL))
+		return -EINVAL;
+
+	if(unlikely(key == NULL))
+		return -ENOKEY;
+
+	hashval = 0;
+	for(i = 0; i < GMTP_HASH_KEY_LEN; ++i)
+		hashval = key[i] + (hashval << 5) - hashval;
+
+	return hashval % table->size;
 }
 
-void kfree_gmtp_hashtable(struct gmtp_hashtable *hashtable)
+struct gmtp_hash_entry *gmtp_lookup_entry(struct gmtp_hashtable *table,
+		const __u8 *key)
 {
-	int i;
-	struct gmtp_client_entry *c_entry, *ctmp;
-	struct gmtp_server_entry *s_entry, *stmp;
+	struct gmtp_hash_entry *entry;
+	unsigned int hashval = table->hash_ops.hash(table, key);
+
+	/* Error */
+	if(hashval < 0)
+		return NULL;
+
+	entry = table->entry[hashval];
+	for(; entry != NULL; entry = entry->next)
+		if(memcmp(key, entry->key, GMTP_HASH_KEY_LEN) == 0)
+			return entry;
+	return NULL;
+}
+
+int gmtp_add_entry(struct gmtp_hashtable *table, struct gmtp_hash_entry *entry)
+{
+	struct gmtp_hash_entry *cur_entry;
+	unsigned int hashval;
 
 	gmtp_print_function();
 
-	if(hashtable == NULL)
+	/* Error */
+	if(hashval < 0)
+		return hashval;
+
+	/** Primary key at client hashtable is flowname */
+	hashval = table->hash_ops.hash(table, entry->key);
+	cur_entry = table->hash_ops.lookup(table, entry->key);
+	if(cur_entry != NULL)
+		return 1; /* Entry already exists */
+
+	entry->next = table->entry[hashval];
+	table->entry[hashval] = entry;
+
+	return 0;
+}
+
+void destroy_gmtp_hashtable(struct gmtp_hashtable *table)
+{
+	int i;
+	struct gmtp_hash_entry *entry, *tmp;
+
+	gmtp_print_function();
+
+	if(table == NULL)
 		return;
 
-	for(i = 0; i < hashtable->size; ++i) {
-		c_entry = hashtable->client_table[i];
-		while(c_entry != NULL) {
-			ctmp = c_entry;
-			gmtp_del_client_list(ctmp);
-			c_entry = c_entry->next;
-			kfree(ctmp);
+	for(i = 0; i < table->size; ++i) {
+		entry = table->entry[i];
+		while(entry != NULL) {
+			tmp = entry;
+			entry = entry->next;
+			kfree(tmp);
 		}
 	}
 
-	for(i = 0; i < hashtable->size; ++i) {
-		s_entry = hashtable->server_table[i];
-		while(s_entry != NULL) {
-			stmp = s_entry;
-			s_entry = s_entry->next;
-			kfree(stmp);
-		}
-	}
-
-	kfree(hashtable->client_table);
-	kfree(hashtable->server_table);
-	kfree(hashtable);
+	kfree(table->entry);
+	kfree(table);
 }
