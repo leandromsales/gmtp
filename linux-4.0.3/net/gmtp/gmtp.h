@@ -281,6 +281,11 @@ static inline struct gmtp_client *gmtp_create_client(__be32 addr, __be16 port,
 		new->max_nclients = max_nclients;
 		new->nclients = 0;
 		new->ack_rx_tstamp = 0;
+
+		new->clients = 0;
+		new->reporter = 0;
+		new->rsock = 0;
+		new->mysock = 0;
 	}
 	return new;
 }
