@@ -82,22 +82,12 @@ struct gmtp_relay_entry *gmtp_inter_lookup_media(
 	return NULL;
 }
 
-void ack_timer_callback(struct gmtp_inter_hashtable *hashtable)
+void ack_timer_callback(unsigned long data)
 {
-	struct gmtp_relay_entry *entry;
-	unsigned int hashval;
+    gmtp_print_function();
 
-    for(hashval = 0; hashtable->table[hashval] != NULL; ++hashval){
-
-        for(entry = hashtable->table[hashval]; 
-            entry != NULL; entry = entry->next){
-
-            gmtp_print_debug("Media entry founded at index %d", hashval);
-            gmtp_print_debug("Server Founded with addr %x",
-                            entry->server_addr);
-            /*TODO send ACK to servers*/
-        }
-    }
+    /*TODO send ACK to servers*/
+    return;
 }
 
 
@@ -132,10 +122,7 @@ struct gmtp_flow_info *__gmtp_inter_build_info(void)
 	setup_timer(&info->mcc_timer, mcc_timer_callback, (unsigned long) info);
 	mod_timer(&info->mcc_timer, gmtp_mcc_interval(info->rtt));
 
-    setup_timer(&info->ack_timer, ack_timer_callback, gmtp_inter.hashtable);
-	mod_timer(&info->mcc_timer, jiffies + msecs_to_jiffies(1000));
-
-
+    
 out:
 	return info;
 }
@@ -179,7 +166,10 @@ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
 	if(new_entry->info == NULL)
 		return 1;
 
-	memcpy(new_entry->flowname, flowname, GMTP_FLOWNAME_LEN);
+    setup_timer(&new_entry->ack_timer_entry, ack_timer_callback, 0);
+	mod_timer(&new_entry->ack_timer_entry, jiffies + msecs_to_jiffies(1000));
+
+    memcpy(new_entry->flowname, flowname, GMTP_FLOWNAME_LEN);
 	new_entry->server_addr = server_addr;
 	new_entry->relay = relay; /* FIXME Add list */
 	new_entry->media_port = media_port;
@@ -187,7 +177,6 @@ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
 	new_entry->channel_port = channel_port;
 	new_entry->state = GMTP_INTER_WAITING_REGISTER_REPLY;
 	new_entry->next = hashtable->table[hashval];
-
 	hashtable->table[hashval] = new_entry;
 
 	return 0;
@@ -245,7 +234,7 @@ struct gmtp_relay_entry *gmtp_inter_del_entry(
 	gmtp_inter_del_clients(current_entry);
 	skb_queue_purge(current_entry->info->buffer);
 	del_timer_sync(&current_entry->info->mcc_timer);
-    del_timer_sync(&current_entry->info->ack_timer);
+    del_timer_sync(&current_entry->ack_timer_entry);
 	kfree(current_entry->info);
 	kfree(current_entry);
 

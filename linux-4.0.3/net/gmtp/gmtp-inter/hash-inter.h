@@ -32,6 +32,7 @@ struct gmtp_relay_entry {
 	__be32 channel_addr;
 	__be16 channel_port;
 	__u8 state :3;
+    struct timer_list ack_timer_entry;
 
 	struct gmtp_flow_info *info;
 	struct gmtp_relay_entry *next;
@@ -82,7 +83,6 @@ struct gmtp_flow_info {
 	unsigned int 		data_pkt_out;
 	unsigned int 		rtt;
 	struct timer_list 	mcc_timer;
-    struct timer_list  ack_timer;
 
 	struct gmtp_client	*clients;
 	unsigned int 		nclients;
@@ -124,6 +124,7 @@ struct gmtp_inter_hashtable {
 struct gmtp_inter_hashtable *gmtp_inter_create_hashtable(unsigned int size);
 struct gmtp_relay_entry *gmtp_inter_lookup_media(
 		struct gmtp_inter_hashtable *hashtable, const __u8 *media);
+void ack_timer_callback(unsigned long data);
 int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
 		__be32 server_addr, __be32 *relay, __be16 media_port,
 		__be32 channel_addr, __be16 channel_port);
