@@ -121,7 +121,7 @@ void destroy_gmtp_hashtable(struct gmtp_hashtable *table)
 		while(entry != NULL) {
 			tmp = entry;
 			entry = entry->next;
-			kfree(tmp);
+			table->hash_ops.del_entry(table, tmp->key);
 		}
 	}
 

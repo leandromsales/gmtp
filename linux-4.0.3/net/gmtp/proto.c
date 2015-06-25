@@ -714,14 +714,6 @@ void gmtp_shutdown(struct sock *sk, int how)
 }
 EXPORT_SYMBOL_GPL(gmtp_shutdown);
 
-void kfree_gmtp_info(struct gmtp_info *gmtp)
-{
-	kfree(gmtp_info->control_sk);
-	kfree(gmtp_info->ctrl_addr);
-	kfree(gmtp_info);
-}
-
-
 /* TODO Study thash_entries... This is from DCCP thash_entries */
 static int thash_entries;
 module_param(thash_entries, int, 0444);
@@ -870,6 +862,8 @@ static int __init gmtp_init(void)
 		goto out;
 	}
 	gmtp_info->relay_enabled = 0;
+	gmtp_info->control_sk = NULL;
+	gmtp_info->ctrl_addr = NULL;
 
 	rc = gmtp_create_inet_hashinfo();
 	if(rc)

@@ -7,11 +7,7 @@ import timeit
 from datetime import datetime
 
 from gmtp import *
-from __builtin__ import str
-from twisted.python.dist import getPackages
 from sys import stdout
-from ubuntu_sso.utils.ui import TRY_AGAIN_BUTTON
-from _dbus_bindings import Message
 
 default_ip = get_ip_address('eth0')
 default_port = 12345

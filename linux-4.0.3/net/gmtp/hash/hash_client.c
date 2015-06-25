@@ -77,37 +77,12 @@ void gmtp_del_client_hash_entry(struct gmtp_hashtable *table, const __u8 *key)
 	}
 }
 
-
-
-void destroy_gmtp_client_hashtable(struct gmtp_hashtable *table)
-{
-	int i;
-	struct gmtp_hash_entry *entry, *tmp;
-
-	gmtp_print_function();
-
-	if(table == NULL)
-		return;
-
-	for(i = 0; i < table->size; ++i) {
-		entry = table->entry[i];
-		while(entry != NULL) {
-			tmp = entry;
-			gmtp_del_client_list((struct gmtp_client_entry *) tmp);
-			entry = entry->next;
-			kfree(tmp);
-		}
-	}
-	kfree(table->entry);
-	kfree(table);
-}
-
 const struct gmtp_hash_ops gmtp_client_hash_ops = {
 		.hash = gmtp_hash,
 		.lookup = gmtp_lookup_entry,
 		.add_entry = gmtp_add_entry,
 		.del_entry = gmtp_del_client_hash_entry,
-		.destroy = destroy_gmtp_client_hashtable,
+		.destroy = destroy_gmtp_hashtable,
 };
 
 

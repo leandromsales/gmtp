@@ -29,10 +29,29 @@ int gmtp_add_server_entry(struct gmtp_hashtable *table, const __u8 *relayid,
 }
 EXPORT_SYMBOL_GPL(gmtp_add_server_entry);
 
+void gmtp_del_server_hash_entry(struct gmtp_hashtable *table, const __u8 *key)
+{
+	struct gmtp_server_entry *entry;
+	int hashval;
+
+	gmtp_print_function();
+
+	hashval = table->hash_ops.hash(table, key);
+	if(hashval < 0)
+		return;
+
+	entry = (struct gmtp_server_entry*) table->entry[hashval];
+	if(entry != NULL) {
+		if(entry->srelay != NULL)
+			kfree(entry->srelay);
+		kfree(entry);
+	}
+}
+
 const struct gmtp_hash_ops gmtp_server_hash_ops = {
 		.hash = gmtp_hash,
 		.lookup = gmtp_lookup_entry,
 		.add_entry = gmtp_add_entry,
-		/*.del_entry = ,*/  /* FIXME Del server entry */
+		.del_entry = gmtp_del_server_hash_entry,
 		.destroy = destroy_gmtp_hashtable,
 };

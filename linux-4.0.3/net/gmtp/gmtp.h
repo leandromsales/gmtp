@@ -201,11 +201,16 @@ struct gmtp_info {
 
 	struct sock		*control_sk;
 	struct sockaddr_in	*ctrl_addr;
-
-
 };
 
-void kfree_gmtp_info(struct gmtp_info *gmtp);
+static inline void kfree_gmtp_info(struct gmtp_info *gmtp_info)
+{
+	if(gmtp_info->control_sk != NULL)
+		kfree(gmtp_info->control_sk);
+	if(gmtp_info->ctrl_addr != NULL)
+		kfree(gmtp_info->ctrl_addr);
+	kfree(gmtp_info);
+}
 
 /**
  * This is the control buffer. It is free to use by any layer.
