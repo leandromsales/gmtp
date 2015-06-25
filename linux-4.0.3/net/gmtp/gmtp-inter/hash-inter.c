@@ -82,13 +82,12 @@ struct gmtp_relay_entry *gmtp_inter_lookup_media(
 	return NULL;
 }
 
-void ack_timer_callback(struct gmtp_inter_hashtable *hashtable, 
-                       const __u8 *media)
+void ack_timer_callback(struct gmtp_relay_entry *entry)
 {
     gmtp_print_function();
-    struct gmtp_relay_entry *entry;
-    entry = gmtp_inter_lookup_media(hashtable, media);
     gmtp_print_debug("Servidor %x", entry->server_addr);
+    mod_timer(&entry->ack_timer_entry, jiffies + msecs_to_jiffies(1000));
+
     /*TODO send ACK to servers*/
     return;
 }
@@ -178,10 +177,10 @@ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
 	new_entry->state = GMTP_INTER_WAITING_REGISTER_REPLY;
 	new_entry->next = hashtable->table[hashval];
 	hashtable->table[hashval] = new_entry;
-     setup_timer(&new_entry->ack_timer_entry, ack_timer_callback,
-                (hashtable, new_entry->flowname));
+    gmtp_print_debug("Chegou aqui");
+    setup_timer(&new_entry->ack_timer_entry, ack_timer_callback, new_entry);
 	mod_timer(&new_entry->ack_timer_entry, jiffies + msecs_to_jiffies(1000));
-
+    gmtp_print_debug("Passou");
 
 
 	return 0;
