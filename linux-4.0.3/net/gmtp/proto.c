@@ -118,26 +118,25 @@ void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh)
 }
 EXPORT_SYMBOL_GPL(print_gmtp_packet);
 
-/**
- * FIXME Presumable buffer overrun at print_route function
- * After calling print_route, we cannot call any non-static functions anymore
- *
- * XXX Do not use it!
-*/
+void print_gmtp_relay(const struct gmtp_relay *relay)
+{
+	unsigned char relayid[GMTP_FLOWNAME_STR_LEN];
+	flowname_str(relayid, relay->relay_id);
+	pr_info("%s :: %pI4\n", relayid, &relay->relay_ip);
+}
+EXPORT_SYMBOL_GPL(print_gmtp_relay);
+
 void print_route(struct gmtp_hdr_route *route)
 {
 	int i;
-	unsigned char relayid[GMTP_RELAY_ID_LEN+1];
-	const struct gmtp_relay *gr;
+	unsigned char relayid[GMTP_FLOWNAME_STR_LEN];
 
 	if(route->nrelays <= 0)
 		return;
 
-	gr = &route->relay_list[route->nrelays-1];
-	flowname_str(relayid, gr->relay_id);
-
-	for(i=0; i < route->nrelays; ++i)
-		pr_info("Route[%d]: %s :: %pI4\n", i, relayid, &gr->relay_ip);
+	pr_info("Route: \n");
+	for(i = route->nrelays - 1; i >= 0; --i)
+		print_gmtp_relay(&route->relay_list[i]);
 }
 EXPORT_SYMBOL_GPL(print_route);
 

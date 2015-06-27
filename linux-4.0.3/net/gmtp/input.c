@@ -443,11 +443,7 @@ int gmtp_rcv_route_notify(struct sock *sk, struct sk_buff *skb,
 
 	gmtp_print_function();
 
-	/* FIXME Presumable buffer overrun at print_route fc.
-	 * After calling print_route, we cannot call
-	 * any non-static function anymore...
-	 */
-	/*print_route(route);*/
+	print_route(route);
 
 	if(route->nrelays <= 0)
 		return 0;

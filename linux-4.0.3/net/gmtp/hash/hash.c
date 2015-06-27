@@ -91,12 +91,11 @@ int gmtp_add_entry(struct gmtp_hashtable *table, struct gmtp_hash_entry *entry)
 
 	gmtp_print_function();
 
-	/* Error */
+	hashval = table->hash_ops.hash(table, entry->key);
 	if(hashval < 0)
 		return hashval;
 
 	/** Primary key at client hashtable is flowname */
-	hashval = table->hash_ops.hash(table, entry->key);
 	cur_entry = table->hash_ops.lookup(table, entry->key);
 	if(cur_entry != NULL)
 		return 1; /* Entry already exists */
