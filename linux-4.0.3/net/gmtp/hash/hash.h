@@ -8,8 +8,6 @@
 #ifndef HASH_INTRA_H_
 #define HASH_INTRA_H_
 
-#include "../gmtp.h"
-
 #define GMTP_HASH_KEY_LEN  16
 
 struct gmtp_hashtable;
@@ -26,6 +24,9 @@ struct gmtp_hash_ops {
 	void (*del_entry)(struct gmtp_hashtable *table, const __u8 *key);
 	void (*destroy)(struct gmtp_hashtable *table);
 };
+
+extern const struct gmtp_hash_ops gmtp_client_hash_ops;
+extern const struct gmtp_hash_ops gmtp_server_hash_ops;
 
 /**
  * struct gmtp_hash_entry - The GMTP hash table entry
@@ -87,8 +88,6 @@ struct gmtp_client_entry *gmtp_lookup_client(struct gmtp_hashtable *table,
 		const __u8 *key);
 void gmtp_del_client_entry(struct gmtp_hashtable *table, const __u8 *key);
 
-extern const struct gmtp_hash_ops gmtp_client_hash_ops;
-
 /** Servers **/
 
 /**
@@ -103,37 +102,33 @@ struct gmtp_server_entry {
 	/* gmtp_hash_entry has to be the first member of gmtp_client_entry */
 	struct gmtp_hash_entry		entry;
 
-	struct gmtp_relay 		*srelay;
-	struct gmtp_hdr_route	 	route;
+	struct gmtp_hashtable 		*relay_hashtable;
 };
+
+int gmtp_add_server_entry(struct gmtp_hashtable *table, const __u8 *flowname,
+		struct gmtp_hdr_route *route);
 
 /**
  * struct gmtp_relay_table_entry - An entry in relays hash table (in server)
- * @list:	the list head
  * @next: 	the next entry with the same key (hash)
  *
  * @relay: the relay info
  * @nextRelay: 	the next relay in path
  * @relay_id: the relay id (key)
  * @relay_ip: the relay ip
+ *
+ * @list:  the list head
  */
-struct gmtp_relay_table_entry {
-	struct list_head 		list;
+struct gmtp_relay_entry {
+	struct gmtp_hash_entry		entry;
 
 	struct gmtp_relay 		relay;
-	struct gmtp_relay_table_entry	*nextRelay;
-	struct gmtp_relay_table_entry	*prevRelayList;
+	struct gmtp_relay_entry		*nextRelay;
+	struct gmtp_relay_entry		*prevRelayList;
+
+	struct list_head 		list;
 };
 
-struct gmtp_relays_hashtable {
-	int 				size;
-	struct gmtp_relay_table_entry	**table;
-};
-
-int gmtp_add_server_entry(struct gmtp_hashtable *table, const __u8 *relayid,
-		__u8 *flowname, struct gmtp_hdr_route *route);
-
-extern const struct gmtp_hash_ops gmtp_server_hash_ops;
 
 
 

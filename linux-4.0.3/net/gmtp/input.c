@@ -13,6 +13,7 @@
 
 #include <uapi/linux/gmtp.h>
 #include "gmtp.h"
+#include "hash.h"
 #include "mcc.h"
 
 static void gmtp_enqueue_skb(struct sock *sk, struct sk_buff *skb)
@@ -439,19 +440,19 @@ int gmtp_rcv_route_notify(struct sock *sk, struct sk_buff *skb,
 			 const struct gmtp_hdr *gh)
 {
 	struct gmtp_hdr_route *route = gmtp_hdr_route(skb);
-	struct gmtp_relay *relay;
-	__u8 nrelays = route->nrelays;
 
 	gmtp_print_function();
-	print_route(route);
 
-	if(nrelays <= 0)
+	/* FIXME Presumable buffer overrun at print_route fc.
+	 * After calling print_route, we cannot call
+	 * any non-static function anymore...
+	 */
+	/*print_route(route);*/
+
+	if(route->nrelays <= 0)
 		return 0;
 
-	relay = &route->relay_list[nrelays-1];
-
-	gmtp_add_server_entry(server_hashtable, relay->relay_id,
-			(__u8*)gh->flowname, route);
+	gmtp_add_server_entry(server_hashtable, gh->flowname, route);
 
 	return 0;
 }

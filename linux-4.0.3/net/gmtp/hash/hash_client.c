@@ -9,7 +9,11 @@
 #include <linux/slab.h>
 #include <linux/string.h>
 
+#include "../gmtp.h"
 #include "hash.h"
+
+struct gmtp_hashtable* client_hashtable;
+EXPORT_SYMBOL_GPL(client_hashtable);
 
 int gmtp_add_client_entry(struct gmtp_hashtable *table,
 		const __u8 *flowname, __be32 local_addr, __be16 local_port,
@@ -21,7 +25,7 @@ int gmtp_add_client_entry(struct gmtp_hashtable *table,
 	if(new_entry == NULL)
 		return 1;
 
-	memcpy(new_entry->entry.key, flowname, GMTP_FLOWNAME_LEN);
+	memcpy(new_entry->entry.key, flowname, GMTP_HASH_KEY_LEN);
 	new_entry->clients = kmalloc(sizeof(struct gmtp_client), GFP_ATOMIC);
 	if(new_entry->clients == NULL)
 		return 2;

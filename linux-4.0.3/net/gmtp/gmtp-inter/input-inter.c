@@ -53,7 +53,7 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct gmtp_hdr *gh_reqnotify;
-	struct gmtp_relay_entry *entry;
+	struct gmtp_inter_entry *entry;
 
 	__u8 code = GMTP_REQNOTIFY_CODE_ERROR;
 	__u8 max_nclients = 0;
@@ -175,7 +175,7 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh_route_n;
-	struct gmtp_relay_entry *entry;
+	struct gmtp_inter_entry *entry;
 	struct gmtp_flow_info *info;
 	struct gmtp_hdr *gh_req_n;
 	struct gmtp_client *client, *temp, *first_client, *cur_reporter = NULL;
@@ -255,7 +255,7 @@ int gmtp_inter_ack_rcv(struct sk_buff *skb)
 {
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct iphdr *iph = ip_hdr(skb);
-	struct gmtp_relay_entry *entry;
+	struct gmtp_inter_entry *entry;
 	struct gmtp_flow_info *info;
 	struct gmtp_client *reporter;
 
@@ -282,7 +282,7 @@ int gmtp_inter_feedback_rcv(struct sk_buff *skb)
 {
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct iphdr *iph = ip_hdr(skb);
-	struct gmtp_relay_entry *entry;
+	struct gmtp_inter_entry *entry;
 	struct gmtp_flow_info *info;
 	struct gmtp_client *reporter;
 
@@ -313,7 +313,7 @@ int gmtp_inter_elect_resp_rcv(struct sk_buff *skb)
 {
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
-	struct gmtp_relay_entry *entry;
+	struct gmtp_inter_entry *entry;
 
 	gmtp_pr_func();
 
@@ -370,7 +370,7 @@ static inline void gmtp_update_stats(struct gmtp_flow_info *info,
 int gmtp_inter_data_rcv(struct sk_buff *skb)
 {
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
-	struct gmtp_relay_entry *entry;
+	struct gmtp_inter_entry *entry;
 	struct gmtp_flow_info *info;
 
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
@@ -401,7 +401,7 @@ int gmtp_inter_close_rcv(struct sk_buff *skb)
 {
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct iphdr *iph = ip_hdr(skb);
-	struct gmtp_relay_entry *entry;
+	struct gmtp_inter_entry *entry;
 
 	gmtp_pr_func();
 

@@ -9,6 +9,7 @@
 #include <linux/slab.h>
 #include <linux/string.h>
 
+#include "../gmtp.h"
 #include "hash.h"
 
 struct gmtp_hashtable *gmtp_build_hashtable(unsigned int size,
@@ -128,3 +129,5 @@ void destroy_gmtp_hashtable(struct gmtp_hashtable *table)
 	kfree(table->entry);
 	kfree(table);
 }
+
+
