@@ -124,10 +124,9 @@ void gmtp_close(struct sock *sk, long timeout);
 int gmtp_connect(struct sock *sk);
 int gmtp_disconnect(struct sock *sk, int flags);
 int gmtp_ioctl(struct sock *sk, int cmd, unsigned long arg);
-int gmtp_sendmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
-		size_t size);
-int gmtp_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
-		size_t len, int nonblock, int flags, int *addr_len);
+int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t size);
+int gmtp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len, int nonblock,
+		int flags, int *addr_len);
 void gmtp_shutdown(struct sock *sk, int how);
 void gmtp_destroy_sock(struct sock *sk);
 void gmtp_set_state(struct sock*, const int);
@@ -188,8 +187,7 @@ struct sock *gmtp_create_openreq_child(struct sock *sk,
 int gmtp_child_process(struct sock *parent, struct sock *child,
 		       struct sk_buff *skb);
 struct sock *gmtp_check_req(struct sock *sk, struct sk_buff *skb,
-			    struct request_sock *req,
-			    struct request_sock **prev);
+			    struct request_sock *req);
 void gmtp_reqsk_send_ack(struct sock *sk, struct sk_buff *skb,
 			 struct request_sock *rsk);
 

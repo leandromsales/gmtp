@@ -253,33 +253,6 @@ void gmtp_v4_err(struct sk_buff *skb, u32 info)
 	}
 
 	switch(sk->sk_state) {
-
-	case GMTP_LISTEN:
-		if(sock_owned_by_user(sk))
-			goto out;
-		req = inet_csk_search_req(sk, &prev, gh->dport, iph->daddr,
-				iph->saddr);
-		if(!req)
-			goto out;
-
-		/*
-		 * ICMPs are not backlogged, hence we cannot get an established
-		 * socket here.
-		 */
-		WARN_ON(req->sk);
-		if(!(seq >= gmtp_rsk(req)->iss && seq <= gmtp_rsk(req)->gss)) {
-			NET_INC_STATS_BH(net, LINUX_MIB_OUTOFWINDOWICMPS);
-			goto out;
-		}
-		/*
-		 * Still in RESPOND, just remove it silently.
-		 * There is no good way to pass the error to the newly
-		 * created socket, and POSIX does not want network
-		 * errors returned from accept().
-		 */
-		inet_csk_reqsk_queue_drop(sk, req, prev);
-		goto out;
-
 	case GMTP_REQUESTING:
 	case GMTP_REQUEST_RECV:
 		if(!sock_owned_by_user(sk)) {
@@ -426,16 +399,15 @@ static struct sock *gmtp_v4_hnd_req(struct sock *sk, struct sk_buff *skb)
 	const struct gmtp_hdr *gh = gmtp_hdr(skb);
 	const struct iphdr *iph = ip_hdr(skb);
 	struct sock *nsk;
-	struct request_sock **prev;
 
 	/* Find possible connection requests. */
-	struct request_sock *req = inet_csk_search_req(sk, &prev, gh->sport,
+	struct request_sock *req = inet_csk_search_req(sk, gh->sport,
 			iph->saddr, iph->daddr);
 
 	gmtp_pr_func();
 
 	if(req != NULL)
-		return gmtp_check_req(sk, skb, req, prev);
+		return gmtp_check_req(sk, skb, req);
 
 	nsk = inet_lookup_established(sock_net(sk), &gmtp_inet_hashinfo,
 			iph->saddr, gh->sport, iph->daddr, gh->dport,
@@ -909,9 +881,8 @@ static void gmtp_v4_reqsk_destructor(struct request_sock *req)
 	kfree(inet_rsk(req)->opt);
 }
 
-void gmtp_syn_ack_timeout(struct sock *sk, struct request_sock *req)
+void gmtp_syn_ack_timeout(const struct request_sock *req)
 {
-	gmtp_print_function();
 }
 EXPORT_SYMBOL(gmtp_syn_ack_timeout);
 
@@ -963,7 +934,7 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
 	if(sk_acceptq_is_full(sk) && inet_csk_reqsk_queue_young(sk) > 1)
 		goto drop;
 
-	req = inet_reqsk_alloc(&gmtp_request_sock_ops);
+	req = inet_reqsk_alloc(&gmtp_request_sock_ops, sk);
 	if(req == NULL)
 		goto drop;
 

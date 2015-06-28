@@ -19,18 +19,7 @@
 
 struct inet_timewait_death_row gmtp_death_row = {
 	.sysctl_max_tw_buckets = NR_FILE * 2,
-	.period		= GMTP_TIMEWAIT_LEN / INET_TWDR_TWKILL_SLOTS,
-	.death_lock	= __SPIN_LOCK_UNLOCKED(gmpt_death_row.death_lock),
 	.hashinfo	= &gmtp_inet_hashinfo,
-	.tw_timer	= TIMER_INITIALIZER(inet_twdr_hangman, 0,
-					    (unsigned long)&gmtp_death_row),
-	.twkill_work	= __WORK_INITIALIZER(gmtp_death_row.twkill_work,
-					     inet_twdr_twkill_work),
-/* Short-time timewait calendar */
-
-	.twcal_hand	= -1,
-	.twcal_timer	= TIMER_INITIALIZER(inet_twdr_twcal_tick, 0,
-					    (unsigned long)&gmtp_death_row),
 };
 EXPORT_SYMBOL_GPL(gmtp_death_row);
 
@@ -40,35 +29,32 @@ void gmtp_time_wait(struct sock *sk, int state, int timeo)
 
 	gmtp_print_function();
 
-	if (gmtp_death_row.tw_count < gmtp_death_row.sysctl_max_tw_buckets) {
-		gmtp_print_debug("We entered in if...");
-//		tw = inet_twsk_alloc(sk, state);
-	}
+	tw = inet_twsk_alloc(sk, &gmtp_death_row, state);
 
 	if (tw != NULL) {
-//		const struct inet_connection_sock *icsk = inet_csk(sk);
-//		const int rto = (icsk->icsk_rto << 2) - (icsk->icsk_rto >> 1);
-//#if IS_ENABLED(CONFIG_IPV6)
-//		if (tw->tw_family == PF_INET6) {
-//			tw->tw_v6_daddr = sk->sk_v6_daddr;
-//			tw->tw_v6_rcv_saddr = sk->sk_v6_rcv_saddr;
-//			tw->tw_ipv6only = sk->sk_ipv6only;
-//		}
-//#endif
-//		/* Linkage updates.*/
-//		__inet_twsk_hashdance(tw, sk, &gmtp_inet_hashinfo);
-//
-//		/* Get the TIME_WAIT timeout firing.*/
-//		if (timeo < rto)
-//			timeo = rto;
-//
-//		tw->tw_timeout = GMTP_TIMEWAIT_LEN;
-//		if (state == GMTP_TIME_WAIT)
-//			timeo = GMTP_TIMEWAIT_LEN;
-//
-//		inet_twsk_schedule(tw, &gmtp_death_row, timeo,
-//				   GMTP_TIMEWAIT_LEN);
-//		inet_twsk_put(tw);
+/*		const struct inet_connection_sock *icsk = inet_csk(sk);
+		const int rto = (icsk->icsk_rto << 2) - (icsk->icsk_rto >> 1);
+#if IS_ENABLED(CONFIG_IPV6)
+		if (tw->tw_family == PF_INET6) {
+			tw->tw_v6_daddr = sk->sk_v6_daddr;
+			tw->tw_v6_rcv_saddr = sk->sk_v6_rcv_saddr;
+			tw->tw_ipv6only = sk->sk_ipv6only;
+		}
+#endif
+		 Linkage updates.
+		__inet_twsk_hashdance(tw, sk, &gmtp_inet_hashinfo);
+
+		 Get the TIME_WAIT timeout firing.
+		if (timeo < rto)
+			timeo = rto;
+
+		tw->tw_timeout = GMTP_TIMEWAIT_LEN;
+		if (state == GMTP_TIME_WAIT)
+			timeo = GMTP_TIMEWAIT_LEN;
+
+		inet_twsk_schedule(tw, &gmtp_death_row, timeo,
+				   GMTP_TIMEWAIT_LEN);
+		inet_twsk_put(tw);*/
 	} else {
 		/* If we're out of memory, just CLOSE this
 		 * socket up.
@@ -125,8 +111,7 @@ EXPORT_SYMBOL_GPL(gmtp_create_openreq_child);
  * as an request_sock.
  */
 struct sock *gmtp_check_req(struct sock *sk, struct sk_buff *skb,
-			    struct request_sock *req,
-			    struct request_sock **prev)
+			    struct request_sock *req)
 {
 	struct sock *child = NULL;
 	struct gmtp_request_sock *greq = gmtp_rsk(req);
@@ -173,8 +158,7 @@ struct sock *gmtp_check_req(struct sock *sk, struct sk_buff *skb,
 	if (child == NULL)
 		goto listen_overflow;
 
-	inet_csk_reqsk_queue_unlink(sk, req, prev);
-	inet_csk_reqsk_queue_removed(sk, req);
+	inet_csk_reqsk_queue_drop(sk, req);
 	inet_csk_reqsk_queue_add(sk, req, child);
 out:
 	return child;
@@ -185,7 +169,7 @@ drop:
 	if (gmtp_hdr(skb)->type != GMTP_PKT_RESET)
 		req->rsk_ops->send_reset(sk, skb);
 
-	inet_csk_reqsk_queue_drop(sk, req, prev);
+	inet_csk_reqsk_queue_drop(sk, req);
 	goto out;
 }
 EXPORT_SYMBOL_GPL(gmtp_check_req);

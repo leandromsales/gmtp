@@ -501,8 +501,8 @@ out:
 }
 EXPORT_SYMBOL_GPL(gmtp_ioctl);
 
-int gmtp_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
-		 size_t len, int nonblock, int flags, int *addr_len)
+int gmtp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len, int nonblock,
+		int flags, int *addr_len)
 {
 	const struct gmtp_hdr *gh;
 	long timeo;
@@ -607,8 +607,7 @@ out:
 
 EXPORT_SYMBOL_GPL(gmtp_recvmsg);
 
-int gmtp_sendmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
-		size_t len)
+int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 {
 	const struct gmtp_sock *gp = gmtp_sk(sk);
 	const int flags = msg->msg_flags;

@@ -162,8 +162,13 @@ out:
  */
 static void gmtp_register_reply_timer(struct sock *sk)
 {
-	inet_csk_reqsk_queue_prune(sk, GMTP_REQ_INTERVAL, GMTP_TIMEOUT_INIT,
-				   GMTP_RTO_MAX);
+
+	/* FIXME DCE cu off syn-ack timer from TCP and register_reply_timer
+	 * from us...
+	 */
+/*	inet_csk_reqsk_queue_prune(sk, GMTP_REQ_INTERVAL, GMTP_TIMEOUT_INIT,
+				   GMTP_RTO_MAX);*/
+	;
 }
 
 static void gmtp_reporter_ackrcv_timer(struct sock *sk)
