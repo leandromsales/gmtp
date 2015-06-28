@@ -29,6 +29,7 @@
 /* per conntrack: protocol private data */
 union nf_conntrack_proto {
 	/* insert conntrack proto private data here */
+//	struct nf_ct_dccp gmtp; //TODO fazer o do GMTP
 	struct nf_ct_dccp dccp;
 	struct ip_ct_sctp sctp;
 	struct ip_ct_tcp tcp;

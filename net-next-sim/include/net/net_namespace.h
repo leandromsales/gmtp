@@ -19,6 +19,7 @@
 #include <net/netns/ieee802154_6lowpan.h>
 #include <net/netns/sctp.h>
 #include <net/netns/dccp.h>
+#include <net/netns/gmtp.h>
 #include <net/netns/netfilter.h>
 #include <net/netns/x_tables.h>
 #if defined(CONFIG_NF_CONNTRACK) || defined(CONFIG_NF_CONNTRACK_MODULE)
@@ -102,6 +103,9 @@ struct net {
 #if defined(CONFIG_IP_DCCP) || defined(CONFIG_IP_DCCP_MODULE)
 	struct netns_dccp	dccp;
 #endif
+//#if defined(CONFIG_IP_GMTP) || defined(CONFIG_IP_GMTP_MODULE)
+	struct netns_gmtp	gmtp;
+//#endif
 #ifdef CONFIG_NETFILTER
 	struct netns_nf		nf;
 	struct netns_xt		xt;

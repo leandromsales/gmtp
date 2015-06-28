@@ -26,10 +26,12 @@ _DCE_ provides network simulator integration with Linux kernel so that any Linux
 ```x-sh
     cd <gmtp_dir>/net-next-sim
     make defconfig ARCH=lib
-    make menuconfig ARCH=lib  # Optional, to add/remove modules
+    # Optional, to add/remove modules:
+    make menuconfig ARCH=lib 
     make library -j8 ARCH=lib
     make testbin -C arch/lib/test
-    ln -s net-next-sim/tools/testing/libos/buildtop/source/ns-3-dce/ ../  # Optional, create a link to ns-3-dce dir
+    # Optional, create a link to ns-3-dce source directories:
+    ln -s net-next-sim/tools/testing/libos/buildtop/source/ns-3-dce/ ../ 
 ```
 
 ## Aplying patches
@@ -37,10 +39,10 @@ _DCE_ provides network simulator integration with Linux kernel so that any Linux
 ```x-sh
     cd <gmtp_dir>
     git checkout <your_branch>
-    git diff KernelBase linux-4.0.3/ >> patches/output.diff
+    git diff KernelBase ./linux-4.0.3 >> <path_to_your_patch>.diff
     cd net-next-sim
     make mrproper
-    patch -p 2 < ../patches/output.diff
+    patch -p 2 <  <path_to_your_patch>.diff
     # Repeat steps of quick-start...
 ```
 

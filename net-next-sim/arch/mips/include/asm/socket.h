@@ -22,6 +22,8 @@
  * @SOCK_STREAM - stream (connection) socket
  * @SOCK_RAW - raw socket
  * @SOCK_RDM - reliably-delivered message
+ * @SOCK_DCCP - Datagram Congestion Control Protocol socket
+ * @SOCK_GMTP - Global Media Transmission Protocol socket
  * @SOCK_SEQPACKET - sequential packet socket
  * @SOCK_PACKET - linux specific way of getting packets at the dev level.
  *		  For writing rarp and other similar things on the user level.
@@ -33,6 +35,7 @@ enum sock_type {
 	SOCK_RDM	= 4,
 	SOCK_SEQPACKET	= 5,
 	SOCK_DCCP	= 6,
+	SOCK_GMTP 	= 7,
 	SOCK_PACKET	= 10,
 };
 

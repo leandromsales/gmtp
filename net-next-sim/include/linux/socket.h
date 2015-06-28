@@ -322,6 +322,7 @@ struct ucred {
 #define SOL_CAIF	278
 #define SOL_ALG		279
 #define SOL_NFC		280
+#define SOL_GMTP	281
 
 /* IPX options */
 #define IPX_TYPE	1
