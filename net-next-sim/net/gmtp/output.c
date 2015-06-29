@@ -684,9 +684,9 @@ static long get_rate_gap(struct gmtp_sock *gp, int acum)
 void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 {
 	struct gmtp_sock *gp = gmtp_sk(sk);
-	int len = (int) packet_len(skb);
 	unsigned long elapsed = 0;
 	long delay = 0, delay2 = 0, delay_budget = 0;
+	int len;
 
 	/** TODO Continue tests with different scales... */
 	static const int scale = 1;
@@ -694,6 +694,8 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 
 	if(unlikely(sk == NULL || skb == NULL))
 		return;
+
+	len = packet_len(skb);
 
 	if(gp->tx_max_rate == 0UL)
 		goto send;

@@ -140,7 +140,11 @@ struct sock* gmtp_multicast_connect(struct sock *sk, enum gmtp_sock_type type,
 
 	gmtp_pr_debug("Joining the multicast group in %pI4@%-5d",
 			&addr, ntohs(port));
+
+	rtnl_lock();
 	ip_mc_join_group(newsk, &mreq);
+	rtnl_unlock();
+
 	__inet_hash_nolisten(newsk, NULL);
 
 	gmtp_sk(newsk)->type = type;

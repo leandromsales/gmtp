@@ -29,39 +29,33 @@ void gmtp_time_wait(struct sock *sk, int state, int timeo)
 
 	gmtp_print_function();
 
+	/*print_gmtp_sock(sk);
+
 	tw = inet_twsk_alloc(sk, &gmtp_death_row, state);
 
-	if (tw != NULL) {
-/*		const struct inet_connection_sock *icsk = inet_csk(sk);
+	if(tw != NULL) {
+		const struct inet_connection_sock *icsk = inet_csk(sk);
 		const int rto = (icsk->icsk_rto << 2) - (icsk->icsk_rto >> 1);
-#if IS_ENABLED(CONFIG_IPV6)
-		if (tw->tw_family == PF_INET6) {
-			tw->tw_v6_daddr = sk->sk_v6_daddr;
-			tw->tw_v6_rcv_saddr = sk->sk_v6_rcv_saddr;
-			tw->tw_ipv6only = sk->sk_ipv6only;
-		}
-#endif
 		 Linkage updates.
 		__inet_twsk_hashdance(tw, sk, &gmtp_inet_hashinfo);
 
 		 Get the TIME_WAIT timeout firing.
-		if (timeo < rto)
+		if(timeo < rto)
 			timeo = rto;
 
 		tw->tw_timeout = GMTP_TIMEWAIT_LEN;
-		if (state == GMTP_TIME_WAIT)
+		if(state == GMTP_TIME_WAIT)
 			timeo = GMTP_TIMEWAIT_LEN;
 
-		inet_twsk_schedule(tw, &gmtp_death_row, timeo,
-				   GMTP_TIMEWAIT_LEN);
-		inet_twsk_put(tw);*/
+		inet_twsk_schedule(tw, timeo);
+		inet_twsk_put(tw);
 	} else {
-		/* If we're out of memory, just CLOSE this
+		 If we're out of memory, just CLOSE this
 		 * socket up.
-		 */
+
 
 		gmtp_print_warning("time wait bucket table overflow!");
-	}
+	}*/
 
 	gmtp_done(sk);
 }
