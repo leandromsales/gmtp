@@ -65,7 +65,7 @@ struct gmtp_hdr *gmtp_inter_make_route_hdr(struct sk_buff *skb)
 }
 
 struct gmtp_hdr *gmtp_inter_make_request_notify_hdr(struct sk_buff *skb,
-		struct gmtp_relay_entry *entry, __be16 new_sport,
+		struct gmtp_inter_entry *entry, __be16 new_sport,
 		__be16 new_dport, struct gmtp_client *my_reporter,
 		__u8 max_nclients, __u8 code)
 {
@@ -129,7 +129,7 @@ int gmtp_inter_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
 
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct iphdr *iph = ip_hdr(skb);
-	struct gmtp_relay_entry *entry;
+	struct gmtp_inter_entry *entry;
 	unsigned int skb_len = skb->len;
 	struct gmtp_hdr *new_gh;
 	int gmtp_hdr_len = sizeof(struct gmtp_hdr)

@@ -19,9 +19,6 @@ EXPORT_SYMBOL_GPL(gmtp_orphan_count);
 struct inet_hashinfo gmtp_inet_hashinfo;
 EXPORT_SYMBOL_GPL(gmtp_inet_hashinfo);
 
-struct gmtp_hashtable* gmtp_hashtable;
-EXPORT_SYMBOL_GPL(gmtp_hashtable);
-
 struct gmtp_info* gmtp_info;
 EXPORT_SYMBOL_GPL(gmtp_info);
 
@@ -121,28 +118,25 @@ void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh)
 }
 EXPORT_SYMBOL_GPL(print_gmtp_packet);
 
-/**
- * @str size MUST HAVE len >= GMTP_FLOWNAME_STR_LEN
- */
-void relayid_str(__u8* str, const __u8 *relayid)
+void print_gmtp_relay(const struct gmtp_relay *relay)
 {
-	flowname_str(str, relayid);
+	unsigned char relayid[GMTP_FLOWNAME_STR_LEN];
+	flowname_str(relayid, relay->relay_id);
+	pr_info("%s :: %pI4\n", relayid, &relay->relay_ip);
 }
+EXPORT_SYMBOL_GPL(print_gmtp_relay);
 
 void print_route(struct gmtp_hdr_route *route)
 {
 	int i;
-	unsigned char relayid[GMTP_RELAY_ID_LEN];
-	const struct gmtp_relay *gr;
+	unsigned char relayid[GMTP_FLOWNAME_STR_LEN];
 
 	if(route->nrelays <= 0)
 		return;
 
-	gr = &route->relay_list[route->nrelays-1];
-	relayid_str(relayid, gr->relay_id);
-
-	for(i=0; i < route->nrelays; ++i)
-		pr_info("Route[%d]: %s :: %pI4\n", i, relayid, &gr->relay_ip);
+	pr_info("Route: \n");
+	for(i = route->nrelays - 1; i >= 0; --i)
+		print_gmtp_relay(&route->relay_list[i]);
 }
 EXPORT_SYMBOL_GPL(print_route);
 
@@ -710,14 +704,6 @@ void gmtp_shutdown(struct sock *sk, int how)
 }
 EXPORT_SYMBOL_GPL(gmtp_shutdown);
 
-void kfree_gmtp_info(struct gmtp_info *gmtp)
-{
-	kfree(gmtp_info->control_sk);
-	kfree(gmtp_info->ctrl_addr);
-	kfree(gmtp_info);
-}
-
-
 /* TODO Study thash_entries... This is from DCCP thash_entries */
 static int thash_entries;
 module_param(thash_entries, int, 0444);
@@ -831,7 +817,7 @@ out_fail:
 	return rc;
 }
 
-static int ghash_entries = 256;
+static int ghash_entries = 1024;
 module_param(ghash_entries, int, 0444);
 MODULE_PARM_DESC(ghash_entries, "Number of GMTP hash entries");
 
@@ -851,8 +837,11 @@ static int __init gmtp_init(void)
 		goto out;
 	}
 
-	gmtp_hashtable = gmtp_create_hashtable(ghash_entries);
-	if(gmtp_hashtable == NULL) {
+	client_hashtable = gmtp_build_hashtable(ghash_entries,
+			gmtp_client_hash_ops);
+	server_hashtable = gmtp_build_hashtable(ghash_entries,
+			gmtp_server_hash_ops);
+	if(client_hashtable == NULL || server_hashtable == NULL) {
 		rc = -ENOBUFS;
 		goto out;
 	}
@@ -863,6 +852,8 @@ static int __init gmtp_init(void)
 		goto out;
 	}
 	gmtp_info->relay_enabled = 0;
+	gmtp_info->control_sk = NULL;
+	gmtp_info->ctrl_addr = NULL;
 
 	rc = gmtp_create_inet_hashinfo();
 	if(rc)
@@ -886,7 +877,9 @@ static void __exit gmtp_exit(void)
 	kmem_cache_destroy(gmtp_inet_hashinfo.bind_bucket_cachep);
 
 	kfree_gmtp_info(gmtp_info);
-	kfree_gmtp_hashtable(gmtp_hashtable);
+	kfree_gmtp_hashtable(client_hashtable);
+	kfree_gmtp_hashtable(server_hashtable);
+
 	percpu_counter_destroy(&gmtp_orphan_count);
 	mcc_lib_exit();
 }

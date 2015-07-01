@@ -316,12 +316,12 @@ int gmtp_connect(struct sock *sk)
 	skb_reserve(skb, sk->sk_prot->max_header);
 	GMTP_SKB_CB(skb)->type = GMTP_PKT_REQUEST;
 
-	client_entry = gmtp_lookup_client(gmtp_hashtable, gp->flowname);
+	client_entry = gmtp_lookup_client(client_hashtable, gp->flowname);
 	if(client_entry == NULL)
-		err = gmtp_add_client_entry(gmtp_hashtable, gp->flowname,
+		err = gmtp_add_client_entry(client_hashtable, gp->flowname,
 				inet->inet_saddr, inet->inet_sport, 0, 0);
 
-	client_entry = gmtp_lookup_client(gmtp_hashtable, gp->flowname);
+	client_entry = gmtp_lookup_client(client_hashtable, gp->flowname);
 	if(err != 0 || client_entry == NULL) {
 		return -ENOBUFS;
 	}
