@@ -1,0 +1,4 @@
+menuconfig GMTP
+	tristate "The GMTP Protocol"
+	depends on INET
+
