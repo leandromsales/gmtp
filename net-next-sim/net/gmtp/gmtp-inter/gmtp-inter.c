@@ -273,7 +273,7 @@ int init_module()
 {
 	int ret = 0;
 	gmtp_pr_func();
-	gmtp_print_debug("Starting GMTP-inter");
+	gmtp_print_debug("Starting GMTP-Inter");
 
 	if(gmtp_info == NULL) {
 		gmtp_print_error("gmtp_info is NULL...");

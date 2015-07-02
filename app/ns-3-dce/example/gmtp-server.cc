@@ -38,9 +38,10 @@ int main (int argc, char *argv[])
   addr_size = sizeof serverStorage;
   newSocket = accept(welcomeSocket, (struct sockaddr *) &serverStorage, &addr_size);
   
-  std::cout << "Sending  'Hello, World!'\n";
-  strcpy(buffer,"Hello, World!\n");
-  send(newSocket,buffer,13,0);
+  const char *msg = "Hello, World!";
+  std::cout << "Sending " << msg << std::endl;
+  strcpy(buffer, msg);
+  send(newSocket,buffer,strlen(msg)+1,0);
 
   //close (newSocket);
   //close (welcomeSocket);
