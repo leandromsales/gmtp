@@ -1,0 +1,10 @@
+menuconfig GMTP
+	tristate "The GMTP Protocol"
+	depends on INET
+
+if GMTP
+
+source "net/gmtp/gmtp-inter/Kconfig"
+
+endif
+
