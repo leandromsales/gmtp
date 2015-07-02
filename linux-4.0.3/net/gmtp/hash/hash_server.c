@@ -67,7 +67,7 @@ int gmtp_add_relay_entries(struct gmtp_hashtable *rtable,
 		if(entry->nextRelay != NULL) {
 			INIT_LIST_HEAD(&entry->nextRelay->prevRelayList->list);
 			list_add_tail(&entry->nextRelay->prevRelayList->list,
-					entry);
+					&entry->list);
 		}
 		nextRelay = entry;
 
