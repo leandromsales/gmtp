@@ -128,7 +128,8 @@ gst_gmtp_read_buffer (GstElement * this, int socket, GstBuffer ** buf)
 
   if (readsize == 0) {
     GST_DEBUG_OBJECT (this, "Got EOS on socket stream");
-    return GST_FLOW_UNEXPECTED;
+    //return GST_FLOW_UNEXPECTED;
+    return GST_FLOW_EOS;
   }
 
   *buf = gst_buffer_new_and_alloc ((int) readsize);

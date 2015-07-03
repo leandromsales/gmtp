@@ -20,6 +20,10 @@
 #ifndef __GST_GMTP_H__
 #define __GST_GMTP_H__
 
+#ifndef GST_USE_UNSTABLE_API
+#define GST_USE_UNSTABLE_API
+#endif
+
 #include <gst/gst.h>
 #include <gst/base/gstadapter.h>
 #include "gstgmtp_common.h"

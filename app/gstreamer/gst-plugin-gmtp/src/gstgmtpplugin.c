@@ -56,5 +56,5 @@ GST_PLUGIN_DEFINE (GST_VERSION_MAJOR,
     GST_VERSION_MINOR,
     gmtp,
     "transfer data over the network via GMTP.",
-    plugin_init, VERSION, GST_LICENSE, "GMTP",
-    "http://garage.maemo.org/projects/ephone")
+    plugin_init, VERSION, "LGPL", "GMTP",
+    "http://www.gmtp-protocol.org")

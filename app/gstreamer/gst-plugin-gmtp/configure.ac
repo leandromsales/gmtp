@@ -2,13 +2,13 @@ dnl required version of autoconf
 AC_PREREQ([2.53])
 
 dnl TODO: fill in your package name and package version here
-AC_INIT([my-plugin-package],[1.0.0])
+AC_INIT([gst-plugin-gmtp-package],[1.0.0])
 
 dnl required versions of gstreamer and plugins-base
 GST_REQUIRED=1.0.0
 GSTPB_REQUIRED=1.0.0
 
-AC_CONFIG_SRCDIR([src/gstplugin.c])
+AC_CONFIG_SRCDIR([src/gstgmtp.c])
 AC_CONFIG_HEADERS([config.h])
 
 dnl required version of automake
@@ -69,6 +69,17 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([ ], [ ])], [
 ], [
   AC_MSG_RESULT([no])
 ])
+
+AC_CHECK_HEADERS([pthread.h], HAVE_PTHREAD_H=yes)
+AM_CONDITIONAL(HAVE_PTHREAD_H, test "x$HAVE_PTHREAD_H" = "xyes")
+
+if test "x$HAVE_PTHREAD_H" != "xyes"; then
+  GST_PLUGINS_SELECTED=`echo $GST_PLUGINS_SELECTED | $SED -e s/gmtp//`
+fi
+
+dnl Check for FIONREAD ioctl declaration
+dnl used in gst/gmtp
+GST_CHECK_FIONREAD
 
 dnl set the plugindir where plugins should be installed (for src/Makefile.am)
 if test "x${prefix}" = "x$HOME"; then
