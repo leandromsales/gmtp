@@ -1,0 +1,4 @@
+{ global:
+gst_plugin_desc;
+gst_plugin_template_get_type;
+local: *; };
