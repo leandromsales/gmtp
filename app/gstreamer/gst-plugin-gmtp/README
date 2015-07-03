@@ -1,0 +1,28 @@
+WHAT IS GMTP?
+-------------
+
+TBD
+
+WHAT IS GST-PLUGIN-GMTP
+-----------------------
+
+TBD
+
+HOW TO USE THE TEMPLATE PLUGIN
+------------------------------
+
+To use it, either make a copy for yourself and rename the parts or use the
+make_element script in tools. To create sources for "myfilter" based on the
+"gsttransform" template run:
+
+cd src;
+../tools/make_element myfilter gsttransform
+
+This will create gstmyfilter.c and gstmyfilter.h. Open them in an editor and
+start editing. There are several occurances of the string "template", update
+those with real values. The plugin will be called 'myfilter' and it will have
+one element called 'myfilter' too. Also look for "FIXME:" markers that point you
+to places where you need to edit the code.
+
+You still need to adjust the Makefile.am.
+
