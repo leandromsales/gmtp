@@ -1,12 +1,26 @@
-WHAT IS GMTP?
--------------
+1. What is GMTP?
+-----------------
 
 TBD
 
-WHAT IS GST-PLUGIN-GMTP
------------------------
+2. What is gst-plugin-gmtp
+--------------------------
 
 TBD
+
+3. Compiling
+------------
+
+	3.1 Test GStreamer
+
+		http://gstreamer.freedesktop.org/data/doc/gstreamer/head/faq/html/chapter-using.html
+
+	3.2 Compiling gst-plugin-gmtp
+
+		export PKG_CONFIG_PATH=/home/wendell/gst-bin/lib/pkgconfig
+		export LD_LIBRARY_PATH=/home/wendell/gst-bin/lib
+		./autogen.sh or ./configure && make
+
 
 HOW TO USE THE TEMPLATE PLUGIN
 ------------------------------
