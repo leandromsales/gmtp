@@ -6,11 +6,9 @@
 #include <iostream>
 #include <arpa/inet.h>
 
-#define SERVER_PORT 2000
+#include "gmtp.h"
 
-#define SOCK_GTMP     7
-#define IPPROTO_GTMP  254
-#define SOL_GTMP      281
+#define SERVER_PORT 2000
 
 int main (int argc, char *argv[])
 {
@@ -20,8 +18,9 @@ int main (int argc, char *argv[])
   struct sockaddr_storage serverStorage;
   socklen_t addr_size;
 
-  welcomeSocket = socket (PF_INET, SOCK_GTMP, IPPROTO_GTMP);
-  setsockopt(welcomeSocket, SOL_GTMP, 1, "1234567812345678", 16);
+  disable_gmtp_inter();
+  welcomeSocket = socket (PF_INET, SOCK_GMTP, IPPROTO_GMTP);
+  setsockopt(welcomeSocket, SOL_GMTP, 1, "1234567812345678", 16);
   
   serverAddr.sin_family = AF_INET;
   serverAddr.sin_port = htons(SERVER_PORT);
@@ -38,9 +37,10 @@ int main (int argc, char *argv[])
   addr_size = sizeof serverStorage;
   newSocket = accept(welcomeSocket, (struct sockaddr *) &serverStorage, &addr_size);
   
-  std::cout << "Sending  'Hello, World!'\n";
-  strcpy(buffer,"Hello, World!\n");
-  send(newSocket,buffer,13,0);
+  const char *msg = "Hello, World!";
+  std::cout << "Sending " << msg << std::endl;
+  strcpy(buffer, msg);
+  send(newSocket,buffer,strlen(msg)+1,0);
 
   //close (newSocket);
   //close (welcomeSocket);

@@ -25,7 +25,7 @@ static inline unsigned long gmtp_mcc_interval(unsigned int rtt)
 	return (jiffies + GMTP_ACK_INTERVAL);
 }
 
-static inline int new_reporter(struct gmtp_relay_entry *entry)
+static inline int new_reporter(struct gmtp_inter_entry *entry)
 {
 	return (entry->info->nclients % GMTP_REPORTER_DEFAULT_PROPORTION) == 0 ?
 			gmtp_inter.kreporter : 0;

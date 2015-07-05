@@ -30,7 +30,7 @@ struct gmtp_inter_hashtable *gmtp_inter_create_hashtable(unsigned int size)
 	if(ht == NULL)
 		return NULL;
 
-	ht->table = kmalloc(sizeof(struct gmtp_relay_entry*) *size, GFP_KERNEL);
+	ht->table = kmalloc(sizeof(struct gmtp_inter_entry*) *size, GFP_KERNEL);
 	if(ht->table == NULL)
 		return NULL;
 
@@ -62,10 +62,10 @@ unsigned int gmtp_inter_hash(struct gmtp_inter_hashtable *hashtable,
 	return hashval % hashtable->size;
 }
 
-struct gmtp_relay_entry *gmtp_inter_lookup_media(
+struct gmtp_inter_entry *gmtp_inter_lookup_media(
 		struct gmtp_inter_hashtable *hashtable, const __u8 *media)
 {
-	struct gmtp_relay_entry *entry;
+	struct gmtp_inter_entry *entry;
 	unsigned int hashval;
 
 	hashval = gmtp_inter_hash(hashtable, media);
@@ -131,8 +131,8 @@ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
 		__be32 server_addr, __be32 *relay, __be16 media_port,
 		__be32 channel_addr, __be16 channel_port)
 {
-	struct gmtp_relay_entry *new_entry;
-	struct gmtp_relay_entry *current_entry;
+	struct gmtp_inter_entry *new_entry;
+	struct gmtp_inter_entry *current_entry;
 	unsigned int hashval;
 
 	gmtp_print_function();
@@ -143,7 +143,7 @@ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
 	if(hashval < 0)
 		return hashval;
 
-	new_entry = kmalloc(sizeof(struct gmtp_relay_entry), GFP_KERNEL);
+	new_entry = kmalloc(sizeof(struct gmtp_inter_entry), GFP_KERNEL);
 	if(new_entry == NULL)
 		return 1;
 
@@ -171,7 +171,7 @@ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
 }
 EXPORT_SYMBOL_GPL(gmtp_inter_add_entry);
 
-void gmtp_inter_del_clients(struct gmtp_relay_entry *entry)
+void gmtp_inter_del_clients(struct gmtp_inter_entry *entry)
 {
 	struct gmtp_flow_info *info = entry->info;
 	struct gmtp_client *client, *temp;
@@ -185,11 +185,11 @@ void gmtp_inter_del_clients(struct gmtp_relay_entry *entry)
 	}
 }
 
-struct gmtp_relay_entry *gmtp_inter_del_entry(
+struct gmtp_inter_entry *gmtp_inter_del_entry(
 		struct gmtp_inter_hashtable *hashtable, __u8 *media)
 {
-	struct gmtp_relay_entry *previous_entry;
-	struct gmtp_relay_entry *current_entry;
+	struct gmtp_inter_entry *previous_entry;
+	struct gmtp_inter_entry *current_entry;
 	int hashval;
 
 	gmtp_print_function();
@@ -232,7 +232,7 @@ struct gmtp_relay_entry *gmtp_inter_del_entry(
 void kfree_gmtp_inter_hashtable(struct gmtp_inter_hashtable *hashtable)
 {
 	int i;
-	struct gmtp_relay_entry *list, *temp;
+	struct gmtp_inter_entry *list, *temp;
 
 	gmtp_print_function();
 
@@ -244,7 +244,7 @@ void kfree_gmtp_inter_hashtable(struct gmtp_inter_hashtable *hashtable)
 		while(list != NULL) {
 			temp = list;
 			list = list->next;
-			kfree(temp);
+			gmtp_inter_del_entry(hashtable, temp->flowname);
 		}
 	}
 

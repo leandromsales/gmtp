@@ -18,7 +18,7 @@ int gmtp_inter_register_out(struct sk_buff *skb)
 {
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
-	struct gmtp_relay_entry *entry;
+	struct gmtp_inter_entry *entry;
 
 	gmtp_pr_func();
 
@@ -66,7 +66,7 @@ int gmtp_inter_data_out(struct sk_buff *skb)
 {
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct iphdr *iph = ip_hdr(skb);
-	struct gmtp_relay_entry *entry;
+	struct gmtp_inter_entry *entry;
 	struct gmtp_flow_info *info;
 
 	unsigned int server_tx;
@@ -103,7 +103,7 @@ out:
 }
 
 static int gmtp_inter_close_from_client(struct sk_buff *skb,
-		struct gmtp_relay_entry *entry)
+		struct gmtp_inter_entry *entry)
 {
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
@@ -183,7 +183,7 @@ int gmtp_inter_close_out(struct sk_buff *skb)
 {
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
-	struct gmtp_relay_entry *entry;
+	struct gmtp_inter_entry *entry;
 
 	gmtp_pr_func();
 

@@ -38,13 +38,16 @@ unsigned char *gmtp_build_md5(unsigned char *buf)
 	struct crypto_hash *tfm;
 	struct hash_desc desc;
 	unsigned char *output;
-	 __u8 md5[21];
 	size_t buf_size = sizeof(buf) - 1;
+	 __u8 md5[21];
 
 	gmtp_print_function();
 
 	output = kmalloc(MD5_LEN * sizeof(unsigned char), GFP_KERNEL);
 	tfm = crypto_alloc_hash("md5", 0, CRYPTO_ALG_ASYNC);
+
+	/* FIXME This fails at NS-3-DCE */
+	pr_info("output: %p | tfm: %p\n", output, tfm);
 	if(output == NULL || IS_ERR(tfm)) {
 		gmtp_pr_error("Allocation failed\n");
 		return NULL;
@@ -273,7 +276,7 @@ int init_module()
 {
 	int ret = 0;
 	gmtp_pr_func();
-	gmtp_print_debug("Starting GMTP-inter");
+	gmtp_print_debug("Starting GMTP-Inter");
 
 	if(gmtp_info == NULL) {
 		gmtp_print_error("gmtp_info is NULL...");
@@ -293,10 +296,24 @@ int init_module()
 	gmtp_inter.ucc_bytes = 0;
 	gmtp_inter.ucc_rx_tstamp = 0;
 	gmtp_inter.rx_rate_wnd = 1000;
-
-	memcpy(gmtp_inter.relay_id, gmtp_inter_build_relay_id(),
-			GMTP_RELAY_ID_LEN);
 	memset(&gmtp_inter.mcst, 0, 4 * sizeof(unsigned char));
+
+/*	gmtp_inter.relay_id = kmalloc(MD5_LEN * sizeof(__u8), GFP_KERNEL);*/
+	unsigned char *rid = gmtp_inter_build_relay_id();
+	if(rid == NULL) {
+		int i;
+		 __u8 id[21];
+		gmtp_pr_error("Relay ID lookup failed...\n");
+		gmtp_pr_info("Creating a random id (based on jiffies).\n");
+		memset(gmtp_inter.relay_id, 0, GMTP_FLOWNAME_LEN);
+		for(i = 0; i < GMTP_FLOWNAME_LEN; i += sizeof(jiffies)) {
+			memcpy(&gmtp_inter.relay_id[i], &jiffies, sizeof(jiffies));
+		}
+		pr_info("Getting relay id...\n");
+		flowname_strn(id, gmtp_inter.relay_id, MD5_LEN);
+		pr_info("Relay ID = %s\n", id);
+	} else
+		memcpy(gmtp_inter.relay_id, rid, GMTP_FLOWNAME_LEN);
 
 	gmtp_inter.hashtable = gmtp_inter_create_hashtable(64);
 	if(gmtp_inter.hashtable == NULL) {
@@ -334,6 +351,9 @@ void cleanup_module()
 	nf_unregister_hook(&nfho_in);
 	nf_unregister_hook(&nfho_out);
 }
+
+module_init(init_module);
+module_exit(cleanup_module);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Mário André Menezes <mariomenezescosta@gmail.com>");

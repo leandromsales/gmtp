@@ -203,10 +203,10 @@ source "net/bridge/netfilter/Kconfig"
 endif
 
 source "net/dccp/Kconfig"
+source "net/gmtp/Kconfig"
 source "net/sctp/Kconfig"
 source "net/rds/Kconfig"
 source "net/tipc/Kconfig"
-source "net/gmtp/Kconfig"
 source "net/atm/Kconfig"
 source "net/l2tp/Kconfig"
 source "net/802/Kconfig"
