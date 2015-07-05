@@ -27,6 +27,7 @@
 struct gmtp_relay_entry {
 	__u8 flowname[GMTP_FLOWNAME_LEN];
 	__be32 server_addr;
+    unsigned char server_mac_addr[6]; 
 	__be32 *relay;
 	__be16 media_port;
 	__be32 channel_addr;

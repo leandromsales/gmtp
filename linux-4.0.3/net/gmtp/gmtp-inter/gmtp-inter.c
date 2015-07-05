@@ -27,10 +27,152 @@
 #include "mcc-inter.h"
 #include "ucc.h"
 
+#include <asm-generic/unaligned.h>
+#include <linux/etherdevice.h>
+
 static struct nf_hook_ops nfho_in;
 static struct nf_hook_ops nfho_out;
 
 struct gmtp_inter gmtp_inter;
+
+
+void gmtp_ack_build(struct gmtp_relay_entry *entry)
+{
+    
+    struct sk_buff *skb = alloc_skb(GMTP_MAX_HDR_LEN,GFP_ATOMIC);
+    int retval = 0, err;
+
+	/* FIXME How to define the ackcode in this case? */
+	if(skb == NULL) {
+		return;
+	}
+
+	/* Reserve space for headers */
+	/*skb_reserve(skb, sk->sk_prot->max_header);*/
+    skb_reserve(skb, GMTP_MAX_HDR_LEN);
+	/*GMTP_SKB_CB(skb)->type = GMTP_PKT_ACK;*/
+	/*gmtp_transmit_skb(sk, skb);*/
+
+    struct gmtp_hdr *gh = gmtp_hdr(skb);
+	__u8 *transport_header;
+
+	struct gmtp_hdr *gh_cpy;
+	struct gmtp_hdr_route *gh_rn;
+	struct gmtp_hdr_register_reply *gh_reply;
+
+	int gmtp_hdr_len = sizeof(struct gmtp_hdr) +
+			sizeof(struct gmtp_hdr_route);
+
+	transport_header = kmalloc(gmtp_hdr_len, gfp_any());
+	memset(transport_header, 0, gmtp_hdr_len);
+
+	gh_cpy = (struct gmtp_hdr *) transport_header;
+	memcpy(gh_cpy, gh, sizeof(struct gmtp_hdr));
+
+	gh_cpy->version = GMTP_VERSION;
+	/*gh_cpy->type  = GMTP_PKT_ROUTE_NOTIFY;*/
+    gh_cpy->type    = GMTP_PKT_ACK;
+	gh_cpy->hdrlen  = gmtp_hdr_len;
+	gh_cpy->relay   = 1;
+	/*gh_cpy->dport = gh->sport;*/
+	/*gh_cpy->sport = gh->dport;*/
+    gh_cpy->dport   = entry->media_port;/*TODO verify correct ports*/
+    gh_cpy->sport   = entry->media_port;
+
+	/*TODO neeed check*/
+    /*gh_rn = (struct gmtp_hdr_route *)(transport_header
+			+ sizeof(struct gmtp_hdr));
+	gh_reply = gmtp_hdr_register_reply(skb);
+	memcpy(gh_rn, gh_reply,	sizeof(*gh_reply));*/
+
+	/*TODO verify what do with gh, gh_cpy, gh_rn;*/
+    /*TODO just for test*/
+    gh = gh_cpy;
+
+    struct socket *sock = NULL;
+	struct net_device *dev_entry = NULL;
+	struct net *net;
+
+	retval = sock_create(AF_INET, SOCK_STREAM, 0, &sock);
+	net = sock_net(sock->sk);
+    
+    dev_entry = dev_get_by_index_rcu(net, 2);
+	sock_release(sock);
+    /*fim avaliar*/
+   	/*struct net_device *dev = skb_src->dev;*/ /*TODO conseguir pegar o dispostivo*/
+    struct net_device *dev = dev_entry;
+    /*struct ethhdr *eth_src = eth_hdr(skb_src);*/
+    
+
+	/*struct sk_buff *skb = alloc_skb(gh_ref->hdrlen, gfp_any());*/
+   
+	struct ethhdr *eth = eth_hdr(skb);
+	struct iphdr *iph;
+	/*struct gmtp_hdr *gh;*/
+	int total_len, ip_len, gmtp_len, data_len = 0;
+
+	if(eth == NULL) {
+		gmtp_print_warning("eth_src is NULL!");
+		return;
+	}
+
+    /*if(gh_ref->type == GMTP_PKT_DATA)*/
+    if(gh->type == GMTP_PKT_DATA)
+	/*	data_len = gmtp_data_len(skb_src);*/
+    data_len = gmtp_data_len(skb);
+
+	/*gmtp_len = gh_ref->hdrlen + data_len;*/
+    gmtp_len = gh->hdrlen + data_len;
+
+	ip_len = gmtp_len + sizeof(*iph);
+	total_len = ip_len + LL_RESERVED_SPACE(dev);
+
+    /*skb_reserve(skb, total_len);*/
+
+	/* Build GMTP data */
+	/*if(data_len > 0) {
+		unsigned char *data = skb_push(skb, data_len);
+		memcpy(data, gmtp_data(skb_src), data_len);
+	}*/
+
+	/* Build GMTP header */
+	/*skb_push(skb, gh_ref->hdrlen);
+	skb_reset_transport_header(skb);
+	gh = gmtp_hdr(skb);
+	memcpy(gh, gh_ref, gh_ref->hdrlen);*/
+
+	/* Build the IP header. */
+	skb_push(skb, sizeof(struct iphdr));
+	skb_reset_network_header(skb);
+	iph = ip_hdr(skb);
+
+	/* iph->version = 4; iph->ihl = 5; */
+	put_unaligned(0x45, (unsigned char *)iph);
+	iph->tos      = 0;
+	iph->frag_off = 0;
+	iph->ttl      = 64;
+	iph->protocol = IPPROTO_GMTP;
+
+    put_unaligned(entry->info->my_addr, &(iph->saddr)); 
+	put_unaligned(entry->server_addr, &(iph->daddr));
+	put_unaligned(htons(skb->len), &(iph->tot_len));
+
+	ip_send_check(iph);
+
+	eth = (struct ethhdr *) skb_push(skb, ETH_HLEN);
+	skb_reset_mac_header(skb);
+	skb->protocol = eth->h_proto = htons(ETH_P_IP);
+    
+	ether_addr_copy(eth->h_source, dev->dev_addr);
+    ether_addr_copy(eth->h_dest, entry->server_mac_addr);
+
+	skb->dev = dev;
+
+	err = dev_queue_xmit(skb);
+	if(err)
+		gmtp_pr_error("Error %d trying send packet (%p)", err, skb);
+}
+
 
 unsigned char *gmtp_build_md5(unsigned char *buf)
 {
@@ -182,15 +324,18 @@ struct sk_buff *gmtp_buffer_dequeue(struct gmtp_flow_info *info)
 unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 		const struct net_device *in, const struct net_device *out,
 		int (*okfn)(struct sk_buff *))
+
 {
-	int ret = NF_ACCEPT;
+    	int ret = NF_ACCEPT;
 	struct iphdr *iph = ip_hdr(skb);
 
 	if((gmtp_info->relay_enabled == 0) || (in == NULL))
 		return ret;
 
 	if(iph->protocol == IPPROTO_GMTP) {
-
+        
+        struct ethhdr *eth = eth_hdr(skb);
+	    struct gmtp_relay_entry *entry;
 		struct gmtp_hdr *gh = gmtp_hdr(skb);
 
 		if(gh->type != GMTP_PKT_DATA && gh->type != GMTP_PKT_FEEDBACK) {
@@ -205,6 +350,19 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 			ret = gmtp_inter_request_rcv(skb);
 			break;
 		case GMTP_PKT_REGISTER_REPLY:
+            /*****************************/ 
+
+            entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
+
+            /*TODO verificar se o mac do server esta sendo pego, ou usar h_dest*/
+	        if(entry != NULL)
+                ether_addr_copy(entry->server_mac_addr, eth->h_source);
+                /*memcpy(&entry->server_mac_addr, eth->h_source, 6);*/
+		        /*entry->server_mac_addr = eth->h_source;*/
+
+            /****************************/
+    
+
 			ret = gmtp_inter_register_reply_rcv(skb);
 			break;
 		case GMTP_PKT_ACK:
