@@ -1,0 +1,5 @@
+2015-07-02  Leandro de Sales  <leandro@gmtp-protocol.org>
+
+	* src/*:
+	  First version based on DCCP plugin
+
