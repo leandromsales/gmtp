@@ -214,7 +214,7 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 		struct gmtp_hdr_reqnotify *gh_rnotify;
 
 		gh_rnotify = gmtp_hdr_reqnotify(skb);
-		pr_info("ReqNotify => Channel: %pI4@%-5d | Code: %d | Cl: %u",
+		pr_info("ReqNotify => Channel: %pI4@%-5d | Code: %d | Cl: %u\n",
 				&gh_rnotify->mcst_addr,
 				ntohs(gh_rnotify->mcst_port),
 				gh_rnotify->rn_code,

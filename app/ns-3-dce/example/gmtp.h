@@ -22,7 +22,6 @@ void set_gmtp_inter(int actived)
   int rsock = socket (PF_INET, SOCK_GMTP, IPPROTO_GMTP);
   setsockopt(rsock, SOL_GMTP, GMTP_SOCKOPT_ROLE_RELAY, &ok, sizeof(int));
   setsockopt(rsock, SOL_GMTP, GMTP_SOCKOPT_RELAY_ENABLED, &actived, sizeof(int));
-  close(rsock);
 }
 
 inline void disable_gmtp_inter()
