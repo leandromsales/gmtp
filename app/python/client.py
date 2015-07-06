@@ -5,20 +5,32 @@ import socket
 import time
 import timeit
 from datetime import datetime
-
+from optparse import Option, OptionParser
 from gmtp import *
 from sys import stdout
 
-default_ip = get_ip_address('eth0')
 default_port = 12345
-default_address = (default_ip, default_port)
 
-if(len(sys.argv) > 2):
-    address = (sys.argv[1], int(sys.argv[2]))
-elif(len(sys.argv) > 1):
-    address = (sys.argv[1], default_port)
+usage = "usage: %prog [options]. Note: -a takes precedence of -i, specify one or other."
+parser = OptionParser(usage=usage, version="%prog 1.0")
+
+parser.add_option("-i", "--iface", dest="iface",
+                  help="The network interface to bind.", metavar="IFACE")
+parser.add_option("-a", "--address", dest="address",
+                  help="The network address", metavar="ADDRESS")
+parser.add_option("-p", "--port", dest="port", type="int",
+                  help="The network port [default: %default]", default=default_port, metavar="PORT")
+
+(options, args) = parser.parse_args()
+
+if (options.address):
+    address = (options.address, options.port)
+elif (options.iface):
+    ip = get_ip_address(options.iface)
+    address = (ip, options.port)
 else:
-    address = default_address
+    parser.print_help()
+    sys.exit(1)
 
 # Create sockets
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_GMTP, socket.IPPROTO_GMTP)
