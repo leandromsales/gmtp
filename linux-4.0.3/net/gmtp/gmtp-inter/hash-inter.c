@@ -84,12 +84,12 @@ struct gmtp_relay_entry *gmtp_inter_lookup_media(
 
 void ack_timer_callback(struct gmtp_relay_entry *entry)
 {
-    gmtp_print_function();
-    gmtp_print_debug("Servidor %x", entry->server_addr);
-    mod_timer(&entry->ack_timer_entry, jiffies + msecs_to_jiffies(1000));
+	gmtp_print_function();
+	gmtp_print_debug("Servidor %x", entry->server_addr);
+	mod_timer(&entry->ack_timer_entry, jiffies + msecs_to_jiffies(1000));
 
-    /*TODO send ACK to servers*/
-    return;
+	/*TODO send ACK to servers*/
+	return;
 }
 
 
@@ -177,11 +177,9 @@ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
 	new_entry->state = GMTP_INTER_WAITING_REGISTER_REPLY;
 	new_entry->next = hashtable->table[hashval];
 	hashtable->table[hashval] = new_entry;
-    gmtp_print_debug("Chegou aqui");
-    setup_timer(&new_entry->ack_timer_entry, ack_timer_callback, new_entry);
-	mod_timer(&new_entry->ack_timer_entry, jiffies + msecs_to_jiffies(1000));
-    gmtp_print_debug("Passou");
-
+	setup_timer(&new_entry->ack_timer_entry, ack_timer_callback, new_entry);
+	mod_timer(&new_entry->ack_timer_entry,
+			jiffies + msecs_to_jiffies(1000));
 
 	return 0;
 }
@@ -238,7 +236,7 @@ struct gmtp_relay_entry *gmtp_inter_del_entry(
 	gmtp_inter_del_clients(current_entry);
 	skb_queue_purge(current_entry->info->buffer);
 	del_timer_sync(&current_entry->info->mcc_timer);
-    del_timer_sync(&current_entry->ack_timer_entry);
+	del_timer_sync(&current_entry->ack_timer_entry);
 	kfree(current_entry->info);
 	kfree(current_entry);
 
