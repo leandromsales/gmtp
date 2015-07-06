@@ -7,9 +7,9 @@
 #include <stdio.h>
 #include <errno.h>
 
-#define SOCK_GTMP     7
-#define IPPROTO_GTMP  254
-#define SOL_GTMP      281
+#include "gmtp.h"
+
+#define SERVER_PORT 2000
 
 int main (int argc, char *argv[])
 {
@@ -18,11 +18,12 @@ int main (int argc, char *argv[])
   struct sockaddr_in serverAddr;
   socklen_t addr_size;
 
-  clientSocket = socket (PF_INET, SOCK_GTMP, IPPROTO_GTMP);
-  setsockopt(clientSocket, SOL_GTMP, 1, "1234567812345678", 16);
+  disable_gmtp_inter();
+  clientSocket = socket (PF_INET, SOCK_GMTP, IPPROTO_GMTP);
+  setsockopt(clientSocket, SOL_GMTP, GMTP_SOCKOPT_FLOWNAME, "1234567812345678", 16);
   
   serverAddr.sin_family = AF_INET;
-  serverAddr.sin_port = htons (2000);
+  serverAddr.sin_port = htons (SERVER_PORT);
   
   struct hostent *host = gethostbyname (argv[1]);
   memcpy (&serverAddr.sin_addr.s_addr, host->h_addr_list[0], host->h_length);

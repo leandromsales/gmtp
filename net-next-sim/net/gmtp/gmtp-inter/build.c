@@ -242,6 +242,8 @@ struct sk_buff *gmtp_inter_build_pkt(struct sk_buff *skb_src, __be32 saddr,
 	struct ethhdr *eth_src = eth_hdr(skb_src);
 
 	struct sk_buff *skb = alloc_skb(gh_ref->hdrlen, gfp_any());
+	struct skb_shared_info *shinfo = skb_shinfo(skb);
+
 	struct ethhdr *eth;
 	struct iphdr *iph;
 	struct gmtp_hdr *gh;
@@ -305,6 +307,7 @@ struct sk_buff *gmtp_inter_build_pkt(struct sk_buff *skb_src, __be32 saddr,
 		ether_addr_copy(eth->h_dest, eth_src->h_dest);
 
 	skb->dev = dev;
+	shinfo->frag_list = NULL;
 
 	return skb;
 }
@@ -312,6 +315,7 @@ struct sk_buff *gmtp_inter_build_pkt(struct sk_buff *skb_src, __be32 saddr,
 void gmtp_inter_send_pkt(struct sk_buff *skb)
 {
 	int err = dev_queue_xmit(skb);
+	/*int err = dev_queue_xmit_sk(NULL, skb);*/
 	if(err)
 		gmtp_pr_error("Error %d trying send packet (%p)", err, skb);
 }
