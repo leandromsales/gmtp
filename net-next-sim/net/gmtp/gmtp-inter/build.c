@@ -238,11 +238,13 @@ struct gmtp_hdr *gmtp_inter_make_close_hdr(struct sk_buff *skb)
 struct sk_buff *gmtp_inter_build_pkt(struct sk_buff *skb_src, __be32 saddr,
 		__be32 daddr, struct gmtp_hdr *gh_ref, bool backward)
 {
+	int err = 0;
 	struct net_device *dev = skb_src->dev;
 	struct ethhdr *eth_src = eth_hdr(skb_src);
+	struct sk_buff *skb;
+	struct skb_shared_info *shinfo;
 
-	struct sk_buff *skb = alloc_skb(gh_ref->hdrlen, gfp_any());
-	struct skb_shared_info *shinfo = skb_shinfo(skb);
+	/*struct sk_buff *skb = alloc_skb(gh_ref->hdrlen, gfp_any());*/
 
 	struct ethhdr *eth;
 	struct iphdr *iph;
@@ -254,17 +256,18 @@ struct sk_buff *gmtp_inter_build_pkt(struct sk_buff *skb_src, __be32 saddr,
 		return NULL;
 	}
 
-	if (skb == NULL) {
-		gmtp_print_warning("skb is null");
-		return NULL;
-	}
-
 	if(gh_ref->type == GMTP_PKT_DATA)
 		data_len = gmtp_data_len(skb_src);
 
 	gmtp_len = gh_ref->hdrlen + data_len;
 	ip_len = gmtp_len + sizeof(*iph);
 	total_len = ip_len + LL_RESERVED_SPACE(dev);
+
+	skb = skb_copy(skb_src, gfp_any());
+	if(skb == NULL) {
+		gmtp_print_warning("skb is null");
+		return NULL;
+	}
 
 	skb_reserve(skb, total_len);
 
@@ -307,7 +310,6 @@ struct sk_buff *gmtp_inter_build_pkt(struct sk_buff *skb_src, __be32 saddr,
 		ether_addr_copy(eth->h_dest, eth_src->h_dest);
 
 	skb->dev = dev;
-	shinfo->frag_list = NULL;
 
 	return skb;
 }
@@ -315,7 +317,6 @@ struct sk_buff *gmtp_inter_build_pkt(struct sk_buff *skb_src, __be32 saddr,
 void gmtp_inter_send_pkt(struct sk_buff *skb)
 {
 	int err = dev_queue_xmit(skb);
-	/*int err = dev_queue_xmit_sk(NULL, skb);*/
 	if(err)
 		gmtp_pr_error("Error %d trying send packet (%p)", err, skb);
 }
@@ -329,6 +330,8 @@ void gmtp_inter_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
 {
 	struct sk_buff *skb = gmtp_inter_build_pkt(skb_src, saddr, daddr,
 			gh_ref, backward);
+
+	gmtp_pr_func();
 
 	if(skb != NULL)
 		gmtp_inter_send_pkt(skb);

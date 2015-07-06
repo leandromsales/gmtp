@@ -32,10 +32,13 @@ int main (int argc, char *argv[])
   connect(clientSocket, (struct sockaddr *) &serverAddr, addr_size);
   
   std::cout << "Connected! Waiting for data...\n";
+  
+  int i = 0;
  
   do {
 	  recv(clientSocket, buffer, 1024, 0);
-	  std::cout << "Data received: " << buffer << std::endl;
+	  std::cout << "Data received (" << ++i << "): " << buffer << std::endl;
+	  
   } while(strcmp(buffer, "out") != 0);
      
   return 0;

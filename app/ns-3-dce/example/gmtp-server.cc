@@ -40,14 +40,14 @@ int main (int argc, char *argv[])
   int i;
   const char *msg = "Hello, World!";
   for(i = 0; i<50; ++i) {
-	std::cout << "Sending " << msg << std::endl;
+	std::cout << "Sending (" << i << "): " << msg << std::endl;
 	strcpy(buffer, msg);
 	send(newSocket,buffer,strlen(msg)+1,0);
   }
   delete(msg);
   
   const char *out = "out";
-  std::cout << "Sending out:" << out << std::endl;
+  std::cout << "Sending out: " << out << std::endl;
   strcpy(buffer, out);
   send(newSocket, buffer, strlen(out)+1, 0);
   delete(out);
