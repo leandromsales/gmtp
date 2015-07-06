@@ -30,11 +30,13 @@ int main (int argc, char *argv[])
 
   addr_size = sizeof serverAddr;
   connect(clientSocket, (struct sockaddr *) &serverAddr, addr_size);
-
-  recv(clientSocket, buffer, 1024, 0);
-  std::cout << "Data received: " << buffer << "\n";   
-
-//  close (clientSocket);
-   
+  
+  std::cout << "Connected! Waiting for data...\n";
+ 
+  do {
+	  recv(clientSocket, buffer, 1024, 0);
+	  std::cout << "Data received: " << buffer << std::endl;
+  } while(strcmp(buffer, "out") != 0);
+     
   return 0;
 }

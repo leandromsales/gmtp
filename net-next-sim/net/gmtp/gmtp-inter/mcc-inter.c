@@ -39,6 +39,8 @@ out:
 }
 
 /**
+ * FIXME Dont start timer if we are Waiting Register Reply...
+ *
  * TODO update_stats RTT through feedbacks
  *
  * If the GMTP-MCC sender receives no reports from the Reporters for (4 RTTs)*,

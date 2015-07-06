@@ -37,13 +37,20 @@ int main (int argc, char *argv[])
   addr_size = sizeof serverStorage;
   newSocket = accept(welcomeSocket, (struct sockaddr *) &serverStorage, &addr_size);
   
+  int i;
   const char *msg = "Hello, World!";
-  std::cout << "Sending " << msg << std::endl;
-  strcpy(buffer, msg);
-  send(newSocket,buffer,strlen(msg)+1,0);
-
-  //close (newSocket);
-  //close (welcomeSocket);
+  for(i = 0; i<50; ++i) {
+	std::cout << "Sending " << msg << std::endl;
+	strcpy(buffer, msg);
+	send(newSocket,buffer,strlen(msg)+1,0);
+  }
+  delete(msg);
+  
+  const char *out = "out";
+  std::cout << "Sending out:" << out << std::endl;
+  strcpy(buffer, out);
+  send(newSocket, buffer, strlen(out)+1, 0);
+  delete(out);
 
   return 0;
 }
