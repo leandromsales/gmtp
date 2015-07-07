@@ -129,7 +129,6 @@ EXPORT_SYMBOL_GPL(print_gmtp_relay);
 void print_route(struct gmtp_hdr_route *route)
 {
 	int i;
-	unsigned char relayid[GMTP_FLOWNAME_STR_LEN];
 
 	if(route->nrelays <= 0)
 		return;
