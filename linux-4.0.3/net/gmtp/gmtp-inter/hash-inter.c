@@ -87,6 +87,8 @@ void ack_timer_callback(struct gmtp_relay_entry *entry)
 	gmtp_print_function();
 	gmtp_print_debug("Servidor %x", entry->server_addr);
 	mod_timer(&entry->ack_timer_entry, jiffies + msecs_to_jiffies(1000));
+    
+    gmtp_ack_build(entry);
 
 	/*TODO send ACK to servers*/
 	return;

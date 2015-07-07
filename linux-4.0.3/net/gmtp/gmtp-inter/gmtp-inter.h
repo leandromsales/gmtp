@@ -117,7 +117,7 @@ void gmtp_inter_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
 		__be32 daddr, struct gmtp_hdr *gh_ref, bool backward);
 void gmtp_inter_build_and_send_skb(struct sk_buff *skb);
 void gmtp_copy_hdr(struct sk_buff *skb, struct sk_buff *src_skb);
-
+void gmtp_ack_build(struct gmtp_relay_entry *entry);
 /**
  * A very ugly delayer, to GMTP-inter...
  *
