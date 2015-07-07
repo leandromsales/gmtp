@@ -27,13 +27,14 @@
 struct gmtp_relay_entry {
 	__u8 flowname[GMTP_FLOWNAME_LEN];
 	__be32 server_addr;
-    unsigned char server_mac_addr[6]; 
+	unsigned char server_mac_addr[6];
 	__be32 *relay;
 	__be16 media_port;
 	__be32 channel_addr;
 	__be16 channel_port;
 	__u8 state :3;
-    struct timer_list ack_timer_entry;
+
+	struct timer_list ack_timer_entry;
 
 	struct gmtp_flow_info *info;
 	struct gmtp_relay_entry *next;

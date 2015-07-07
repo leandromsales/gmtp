@@ -349,87 +349,36 @@ void gmtp_copy_hdr(struct sk_buff *skb, struct sk_buff *src_skb)
 
 void gmtp_ack_build(struct gmtp_relay_entry *entry)
 {
-
 	struct sk_buff *skb = alloc_skb(GMTP_MAX_HDR_LEN, GFP_ATOMIC);
-	int retval = 0, err;
-
-	if(skb == NULL) {
-		return;
-	}
-
-	/* Reserve space for headers */
-	/*skb_reserve(skb, sk->sk_prot->max_header);*/
-	skb_reserve(skb, GMTP_MAX_HDR_LEN);
-	/*GMTP_SKB_CB(skb)->type = GMTP_PKT_ACK;*/
-
-	struct gmtp_hdr *gh = gmtp_hdr(skb);
-	__u8 *transport_header;
-
-	struct gmtp_hdr *gh_cpy;
-	//struct gmtp_hdr_route *gh_rn;
+	struct gmtp_hdr *gh;
+	int gmtp_hdr_len = sizeof(struct gmtp_hdr);
 	
-    int gmtp_hdr_len = sizeof(struct gmtp_hdr)
-			+ sizeof(struct gmtp_hdr_route);
-
 	struct ethhdr *eth = eth_hdr(skb);
 	struct iphdr *iph;
-    struct socket *sock = NULL;
+	struct socket *sock = NULL;
 	struct net_device *dev_entry = NULL;
 	struct net *net;
-	int total_len, ip_len, gmtp_len, data_len = 0;
+	int total_len, ip_len = 0;
 
-	transport_header = kmalloc(gmtp_hdr_len, gfp_any());
-	memset(transport_header, 0, gmtp_hdr_len);
-
-	gh_cpy = (struct gmtp_hdr *)transport_header;
-	memcpy(gh_cpy, gh, sizeof(struct gmtp_hdr));
-
-	gh_cpy->version = GMTP_VERSION;
-	gh_cpy->type = GMTP_PKT_ACK;
-	gh_cpy->hdrlen = gmtp_hdr_len;
-	gh_cpy->relay = 1;
-	gh_cpy->dport = entry->info->my_port;
-	gh_cpy->sport = entry->media_port;
-
-	/*gh_rn = (struct gmtp_hdr_route *)(transport_header
-	 + sizeof(struct gmtp_hdr));
-	 gh_reply = gmtp_hdr_register_reply(skb);
-	 memcpy(gh_rn, gh_reply,	sizeof(*gh_reply));*/
-
-	gh = gh_cpy;
-
-	retval = sock_create(AF_INET, SOCK_STREAM, 0, &sock);
+	sock_create(AF_INET, SOCK_STREAM, 0, &sock);
 	net = sock_net(sock->sk);
-
 	dev_entry = dev_get_by_index_rcu(net, 2);
 	sock_release(sock);
-	
-   	if(eth == NULL) {
-		gmtp_print_warning("eth is NULL!");
-		return;
-	}
 
-	if(gh->type == GMTP_PKT_DATA)
-		data_len = gmtp_data_len(skb);
-
-	gmtp_len = gh->hdrlen + data_len;
-
-	ip_len = gmtp_len + sizeof(*iph);
+	ip_len = gmtp_hdr_len + sizeof(*iph);
 	total_len = ip_len + LL_RESERVED_SPACE(dev_entry);
+	skb_reserve(skb, total_len);
 
-	/*skb_reserve(skb, total_len);*/
+	gh = gmtp_zeroed_hdr(skb, gmtp_hdr_len);
 
-	/* Build GMTP data */
-	/*if(data_len > 0) {
-	 unsigned char *data = skb_push(skb, data_len);
-	 memcpy(data, gmtp_data(skb_src), data_len);
-	 }*/
-
-	/* Build GMTP header */
-	/*skb_push(skb, gh_ref->hdrlen);
-	 skb_reset_transport_header(skb);
-	 gh = gmtp_hdr(skb);
-	 memcpy(gh, gh_ref, gh_ref->hdrlen);*/
+	gh->version = GMTP_VERSION;
+	gh->type = GMTP_PKT_ACK;
+	gh->hdrlen = gmtp_hdr_len;
+	gh->relay = 1;
+	gh->dport = entry->media_port;
+	gh->sport = entry->info->my_port;
+	gh->transm_r = gmtp_inter.ucc_rx;
+	memcpy(gh->flowname, entry->flowname, GMTP_FLOWNAME_LEN);
 
 	/* Build the IP header. */
 	skb_push(skb, sizeof(struct iphdr));
@@ -449,6 +398,8 @@ void gmtp_ack_build(struct gmtp_relay_entry *entry)
 
 	ip_send_check(iph);
 
+	print_gmtp_packet(iph, gh);
+
 	eth = (struct ethhdr *)skb_push(skb, ETH_HLEN);
 	skb_reset_mac_header(skb);
 	skb->protocol = eth->h_proto = htons(ETH_P_IP);
@@ -458,8 +409,6 @@ void gmtp_ack_build(struct gmtp_relay_entry *entry)
 
 	skb->dev = dev_entry;
 
-	err = dev_queue_xmit(skb);
-	if(err)
-		gmtp_pr_error("Error %d trying send packet (%p)", err, skb);
+	gmtp_inter_send_pkt(skb);
 }
 

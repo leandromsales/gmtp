@@ -84,7 +84,7 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 		int err = gmtp_inter_add_entry(gmtp_inter.hashtable, gh->flowname,
 				iph->daddr,
 				NULL,
-				gh->sport,
+				gh->dport,
 				mcst_addr,
 				gh->dport); /* Mcst port <- server port */
 
