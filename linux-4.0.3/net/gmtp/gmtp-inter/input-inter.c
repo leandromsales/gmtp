@@ -67,6 +67,7 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 		switch(entry->state) {
 		case GMTP_INTER_WAITING_REGISTER_REPLY:
 			code = 	GMTP_REQNOTIFY_CODE_WAIT;
+			gh->type = GMTP_PKT_REGISTER;
 			break;
 		case GMTP_INTER_REGISTER_REPLY_RECEIVED:
 		case GMTP_INTER_TRANSMITTING:
@@ -421,6 +422,8 @@ int gmtp_inter_close_rcv(struct sk_buff *skb)
 		gh_reset = gmtp_inter_make_reset_hdr(skb,
 				GMTP_RESET_CODE_CLOSED);
 		if(gh_reset != NULL) {
+
+			/* FIXME Crashing ns-3 */
 			gmtp_inter_build_and_send_pkt(skb, iph->daddr,
 					iph->saddr, gh_reset, true);
 			gmtp_pr_debug("Reset: src=%pI4@%-5d, dst=%pI4@%-5d",

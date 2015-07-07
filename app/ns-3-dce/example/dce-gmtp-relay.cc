@@ -59,6 +59,13 @@ int main (int argc, char *argv[])
   DceApplicationHelper dce;
   ApplicationContainer apps;
   
+//  dce.SetBinary ("gmtp-inter");
+//  dce.SetStackSize (1 << 16);
+//  dce.ResetArguments ();
+//  dce.ParseArguments ("off");
+//  apps = dce.Install (r);
+//  apps.Start (Seconds (2.0));
+  
   dce.SetBinary ("ip");
   dce.SetStackSize (1 << 16);
   dce.ResetArguments ();
@@ -70,32 +77,51 @@ int main (int argc, char *argv[])
   dce.ParseArguments ("route add default via 10.1.2.1 dev sim0");
   apps = dce.Install (n1);
   apps.Start (Seconds (2.5));
-  
+ 
   dce.ResetArguments ();
   dce.ParseArguments ("route");
-  apps = dce.Install (all);
+  apps = dce.Install (all);  
   apps.Start (Seconds (3.0));
-  apps = dce.Install (r);
+  
+  dce.ResetArguments ();
+  dce.ParseArguments ("link set sim0 up");
+  apps = dce.Install(all);
+  apps.Start(Seconds(3.5));
+  
+  dce.ResetArguments ();
+  dce.ParseArguments ("link set sim1 up");
+  apps = dce.Install(r);
+  apps.Start(Seconds(3.6));
+  
+  dce.ResetArguments();
+  dce.ParseArguments("addr show dev sim0");
+  apps = dce.Install(all);
+  apps.Start(Seconds(3.9));
+  
+  dce.ResetArguments();
+  dce.ParseArguments("addr show dev sim1");
+  apps = dce.Install(r);
+  apps.Start(Seconds(4.0));
   
   dce.SetBinary ("gmtp-server");
+  dce.SetStackSize (1 << 16);
   dce.ResetArguments ();
   apps = dce.Install (n0);
-  apps.Start (Seconds (4.0));
-
+  apps.Start (Seconds (5.0));
+  
   dce.SetBinary ("gmtp-client");
   dce.SetStackSize (1 << 16);
   dce.ResetArguments ();
   dce.AddArgument ("10.1.1.2");
   apps = dce.Install (n1);
-  //apps = dce.Install (r);
-  apps.Start (Seconds (4.5));
+  apps.Start (Seconds (7.0));
 
   csma.EnablePcapAll ("dce-gmtp");
   
   AsciiTraceHelper ascii;
   csma.EnableAsciiAll(ascii.CreateFileStream("dce-gmtp.tr"));
 
-  Simulator::Stop (Seconds (20.0));
+  Simulator::Stop (Seconds (30.0));
   Simulator::Run ();
   Simulator::Destroy ();
   

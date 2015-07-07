@@ -343,6 +343,7 @@ static int gmtp_v4_send_register_reply(struct sock *sk,
 	gmtp_print_function();
 
 	dst = inet_csk_route_req(sk, &fl4, req);
+	pr_info("dst: %p\n", dst);
 	if(dst == NULL)
 		goto out;
 

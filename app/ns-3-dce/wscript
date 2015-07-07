@@ -305,6 +305,7 @@ def build_dce_examples(module, bld):
                     ['dccp-server', []],
                     ['dccp-client', []],
                     ['freebsd-iproute', []],
+                    ['gmtp-inter', []],
                     ['gmtp-server', []],
                     ['gmtp-client', []],
                     ['server', []], #GMTP

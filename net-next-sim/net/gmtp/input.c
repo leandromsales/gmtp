@@ -194,15 +194,6 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 
 	/*** FIXME Check sequence numbers  ***/
 
-	/* Stop the REQUEST timer */
-	inet_csk_clear_xmit_timer(sk, ICSK_TIME_RETRANS);
-	WARN_ON(sk->sk_send_head == NULL);
-	kfree_skb(sk->sk_send_head);
-	sk->sk_send_head = NULL;
-
-	gp->gsr = gp->isr = GMTP_SKB_CB(skb)->seq;
-	gmtp_sync_mss(sk, icsk->icsk_pmtu_cookie);
-
 	/** First reply received and i have a relay */
 	if(gp->relay_rtt == 0 && gh->type == GMTP_PKT_REQUESTNOTIFY)
 		gp->relay_rtt = jiffies_to_msecs(jiffies) - gp->req_stamp;
@@ -214,27 +205,28 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 		struct gmtp_hdr_reqnotify *gh_rnotify;
 
 		gh_rnotify = gmtp_hdr_reqnotify(skb);
-		pr_info("ReqNotify => Channel: %pI4@%-5d | Code: %d | Cl: %u",
+		pr_info("ReqNotify => Channel: %pI4@%-5d | Code: %d | Cl: %u\n",
 				&gh_rnotify->mcst_addr,
 				ntohs(gh_rnotify->mcst_port),
 				gh_rnotify->rn_code,
 				gh_rnotify->max_nclients);
 
-		pr_info("Reporter: %pI4@%-5d\n", &gh_rnotify->reporter_addr,
-				ntohs(gh_rnotify->reporter_port));
-
-		memcpy(gp->relay_id, gh_rnotify->relay_id, GMTP_RELAY_ID_LEN);
-
-		gp->myself->max_nclients = gh_rnotify->max_nclients;
-		if(gp->myself->max_nclients > 0) {
-			gp->role = GMTP_ROLE_REPORTER;
-			gp->myself->clients = kmalloc(sizeof(struct gmtp_client),
-								GFP_ATOMIC);
-			INIT_LIST_HEAD(&gp->myself->clients->list);
-		}
-
 		switch(gh_rnotify->rn_code) {
 		case GMTP_REQNOTIFY_CODE_OK: /* Process packet */
+			pr_info("Reporter: %pI4@%-5d\n",
+					&gh_rnotify->reporter_addr,
+					ntohs(gh_rnotify->reporter_port));
+			memcpy(gp->relay_id, gh_rnotify->relay_id,
+					GMTP_RELAY_ID_LEN);
+
+			gp->myself->max_nclients = gh_rnotify->max_nclients;
+			if(gp->myself->max_nclients > 0) {
+				gp->role = GMTP_ROLE_REPORTER;
+				gp->myself->clients = kmalloc(
+						sizeof(struct gmtp_client),
+						GFP_ATOMIC);
+				INIT_LIST_HEAD(&gp->myself->clients->list);
+			}
 			break;
 		case GMTP_REQNOTIFY_CODE_WAIT: /* Do nothing... */
 			return 0;
@@ -275,6 +267,15 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 			goto err;
 
 	}
+
+	/* Stop the REQUEST timer */
+	inet_csk_clear_xmit_timer(sk, ICSK_TIME_RETRANS);
+	WARN_ON(sk->sk_send_head == NULL);
+	kfree_skb(sk->sk_send_head);
+	sk->sk_send_head = NULL;
+
+	gp->gsr = gp->isr = GMTP_SKB_CB(skb)->seq;
+	gmtp_sync_mss(sk, icsk->icsk_pmtu_cookie);
 
 	gmtp_set_state(sk, GMTP_OPEN);
 
