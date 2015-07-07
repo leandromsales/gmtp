@@ -68,6 +68,8 @@ struct gmtp_inter {
 
 	unsigned char		kreporter;
 
+    struct timer_list gmtp_timer;    
+
 	struct gmtp_inter_hashtable *hashtable;
 };
 
@@ -81,6 +83,7 @@ struct gmtp_flow_info *gmtp_inter_get_info(
 		struct gmtp_inter_hashtable *hashtable, const __u8 *media);
 __be32 gmtp_inter_device_ip(struct net_device *dev);
 unsigned char *gmtp_build_md5(unsigned char *buf);
+void gmtp_timer_callback(void);
 
 /** input.c */
 int gmtp_inter_request_rcv(struct sk_buff *skb);

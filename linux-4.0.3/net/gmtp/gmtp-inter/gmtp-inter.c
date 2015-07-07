@@ -288,6 +288,14 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 	return ret;
 }
 
+void gmtp_timer_callback(void)
+{
+	gmtp_print_function();
+    gmtp_ucc(UINT_MAX,1);    
+	mod_timer(&gmtp_inter.gmtp_timer, jiffies + msecs_to_jiffies(1000));
+    
+}
+
 int init_module()
 {
 	int ret = 0;
@@ -299,6 +307,9 @@ int init_module()
 		ret = -ENOBUFS;
 		goto out;
 	}
+
+    setup_timer(&gmtp_inter.gmtp_timer, gmtp_timer_callback, 0);
+   	mod_timer(&gmtp_inter.gmtp_timer, jiffies + msecs_to_jiffies(1000)); 
 
 	gmtp_inter.capacity = CAPACITY_DEFAULT;
 	gmtp_inter.buffer_len = 0;
@@ -352,6 +363,7 @@ void cleanup_module()
 
 	nf_unregister_hook(&nfho_in);
 	nf_unregister_hook(&nfho_out);
+    del_timer(&gmtp_inter.gmtp_timer);
 }
 
 MODULE_LICENSE("GPL");
