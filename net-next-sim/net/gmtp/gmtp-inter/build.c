@@ -238,13 +238,9 @@ struct gmtp_hdr *gmtp_inter_make_close_hdr(struct sk_buff *skb)
 struct sk_buff *gmtp_inter_build_pkt(struct sk_buff *skb_src, __be32 saddr,
 		__be32 daddr, struct gmtp_hdr *gh_ref, bool backward)
 {
-	int err = 0;
 	struct net_device *dev = skb_src->dev;
 	struct ethhdr *eth_src = eth_hdr(skb_src);
 	struct sk_buff *skb;
-	struct skb_shared_info *shinfo;
-
-	/*struct sk_buff *skb = alloc_skb(gh_ref->hdrlen, gfp_any());*/
 
 	struct ethhdr *eth;
 	struct iphdr *iph;

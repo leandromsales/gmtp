@@ -229,7 +229,6 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 			}
 			break;
 		case GMTP_REQNOTIFY_CODE_WAIT: /* Do nothing... */
-			/*goto wait_received;*/
 			return 0;
 			/* FIXME Del entry in table when receiving error... */
 		case GMTP_REQNOTIFY_CODE_ERROR:
@@ -312,9 +311,6 @@ out_invalid_packet:
  	/* gmtp_v4_do_rcv will send a reset */
  	GMTP_SKB_CB(skb)->reset_code = GMTP_RESET_CODE_PACKET_ERROR;
  	return 1;
-
-wait_received:
-	return 1;
 
 err:
  	/*
