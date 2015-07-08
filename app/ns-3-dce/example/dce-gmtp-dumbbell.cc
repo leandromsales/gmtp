@@ -21,12 +21,12 @@ int main(int argc, char *argv[])
 
 	cout << "Create nodes." << endl;
 	Ptr<Node> server = CreateObject<Node>();
-	Ptr<Node> relay = CreateObject<Node>();
-	Ptr<Node> client = CreateObject<Node>();
+	Ptr<Node> relay1 = CreateObject<Node>();
+	Ptr<Node> client1 = CreateObject<Node>();
 
-	NodeContainer net1(relay, server);
-	NodeContainer net2(relay, client);
-	NodeContainer all(relay, server, client);
+	NodeContainer net1(relay1, server);
+	NodeContainer net2(relay1, client1);
+	NodeContainer all(relay1, server, client1);
 
 	DceManagerHelper dceManager;
 	dceManager.SetTaskManagerAttribute("FiberManagerType",
@@ -59,13 +59,6 @@ int main(int argc, char *argv[])
 	DceApplicationHelper dce;
 	ApplicationContainer apps;
 
-//	  dce.SetBinary ("gmtp-inter");
-//	  dce.SetStackSize (1 << 16);
-//	  dce.ResetArguments ();
-//	  dce.ParseArguments ("off");
-//	  apps = dce.Install (r);
-//	  apps.Start (Seconds (2.0));
-
 	dce.SetBinary("ip");
 	dce.SetStackSize(1 << 16);
 	dce.ResetArguments();
@@ -75,7 +68,7 @@ int main(int argc, char *argv[])
 
 	dce.ResetArguments();
 	dce.ParseArguments("route add default via 10.1.2.1 dev sim0");
-	apps = dce.Install(client);
+	apps = dce.Install(client1);
 	apps.Start(Seconds(2.5));
 
 	dce.ResetArguments();
@@ -90,7 +83,7 @@ int main(int argc, char *argv[])
 
 	dce.ResetArguments();
 	dce.ParseArguments("link set sim1 up");
-	apps = dce.Install(relay);
+	apps = dce.Install(relay1);
 	apps.Start(Seconds(3.6));
 
 	dce.ResetArguments();
@@ -100,7 +93,7 @@ int main(int argc, char *argv[])
 
 	dce.ResetArguments();
 	dce.ParseArguments("addr show dev sim1");
-	apps = dce.Install(relay);
+	apps = dce.Install(relay1);
 	apps.Start(Seconds(4.0));
 
 	dce.SetBinary("gmtp-server");
@@ -113,13 +106,13 @@ int main(int argc, char *argv[])
 	dce.SetStackSize(1 << 16);
 	dce.ResetArguments();
 	dce.AddArgument("10.1.1.2");
-	apps = dce.Install(client);
+	apps = dce.Install(client1);
 	apps.Start(Seconds(7.0));
 
-	csma.EnablePcapAll("dce-gmtp-relay");
+	csma.EnablePcapAll("dce-gmtp-dumbbell");
 
 	AsciiTraceHelper ascii;
-	csma.EnableAsciiAll(ascii.CreateFileStream("dce-gmtp-relay.tr"));
+	csma.EnableAsciiAll(ascii.CreateFileStream("dce-gmtp-dumbbell.tr"));
 
 	Simulator::Stop(Seconds(30.0));
 	Simulator::Run();

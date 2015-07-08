@@ -383,6 +383,10 @@ def build_dce_examples(module, bld):
     module.add_example(needed = ['core', 'network', 'dce', 'point-to-point', 'applications', 'internet', 'csma'],
                        target='bin/dce-gmtp-relay',
                        source=['example/dce-gmtp-relay.cc'])
+                       
+    module.add_example(needed = ['core', 'network', 'dce', 'point-to-point', 'applications', 'internet', 'csma'],
+                       target='bin/dce-gmtp-dumbbell',
+                       source=['example/dce-gmtp-dumbbell.cc'])
 
     if bld.env['LIB_ASPECT_PATH']:
         module.add_example(needed = ['core', 'network', 'internet', 'dce', 'point-to-point', 'csma', 'applications'],
