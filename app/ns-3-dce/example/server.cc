@@ -23,6 +23,7 @@ int main()
 	socklen_t len;
 	fd_set socks;
 	fd_set readsocks;
+	fd_set writesocks;
 	int maxsock;
 	int reuseaddr = 1;
 
@@ -67,12 +68,13 @@ int main()
 	while(1) {
 	        unsigned int s;
 	        readsocks = socks;
-	        if (select(maxsock + 1, &readsocks, NULL, NULL, NULL) == -1) {
+	        writesocks = socks;
+	        if (select(maxsock + 1, &readsocks, &writesocks, NULL, NULL) == -1) {
 	            perror("select");
 	            return 1;
 	        }
 	        for (s = 0; s <= maxsock; s++) {
-	            if (FD_ISSET(s, &readsocks)) {
+	            if (FD_ISSET(s, &readsocks) || FD_ISSET(s, &writesocks)) {
 	                printf("socket %d was ready\n", s);
 	                if (s == sockfd) {
 	                    /* New connection */
@@ -106,8 +108,14 @@ int main()
 
 void handle(int newsock, fd_set *set)
 {
+	int i = 10;
 	char buffer[BUF_SIZE] = "Hello, World!";
-	send(newsock, buffer, BUF_SIZE, 0);
+	char out[4] = "out";
+
+	do {
+		send(newsock, buffer, BUF_SIZE, 0);
+	} while(--i);
+	send(newsock, out, 4, 0);
 	FD_CLR(newsock, set);
 	close(newsock);
 }

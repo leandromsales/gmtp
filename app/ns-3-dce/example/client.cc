@@ -53,16 +53,13 @@ int main(int argc, char**argv)
 	}
 	printf("Connected to the server...\n");
 
-	while(1) {
-		ret = recv(sockfd, buffer, BUF_SIZE, 0);
-//		if(ret < 0) {
-//			printf("Error receiving data!\n");
-//		} else {
-			printf("Received (%d): ", ret);
-			fputs(buffer, stdout);
-			printf("\n");
-//		}
-	}
+	int i = 0;
+	do {
+		recv(sockfd, buffer, BUF_SIZE, 0);
+		printf("Received (%d): ", ++i);
+		fputs(buffer, stdout);
+		printf("\n");
+	} while(strcmp(buffer, "out") != 0);
 	return 0;
 }
 
