@@ -6,53 +6,60 @@
 
 using namespace ns3;
 
-int main (int argc, char *argv[])
+int main(int argc, char *argv[])
 {
-  CommandLine cmd;
-  cmd.Parse (argc, argv);
+	CommandLine cmd;
+	cmd.Parse(argc, argv);
 
-  NodeContainer nodes;
-  nodes.Create (2);
+	NodeContainer nodes;
+	nodes.Create(3);
 
-  CsmaHelper csma;
-  csma.SetChannelAttribute ("DataRate", StringValue ("5Mbps"));
-  csma.SetChannelAttribute ("Delay", StringValue ("2ms"));
-  NetDeviceContainer devices = csma.Install (nodes);
+	CsmaHelper csma;
+	csma.SetChannelAttribute("DataRate", StringValue("5Mbps"));
+	csma.SetChannelAttribute("Delay", StringValue("2ms"));
+	NetDeviceContainer devices = csma.Install(nodes);
 
-  DceManagerHelper dceManager;
-  dceManager.SetTaskManagerAttribute ("FiberManagerType",
-                                      StringValue ("UcontextFiberManager"));
-  dceManager.SetNetworkStack ("ns3::LinuxSocketFdFactory",
-                              "Library", StringValue ("liblinux.so"));
+	DceManagerHelper dceManager;
+	dceManager.SetTaskManagerAttribute("FiberManagerType",
+			StringValue("UcontextFiberManager"));
+	dceManager.SetNetworkStack("ns3::LinuxSocketFdFactory", "Library",
+			StringValue("liblinux.so"));
 
-  LinuxStackHelper stack;
-  stack.Install (nodes);
-  Ipv4AddressHelper address;
-  address.SetBase ("10.0.0.0", "255.255.255.0");
-  Ipv4InterfaceContainer interfaces = address.Assign (devices);
-  dceManager.Install (nodes);
+	LinuxStackHelper stack;
+	stack.Install(nodes);
+	Ipv4AddressHelper address;
+	address.SetBase("10.0.0.0", "255.255.255.0");
+	Ipv4InterfaceContainer interfaces = address.Assign(devices);
+	dceManager.Install(nodes);
 
-  DceApplicationHelper dce;
-  ApplicationContainer apps;
+	DceApplicationHelper dce;
+	ApplicationContainer apps;
 
-  dce.SetBinary ("gmtp-server");
-  dce.SetStackSize (1 << 16);
-  dce.ResetArguments ();
-  apps = dce.Install (nodes.Get (0));
-  apps.Start (Seconds (4.0));
+	dce.SetBinary("gmtp-server-multi");
+	dce.SetStackSize(1 << 16);
+	dce.ResetArguments();
+	apps = dce.Install(nodes.Get(0));
+	apps.Start(Seconds(4.0));
 
-  dce.SetBinary ("gmtp-client");
-  dce.SetStackSize (1 << 16);
-  dce.ResetArguments ();
-  dce.AddArgument ("10.0.0.1");
-  apps = dce.Install (nodes.Get (1));
-  apps.Start (Seconds (4.5));
+	dce.SetBinary("gmtp-client");
+	dce.SetStackSize(1 << 16);
+	dce.ResetArguments();
+	dce.AddArgument("10.0.0.1");
+	apps = dce.Install(nodes.Get(1));
+	apps.Start(Seconds(4.5));
 
-  csma.EnablePcapAll ("dce-gmtp");
+	dce.SetBinary("gmtp-client");
+	dce.SetStackSize(1 << 16);
+	dce.ResetArguments();
+	dce.AddArgument("10.0.0.1");
+	apps = dce.Install(nodes.Get(2));
+	apps.Start(Seconds(4.6));
 
-  Simulator::Stop (Seconds (20.0));
-  Simulator::Run ();
-  Simulator::Destroy ();
+	csma.EnablePcapAll("dce-gmtp-simple");
 
-  return 0;
+	Simulator::Stop(Seconds(20.0));
+	Simulator::Run();
+	Simulator::Destroy();
+
+	return 0;
 }

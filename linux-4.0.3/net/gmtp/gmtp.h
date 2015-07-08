@@ -194,6 +194,7 @@ struct sock *gmtp_check_req(struct sock *sk, struct sk_buff *skb,
 			    struct request_sock **prev);
 void gmtp_reqsk_send_ack(struct sock *sk, struct sk_buff *skb,
 			 struct request_sock *rsk);
+unsigned int gmtp_poll(struct file *file, struct socket *sock, poll_table *wait);
 
 
 /** GMTP structs and etc **/
