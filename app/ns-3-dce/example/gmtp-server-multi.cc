@@ -9,7 +9,7 @@
 
 #include "gmtp.h"
 
-#define BUF_SIZE 2000
+#define BUF_SIZE 1024
 #define CLADDR_LEN 100
 
 #define PORT 2000
@@ -108,7 +108,7 @@ int main()
 
 void handle(int newsock, fd_set *set)
 {
-	int i = 10;
+	int i = 50;
 	char buffer[BUF_SIZE] = "Hello, World!";
 	char out[4] = "out";
 

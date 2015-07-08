@@ -308,8 +308,7 @@ def build_dce_examples(module, bld):
                     ['gmtp-inter', []],
                     ['gmtp-server', []],
                     ['gmtp-client', []],
-                    ['server', []], #GMTP
-                    ['client', []], #GMTP
+                    ['gmtp-server-multi', []], #GMTP
 #                    ['little-cout', []],
                     ]
 
