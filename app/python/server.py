@@ -65,7 +65,7 @@ total_time = 0
 start_time = 0
 last_time = 0
  
-print "Sending text: '" + msg + "' at " +  str(tx_rate) + " bytes/s (max)\n"
+#print "Sending text: '" + msg + "' at " +  str(tx_rate) + " bytes/s (max)\n"
 print "Sending... "
 
 try:
@@ -97,16 +97,18 @@ try:
             
             rate = "%.2f" % (size1000/elapsed)
             total_rate = "%.2f" % (total_size/total_time)
+            rate_mb = "%.2f" % (size1000/elapsed/1000000)
+            total_rate_mb = "%.2f" % (total_size/total_time/1000000)
             
             last_time = timeit.default_timer()
             last_size = total_size
             
             print "\nMessage", i, "sent to client at", nowstr +":\n", text
-            print "\tPacket Size: ", size, "bytes"
-            print "\tSize of last 1000:", size1000, "bytes / Time elapsed: ", elapsed, "s"
-            print "\tTotal sent:", total_size, "bytes / Total time:", total_time, "s"
-            print "\tSend rate (last 1000):", rate, "bytes/s"
-            print "\tSend rate (total): ", total_rate, "bytes/s\n\n"
+            print "\tPacket Size: ", size, "Bytes"
+            print "\tSize of last 1000:", size1000, "Bytes / Time elapsed: ", elapsed, "s"
+            print "\tTotal sent:", total_size, "Bytes / Total time:", total_time, "s"
+            print "\tSend rate (last 1000):", rate, "B/s | ", rate_mb, "MB/s"
+            print "\tSend rate (total): ", total_rate, "B/s | ", total_rate_mb, "MB/s\n\n"
             print "Sending... "
         
 except (KeyboardInterrupt, SystemExit):

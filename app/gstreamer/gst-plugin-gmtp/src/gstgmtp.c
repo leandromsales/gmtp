@@ -172,11 +172,7 @@ gst_gmtp_create_new_socket (GstElement * element)
   if ((sock_fd = socket (AF_INET, SOCK_GMTP, IPPROTO_GMTP)) < 0) {
     GST_ELEMENT_ERROR (element, RESOURCE, OPEN_READ, (NULL), GST_ERROR_SYSTEM);
   }
-  int ok = 1;
-  int actived = 0;
   setsockopt(sock_fd, SOL_GMTP, GMTP_SOCKOPT_FLOWNAME, "1234567812345678", 16);
-  setsockopt(sock_fd, SOL_GMTP, GMTP_SOCKOPT_ROLE_RELAY, &ok, sizeof(int));
-  setsockopt(sock_fd, SOL_GMTP, GMTP_SOCKOPT_RELAY_ENABLED, &actived, sizeof(int));
   GST_INFO ("SOCKET GMTP CRIADO");
 
   return sock_fd;

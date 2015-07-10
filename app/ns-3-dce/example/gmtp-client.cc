@@ -58,7 +58,7 @@ int main(int argc, char**argv)
 	do {
 		recv(sockfd, buffer, BUF_SIZE, 0);
 		printf("Received (%d): %s\n", ++i, buffer);
-	} while(strcmp(buffer, "out") != 0);
+	} while(strcmp(buffer, "exit") != 0);
 
 	return 0;
 }

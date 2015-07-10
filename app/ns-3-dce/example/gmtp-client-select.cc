@@ -77,7 +77,6 @@ int main(int argc, char**argv)
 		  }
 		  printf("chegou!\n");
 
-		  printf("%d", FIONREAD);
 		  if (ioctl (sockfd, FIONREAD, &readsize) < 0) {
 			printf("FIONREAD failed: %s", strerror (errno));
 			exit(1);
@@ -88,7 +87,7 @@ int main(int argc, char**argv)
 		  	exit(1);
 		  }
 
-		  delete(buf);
+		  free(buf);
 		  buf = (char *) malloc((int) readsize);
 		  bytes_read = recv (sockfd, buf, (int) readsize, 0);
 
@@ -97,11 +96,11 @@ int main(int argc, char**argv)
 		  	exit(1);
 		  }
 		  i++;
+		  printf("======================\n");
 		  printf("message index %d\n", i);
-		  printf("bytes read %zu\n", bytes_read);
-		  printf("buffer size %d\n", readsize);
-		  printf("Content %s\n", buf);
-		  printf("=============== \n\n");
+		  printf("Bytes read %zu\n", bytes_read);
+		  printf("FIONREAD size %d\n", readsize);
+		  printf("Content: %s\n\n", buf);
 	} while (strcmp(buf, "exit") != 0);
   return 0;
 }
