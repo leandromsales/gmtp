@@ -115,7 +115,6 @@ gst_gmtp_read_buffer (GstElement * this, int sockfd, GstBuffer ** buf)
 
   /* ask how much is available for reading on the socket */
 #ifndef G_OS_WIN32
-  GST_INFO("%d\n", FIONREAD);
   if (ioctl (sockfd, FIONREAD, &readsize) < 0) {
     GST_ELEMENT_ERROR (this, RESOURCE, READ, (NULL),
         ("read FIONREAD value failed: %s", g_strerror (errno)));
@@ -127,7 +126,6 @@ gst_gmtp_read_buffer (GstElement * this, int sockfd, GstBuffer ** buf)
     return GST_FLOW_ERROR;
   }
 
-  GST_INFO ("Readsize: %d", readsize);
   if (readsize == 0) {
     GST_DEBUG_OBJECT (this, "Got EOS on socket stream");
     //return GST_FLOW_UNEXPECTED;
@@ -153,7 +151,6 @@ gst_gmtp_read_buffer (GstElement * this, int sockfd, GstBuffer ** buf)
 
   GST_LOG_OBJECT (this, "bytes read %" G_GSSIZE_FORMAT, bytes_read);
   GST_LOG_OBJECT (this, "returning buffer of size %" G_GSIZE_FORMAT, map.size);
-  GST_INFO ("Read %" G_GSIZE_FORMAT " bytes succesfully.", bytes_read);
 
   return GST_FLOW_OK;
 }
@@ -525,23 +522,22 @@ gst_gmtp_get_ccid (GstElement * element, int sock_fd, int tx_or_rx)
  * @return the MTU if the operation was successful, -1 otherwise.
  */
 gint
-gst_gmtp_get_max_packet_size (GstElement * element, int sock)
+gst_gmtp_get_max_packet_size (GstElement * element, int sockfd)
 {
-  return TRUE;
+  return 1024;
   int size;
   socklen_t sizelen = sizeof (size);
 #ifndef G_OS_WIN32
-  if (getsockopt (sock, SOL_GMTP, GMTP_SOCKOPT_GET_CUR_MPS,
-          &size, &sizelen) < 0) {
+  if (getsockopt (sockfd, SOL_GMTP, GMTP_SOCKOPT_GET_CUR_MSS, &size, &sizelen) < 0) {
 #else
-  if (getsockopt (sock, SOL_GMTP, GMTP_SOCKOPT_GET_CUR_MPS,
-          (char *) &size, &sizelen) < 0) {
+  if (getsockopt (sockfd, SOL_GMTP, GMTP_SOCKOPT_GET_CUR_MSS, (char *) &size, &sizelen) < 0) {
 #endif
     GST_ELEMENT_ERROR (element, RESOURCE, SETTINGS, (NULL),
         ("Could not get current MTU %d: %s", errno, g_strerror (errno)));
     return -1;
   }
-  GST_DEBUG_OBJECT (element, "MTU: %d", size);
+  GST_INFO ("MTU: %d", size);
+  if (size <= 0) size = 1024;
   return size;
 }
 

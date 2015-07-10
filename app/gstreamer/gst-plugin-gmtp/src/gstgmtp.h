@@ -29,11 +29,13 @@
 #ifndef SOCK_GMTP
 	//#define SOCK_GMTP		6
 	#define SOCK_GMTP		7
+	//#define SOCK_GMTP SOCK_STREAM
 #endif
 
 #ifndef IPPROTO_GMTP
 	//#define IPPROTO_GMTP	33
 	#define IPPROTO_GMTP	254
+	//#define IPPROTO_GMTP	0
 #endif
 
 #ifndef SOL_GMTP
