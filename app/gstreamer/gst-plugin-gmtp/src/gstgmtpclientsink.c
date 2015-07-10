@@ -258,6 +258,12 @@ gst_gmtp_client_sink_stop (GstBaseSink * bsink)
   return TRUE;
 }
 
+static gboolean
+gst_gmtp_client_sink_setcaps (GstBaseSink * bsink, GstCaps * caps)
+{
+  return TRUE;
+}
+
 /*
  * Define the gst class, callbacks, etc.
  */
@@ -325,6 +331,7 @@ gst_gmtp_client_sink_class_init (GstGMTPClientSinkClass * klass)
   gstbasesink_class->start = gst_gmtp_client_sink_start;
   gstbasesink_class->stop = gst_gmtp_client_sink_stop;
   gstbasesink_class->render = gst_gmtp_client_sink_render;
+  gstbasesink_class->set_caps = gst_gmtp_client_sink_setcaps;
 
   GST_DEBUG_CATEGORY_INIT (gmtpclientsink_debug, "gmtpclientsink", 0,
       "GMTP Client Sink");

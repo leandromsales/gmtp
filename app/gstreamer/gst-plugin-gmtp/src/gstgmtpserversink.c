@@ -217,6 +217,7 @@ gst_gmtp_server_sink_start (GstBaseSink * bsink)
   if ((sink->sock_fd = gst_gmtp_create_new_socket (GST_ELEMENT (sink))) < 0) {
     return FALSE;
   }
+  GST_LOG_OBJECT (GST_ELEMENT(sink), "SOCKET CRIADO");
 
   if (!gst_gmtp_make_address_reusable (GST_ELEMENT (sink), sink->sock_fd)) {
     return FALSE;

@@ -15,13 +15,16 @@ TBD
 
 		http://gstreamer.freedesktop.org/data/doc/gstreamer/head/faq/html/chapter-using.html
 		./gst-launch-1.0 -v filesrc location=~/sweetchildomine.mp3 ! decodebin ! alsasink
-		./gst-launch-1.0 -v filesrc location=~/sweetchildomine.mp3 ! mad ! mpegaudioparse ! alsasink
+		./gst-launch-1.0 -v filesrc location=~/sweetchildomine.mp3 ! mpegaudioparse ! mad ! alsasink
 
 	3.2 Compiling gst-plugin-gmtp
 
 		export PKG_CONFIG_PATH=/home/wendell/gst-bin/lib/pkgconfig
 		export LD_LIBRARY_PATH=/home/wendell/gst-bin/lib
-		./autogen.sh or ./configure && make
+		./autogen.sh && ./configure --prefix=/home/wendell/gst-bin && make
+
+		./gst-launch-1.0 -v filesrc location=~/sweetchildomine.mp3 ! mpegaudioparse ! gmtpserversink port=9011 ccid=2
+		./gst-launch-1.0 -v gmtpclientsrc host=localhost port=9011 ccid=2 ! decodebin ! alsasink
 
 4. Porting to GStreamer 1.0
 ---------------------------

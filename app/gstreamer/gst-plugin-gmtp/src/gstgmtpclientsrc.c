@@ -117,7 +117,7 @@ gst_gmtp_client_src_create (GstPushSrc * psrc, GstBuffer ** outbuf)
         GST_TIME_ARGS (GST_BUFFER_DURATION (*outbuf)),
         GST_BUFFER_OFFSET (*outbuf), GST_BUFFER_OFFSET_END (*outbuf));
 
-    if (!gst_caps_is_equal (src->caps, GST_CAPS_ANY)) {
+    if ((src->caps != NULL) && !gst_caps_is_equal (src->caps, GST_CAPS_ANY)) {
 /*
 http://gstreamer-devel.966125.n4.nabble.com/Problem-with-several-gst-caps-functions-td4663327.html
 
@@ -182,7 +182,8 @@ gst_gmtp_client_src_set_property (GObject * object, guint prop_id,
       src->caps = new_caps;
       if (old_caps)
         gst_caps_unref (old_caps);
-      gst_pad_set_caps (GST_BASE_SRC (src)->srcpad, new_caps);
+      if (new_caps != NULL)
+        gst_pad_set_caps (GST_BASE_SRC (src)->srcpad, new_caps);
       break;
     }
     default:
@@ -330,6 +331,22 @@ gst_gmtp_client_src_stop (GstBaseSrc * bsrc)
   return TRUE;
 }
 
+static GstCaps *
+gst_gmtp_client_src_getcaps (GstBaseSrc * bsrc, GstCaps * filter)
+{
+  GstGMTPClientSrc *src;
+  GstCaps *caps = NULL;
+
+  src = GST_GMTP_CLIENT_SRC (bsrc);
+
+  caps = (filter ? gst_caps_ref (filter) : gst_caps_new_any ());
+
+  GST_DEBUG_OBJECT (src, "returning caps %" GST_PTR_FORMAT, caps);
+  g_assert (GST_IS_CAPS (caps));
+  return caps;
+}
+
+
 /*
  * Define the gst class, callbacks, etc.
  */
@@ -404,7 +421,7 @@ gst_gmtp_client_src_class_init (GstGMTPClientSrcClass * klass)
 
   gstbasesrc_class->start = gst_gmtp_client_src_start;
   gstbasesrc_class->stop = gst_gmtp_client_src_stop;
-
+  gstbasesrc_class->get_caps = gst_gmtp_client_src_getcaps;
   gstpush_src_class->create = gst_gmtp_client_src_create;
 
   GST_DEBUG_CATEGORY_INIT (gmtpclientsrc_debug, "gmtpclientsrc", 0,

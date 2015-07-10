@@ -5,10 +5,14 @@ config.*
 configure
 libtool
 Makefile.in
+Makefile
 depcomp
 install-sh
 ltmain.sh
 missing
 stamp-*
 *~
-
+.deps/
+.libs/
+*.la
+*.lo

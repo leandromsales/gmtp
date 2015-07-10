@@ -27,15 +27,18 @@
 /* GMTP socket general options */
 #define GMTP_BACKLOG	5
 #ifndef SOCK_GMTP
-	#define SOCK_GMTP		6
+	//#define SOCK_GMTP		6
+	#define SOCK_GMTP		7
 #endif
 
 #ifndef IPPROTO_GMTP
-	#define IPPROTO_GMTP	33
+	//#define IPPROTO_GMTP	33
+	#define IPPROTO_GMTP	254
 #endif
 
 #ifndef SOL_GMTP
-	#define SOL_GMTP		269
+	//#define SOL_GMTP		269
+	#define SOL_GMTP		281
 #endif
 
 /* gmtp socket specific options */
@@ -44,7 +47,7 @@
 #define GMTP_SOCKOPT_CHANGE_L           3
 #define GMTP_SOCKOPT_CHANGE_R           4
 #define GMTP_SOCKOPT_GET_CUR_MPS        5
-#define GMTP_SOCKOPT_SERVER_TIMEWAIT    6
+//#define GMTP_SOCKOPT_SERVER_TIMEWAIT    6
 #define GMTP_SOCKOPT_SEND_CSCOV         10
 #define GMTP_SOCKOPT_RECV_CSCOV         11
 #define GMTP_SOCKOPT_AVAILABLE_CCIDS    12
@@ -64,6 +67,15 @@
 #define GMTP_DEFAULT_CCID		 2
 
 #define GMTP_DELTA			 100
+
+#define GMTP_SOCKOPT_FLOWNAME 1
+#define GMTP_SOCKOPT_MAX_TX_RATE 2
+#define GMTP_SOCKOPT_GET_CUR_MSS 3
+#define GMTP_SOCKOPT_SERVER_RTT 4
+#define GMTP_SOCKOPT_SERVER_TIMEWAIT 5
+#define GMTP_SOCKOPT_PULL 6
+#define GMTP_SOCKOPT_ROLE_RELAY 7
+#define GMTP_SOCKOPT_RELAY_ENABLED 8
 
 gchar *gst_gmtp_host_to_ip (GstElement * element, const gchar * host);
 

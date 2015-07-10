@@ -93,8 +93,6 @@ gst_gmtp_read_buffer (GstElement * this, int socket, GstBuffer ** buf)
   gssize bytes_read;
 #ifndef G_OS_WIN32
   int readsize;
-  struct msghdr mh;
-  struct iovec iov;
 #else
   unsigned long readsize;
 #endif
@@ -135,32 +133,23 @@ gst_gmtp_read_buffer (GstElement * this, int socket, GstBuffer ** buf)
   GstMapInfo map;
   *buf = gst_buffer_new_and_alloc ((int) readsize);
   gst_buffer_map (*buf, &map, GST_MAP_READ);
-  //gsize size = map.size;
-  //guint8 *data = map.data;
 #ifndef G_OS_WIN32
-
-  memset (&mh, 0, sizeof (mh));
-  mh.msg_name = NULL;
-  mh.msg_namelen = 0;
-  iov.iov_base = (char *) map.data;
-  iov.iov_len = readsize;
-  mh.msg_iov = &iov;
-  mh.msg_iovlen = 1;
-
-  bytes_read = recvmsg (socket, &mh, 0);
+  bytes_read = recv (socket, (char *) map.data, (int) map.size, 0);
 #else
   bytes_read =
-      recvfrom (socket, (char *) map.data, (int) readsize, 0,
+      recvfrom (socket, (char *) map.data, (int) map.size, 0,
       NULL, 0);
+
 #endif
 
-  if (bytes_read != readsize) {
+  if (bytes_read != map.size) {
     GST_DEBUG_OBJECT (this, "Error while reading data");
     return GST_FLOW_ERROR;
   }
 
   GST_LOG_OBJECT (this, "bytes read %" G_GSSIZE_FORMAT, bytes_read);
   GST_LOG_OBJECT (this, "returning buffer of size %" G_GSIZE_FORMAT, map.size);
+  GST_INFO ("Read %" G_GSIZE_FORMAT " bytes succesfully.", bytes_read);
 
   return GST_FLOW_OK;
 }
@@ -174,9 +163,13 @@ gint
 gst_gmtp_create_new_socket (GstElement * element)
 {
   int sock_fd;
+  GST_INFO ("SOCK_GMTP: %d IPPROTO_GMTP: %d", SOCK_GMTP, IPPROTO_GMTP);
+  //if ((sock_fd = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
   if ((sock_fd = socket (AF_INET, SOCK_GMTP, IPPROTO_GMTP)) < 0) {
     GST_ELEMENT_ERROR (element, RESOURCE, OPEN_READ, (NULL), GST_ERROR_SYSTEM);
   }
+  setsockopt(sock_fd, SOL_GMTP, GMTP_SOCKOPT_FLOWNAME, "1234567812345678", 16);
+  GST_INFO ("SOCKET GMTP CRIADO");
 
   return sock_fd;
 }
@@ -342,21 +335,10 @@ gst_gmtp_socket_write (GstElement * element, int socket, const void *buf,
   ssize_t wrote = 0;
 
 #ifndef G_OS_WIN32
-  struct iovec iov;
-  struct msghdr mh;
-
-  memset (&mh, 0, sizeof (mh));
-
   while (bytes_written < size) {
     do {
-      mh.msg_name = NULL;
-      mh.msg_namelen = 0;
-      iov.iov_base = (char *) buf + bytes_written;
-      iov.iov_len = MIN (packet_size, size - bytes_written);
-      mh.msg_iov = &iov;
-      mh.msg_iovlen = 1;
-
-      wrote = sendmsg (socket, &mh, 0);
+      wrote = send (socket, (char *) buf + bytes_written,
+	  MIN (packet_size, size - bytes_written), 0);
     } while (wrote == -1 && errno == EAGAIN);
 #else
   int errorCode = 0;
@@ -388,6 +370,7 @@ gst_gmtp_socket_write (GstElement * element, int socket, const void *buf,
             bytes_written, size, g_strerror (errno)));
     return GST_FLOW_ERROR;
   }
+  GST_INFO ("Wrote %" G_GSIZE_FORMAT " bytes succesfully.", bytes_written);
 
   return GST_FLOW_OK;
 }
@@ -451,6 +434,7 @@ gst_gmtp_make_address_reusable (GstElement * element, int sock_fd)
 gboolean
 gst_gmtp_set_ccid (GstElement * element, int sock_fd, uint8_t ccid)
 {
+  return TRUE;
   uint8_t ccids[4];             /* for getting the available CCIDs, should be large enough */
   socklen_t len = sizeof (ccids);
   int i, ret;
@@ -539,6 +523,7 @@ gst_gmtp_get_ccid (GstElement * element, int sock_fd, int tx_or_rx)
 gint
 gst_gmtp_get_max_packet_size (GstElement * element, int sock)
 {
+  return TRUE;
   int size;
   socklen_t sizelen = sizeof (size);
 #ifndef G_OS_WIN32

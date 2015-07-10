@@ -113,7 +113,7 @@ gst_gmtp_server_src_create (GstPushSrc * psrc, GstBuffer ** outbuf)
         GST_TIME_ARGS (GST_BUFFER_DURATION (*outbuf)),
         GST_BUFFER_OFFSET (*outbuf), GST_BUFFER_OFFSET_END (*outbuf));
 
-    if (!gst_caps_is_equal (src->caps, GST_CAPS_ANY)) {
+    if ((src->caps != NULL) && !gst_caps_is_equal (src->caps, GST_CAPS_ANY)) {
 /*
 
 There is no GstController anymore, the functionality was merged into the 
@@ -170,7 +170,8 @@ gst_gmtp_server_src_set_property (GObject * object, guint prop_id,
       if (old_caps) {
         gst_caps_unref (old_caps);
       }
-      gst_pad_set_caps (GST_BASE_SRC (src)->srcpad, new_caps);
+      if (new_caps != NULL)
+        gst_pad_set_caps (GST_BASE_SRC (src)->srcpad, new_caps);
       break;
     }
     default:
