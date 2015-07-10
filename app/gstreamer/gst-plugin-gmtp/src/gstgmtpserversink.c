@@ -103,7 +103,7 @@ gst_gmtp_server_create_client (GstElement * element, int socket)
   client->pksize = gst_gmtp_get_max_packet_size (element, client->socket);
   client->flow_status = GST_FLOW_OK;
 
-  GST_DEBUG_OBJECT (element, "Creating a new client with fd %d and MTU %d.",
+  GST_INFO ("Creating a new client with fd %d and MTU %d.",
       client->socket, client->pksize);
 
   /* the socket is connected */

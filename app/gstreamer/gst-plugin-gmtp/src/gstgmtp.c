@@ -25,6 +25,8 @@
 
 #ifdef HAVE_FIONREAD_IN_SYS_FILIO
 #include <sys/filio.h>
+#else
+#include <sys/ioctl.h>
 #endif
 
 /*
@@ -86,7 +88,7 @@ gst_gmtp_host_to_ip (GstElement * element, const gchar * host)
  * Handle it with EOS.
  */
 GstFlowReturn
-gst_gmtp_read_buffer (GstElement * this, int socket, GstBuffer ** buf)
+gst_gmtp_read_buffer (GstElement * this, int sockfd, GstBuffer ** buf)
 {
   fd_set testfds;
   int maxfdp1;
@@ -101,8 +103,8 @@ gst_gmtp_read_buffer (GstElement * this, int socket, GstBuffer ** buf)
 
   /* do a blocking select on the socket */
   FD_ZERO (&testfds);
-  FD_SET (socket, &testfds);
-  maxfdp1 = socket + 1;
+  FD_SET (sockfd, &testfds);
+  maxfdp1 = sockfd + 1;
 
   /* no action (0) is also an error in our case */
   if (select (maxfdp1, &testfds, NULL, NULL, 0) <= 0) {
@@ -113,17 +115,19 @@ gst_gmtp_read_buffer (GstElement * this, int socket, GstBuffer ** buf)
 
   /* ask how much is available for reading on the socket */
 #ifndef G_OS_WIN32
-  if (ioctl (socket, FIONREAD, &readsize) < 0) {
+  GST_INFO("%d\n", FIONREAD);
+  if (ioctl (sockfd, FIONREAD, &readsize) < 0) {
     GST_ELEMENT_ERROR (this, RESOURCE, READ, (NULL),
         ("read FIONREAD value failed: %s", g_strerror (errno)));
 #else
-  if (ioctlsocket (socket, FIONREAD, &readsize) == SOCKET_ERROR) {
+  if (ioctlsocket (sockfd, FIONREAD, &readsize) == SOCKET_ERROR) {
     GST_ELEMENT_ERROR (this, RESOURCE, READ, (NULL),
         ("read FIONREAD value failed: %s", g_strerror (WSAGetLastError ())));
 #endif
     return GST_FLOW_ERROR;
   }
 
+  GST_INFO ("Readsize: %d", readsize);
   if (readsize == 0) {
     GST_DEBUG_OBJECT (this, "Got EOS on socket stream");
     //return GST_FLOW_UNEXPECTED;
@@ -134,10 +138,10 @@ gst_gmtp_read_buffer (GstElement * this, int socket, GstBuffer ** buf)
   *buf = gst_buffer_new_and_alloc ((int) readsize);
   gst_buffer_map (*buf, &map, GST_MAP_READ);
 #ifndef G_OS_WIN32
-  bytes_read = recv (socket, (char *) map.data, (int) map.size, 0);
+  bytes_read = recv (sockfd, (char *) map.data, (int) map.size, 0);
 #else
   bytes_read =
-      recvfrom (socket, (char *) map.data, (int) map.size, 0,
+      recvfrom (sockfd, (char *) map.data, (int) map.size, 0,
       NULL, 0);
 
 #endif
@@ -163,12 +167,16 @@ gint
 gst_gmtp_create_new_socket (GstElement * element)
 {
   int sock_fd;
-  GST_INFO ("SOCK_GMTP: %d IPPROTO_GMTP: %d", SOCK_GMTP, IPPROTO_GMTP);
+  GST_INFO ("SOCK_GMTP: %d IPPROTO_GMTP: %d SOL_GMTP: %d", SOCK_GMTP, IPPROTO_GMTP, SOL_GMTP);
   //if ((sock_fd = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
   if ((sock_fd = socket (AF_INET, SOCK_GMTP, IPPROTO_GMTP)) < 0) {
     GST_ELEMENT_ERROR (element, RESOURCE, OPEN_READ, (NULL), GST_ERROR_SYSTEM);
   }
+  int ok = 1;
+  int actived = 0;
   setsockopt(sock_fd, SOL_GMTP, GMTP_SOCKOPT_FLOWNAME, "1234567812345678", 16);
+  setsockopt(sock_fd, SOL_GMTP, GMTP_SOCKOPT_ROLE_RELAY, &ok, sizeof(int));
+  setsockopt(sock_fd, SOL_GMTP, GMTP_SOCKOPT_RELAY_ENABLED, &actived, sizeof(int));
   GST_INFO ("SOCKET GMTP CRIADO");
 
   return sock_fd;

@@ -35,7 +35,7 @@ else:
 # Create sockets
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_GMTP, socket.IPPROTO_GMTP)
 
-flowname = getHash(address)
+flowname = "1234567812345678"
 client_socket.setsockopt(socket.SOL_GMTP, socket.GMTP_SOCKOPT_FLOWNAME, flowname)
 
 print 'Connecting to ', address

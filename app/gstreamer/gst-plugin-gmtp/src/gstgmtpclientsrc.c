@@ -108,7 +108,7 @@ gst_gmtp_client_src_create (GstPushSrc * psrc, GstBuffer ** outbuf)
   ret = gst_gmtp_read_buffer (GST_ELEMENT (src), src->sock_fd, outbuf);
 
   if (ret == GST_FLOW_OK) {
-    GST_LOG_OBJECT (src,
+    GST_INFO (
         "Returning buffer from _get of size %" G_GSIZE_FORMAT ", ts %"
         GST_TIME_FORMAT ", dur %" GST_TIME_FORMAT
         ", offset %" G_GINT64_FORMAT ", offset_end %" G_GINT64_FORMAT,
@@ -251,8 +251,8 @@ gst_gmtp_client_src_start (GstBaseSrc * bsrc)
     /* name the server socket */
     memset (&src->server_sin, 0, sizeof (src->server_sin));
     src->server_sin.sin_family = AF_INET;       /* network socket */
-    src->server_sin.sin_port = htons (src->port);       /* on port */
     src->server_sin.sin_addr.s_addr = inet_addr (ip);   /* on host ip */
+    src->server_sin.sin_port = htons (src->port);       /* on port */
     g_free (ip);
 
     /* create socket */

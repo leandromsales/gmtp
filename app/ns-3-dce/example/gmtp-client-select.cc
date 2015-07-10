@@ -16,8 +16,7 @@
 
 #include "gmtp.h"
 
-#define PORT 2000
-#define BUF_SIZE 1024
+#define PORT 12345
 
 using namespace std;
 
@@ -78,6 +77,7 @@ int main(int argc, char**argv)
 		  }
 		  printf("chegou!\n");
 
+		  printf("%d", FIONREAD);
 		  if (ioctl (sockfd, FIONREAD, &readsize) < 0) {
 			printf("FIONREAD failed: %s", strerror (errno));
 			exit(1);

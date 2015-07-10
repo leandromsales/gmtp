@@ -40,7 +40,7 @@ print "Starting server... at ", address
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_GMTP, socket.IPPROTO_GMTP)
 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-flowname = getHash(address)
+flowname = "1234567812345678";
 server_socket.setsockopt(socket.SOL_GMTP, socket.GMTP_SOCKOPT_FLOWNAME, flowname)
 
 #tx_rate = "max_gmtp_rate"

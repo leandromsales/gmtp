@@ -12,7 +12,7 @@
 
 #include "gmtp.h"
 
-#define PORT 2000
+#define PORT 12345
 #define BUF_SIZE 1024
 
 using namespace std;

@@ -8,7 +8,7 @@
 
 #include "gmtp.h"
 
-#define SERVER_PORT 2000
+#define SERVER_PORT 12345
 #define MAX_CONNECTION 10
 
 int main(int argc, char *argv[])
