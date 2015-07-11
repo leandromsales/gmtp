@@ -155,6 +155,10 @@ gst_gmtp_read_buffer (GstElement * this, int sockfd, GstBuffer ** buf)
   return GST_FLOW_OK;
 }
 
+void load_modules() {
+	//system("sudo modprobe gmtp_ipv4");
+}
+
 /* Create a new GMTP socket
  *
  * @param element - the element
@@ -163,6 +167,7 @@ gst_gmtp_read_buffer (GstElement * this, int sockfd, GstBuffer ** buf)
 gint
 gst_gmtp_create_new_socket (GstElement * element)
 {
+  load_modules();
   int sock_fd;
   GST_INFO ("SOCK_GMTP: %d IPPROTO_GMTP: %d SOL_GMTP: %d", SOCK_GMTP, IPPROTO_GMTP, SOL_GMTP);
   //if ((sock_fd = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -369,6 +374,7 @@ gst_gmtp_socket_write (GstElement * element, int socket, const void *buf,
         ("Error while sending data to socket %d.", socket),
         ("Only %" G_GSIZE_FORMAT " of %" G_GSIZE_FORMAT " bytes written: %s",
             bytes_written, size, g_strerror (errno)));
+    //return GST_FLOW_ERROR;
     return GST_FLOW_ERROR;
   }
   GST_INFO ("Wrote %" G_GSIZE_FORMAT " bytes succesfully.", bytes_written);
@@ -524,21 +530,17 @@ gst_gmtp_get_ccid (GstElement * element, int sock_fd, int tx_or_rx)
 gint
 gst_gmtp_get_max_packet_size (GstElement * element, int sockfd)
 {
-  return 1024;
-  int size;
-  socklen_t sizelen = sizeof (size);
+  unsigned int mss = 1024;
+  socklen_t sizelen = (socklen_t) sizeof(unsigned int);
 #ifndef G_OS_WIN32
-  if (getsockopt (sockfd, SOL_GMTP, GMTP_SOCKOPT_GET_CUR_MSS, &size, &sizelen) < 0) {
+  if (getsockopt (sockfd, SOL_GMTP, GMTP_SOCKOPT_GET_CUR_MSS, &mss, &sizelen) < 0) {
 #else
-  if (getsockopt (sockfd, SOL_GMTP, GMTP_SOCKOPT_GET_CUR_MSS, (char *) &size, &sizelen) < 0) {
+  if (getsockopt (sockfd, SOL_GMTP, GMTP_SOCKOPT_GET_CUR_MSS, (char *) &mss, &sizelen) < 0) {
 #endif
     GST_ELEMENT_ERROR (element, RESOURCE, SETTINGS, (NULL),
-        ("Could not get current MTU %d: %s", errno, g_strerror (errno)));
-    return -1;
+        ("Could not get current MTU %d: %s. Returning default value %d", errno, g_strerror (errno), mss));
   }
-  GST_INFO ("MTU: %d", size);
-  if (size <= 0) size = 1024;
-  return size;
+  return mss;
 }
 
 void
