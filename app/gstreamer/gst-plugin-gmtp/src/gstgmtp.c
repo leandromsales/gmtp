@@ -524,21 +524,17 @@ gst_gmtp_get_ccid (GstElement * element, int sock_fd, int tx_or_rx)
 gint
 gst_gmtp_get_max_packet_size (GstElement * element, int sockfd)
 {
-  return 1024;
-  int size;
-  socklen_t sizelen = sizeof (size);
+  unsigned int mss = 1024;
+  socklen_t sizelen = (socklen_t) sizeof(unsigned int);
 #ifndef G_OS_WIN32
-  if (getsockopt (sockfd, SOL_GMTP, GMTP_SOCKOPT_GET_CUR_MSS, &size, &sizelen) < 0) {
+  if (getsockopt (sockfd, SOL_GMTP, GMTP_SOCKOPT_GET_CUR_MSS, &mss, &sizelen) < 0) {
 #else
-  if (getsockopt (sockfd, SOL_GMTP, GMTP_SOCKOPT_GET_CUR_MSS, (char *) &size, &sizelen) < 0) {
+  if (getsockopt (sockfd, SOL_GMTP, GMTP_SOCKOPT_GET_CUR_MSS, (char *) &mss, &sizelen) < 0) {
 #endif
     GST_ELEMENT_ERROR (element, RESOURCE, SETTINGS, (NULL),
-        ("Could not get current MTU %d: %s", errno, g_strerror (errno)));
-    return -1;
+        ("Could not get current MTU %d: %s. Returning default value %d", errno, g_strerror (errno), mss));
   }
-  GST_INFO ("MTU: %d", size);
-  if (size <= 0) size = 1024;
-  return size;
+  return mss;
 }
 
 void
