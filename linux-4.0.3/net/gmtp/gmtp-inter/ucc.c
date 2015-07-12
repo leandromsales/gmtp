@@ -59,8 +59,8 @@ void gmtp_ucc(unsigned int h_user, unsigned char debug)
 
 	h = gmtp_rtt_average();
 	H = (h < h_user) ? h : h_user;
-	up = (H / h) * (ALPHA(GHAMA(C)-y) - BETA(q / h));
-	delta = ((int)(r_prev) * up) / GHAMA(C);
+	up = (H / h) * (GMTP_ALPHA(GMTP_GHAMA(C)-y) - GMTP_BETA(q / h));
+	delta = ((int)(r_prev) * up) / GMTP_GHAMA(C);
 
 	/**
 	 * r = r_prev * (1 + up/GHAMA(C)) =>
@@ -90,21 +90,21 @@ void gmtp_ucc(unsigned int h_user, unsigned char debug)
 		gmtp_pr_debug("y(t): %u bytes/s", y);
 		gmtp_pr_debug("q(t): %u bytes\n", q);
 		gmtp_pr_debug("H/h0: %u", (H / h));
-		gmtp_pr_debug("GHAMA(C): %u", GHAMA(C));
-		gmtp_pr_debug("ALPHA(GHAMA(C)-y): %u", ALPHA(GHAMA(C)-y));
+		gmtp_pr_debug("GHAMA(C): %u", GMTP_GHAMA(C));
+		gmtp_pr_debug("ALPHA(GHAMA(C)-y): %u", GMTP_ALPHA(GMTP_GHAMA(C)-y));
 		gmtp_pr_debug("q/h: %u", q / h);
-		gmtp_pr_debug("BETA(q/h): %u", BETA(q/h));
+		gmtp_pr_debug("BETA(q/h): %u", GMTP_BETA(q/h));
 		gmtp_pr_debug("ALPHA(GHAMA(C)-y) - BETA(q/h):");
-		gmtp_pr_debug("%u - %u: %d\n", ALPHA(GHAMA(C)-y), BETA(q/h),
-				(ALPHA(GHAMA(C)-y) - BETA(q/h)));
+		gmtp_pr_debug("%u - %u: %d\n", GMTP_ALPHA(GMTP_GHAMA(C)-y), GMTP_BETA(q/h),
+				(GMTP_ALPHA(GMTP_GHAMA(C)-y) - GMTP_BETA(q/h)));
 
 		gmtp_pr_debug("up = ((H / h) * [ALPHA(GHAMA(C)-y) - BETA(q / h)])");
-		gmtp_pr_debug("up = %u * [%u - %u]", H / h, ALPHA(GHAMA(C)-y),
-				BETA(q / h));
+		gmtp_pr_debug("up = %u * [%u - %u]", H / h, GMTP_ALPHA(GMTP_GHAMA(C)-y),
+				GMTP_BETA(q / h));
 		gmtp_pr_debug("up = %d\n", up);
 		gmtp_pr_debug("delta = ((r_prev * up)/GHAMA(C))");
 		gmtp_pr_debug("delta = (%d * %u)/%u", (int )(r_prev), up,
-				GHAMA(C));
+				GMTP_GHAMA(C));
 		gmtp_pr_debug("delta = %d\n", delta);
 
 		gmtp_pr_debug("new_r = (int)(r_prev) + delta");

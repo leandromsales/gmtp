@@ -19,7 +19,7 @@
 
 #define SYNTH_OK 0x0001
 #define B_ALPHA 0x0002
-#define ALPHA 0x0003
+#define GMTP_ALPHA 0x0003
 #define B_CAP 0x0004
 #define A_CAP 0x0007
 #define B_NUM 0x0008
