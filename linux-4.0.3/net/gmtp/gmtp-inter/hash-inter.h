@@ -8,10 +8,10 @@
 #ifndef HASH_INTER_H_
 #define HASH_INTER_H_
 
-#define GMTP_HASH_SIZE  16
+#define GMTP_HASH_KEY_LEN  16
 
 /**
- * struct gmtp_relay_entry: entry in GMTP-inter Relay Table
+ * struct gmtp_inter_entry: entry in GMTP-inter Relay Table
  *
  * @flowname: Name of dataflow
  * @server_addr: IP address of media server
@@ -22,9 +22,9 @@
  * @state: state of media transmission
  * @info: control information for media transmission
  *
- * @next: pointer to next gmtp_relay_entry
+ * @next: pointer to next gmtp_inter_entry
  */
-struct gmtp_relay_entry {
+struct gmtp_inter_entry {
 	__u8 flowname[GMTP_FLOWNAME_LEN];
 	__be32 server_addr;
 	unsigned char server_mac_addr[6];
@@ -37,7 +37,7 @@ struct gmtp_relay_entry {
 	struct timer_list ack_timer_entry;
 
 	struct gmtp_flow_info *info;
-	struct gmtp_relay_entry *next;
+	struct gmtp_inter_entry *next;
 };
 
 /**
@@ -119,18 +119,18 @@ enum {
  */
 struct gmtp_inter_hashtable {
 	int size;
-	struct gmtp_relay_entry **table;
+	struct gmtp_inter_entry **table;
 };
 
 /** hash.c */
 struct gmtp_inter_hashtable *gmtp_inter_create_hashtable(unsigned int size);
-struct gmtp_relay_entry *gmtp_inter_lookup_media(
+struct gmtp_inter_entry *gmtp_inter_lookup_media(
 		struct gmtp_inter_hashtable *hashtable, const __u8 *media);
 void ack_timer_callback(struct gmtp_relay_entry *entry);
 int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
 		__be32 server_addr, __be32 *relay, __be16 media_port,
 		__be32 channel_addr, __be16 channel_port);
-struct gmtp_relay_entry *gmtp_inter_del_entry(
+struct gmtp_inter_entry *gmtp_inter_del_entry(
 		struct gmtp_inter_hashtable *hashtable, __u8 *media);
 
 void kfree_gmtp_inter_hashtable(struct gmtp_inter_hashtable *hashtable);

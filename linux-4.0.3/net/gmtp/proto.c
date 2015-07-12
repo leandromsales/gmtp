@@ -3,6 +3,7 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/types.h>
+#include <linux/poll.h>
 
 #include <net/inet_hashtables.h>
 #include <net/sock.h>
@@ -10,6 +11,7 @@
 
 #include <uapi/linux/gmtp.h>
 #include <linux/gmtp.h>
+
 #include "gmtp.h"
 #include "mcc.h"
 
@@ -18,9 +20,6 @@ EXPORT_SYMBOL_GPL(gmtp_orphan_count);
 
 struct inet_hashinfo gmtp_inet_hashinfo;
 EXPORT_SYMBOL_GPL(gmtp_inet_hashinfo);
-
-struct gmtp_hashtable* gmtp_hashtable;
-EXPORT_SYMBOL_GPL(gmtp_hashtable);
 
 struct gmtp_info* gmtp_info;
 EXPORT_SYMBOL_GPL(gmtp_info);
@@ -78,7 +77,7 @@ const char *gmtp_state_name(const int state)
 	[GMTP_OPEN]		= "OPEN",
 	[GMTP_REQUESTING]	= "REQUESTING",
 	[GMTP_LISTEN]		= "LISTEN",
-	[GMTP_REQUEST_RECV]		= "REQUEST/REGISTER_RECEIVED",
+	[GMTP_REQUEST_RECV]     = "REQUEST/REGISTER_RECEIVED",
 	[GMTP_ACTIVE_CLOSEREQ]	= "CLOSEREQ",
 	[GMTP_PASSIVE_CLOSE]	= "PASSIVE_CLOSE",
 	[GMTP_CLOSING]		= "CLOSING",
@@ -121,28 +120,24 @@ void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh)
 }
 EXPORT_SYMBOL_GPL(print_gmtp_packet);
 
-/**
- * @str size MUST HAVE len >= GMTP_FLOWNAME_STR_LEN
- */
-void relayid_str(__u8* str, const __u8 *relayid)
+void print_gmtp_relay(const struct gmtp_relay *relay)
 {
-	flowname_str(str, relayid);
+	unsigned char relayid[GMTP_FLOWNAME_STR_LEN];
+	flowname_str(relayid, relay->relay_id);
+	pr_info("%s :: %pI4\n", relayid, &relay->relay_ip);
 }
+EXPORT_SYMBOL_GPL(print_gmtp_relay);
 
 void print_route(struct gmtp_hdr_route *route)
 {
 	int i;
-	unsigned char relayid[GMTP_RELAY_ID_LEN];
-	const struct gmtp_relay *gr;
 
 	if(route->nrelays <= 0)
 		return;
 
-	gr = &route->relay_list[route->nrelays-1];
-	relayid_str(relayid, gr->relay_id);
-
-	for(i=0; i < route->nrelays; ++i)
-		pr_info("Route[%d]: %s :: %pI4\n", i, relayid, &gr->relay_ip);
+	pr_info("Route: \n");
+	for(i = route->nrelays - 1; i >= 0; --i)
+		print_gmtp_relay(&route->relay_list[i]);
 }
 EXPORT_SYMBOL_GPL(print_route);
 
@@ -465,6 +460,56 @@ int gmtp_disconnect(struct sock *sk, int flags)
 }
 EXPORT_SYMBOL_GPL(gmtp_disconnect);
 
+
+unsigned int gmtp_poll(struct file *file, struct socket *sock,
+                poll_table *wait) {
+	unsigned int mask;
+	struct sock *sk = sock->sk;
+
+	sock_poll_wait(file, sk_sleep(sk), wait);
+	if (sk->sk_state == GMTP_LISTEN)
+		return inet_csk_listen_poll(sk);
+
+	/* Socket is not locked. We are protected from async events
+	   by poll logic and correct handling of state changes
+	   made by another threads is impossible in any case.
+	 */
+
+	mask = 0;
+	if (sk->sk_err)
+		mask = POLLERR;
+
+	if (sk->sk_shutdown == SHUTDOWN_MASK || sk->sk_state == GMTP_CLOSED)
+		mask |= POLLHUP;
+	if (sk->sk_shutdown & RCV_SHUTDOWN)
+		mask |= POLLIN | POLLRDNORM | POLLRDHUP;
+
+	/* Connected? */
+	if ((1 << sk->sk_state) & ~(GMTPF_REQUESTING)) {
+		if (atomic_read(&sk->sk_rmem_alloc) > 0)
+			mask |= POLLIN | POLLRDNORM;
+
+		if (!(sk->sk_shutdown & SEND_SHUTDOWN)) {
+			if (sk_stream_is_writeable(sk)) {
+				mask |= POLLOUT | POLLWRNORM;
+			} else {  /* send SIGIO later */
+				set_bit(SOCK_ASYNC_NOSPACE,
+					&sk->sk_socket->flags);
+				set_bit(SOCK_NOSPACE, &sk->sk_socket->flags);
+
+				/* Race breaker. If space is freed after
+				 * wspace test but before the flags are set,
+				 * IO signal will be lost.
+				 */
+				if (sk_stream_is_writeable(sk))
+					mask |= POLLOUT | POLLWRNORM;
+			}
+		}
+	}
+	return mask;
+}
+EXPORT_SYMBOL_GPL(gmtp_poll);
+
 int gmtp_ioctl(struct sock *sk, int cmd, unsigned long arg)
 {
 	int rc = -ENOTCONN;
@@ -711,14 +756,6 @@ void gmtp_shutdown(struct sock *sk, int how)
 }
 EXPORT_SYMBOL_GPL(gmtp_shutdown);
 
-void kfree_gmtp_info(struct gmtp_info *gmtp)
-{
-	kfree(gmtp_info->control_sk);
-	kfree(gmtp_info->ctrl_addr);
-	kfree(gmtp_info);
-}
-
-
 /* TODO Study thash_entries... This is from DCCP thash_entries */
 static int thash_entries;
 module_param(thash_entries, int, 0444);
@@ -832,7 +869,7 @@ out_fail:
 	return rc;
 }
 
-static int ghash_entries = 256;
+static int ghash_entries = 1024;
 module_param(ghash_entries, int, 0444);
 MODULE_PARM_DESC(ghash_entries, "Number of GMTP hash entries");
 
@@ -852,8 +889,11 @@ static int __init gmtp_init(void)
 		goto out;
 	}
 
-	gmtp_hashtable = gmtp_create_hashtable(ghash_entries);
-	if(gmtp_hashtable == NULL) {
+	client_hashtable = gmtp_build_hashtable(ghash_entries,
+			gmtp_client_hash_ops);
+	server_hashtable = gmtp_build_hashtable(ghash_entries,
+			gmtp_server_hash_ops);
+	if(client_hashtable == NULL || server_hashtable == NULL) {
 		rc = -ENOBUFS;
 		goto out;
 	}
@@ -864,6 +904,8 @@ static int __init gmtp_init(void)
 		goto out;
 	}
 	gmtp_info->relay_enabled = 0;
+	gmtp_info->control_sk = NULL;
+	gmtp_info->ctrl_addr = NULL;
 
 	rc = gmtp_create_inet_hashinfo();
 	if(rc)
@@ -887,7 +929,9 @@ static void __exit gmtp_exit(void)
 	kmem_cache_destroy(gmtp_inet_hashinfo.bind_bucket_cachep);
 
 	kfree_gmtp_info(gmtp_info);
-	kfree_gmtp_hashtable(gmtp_hashtable);
+	kfree_gmtp_hashtable(client_hashtable);
+	kfree_gmtp_hashtable(server_hashtable);
+
 	percpu_counter_destroy(&gmtp_orphan_count);
 	mcc_lib_exit();
 }

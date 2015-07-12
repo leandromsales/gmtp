@@ -343,6 +343,7 @@ static int gmtp_v4_send_register_reply(struct sock *sk,
 	gmtp_print_function();
 
 	dst = inet_csk_route_req(sk, &fl4, req);
+	pr_info("dst: %p\n", dst);
 	if(dst == NULL)
 		goto out;
 
@@ -563,7 +564,7 @@ static int gmtp_v4_reporter_rcv_elect_request(struct sk_buff *skb)
 
 	gmtp_pr_func();
 
-	media_entry = gmtp_lookup_client(gmtp_hashtable, gh->flowname);
+	media_entry = gmtp_lookup_client(client_hashtable, gh->flowname);
 	if(media_entry == NULL) {
 		pr_info("Media entry == NULL\n");
 		return 1;
@@ -602,7 +603,7 @@ static int gmtp_v4_client_rcv_elect_response(struct sk_buff *skb)
 
 	gmtp_pr_func();
 
-	media_entry = gmtp_lookup_client(gmtp_hashtable, gh->flowname);
+	media_entry = gmtp_lookup_client(client_hashtable, gh->flowname);
 	if(media_entry == NULL) {
 		pr_info("Media entry == NULL\n");
 		return 1;
@@ -672,7 +673,7 @@ static int gmtp_v4_reporter_rcv_ack(struct sk_buff *skb)
 
 	gmtp_pr_func();
 
-	media_entry = gmtp_lookup_client(gmtp_hashtable, gh->flowname);
+	media_entry = gmtp_lookup_client(client_hashtable, gh->flowname);
 	if(media_entry == NULL) {
 		pr_info("Media entry == NULL\n");
 		return 1;
@@ -866,7 +867,7 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 
 		struct gmtp_client *tmp;
 		struct gmtp_client_entry *media_entry = gmtp_lookup_client(
-				gmtp_hashtable, gh->flowname);
+				client_hashtable, gh->flowname);
 
 		if(media_entry == NULL)
 			goto discard_it;
@@ -1178,7 +1179,7 @@ static const struct proto_ops inet_gmtp_ops = {
 		.socketpair = sock_no_socketpair,
 		.accept = inet_accept,
 		.getname = inet_getname,
-		/*	.poll		   = dccp_poll, */
+		.poll = gmtp_poll,
 		.ioctl = inet_ioctl,
 		.listen = inet_gmtp_listen,
 		.shutdown = inet_shutdown,

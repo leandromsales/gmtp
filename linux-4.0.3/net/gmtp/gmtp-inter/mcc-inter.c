@@ -39,6 +39,8 @@ out:
 }
 
 /**
+ * FIXME Don't start timer if we are Waiting Register Reply...
+ *
  * TODO update_stats RTT through feedbacks
  *
  * If the GMTP-MCC sender receives no reports from the Reporters for (4 RTTs)*,
@@ -93,7 +95,7 @@ void mcc_timer_callback(unsigned long data)
 	/*pr_info("RTT: %u ms, Next interval: %lu ms\n", info->rtt,
 			(gmtp_mcc_interval(info->rtt) - jiffies));*/
 
-	/* TODO Send here an ack to server */
+	/* TODO Send here an ack to server? */
 
 	mod_timer(&info->mcc_timer, gmtp_mcc_interval(info->rtt));
 }

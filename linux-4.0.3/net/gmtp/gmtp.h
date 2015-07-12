@@ -99,7 +99,8 @@
 extern struct gmtp_info *gmtp_info;
 extern struct inet_hashinfo gmtp_inet_hashinfo;
 extern struct percpu_counter gmtp_orphan_count;
-extern struct gmtp_hashtable *gmtp_hashtable;
+extern struct gmtp_hashtable *client_hashtable;
+extern struct gmtp_hashtable *server_hashtable;
 
 void gmtp_init_xmit_timers(struct sock *sk);
 static inline void gmtp_clear_xmit_timers(struct sock *sk)
@@ -136,6 +137,7 @@ const char *gmtp_packet_name(const int);
 const char *gmtp_state_name(const int);
 void flowname_str(__u8* str, const __u8 *flowname);
 void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh);
+void print_gmtp_relay(const struct gmtp_relay *relay);
 void print_route(struct gmtp_hdr_route *route);
 void print_gmtp_sock(struct sock *sk);
 
@@ -192,6 +194,7 @@ struct sock *gmtp_check_req(struct sock *sk, struct sk_buff *skb,
 			    struct request_sock **prev);
 void gmtp_reqsk_send_ack(struct sock *sk, struct sk_buff *skb,
 			 struct request_sock *rsk);
+unsigned int gmtp_poll(struct file *file, struct socket *sock, poll_table *wait);
 
 
 /** GMTP structs and etc **/
@@ -200,11 +203,16 @@ struct gmtp_info {
 
 	struct sock		*control_sk;
 	struct sockaddr_in	*ctrl_addr;
-
-
 };
 
-void kfree_gmtp_info(struct gmtp_info *gmtp);
+static inline void kfree_gmtp_info(struct gmtp_info *gmtp_info)
+{
+	if(gmtp_info->control_sk != NULL)
+		kfree(gmtp_info->control_sk);
+	if(gmtp_info->ctrl_addr != NULL)
+		kfree(gmtp_info->ctrl_addr);
+	kfree(gmtp_info);
+}
 
 /**
  * This is the control buffer. It is free to use by any layer.
@@ -281,6 +289,11 @@ static inline struct gmtp_client *gmtp_create_client(__be32 addr, __be16 port,
 		new->max_nclients = max_nclients;
 		new->nclients = 0;
 		new->ack_rx_tstamp = 0;
+
+		new->clients = 0;
+		new->reporter = 0;
+		new->rsock = 0;
+		new->mysock = 0;
 	}
 	return new;
 }

@@ -65,7 +65,7 @@ struct gmtp_hdr *gmtp_inter_make_route_hdr(struct sk_buff *skb)
 }
 
 struct gmtp_hdr *gmtp_inter_make_request_notify_hdr(struct sk_buff *skb,
-		struct gmtp_relay_entry *entry, __be16 new_sport,
+		struct gmtp_inter_entry *entry, __be16 new_sport,
 		__be16 new_dport, struct gmtp_client *my_reporter,
 		__u8 max_nclients, __u8 code)
 {
@@ -129,7 +129,7 @@ int gmtp_inter_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
 
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct iphdr *iph = ip_hdr(skb);
-	struct gmtp_relay_entry *entry;
+	struct gmtp_inter_entry *entry;
 	unsigned int skb_len = skb->len;
 	struct gmtp_hdr *new_gh;
 	int gmtp_hdr_len = sizeof(struct gmtp_hdr)
@@ -240,8 +240,8 @@ struct sk_buff *gmtp_inter_build_pkt(struct sk_buff *skb_src, __be32 saddr,
 {
 	struct net_device *dev = skb_src->dev;
 	struct ethhdr *eth_src = eth_hdr(skb_src);
+	struct sk_buff *skb;
 
-	struct sk_buff *skb = alloc_skb(gh_ref->hdrlen, gfp_any());
 	struct ethhdr *eth;
 	struct iphdr *iph;
 	struct gmtp_hdr *gh;
@@ -252,17 +252,21 @@ struct sk_buff *gmtp_inter_build_pkt(struct sk_buff *skb_src, __be32 saddr,
 		return NULL;
 	}
 
-	if (skb == NULL) {
-		gmtp_print_warning("skb is null");
-		return NULL;
-	}
-
 	if(gh_ref->type == GMTP_PKT_DATA)
 		data_len = gmtp_data_len(skb_src);
 
 	gmtp_len = gh_ref->hdrlen + data_len;
 	ip_len = gmtp_len + sizeof(*iph);
 	total_len = ip_len + LL_RESERVED_SPACE(dev);
+
+	if(gh_ref->type == GMTP_PKT_RESET)
+		skb = skb_copy(skb_src, gfp_any());
+	else
+		skb = alloc_skb(gh_ref->hdrlen, gfp_any());
+	if(skb == NULL) {
+		gmtp_print_warning("skb is null");
+		return NULL;
+	}
 
 	skb_reserve(skb, total_len);
 
@@ -285,16 +289,16 @@ struct sk_buff *gmtp_inter_build_pkt(struct sk_buff *skb_src, __be32 saddr,
 
 	/* iph->version = 4; iph->ihl = 5; */
 	put_unaligned(0x45, (unsigned char *)iph);
-	iph->tos      = 0;
+	iph->tos = 0;
 	iph->frag_off = 0;
-	iph->ttl      = 64;
+	iph->ttl = 64;
 	iph->protocol = IPPROTO_GMTP;
 	put_unaligned(saddr, &(iph->saddr));
 	put_unaligned(daddr, &(iph->daddr));
 	put_unaligned(htons(skb->len), &(iph->tot_len));
 	ip_send_check(iph);
 
-	eth = (struct ethhdr *) skb_push(skb, ETH_HLEN);
+	eth = (struct ethhdr *)skb_push(skb, ETH_HLEN);
 	skb_reset_mac_header(skb);
 	skb->protocol = eth->h_proto = htons(ETH_P_IP);
 
@@ -325,6 +329,8 @@ void gmtp_inter_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
 {
 	struct sk_buff *skb = gmtp_inter_build_pkt(skb_src, saddr, daddr,
 			gh_ref, backward);
+
+	gmtp_pr_func();
 
 	if(skb != NULL)
 		gmtp_inter_send_pkt(skb);
