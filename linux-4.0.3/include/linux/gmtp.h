@@ -163,8 +163,8 @@ static inline struct gmtp_request_sock *gmtp_rsk(const struct request_sock *req)
  * @tx_first_stamp: time stamp of first sent data packet (jiffies)
  * @tx_last_stamp: time stamp of last sent data packet (jiffies)
  * @tx_max_rate: Max TX rate (bytes/s). 0 == no limits.
- * tx_byte_budget: the amount of bytes that can be sent immediately.
- * tx_adj_budget: memory of last adjustment in TX rate.
+ * @tx_byte_budget: the amount of bytes that can be sent immediately.
+ * @tx_adj_budget: memory of last adjustment in TX rate.
  */
 struct gmtp_sock {
 	/* inet_connection_sock has to be the first member of gmtp_sock */

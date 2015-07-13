@@ -394,8 +394,11 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 		gmtp_enqueue_skb(sk, skb);
 		return 0;
 	case GMTP_PKT_ACK:
-		if(gp->role == GMTP_ROLE_SERVER)
-			pr_info("ACK received! (server)\n");
+		if(gp->role == GMTP_ROLE_SERVER) {
+			struct gmtp_hdr_ack *gack = gmtp_hdr_ack(skb);
+			gp->tx_rtt = (u32)jiffies_to_msecs(jiffies) -
+					(u32)(gack->orig_tstamp + gack->wait);
+		}
 		goto discard;
 	case GMTP_PKT_RESET:
 		/*

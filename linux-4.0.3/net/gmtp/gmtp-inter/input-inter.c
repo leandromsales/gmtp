@@ -346,6 +346,7 @@ static inline void gmtp_update_stats(struct gmtp_flow_info *info,
 	info->recent_bytes += skblen(skb);
 	info->seq = (unsigned int) gh->seq;
 	info->rtt = (unsigned int) gh->server_rtt;
+	info->last_data_tstamp = gmtp_hdr_data(skb)->tstamp;
 
 	if(gh->seq % gmtp_inter.rx_rate_wnd == 0) {
 		unsigned long current_time = ktime_to_ms(ktime_get_real());
@@ -395,9 +396,6 @@ int gmtp_inter_data_rcv(struct sk_buff *skb)
 		gmtp_buffer_add(info, skb);
 
 	gmtp_update_stats(info, skb, gh);
-
-	if(gh->seq % 1000 == 0)
-		gmtp_ucc(UINT_MAX, 0);
 
 out:
 	return NF_ACCEPT;
