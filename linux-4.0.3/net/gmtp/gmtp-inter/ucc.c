@@ -20,11 +20,6 @@ unsigned int gmtp_rtt_average()
 	return 1;
 }
 
-unsigned int gmtp_rx_rate()
-{
-	return 0;
-}
-
 unsigned int gmtp_relay_queue_size()
 {
 	return gmtp_inter.total_bytes_rx;

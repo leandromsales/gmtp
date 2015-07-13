@@ -1,4 +1,6 @@
 #include <net/ip.h>
+#include <asm-generic/unaligned.h>
+#include <linux/etherdevice.h>
 
 #include <uapi/linux/gmtp.h>
 #include <linux/gmtp.h>
@@ -175,6 +177,7 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
 	int ret = NF_ACCEPT;
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct iphdr *iph = ip_hdr(skb);
+	struct ethhdr *eth = eth_hdr(skb);
 	struct gmtp_hdr *gh_route_n;
 	struct gmtp_inter_entry *entry;
 	struct gmtp_flow_info *info;
@@ -196,6 +199,7 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
 	if(entry == NULL)
 		return NF_ACCEPT;
 	info = entry->info;
+	ether_addr_copy(entry->server_mac_addr, eth->h_source);
 
 	gh_route_n = gmtp_inter_make_route_hdr(skb);
 	if(gh_route_n != NULL)
@@ -268,8 +272,9 @@ int gmtp_inter_ack_rcv(struct sk_buff *skb)
 
 	info = entry->info;
 	reporter = gmtp_get_client(&info->clients->list, iph->saddr, gh->sport);
+	gmtp_pr_debug("Reporter: %pI4:%d", &iph->saddr, gh->sport);
 	if(reporter != NULL) {
-		print_gmtp_packet(iph, gh);
+		pr_info("reporter->ack_rx_tstamp = jiffies_to_msecs(jiffies)\n");
 		reporter->ack_rx_tstamp = jiffies_to_msecs(jiffies);
 	}
 

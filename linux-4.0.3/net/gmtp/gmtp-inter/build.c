@@ -298,8 +298,9 @@ struct sk_buff *gmtp_inter_build_pkt(struct sk_buff *skb_src, __be32 saddr,
 	put_unaligned(htons(skb->len), &(iph->tot_len));
 	ip_send_check(iph);
 
-	eth = (struct ethhdr *)skb_push(skb, ETH_HLEN);
+	skb_push(skb, ETH_HLEN);
 	skb_reset_mac_header(skb);
+	eth = eth_hdr(skb);
 	skb->protocol = eth->h_proto = htons(ETH_P_IP);
 
 	ether_addr_copy(eth->h_source, dev->dev_addr);
@@ -330,8 +331,6 @@ void gmtp_inter_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
 	struct sk_buff *skb = gmtp_inter_build_pkt(skb_src, saddr, daddr,
 			gh_ref, backward);
 
-	gmtp_pr_func();
-
 	if(skb != NULL)
 		gmtp_inter_send_pkt(skb);
 }
@@ -353,13 +352,13 @@ void gmtp_copy_hdr(struct sk_buff *skb, struct sk_buff *src_skb)
 		memcpy(gh, gh_src, gh_src->hdrlen);
 }
 
-void gmtp_ack_build(struct gmtp_relay_entry *entry)
+struct sk_buff *gmtp_inter_build_ack(struct gmtp_inter_entry *entry)
 {
 	struct sk_buff *skb = alloc_skb(GMTP_MAX_HDR_LEN, GFP_ATOMIC);
 	struct gmtp_hdr *gh;
 	int gmtp_hdr_len = sizeof(struct gmtp_hdr);
 	
-	struct ethhdr *eth = eth_hdr(skb);
+	struct ethhdr *eth;
 	struct iphdr *iph;
 	struct socket *sock = NULL;
 	struct net_device *dev_entry = NULL;
@@ -371,7 +370,7 @@ void gmtp_ack_build(struct gmtp_relay_entry *entry)
 	dev_entry = dev_get_by_index_rcu(net, 2);
 	sock_release(sock);
 
-	ip_len = gmtp_hdr_len + sizeof(*iph);
+	ip_len = gmtp_hdr_len + sizeof(struct iphdr);
 	total_len = ip_len + LL_RESERVED_SPACE(dev_entry);
 	skb_reserve(skb, total_len);
 
@@ -406,8 +405,9 @@ void gmtp_ack_build(struct gmtp_relay_entry *entry)
 
 	print_gmtp_packet(iph, gh);
 
-	eth = (struct ethhdr *)skb_push(skb, ETH_HLEN);
+	skb_push(skb, ETH_HLEN);
 	skb_reset_mac_header(skb);
+	eth = eth_hdr(skb);
 	skb->protocol = eth->h_proto = htons(ETH_P_IP);
 
 	ether_addr_copy(eth->h_source, dev_entry->dev_addr);
@@ -415,6 +415,6 @@ void gmtp_ack_build(struct gmtp_relay_entry *entry)
 
 	skb->dev = dev_entry;
 
-	gmtp_inter_send_pkt(skb);
+	return skb;
 }
 

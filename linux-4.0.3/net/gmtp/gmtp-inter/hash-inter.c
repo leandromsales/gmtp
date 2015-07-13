@@ -82,16 +82,13 @@ struct gmtp_inter_entry *gmtp_inter_lookup_media(
 	return NULL;
 }
 
-void ack_timer_callback(struct gmtp_relay_entry *entry)
+void ack_timer_callback(struct gmtp_inter_entry *entry)
 {
-	gmtp_print_function();
-	gmtp_print_debug("Servidor %x", entry->server_addr);
-	mod_timer(&entry->ack_timer_entry, jiffies + msecs_to_jiffies(1000));
-    
-    gmtp_ack_build(entry);
+	struct sk_buff *skb = gmtp_inter_build_ack(entry);
+	if(skb != NULL)
+		gmtp_inter_send_pkt(skb);
 
-	/*TODO send ACK to servers*/
-	return;
+	mod_timer(&entry->ack_timer_entry, jiffies + HZ);
 }
 
 
@@ -125,8 +122,6 @@ struct gmtp_flow_info *__gmtp_inter_build_info(void)
 
 	setup_timer(&info->mcc_timer, mcc_timer_callback, (unsigned long) info);
 	mod_timer(&info->mcc_timer, gmtp_mcc_interval(info->rtt));
-
-    
 out:
 	return info;
 }
@@ -180,8 +175,7 @@ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
 	new_entry->next = hashtable->table[hashval];
 	hashtable->table[hashval] = new_entry;
 	setup_timer(&new_entry->ack_timer_entry, ack_timer_callback, new_entry);
-	mod_timer(&new_entry->ack_timer_entry,
-			jiffies + msecs_to_jiffies(1000));
+	mod_timer(&new_entry->ack_timer_entry, jiffies + 3*HZ);
 
 	return 0;
 }

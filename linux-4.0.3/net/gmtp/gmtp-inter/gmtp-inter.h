@@ -68,7 +68,7 @@ struct gmtp_inter {
 
 	unsigned char		kreporter;
 
-    struct timer_list gmtp_timer;    
+	struct timer_list 	gmtp_ucc_timer;
 
 	struct gmtp_inter_hashtable *hashtable;
 };
@@ -101,6 +101,7 @@ int gmtp_inter_data_out(struct sk_buff *skb);
 int gmtp_inter_close_out(struct sk_buff *skb);
 
 /** build.c */
+void gmtp_inter_send_pkt(struct sk_buff *skb);
 void gmtp_inter_add_relayid(struct sk_buff *skb);
 struct gmtp_hdr *gmtp_inter_make_route_hdr(struct sk_buff *skb);
 
@@ -120,7 +121,8 @@ void gmtp_inter_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
 		__be32 daddr, struct gmtp_hdr *gh_ref, bool backward);
 void gmtp_inter_build_and_send_skb(struct sk_buff *skb);
 void gmtp_copy_hdr(struct sk_buff *skb, struct sk_buff *src_skb);
-void gmtp_ack_build(struct gmtp_relay_entry *entry);
+struct sk_buff *gmtp_inter_build_ack(struct gmtp_inter_entry *entry);
+
 /**
  * A very ugly delayer, to GMTP-inter...
  *

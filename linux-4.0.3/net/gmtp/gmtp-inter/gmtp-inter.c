@@ -27,9 +27,6 @@
 #include "mcc-inter.h"
 #include "ucc.h"
 
-#include <asm-generic/unaligned.h>
-#include <linux/etherdevice.h>
-
 static struct nf_hook_ops nfho_in;
 static struct nf_hook_ops nfho_out;
 
@@ -195,11 +192,10 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 
 	if(iph->protocol == IPPROTO_GMTP) {
         
-        struct ethhdr *eth = eth_hdr(skb);
-	    struct gmtp_relay_entry *entry;
-		struct gmtp_hdr *gh = gmtp_hdr(skb);
+  		struct gmtp_hdr *gh = gmtp_hdr(skb);
 
-		if(gh->type != GMTP_PKT_DATA && gh->type != GMTP_PKT_FEEDBACK) {
+		if(unlikely(gh->type != GMTP_PKT_DATA
+					&& gh->type != GMTP_PKT_FEEDBACK)) {
 			gmtp_pr_debug("GMTP packet: %s (%d)",
 					gmtp_packet_name(gh->type), gh->type);
 			print_packet(skb, true);
@@ -211,19 +207,6 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 			ret = gmtp_inter_request_rcv(skb);
 			break;
 		case GMTP_PKT_REGISTER_REPLY:
-            /*****************************/ 
-
-            entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
-
-            /*TODO verificar se o mac do server esta sendo pego, ou usar h_dest*/
-	        if(entry != NULL)
-                ether_addr_copy(entry->server_mac_addr, eth->h_source);
-                /*memcpy(&entry->server_mac_addr, eth->h_source, 6);*/
-		        /*entry->server_mac_addr = eth->h_source;*/
-
-            /****************************/
-    
-
 			ret = gmtp_inter_register_reply_rcv(skb);
 			break;
 		case GMTP_PKT_ACK:
@@ -290,9 +273,8 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 
 void gmtp_timer_callback(void)
 {
-	gmtp_print_function();
-    gmtp_ucc(UINT_MAX,1);    
-	mod_timer(&gmtp_inter.gmtp_timer, jiffies + msecs_to_jiffies(1000));
+	gmtp_ucc(UINT_MAX, 0);
+	mod_timer(&gmtp_inter.gmtp_ucc_timer, jiffies + HZ);
     
 }
 
@@ -308,8 +290,8 @@ int init_module()
 		goto out;
 	}
 
-    setup_timer(&gmtp_inter.gmtp_timer, gmtp_timer_callback, 0);
-   	mod_timer(&gmtp_inter.gmtp_timer, jiffies + msecs_to_jiffies(1000)); 
+	setup_timer(&gmtp_inter.gmtp_ucc_timer, gmtp_timer_callback, 0);
+   	mod_timer(&gmtp_inter.gmtp_ucc_timer, jiffies + msecs_to_jiffies(1000)); 
 
 	gmtp_inter.capacity = CAPACITY_DEFAULT;
 	gmtp_inter.buffer_len = 0;
@@ -363,7 +345,7 @@ void cleanup_module()
 
 	nf_unregister_hook(&nfho_in);
 	nf_unregister_hook(&nfho_out);
-    del_timer(&gmtp_inter.gmtp_timer);
+	del_timer(&gmtp_inter.gmtp_ucc_timer);
 }
 
 MODULE_LICENSE("GPL");
