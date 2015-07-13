@@ -230,6 +230,8 @@ static inline void kfree_gmtp_info(struct gmtp_info *gmtp_info)
  * @reset_code: one of %gmtp_reset_codes
  * @reset_data: Data1..3 fields (depend on @gmtpd_reset_code)
  * @seq: sequence number
+ * @server_tstamp: time stamp of last received packet (at server)
+ * @rx_tstamp: time stamp of last received packet (at reception)
  *
  * This is used for transmission as well as for reception.
  */
@@ -240,9 +242,18 @@ struct gmtp_skb_cb {
 	__u8 elect_code:2;
 	__be32 seq;
 	__be32 server_tstamp;
+	ktime_t rx_tstamp;
 };
 
 #define GMTP_SKB_CB(__skb) ((struct gmtp_skb_cb *)&((__skb)->cb[0]))
+
+/**
+ * Returns subtraction of two ktimes, in __be32 format (milliseconds)
+ */
+static inline __be32 ktime_sub_ms_be32(ktime_t last, ktime_t first)
+{
+	return (__be32) ktime_to_ms(ktime_sub(last, first));
+}
 
 /**
  * gmtp_loss_count - Approximate the number of lost data packets in a burst loss

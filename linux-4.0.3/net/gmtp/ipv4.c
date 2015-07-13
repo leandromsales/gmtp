@@ -812,7 +812,7 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 
 	return sk_receive_skb(sk, skb, 1);
 
-	no_gmtp_socket:
+no_gmtp_socket:
 
 	if(!xfrm4_policy_check(NULL, XFRM_POLICY_IN, skb))
 		goto discard_it;
@@ -893,14 +893,8 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 		 * Look up flow ID in table and get corresponding socket
 		 */
 
-		pr_info("Unicast packet... \n");
 		sk = __inet_lookup_skb(&gmtp_inet_hashinfo, skb, gh->sport,
 				gh->dport);
-
-		if(sk != NULL)
-			print_gmtp_sock(sk);
-		else
-			pr_info("sk is NULL!\n");
 
 		return gmtp_v4_sk_receive_skb(skb, sk);
 	}

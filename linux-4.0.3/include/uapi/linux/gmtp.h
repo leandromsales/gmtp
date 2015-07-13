@@ -98,11 +98,27 @@ struct gmtp_hdr_data {
 };
 
 /**
+ * struct gmtp_hdr_ack - ACK packets
+ * @orig_tstamp: time stamp of original received packet
+ * @wait: time wait from reception of packet to ack send
+ *
+ * The receiver will calculate RTT: now - (orig + wait)
+ */
+struct gmtp_hdr_ack {
+	__be32 orig_tstamp;
+	__be32 wait;
+};
+
+/**
  * struct gmtp_hdr_feedback - Data packets
- * @tstamp: time stamp of received data packet
+ * @orig_tstamp: time stamp of received data packet
+ * @wait: time wait from reception of packet to feedback send
+ * @nclients: active clients at reporter
+ *
  */
 struct gmtp_hdr_feedback {
-	__be32 	pkt_tstamp;
+	__be32 	orig_tstamp;
+	__be32 	wait;
 	__u8	nclients;
 };
 
@@ -254,8 +270,13 @@ static inline unsigned int gmtp_packet_hdr_variable_len(const __u8 type)
 	switch(type)
 	{
 	case GMTP_PKT_DATA:
-	case GMTP_PKT_DATAACK:
 		len = sizeof(struct gmtp_hdr_data);
+		break;
+	case GMTP_PKT_DATAACK:
+		len = sizeof(struct gmtp_hdr_data) + sizeof(struct gmtp_hdr_ack);
+		break;
+	case GMTP_PKT_ACK:
+		len = sizeof(struct gmtp_hdr_ack);
 		break;
 	case GMTP_PKT_FEEDBACK:
 		len = sizeof(struct gmtp_hdr_feedback);

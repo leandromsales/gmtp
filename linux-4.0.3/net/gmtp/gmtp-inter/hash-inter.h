@@ -46,6 +46,7 @@ struct gmtp_inter_entry {
  * @seq: sequence number of last received packet
  * @total_bytes: amount of received bytes
  * @last_rx_tstamp: time stamp of last received data packet (milliseconds)
+ * @last_data_tstamp: time stamp stored in last received data packet.
  *
  * @nfeedbacks: number of received feedbacks at last window
  * @sum_feedbacks: sum of all feedbacks tx rates received at last window
@@ -74,6 +75,7 @@ struct gmtp_flow_info {
 	unsigned int		seq;
 	unsigned int 		total_bytes;
 	unsigned long  		last_rx_tstamp; /* milliseconds */
+	__be32 			last_data_tstamp;
 
 	/* GMTP-MCC */
 	unsigned int		nfeedbacks;

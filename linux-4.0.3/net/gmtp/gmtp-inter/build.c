@@ -355,14 +355,16 @@ void gmtp_copy_hdr(struct sk_buff *skb, struct sk_buff *src_skb)
 struct sk_buff *gmtp_inter_build_ack(struct gmtp_inter_entry *entry)
 {
 	struct sk_buff *skb = alloc_skb(GMTP_MAX_HDR_LEN, GFP_ATOMIC);
-	struct gmtp_hdr *gh;
-	int gmtp_hdr_len = sizeof(struct gmtp_hdr);
 	
 	struct ethhdr *eth;
 	struct iphdr *iph;
+	struct gmtp_hdr *gh;
+	struct gmtp_hdr_ack *gack;
+
 	struct socket *sock = NULL;
 	struct net_device *dev_entry = NULL;
 	struct net *net;
+	int gmtp_hdr_len = sizeof(struct gmtp_hdr) + sizeof(struct gmtp_hdr_ack);
 	int total_len, ip_len = 0;
 
 	sock_create(AF_INET, SOCK_STREAM, 0, &sock);
@@ -384,6 +386,11 @@ struct sk_buff *gmtp_inter_build_ack(struct gmtp_inter_entry *entry)
 	gh->sport = entry->info->my_port;
 	gh->transm_r = gmtp_inter.ucc_rx;
 	memcpy(gh->flowname, entry->flowname, GMTP_FLOWNAME_LEN);
+
+	gack = gmtp_hdr_ack(skb);
+	gack->orig_tstamp = entry->info->last_data_tstamp;
+	gack->wait = (__be32 )(ktime_to_ms(ktime_get_real())
+			- entry->info->last_rx_tstamp);
 
 	/* Build the IP header. */
 	skb_push(skb, sizeof(struct iphdr));

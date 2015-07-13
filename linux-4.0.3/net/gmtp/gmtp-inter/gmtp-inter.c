@@ -167,6 +167,7 @@ void gmtp_buffer_add(struct gmtp_flow_info *info, struct sk_buff *newsk)
 	skb_queue_tail(info->buffer, skb_copy(newsk, GFP_ATOMIC));
 	info->buffer_len += newsk->len + ETH_HLEN;
 	gmtp_inter.buffer_len += newsk->len + ETH_HLEN;
+	info->last_rx_tstamp = ;
 }
 
 struct sk_buff *gmtp_buffer_dequeue(struct gmtp_flow_info *info)

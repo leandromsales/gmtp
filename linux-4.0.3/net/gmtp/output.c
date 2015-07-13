@@ -88,11 +88,13 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 		if (gcb->type == GMTP_PKT_FEEDBACK) {
 			struct gmtp_hdr_feedback *fh = gmtp_hdr_feedback(skb);
 			gh->transm_r = gp->rx_max_rate;
-			fh->pkt_tstamp = gcb->server_tstamp;
+			fh->orig_tstamp = gcb->server_tstamp;
+			fh->wait = ktime_sub_ms_be32(ktime_get_real(),
+							gcb->rx_tstamp);
 			fh->nclients = gp->myself->nclients;
 
-			pr_info("[Feedback] pkt_tstamp=%u, nclients=%u\n",
-					fh->pkt_tstamp, fh->nclients);
+			pr_info("[Feedback] orig_tstamp=%u, wait=%u, nclients=%u\n",
+					fh->orig_tstamp, fh->wait, fh->nclients);
 		}
 
 		if (gcb->type == GMTP_PKT_RESET)
@@ -482,7 +484,9 @@ EXPORT_SYMBOL_GPL(gmtp_ctl_make_elect_response);
 struct sk_buff *gmtp_ctl_make_ack(struct sock *sk, struct sk_buff *rcv_skb)
 {
 	struct gmtp_hdr *rxgh = gmtp_hdr(rcv_skb), *gh;
-	const u32 gmtp_hdr_len = sizeof(struct gmtp_hdr);
+	struct gmtp_hdr_ack *gack;
+	const u32 gmtp_hdr_len = sizeof(struct gmtp_hdr)
+			+ sizeof(struct gmtp_hdr_ack);
 	struct sk_buff *skb;
 
 	gmtp_print_function();
@@ -504,11 +508,22 @@ struct sk_buff *gmtp_ctl_make_ack(struct sock *sk, struct sk_buff *rcv_skb)
 	gh->transm_r = rxgh->transm_r;
 	memcpy(gh->flowname, rxgh->flowname, GMTP_FLOWNAME_LEN);
 
+
+	if(rxgh->type == GMTP_PKT_DATA) {
+		struct gmtp_hdr_data *ghd = gmtp_hdr_data(rcv_skb);
+		pr_info("Responding a DATA with a ACK");
+		gack = gmtp_hdr_ack(skb);
+		gack->orig_tstamp = ghd->tstamp;
+		gack->wait = ktime_sub_ms_be32(ktime_get_real(), rcv_skb->tstamp);
+	} else {
+		pr_info("Responding a NON-DATA with a ACK");
+	}
+
 	return skb;
 }
 EXPORT_SYMBOL_GPL(gmtp_ctl_make_ack);
 
-void gmtp_send_feedback(struct sock *sk, __be32 server_tstamp)
+void gmtp_send_feedback(struct sock *sk, __be32 server_tstamp, ktime_t rx_tstamp)
 {
 	if(sk->sk_state != GMTP_CLOSED) {
 
@@ -519,6 +534,7 @@ void gmtp_send_feedback(struct sock *sk, __be32 server_tstamp)
 		skb_reserve(skb, sk->sk_prot->max_header);
 		GMTP_SKB_CB(skb)->type = GMTP_PKT_FEEDBACK;
 		GMTP_SKB_CB(skb)->server_tstamp = server_tstamp;
+		GMTP_SKB_CB(skb)->rx_tstamp = rx_tstamp;
 
 		gmtp_transmit_skb(sk, skb);
 	}
