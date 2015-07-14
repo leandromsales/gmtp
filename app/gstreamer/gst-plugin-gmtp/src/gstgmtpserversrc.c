@@ -113,8 +113,8 @@ gst_gmtp_server_src_create (GstPushSrc * psrc, GstBuffer ** outbuf)
         GST_TIME_ARGS (GST_BUFFER_DURATION (*outbuf)),
         GST_BUFFER_OFFSET (*outbuf), GST_BUFFER_OFFSET_END (*outbuf));
 
-    if ((src->caps != NULL) && !gst_caps_is_equal (src->caps, GST_CAPS_ANY)) {
 /*
+    if ((src->caps != NULL) && !gst_caps_is_equal (src->caps, GST_CAPS_ANY)) {
 
 There is no GstController anymore, the functionality was merged into the 
 GstObject base class. 
@@ -122,10 +122,10 @@ GstObject base class.
 There are also no caps on the buffers anymore, you need to set them on 
 the pad, or more precisely send a caps event downstream.
 
-*/
       //gst_buffer_set_caps (*outbuf, src->caps);
       gst_pad_set_caps(GST_BASE_SRC (src)->srcpad, src->caps);
     }
+*/
   }
 
   return ret;
@@ -336,6 +336,37 @@ gst_gmtp_server_src_stop (GstBaseSrc * bsrc)
   return TRUE;
 }
 
+static GstCaps *
+gst_gmtp_server_src_getcaps (GstBaseSrc * bsrc, GstCaps * filter)
+{
+  GstGMTPServerSrc *src;
+  GstCaps *caps = NULL;
+
+  src = GST_GMTP_SERVER_SRC (bsrc);
+
+  caps = (filter ? gst_caps_ref (filter) : gst_caps_new_any ());
+
+  GST_DEBUG_OBJECT (src, "returning caps %" GST_PTR_FORMAT, caps);
+  g_assert (GST_IS_CAPS (caps));
+  return caps;
+}
+
+static gboolean
+gst_gmtp_server_src_setcaps (GstBaseSrc * bsrc, GstCaps * caps)
+{
+  GstGMTPServerSrc *src;
+  src = GST_GMTP_SERVER_SRC (bsrc);
+  GST_INFO("CHAMOUT SET CAPS DE CLIENT SRC");
+  if ((caps != NULL) && (!gst_caps_is_equal (caps, GST_CAPS_ANY))) {
+    if (!gst_pad_set_caps(bsrc->srcpad, caps)) {
+       GST_ELEMENT_ERROR (src, CORE, NEGOTIATION, (NULL),
+          ("Error setting caps."));
+      return FALSE;
+    }
+  }
+  return TRUE;
+}
+
 static void
 gst_gmtp_server_src_class_init (GstGMTPServerSrcClass * klass)
 {
@@ -402,7 +433,8 @@ gst_gmtp_server_src_class_init (GstGMTPServerSrcClass * klass)
 
   gstbasesrc_class->start = gst_gmtp_server_src_start;
   gstbasesrc_class->stop = gst_gmtp_server_src_stop;
-
+  gstbasesrc_class->get_caps = gst_gmtp_server_src_getcaps;
+  gstbasesrc_class->set_caps = gst_gmtp_server_src_setcaps;
   gstpush_src_class->create = gst_gmtp_server_src_create;
 
   GST_DEBUG_CATEGORY_INIT (gmtpserversrc_debug, "gmtpserversrc", 0,

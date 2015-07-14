@@ -389,6 +389,36 @@ gst_gmtp_server_sink_get_property (GObject * object, guint prop_id,
   }
 }
 
+static GstCaps *
+gst_gmtp_server_sink_getcaps (GstBaseSink *bsink, GstCaps * filter)
+{
+  GstGMTPServerSink *sink;
+  GstCaps *caps = NULL;
+
+  sink = GST_GMTP_SERVER_SINK (bsink);
+
+  caps = (filter ? gst_caps_ref (filter) : gst_caps_new_any ());
+
+  GST_DEBUG_OBJECT (sink, "returning caps %" GST_PTR_FORMAT, caps);
+  g_assert (GST_IS_CAPS (caps));
+  return caps;
+}
+
+static gboolean
+gst_gmtp_server_sink_setcaps (GstBaseSink * bsink, GstCaps * caps)
+{
+  GstGMTPServerSink *sink;
+  sink = GST_GMTP_SERVER_SINK (bsink);
+  GST_INFO("CHAMOUT SET CAPS DE SERVER SINK");
+  if ((caps != NULL) && (!gst_caps_is_equal (caps, GST_CAPS_ANY))) {
+    if (!gst_pad_set_caps(bsink->sinkpad, caps)) {
+       GST_ELEMENT_ERROR (sink, CORE, NEGOTIATION, (NULL),
+          ("Error setting caps."));
+      return FALSE;
+    }
+  }
+  return TRUE;
+}
 
 static void
 gst_gmtp_server_sink_class_init (GstGMTPServerSinkClass * klass)
@@ -457,6 +487,8 @@ gst_gmtp_server_sink_class_init (GstGMTPServerSinkClass * klass)
   gstbasesink_class->start = gst_gmtp_server_sink_start;
   gstbasesink_class->stop = gst_gmtp_server_sink_stop;
   gstbasesink_class->render = gst_gmtp_server_sink_render;
+//  gstbasesink_class->set_caps = gst_gmtp_server_sink_setcaps;
+  gstbasesink_class->get_caps = gst_gmtp_server_sink_getcaps;
 
   GST_DEBUG_CATEGORY_INIT (gmtpserversink_debug, "gmtpserversink", 0,
       "GMTP Server Sink");

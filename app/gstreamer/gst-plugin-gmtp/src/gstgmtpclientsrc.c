@@ -117,8 +117,8 @@ gst_gmtp_client_src_create (GstPushSrc * psrc, GstBuffer ** outbuf)
         GST_TIME_ARGS (GST_BUFFER_DURATION (*outbuf)),
         GST_BUFFER_OFFSET (*outbuf), GST_BUFFER_OFFSET_END (*outbuf));
 
-    if ((src->caps != NULL) && !gst_caps_is_equal (src->caps, GST_CAPS_ANY)) {
 /*
+    if ((src->caps != NULL) && !gst_caps_is_equal (src->caps, GST_CAPS_ANY)) {
 http://gstreamer-devel.966125.n4.nabble.com/Problem-with-several-gst-caps-functions-td4663327.html
 
 There is no GstController anymore, the functionality was merged into the 
@@ -127,10 +127,10 @@ GstObject base class.
 There are also no caps on the buffers anymore, you need to set them on 
 the pad, or more precisely send a caps event downstream.
 
-*/
       //gst_buffer_set_caps (*outbuf, src->caps);
       gst_pad_set_caps(GST_BASE_SRC (src)->srcpad, src->caps);
     }
+*/
   }
 
   return ret;
@@ -346,6 +346,21 @@ gst_gmtp_client_src_getcaps (GstBaseSrc * bsrc, GstCaps * filter)
   return caps;
 }
 
+static gboolean
+gst_gmtp_client_src_setcaps (GstBaseSrc * bsrc, GstCaps * caps)
+{
+  GstGMTPClientSrc *src;
+  src = GST_GMTP_CLIENT_SRC (bsrc);
+  GST_INFO("CHAMOUT SET CAPS DE CLIENT SRC");
+  if ((caps != NULL) && (!gst_caps_is_equal (caps, GST_CAPS_ANY))) {
+    if (!gst_pad_set_caps(bsrc->srcpad, caps)) {
+       GST_ELEMENT_ERROR (src, CORE, NEGOTIATION, (NULL),
+          ("Error setting caps."));
+      return FALSE;
+    }
+  }
+  return TRUE;
+}
 
 /*
  * Define the gst class, callbacks, etc.
@@ -421,8 +436,9 @@ gst_gmtp_client_src_class_init (GstGMTPClientSrcClass * klass)
 
   gstbasesrc_class->start = gst_gmtp_client_src_start;
   gstbasesrc_class->stop = gst_gmtp_client_src_stop;
-  gstbasesrc_class->get_caps = gst_gmtp_client_src_getcaps;
   gstpush_src_class->create = gst_gmtp_client_src_create;
+  gstbasesrc_class->get_caps = gst_gmtp_client_src_getcaps;
+  gstbasesrc_class->set_caps = gst_gmtp_client_src_setcaps;
 
   GST_DEBUG_CATEGORY_INIT (gmtpclientsrc_debug, "gmtpclientsrc", 0,
       "GMTP Client Source");

@@ -258,9 +258,34 @@ gst_gmtp_client_sink_stop (GstBaseSink * bsink)
   return TRUE;
 }
 
+static GstCaps *
+gst_gmtp_client_sink_getcaps (GstBaseSink * bsink, GstCaps * filter)
+{
+  GstGMTPClientSink *sink;
+  GstCaps *caps = NULL;
+
+  sink = GST_GMTP_CLIENT_SINK (bsink);
+
+  caps = (filter ? gst_caps_ref (filter) : gst_caps_new_any ());
+
+  GST_DEBUG_OBJECT (sink, "returning caps %" GST_PTR_FORMAT, caps);
+  g_assert (GST_IS_CAPS (caps));
+  return caps;
+}
+
 static gboolean
 gst_gmtp_client_sink_setcaps (GstBaseSink * bsink, GstCaps * caps)
 {
+  GstGMTPClientSink *sink;
+  sink = GST_GMTP_CLIENT_SINK (bsink);
+  GST_INFO("CHAMOUT SET CAPS DE CLIENT SINK");
+  if ((caps != NULL) && (!gst_caps_is_equal (caps, GST_CAPS_ANY))) {
+    if (!gst_pad_set_caps(bsink->sinkpad, caps)) {
+       GST_ELEMENT_ERROR (sink, CORE, NEGOTIATION, (NULL),
+          ("Error setting caps."));
+      return FALSE;
+    }
+  }
   return TRUE;
 }
 
@@ -331,7 +356,8 @@ gst_gmtp_client_sink_class_init (GstGMTPClientSinkClass * klass)
   gstbasesink_class->start = gst_gmtp_client_sink_start;
   gstbasesink_class->stop = gst_gmtp_client_sink_stop;
   gstbasesink_class->render = gst_gmtp_client_sink_render;
-  gstbasesink_class->set_caps = gst_gmtp_client_sink_setcaps;
+  //gstbasesink_class->set_caps = gst_gmtp_client_sink_setcaps;
+  gstbasesink_class->get_caps = gst_gmtp_client_sink_getcaps;
 
   GST_DEBUG_CATEGORY_INIT (gmtpclientsink_debug, "gmtpclientsink", 0,
       "GMTP Client Sink");

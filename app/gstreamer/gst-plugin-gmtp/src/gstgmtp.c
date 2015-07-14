@@ -175,6 +175,9 @@ gst_gmtp_create_new_socket (GstElement * element)
     GST_ELEMENT_ERROR (element, RESOURCE, OPEN_READ, (NULL), GST_ERROR_SYSTEM);
   }
   setsockopt(sock_fd, SOL_GMTP, GMTP_SOCKOPT_FLOWNAME, "1234567812345678", 16);
+  unsigned int tx = 33000;
+  socklen_t sizelen = (socklen_t) sizeof(unsigned int);
+  setsockopt(sock_fd, SOL_GMTP, GMTP_SOCKOPT_MAX_TX_RATE, &tx, sizelen);
   GST_INFO ("SOCKET GMTP CRIADO");
 
   return sock_fd;
@@ -282,6 +285,7 @@ gst_gmtp_bind_server_socket (GstElement * element, int server_sock_fd,
 
   GST_DEBUG_OBJECT (element, "Binding server socket to address.");
 
+  //ret = bind (server_sock_fd, (struct sockaddr *) &server_sin,
   ret = bind (server_sock_fd, (struct sockaddr *) &server_sin,
       sizeof (server_sin));
   if (ret) {

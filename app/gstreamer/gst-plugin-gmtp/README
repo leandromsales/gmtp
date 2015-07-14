@@ -26,6 +26,12 @@ TBD
 		./gst-launch-1.0 -v filesrc location=~/sweetchildomine.mp3 ! mpegaudioparse ! gmtpserversink port=9011 ccid=2
 		./gst-launch-1.0 -v gmtpclientsrc host=localhost port=9011 ccid=2 ! decodebin ! alsasink
 
+	3.3 Pipeline examples
+		* Play local mp3 and save it to a new file at the same time
+		gst-launch-1.0 -v filesrc location=~/sweetchildomine.mp3 ! tee name=tp tp. ! queue ! filesink location=/tmp/scom2.mp3 tp. ! queue ! decodebin ! alsasink
+		* Play remote mp3 and save it to a new file at the same time
+		gst-launch-1.0 -v gmtpclientsrc host=192.168.25.58 port=12345 ! tee name=tp tp. ! queue ! filesink location=/tmp/scom3.mp3 tp. ! queue ! decodebin ! alsasink
+
 4. Porting to GStreamer 1.0
 ---------------------------
 
