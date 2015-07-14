@@ -305,10 +305,10 @@ def build_dce_examples(module, bld):
                     ['dccp-server', []],
                     ['dccp-client', []],
                     ['freebsd-iproute', []],
-                    ['gmtp-inter', []],
-                    ['gmtp-server', []],
-                    ['gmtp-client', []],
-                    ['gmtp-server-multi', []], #GMTP
+                    ['gmtp/gmtp-inter', []],
+                    ['gmtp/gmtp-server', []],
+                    ['gmtp/gmtp-client', []],
+                    ['gmtp/gmtp-server-multi', []],
 #                    ['little-cout', []],
                     ]
 
@@ -322,6 +322,7 @@ def build_dce_examples(module, bld):
         module.add_example(**dce_kw(target = 'bin_dce/' + name, 
                                     source = ['example/' + name + '.cc'],
                                     lib = lib))
+        
         bld.install_files('${PREFIX}/bin_dce', 'bin_dce/' + name , chmod=0755 )        
 
     module.add_example(needed = ['core', 'internet', 'dce'], 
@@ -378,15 +379,15 @@ def build_dce_examples(module, bld):
                        
     module.add_example(needed = ['core', 'network', 'dce', 'point-to-point', 'applications', 'internet', 'csma'],
                        target='bin/dce-gmtp-simple',
-                       source=['example/dce-gmtp-simple.cc'])
+                       source=['example/gmtp/dce-gmtp-simple.cc'])
                        
     module.add_example(needed = ['core', 'network', 'dce', 'point-to-point', 'applications', 'internet', 'csma'],
                        target='bin/dce-gmtp-relay',
-                       source=['example/dce-gmtp-relay.cc'])
+                       source=['example/gmtp/dce-gmtp-relay.cc'])
                        
     module.add_example(needed = ['core', 'network', 'dce', 'point-to-point', 'applications', 'internet', 'csma'],
                        target='bin/dce-gmtp-dumbbell',
-                       source=['example/dce-gmtp-dumbbell.cc'])
+                       source=['example/gmtp/dce-gmtp-dumbbell.cc'])
 
     if bld.env['LIB_ASPECT_PATH']:
         module.add_example(needed = ['core', 'network', 'internet', 'dce', 'point-to-point', 'csma', 'applications'],
