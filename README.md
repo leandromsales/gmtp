@@ -65,9 +65,9 @@ Select General setup option and press return, now make sure that the option "Ini
 Select save and confirm the .config name, exit and exit again.
 
 
-Now, it's time to compile the kernel itself (Note: X is the Number of threads):
+Now, it's time to compile the kernel itself:
 
-    $ make -j X
+    $ make -j 4
 
 Generate kernel modules:
 
@@ -81,11 +81,13 @@ Copy the kernel to /boot directory:
 
     # cp -v arch/x86/boot/bzImage /boot/vmlinuz-4.0.3
     
+If you prefer to use Lilo,follow these steps:
+
 Generate lilo config file:
 
     # liloconfig
 
-Run lilo
+Run lilo:
     
     # lilo
     
