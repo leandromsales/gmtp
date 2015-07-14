@@ -29,6 +29,8 @@
 #include <sys/ioctl.h>
 #endif
 
+#include <gio/gio.h>
+
 /*
  * Resolves host to IP address
  * @param element - the element
