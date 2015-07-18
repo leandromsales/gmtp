@@ -32,6 +32,13 @@ TBD
 		* Play remote mp3 and save it to a new file at the same time
 		gst-launch-1.0 -v gmtpclientsrc host=192.168.25.58 port=12345 ! tee name=tp tp. ! queue ! filesink location=/tmp/scom3.mp3 tp. ! queue ! decodebin ! alsasink
 
+	3.4 Additionals
+		http://processors.wiki.ti.com/index.php/Example_GStreamer_Pipelines
+		https://developer.ridgerun.com/wiki/index.php?title=Using_UDP_Multicast_with_GStreamer
+		http://www.jejik.com/articles/2007/01/streaming_audio_over_tcp_with_python-gstreamer/
+		http://www.polytech2go.fr/topinternet/sp_inetmedia/Lect.03.Gstreamer.multimedia.and.internet.pdf
+		http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-base-plugins/html/gst-plugins-base-plugins-plugin-tcp.html
+
 4. Porting to GStreamer 1.0
 ---------------------------
 
