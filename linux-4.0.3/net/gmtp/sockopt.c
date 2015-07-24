@@ -35,8 +35,10 @@ static int do_gmtp_setsockopt(struct sock *sk, int level, int optname,
 		err = gmtp_setsockopt_flowname(gp, optval, optlen);
 		break;
 	case GMTP_SOCKOPT_MAX_TX_RATE:
-		if(val > 0)
+		if(val > 0) {
 			gp->tx_max_rate = (unsigned long)val;
+			gp->tx_ucc_rate = gp->tx_max_rate;
+		}
 		else
 			err = -EINVAL;
 		break;
@@ -126,11 +128,17 @@ static int do_gmtp_getsockopt(struct sock *sk, int level, int optname,
 	switch (optname) {
 	case GMTP_SOCKOPT_FLOWNAME:
 		return gmtp_getsockopt_flowname(gp, optval, optlen);
+	case GMTP_SOCKOPT_MAX_TX_RATE:
+		val = (int) gp->tx_max_rate;
+		break;
+	case GMTP_SOCKOPT_UCC_TX_RATE:
+		val = (int) gp->tx_ucc_rate;
+		break;
 	case GMTP_SOCKOPT_GET_CUR_MSS:
-		val = gp->mss;
+		val = (int) gp->mss;
 		break;
 	case GMTP_SOCKOPT_SERVER_TIMEWAIT:
-		val = gp->server_timewait;
+		val = (int) gp->server_timewait;
 		break;
 	case GMTP_SOCKOPT_ROLE_RELAY:
 		val = (gp->role == GMTP_ROLE_RELAY)? 1 : 0;

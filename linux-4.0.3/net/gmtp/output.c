@@ -80,11 +80,11 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 		gh->dport = inet->inet_dport;
 		gh->hdrlen = gmtp_header_size;
 		gh->server_rtt = gp->role == GMTP_ROLE_SERVER ?
-				TO_U8(gp->tx_rtt) : TO_U8(gp->rx_rtt);
+				TO_U12(gp->tx_rtt) : TO_U12(gp->rx_rtt);
 
 		memcpy(gh->flowname, gp->flowname, GMTP_FLOWNAME_LEN);
 
-		gh->transm_r = (__be32) gp->tx_max_rate;
+		gh->transm_r = (__be32) gp->tx_ucc_rate;
 		if (gcb->type == GMTP_PKT_FEEDBACK) {
 			struct gmtp_hdr_feedback *fh = gmtp_hdr_feedback(skb);
 			gh->transm_r = gp->rx_max_rate;
@@ -209,7 +209,7 @@ struct sk_buff *gmtp_make_register_reply(struct sock *sk, struct dst_entry *dst,
 	gh->dport	= inet_rsk(req)->ir_rmt_port;
 	gh->type	= GMTP_PKT_REGISTER_REPLY;
 	gh->seq 	= greq->gss;
-	gh->server_rtt	= TO_U8(gmtp_sk(sk)->tx_rtt);
+	gh->server_rtt	= TO_U12(gmtp_sk(sk)->tx_rtt);
 	gh->transm_r	= (__be32) gmtp_sk(sk)->tx_max_rate;
 	gh->hdrlen	= gmtp_header_size;
 	memcpy(gh->flowname, greq->flowname, GMTP_FLOWNAME_LEN);
@@ -674,8 +674,9 @@ static void gmtp_xmit_packet(struct sock *sk, struct sk_buff *skb) {
  */
 static long get_rate_gap(struct gmtp_sock *gp, int acum)
 {
-	long rate = (long)gp->tx_sample_rate;
-	long tx = (long)gp->tx_max_rate;
+	long rate = (long) gp->tx_sample_rate;
+	long tx = (long) min(gp->tx_max_rate, gp->tx_ucc_rate);
+
 	long coef_adj = 0;
 
 	if(gp->tx_dpkts_sent < GMTP_MIN_SAMPLE_LEN)
@@ -703,6 +704,7 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 	int len = (int) packet_len(skb);
 	unsigned long elapsed = 0;
 	long delay = 0, delay2 = 0, delay_budget = 0;
+	unsigned long tx_rate = 0;
 
 	/** TODO Continue tests with different scales... */
 	static const int scale = 1;
@@ -713,6 +715,8 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 
 	if(gp->tx_max_rate == 0UL)
 		goto send;
+	else
+		tx_rate = min(gp->tx_max_rate, gp->tx_ucc_rate);
 	/*
 	pr_info("[%d] Tx rate: %lu bytes/s\n", gp->pkt_sent, gp->total_rate);
 	pr_info("[-] Tx rate (sample): %lu bytes/s\n", gp->sample_rate);
@@ -727,7 +731,7 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 		goto wait;
 	}
 
-	delay = DIV_ROUND_CLOSEST((HZ * len), gp->tx_max_rate);
+	delay = DIV_ROUND_CLOSEST((HZ * len), tx_rate);
 	delay2 = delay - elapsed;
 
 	if(delay2 > 0)
@@ -742,7 +746,7 @@ wait:
 	 * TODO More tests with byte_budgets...
 	 */
 	if(delay <= 0)
-		gp->tx_byte_budget = mult_frac(scale, gp->tx_max_rate, HZ) -
+		gp->tx_byte_budget = mult_frac(scale, tx_rate, HZ) -
 			mult_frac(gp->tx_byte_budget, (int) get_rate_gap(gp, 0), 100);
 	else
 		gp->tx_byte_budget = INT_MIN;

@@ -194,7 +194,7 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 	if(gp->relay_rtt == 0 && gh->type == GMTP_PKT_REQUESTNOTIFY)
 		gp->relay_rtt = jiffies_to_msecs(jiffies) - gp->req_stamp;
 
-	gp->rx_rtt = (__u32) gh->server_rtt + gp->relay_rtt;
+	gp->rx_rtt = ntohs(gh->server_rtt) + gp->relay_rtt;
 	gmtp_pr_debug("RTT: %u ms", gp->rx_rtt);
 
 	if(gh->type == GMTP_PKT_REQUESTNOTIFY) {
@@ -390,7 +390,7 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 	case GMTP_PKT_DATAACK:
 	case GMTP_PKT_DATA:
 		if(gmtp_role_client(sk))
-			gp->rx_rtt = (__u32) gh->server_rtt + gp->relay_rtt;
+			gp->rx_rtt = ntohs(gh->server_rtt) + gp->relay_rtt;
 		gmtp_enqueue_skb(sk, skb);
 		return 0;
 	case GMTP_PKT_ACK:

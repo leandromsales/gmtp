@@ -92,9 +92,10 @@
 #define GMTP_ACK_INTERVAL ((unsigned int)(HZ))
 #define GMTP_ACK_TIMEOUT  (4 * GMTP_ACK_INTERVAL)
 
-/* Int to __u8 operations */
-#define TO_U8(x) ((x) > UINT_MAX) ? UINT_MAX : (__u8)(x)
-#define SUB_U8(a, b) ((a-b) > UINT_MAX) ? UINT_MAX : (a-b)
+/* Int to __U12 operations */
+#define TO_U12(x) 	htons(max((U16_MAX >> 4), (x)))
+#define SUB_U12(a, b) 	htons(max((U16_MAX >> 4), (a-b)))
+#define ADD_U12(a, b) 	htons(max((U16_MAX >> 4), (a+b)))
 
 extern struct gmtp_info *gmtp_info;
 extern struct inet_hashinfo gmtp_inet_hashinfo;

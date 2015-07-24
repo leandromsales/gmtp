@@ -36,9 +36,9 @@
  *  0                   1                   2                   3
  *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- *  | Ver |   Type  |     Header Lenght   |   Server RTT  |P|R| Res |
+ *  | V.|   Type  |     Header Length   |       Server RTT      |P|R|
  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- *  |          Source Port          |           Dest Port           |
+ *  |          Source Port          |       Destination Port        |
  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *  |                         Sequence Number                       |
  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -54,7 +54,7 @@
  *  +=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
  *  |                                                               |
  *  |              Variable part (depends of 'type')                |
- *  |             Max Lenght = (2^11-1) => 2047 bytes               |
+ *  |             Max Length = (2^11-1) => 2047 bytes               |
  *  |                                                               |
  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
@@ -66,22 +66,20 @@
  * @server_rtt: server RTT
  * @pull:  'P' (Pull) field
  * @relay:  'R' (Relay) field. It is activated when a relay send packets
- * @res: reserved to future
- * @src_port: source port
- * @dest_port: destiny port
+ * @res: reserved to future <- [DEPRECATED]
+ * @sport: source port
+ * @dport: destiny port
  * @seq: sequence number
  * @transm_r: transmission rate
  * @flowname: data flow name
- * @varpart: Variable part, depends of the 'Packet type' field
  */
 struct gmtp_hdr {
-	__u8 	version:3;
+	__u8 	version:2;
 	__u8 	type:5;
 	__be16 	hdrlen:11;
-	__u8 	server_rtt;
+	__be16 	server_rtt:12;
 	__u8 	pull:1;
 	__u8 	relay:1;
-	__u8 	res:3;
 	__be16 	sport; //source port
 	__be16 	dport; //dest port
 	__be32 	seq;
@@ -308,6 +306,7 @@ static inline unsigned int gmtp_packet_hdr_variable_len(const __u8 type)
 enum gmtp_sockopt_codes {
 	GMTP_SOCKOPT_FLOWNAME = 1,
 	GMTP_SOCKOPT_MAX_TX_RATE,
+	GMTP_SOCKOPT_UCC_TX_RATE,
 	GMTP_SOCKOPT_GET_CUR_MSS,
 	GMTP_SOCKOPT_SERVER_RTT,
 	GMTP_SOCKOPT_SERVER_TIMEWAIT,
