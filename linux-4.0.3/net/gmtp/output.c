@@ -233,6 +233,8 @@ struct sk_buff *gmtp_ctl_make_reset(struct sock *sk, struct sk_buff *rcv_skb)
 	struct gmtp_hdr_reset *ghr;
 	struct sk_buff *skb;
 
+	gmtp_pr_func();
+
 	skb = alloc_skb(sk->sk_prot->max_header, GFP_ATOMIC);
 	if (skb == NULL)
 		return NULL;

@@ -93,9 +93,9 @@
 #define GMTP_ACK_TIMEOUT  (4 * GMTP_ACK_INTERVAL)
 
 /* Int to __U12 operations */
-#define TO_U12(x) 	htons(max((U16_MAX >> 4), (x)))
-#define SUB_U12(a, b) 	htons(max((U16_MAX >> 4), (a-b)))
-#define ADD_U12(a, b) 	htons(max((U16_MAX >> 4), (a+b)))
+#define TO_U12(x) 	min((U16_MAX >> 4), (x))
+#define SUB_U12(a, b) 	min((U16_MAX >> 4), (a-b))
+#define ADD_U12(a, b) 	min((U16_MAX >> 4), (a+b))
 
 extern struct gmtp_info *gmtp_info;
 extern struct inet_hashinfo gmtp_inet_hashinfo;

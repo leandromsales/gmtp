@@ -115,7 +115,7 @@ void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh)
 				gmtp_packet_name(gh->type), gh->type,
 				&iph->saddr, ntohs(gh->sport),
 				&iph->daddr, ntohs(gh->dport),
-				gh->seq, ntohs(gh->server_rtt), gh->transm_r,
+				gh->seq, /*(u32)*/ gh->server_rtt, gh->transm_r,
 				flowname);
 }
 EXPORT_SYMBOL_GPL(print_gmtp_packet);
