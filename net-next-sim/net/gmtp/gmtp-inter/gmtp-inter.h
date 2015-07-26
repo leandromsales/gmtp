@@ -45,6 +45,8 @@ extern void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh
  * @ucc_bytes: bytes received since last GMTP-UCC execution
  * @ucc_rx_tstamp: time stamp of last GMTP-UCC execution
  * @rx_rate_wnd: size of window to calculate rx rates
+ * @h: Current H_0 in RCP equation
+ * @last_rtt: Last RTT received in all flows
  *
  * @mcst: control of granted multicast addresses
  * @kreporter: number of clients per reporter.
@@ -63,10 +65,15 @@ struct gmtp_inter {
 	unsigned int        	ucc_bytes;
 	unsigned long  		ucc_rx_tstamp;
 	unsigned int 		rx_rate_wnd;
+	unsigned int 		h;
+	unsigned int		h_user;
+	unsigned int 		last_rtt;
 
 	unsigned char		mcst[4];
 
 	unsigned char		kreporter;
+
+	struct timer_list 	gmtp_ucc_timer;
 
 	struct gmtp_inter_hashtable *hashtable;
 };
@@ -81,6 +88,7 @@ struct gmtp_flow_info *gmtp_inter_get_info(
 		struct gmtp_inter_hashtable *hashtable, const __u8 *media);
 __be32 gmtp_inter_device_ip(struct net_device *dev);
 unsigned char *gmtp_build_md5(unsigned char *buf);
+void gmtp_timer_callback(void);
 
 /** input.c */
 int gmtp_inter_request_rcv(struct sk_buff *skb);
@@ -98,6 +106,7 @@ int gmtp_inter_data_out(struct sk_buff *skb);
 int gmtp_inter_close_out(struct sk_buff *skb);
 
 /** build.c */
+void gmtp_inter_send_pkt(struct sk_buff *skb);
 void gmtp_inter_add_relayid(struct sk_buff *skb);
 struct gmtp_hdr *gmtp_inter_make_route_hdr(struct sk_buff *skb);
 
@@ -117,6 +126,7 @@ void gmtp_inter_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
 		__be32 daddr, struct gmtp_hdr *gh_ref, bool backward);
 void gmtp_inter_build_and_send_skb(struct sk_buff *skb);
 void gmtp_copy_hdr(struct sk_buff *skb, struct sk_buff *src_skb);
+struct sk_buff *gmtp_inter_build_ack(struct gmtp_inter_entry *entry);
 
 /**
  * A very ugly delayer, to GMTP-inter...

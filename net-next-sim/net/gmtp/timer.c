@@ -200,6 +200,17 @@ static void gmtp_reporter_ackrcv_timer(struct sock *sk)
 	inet_csk_reset_keepalive_timer(sk, GMTP_ACK_TIMEOUT);
 }
 
+/** TODO implement method to disconnect dead relays */
+static void gmtp_server_ackrcv_timer(struct sock *sk)
+{
+	struct gmtp_sock *gp = gmtp_sk(sk);
+
+	gmtp_pr_func();
+
+	inet_csk_reset_keepalive_timer(sk, GMTP_ACK_TIMEOUT);
+}
+
+
 static void gmtp_client_sendack_timer(struct sock *sk)
 {
 	struct gmtp_sock *gp = gmtp_sk(sk);
@@ -230,9 +241,6 @@ static void gmtp_keepalive_timer(unsigned long data)
 	struct sock *sk = (struct sock *)data;
 	struct gmtp_sock *gp = gmtp_sk(sk);
 
-	gmtp_pr_func();
-
-	pr_info("Locking socket (%p) \n", sk);
 	print_gmtp_sock(sk);
 
 	bh_lock_sock(sk);
@@ -248,10 +256,13 @@ static void gmtp_keepalive_timer(unsigned long data)
 		goto out;
 	}
 
-	if(gp->role == GMTP_ROLE_REPORTER) {
-		if(sk->sk_state == GMTP_OPEN) {
+	if(sk->sk_state == GMTP_OPEN) {
+		switch(gp->role) {
+		case GMTP_ROLE_REPORTER:
 			gmtp_reporter_ackrcv_timer(sk);
 			goto out;
+		case GMTP_ROLE_SERVER:
+			gmtp_server_ackrcv_timer(sk);
 		}
 	}
 

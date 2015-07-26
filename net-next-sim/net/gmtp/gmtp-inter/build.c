@@ -327,8 +327,6 @@ void gmtp_inter_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
 	struct sk_buff *skb = gmtp_inter_build_pkt(skb_src, saddr, daddr,
 			gh_ref, backward);
 
-	gmtp_pr_func();
-
 	if(skb != NULL)
 		gmtp_inter_send_pkt(skb);
 }
@@ -349,3 +347,80 @@ void gmtp_copy_hdr(struct sk_buff *skb, struct sk_buff *src_skb)
 	if(gh->type == gh_src->type)
 		memcpy(gh, gh_src, gh_src->hdrlen);
 }
+
+
+struct sk_buff *gmtp_inter_build_ack(struct gmtp_inter_entry *entry)
+{
+	struct sk_buff *skb = alloc_skb(GMTP_MAX_HDR_LEN, GFP_ATOMIC);
+
+	struct ethhdr *eth;
+	struct iphdr *iph;
+	struct gmtp_hdr *gh;
+	struct gmtp_hdr_ack *gack;
+
+	struct socket *sock = NULL;
+	struct net_device *dev_entry = NULL;
+	struct net *net;
+	int gmtp_hdr_len = sizeof(struct gmtp_hdr) + sizeof(struct gmtp_hdr_ack);
+	int total_len, ip_len = 0;
+
+	sock_create(AF_INET, SOCK_STREAM, 0, &sock);
+	net = sock_net(sock->sk);
+	dev_entry = dev_get_by_index_rcu(net, 2);
+	sock_release(sock);
+
+	ip_len = gmtp_hdr_len + sizeof(struct iphdr);
+	total_len = ip_len + LL_RESERVED_SPACE(dev_entry);
+	skb_reserve(skb, total_len);
+
+	gh = gmtp_zeroed_hdr(skb, gmtp_hdr_len);
+
+	gh->version = GMTP_VERSION;
+	gh->type = GMTP_PKT_ACK;
+	gh->hdrlen = gmtp_hdr_len;
+	gh->relay = 1;
+	gh->seq = entry->info->seq;
+	gh->dport = entry->media_port;
+	gh->sport = entry->info->my_port;
+	gh->server_rtt = entry->info->rtt;
+	gh->transm_r = gmtp_inter.ucc_rx;
+	memcpy(gh->flowname, entry->flowname, GMTP_FLOWNAME_LEN);
+
+	gack = gmtp_hdr_ack(skb);
+	gack->orig_tstamp = entry->info->last_data_tstamp;
+	gack->wait = (__be32)(ktime_to_ms(ktime_get_real())
+			- entry->info->last_rx_tstamp);
+
+	/* Build the IP header. */
+	skb_push(skb, sizeof(struct iphdr));
+	skb_reset_network_header(skb);
+	iph = ip_hdr(skb);
+
+	/* iph->version = 4; iph->ihl = 5; */
+	put_unaligned(0x45, (unsigned char *)iph);
+	iph->tos = 0;
+	iph->frag_off = 0;
+	iph->ttl = 64;
+	iph->protocol = IPPROTO_GMTP;
+
+	put_unaligned(entry->info->my_addr, &(iph->saddr));
+	put_unaligned(entry->server_addr, &(iph->daddr));
+	put_unaligned(htons(skb->len), &(iph->tot_len));
+
+	ip_send_check(iph);
+
+	print_gmtp_packet(iph, gh);
+
+	skb_push(skb, ETH_HLEN);
+	skb_reset_mac_header(skb);
+	eth = eth_hdr(skb);
+	skb->protocol = eth->h_proto = htons(ETH_P_IP);
+
+	ether_addr_copy(eth->h_source, dev_entry->dev_addr);
+	ether_addr_copy(eth->h_dest, entry->server_mac_addr);
+
+	skb->dev = dev_entry;
+
+	return skb;
+}
+

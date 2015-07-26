@@ -114,7 +114,7 @@ void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh)
 				gmtp_packet_name(gh->type), gh->type,
 				&iph->saddr, ntohs(gh->sport),
 				&iph->daddr, ntohs(gh->dport),
-				gh->seq, gh->server_rtt, gh->transm_r,
+				gh->seq, /*(u32)*/ gh->server_rtt, gh->transm_r,
 				flowname);
 }
 EXPORT_SYMBOL_GPL(print_gmtp_packet);
@@ -251,6 +251,7 @@ int gmtp_init_sock(struct sock *sk)
 	gp->tx_first_stamp	= 0UL;
 	gp->tx_last_stamp	= 0UL;
 	gp->tx_max_rate		= 0UL; /* Unlimited */
+	gp->tx_ucc_rate		= 0UL; /* Unlimited */
 	gp->tx_byte_budget	= INT_MIN;
 	gp->tx_adj_budget	= 0;
 
