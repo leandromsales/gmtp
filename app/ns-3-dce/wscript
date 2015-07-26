@@ -12,7 +12,8 @@ import subprocess
 import Logs
 from waflib.Errors import WafError
 
-def options(opt):
+
+def options(opt): 
     opt.tool_options('compiler_cc') 
     ns3waf.options(opt)
     opt.add_option('--enable-kernel-stack',

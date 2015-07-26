@@ -1,5 +1,6 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <stdio.h>
 
 #define SOCK_GMTP     7
 #define IPPROTO_GMTP  254
@@ -18,18 +19,21 @@ enum gmtp_sockopt_codes {
 
 void set_gmtp_inter(int actived)
 {
-  int ok = 1;
-  int rsock = socket (PF_INET, SOCK_GMTP, IPPROTO_GMTP);
-  setsockopt(rsock, SOL_GMTP, GMTP_SOCKOPT_ROLE_RELAY, &ok, sizeof(int));
-  setsockopt(rsock, SOL_GMTP, GMTP_SOCKOPT_RELAY_ENABLED, &actived, sizeof(int));
+	int ok = 1;
+	int rsock = socket(PF_INET, SOCK_GMTP, IPPROTO_GMTP);
+	setsockopt(rsock, SOL_GMTP, GMTP_SOCKOPT_ROLE_RELAY, &ok, sizeof(int));
+	setsockopt(rsock, SOL_GMTP, GMTP_SOCKOPT_RELAY_ENABLED, &actived,
+			sizeof(int));
 }
 
 inline void disable_gmtp_inter()
 {
-    set_gmtp_inter(false);
+	printf("Trying disable gmtp_inter...\n");
+	set_gmtp_inter(false);
 }
 
 inline void enable_gmtp_inter()
 {
-    set_gmtp_inter(true);
+	printf("Trying enable gmtp_inter...\n");
+	set_gmtp_inter(true);
 }
