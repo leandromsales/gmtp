@@ -20,13 +20,13 @@ int main(int argc, char *argv[])
 	cmd.Parse(argc, argv);
 
 	cout << "Create nodes." << endl;
-	Ptr<Node> n0 = CreateObject<Node>();
-	Ptr<Node> r = CreateObject<Node>();
-	Ptr<Node> n1 = CreateObject<Node>();
+	Ptr<Node> server = CreateObject<Node>();
+	Ptr<Node> relay = CreateObject<Node>();
+	Ptr<Node> client = CreateObject<Node>();
 
-	NodeContainer net1(r, n0);
-	NodeContainer net2(r, n1);
-	NodeContainer all(r, n0, n1);
+	NodeContainer net1(relay, server);
+	NodeContainer net2(relay, client);
+	NodeContainer all(relay, server, client);
 
 	DceManagerHelper dceManager;
 	dceManager.SetTaskManagerAttribute("FiberManagerType",
@@ -59,23 +59,23 @@ int main(int argc, char *argv[])
 	DceApplicationHelper dce;
 	ApplicationContainer apps;
 
-	//  dce.SetBinary ("gmtp-inter");
-	//  dce.SetStackSize (1 << 16);
-	//  dce.ResetArguments ();
-	//  dce.ParseArguments ("off");
-	//  apps = dce.Install (r);
-	//  apps.Start (Seconds (2.0));
+//	  dce.SetBinary ("gmtp-inter");
+//	  dce.SetStackSize (1 << 16);
+//	  dce.ResetArguments ();
+//	  dce.ParseArguments ("off");
+//	  apps = dce.Install (r);
+//	  apps.Start (Seconds (2.0));
 
 	dce.SetBinary("ip");
 	dce.SetStackSize(1 << 16);
 	dce.ResetArguments();
 	dce.ParseArguments("route add default via 10.1.1.1 dev sim0");
-	apps = dce.Install(n0);
+	apps = dce.Install(server);
 	apps.Start(Seconds(2.5));
 
 	dce.ResetArguments();
 	dce.ParseArguments("route add default via 10.1.2.1 dev sim0");
-	apps = dce.Install(n1);
+	apps = dce.Install(client);
 	apps.Start(Seconds(2.5));
 
 	dce.ResetArguments();
@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
 
 	dce.ResetArguments();
 	dce.ParseArguments("link set sim1 up");
-	apps = dce.Install(r);
+	apps = dce.Install(relay);
 	apps.Start(Seconds(3.6));
 
 	dce.ResetArguments();
@@ -100,26 +100,26 @@ int main(int argc, char *argv[])
 
 	dce.ResetArguments();
 	dce.ParseArguments("addr show dev sim1");
-	apps = dce.Install(r);
+	apps = dce.Install(relay);
 	apps.Start(Seconds(4.0));
 
 	dce.SetBinary("gmtp-server");
 	dce.SetStackSize(1 << 16);
 	dce.ResetArguments();
-	apps = dce.Install(n0);
+	apps = dce.Install(server);
 	apps.Start(Seconds(5.0));
 
 	dce.SetBinary("gmtp-client");
 	dce.SetStackSize(1 << 16);
 	dce.ResetArguments();
 	dce.AddArgument("10.1.1.2");
-	apps = dce.Install(n1);
+	apps = dce.Install(client);
 	apps.Start(Seconds(7.0));
 
 	csma.EnablePcapAll("dce-gmtp-relay");
 
 	AsciiTraceHelper ascii;
-	csma.EnableAsciiAll(ascii.CreateFileStream("dce-gmtp.tr"));
+	csma.EnableAsciiAll(ascii.CreateFileStream("dce-gmtp-relay.tr"));
 
 	Simulator::Stop(Seconds(30.0));
 	Simulator::Run();
