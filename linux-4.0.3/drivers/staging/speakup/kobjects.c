@@ -56,7 +56,7 @@ static ssize_t chars_chartab_show(struct kobject *kobj,
 				cp = "NUM";
 			else if (IS_TYPE(i, A_CAP))
 				cp = "A_CAP";
-			else if (IS_TYPE(i, GMTP_ALPHA))
+			else if (IS_TYPE(i, ALPHA))
 				cp = "ALPHA";
 			else if (IS_TYPE(i, B_CAPSYM))
 				cp = "B_CAPSYM";
