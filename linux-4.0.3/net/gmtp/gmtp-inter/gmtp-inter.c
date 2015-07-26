@@ -273,9 +273,9 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 
 void gmtp_timer_callback(void)
 {
-	gmtp_ucc(UINT_MAX, 0);
-	mod_timer(&gmtp_inter.gmtp_ucc_timer, jiffies + HZ);
-    
+	gmtp_ucc(0);
+	mod_timer(&gmtp_inter.gmtp_ucc_timer,
+			jiffies + min(gmtp_inter.h, gmtp_inter.h_user));
 }
 
 int init_module()
@@ -290,9 +290,6 @@ int init_module()
 		goto out;
 	}
 
-	setup_timer(&gmtp_inter.gmtp_ucc_timer, gmtp_timer_callback, 0);
-   	mod_timer(&gmtp_inter.gmtp_ucc_timer, jiffies + msecs_to_jiffies(1000)); 
-
 	gmtp_inter.capacity = CAPACITY_DEFAULT;
 	gmtp_inter.buffer_len = 0;
 	gmtp_inter.kreporter = GMTP_REPORTER_DEFAULT_PROPORTION - 1;
@@ -305,6 +302,12 @@ int init_module()
 	gmtp_inter.ucc_bytes = 0;
 	gmtp_inter.ucc_rx_tstamp = 0;
 	gmtp_inter.rx_rate_wnd = 1000;
+	gmtp_inter.h = 0;
+	gmtp_inter.h_user = UINT_MAX; /* TODO Make it user defined */
+	gmtp_inter.last_rtt = GMTP_DEFAULT_RTT;
+
+	setup_timer(&gmtp_inter.gmtp_ucc_timer, gmtp_timer_callback, 0);
+	mod_timer(&gmtp_inter.gmtp_ucc_timer, jiffies + HZ);
 
 	memcpy(gmtp_inter.relay_id, gmtp_inter_build_relay_id(),
 			GMTP_RELAY_ID_LEN);

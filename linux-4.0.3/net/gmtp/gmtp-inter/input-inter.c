@@ -191,14 +191,16 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
 	gmtp_inter_add_relayid(skb);
 
 	gmtp_print_debug("UPDATING Tx Rate");
-	gmtp_ucc(UINT_MAX, 1);
+	gmtp_inter.last_rtt = gh->server_rtt;
 	if(gmtp_inter.ucc_rx < gh->transm_r)
 		gh->transm_r = (__be32) gmtp_inter.ucc_rx;
 
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry == NULL)
 		return NF_ACCEPT;
+
 	info = entry->info;
+	info->rtt = (unsigned int) gh->server_rtt;
 	ether_addr_copy(entry->server_mac_addr, eth->h_source);
 
 	gh_route_n = gmtp_inter_make_route_hdr(skb);
@@ -362,6 +364,7 @@ static inline void gmtp_update_stats(struct gmtp_flow_info *info,
 
 	gmtp_inter.total_bytes_rx += skblen(skb);
 	gmtp_inter.ucc_bytes += skblen(skb);
+	gmtp_inter.last_rtt = (unsigned int) gh->server_rtt;
 }
 
 /**

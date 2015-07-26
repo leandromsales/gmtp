@@ -64,10 +64,13 @@ static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
 		gmtp_done(sk);
 		break;
 	case GMTP_OPEN:
+		/* FIXME Close only if gh->flowname == gp->flowname */
 		/* Clear hash table */
+		if(gmtp_role_client(sk))
+			gmtp_del_client_entry(client_hashtable,
+					gmtp_sk(sk)->flowname);
 		/* FIXME: Implement gmtp_del_server_entry() */
-		/*if(gmtp_role_client(sk))
-			gmtp_del_client_entry(gmtp_hashtable, gp->flowname);
+		/*
 		else if(gp->role == GMTP_ROLE_SERVER)
 			gmtp_print_error("FIXME: "
 					"Implement gmtp_del_server_entry()");*/

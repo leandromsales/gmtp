@@ -45,6 +45,8 @@ extern void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh
  * @ucc_bytes: bytes received since last GMTP-UCC execution
  * @ucc_rx_tstamp: time stamp of last GMTP-UCC execution
  * @rx_rate_wnd: size of window to calculate rx rates
+ * @h: Current H_0 in RCP equation
+ * @last_rtt: Last RTT received in all flows
  *
  * @mcst: control of granted multicast addresses
  * @kreporter: number of clients per reporter.
@@ -63,6 +65,9 @@ struct gmtp_inter {
 	unsigned int        	ucc_bytes;
 	unsigned long  		ucc_rx_tstamp;
 	unsigned int 		rx_rate_wnd;
+	unsigned int 		h;
+	unsigned int		h_user;
+	unsigned int 		last_rtt;
 
 	unsigned char		mcst[4];
 

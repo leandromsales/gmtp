@@ -418,7 +418,6 @@ out:
 
 static void gmtp_v4_ctl_send_reset(struct sock *sk, struct sk_buff *rxskb)
 {
-	gmtp_pr_func();
 	gmtp_v4_ctl_send_packet(sk, rxskb, GMTP_PKT_RESET);
 }
 
@@ -860,10 +859,8 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 
 	/**
 	 * FIXME Change Election algorithm to fully distributed using multicast
-	 *
-	 * Only accept multicast packets from relays
 	 */
-	if(skb->pkt_type == PACKET_MULTICAST && gh->relay == 1) {
+	if(skb->pkt_type == PACKET_MULTICAST) {
 
 		struct gmtp_client *tmp;
 		struct gmtp_client_entry *media_entry = gmtp_lookup_client(
@@ -928,7 +925,7 @@ static struct request_sock_ops gmtp_request_sock_ops __read_mostly = {
 };
 
 /*
- * Called when a client sends a REQUEST
+ * Called by SERVER when it received a request from client/relay
  */
 int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
 {
