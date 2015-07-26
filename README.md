@@ -141,9 +141,9 @@ Run server and client apps:
     
 Note that you can specify the network interface, ip address and port. Use -h for more info.
 
-Monitoring information through the log file:
+Monitoring information through the log file, for example:
 
-    $ tail -f /var/log/syslog
+    $ /var/log/syslog
 
 
 Contributing:
