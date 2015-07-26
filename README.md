@@ -3,10 +3,6 @@ Global Media Transmission Protocol (GMTP)
 
 Repository for the Global Media Transmission Protocol (GMTP).
 
-GMTP protocol
-=============
-
-
 Contents
 ========
 - Introduction
@@ -39,7 +35,7 @@ For the environment used in the tests, you need to install git to get the source
 
 Using git to get gmtp source:
 
-    $ git clone https://github.com/compelab/gmtp.git -b develop
+    $ git clone https://github.com/compelab/gmtp.git -b master
 
     
 ## Compile Kernel with GMTP code ##
@@ -77,19 +73,15 @@ Install modules:
 
     # make modules_install
     
-Copy the kernel to /boot directory:
+Install the new kernel:
 
-    # cp -v arch/x86/boot/bzImage /boot/vmlinuz-4.0.3
+    # make install
     
 If you prefer to use Lilo,follow these steps:
 
 Generate lilo config file:
 
     # liloconfig
-
-Run lilo:
-    
-    # lilo
     
 Edit lilo.conf:
 
@@ -100,6 +92,11 @@ and if there is no entry for the new kernel, please add:
 image = /boot/vmlinuz-4.0.3
     label = "linux-4.0.3"
     root = /dev/sda1
+
+Run lilo:
+    
+    # lilo
+    
 
 - Compile and load GMTP modules
 
