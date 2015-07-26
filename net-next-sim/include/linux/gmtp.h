@@ -163,8 +163,9 @@ static inline struct gmtp_request_sock *gmtp_rsk(const struct request_sock *req)
  * @tx_first_stamp: time stamp of first sent data packet (jiffies)
  * @tx_last_stamp: time stamp of last sent data packet (jiffies)
  * @tx_max_rate: Max TX rate (bytes/s). 0 == no limits.
- * tx_byte_budget: the amount of bytes that can be sent immediately.
- * tx_adj_budget: memory of last adjustment in TX rate.
+ * @tx_max_rate: Max UCC TX rate (bytes/s). Via GMTP-UCC. 0 == no limits.
+ * @tx_byte_budget: the amount of bytes that can be sent immediately.
+ * @tx_adj_budget: memory of last adjustment in TX rate.
  */
 struct gmtp_sock {
 	/* inet_connection_sock has to be the first member of gmtp_sock */
@@ -224,6 +225,7 @@ struct gmtp_sock {
 	unsigned long			tx_first_stamp;  /* jiffies */
 	unsigned long 			tx_last_stamp;	/* jiffies */
 	unsigned long			tx_max_rate;
+	unsigned long			tx_ucc_rate;
 	int 				tx_byte_budget;
 	int				tx_adj_budget;
 };
@@ -270,6 +272,18 @@ static inline struct gmtp_hdr_data *gmtp_hdr_data(const struct sk_buff *skb)
 						 sizeof(struct gmtp_hdr));
 }
 
+static inline struct gmtp_hdr_ack *gmtp_hdr_ack(const struct sk_buff *skb)
+{
+	return (struct gmtp_hdr_ack *)(skb_transport_header(skb) +
+						 sizeof(struct gmtp_hdr));
+}
+
+static inline struct gmtp_hdr_feedback *gmtp_hdr_feedback(const struct sk_buff *skb)
+{
+	return (struct gmtp_hdr_feedback *)(skb_transport_header(skb)
+			+ sizeof(struct gmtp_hdr));
+}
+
 static inline struct gmtp_hdr_register_reply *gmtp_hdr_register_reply(
 		const struct sk_buff *skb)
 {
@@ -281,12 +295,6 @@ static inline struct gmtp_hdr_route *gmtp_hdr_route(const struct sk_buff *skb)
 {
 	return (struct gmtp_hdr_route *)(skb_transport_header(skb) +
 						 sizeof(struct gmtp_hdr));
-}
-
-static inline struct gmtp_hdr_feedback *gmtp_hdr_feedback(const struct sk_buff *skb)
-{
-	return (struct gmtp_hdr_feedback *)(skb_transport_header(skb)
-			+ sizeof(struct gmtp_hdr));
 }
 
 static inline struct gmtp_hdr_reqnotify *gmtp_hdr_reqnotify(

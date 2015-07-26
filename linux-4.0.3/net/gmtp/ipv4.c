@@ -418,7 +418,6 @@ out:
 
 static void gmtp_v4_ctl_send_reset(struct sock *sk, struct sk_buff *rxskb)
 {
-	gmtp_pr_func();
 	gmtp_v4_ctl_send_packet(sk, rxskb, GMTP_PKT_RESET);
 }
 
@@ -812,7 +811,7 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 
 	return sk_receive_skb(sk, skb, 1);
 
-	no_gmtp_socket:
+no_gmtp_socket:
 
 	if(!xfrm4_policy_check(NULL, XFRM_POLICY_IN, skb))
 		goto discard_it;
@@ -855,15 +854,13 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 	GMTP_SKB_CB(skb)->seq = gh->seq;
 	GMTP_SKB_CB(skb)->type = gh->type;
 
-	if(gh->type != GMTP_PKT_DATA)
+	if(unlikely(gh->type != GMTP_PKT_DATA && gh->type != GMTP_PKT_ACK))
 		print_gmtp_packet(iph, gh);
 
 	/**
 	 * FIXME Change Election algorithm to fully distributed using multicast
-	 *
-	 * Only accept multicast packets from relays
 	 */
-	if(skb->pkt_type == PACKET_MULTICAST && gh->relay == 1) {
+	if(skb->pkt_type == PACKET_MULTICAST) {
 
 		struct gmtp_client *tmp;
 		struct gmtp_client_entry *media_entry = gmtp_lookup_client(
@@ -892,6 +889,7 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 		/* Unicast packet...
 		 * Look up flow ID in table and get corresponding socket
 		 */
+
 		sk = __inet_lookup_skb(&gmtp_inet_hashinfo, skb, gh->sport,
 				gh->dport);
 
@@ -927,7 +925,7 @@ static struct request_sock_ops gmtp_request_sock_ops __read_mostly = {
 };
 
 /*
- * Called when a client sends a REQUEST
+ * Called by SERVER when it received a request from client/relay
  */
 int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
 {

@@ -27,6 +27,9 @@
 #include "mcc-inter.h"
 #include "ucc.h"
 
+#include <asm-generic/unaligned.h>
+#include <linux/etherdevice.h>
+
 static struct nf_hook_ops nfho_in;
 static struct nf_hook_ops nfho_out;
 
@@ -196,7 +199,8 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 
 		struct gmtp_hdr *gh = gmtp_hdr(skb);
 
-		if(gh->type != GMTP_PKT_DATA && gh->type != GMTP_PKT_FEEDBACK) {
+		if(unlikely(gh->type != GMTP_PKT_DATA
+						&& gh->type != GMTP_PKT_FEEDBACK)) {
 			gmtp_pr_debug("GMTP packet: %s (%d)",
 					gmtp_packet_name(gh->type), gh->type);
 			print_packet(skb, true);
@@ -272,6 +276,13 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 	return ret;
 }
 
+void gmtp_timer_callback(void)
+{
+	gmtp_ucc(0);
+	mod_timer(&gmtp_inter.gmtp_ucc_timer,
+			jiffies + min(gmtp_inter.h, gmtp_inter.h_user));
+}
+
 int init_module()
 {
 	int ret = 0;
@@ -323,6 +334,12 @@ int init_module()
 	}
 
 	gmtp_info->relay_enabled = 1; /* Enables gmtp-inter */
+
+	gmtp_inter.h = 0;
+	gmtp_inter.h_user = UINT_MAX; /* TODO Make it user defined */
+	gmtp_inter.last_rtt = GMTP_DEFAULT_RTT;
+	setup_timer(&gmtp_inter.gmtp_ucc_timer, gmtp_timer_callback, 0);
+	mod_timer(&gmtp_inter.gmtp_ucc_timer, jiffies + HZ);
 
 	nfho_in.hook = hook_func_in;
 	nfho_in.hooknum = NF_INET_PRE_ROUTING;

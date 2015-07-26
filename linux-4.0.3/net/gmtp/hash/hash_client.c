@@ -48,6 +48,7 @@ EXPORT_SYMBOL_GPL(gmtp_lookup_client);
 
 void gmtp_del_client_entry(struct gmtp_hashtable *table, const __u8 *key)
 {
+	gmtp_pr_func();
 	table->hash_ops.del_entry(table, key);
 }
 EXPORT_SYMBOL_GPL(gmtp_del_client_entry);
@@ -56,11 +57,14 @@ void gmtp_del_client_list(struct gmtp_client_entry *entry)
 {
 	struct gmtp_client *client, *temp;
 	gmtp_pr_func();
-	list_for_each_entry_safe(client, temp, &(entry->clients->list), list)
+	list_for_each_entry_safe(client, temp, &entry->clients->list, list)
 	{
-		list_del(&client->list);
-		kfree(client);
+		gmtp_pr_error("FIXME: list_del(&client->list) crashes GMTP");
+		/** FIXME Call list_dell here crashes GMTP... */
+		/*list_del(&client->list);
+		kfree(client);*/
 	}
+
 }
 
 void gmtp_del_client_hash_entry(struct gmtp_hashtable *table, const __u8 *key)
@@ -70,14 +74,10 @@ void gmtp_del_client_hash_entry(struct gmtp_hashtable *table, const __u8 *key)
 
 	gmtp_print_function();
 
-	hashval = table->hash_ops.hash(table, key);
-	if(hashval < 0)
-		return;
-
-	entry = (struct gmtp_client_entry*) table->entry[hashval];
+	entry = (struct gmtp_client_entry *) table->hash_ops.lookup(table, key);
 	if(entry != NULL) {
 		gmtp_del_client_list(entry);
-		kfree(entry);
+		/*kfree(entry);*/
 	}
 }
 

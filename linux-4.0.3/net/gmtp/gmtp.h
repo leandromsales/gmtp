@@ -92,9 +92,10 @@
 #define GMTP_ACK_INTERVAL ((unsigned int)(HZ))
 #define GMTP_ACK_TIMEOUT  (4 * GMTP_ACK_INTERVAL)
 
-/* Int to __u8 operations */
-#define TO_U8(x) ((x) > UINT_MAX) ? UINT_MAX : (__u8)(x)
-#define SUB_U8(a, b) ((a-b) > UINT_MAX) ? UINT_MAX : (a-b)
+/* Int to __U12 operations */
+#define TO_U12(x) 	min((U16_MAX >> 4), (x))
+#define SUB_U12(a, b) 	min((U16_MAX >> 4), (a-b))
+#define ADD_U12(a, b) 	min((U16_MAX >> 4), (a+b))
 
 extern struct gmtp_info *gmtp_info;
 extern struct inet_hashinfo gmtp_inet_hashinfo;
@@ -164,7 +165,7 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 void gmtp_send_ack(struct sock *sk);
 void gmtp_send_elect_request(struct sock *sk, unsigned long interval);
 void gmtp_send_elect_response(struct sock *sk, __u8 code);
-void gmtp_send_feedback(struct sock *sk, __be32 server_tstamp);
+void gmtp_send_feedback(struct sock *sk, __be32 server_tstamp, ktime_t rx_tstamp);
 void gmtp_send_close(struct sock *sk, const int active);
 int gmtp_send_reset(struct sock *sk, enum gmtp_reset_codes code);
 void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb);
@@ -230,6 +231,8 @@ static inline void kfree_gmtp_info(struct gmtp_info *gmtp_info)
  * @reset_code: one of %gmtp_reset_codes
  * @reset_data: Data1..3 fields (depend on @gmtpd_reset_code)
  * @seq: sequence number
+ * @server_tstamp: time stamp of last received packet (at server)
+ * @rx_tstamp: time stamp of last received packet (at reception)
  *
  * This is used for transmission as well as for reception.
  */
@@ -240,9 +243,18 @@ struct gmtp_skb_cb {
 	__u8 elect_code:2;
 	__be32 seq;
 	__be32 server_tstamp;
+	ktime_t rx_tstamp;
 };
 
 #define GMTP_SKB_CB(__skb) ((struct gmtp_skb_cb *)&((__skb)->cb[0]))
+
+/**
+ * Returns subtraction of two ktimes, in __be32 format (milliseconds)
+ */
+static inline __be32 ktime_sub_ms_be32(ktime_t last, ktime_t first)
+{
+	return (__be32) ktime_to_ms(ktime_sub(last, first));
+}
 
 /**
  * gmtp_loss_count - Approximate the number of lost data packets in a burst loss

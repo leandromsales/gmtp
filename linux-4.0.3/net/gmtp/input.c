@@ -64,10 +64,13 @@ static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
 		gmtp_done(sk);
 		break;
 	case GMTP_OPEN:
+		/* FIXME Close only if gh->flowname == gp->flowname */
 		/* Clear hash table */
+		if(gmtp_role_client(sk))
+			gmtp_del_client_entry(client_hashtable,
+					gmtp_sk(sk)->flowname);
 		/* FIXME: Implement gmtp_del_server_entry() */
-		/*if(gmtp_role_client(sk))
-			gmtp_del_client_entry(gmtp_hashtable, gp->flowname);
+		/*
 		else if(gp->role == GMTP_ROLE_SERVER)
 			gmtp_print_error("FIXME: "
 					"Implement gmtp_del_server_entry()");*/
@@ -194,7 +197,7 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 	if(gp->relay_rtt == 0 && gh->type == GMTP_PKT_REQUESTNOTIFY)
 		gp->relay_rtt = jiffies_to_msecs(jiffies) - gp->req_stamp;
 
-	gp->rx_rtt = (__u32) gh->server_rtt + gp->relay_rtt;
+	gp->rx_rtt = (u32) gh->server_rtt + gp->relay_rtt;
 	gmtp_pr_debug("RTT: %u ms", gp->rx_rtt);
 
 	if(gh->type == GMTP_PKT_REQUESTNOTIFY) {
@@ -390,10 +393,16 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 	case GMTP_PKT_DATAACK:
 	case GMTP_PKT_DATA:
 		if(gmtp_role_client(sk))
-			gp->rx_rtt = (__u32) gh->server_rtt + gp->relay_rtt;
+			gp->rx_rtt = (u32) gh->server_rtt + gp->relay_rtt;
 		gmtp_enqueue_skb(sk, skb);
 		return 0;
 	case GMTP_PKT_ACK:
+		if(gp->role == GMTP_ROLE_SERVER) {
+			struct gmtp_hdr_ack *gack = gmtp_hdr_ack(skb);
+			gp->tx_rtt = (u32)jiffies_to_msecs(jiffies) -
+					(u32)(gack->orig_tstamp + gack->wait);
+			gp->tx_ucc_rate = min(gp->tx_ucc_rate, gh->transm_r);
+		}
 		goto discard;
 	case GMTP_PKT_RESET:
 		/*

@@ -1,0 +1,1121 @@
+diff --git a/linux-4.0.3/include/linux/gmtp.h b/linux-4.0.3/include/linux/gmtp.h
+index ced752f..1af86a0 100644
+--- a/linux-4.0.3/include/linux/gmtp.h
++++ b/linux-4.0.3/include/linux/gmtp.h
+@@ -163,8 +163,9 @@ static inline struct gmtp_request_sock *gmtp_rsk(const struct request_sock *req)
+  * @tx_first_stamp: time stamp of first sent data packet (jiffies)
+  * @tx_last_stamp: time stamp of last sent data packet (jiffies)
+  * @tx_max_rate: Max TX rate (bytes/s). 0 == no limits.
+- * tx_byte_budget: the amount of bytes that can be sent immediately.
+- * tx_adj_budget: memory of last adjustment in TX rate.
++ * @tx_max_rate: Max UCC TX rate (bytes/s). Via GMTP-UCC. 0 == no limits.
++ * @tx_byte_budget: the amount of bytes that can be sent immediately.
++ * @tx_adj_budget: memory of last adjustment in TX rate.
+  */
+ struct gmtp_sock {
+ 	/* inet_connection_sock has to be the first member of gmtp_sock */
+@@ -224,6 +225,7 @@ struct gmtp_sock {
+ 	unsigned long			tx_first_stamp;  /* jiffies */
+ 	unsigned long 			tx_last_stamp;	/* jiffies */
+ 	unsigned long			tx_max_rate;
++	unsigned long			tx_ucc_rate;
+ 	int 				tx_byte_budget;
+ 	int				tx_adj_budget;
+ };
+@@ -270,6 +272,18 @@ static inline struct gmtp_hdr_data *gmtp_hdr_data(const struct sk_buff *skb)
+ 						 sizeof(struct gmtp_hdr));
+ }
+ 
++static inline struct gmtp_hdr_ack *gmtp_hdr_ack(const struct sk_buff *skb)
++{
++	return (struct gmtp_hdr_ack *)(skb_transport_header(skb) +
++						 sizeof(struct gmtp_hdr));
++}
++
++static inline struct gmtp_hdr_feedback *gmtp_hdr_feedback(const struct sk_buff *skb)
++{
++	return (struct gmtp_hdr_feedback *)(skb_transport_header(skb)
++			+ sizeof(struct gmtp_hdr));
++}
++
+ static inline struct gmtp_hdr_register_reply *gmtp_hdr_register_reply(
+ 		const struct sk_buff *skb)
+ {
+@@ -283,12 +297,6 @@ static inline struct gmtp_hdr_route *gmtp_hdr_route(const struct sk_buff *skb)
+ 						 sizeof(struct gmtp_hdr));
+ }
+ 
+-static inline struct gmtp_hdr_feedback *gmtp_hdr_feedback(const struct sk_buff *skb)
+-{
+-	return (struct gmtp_hdr_feedback *)(skb_transport_header(skb)
+-			+ sizeof(struct gmtp_hdr));
+-}
+-
+ static inline struct gmtp_hdr_reqnotify *gmtp_hdr_reqnotify(
+ 		const struct sk_buff *skb)
+ {
+diff --git a/linux-4.0.3/include/uapi/linux/gmtp.h b/linux-4.0.3/include/uapi/linux/gmtp.h
+index ab9dd98..8cd03bd 100644
+--- a/linux-4.0.3/include/uapi/linux/gmtp.h
++++ b/linux-4.0.3/include/uapi/linux/gmtp.h
+@@ -36,9 +36,9 @@
+  *  0                   1                   2                   3
+  *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+- *  | Ver |   Type  |     Header Lenght   |   Server RTT  |P|R| Res |
++ *  | V.|   Type  |     Header Length   |       Server RTT      |P|R|
+  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+- *  |          Source Port          |           Dest Port           |
++ *  |          Source Port          |       Destination Port        |
+  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  *  |                         Sequence Number                       |
+  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+@@ -54,7 +54,7 @@
+  *  +=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+  *  |                                                               |
+  *  |              Variable part (depends of 'type')                |
+- *  |             Max Lenght = (2^11-1) => 2047 bytes               |
++ *  |             Max Length = (2^11-1) => 2047 bytes               |
+  *  |                                                               |
+  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  *
+@@ -66,22 +66,20 @@
+  * @server_rtt: server RTT
+  * @pull:  'P' (Pull) field
+  * @relay:  'R' (Relay) field. It is activated when a relay send packets
+- * @res: reserved to future
+- * @src_port: source port
+- * @dest_port: destiny port
++ * @res: reserved to future <- [DEPRECATED]
++ * @sport: source port
++ * @dport: destiny port
+  * @seq: sequence number
+  * @transm_r: transmission rate
+  * @flowname: data flow name
+- * @varpart: Variable part, depends of the 'Packet type' field
+  */
+ struct gmtp_hdr {
+-	__u8 	version:3;
++	__u8 	version:2;
+ 	__u8 	type:5;
+ 	__be16 	hdrlen:11;
+-	__u8 	server_rtt;
++	__be16 	server_rtt:12;
+ 	__u8 	pull:1;
+ 	__u8 	relay:1;
+-	__u8 	res:3;
+ 	__be16 	sport; //source port
+ 	__be16 	dport; //dest port
+ 	__be32 	seq;
+@@ -98,11 +96,27 @@ struct gmtp_hdr_data {
+ };
+ 
+ /**
++ * struct gmtp_hdr_ack - ACK packets
++ * @orig_tstamp: time stamp of original received packet
++ * @wait: time wait from reception of packet to ack send
++ *
++ * The receiver will calculate RTT: now - (orig + wait)
++ */
++struct gmtp_hdr_ack {
++	__be32 orig_tstamp;
++	__be32 wait;
++};
++
++/**
+  * struct gmtp_hdr_feedback - Data packets
+- * @tstamp: time stamp of received data packet
++ * @orig_tstamp: time stamp of received data packet
++ * @wait: time wait from reception of packet to feedback send
++ * @nclients: active clients at reporter
++ *
+  */
+ struct gmtp_hdr_feedback {
+-	__be32 	pkt_tstamp;
++	__be32 	orig_tstamp;
++	__be32 	wait;
+ 	__u8	nclients;
+ };
+ 
+@@ -254,9 +268,14 @@ static inline unsigned int gmtp_packet_hdr_variable_len(const __u8 type)
+ 	switch(type)
+ 	{
+ 	case GMTP_PKT_DATA:
+-	case GMTP_PKT_DATAACK:
+ 		len = sizeof(struct gmtp_hdr_data);
+ 		break;
++	case GMTP_PKT_DATAACK:
++		len = sizeof(struct gmtp_hdr_data) + sizeof(struct gmtp_hdr_ack);
++		break;
++	case GMTP_PKT_ACK:
++		len = sizeof(struct gmtp_hdr_ack);
++		break;
+ 	case GMTP_PKT_FEEDBACK:
+ 		len = sizeof(struct gmtp_hdr_feedback);
+ 		break;
+@@ -287,6 +306,7 @@ static inline unsigned int gmtp_packet_hdr_variable_len(const __u8 type)
+ enum gmtp_sockopt_codes {
+ 	GMTP_SOCKOPT_FLOWNAME = 1,
+ 	GMTP_SOCKOPT_MAX_TX_RATE,
++	GMTP_SOCKOPT_UCC_TX_RATE,
+ 	GMTP_SOCKOPT_GET_CUR_MSS,
+ 	GMTP_SOCKOPT_SERVER_RTT,
+ 	GMTP_SOCKOPT_SERVER_TIMEWAIT,
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/build.c b/linux-4.0.3/net/gmtp/gmtp-inter/build.c
+index e7d416c..8883bad 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/build.c
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/build.c
+@@ -298,8 +298,9 @@ struct sk_buff *gmtp_inter_build_pkt(struct sk_buff *skb_src, __be32 saddr,
+ 	put_unaligned(htons(skb->len), &(iph->tot_len));
+ 	ip_send_check(iph);
+ 
+-	eth = (struct ethhdr *)skb_push(skb, ETH_HLEN);
++	skb_push(skb, ETH_HLEN);
+ 	skb_reset_mac_header(skb);
++	eth = eth_hdr(skb);
+ 	skb->protocol = eth->h_proto = htons(ETH_P_IP);
+ 
+ 	ether_addr_copy(eth->h_source, dev->dev_addr);
+@@ -330,8 +331,6 @@ void gmtp_inter_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
+ 	struct sk_buff *skb = gmtp_inter_build_pkt(skb_src, saddr, daddr,
+ 			gh_ref, backward);
+ 
+-	gmtp_pr_func();
+-
+ 	if(skb != NULL)
+ 		gmtp_inter_send_pkt(skb);
+ }
+@@ -353,17 +352,19 @@ void gmtp_copy_hdr(struct sk_buff *skb, struct sk_buff *src_skb)
+ 		memcpy(gh, gh_src, gh_src->hdrlen);
+ }
+ 
+-void gmtp_ack_build(struct gmtp_relay_entry *entry)
++struct sk_buff *gmtp_inter_build_ack(struct gmtp_inter_entry *entry)
+ {
+ 	struct sk_buff *skb = alloc_skb(GMTP_MAX_HDR_LEN, GFP_ATOMIC);
+-	struct gmtp_hdr *gh;
+-	int gmtp_hdr_len = sizeof(struct gmtp_hdr);
+ 	
+-	struct ethhdr *eth = eth_hdr(skb);
++	struct ethhdr *eth;
+ 	struct iphdr *iph;
++	struct gmtp_hdr *gh;
++	struct gmtp_hdr_ack *gack;
++
+ 	struct socket *sock = NULL;
+ 	struct net_device *dev_entry = NULL;
+ 	struct net *net;
++	int gmtp_hdr_len = sizeof(struct gmtp_hdr) + sizeof(struct gmtp_hdr_ack);
+ 	int total_len, ip_len = 0;
+ 
+ 	sock_create(AF_INET, SOCK_STREAM, 0, &sock);
+@@ -371,7 +372,7 @@ void gmtp_ack_build(struct gmtp_relay_entry *entry)
+ 	dev_entry = dev_get_by_index_rcu(net, 2);
+ 	sock_release(sock);
+ 
+-	ip_len = gmtp_hdr_len + sizeof(*iph);
++	ip_len = gmtp_hdr_len + sizeof(struct iphdr);
+ 	total_len = ip_len + LL_RESERVED_SPACE(dev_entry);
+ 	skb_reserve(skb, total_len);
+ 
+@@ -381,11 +382,18 @@ void gmtp_ack_build(struct gmtp_relay_entry *entry)
+ 	gh->type = GMTP_PKT_ACK;
+ 	gh->hdrlen = gmtp_hdr_len;
+ 	gh->relay = 1;
++	gh->seq = entry->info->seq;
+ 	gh->dport = entry->media_port;
+ 	gh->sport = entry->info->my_port;
++	gh->server_rtt = entry->info->rtt;
+ 	gh->transm_r = gmtp_inter.ucc_rx;
+ 	memcpy(gh->flowname, entry->flowname, GMTP_FLOWNAME_LEN);
+ 
++	gack = gmtp_hdr_ack(skb);
++	gack->orig_tstamp = entry->info->last_data_tstamp;
++	gack->wait = (__be32)(ktime_to_ms(ktime_get_real())
++			- entry->info->last_rx_tstamp);
++
+ 	/* Build the IP header. */
+ 	skb_push(skb, sizeof(struct iphdr));
+ 	skb_reset_network_header(skb);
+@@ -406,8 +414,9 @@ void gmtp_ack_build(struct gmtp_relay_entry *entry)
+ 
+ 	print_gmtp_packet(iph, gh);
+ 
+-	eth = (struct ethhdr *)skb_push(skb, ETH_HLEN);
++	skb_push(skb, ETH_HLEN);
+ 	skb_reset_mac_header(skb);
++	eth = eth_hdr(skb);
+ 	skb->protocol = eth->h_proto = htons(ETH_P_IP);
+ 
+ 	ether_addr_copy(eth->h_source, dev_entry->dev_addr);
+@@ -415,6 +424,6 @@ void gmtp_ack_build(struct gmtp_relay_entry *entry)
+ 
+ 	skb->dev = dev_entry;
+ 
+-	gmtp_inter_send_pkt(skb);
++	return skb;
+ }
+ 
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.c b/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.c
+index 7060cae..dec33ce 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.c
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.c
+@@ -27,9 +27,6 @@
+ #include "mcc-inter.h"
+ #include "ucc.h"
+ 
+-#include <asm-generic/unaligned.h>
+-#include <linux/etherdevice.h>
+-
+ static struct nf_hook_ops nfho_in;
+ static struct nf_hook_ops nfho_out;
+ 
+@@ -195,11 +192,10 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
+ 
+ 	if(iph->protocol == IPPROTO_GMTP) {
+         
+-        struct ethhdr *eth = eth_hdr(skb);
+-	    struct gmtp_relay_entry *entry;
+-		struct gmtp_hdr *gh = gmtp_hdr(skb);
++  		struct gmtp_hdr *gh = gmtp_hdr(skb);
+ 
+-		if(gh->type != GMTP_PKT_DATA && gh->type != GMTP_PKT_FEEDBACK) {
++		if(unlikely(gh->type != GMTP_PKT_DATA
++					&& gh->type != GMTP_PKT_FEEDBACK)) {
+ 			gmtp_pr_debug("GMTP packet: %s (%d)",
+ 					gmtp_packet_name(gh->type), gh->type);
+ 			print_packet(skb, true);
+@@ -211,19 +207,6 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
+ 			ret = gmtp_inter_request_rcv(skb);
+ 			break;
+ 		case GMTP_PKT_REGISTER_REPLY:
+-            /*****************************/ 
+-
+-            entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
+-
+-            /*TODO verificar se o mac do server esta sendo pego, ou usar h_dest*/
+-	        if(entry != NULL)
+-                ether_addr_copy(entry->server_mac_addr, eth->h_source);
+-                /*memcpy(&entry->server_mac_addr, eth->h_source, 6);*/
+-		        /*entry->server_mac_addr = eth->h_source;*/
+-
+-            /****************************/
+-    
+-
+ 			ret = gmtp_inter_register_reply_rcv(skb);
+ 			break;
+ 		case GMTP_PKT_ACK:
+@@ -290,10 +273,9 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
+ 
+ void gmtp_timer_callback(void)
+ {
+-	gmtp_print_function();
+-    gmtp_ucc(UINT_MAX,1);    
+-	mod_timer(&gmtp_inter.gmtp_timer, jiffies + msecs_to_jiffies(1000));
+-    
++	gmtp_ucc(0);
++	mod_timer(&gmtp_inter.gmtp_ucc_timer,
++			jiffies + min(gmtp_inter.h, gmtp_inter.h_user));
+ }
+ 
+ int init_module()
+@@ -308,9 +290,6 @@ int init_module()
+ 		goto out;
+ 	}
+ 
+-    setup_timer(&gmtp_inter.gmtp_timer, gmtp_timer_callback, 0);
+-   	mod_timer(&gmtp_inter.gmtp_timer, jiffies + msecs_to_jiffies(1000)); 
+-
+ 	gmtp_inter.capacity = CAPACITY_DEFAULT;
+ 	gmtp_inter.buffer_len = 0;
+ 	gmtp_inter.kreporter = GMTP_REPORTER_DEFAULT_PROPORTION - 1;
+@@ -323,6 +302,12 @@ int init_module()
+ 	gmtp_inter.ucc_bytes = 0;
+ 	gmtp_inter.ucc_rx_tstamp = 0;
+ 	gmtp_inter.rx_rate_wnd = 1000;
++	gmtp_inter.h = 0;
++	gmtp_inter.h_user = UINT_MAX; /* TODO Make it user defined */
++	gmtp_inter.last_rtt = GMTP_DEFAULT_RTT;
++
++	setup_timer(&gmtp_inter.gmtp_ucc_timer, gmtp_timer_callback, 0);
++	mod_timer(&gmtp_inter.gmtp_ucc_timer, jiffies + HZ);
+ 
+ 	memcpy(gmtp_inter.relay_id, gmtp_inter_build_relay_id(),
+ 			GMTP_RELAY_ID_LEN);
+@@ -363,7 +348,7 @@ void cleanup_module()
+ 
+ 	nf_unregister_hook(&nfho_in);
+ 	nf_unregister_hook(&nfho_out);
+-    del_timer(&gmtp_inter.gmtp_timer);
++	del_timer(&gmtp_inter.gmtp_ucc_timer);
+ }
+ 
+ MODULE_LICENSE("GPL");
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.h b/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.h
+index 2ebf0dc..f0ee742 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.h
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.h
+@@ -45,6 +45,8 @@ extern void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh
+  * @ucc_bytes: bytes received since last GMTP-UCC execution
+  * @ucc_rx_tstamp: time stamp of last GMTP-UCC execution
+  * @rx_rate_wnd: size of window to calculate rx rates
++ * @h: Current H_0 in RCP equation
++ * @last_rtt: Last RTT received in all flows
+  *
+  * @mcst: control of granted multicast addresses
+  * @kreporter: number of clients per reporter.
+@@ -63,12 +65,15 @@ struct gmtp_inter {
+ 	unsigned int        	ucc_bytes;
+ 	unsigned long  		ucc_rx_tstamp;
+ 	unsigned int 		rx_rate_wnd;
++	unsigned int 		h;
++	unsigned int		h_user;
++	unsigned int 		last_rtt;
+ 
+ 	unsigned char		mcst[4];
+ 
+ 	unsigned char		kreporter;
+ 
+-    struct timer_list gmtp_timer;    
++	struct timer_list 	gmtp_ucc_timer;
+ 
+ 	struct gmtp_inter_hashtable *hashtable;
+ };
+@@ -101,6 +106,7 @@ int gmtp_inter_data_out(struct sk_buff *skb);
+ int gmtp_inter_close_out(struct sk_buff *skb);
+ 
+ /** build.c */
++void gmtp_inter_send_pkt(struct sk_buff *skb);
+ void gmtp_inter_add_relayid(struct sk_buff *skb);
+ struct gmtp_hdr *gmtp_inter_make_route_hdr(struct sk_buff *skb);
+ 
+@@ -120,7 +126,8 @@ void gmtp_inter_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
+ 		__be32 daddr, struct gmtp_hdr *gh_ref, bool backward);
+ void gmtp_inter_build_and_send_skb(struct sk_buff *skb);
+ void gmtp_copy_hdr(struct sk_buff *skb, struct sk_buff *src_skb);
+-void gmtp_ack_build(struct gmtp_relay_entry *entry);
++struct sk_buff *gmtp_inter_build_ack(struct gmtp_inter_entry *entry);
++
+ /**
+  * A very ugly delayer, to GMTP-inter...
+  *
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.c b/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.c
+index b98d4fd..37001c1 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.c
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.c
+@@ -82,16 +82,13 @@ struct gmtp_inter_entry *gmtp_inter_lookup_media(
+ 	return NULL;
+ }
+ 
+-void ack_timer_callback(struct gmtp_relay_entry *entry)
++void ack_timer_callback(struct gmtp_inter_entry *entry)
+ {
+-	gmtp_print_function();
+-	gmtp_print_debug("Servidor %x", entry->server_addr);
+-	mod_timer(&entry->ack_timer_entry, jiffies + msecs_to_jiffies(1000));
+-    
+-    gmtp_ack_build(entry);
++	struct sk_buff *skb = gmtp_inter_build_ack(entry);
++	if(skb != NULL)
++		gmtp_inter_send_pkt(skb);
+ 
+-	/*TODO send ACK to servers*/
+-	return;
++	mod_timer(&entry->ack_timer_entry, jiffies + HZ);
+ }
+ 
+ 
+@@ -125,8 +122,6 @@ struct gmtp_flow_info *__gmtp_inter_build_info(void)
+ 
+ 	setup_timer(&info->mcc_timer, mcc_timer_callback, (unsigned long) info);
+ 	mod_timer(&info->mcc_timer, gmtp_mcc_interval(info->rtt));
+-
+-    
+ out:
+ 	return info;
+ }
+@@ -180,8 +175,7 @@ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
+ 	new_entry->next = hashtable->table[hashval];
+ 	hashtable->table[hashval] = new_entry;
+ 	setup_timer(&new_entry->ack_timer_entry, ack_timer_callback, new_entry);
+-	mod_timer(&new_entry->ack_timer_entry,
+-			jiffies + msecs_to_jiffies(1000));
++	mod_timer(&new_entry->ack_timer_entry, jiffies + 3*HZ);
+ 
+ 	return 0;
+ }
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.h b/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.h
+index 5cb7b40..ca13502 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.h
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.h
+@@ -46,6 +46,7 @@ struct gmtp_inter_entry {
+  * @seq: sequence number of last received packet
+  * @total_bytes: amount of received bytes
+  * @last_rx_tstamp: time stamp of last received data packet (milliseconds)
++ * @last_data_tstamp: time stamp stored in last received data packet.
+  *
+  * @nfeedbacks: number of received feedbacks at last window
+  * @sum_feedbacks: sum of all feedbacks tx rates received at last window
+@@ -74,6 +75,7 @@ struct gmtp_flow_info {
+ 	unsigned int		seq;
+ 	unsigned int 		total_bytes;
+ 	unsigned long  		last_rx_tstamp; /* milliseconds */
++	__be32 			last_data_tstamp;
+ 
+ 	/* GMTP-MCC */
+ 	unsigned int		nfeedbacks;
+@@ -126,7 +128,7 @@ struct gmtp_inter_hashtable {
+ struct gmtp_inter_hashtable *gmtp_inter_create_hashtable(unsigned int size);
+ struct gmtp_inter_entry *gmtp_inter_lookup_media(
+ 		struct gmtp_inter_hashtable *hashtable, const __u8 *media);
+-void ack_timer_callback(struct gmtp_relay_entry *entry);
++void ack_timer_callback(struct gmtp_inter_entry *entry);
+ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
+ 		__be32 server_addr, __be32 *relay, __be16 media_port,
+ 		__be32 channel_addr, __be16 channel_port);
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/input-inter.c b/linux-4.0.3/net/gmtp/gmtp-inter/input-inter.c
+index 151eef6..9d89e99 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/input-inter.c
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/input-inter.c
+@@ -1,4 +1,6 @@
+ #include <net/ip.h>
++#include <asm-generic/unaligned.h>
++#include <linux/etherdevice.h>
+ 
+ #include <uapi/linux/gmtp.h>
+ #include <linux/gmtp.h>
+@@ -175,6 +177,7 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
+ 	int ret = NF_ACCEPT;
+ 	struct gmtp_hdr *gh = gmtp_hdr(skb);
+ 	struct iphdr *iph = ip_hdr(skb);
++	struct ethhdr *eth = eth_hdr(skb);
+ 	struct gmtp_hdr *gh_route_n;
+ 	struct gmtp_inter_entry *entry;
+ 	struct gmtp_flow_info *info;
+@@ -188,14 +191,17 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
+ 	gmtp_inter_add_relayid(skb);
+ 
+ 	gmtp_print_debug("UPDATING Tx Rate");
+-	gmtp_ucc(UINT_MAX, 1);
++	gmtp_inter.last_rtt = gh->server_rtt;
+ 	if(gmtp_inter.ucc_rx < gh->transm_r)
+ 		gh->transm_r = (__be32) gmtp_inter.ucc_rx;
+ 
+ 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
+ 	if(entry == NULL)
+ 		return NF_ACCEPT;
++
+ 	info = entry->info;
++	info->rtt = (unsigned int) gh->server_rtt;
++	ether_addr_copy(entry->server_mac_addr, eth->h_source);
+ 
+ 	gh_route_n = gmtp_inter_make_route_hdr(skb);
+ 	if(gh_route_n != NULL)
+@@ -268,8 +274,9 @@ int gmtp_inter_ack_rcv(struct sk_buff *skb)
+ 
+ 	info = entry->info;
+ 	reporter = gmtp_get_client(&info->clients->list, iph->saddr, gh->sport);
++	gmtp_pr_debug("Reporter: %pI4:%d", &iph->saddr, gh->sport);
+ 	if(reporter != NULL) {
+-		print_gmtp_packet(iph, gh);
++		pr_info("reporter->ack_rx_tstamp = jiffies_to_msecs(jiffies)\n");
+ 		reporter->ack_rx_tstamp = jiffies_to_msecs(jiffies);
+ 	}
+ 
+@@ -341,6 +348,7 @@ static inline void gmtp_update_stats(struct gmtp_flow_info *info,
+ 	info->recent_bytes += skblen(skb);
+ 	info->seq = (unsigned int) gh->seq;
+ 	info->rtt = (unsigned int) gh->server_rtt;
++	info->last_data_tstamp = gmtp_hdr_data(skb)->tstamp;
+ 
+ 	if(gh->seq % gmtp_inter.rx_rate_wnd == 0) {
+ 		unsigned long current_time = ktime_to_ms(ktime_get_real());
+@@ -356,6 +364,7 @@ static inline void gmtp_update_stats(struct gmtp_flow_info *info,
+ 
+ 	gmtp_inter.total_bytes_rx += skblen(skb);
+ 	gmtp_inter.ucc_bytes += skblen(skb);
++	gmtp_inter.last_rtt = (unsigned int) gh->server_rtt;
+ }
+ 
+ /**
+@@ -391,9 +400,6 @@ int gmtp_inter_data_rcv(struct sk_buff *skb)
+ 
+ 	gmtp_update_stats(info, skb, gh);
+ 
+-	if(gh->seq % 1000 == 0)
+-		gmtp_ucc(UINT_MAX, 0);
+-
+ out:
+ 	return NF_ACCEPT;
+ }
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/ucc.c b/linux-4.0.3/net/gmtp/gmtp-inter/ucc.c
+index daca304..d7531c3 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/ucc.c
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/ucc.c
+@@ -15,14 +15,22 @@
+ 
+ extern struct gmtp_inter gmtp_inter;
+ 
+-unsigned int gmtp_rtt_average()
++unsigned int gmtp_rtt_average(unsigned char debug)
+ {
+-	return 1;
+-}
+-
+-unsigned int gmtp_rx_rate()
+-{
+-	return 0;
++	unsigned int old_h = gmtp_inter.h;
++
++	gmtp_inter.h = GMTP_THETA(gmtp_inter.last_rtt) +
++			GMTP_ONE_MINUS_THETA(old_h);
++
++	if(unlikely(!!debug)) {
++		gmtp_pr_debug("h0 = 0.02 * RTT + (1-0.02)* h0");
++		gmtp_pr_debug("h0 = 0.02 * %u + (1-0.02)* %u",
++				gmtp_inter.last_rtt, old_h);
++		gmtp_pr_debug("h0 = %u + %u", GMTP_THETA(gmtp_inter.last_rtt),
++				GMTP_ONE_MINUS_THETA(old_h));
++		gmtp_pr_debug("New h0 = %u ms", gmtp_inter.h);
++	}
++	return gmtp_inter.h;
+ }
+ 
+ unsigned int gmtp_relay_queue_size()
+@@ -36,7 +44,7 @@ unsigned int gmtp_relay_queue_size()
+  * FIXME Work with MSEC in RTT and TX.
+  * After convert to SEC...
+  */
+-void gmtp_ucc(unsigned int h_user, unsigned char debug)
++void gmtp_ucc(unsigned char debug)
+ {
+ 	int up, delta;
+ 	unsigned int r = 0, H, h;
+@@ -49,16 +57,11 @@ void gmtp_ucc(unsigned int h_user, unsigned char debug)
+ 	unsigned long current_time = ktime_to_ms(ktime_get_real());
+ 	unsigned long elapsed = current_time - gmtp_inter.ucc_rx_tstamp;
+ 
+-	if(!!debug) {
+-		pr_info("\n");
+-		gmtp_pr_func();
+-	}
+-
+ 	if(elapsed != 0)
+ 		y = DIV_ROUND_CLOSEST(gmtp_inter.ucc_bytes * MSEC_PER_SEC, elapsed);
+ 
+-	h = gmtp_rtt_average();
+-	H = (h < h_user) ? h : h_user;
++	h = gmtp_rtt_average(debug);
++	H = min(h, gmtp_inter.h_user);
+ 	up = (H / h) * (GMTP_ALPHA(GMTP_GHAMA(C)-y) - GMTP_BETA(q / h));
+ 	delta = ((int)(r_prev) * up) / GMTP_GHAMA(C);
+ 
+@@ -76,16 +79,18 @@ void gmtp_ucc(unsigned int h_user, unsigned char debug)
+ 	gmtp_inter.ucc_rx_tstamp = ktime_to_ms(ktime_get_real());
+ 	gmtp_inter.total_rx = y;
+ 
+-	if(!!debug) {
++	if(unlikely(!!debug)) {
++		pr_info("\n");
++		gmtp_pr_func();
+ 		pr_info("r_prev: %d bytes/s\n", r_prev);
+ 		gmtp_pr_debug("Current time: %lu ms", current_time);
+ 		gmtp_pr_debug("Stamp: %lu ms", gmtp_inter.ucc_rx_tstamp);
+ 		gmtp_pr_debug("Elapsed: %lu ms", elapsed);
+ 		gmtp_pr_debug("Received bytes at interval: %u bytes\n",
+ 				gmtp_inter.ucc_bytes);
+-		gmtp_pr_debug("h_user: %u", h_user);
+-		gmtp_pr_debug("h0: %u", h);
+-		gmtp_pr_debug("H: %u\n", H);
++		gmtp_pr_debug("h_user: %u ms", gmtp_inter.h_user);
++		gmtp_pr_debug("h0: %u ms", h);
++		gmtp_pr_debug("H: %u ms\n", H);
+ 		gmtp_pr_debug("C: %u bytes/s", C);
+ 		gmtp_pr_debug("y(t): %u bytes/s", y);
+ 		gmtp_pr_debug("q(t): %u bytes\n", q);
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/ucc.h b/linux-4.0.3/net/gmtp/gmtp-inter/ucc.h
+index ebae26f..589bd30 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/ucc.h
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/ucc.h
+@@ -11,13 +11,12 @@
+ #define GMTP_ALPHA(X) DIV_ROUND_CLOSEST(X * 30, 100) /* X*0.3 */
+ #define GMTP_BETA(X)  DIV_ROUND_CLOSEST(X * 60, 100) /* X*0.6 */
+ #define GMTP_GHAMA(X) (X) /* DIV_ROUND_CLOSEST(X * 100, 100)*/ /* X*1.0 */
+-#define GMTP_THETA(X) DIV_ROUND_CLOSEST(X * 20, 100) /* X*0.02 */
++#define GMTP_THETA(X) DIV_ROUND_CLOSEST(X * 2000, 100000) /* X*0.02 */
++#define GMTP_ONE_MINUS_THETA(X) DIV_ROUND_CLOSEST(X * 98000, 100000) /* X*(1-0.02) */
+ 
+ /** gmtp-ucc. */
+-unsigned int gmtp_rtt_average(void);
+-unsigned int gmtp_rx_rate(void);
++unsigned int gmtp_rtt_average(unsigned char debug);
+ unsigned int gmtp_relay_queue_size(void);
+-unsigned int gmtp_get_current_rx_rate(void);
+-void gmtp_ucc(unsigned int h_user, unsigned char debug);
++void gmtp_ucc(unsigned char debug);
+ 
+ #endif /* UCC_H_ */
+diff --git a/linux-4.0.3/net/gmtp/gmtp.h b/linux-4.0.3/net/gmtp/gmtp.h
+index 4e7650e..16e1e46 100644
+--- a/linux-4.0.3/net/gmtp/gmtp.h
++++ b/linux-4.0.3/net/gmtp/gmtp.h
+@@ -92,9 +92,10 @@
+ #define GMTP_ACK_INTERVAL ((unsigned int)(HZ))
+ #define GMTP_ACK_TIMEOUT  (4 * GMTP_ACK_INTERVAL)
+ 
+-/* Int to __u8 operations */
+-#define TO_U8(x) ((x) > UINT_MAX) ? UINT_MAX : (__u8)(x)
+-#define SUB_U8(a, b) ((a-b) > UINT_MAX) ? UINT_MAX : (a-b)
++/* Int to __U12 operations */
++#define TO_U12(x) 	min((U16_MAX >> 4), (x))
++#define SUB_U12(a, b) 	min((U16_MAX >> 4), (a-b))
++#define ADD_U12(a, b) 	min((U16_MAX >> 4), (a+b))
+ 
+ extern struct gmtp_info *gmtp_info;
+ extern struct inet_hashinfo gmtp_inet_hashinfo;
+@@ -164,7 +165,7 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
+ void gmtp_send_ack(struct sock *sk);
+ void gmtp_send_elect_request(struct sock *sk, unsigned long interval);
+ void gmtp_send_elect_response(struct sock *sk, __u8 code);
+-void gmtp_send_feedback(struct sock *sk, __be32 server_tstamp);
++void gmtp_send_feedback(struct sock *sk, __be32 server_tstamp, ktime_t rx_tstamp);
+ void gmtp_send_close(struct sock *sk, const int active);
+ int gmtp_send_reset(struct sock *sk, enum gmtp_reset_codes code);
+ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb);
+@@ -230,6 +231,8 @@ static inline void kfree_gmtp_info(struct gmtp_info *gmtp_info)
+  * @reset_code: one of %gmtp_reset_codes
+  * @reset_data: Data1..3 fields (depend on @gmtpd_reset_code)
+  * @seq: sequence number
++ * @server_tstamp: time stamp of last received packet (at server)
++ * @rx_tstamp: time stamp of last received packet (at reception)
+  *
+  * This is used for transmission as well as for reception.
+  */
+@@ -240,11 +243,20 @@ struct gmtp_skb_cb {
+ 	__u8 elect_code:2;
+ 	__be32 seq;
+ 	__be32 server_tstamp;
++	ktime_t rx_tstamp;
+ };
+ 
+ #define GMTP_SKB_CB(__skb) ((struct gmtp_skb_cb *)&((__skb)->cb[0]))
+ 
+ /**
++ * Returns subtraction of two ktimes, in __be32 format (milliseconds)
++ */
++static inline __be32 ktime_sub_ms_be32(ktime_t last, ktime_t first)
++{
++	return (__be32) ktime_to_ms(ktime_sub(last, first));
++}
++
++/**
+  * gmtp_loss_count - Approximate the number of lost data packets in a burst loss
+  * @s1:  last known sequence number before the loss ('hole')
+  * @s2:  first sequence number seen after the 'hole'
+diff --git a/linux-4.0.3/net/gmtp/hash/hash_client.c b/linux-4.0.3/net/gmtp/hash/hash_client.c
+index 514099c..6a82bf6 100644
+--- a/linux-4.0.3/net/gmtp/hash/hash_client.c
++++ b/linux-4.0.3/net/gmtp/hash/hash_client.c
+@@ -48,6 +48,7 @@ EXPORT_SYMBOL_GPL(gmtp_lookup_client);
+ 
+ void gmtp_del_client_entry(struct gmtp_hashtable *table, const __u8 *key)
+ {
++	gmtp_pr_func();
+ 	table->hash_ops.del_entry(table, key);
+ }
+ EXPORT_SYMBOL_GPL(gmtp_del_client_entry);
+@@ -56,11 +57,14 @@ void gmtp_del_client_list(struct gmtp_client_entry *entry)
+ {
+ 	struct gmtp_client *client, *temp;
+ 	gmtp_pr_func();
+-	list_for_each_entry_safe(client, temp, &(entry->clients->list), list)
++	list_for_each_entry_safe(client, temp, &entry->clients->list, list)
+ 	{
+-		list_del(&client->list);
+-		kfree(client);
++		gmtp_pr_error("FIXME: list_del(&client->list) crashes GMTP");
++		/** FIXME Call list_dell here crashes GMTP... */
++		/*list_del(&client->list);
++		kfree(client);*/
+ 	}
++
+ }
+ 
+ void gmtp_del_client_hash_entry(struct gmtp_hashtable *table, const __u8 *key)
+@@ -70,14 +74,10 @@ void gmtp_del_client_hash_entry(struct gmtp_hashtable *table, const __u8 *key)
+ 
+ 	gmtp_print_function();
+ 
+-	hashval = table->hash_ops.hash(table, key);
+-	if(hashval < 0)
+-		return;
+-
+-	entry = (struct gmtp_client_entry*) table->entry[hashval];
++	entry = (struct gmtp_client_entry *) table->hash_ops.lookup(table, key);
+ 	if(entry != NULL) {
+ 		gmtp_del_client_list(entry);
+-		kfree(entry);
++		/*kfree(entry);*/
+ 	}
+ }
+ 
+diff --git a/linux-4.0.3/net/gmtp/input.c b/linux-4.0.3/net/gmtp/input.c
+index ab23182..63f121f 100644
+--- a/linux-4.0.3/net/gmtp/input.c
++++ b/linux-4.0.3/net/gmtp/input.c
+@@ -64,10 +64,13 @@ static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
+ 		gmtp_done(sk);
+ 		break;
+ 	case GMTP_OPEN:
++		/* FIXME Close only if gh->flowname == gp->flowname */
+ 		/* Clear hash table */
++		if(gmtp_role_client(sk))
++			gmtp_del_client_entry(client_hashtable,
++					gmtp_sk(sk)->flowname);
+ 		/* FIXME: Implement gmtp_del_server_entry() */
+-		/*if(gmtp_role_client(sk))
+-			gmtp_del_client_entry(gmtp_hashtable, gp->flowname);
++		/*
+ 		else if(gp->role == GMTP_ROLE_SERVER)
+ 			gmtp_print_error("FIXME: "
+ 					"Implement gmtp_del_server_entry()");*/
+@@ -194,7 +197,7 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
+ 	if(gp->relay_rtt == 0 && gh->type == GMTP_PKT_REQUESTNOTIFY)
+ 		gp->relay_rtt = jiffies_to_msecs(jiffies) - gp->req_stamp;
+ 
+-	gp->rx_rtt = (__u32) gh->server_rtt + gp->relay_rtt;
++	gp->rx_rtt = (u32) gh->server_rtt + gp->relay_rtt;
+ 	gmtp_pr_debug("RTT: %u ms", gp->rx_rtt);
+ 
+ 	if(gh->type == GMTP_PKT_REQUESTNOTIFY) {
+@@ -390,10 +393,16 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
+ 	case GMTP_PKT_DATAACK:
+ 	case GMTP_PKT_DATA:
+ 		if(gmtp_role_client(sk))
+-			gp->rx_rtt = (__u32) gh->server_rtt + gp->relay_rtt;
++			gp->rx_rtt = (u32) gh->server_rtt + gp->relay_rtt;
+ 		gmtp_enqueue_skb(sk, skb);
+ 		return 0;
+ 	case GMTP_PKT_ACK:
++		if(gp->role == GMTP_ROLE_SERVER) {
++			struct gmtp_hdr_ack *gack = gmtp_hdr_ack(skb);
++			gp->tx_rtt = (u32)jiffies_to_msecs(jiffies) -
++					(u32)(gack->orig_tstamp + gack->wait);
++			gp->tx_ucc_rate = min(gp->tx_ucc_rate, gh->transm_r);
++		}
+ 		goto discard;
+ 	case GMTP_PKT_RESET:
+ 		/*
+diff --git a/linux-4.0.3/net/gmtp/ipv4.c b/linux-4.0.3/net/gmtp/ipv4.c
+index 0940a77..2a27705 100644
+--- a/linux-4.0.3/net/gmtp/ipv4.c
++++ b/linux-4.0.3/net/gmtp/ipv4.c
+@@ -418,7 +418,6 @@ out:
+ 
+ static void gmtp_v4_ctl_send_reset(struct sock *sk, struct sk_buff *rxskb)
+ {
+-	gmtp_pr_func();
+ 	gmtp_v4_ctl_send_packet(sk, rxskb, GMTP_PKT_RESET);
+ }
+ 
+@@ -812,7 +811,7 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
+ 
+ 	return sk_receive_skb(sk, skb, 1);
+ 
+-	no_gmtp_socket:
++no_gmtp_socket:
+ 
+ 	if(!xfrm4_policy_check(NULL, XFRM_POLICY_IN, skb))
+ 		goto discard_it;
+@@ -855,15 +854,13 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
+ 	GMTP_SKB_CB(skb)->seq = gh->seq;
+ 	GMTP_SKB_CB(skb)->type = gh->type;
+ 
+-	if(gh->type != GMTP_PKT_DATA)
++	if(unlikely(gh->type != GMTP_PKT_DATA && gh->type != GMTP_PKT_ACK))
+ 		print_gmtp_packet(iph, gh);
+ 
+ 	/**
+ 	 * FIXME Change Election algorithm to fully distributed using multicast
+-	 *
+-	 * Only accept multicast packets from relays
+ 	 */
+-	if(skb->pkt_type == PACKET_MULTICAST && gh->relay == 1) {
++	if(skb->pkt_type == PACKET_MULTICAST) {
+ 
+ 		struct gmtp_client *tmp;
+ 		struct gmtp_client_entry *media_entry = gmtp_lookup_client(
+@@ -892,6 +889,7 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
+ 		/* Unicast packet...
+ 		 * Look up flow ID in table and get corresponding socket
+ 		 */
++
+ 		sk = __inet_lookup_skb(&gmtp_inet_hashinfo, skb, gh->sport,
+ 				gh->dport);
+ 
+@@ -927,7 +925,7 @@ static struct request_sock_ops gmtp_request_sock_ops __read_mostly = {
+ };
+ 
+ /*
+- * Called when a client sends a REQUEST
++ * Called by SERVER when it received a request from client/relay
+  */
+ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
+ {
+diff --git a/linux-4.0.3/net/gmtp/mcc/mcc_input.c b/linux-4.0.3/net/gmtp/mcc/mcc_input.c
+index 251d8c8..bd26862 100644
+--- a/linux-4.0.3/net/gmtp/mcc/mcc_input.c
++++ b/linux-4.0.3/net/gmtp/mcc/mcc_input.c
+@@ -119,7 +119,7 @@ static void mcc_rx_send_feedback(struct sock *sk,
+ 			       gp->rx_max_rate,
+ 			       gp->rx_x_recv);
+ 
+-		gmtp_send_feedback(sk, GMTP_SKB_CB(skb)->server_tstamp);
++		gmtp_send_feedback(sk, GMTP_SKB_CB(skb)->server_tstamp, skb->tstamp);
+ 	}
+ }
+ 
+diff --git a/linux-4.0.3/net/gmtp/output.c b/linux-4.0.3/net/gmtp/output.c
+index 549628e..c1d9645 100644
+--- a/linux-4.0.3/net/gmtp/output.c
++++ b/linux-4.0.3/net/gmtp/output.c
+@@ -80,19 +80,21 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
+ 		gh->dport = inet->inet_dport;
+ 		gh->hdrlen = gmtp_header_size;
+ 		gh->server_rtt = gp->role == GMTP_ROLE_SERVER ?
+-				TO_U8(gp->tx_rtt) : TO_U8(gp->rx_rtt);
++				TO_U12(gp->tx_rtt) : TO_U12(gp->rx_rtt);
+ 
+ 		memcpy(gh->flowname, gp->flowname, GMTP_FLOWNAME_LEN);
+ 
+-		gh->transm_r = (__be32) gp->tx_max_rate;
++		gh->transm_r = (__be32) gp->tx_ucc_rate;
+ 		if (gcb->type == GMTP_PKT_FEEDBACK) {
+ 			struct gmtp_hdr_feedback *fh = gmtp_hdr_feedback(skb);
+ 			gh->transm_r = gp->rx_max_rate;
+-			fh->pkt_tstamp = gcb->server_tstamp;
++			fh->orig_tstamp = gcb->server_tstamp;
++			fh->wait = ktime_sub_ms_be32(ktime_get_real(),
++							gcb->rx_tstamp);
+ 			fh->nclients = gp->myself->nclients;
+ 
+-			pr_info("[Feedback] pkt_tstamp=%u, nclients=%u\n",
+-					fh->pkt_tstamp, fh->nclients);
++			pr_info("[Feedback] orig_tstamp=%u, wait=%u, nclients=%u\n",
++					fh->orig_tstamp, fh->wait, fh->nclients);
+ 		}
+ 
+ 		if (gcb->type == GMTP_PKT_RESET)
+@@ -207,7 +209,7 @@ struct sk_buff *gmtp_make_register_reply(struct sock *sk, struct dst_entry *dst,
+ 	gh->dport	= inet_rsk(req)->ir_rmt_port;
+ 	gh->type	= GMTP_PKT_REGISTER_REPLY;
+ 	gh->seq 	= greq->gss;
+-	gh->server_rtt	= TO_U8(gmtp_sk(sk)->tx_rtt);
++	gh->server_rtt	= TO_U12(gmtp_sk(sk)->tx_rtt);
+ 	gh->transm_r	= (__be32) gmtp_sk(sk)->tx_max_rate;
+ 	gh->hdrlen	= gmtp_header_size;
+ 	memcpy(gh->flowname, greq->flowname, GMTP_FLOWNAME_LEN);
+@@ -231,6 +233,8 @@ struct sk_buff *gmtp_ctl_make_reset(struct sock *sk, struct sk_buff *rcv_skb)
+ 	struct gmtp_hdr_reset *ghr;
+ 	struct sk_buff *skb;
+ 
++	gmtp_pr_func();
++
+ 	skb = alloc_skb(sk->sk_prot->max_header, GFP_ATOMIC);
+ 	if (skb == NULL)
+ 		return NULL;
+@@ -482,7 +486,9 @@ EXPORT_SYMBOL_GPL(gmtp_ctl_make_elect_response);
+ struct sk_buff *gmtp_ctl_make_ack(struct sock *sk, struct sk_buff *rcv_skb)
+ {
+ 	struct gmtp_hdr *rxgh = gmtp_hdr(rcv_skb), *gh;
+-	const u32 gmtp_hdr_len = sizeof(struct gmtp_hdr);
++	struct gmtp_hdr_ack *gack;
++	const u32 gmtp_hdr_len = sizeof(struct gmtp_hdr)
++			+ sizeof(struct gmtp_hdr_ack);
+ 	struct sk_buff *skb;
+ 
+ 	gmtp_print_function();
+@@ -504,11 +510,22 @@ struct sk_buff *gmtp_ctl_make_ack(struct sock *sk, struct sk_buff *rcv_skb)
+ 	gh->transm_r = rxgh->transm_r;
+ 	memcpy(gh->flowname, rxgh->flowname, GMTP_FLOWNAME_LEN);
+ 
++
++	if(rxgh->type == GMTP_PKT_DATA) {
++		struct gmtp_hdr_data *ghd = gmtp_hdr_data(rcv_skb);
++		pr_info("Responding a DATA with a ACK");
++		gack = gmtp_hdr_ack(skb);
++		gack->orig_tstamp = ghd->tstamp;
++		gack->wait = ktime_sub_ms_be32(ktime_get_real(), rcv_skb->tstamp);
++	} else {
++		pr_info("Responding a NON-DATA with a ACK");
++	}
++
+ 	return skb;
+ }
+ EXPORT_SYMBOL_GPL(gmtp_ctl_make_ack);
+ 
+-void gmtp_send_feedback(struct sock *sk, __be32 server_tstamp)
++void gmtp_send_feedback(struct sock *sk, __be32 server_tstamp, ktime_t rx_tstamp)
+ {
+ 	if(sk->sk_state != GMTP_CLOSED) {
+ 
+@@ -519,6 +536,7 @@ void gmtp_send_feedback(struct sock *sk, __be32 server_tstamp)
+ 		skb_reserve(skb, sk->sk_prot->max_header);
+ 		GMTP_SKB_CB(skb)->type = GMTP_PKT_FEEDBACK;
+ 		GMTP_SKB_CB(skb)->server_tstamp = server_tstamp;
++		GMTP_SKB_CB(skb)->rx_tstamp = rx_tstamp;
+ 
+ 		gmtp_transmit_skb(sk, skb);
+ 	}
+@@ -658,8 +676,9 @@ static void gmtp_xmit_packet(struct sock *sk, struct sk_buff *skb) {
+  */
+ static long get_rate_gap(struct gmtp_sock *gp, int acum)
+ {
+-	long rate = (long)gp->tx_sample_rate;
+-	long tx = (long)gp->tx_max_rate;
++	long rate = (long) gp->tx_sample_rate;
++	long tx = (long) min(gp->tx_max_rate, gp->tx_ucc_rate);
++
+ 	long coef_adj = 0;
+ 
+ 	if(gp->tx_dpkts_sent < GMTP_MIN_SAMPLE_LEN)
+@@ -687,6 +706,7 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
+ 	int len = (int) packet_len(skb);
+ 	unsigned long elapsed = 0;
+ 	long delay = 0, delay2 = 0, delay_budget = 0;
++	unsigned long tx_rate = 0;
+ 
+ 	/** TODO Continue tests with different scales... */
+ 	static const int scale = 1;
+@@ -697,6 +717,8 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
+ 
+ 	if(gp->tx_max_rate == 0UL)
+ 		goto send;
++	else
++		tx_rate = min(gp->tx_max_rate, gp->tx_ucc_rate);
+ 	/*
+ 	pr_info("[%d] Tx rate: %lu bytes/s\n", gp->pkt_sent, gp->total_rate);
+ 	pr_info("[-] Tx rate (sample): %lu bytes/s\n", gp->sample_rate);
+@@ -711,7 +733,7 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
+ 		goto wait;
+ 	}
+ 
+-	delay = DIV_ROUND_CLOSEST((HZ * len), gp->tx_max_rate);
++	delay = DIV_ROUND_CLOSEST((HZ * len), tx_rate);
+ 	delay2 = delay - elapsed;
+ 
+ 	if(delay2 > 0)
+@@ -726,7 +748,7 @@ wait:
+ 	 * TODO More tests with byte_budgets...
+ 	 */
+ 	if(delay <= 0)
+-		gp->tx_byte_budget = mult_frac(scale, gp->tx_max_rate, HZ) -
++		gp->tx_byte_budget = mult_frac(scale, tx_rate, HZ) -
+ 			mult_frac(gp->tx_byte_budget, (int) get_rate_gap(gp, 0), 100);
+ 	else
+ 		gp->tx_byte_budget = INT_MIN;
+diff --git a/linux-4.0.3/net/gmtp/proto.c b/linux-4.0.3/net/gmtp/proto.c
+index a83b41b..8fb6dc5 100644
+--- a/linux-4.0.3/net/gmtp/proto.c
++++ b/linux-4.0.3/net/gmtp/proto.c
+@@ -115,7 +115,7 @@ void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh)
+ 				gmtp_packet_name(gh->type), gh->type,
+ 				&iph->saddr, ntohs(gh->sport),
+ 				&iph->daddr, ntohs(gh->dport),
+-				gh->seq, gh->server_rtt, gh->transm_r,
++				gh->seq, /*(u32)*/ gh->server_rtt, gh->transm_r,
+ 				flowname);
+ }
+ EXPORT_SYMBOL_GPL(print_gmtp_packet);
+@@ -252,6 +252,7 @@ int gmtp_init_sock(struct sock *sk)
+ 	gp->tx_first_stamp	= 0UL;
+ 	gp->tx_last_stamp	= 0UL;
+ 	gp->tx_max_rate		= 0UL; /* Unlimited */
++	gp->tx_ucc_rate		= 0UL; /* Unlimited */
+ 	gp->tx_byte_budget	= INT_MIN;
+ 	gp->tx_adj_budget	= 0;
+ 
+diff --git a/linux-4.0.3/net/gmtp/sockopt.c b/linux-4.0.3/net/gmtp/sockopt.c
+index e1ba1bb..ab4a1c2 100644
+--- a/linux-4.0.3/net/gmtp/sockopt.c
++++ b/linux-4.0.3/net/gmtp/sockopt.c
+@@ -35,8 +35,10 @@ static int do_gmtp_setsockopt(struct sock *sk, int level, int optname,
+ 		err = gmtp_setsockopt_flowname(gp, optval, optlen);
+ 		break;
+ 	case GMTP_SOCKOPT_MAX_TX_RATE:
+-		if(val > 0)
++		if(val > 0) {
+ 			gp->tx_max_rate = (unsigned long)val;
++			gp->tx_ucc_rate = gp->tx_max_rate;
++		}
+ 		else
+ 			err = -EINVAL;
+ 		break;
+@@ -126,11 +128,17 @@ static int do_gmtp_getsockopt(struct sock *sk, int level, int optname,
+ 	switch (optname) {
+ 	case GMTP_SOCKOPT_FLOWNAME:
+ 		return gmtp_getsockopt_flowname(gp, optval, optlen);
++	case GMTP_SOCKOPT_MAX_TX_RATE:
++		val = (int) gp->tx_max_rate;
++		break;
++	case GMTP_SOCKOPT_UCC_TX_RATE:
++		val = (int) gp->tx_ucc_rate;
++		break;
+ 	case GMTP_SOCKOPT_GET_CUR_MSS:
+-		val = gp->mss;
++		val = (int) gp->mss;
+ 		break;
+ 	case GMTP_SOCKOPT_SERVER_TIMEWAIT:
+-		val = gp->server_timewait;
++		val = (int) gp->server_timewait;
+ 		break;
+ 	case GMTP_SOCKOPT_ROLE_RELAY:
+ 		val = (gp->role == GMTP_ROLE_RELAY)? 1 : 0;
+diff --git a/linux-4.0.3/net/gmtp/timer.c b/linux-4.0.3/net/gmtp/timer.c
+index f509e9d..1d65ba6 100644
+--- a/linux-4.0.3/net/gmtp/timer.c
++++ b/linux-4.0.3/net/gmtp/timer.c
+@@ -195,6 +195,17 @@ static void gmtp_reporter_ackrcv_timer(struct sock *sk)
+ 	inet_csk_reset_keepalive_timer(sk, GMTP_ACK_TIMEOUT);
+ }
+ 
++/** TODO implement method to disconnect dead relays */
++static void gmtp_server_ackrcv_timer(struct sock *sk)
++{
++	struct gmtp_sock *gp = gmtp_sk(sk);
++
++	gmtp_pr_func();
++
++	inet_csk_reset_keepalive_timer(sk, GMTP_ACK_TIMEOUT);
++}
++
++
+ static void gmtp_client_sendack_timer(struct sock *sk)
+ {
+ 	struct gmtp_sock *gp = gmtp_sk(sk);
+@@ -225,9 +236,6 @@ static void gmtp_keepalive_timer(unsigned long data)
+ 	struct sock *sk = (struct sock *)data;
+ 	struct gmtp_sock *gp = gmtp_sk(sk);
+ 
+-	gmtp_pr_func();
+-
+-	pr_info("Locking socket (%p) \n", sk);
+ 	print_gmtp_sock(sk);
+ 
+ 	bh_lock_sock(sk);
+@@ -243,10 +251,13 @@ static void gmtp_keepalive_timer(unsigned long data)
+ 		goto out;
+ 	}
+ 
+-	if(gp->role == GMTP_ROLE_REPORTER) {
+-		if(sk->sk_state == GMTP_OPEN) {
++	if(sk->sk_state == GMTP_OPEN) {
++		switch(gp->role) {
++		case GMTP_ROLE_REPORTER:
+ 			gmtp_reporter_ackrcv_timer(sk);
+ 			goto out;
++		case GMTP_ROLE_SERVER:
++			gmtp_server_ackrcv_timer(sk);
+ 		}
+ 	}
+ 

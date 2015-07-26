@@ -82,6 +82,16 @@ struct gmtp_inter_entry *gmtp_inter_lookup_media(
 	return NULL;
 }
 
+void ack_timer_callback(struct gmtp_inter_entry *entry)
+{
+	struct sk_buff *skb = gmtp_inter_build_ack(entry);
+	if(skb != NULL)
+		gmtp_inter_send_pkt(skb);
+
+	mod_timer(&entry->ack_timer_entry, jiffies + HZ);
+}
+
+
 struct gmtp_flow_info *__gmtp_inter_build_info(void)
 {
 	struct gmtp_flow_info *info = kmalloc(sizeof(struct gmtp_flow_info),
@@ -112,7 +122,6 @@ struct gmtp_flow_info *__gmtp_inter_build_info(void)
 
 	setup_timer(&info->mcc_timer, mcc_timer_callback, (unsigned long) info);
 	mod_timer(&info->mcc_timer, gmtp_mcc_interval(info->rtt));
-
 out:
 	return info;
 }
@@ -164,8 +173,9 @@ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
 	new_entry->channel_port = channel_port;
 	new_entry->state = GMTP_INTER_WAITING_REGISTER_REPLY;
 	new_entry->next = hashtable->table[hashval];
-
 	hashtable->table[hashval] = new_entry;
+	setup_timer(&new_entry->ack_timer_entry, ack_timer_callback, new_entry);
+	mod_timer(&new_entry->ack_timer_entry, jiffies + 3*HZ);
 
 	return 0;
 }
@@ -222,6 +232,7 @@ struct gmtp_inter_entry *gmtp_inter_del_entry(
 	gmtp_inter_del_clients(current_entry);
 	skb_queue_purge(current_entry->info->buffer);
 	del_timer_sync(&current_entry->info->mcc_timer);
+	del_timer_sync(&current_entry->ack_timer_entry);
 	kfree(current_entry->info);
 	kfree(current_entry);
 

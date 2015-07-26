@@ -5,9 +5,9 @@ import socket
 import time
 import timeit
 from datetime import datetime
+from sys import stdout
 from optparse import Option, OptionParser
 from gmtp import *
-from sys import stdout
 
 default_port = 12345
 

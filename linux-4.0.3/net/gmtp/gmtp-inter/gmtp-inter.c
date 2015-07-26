@@ -182,18 +182,20 @@ struct sk_buff *gmtp_buffer_dequeue(struct gmtp_flow_info *info)
 unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 		const struct net_device *in, const struct net_device *out,
 		int (*okfn)(struct sk_buff *))
+
 {
-	int ret = NF_ACCEPT;
+    	int ret = NF_ACCEPT;
 	struct iphdr *iph = ip_hdr(skb);
 
 	if((gmtp_info->relay_enabled == 0) || (in == NULL))
 		return ret;
 
 	if(iph->protocol == IPPROTO_GMTP) {
+        
+  		struct gmtp_hdr *gh = gmtp_hdr(skb);
 
-		struct gmtp_hdr *gh = gmtp_hdr(skb);
-
-		if(gh->type != GMTP_PKT_DATA && gh->type != GMTP_PKT_FEEDBACK) {
+		if(unlikely(gh->type != GMTP_PKT_DATA
+					&& gh->type != GMTP_PKT_FEEDBACK)) {
 			gmtp_pr_debug("GMTP packet: %s (%d)",
 					gmtp_packet_name(gh->type), gh->type);
 			print_packet(skb, true);
@@ -269,6 +271,13 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 	return ret;
 }
 
+void gmtp_timer_callback(void)
+{
+	gmtp_ucc(0);
+	mod_timer(&gmtp_inter.gmtp_ucc_timer,
+			jiffies + min(gmtp_inter.h, gmtp_inter.h_user));
+}
+
 int init_module()
 {
 	int ret = 0;
@@ -307,6 +316,12 @@ int init_module()
 
 	gmtp_info->relay_enabled = 1; /* Enables gmtp-inter */
 
+	gmtp_inter.h = 0;
+	gmtp_inter.h_user = UINT_MAX; /* TODO Make it user defined */
+	gmtp_inter.last_rtt = GMTP_DEFAULT_RTT;
+	setup_timer(&gmtp_inter.gmtp_ucc_timer, gmtp_timer_callback, 0);
+	mod_timer(&gmtp_inter.gmtp_ucc_timer, jiffies + HZ);
+
 	nfho_in.hook = hook_func_in;
 	nfho_in.hooknum = NF_INET_PRE_ROUTING;
 	nfho_in.pf = PF_INET;
@@ -333,6 +348,7 @@ void cleanup_module()
 
 	nf_unregister_hook(&nfho_in);
 	nf_unregister_hook(&nfho_out);
+	del_timer(&gmtp_inter.gmtp_ucc_timer);
 }
 
 MODULE_LICENSE("GPL");

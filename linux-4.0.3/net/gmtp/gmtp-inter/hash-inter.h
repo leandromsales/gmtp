@@ -27,11 +27,14 @@
 struct gmtp_inter_entry {
 	__u8 flowname[GMTP_FLOWNAME_LEN];
 	__be32 server_addr;
+	unsigned char server_mac_addr[6];
 	__be32 *relay;
 	__be16 media_port;
 	__be32 channel_addr;
 	__be16 channel_port;
 	__u8 state :3;
+
+	struct timer_list ack_timer_entry;
 
 	struct gmtp_flow_info *info;
 	struct gmtp_inter_entry *next;
@@ -43,6 +46,7 @@ struct gmtp_inter_entry {
  * @seq: sequence number of last received packet
  * @total_bytes: amount of received bytes
  * @last_rx_tstamp: time stamp of last received data packet (milliseconds)
+ * @last_data_tstamp: time stamp stored in last received data packet.
  *
  * @nfeedbacks: number of received feedbacks at last window
  * @sum_feedbacks: sum of all feedbacks tx rates received at last window
@@ -71,6 +75,7 @@ struct gmtp_flow_info {
 	unsigned int		seq;
 	unsigned int 		total_bytes;
 	unsigned long  		last_rx_tstamp; /* milliseconds */
+	__be32 			last_data_tstamp;
 
 	/* GMTP-MCC */
 	unsigned int		nfeedbacks;
@@ -123,6 +128,7 @@ struct gmtp_inter_hashtable {
 struct gmtp_inter_hashtable *gmtp_inter_create_hashtable(unsigned int size);
 struct gmtp_inter_entry *gmtp_inter_lookup_media(
 		struct gmtp_inter_hashtable *hashtable, const __u8 *media);
+void ack_timer_callback(struct gmtp_inter_entry *entry);
 int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
 		__be32 server_addr, __be32 *relay, __be16 media_port,
 		__be32 channel_addr, __be16 channel_port);
