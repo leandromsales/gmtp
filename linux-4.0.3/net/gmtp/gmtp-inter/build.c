@@ -386,13 +386,11 @@ struct sk_buff *gmtp_inter_build_ack(struct gmtp_inter_entry *entry)
 	gh->dport = entry->media_port;
 	gh->sport = entry->info->my_port;
 	gh->server_rtt = entry->info->flow_rtt;
-	gh->transm_r = gmtp_inter.ucc_rx;
+	gh->transm_r = min(gmtp_inter.ucc_rx, entry->info->rcv_tx_rate);
 	memcpy(gh->flowname, entry->flowname, GMTP_FLOWNAME_LEN);
 
 	gack = gmtp_hdr_ack(skb);
 	gack->orig_tstamp = entry->info->last_data_tstamp;
-	gack->wait = (__be32)(ktime_to_ms(ktime_get_real())
-			- entry->info->last_rx_tstamp);
 
 	/* Build the IP header. */
 	skb_push(skb, sizeof(struct iphdr));

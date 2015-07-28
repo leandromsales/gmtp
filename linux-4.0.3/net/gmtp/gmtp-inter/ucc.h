@@ -15,6 +15,7 @@
 #define GMTP_ONE_MINUS_THETA(X) DIV_ROUND_CLOSEST(X * 98000, 100000) /* X*(1-0.02) */
 
 /** gmtp-ucc. */
+void gmtp_ucc_callback(void);
 unsigned int gmtp_relay_queue_size(void);
 void gmtp_ucc(unsigned char debug);
 

@@ -72,8 +72,7 @@ static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
 		/* FIXME: Implement gmtp_del_server_entry() */
 		/*
 		else if(gp->role == GMTP_ROLE_SERVER)
-			gmtp_print_error("FIXME: "
-					"Implement gmtp_del_server_entry()");*/
+			gmtp_print_error("FIXME: Implement gmtp_del_server_entry()");*/
 
 		/* Give waiting application a chance to read pending data */
 		queued = 1;
@@ -403,8 +402,6 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 			gp->tx_avg_rtt = rtt_ewma(gp->tx_avg_rtt, gp->tx_rtt,
 					GMTP_RTT_WEIGHT);
 
-			/* FIXME When gp->tx_ucc_rate==0 means unlimited tx_rate...
-			 * This will cause troubles */
 			gp->tx_ucc_rate = min(gp->tx_ucc_rate, gh->transm_r);
 		}
 		goto discard;

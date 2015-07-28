@@ -195,6 +195,10 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
 	gmtp_inter.avg_rtt = rtt_ewma(gmtp_inter.avg_rtt, gmtp_inter.last_rtt,
 			GMTP_RTT_WEIGHT);
 
+	pr_info("Server RTT: %u ms\n", (unsigned int) gh->server_rtt);
+	pr_info("Last RTT: %u ms\n", gmtp_inter.last_rtt);
+	pr_info("RTT AVG: %u ms\n", gmtp_inter.avg_rtt);
+
 	if(gmtp_inter.ucc_rx < gh->transm_r)
 		gh->transm_r = (__be32) gmtp_inter.ucc_rx;
 
@@ -203,6 +207,7 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
 		return NF_ACCEPT;
 
 	info = entry->info;
+	info->rcv_tx_rate = gh->transm_r;
 	info->flow_rtt = (unsigned int) gh->server_rtt;
 	info->flow_avg_rtt = rtt_ewma(info->flow_avg_rtt, info->flow_rtt,
 			GMTP_RTT_WEIGHT);
@@ -350,11 +355,22 @@ int gmtp_inter_elect_resp_rcv(struct sk_buff *skb)
 static inline void gmtp_update_stats(struct gmtp_flow_info *info,
 		struct sk_buff *skb, struct gmtp_hdr *gh)
 {
+	gmtp_inter.total_bytes_rx += skblen(skb);
+	gmtp_inter.ucc_bytes += skblen(skb);
+	gmtp_inter.last_rtt = (unsigned int)gh->server_rtt;
+	gmtp_inter.avg_rtt = rtt_ewma(gmtp_inter.avg_rtt, gmtp_inter.last_rtt,
+	GMTP_RTT_WEIGHT);
+
 	info->total_bytes += skblen(skb);
 	info->recent_bytes += skblen(skb);
-	info->seq = (unsigned int) gh->seq;
-	info->rtt = (unsigned int) gh->server_rtt;
+	info->seq = (unsigned int)gh->seq;
+	info->flow_rtt = (unsigned int)gh->server_rtt;
+	info->flow_avg_rtt = rtt_ewma(info->flow_avg_rtt, info->flow_rtt,
+	GMTP_RTT_WEIGHT);
 	info->last_data_tstamp = gmtp_hdr_data(skb)->tstamp;
+
+	info->rcv_tx_rate = gh->transm_r;
+	gh->transm_r = min(info->rcv_tx_rate, gmtp_inter.ucc_rx);
 
 	if(gh->seq % gmtp_inter.rx_rate_wnd == 0) {
 		unsigned long current_time = ktime_to_ms(ktime_get_real());
@@ -367,13 +383,9 @@ static inline void gmtp_update_stats(struct gmtp_flow_info *info,
 		info->recent_rx_tstamp = ktime_to_ms(skb->tstamp);
 		info->recent_bytes = 0;
 		pr_info("Last RTT: %u ms\n", (unsigned int) gh->server_rtt);
+		pr_info("Last RTT: %u ms\n", gmtp_inter.last_rtt);
+		pr_info("RTT AVG: %u ms\n", gmtp_inter.avg_rtt);
 	}
-
-	gmtp_inter.total_bytes_rx += skblen(skb);
-	gmtp_inter.ucc_bytes += skblen(skb);
-	gmtp_inter.last_rtt = (unsigned int) gh->server_rtt;
-	gmtp_inter.avg_rtt = rtt_ewma(gmtp_inter.avg_rtt, gmtp_inter.last_rtt,
-			GMTP_RTT_WEIGHT);
 }
 
 /**

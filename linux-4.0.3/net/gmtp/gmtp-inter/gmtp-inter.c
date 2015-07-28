@@ -271,13 +271,6 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 	return ret;
 }
 
-void gmtp_timer_callback(void)
-{
-	gmtp_ucc(1);
-	mod_timer(&gmtp_inter.gmtp_ucc_timer,
-			jiffies + min(gmtp_inter.avg_rtt, gmtp_inter.h_user));
-}
-
 int init_module()
 {
 	int ret = 0;
@@ -316,10 +309,12 @@ int init_module()
 
 	gmtp_info->relay_enabled = 1; /* Enables gmtp-inter */
 
-	gmtp_inter.avg_rtt = 0;
 	gmtp_inter.h_user = UINT_MAX; /* TODO Make it user defined */
 	gmtp_inter.last_rtt = GMTP_DEFAULT_RTT;
-	setup_timer(&gmtp_inter.gmtp_ucc_timer, gmtp_timer_callback, 0);
+	gmtp_inter.avg_rtt = rtt_ewma(0, GMTP_DEFAULT_RTT, GMTP_RTT_WEIGHT);
+
+	pr_info("Configuring GMTP-UCC timer...\n");
+	setup_timer(&gmtp_inter.gmtp_ucc_timer, gmtp_ucc_callback, 0);
 	mod_timer(&gmtp_inter.gmtp_ucc_timer, jiffies + HZ);
 
 	nfho_in.hook = hook_func_in;

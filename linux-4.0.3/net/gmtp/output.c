@@ -714,7 +714,7 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 	if(unlikely(sk == NULL || skb == NULL))
 		return;
 
-	if(gp->tx_max_rate == 0UL)
+	if(gp->tx_max_rate == UINT_MAX)
 		goto send;
 	else
 		tx_rate = min(gp->tx_max_rate, gp->tx_ucc_rate);
