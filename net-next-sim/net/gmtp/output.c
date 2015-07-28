@@ -80,7 +80,7 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 		gh->dport = inet->inet_dport;
 		gh->hdrlen = gmtp_header_size;
 		gh->server_rtt = gp->role == GMTP_ROLE_SERVER ?
-				TO_U12(gp->tx_rtt) : TO_U12(gp->rx_rtt);
+				TO_U12(gp->tx_avg_rtt) : TO_U12(gp->rx_rtt);
 
 		memcpy(gh->flowname, gp->flowname, GMTP_FLOWNAME_LEN);
 
@@ -209,7 +209,7 @@ struct sk_buff *gmtp_make_register_reply(struct sock *sk, struct dst_entry *dst,
 	gh->dport	= inet_rsk(req)->ir_rmt_port;
 	gh->type	= GMTP_PKT_REGISTER_REPLY;
 	gh->seq 	= greq->gss;
-	gh->server_rtt	= TO_U12(gmtp_sk(sk)->tx_rtt);
+	gh->server_rtt	= GMTP_DEFAULT_RTT;
 	gh->transm_r	= (__be32) gmtp_sk(sk)->tx_max_rate;
 	gh->hdrlen	= gmtp_header_size;
 	memcpy(gh->flowname, greq->flowname, GMTP_FLOWNAME_LEN);
@@ -516,7 +516,6 @@ struct sk_buff *gmtp_ctl_make_ack(struct sock *sk, struct sk_buff *rcv_skb)
 		pr_info("Responding a DATA with a ACK");
 		gack = gmtp_hdr_ack(skb);
 		gack->orig_tstamp = ghd->tstamp;
-		gack->wait = ktime_sub_ms_be32(ktime_get_real(), rcv_skb->tstamp);
 	} else {
 		pr_info("Responding a NON-DATA with a ACK");
 	}
@@ -715,7 +714,7 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 	if(unlikely(sk == NULL || skb == NULL))
 		return;
 
-	if(gp->tx_max_rate == 0UL)
+	if(gp->tx_max_rate == UINT_MAX)
 		goto send;
 	else
 		tx_rate = min(gp->tx_max_rate, gp->tx_ucc_rate);

@@ -109,7 +109,7 @@ struct gmtp_flow_info *__gmtp_inter_build_info(void)
 	info->current_rx = 0;
 	info->required_tx = 0;
 	info->data_pkt_out = 0;
-	info->rtt = 0;
+	info->flow_rtt = 0;
 
 	info->clients = kmalloc(sizeof(struct gmtp_client), GFP_KERNEL);
 	INIT_LIST_HEAD(&info->clients->list);
@@ -121,7 +121,7 @@ struct gmtp_flow_info *__gmtp_inter_build_info(void)
 	gmtp_set_buffer_limits(info, 1);
 
 	setup_timer(&info->mcc_timer, mcc_timer_callback, (unsigned long) info);
-	mod_timer(&info->mcc_timer, gmtp_mcc_interval(info->rtt));
+	mod_timer(&info->mcc_timer, gmtp_mcc_interval(info->flow_rtt));
 out:
 	return info;
 }

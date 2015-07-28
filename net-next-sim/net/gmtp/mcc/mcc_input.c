@@ -89,7 +89,7 @@ static void mcc_rx_send_feedback(struct sock *sk,
 	sample = gp->rx_rtt * USEC_PER_MSEC;
 
 	if(sample != 0)
-		gp->rx_avg_rtt = mcc_ewma(gp->rx_avg_rtt, sample, 9);
+		gp->rx_avg_rtt = rtt_ewma(gp->rx_avg_rtt, sample, 900);
 
 	if(gp->rx_avg_rtt <= 0)
 		gp->rx_avg_rtt = GMTP_SANE_RTT_MIN;
@@ -204,7 +204,7 @@ void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 		/*
 		 * Update moving-average of s and the sum of received payload bytes
 		 */
-		gp->rx_s = mcc_ewma(gp->rx_s, payload, 9);
+		gp->rx_s = rtt_ewma(gp->rx_s, payload, 900);
 		gp->rx_bytes_recv += payload;
 		GMTP_SKB_CB(skb)->server_tstamp = dh->tstamp;
 	}
@@ -236,7 +236,7 @@ void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 		 * computation of p when the first loss occurs; RFC 3448, 6.3.1.
 		 */
 		if(sample != 0)
-			gp->rx_avg_rtt = mcc_ewma(gp->rx_avg_rtt, sample, 9);
+			gp->rx_avg_rtt = rtt_ewma(gp->rx_avg_rtt, sample, 900);
 
 	} else if(mcc_lh_update_i_mean(&gp->rx_li_hist, skb)) {
 		/*

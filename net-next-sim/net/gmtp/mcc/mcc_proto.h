@@ -46,15 +46,6 @@ static inline u32 scaled_div32(u64 a, u64 b)
 	return result;
 }
 
-/**
- * mcc_ewma  -  Exponentially weighted moving average
- * @weight: Weight to be used as damping factor, in units of 1/10
- */
-static inline u32 mcc_ewma(const u32 avg, const u32 newval, const u8 weight)
-{
-	return avg ? (weight * avg + (10 - weight) * newval) / 10 : newval;
-}
-
 u32 mcc_calc_x(u16 s, u32 R, u32 p);
 u32 mcc_calc_x_reverse_lookup(u32 fvalue);
 u32 mcc_invert_loss_event_rate(u32 loss_event_rate);

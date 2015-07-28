@@ -77,6 +77,17 @@
 #define GMTP_SANE_RTT_MIN	100		    /* 0.1 ms */
 #define GMTP_FALLBACK_RTT	((GMTP_DEFAULT_RTT * USEC_PER_MSEC) / 5)
 #define GMTP_SANE_RTT_MAX	(3 * USEC_PER_SEC)  /* 3 s    */
+#define GMTP_RTT_WEIGHT		20 	/* 0.02 */
+
+/**
+ * rtt_ewma  -  Exponentially weighted moving average
+ * @weight: Weight to be used as damping factor, in units of 1/1000
+ * 		factor 1/1000 allows better weight granularity
+ */
+static inline u32 rtt_ewma(const u32 avg, const u32 newval, const u8 weight)
+{
+	return avg ? (weight * avg + (1000 - weight) * newval) / 1000 : newval;
+}
 
 /* initial RTO value
  * The back-off value for retransmissions. This is needed for
