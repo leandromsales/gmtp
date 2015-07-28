@@ -7,30 +7,22 @@
 
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/ktime.h>
 
+#include "../gmtp.h"
 #include "gmtp-inter.h"
 #include "ucc.h"
 
-#include <linux/ktime.h>
-
 extern struct gmtp_inter gmtp_inter;
 
-unsigned int gmtp_rtt_average(unsigned char debug)
+void gmtp_ucc_callback(void)
 {
-	unsigned int old_h = gmtp_inter.h;
+	unsigned int next = min(gmtp_inter.avg_rtt, gmtp_inter.h_user);
+	if(next <= 0)
+		next = GMTP_DEFAULT_RTT;
 
-	gmtp_inter.h = GMTP_THETA(gmtp_inter.last_rtt) +
-			GMTP_ONE_MINUS_THETA(old_h);
-
-	if(unlikely(!!debug)) {
-		gmtp_pr_debug("h0 = 0.02 * RTT + (1-0.02)* h0");
-		gmtp_pr_debug("h0 = 0.02 * %u + (1-0.02)* %u",
-				gmtp_inter.last_rtt, old_h);
-		gmtp_pr_debug("h0 = %u + %u", GMTP_THETA(gmtp_inter.last_rtt),
-				GMTP_ONE_MINUS_THETA(old_h));
-		gmtp_pr_debug("New h0 = %u ms", gmtp_inter.h);
-	}
-	return gmtp_inter.h;
+	gmtp_ucc(0);
+	mod_timer(&gmtp_inter.gmtp_ucc_timer, jiffies + msecs_to_jiffies(next));
 }
 
 unsigned int gmtp_relay_queue_size()
@@ -60,10 +52,15 @@ void gmtp_ucc(unsigned char debug)
 	if(elapsed != 0)
 		y = DIV_ROUND_CLOSEST(gmtp_inter.ucc_bytes * MSEC_PER_SEC, elapsed);
 
-	h = gmtp_rtt_average(debug);
+	/* FIXME Sane RTT before using it (in server and relays) */
+	h = gmtp_inter.avg_rtt;
+	if(h<=0) {
+		gmtp_pr_error("Error: h = %u. Assuming h = 1 ms", h);
+		h = 1;
+	}
 	H = min(h, gmtp_inter.h_user);
-	up = (H / h) * (GMTP_ALPHA(GMTP_GHAMA(C)-y) - GMTP_BETA(q / h));
-	delta = ((int)(r_prev) * up) / GMTP_GHAMA(C);
+	up = DIV_ROUND_CLOSEST(H, h) * (GMTP_ALPHA(GMTP_GHAMA(C)-y) - GMTP_BETA(q / h));
+	delta = DIV_ROUND_CLOSEST( ((int)(r_prev) * up), GMTP_GHAMA(C));
 
 	/**
 	 * r = r_prev * (1 + up/GHAMA(C)) =>
@@ -94,7 +91,7 @@ void gmtp_ucc(unsigned char debug)
 		gmtp_pr_debug("C: %u bytes/s", C);
 		gmtp_pr_debug("y(t): %u bytes/s", y);
 		gmtp_pr_debug("q(t): %u bytes\n", q);
-		gmtp_pr_debug("H/h0: %u", (H / h));
+		gmtp_pr_debug("H/h0: %u", DIV_ROUND_CLOSEST(H, h));
 		gmtp_pr_debug("GHAMA(C): %u", GMTP_GHAMA(C));
 		gmtp_pr_debug("ALPHA(GHAMA(C)-y): %u", GMTP_ALPHA(GMTP_GHAMA(C)-y));
 		gmtp_pr_debug("q/h: %u", q / h);

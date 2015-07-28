@@ -111,11 +111,11 @@ void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh)
 	__u8 flowname[GMTP_FLOWNAME_STR_LEN];
 	flowname_str(flowname, gh->flowname);
 	pr_info("%s (%d) src=%pI4@%-5d, dst=%pI4@%-5d, seq=%u, rtt=%u ms, "
-			"transm_r=%u bytes/s, flow=%s\n",
+			"transm_r=%u B/s, flow=%s\n",
 				gmtp_packet_name(gh->type), gh->type,
 				&iph->saddr, ntohs(gh->sport),
 				&iph->daddr, ntohs(gh->dport),
-				gh->seq, /*(u32)*/ gh->server_rtt, gh->transm_r,
+				gh->seq, gh->server_rtt, gh->transm_r,
 				flowname);
 }
 EXPORT_SYMBOL_GPL(print_gmtp_packet);
@@ -233,7 +233,8 @@ int gmtp_init_sock(struct sock *sk)
 	gp->req_stamp		= 0;
 	gp->ack_rx_tstamp	= 0;
 	gp->ack_tx_tstamp	= 0;
-	gp->tx_rtt		= GMTP_DEFAULT_RTT;
+	gp->tx_rtt		= 0;
+	gp->tx_avg_rtt		= 0;
 	gp->relay_rtt		= 0;
 
 	gp->rx_max_rate 	= 0;
@@ -251,8 +252,8 @@ int gmtp_init_sock(struct sock *sk)
 
 	gp->tx_first_stamp	= 0UL;
 	gp->tx_last_stamp	= 0UL;
-	gp->tx_max_rate		= 0UL; /* Unlimited */
-	gp->tx_ucc_rate		= 0UL; /* Unlimited */
+	gp->tx_max_rate		= UINT_MAX; /* Unlimited */
+	gp->tx_ucc_rate		= UINT_MAX; /* Unlimited */
 	gp->tx_byte_budget	= INT_MIN;
 	gp->tx_adj_budget	= 0;
 

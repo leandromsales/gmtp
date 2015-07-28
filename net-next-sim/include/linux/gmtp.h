@@ -211,6 +211,7 @@ struct gmtp_sock {
 
 	/** Tx variables */
 	u32 				tx_rtt;
+	u32				tx_avg_rtt;
 	u32	 			tx_dpkts_sent;
 	u32				tx_data_sent;
 	u32				tx_bytes_sent;

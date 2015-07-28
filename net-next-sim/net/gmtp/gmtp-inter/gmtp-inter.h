@@ -65,7 +65,7 @@ struct gmtp_inter {
 	unsigned int        	ucc_bytes;
 	unsigned long  		ucc_rx_tstamp;
 	unsigned int 		rx_rate_wnd;
-	unsigned int 		h;
+	unsigned int 		avg_rtt;
 	unsigned int		h_user;
 	unsigned int 		last_rtt;
 
