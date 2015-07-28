@@ -85,7 +85,8 @@ struct gmtp_flow_info {
 	unsigned int 		current_rx;
 	unsigned int 		required_tx;
 	unsigned int 		data_pkt_out;
-	unsigned int 		rtt;
+	unsigned int 		flow_rtt;
+	unsigned int 		flow_avg_rtt;
 	struct timer_list 	mcc_timer;
 
 	struct gmtp_client	*clients;

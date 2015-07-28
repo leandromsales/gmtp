@@ -104,7 +104,6 @@ struct gmtp_hdr_data {
  */
 struct gmtp_hdr_ack {
 	__be32 orig_tstamp;
-	__be32 wait;
 };
 
 /**

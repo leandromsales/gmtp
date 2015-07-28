@@ -191,7 +191,10 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
 	gmtp_inter_add_relayid(skb);
 
 	gmtp_print_debug("UPDATING Tx Rate");
-	gmtp_inter.last_rtt = gh->server_rtt;
+	gmtp_inter.last_rtt = (unsigned int) gh->server_rtt;
+	gmtp_inter.avg_rtt = rtt_ewma(gmtp_inter.avg_rtt, gmtp_inter.last_rtt,
+			GMTP_RTT_WEIGHT);
+
 	if(gmtp_inter.ucc_rx < gh->transm_r)
 		gh->transm_r = (__be32) gmtp_inter.ucc_rx;
 
@@ -200,7 +203,10 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
 		return NF_ACCEPT;
 
 	info = entry->info;
-	info->rtt = (unsigned int) gh->server_rtt;
+	info->flow_rtt = (unsigned int) gh->server_rtt;
+	info->flow_avg_rtt = rtt_ewma(info->flow_avg_rtt, info->flow_rtt,
+			GMTP_RTT_WEIGHT);
+
 	ether_addr_copy(entry->server_mac_addr, eth->h_source);
 
 	gh_route_n = gmtp_inter_make_route_hdr(skb);
@@ -360,11 +366,14 @@ static inline void gmtp_update_stats(struct gmtp_flow_info *info,
 
 		info->recent_rx_tstamp = ktime_to_ms(skb->tstamp);
 		info->recent_bytes = 0;
+		pr_info("Last RTT: %u ms\n", (unsigned int) gh->server_rtt);
 	}
 
 	gmtp_inter.total_bytes_rx += skblen(skb);
 	gmtp_inter.ucc_bytes += skblen(skb);
 	gmtp_inter.last_rtt = (unsigned int) gh->server_rtt;
+	gmtp_inter.avg_rtt = rtt_ewma(gmtp_inter.avg_rtt, gmtp_inter.last_rtt,
+			GMTP_RTT_WEIGHT);
 }
 
 /**

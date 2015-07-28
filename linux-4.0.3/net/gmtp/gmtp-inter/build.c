@@ -385,7 +385,7 @@ struct sk_buff *gmtp_inter_build_ack(struct gmtp_inter_entry *entry)
 	gh->seq = entry->info->seq;
 	gh->dport = entry->media_port;
 	gh->sport = entry->info->my_port;
-	gh->server_rtt = entry->info->rtt;
+	gh->server_rtt = entry->info->flow_rtt;
 	gh->transm_r = gmtp_inter.ucc_rx;
 	memcpy(gh->flowname, entry->flowname, GMTP_FLOWNAME_LEN);
 

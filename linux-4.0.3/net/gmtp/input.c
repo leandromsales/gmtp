@@ -399,8 +399,12 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 	case GMTP_PKT_ACK:
 		if(gp->role == GMTP_ROLE_SERVER) {
 			struct gmtp_hdr_ack *gack = gmtp_hdr_ack(skb);
-			gp->tx_rtt = (u32)jiffies_to_msecs(jiffies) -
-					(u32)(gack->orig_tstamp + gack->wait);
+			gp->tx_rtt = jiffies_to_msecs(jiffies) - gack->orig_tstamp;
+			gp->tx_avg_rtt = rtt_ewma(gp->tx_avg_rtt, gp->tx_rtt,
+					GMTP_RTT_WEIGHT);
+
+			/* FIXME When gp->tx_ucc_rate==0 means unlimited tx_rate...
+			 * This will cause troubles */
 			gp->tx_ucc_rate = min(gp->tx_ucc_rate, gh->transm_r);
 		}
 		goto discard;
@@ -470,7 +474,7 @@ static int gmtp_rcv_request_rcv_state_process(struct sock *sk,
 						   const unsigned int len)
 {
 	struct inet_connection_sock *icsk = inet_csk(sk);
-	__u32 elapsed = 0;
+	struct gmtp_sock *gp = gmtp_sk(sk);
 	int queued = 0;
 
 	gmtp_print_function();
@@ -483,12 +487,15 @@ static int gmtp_rcv_request_rcv_state_process(struct sock *sk,
 		if (sk->sk_state == GMTP_REQUEST_RECV)
 			break;
 	/* ROUTE_NOTIFY is a special ack */
+	/** TODO Atualizar tx_rate dos caminhos */
 	case GMTP_PKT_ROUTE_NOTIFY:
 	case GMTP_PKT_DATAACK:
 	case GMTP_PKT_ACK:
-		elapsed = jiffies_to_msecs(jiffies) - gmtp_sk(sk)->reply_stamp;
-		gmtp_sk(sk)->tx_rtt = elapsed;
-		gmtp_print_debug("RTT: %u ms", gmtp_sk(sk)->tx_rtt);
+		gp->tx_rtt = jiffies_to_msecs(jiffies) - gmtp_sk(sk)->reply_stamp;
+		gp->tx_avg_rtt = rtt_ewma(gp->tx_avg_rtt, gp->tx_rtt,
+							GMTP_RTT_WEIGHT);
+		gmtp_pr_debug("RTT: %u ms | RTT_AVG: %u ms", gp->tx_rtt,
+				gp->tx_avg_rtt);
 
 		inet_csk_clear_xmit_timer(sk, ICSK_TIME_DACK);
 

@@ -233,7 +233,8 @@ int gmtp_init_sock(struct sock *sk)
 	gp->req_stamp		= 0;
 	gp->ack_rx_tstamp	= 0;
 	gp->ack_tx_tstamp	= 0;
-	gp->tx_rtt		= GMTP_DEFAULT_RTT;
+	gp->tx_rtt		= 0;
+	gp->tx_avg_rtt		= 0;
 	gp->relay_rtt		= 0;
 
 	gp->rx_max_rate 	= 0;
