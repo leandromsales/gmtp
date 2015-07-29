@@ -39,18 +39,18 @@ int main(int argc, char *argv[])
 	dce.SetStackSize(1 << 16);
 	dce.ResetArguments();
 	apps = dce.Install(nodes.Get(0));
-	apps.Start(Seconds(4.0));
+	apps.Start(Seconds(2.0));
 
 	dce.SetBinary("gmtp-client");
 	dce.SetStackSize(1 << 16);
 	dce.ResetArguments();
 	dce.AddArgument("10.0.0.1");
 	apps = dce.Install(nodes.Get(1));
-	apps.Start(Seconds(4.5));
+	apps.Start(Seconds(2.5));
 
 	csma.EnablePcapAll("dce-gmtp-simple");
 
-	Simulator::Stop(Seconds(20.0));
+	Simulator::Stop(Seconds(600.0));
 	Simulator::Run();
 	Simulator::Destroy();
 

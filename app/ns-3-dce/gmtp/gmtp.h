@@ -2,6 +2,9 @@
 #include <arpa/inet.h>
 #include <stdio.h>
 
+#ifndef GMTP_H_
+#define GMTP_H_
+
 #define SOCK_GMTP     7
 #define IPPROTO_GMTP  254
 #define SOL_GMTP      281
@@ -37,3 +40,5 @@ inline void enable_gmtp_inter()
 	printf("Trying enable gmtp_inter...\n");
 	set_gmtp_inter(true);
 }
+
+#endif /* GMTP_H_ */

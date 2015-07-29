@@ -14,7 +14,19 @@
 
 #define PORT 2000
 
-void handle(int newsock, fd_set *set);
+void handle(int newsock, fd_set *set)
+{
+	int i = 500;
+	char buffer[BUF_SIZE] = "Hello, World!";
+	char out[4] = "out";
+
+	do {
+		send(newsock, buffer, BUF_SIZE, 0);
+	} while(--i);
+	send(newsock, out, 4, 0);
+	FD_CLR(newsock, set);
+	close(newsock);
+}
 
 int main()
 {
@@ -26,16 +38,20 @@ int main()
 	fd_set writesocks;
 	int maxsock;
 	int reuseaddr = 1;
+	int max_tx = 20000;
 
 	disable_gmtp_inter();
 	sockfd = socket(AF_INET, SOCK_GMTP, IPPROTO_GMTP);
-	setsockopt(sockfd, SOL_GMTP, 1, "1234567812345678", 16);
 //	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if(sockfd < 0) {
 		printf("Error creating socket!\n");
 		exit(1);
 	}
 	printf("Socket created...\n");
+
+	printf("Calling setsockopt...\n");
+	setsockopt(sockfd, SOL_GMTP, GMTP_SOCKOPT_FLOWNAME, "1234567812345678", 16);
+	setsockopt(sockfd, SOL_GMTP, GMTP_SOCKOPT_MAX_TX_RATE, &max_tx, sizeof(max_tx));
 
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
@@ -94,6 +110,7 @@ int main()
 	                    }
 	                } else {
 	                    /* Handle read or disconnection */
+	                    printf("Calling handle!");
 	                    handle(s, &socks);
 	                }
 	            }
@@ -104,19 +121,5 @@ int main()
 	close(sockfd);
 
 	return 0;
-}
-
-void handle(int newsock, fd_set *set)
-{
-	int i = 50;
-	char buffer[BUF_SIZE] = "Hello, World!";
-	char out[4] = "out";
-
-	do {
-		send(newsock, buffer, BUF_SIZE, 0);
-	} while(--i);
-	send(newsock, out, 4, 0);
-	FD_CLR(newsock, set);
-	close(newsock);
 }
 

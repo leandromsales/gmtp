@@ -4,11 +4,13 @@
 #include "ns3/csma-module.h"
 #include "ns3/internet-module.h"
 
+#include "dce-gmtp.h"
+
 // Network topology
 // //
-// //             n0   r    n1
-// //             |    _    |
-// //             ====|_|====
+// //             s    r    c0	c1
+// //             |    _    |	|
+// //             ====|_|========
 // //                router
 // //
 using namespace ns3;
@@ -19,14 +21,15 @@ int main(int argc, char *argv[])
 	CommandLine cmd;
 	cmd.Parse(argc, argv);
 
-	cout << "Create nodes." << endl;
+	cout << "Creating nodes..." << endl;
 	Ptr<Node> server = CreateObject<Node>();
 	Ptr<Node> relay = CreateObject<Node>();
-	Ptr<Node> client = CreateObject<Node>();
+	Ptr<Node> c0 = CreateObject<Node>();
+	Ptr<Node> c1 = CreateObject<Node>();
 
 	NodeContainer net1(relay, server);
-	NodeContainer net2(relay, client);
-	NodeContainer all(relay, server, client);
+	NodeContainer net2(relay, c0, c1);
+	NodeContainer all(relay, server, c0, c1);
 
 	DceManagerHelper dceManager;
 	dceManager.SetTaskManagerAttribute("FiberManagerType",
@@ -35,6 +38,7 @@ int main(int argc, char *argv[])
 			StringValue("liblinux.so"));
 	LinuxStackHelper stack;
 	stack.Install(all);
+	dceManager.Install(all);
 
 	CsmaHelper csma;
 	csma.SetChannelAttribute("DataRate", StringValue("5Mbps"));
@@ -51,57 +55,18 @@ int main(int argc, char *argv[])
 	address.SetBase("10.1.2.0", "255.255.255.0");
 	Ipv4InterfaceContainer i2 = address.Assign(d2);
 
-	// It does not work in DCE
-	//Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
+	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
+	LinuxStackHelper::PopulateRoutingTables ();
 
-	dceManager.Install(all);
+
+	for(int n = 0; n < 4; n++) {
+		RunIp(all.Get(n), Seconds(2), "link show");
+		RunIp(all.Get(n), Seconds(2.1), "route show table all");
+		RunIp(all.Get(n), Seconds(2.2), "addr list");
+	}
 
 	DceApplicationHelper dce;
 	ApplicationContainer apps;
-
-//	  dce.SetBinary ("gmtp-inter");
-//	  dce.SetStackSize (1 << 16);
-//	  dce.ResetArguments ();
-//	  dce.ParseArguments ("off");
-//	  apps = dce.Install (r);
-//	  apps.Start (Seconds (2.0));
-
-	dce.SetBinary("ip");
-	dce.SetStackSize(1 << 16);
-	dce.ResetArguments();
-	dce.ParseArguments("route add default via 10.1.1.1 dev sim0");
-	apps = dce.Install(server);
-	apps.Start(Seconds(2.5));
-
-	dce.ResetArguments();
-	dce.ParseArguments("route add default via 10.1.2.1 dev sim0");
-	apps = dce.Install(client);
-	apps.Start(Seconds(2.5));
-
-	dce.ResetArguments();
-	dce.ParseArguments("route");
-	apps = dce.Install(all);
-	apps.Start(Seconds(3.0));
-
-	dce.ResetArguments();
-	dce.ParseArguments("link set sim0 up");
-	apps = dce.Install(all);
-	apps.Start(Seconds(3.5));
-
-	dce.ResetArguments();
-	dce.ParseArguments("link set sim1 up");
-	apps = dce.Install(relay);
-	apps.Start(Seconds(3.6));
-
-	dce.ResetArguments();
-	dce.ParseArguments("addr show dev sim0");
-	apps = dce.Install(all);
-	apps.Start(Seconds(3.9));
-
-	dce.ResetArguments();
-	dce.ParseArguments("addr show dev sim1");
-	apps = dce.Install(relay);
-	apps.Start(Seconds(4.0));
 
 	dce.SetBinary("gmtp-server");
 	dce.SetStackSize(1 << 16);
@@ -113,15 +78,18 @@ int main(int argc, char *argv[])
 	dce.SetStackSize(1 << 16);
 	dce.ResetArguments();
 	dce.AddArgument("10.1.1.2");
-	apps = dce.Install(client);
+	apps = dce.Install(c0);
 	apps.Start(Seconds(7.0));
+
+	apps = dce.Install(c1);
+	apps.Start(Seconds(8.0));
 
 	csma.EnablePcapAll("dce-gmtp-relay");
 
 	AsciiTraceHelper ascii;
 	csma.EnableAsciiAll(ascii.CreateFileStream("dce-gmtp-relay.tr"));
 
-	Simulator::Stop(Seconds(30.0));
+	Simulator::Stop(Seconds(60.0));
 	Simulator::Run();
 	Simulator::Destroy();
 

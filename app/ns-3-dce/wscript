@@ -310,7 +310,7 @@ def build_dce_examples(module, bld):
                     ['gmtp/gmtp-server', []],
                     ['gmtp/gmtp-client', []],
                     ['gmtp/gmtp-server-multi', []],
-#                    ['little-cout', []],
+#                   ['little-cout', []],
                     ]
 
     if bld.env['SCTP_TOOLS_FOUND']:
