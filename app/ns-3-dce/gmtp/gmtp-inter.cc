@@ -13,17 +13,13 @@ int main (int argc, char *argv[])
 {
   string s(argv[1]);
 
-  printf("Porra!!!!\n");
+  if(s.compare(ON) == 0) {
+	  enable_gmtp_inter();
+  }
 
-//  if(s.compare(ON) == 0) {
-//	  cout << "Turning on GMTP-Inter" << endl;
-//	  enable_gmtp_inter();
-//  }
-//
-//  if(s.compare(OFF) == 0) {
-//	  cout << "Turning off GMTP-Inter" << endl;
-//	  disable_gmtp_inter();
-//  }
+  if(s.compare(OFF) == 0) {
+	  disable_gmtp_inter();
+  }
 
   return 0;
 }

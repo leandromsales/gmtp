@@ -31,13 +31,13 @@ void set_gmtp_inter(int actived)
 
 inline void disable_gmtp_inter()
 {
-	printf("Trying disable gmtp_inter...\n");
+	printf("Disabling gmtp_inter...\n");
 	set_gmtp_inter(false);
 }
 
 inline void enable_gmtp_inter()
 {
-	printf("Trying enable gmtp_inter...\n");
+	printf("Enabling gmtp_inter...\n");
 	set_gmtp_inter(true);
 }
 

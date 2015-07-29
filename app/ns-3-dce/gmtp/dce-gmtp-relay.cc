@@ -25,11 +25,10 @@ int main(int argc, char *argv[])
 	Ptr<Node> server = CreateObject<Node>();
 	Ptr<Node> relay = CreateObject<Node>();
 	Ptr<Node> c0 = CreateObject<Node>();
-	Ptr<Node> c1 = CreateObject<Node>();
 
 	NodeContainer net1(relay, server);
-	NodeContainer net2(relay, c0, c1);
-	NodeContainer all(relay, server, c0, c1);
+	NodeContainer net2(relay, c0);
+	NodeContainer all(relay, server, c0);
 
 	DceManagerHelper dceManager;
 	dceManager.SetTaskManagerAttribute("FiberManagerType",
@@ -59,29 +58,30 @@ int main(int argc, char *argv[])
 	LinuxStackHelper::PopulateRoutingTables ();
 
 
-	for(int n = 0; n < 4; n++) {
+	for(int n = 0; n < 3; n++) {
 		RunIp(all.Get(n), Seconds(2), "link show");
 		RunIp(all.Get(n), Seconds(2.1), "route show table all");
 		RunIp(all.Get(n), Seconds(2.2), "addr list");
 	}
 
+	RunGtmpInter(relay, Seconds(3.0), "off");
+
 	DceApplicationHelper dce;
 	ApplicationContainer apps;
 
 	dce.SetBinary("gmtp-server");
+//	dce.SetBinary("tcp-server");
 	dce.SetStackSize(1 << 16);
 	dce.ResetArguments();
 	apps = dce.Install(server);
 	apps.Start(Seconds(5.0));
 
 	dce.SetBinary("gmtp-client");
+//	dce.SetBinary("tcp-client");
 	dce.SetStackSize(1 << 16);
 	dce.ResetArguments();
 	dce.AddArgument("10.1.1.2");
 	apps = dce.Install(c0);
-	apps.Start(Seconds(7.0));
-
-	apps = dce.Install(c1);
 	apps.Start(Seconds(8.0));
 
 	csma.EnablePcapAll("dce-gmtp-relay");
