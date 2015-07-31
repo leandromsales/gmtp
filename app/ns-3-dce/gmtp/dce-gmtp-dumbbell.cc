@@ -24,14 +24,21 @@ int main(int argc, char *argv[])
 	CommandLine cmd;
 	cmd.Parse(argc, argv);
 
+	int nclients = 1;
+	int nrelays = 2;
+
 	cout << "Creating nodes..." << endl;
 	Ptr<Node> server = CreateObject<Node>();
-	Ptr<Node> relay = CreateObject<Node>();
-	Ptr<Node> client = CreateObject<Node>();
 
-	NodeContainer net1(relay, server);
-	NodeContainer net2(relay, client);
-	NodeContainer all(relay, server, client);
+	NodeContainer relays;
+	relays.Create (nrelays);
+
+	NodeContainer clients;
+	clients.Create (nclients);
+
+	NodeContainer net1(relays.Get(0), server);
+	NodeContainer net2(relays.Get(1), clients);
+	NodeContainer all(server, relays, clients);
 
 	DceManagerHelper dceManager;
 	dceManager.SetTaskManagerAttribute("FiberManagerType",
@@ -43,11 +50,12 @@ int main(int argc, char *argv[])
 	dceManager.Install(all);
 
 	CsmaHelper csma;
-	csma.SetChannelAttribute("DataRate", StringValue("5Mbps"));
-	csma.SetChannelAttribute("Delay", StringValue("2ms"));
+	csma.SetChannelAttribute("DataRate", StringValue("10Mbps"));
+	csma.SetChannelAttribute("Delay", StringValue("1ms"));
 
 	NetDeviceContainer d1 = csma.Install(net1);
 	NetDeviceContainer d2 = csma.Install(net2);
+	NetDeviceContainer r = csma.Install(relays);
 
 	cout << "Create networks and assign IPv4 Addresses." << endl;
 	Ipv4AddressHelper address;
@@ -57,38 +65,47 @@ int main(int argc, char *argv[])
 	address.SetBase("10.1.2.0", "255.255.255.0");
 	Ipv4InterfaceContainer i2 = address.Assign(d2);
 
+	address.SetBase("10.1.3.0", "255.255.255.0");
+	Ipv4InterfaceContainer i3 = address.Assign(r);
+
 	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 	LinuxStackHelper::PopulateRoutingTables ();
 
+	RunIp(server, Seconds(2.0), "addr list sim0");
+	for(int n = 0; n < nclients; n++)
+		RunIp(clients.Get(n), Seconds(2.1), "addr list sim0");
 
-	for(int n = 0; n < 2; n++) {
-		RunIp(all.Get(n), Seconds(2), "link show");
-		RunIp(all.Get(n), Seconds(2.1), "route show table all");
-		RunIp(all.Get(n), Seconds(2.2), "addr list");
+	for(int n = 0; n < nrelays; n++) {
+		RunIp(relays.Get(n), Seconds(2.2), "addr list sim0");
+		RunIp(relays.Get(n), Seconds(2.3), "addr list sim1");
+		//FIXME Make work with gmtp-inter
+		RunGtmpInter(relays.Get(n), Seconds(3.0), "off");
 	}
 
 	DceApplicationHelper dce;
 	ApplicationContainer apps;
 
+//	dce.SetBinary("tcp-server");
 	dce.SetBinary("gmtp-server");
 	dce.SetStackSize(1 << 16);
 	dce.ResetArguments();
 	apps = dce.Install(server);
-	apps.Start(Seconds(5.0));
+	apps.Start(Seconds(4.0));
 
+//	dce.SetBinary("tcp-client");
 	dce.SetBinary("gmtp-client");
 	dce.SetStackSize(1 << 16);
 	dce.ResetArguments();
 	dce.AddArgument("10.1.1.2");
-	apps = dce.Install(client);
+	apps = dce.Install(clients);
 	apps.Start(Seconds(7.0));
 
-	csma.EnablePcapAll("dce-gmtp-dumbbel");
+	csma.EnablePcapAll("dce-gmtp-dumbbell");
 
 	AsciiTraceHelper ascii;
-	csma.EnableAsciiAll(ascii.CreateFileStream("dce-gmtp-dumbbel.tr"));
+	csma.EnableAsciiAll(ascii.CreateFileStream("dce-gmtp-dumbbell.tr"));
 
-	Simulator::Stop(Seconds(30.0));
+	Simulator::Stop (Seconds (120.0));
 	Simulator::Run();
 	Simulator::Destroy();
 

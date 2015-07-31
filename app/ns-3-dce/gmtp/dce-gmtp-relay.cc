@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
 	CommandLine cmd;
 	cmd.Parse(argc, argv);
 
-	int nclients = 1;
+	int nclients = 2;
 
 	cout << "Creating nodes..." << endl;
 	Ptr<Node> server = CreateObject<Node>();
@@ -60,14 +60,15 @@ int main(int argc, char *argv[])
 
 	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 	LinuxStackHelper::PopulateRoutingTables ();
-//
-//	for(int n = 0; n < 2+nclients; n++) {
+
+	for(int n = 0; n < 2+nclients; n++) {
 //		RunIp(all.Get(n), Seconds(2), "link show");
-//		RunIp(all.Get(n), Seconds(2.1), "route show table all");
-//		RunIp(all.Get(n), Seconds(2.2), "addr list");
-//	}
+		RunIp(all.Get(n), Seconds(2.1), "route show table all");
+		RunIp(all.Get(n), Seconds(2.2), "addr list sim0");
+	}
 
 //	RunGtmpInter(relay, Seconds(3.0), "off");
+	RunIp(relay, Seconds(2.3), "addr list sim1");
 
 	DceApplicationHelper dce;
 	ApplicationContainer apps;

@@ -203,6 +203,11 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 			print_gmtp_packet(iph, gh);
 		}
 
+		if(gh->seq == 550980190 || iph->saddr==0 || iph->daddr == 0) {
+			pr_info("Olha o danado!\n");
+			print_gmtp_packet(iph, gh);
+		}
+
 		switch(gh->type) {
 		case GMTP_PKT_REQUEST:
 			ret = gmtp_inter_request_rcv(skb);

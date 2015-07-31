@@ -645,8 +645,10 @@ static void gmtp_xmit_packet(struct sock *sk, struct sk_buff *skb) {
 	GMTP_SKB_CB(skb)->type = GMTP_PKT_DATA;
 
 	err = gmtp_transmit_skb(sk, skb);
-	if (err)
+	if (err) {
 		gmtp_pr_error("transmit_skb() returned err=%d\n", err);
+		print_gmtp_packet(ip_hdr(skb), gmtp_hdr(skb));
+	}
 
 	/*
 	 * Register this one as sent (even if an error occurred).

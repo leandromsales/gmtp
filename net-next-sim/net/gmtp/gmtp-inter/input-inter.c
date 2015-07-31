@@ -269,7 +269,7 @@ int gmtp_inter_ack_rcv(struct sk_buff *skb)
 	info = entry->info;
 	reporter = gmtp_get_client(&info->clients->list, iph->saddr, gh->sport);
 	if(reporter != NULL) {
-		print_gmtp_packet(iph, gh);
+		pr_info("Reporter is not NULL!\n");
 		reporter->ack_rx_tstamp = jiffies_to_msecs(jiffies);
 	}
 
@@ -357,6 +357,8 @@ static inline void gmtp_update_stats(struct gmtp_flow_info *info,
 	gmtp_inter.total_bytes_rx += skblen(skb);
 	gmtp_inter.ucc_bytes += skblen(skb);
 }
+
+
 
 /**
  * P = p.flowname
