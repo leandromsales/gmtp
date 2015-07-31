@@ -21,14 +21,18 @@ int main(int argc, char *argv[])
 	CommandLine cmd;
 	cmd.Parse(argc, argv);
 
+	int nclients = 1;
+
 	cout << "Creating nodes..." << endl;
 	Ptr<Node> server = CreateObject<Node>();
 	Ptr<Node> relay = CreateObject<Node>();
-	Ptr<Node> c0 = CreateObject<Node>();
+
+	NodeContainer clients;
+	clients.Create (nclients);
 
 	NodeContainer net1(relay, server);
-	NodeContainer net2(relay, c0);
-	NodeContainer all(relay, server, c0);
+	NodeContainer net2(relay, clients);
+	NodeContainer all(relay, server, clients);
 
 	DceManagerHelper dceManager;
 	dceManager.SetTaskManagerAttribute("FiberManagerType",
@@ -40,8 +44,8 @@ int main(int argc, char *argv[])
 	dceManager.Install(all);
 
 	CsmaHelper csma;
-	csma.SetChannelAttribute("DataRate", StringValue("5Mbps"));
-	csma.SetChannelAttribute("Delay", StringValue("2ms"));
+	csma.SetChannelAttribute("DataRate", StringValue("10Mbps"));
+	csma.SetChannelAttribute("Delay", StringValue("1ms"));
 
 	NetDeviceContainer d1 = csma.Install(net1);
 	NetDeviceContainer d2 = csma.Install(net2);
@@ -56,40 +60,41 @@ int main(int argc, char *argv[])
 
 	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 	LinuxStackHelper::PopulateRoutingTables ();
+//
+//	for(int n = 0; n < 2+nclients; n++) {
+//		RunIp(all.Get(n), Seconds(2), "link show");
+//		RunIp(all.Get(n), Seconds(2.1), "route show table all");
+//		RunIp(all.Get(n), Seconds(2.2), "addr list");
+//	}
 
-
-	for(int n = 0; n < 3; n++) {
-		RunIp(all.Get(n), Seconds(2), "link show");
-		RunIp(all.Get(n), Seconds(2.1), "route show table all");
-		RunIp(all.Get(n), Seconds(2.2), "addr list");
-	}
-
-	RunGtmpInter(relay, Seconds(3.0), "off");
+//	RunGtmpInter(relay, Seconds(3.0), "off");
 
 	DceApplicationHelper dce;
 	ApplicationContainer apps;
 
 	dce.SetBinary("gmtp-server");
-//	dce.SetBinary("tcp-server");
 	dce.SetStackSize(1 << 16);
 	dce.ResetArguments();
 	apps = dce.Install(server);
-	apps.Start(Seconds(5.0));
+	apps.Start(Seconds(4.0));
 
-	dce.SetBinary("gmtp-client");
-//	dce.SetBinary("tcp-client");
-	dce.SetStackSize(1 << 16);
-	dce.ResetArguments();
-	dce.AddArgument("10.1.1.2");
-	apps = dce.Install(c0);
-	apps.Start(Seconds(8.0));
+	float start = 5.0;
+	for(int i=0; i<nclients; ++i, start+=(float)(i)/10) {
+		dce.SetBinary("gmtp-client");
+		dce.SetStackSize(1 << 16);
+		dce.ResetArguments();
+		dce.AddArgument("10.1.1.2");
+		apps = dce.Install(clients.Get(i));
+		cout << "Starting client... " << start << endl;
+		apps.Start(Seconds(start));
+	}
 
 	csma.EnablePcapAll("dce-gmtp-relay");
 
 	AsciiTraceHelper ascii;
 	csma.EnableAsciiAll(ascii.CreateFileStream("dce-gmtp-relay.tr"));
 
-	Simulator::Stop(Seconds(60.0));
+	Simulator::Stop (Seconds (120.0));
 	Simulator::Run();
 	Simulator::Destroy();
 

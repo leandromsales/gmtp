@@ -584,16 +584,18 @@ static long gmtp_wait_for_delay(struct sock *sk, unsigned long delay)
 	return remaining;
 }
 
+
+
 static inline unsigned int packet_len(struct sk_buff *skb)
 {
 	/* Total = Data + (GMTP + IP + MAC) */
-	return skb->len + (gmtp_hdr_len(skb) + 20 + ETH_HLEN);
+	return skb->len + (gmtp_data_hdr_len() + 20 + ETH_HLEN);
 }
 
 static inline unsigned int payload_len(struct sk_buff *skb)
 {
 	/* Data = Total - (GMTP + IP + MAC) */
-	return skb->len - (gmtp_hdr_len(skb) + 20 + ETH_HLEN);
+	return skb->len - (gmtp_data_hdr_len() + 20 + ETH_HLEN);
 }
 
 /*static inline void packet_sent(struct gmtp_sock *gp, int data_len)*/
@@ -603,7 +605,7 @@ static inline void packet_sent(struct sock *sk, struct sk_buff *skb)
 	unsigned long elapsed = 0;
 	int data_len = payload_len(skb);
 
-	if(gp->tx_dpkts_sent == 0)
+	if(unlikely(gp->tx_dpkts_sent == 0))
 		gmtp_pr_info("Start sending data packets...\n\n");
 
 	++gp->tx_dpkts_sent;

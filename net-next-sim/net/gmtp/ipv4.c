@@ -835,7 +835,7 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 	 *
 	 * Only accept multicast packets from relays
 	 */
-	if(skb->pkt_type == PACKET_MULTICAST && gh->relay == 1) {
+	if(skb->pkt_type == PACKET_MULTICAST) {
 
 		struct gmtp_client *tmp;
 		struct gmtp_client_entry *media_entry = gmtp_lookup_client(

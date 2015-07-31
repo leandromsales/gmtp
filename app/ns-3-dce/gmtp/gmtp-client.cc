@@ -9,13 +9,26 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <iostream>
+#include <ctime>
+#include <cstdio>
 
 #include "gmtp.h"
 
 #define PORT 2000
-#define BUF_SIZE 1024
+#define BUF_SIZE 64
 
-using namespace std;
+inline void print_stats(int i, time_t start, int total, int total_data)
+{
+	time_t time_elapsed = time(0) - start;
+	int elapsed = static_cast<int>(time_elapsed);
+
+	printf("%d packets received in %d s!\n", i, (int)elapsed);
+	printf("%d data bytes received (%d B/packet)\n", total_data, total/i);
+	printf("%d bytes received (%d B/packet)\n", total, total/i);
+	printf("Data RX: %d B/s\n", total_data/elapsed);
+	printf("RX: %d B/s\n", total/elapsed);
+	printf("-----------------\n");
+}
 
 int main(int argc, char**argv)
 {
@@ -24,6 +37,8 @@ int main(int argc, char**argv)
 	struct hostent * server;
 	char * serverAddr;
 	char buffer[BUF_SIZE];
+
+	printf("Starting GMTP Client...\n");
 
 	if(argc < 2) {
 		printf("usage: client < ip address >\n");
@@ -40,7 +55,7 @@ int main(int argc, char**argv)
 		printf("Error creating socket!\n");
 		exit(1);
 	}
-	printf("Socket created...\n");
+	printf("Socket created...");
 
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
@@ -54,14 +69,21 @@ int main(int argc, char**argv)
 	}
 
 	printf("Connected to the server...\n");
+	time_t start = time(0);
 	int i = 0;
+	int size, total, total_data;
 	do {
-		recv(sockfd, buffer, BUF_SIZE, 0);
+		size = recv(sockfd, buffer, BUF_SIZE, 0);
+		total += size + 36 + 20;
+		total_data += size;
 		++i;
-//		printf("Received (%d): %s\n", i, buffer);
+		if(i%1000 == 0) {
+			printf("Received (%d): %s\n",  i, buffer);
+			print_stats(i, start, total, total_data);
+		}
 	} while(strcmp(buffer, "out") != 0);
 
-	printf("%d packets received!\n", i);
+	print_stats(i, start, total, total_data);
 
 	return 0;
 }

@@ -15,8 +15,8 @@ int main(int argc, char *argv[])
 	nodes.Create(2);
 
 	CsmaHelper csma;
-	csma.SetChannelAttribute("DataRate", StringValue("5Mbps"));
-	csma.SetChannelAttribute("Delay", StringValue("2ms"));
+	csma.SetChannelAttribute("DataRate", StringValue("10Mbps"));
+	csma.SetChannelAttribute("Delay", StringValue("1ms"));
 	NetDeviceContainer devices = csma.Install(nodes);
 
 	DceManagerHelper dceManager;

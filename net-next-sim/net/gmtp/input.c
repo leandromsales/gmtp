@@ -121,6 +121,7 @@ struct sock* gmtp_multicast_connect(struct sock *sk, enum gmtp_sock_type type,
 {
 	struct sock *newsk;
 	struct ip_mreqn mreq;
+	int ret;
 
 	gmtp_pr_func();
 
@@ -136,15 +137,15 @@ struct sock* gmtp_multicast_connect(struct sock *sk, enum gmtp_sock_type type,
 
 	mreq.imr_multiaddr.s_addr = addr;
 	mreq.imr_address.s_addr = htonl(INADDR_ANY);
-	/* FIXME Interface index must be filled ? */
-	mreq.imr_ifindex = 0;
+	/* NS-3 sim0 interface is 7 */
+	mreq.imr_ifindex = 7;
 
 	gmtp_pr_debug("Joining the multicast group in %pI4@%-5d",
 			&addr, ntohs(port));
-
 	rtnl_lock();
-	ip_mc_join_group(newsk, &mreq);
+	ret = ip_mc_join_group(newsk, &mreq);
 	rtnl_unlock();
+	pr_info("ip_mc_join_group returned %d\n", ret);
 
 	__inet_hash_nolisten(newsk, NULL);
 

@@ -5,26 +5,38 @@
 #include <string.h>
 #include <iostream>
 #include <arpa/inet.h>
-#include <cstdio>
 
 #include "gmtp.h"
 
 #define SERVER_PORT 2000
 
+using namespace std;
+
+static inline void print_stats(int i, time_t start, int total, int total_data)
+{
+	time_t elapsed = time(0) - start;
+	cout << i << " packets sent in " << elapsed << " s!" << endl;
+	cout << total_data << " data bytes sent (" << total_data/i << " B/packet)" << endl;
+	cout << total << " bytes sent (data+hdr) (" << total/i << " B/packet)" << endl;
+	cout << "Data TX: " << total_data/elapsed << " B/s" << endl;
+	cout << "TX: " << total/elapsed << " B/s" << endl;
+}
+
 int main(int argc, char *argv[])
 {
 	int welcomeSocket, newSocket;
-	char buffer[1024];
 	struct sockaddr_in serverAddr;
 	struct sockaddr_storage serverStorage;
 	socklen_t addr_size;
-	int max_tx = 20000;
+	int max_tx = 30000; // Bps
+
+	cout << "Starting GMTP Server..." << endl;
 
 	disable_gmtp_inter();
 	welcomeSocket = socket(PF_INET, SOCK_GMTP, IPPROTO_GMTP);
 	setsockopt(welcomeSocket, SOL_GMTP, GMTP_SOCKOPT_FLOWNAME, "1234567812345678", 16);
 
-	printf("Limiting tx_rate...\n");
+	cout << "Limiting tx_rate to " << max_tx << " B/s" << endl;
 	setsockopt(welcomeSocket, SOL_GMTP, GMTP_SOCKOPT_MAX_TX_RATE, &max_tx, sizeof(max_tx));
 
 	serverAddr.sin_family = AF_INET;
@@ -35,29 +47,33 @@ int main(int argc, char *argv[])
 	bind(welcomeSocket, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
 
 	if(listen(welcomeSocket, 5) == 0)
-		std::cout << "Listening\n";
+		cout << "Listening\n";
 	else
-		std::cout << "Error\n";
+		cout << "Error\n";
 
 	addr_size = sizeof serverStorage;
 	newSocket = accept(welcomeSocket, (struct sockaddr *)&serverStorage,
 			&addr_size);
 
+	cout << "Connected with client!" << endl;
+	time_t start = time(0);
 	int i;
 	const char *msg = "Hello, World!";
-	for(i = 0; i < 50000; ++i) {
-//		std::cout << "Sending (" << i << "): " << msg << std::endl;
-		strcpy(buffer, msg);
-		send(newSocket, buffer, strlen(msg) + 1, 0);
+	int total_data, total, size = strlen(msg) + 1;
+	for(i = 0; i < 10000; ++i) {
+//		cout << "Sending (" << i << "): " << msg << endl;
+		send(newSocket, msg, size, 0);
+		total += size + 36 + 20;
+		total_data += size;
 	}
 	delete (msg);
 
-	std::cout << i << " packets sent!" << std::endl;
 	const char *out = "out";
-	std::cout << "Sending out: " << out << std::endl;
-	strcpy(buffer, out);
-	send(newSocket, buffer, strlen(out) + 1, 0);
+	cout << "Sending out: " << out << std::endl;
+	send(newSocket, out, strlen(out) + 1, 0);
 	delete (out);
+
+	print_stats(i, start, total, total_data);
 
 	return 0;
 }

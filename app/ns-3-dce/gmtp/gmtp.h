@@ -1,6 +1,5 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#include <stdio.h>
 
 #ifndef GMTP_H_
 #define GMTP_H_
@@ -31,13 +30,11 @@ void set_gmtp_inter(int actived)
 
 inline void disable_gmtp_inter()
 {
-	printf("Disabling gmtp_inter...\n");
 	set_gmtp_inter(false);
 }
 
 inline void enable_gmtp_inter()
 {
-	printf("Enabling gmtp_inter...\n");
 	set_gmtp_inter(true);
 }
 
