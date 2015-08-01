@@ -5,7 +5,7 @@
 #include <string.h>
 #include <iostream>
 #include <arpa/inet.h>
-
+#include <cstdio>
 #include "gmtp.h"
 
 #define SERVER_PORT 2000
@@ -15,6 +15,7 @@ using namespace std;
 static inline void print_stats(int i, time_t start, int total, int total_data)
 {
 	time_t elapsed = time(0) - start;
+	if(elapsed==0) elapsed=1;
 	cout << i << " packets sent in " << elapsed << " s!" << endl;
 	cout << total_data << " data bytes sent (" << total_data/i << " B/packet)" << endl;
 	cout << total << " bytes sent (data+hdr) (" << total/i << " B/packet)" << endl;
@@ -60,20 +61,20 @@ int main(int argc, char *argv[])
 	int i;
 	const char *msg = "Hello, World!";
 	int total_data, total, size = strlen(msg) + 1;
-	for(i = 0; i < 10000; ++i) {
-//		cout << "Sending (" << i << "): " << msg << endl;
+	for(i = 0; i < 50000; ++i) {
 		send(newSocket, msg, size, 0);
 		total += size + 36 + 20;
 		total_data += size;
 	}
-	delete (msg);
-
-	const char *out = "out";
-	cout << "Sending out: " << out << std::endl;
-	send(newSocket, out, strlen(out) + 1, 0);
-	delete (out);
 
 	print_stats(i, start, total, total_data);
+
+	const char *outstr = "out";
+	// Send 'out' 5 times for now... gmtp-inter bug...
+	for(i = 0; i < 6; ++i) {
+		printf("Sending out: %s\n", outstr);
+		send(newSocket, outstr, strlen(outstr), 0);
+	}
 
 	return 0;
 }

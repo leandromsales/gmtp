@@ -11,6 +11,7 @@
 #include <iostream>
 #include <ctime>
 #include <cstdio>
+#include <cstring>
 
 #include "gmtp.h"
 
@@ -21,6 +22,7 @@ inline void print_stats(int i, time_t start, int total, int total_data)
 {
 	time_t time_elapsed = time(0) - start;
 	int elapsed = static_cast<int>(time_elapsed);
+	if(elapsed==0) elapsed ++;
 
 	printf("%d packets received in %d s!\n", i, (int)elapsed);
 	printf("%d data bytes received (%d B/packet)\n", total_data, total/i);
@@ -55,7 +57,7 @@ int main(int argc, char**argv)
 		printf("Error creating socket!\n");
 		exit(1);
 	}
-	printf("Socket created...");
+	printf("Socket created...\n");
 
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
@@ -72,16 +74,18 @@ int main(int argc, char**argv)
 	time_t start = time(0);
 	int i = 0;
 	int size, total, total_data;
+	const char *outstr = "out";
 	do {
+		memset(buffer, '\0', BUF_SIZE); //Clean buffer
 		size = recv(sockfd, buffer, BUF_SIZE, 0);
+		++i;
 		total += size + 36 + 20;
 		total_data += size;
-		++i;
-		if(i%1000 == 0) {
+//		if(i%100 == 0) {
 			printf("Received (%d): %s\n",  i, buffer);
 			print_stats(i, start, total, total_data);
-		}
-	} while(strcmp(buffer, "out") != 0);
+//		}
+	} while(strcmp(buffer, outstr) != 0);
 
 	print_stats(i, start, total, total_data);
 

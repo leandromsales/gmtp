@@ -226,6 +226,15 @@ struct gmtp_sock {
 	unsigned long			tx_max_rate;
 	int 				tx_byte_budget;
 	int				tx_adj_budget;
+
+/*	struct tasklet_struct		xmitlet;*/
+	struct timer_list		xmit_timer;
+/*	struct sk_buff			*pending_skb;*/
+};
+
+struct gmtp_packet_info {
+	struct sock			*sk;
+	struct sk_buff			*skb;
 };
 
 static inline struct gmtp_sock *gmtp_sk(const struct sock *sk)

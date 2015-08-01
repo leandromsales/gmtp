@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
 	CommandLine cmd;
 	cmd.Parse(argc, argv);
 
-	int nclients = 2;
+	int nclients = 10;
 
 	cout << "Creating nodes..." << endl;
 	Ptr<Node> server = CreateObject<Node>();
@@ -33,6 +33,8 @@ int main(int argc, char *argv[])
 	NodeContainer net1(relay, server);
 	NodeContainer net2(relay, clients);
 	NodeContainer all(relay, server, clients);
+//	NodeContainer net2(relay, clients.Get(0), clients.Get(1));
+//	NodeContainer all(relay, server, clients.Get(0), clients.Get(1));
 
 	DceManagerHelper dceManager;
 	dceManager.SetTaskManagerAttribute("FiberManagerType",
@@ -74,28 +76,31 @@ int main(int argc, char *argv[])
 	ApplicationContainer apps;
 
 	dce.SetBinary("gmtp-server");
-	dce.SetStackSize(1 << 16);
+	dce.SetStackSize(1 << 31);
 	dce.ResetArguments();
 	apps = dce.Install(server);
 	apps.Start(Seconds(4.0));
 
-	float start = 5.0;
-	for(int i=0; i<nclients; ++i, start+=(float)(i)/10) {
-		dce.SetBinary("gmtp-client");
-		dce.SetStackSize(1 << 16);
-		dce.ResetArguments();
-		dce.AddArgument("10.1.1.2");
-		apps = dce.Install(clients.Get(i));
-		cout << "Starting client... " << start << endl;
-		apps.Start(Seconds(start));
-	}
+	dce.SetBinary("gmtp-client");
+	dce.SetStackSize(1 << 16);
+	dce.ResetArguments();
+	dce.AddArgument("10.1.1.2");
+//	apps = dce.Install(clients.Get(0));
+//	apps.Start(Seconds(5));
+//
+//	apps = dce.Install(clients.Get(1));
+//	apps.Start(Seconds(5.1));
+
+	apps = dce.Install(clients);
+	apps.Start(Seconds(5));
+
 
 	csma.EnablePcapAll("dce-gmtp-relay");
 
 	AsciiTraceHelper ascii;
 	csma.EnableAsciiAll(ascii.CreateFileStream("dce-gmtp-relay.tr"));
 
-	Simulator::Stop (Seconds (120.0));
+	Simulator::Stop (Seconds (300.0));
 	Simulator::Run();
 	Simulator::Destroy();
 

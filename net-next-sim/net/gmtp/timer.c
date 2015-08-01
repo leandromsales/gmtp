@@ -36,16 +36,15 @@ static int gmtp_write_timeout(struct sock *sk)
 			dst_negative_advice(sk);
 		retry_until = icsk->icsk_syn_retries ?
 			    : TCP_SYN_RETRIES;
+
 	} else {
 		if (icsk->icsk_retransmits >= TCP_RETR1) {
 		/* NOTE. draft-ietf-tcpimpl-pmtud-01.txt requires pmtu
 		   black hole detection. :-(
-
 		   It is place to make it. It is not made. I do not want
 		   to make it. It is disguisting. It does not work in any
 		   case. Let me to cite the same draft, which requires for
 		   us to implement this:
-
    "The one security concern raised by this memo is that ICMP black holes
    are often caused by over-zealous security administrators who block
    all ICMP messages.  It is vitally important that those who design and
@@ -54,7 +53,6 @@ static int gmtp_write_timeout(struct sock *sk)
    if most TCP implementations cannot transfer data from it.  It would
    be far nicer to have all of the black holes fixed rather than fixing
    all of the TCP implementations."
-
 			   Golden words :-).
 		   */
 
@@ -62,10 +60,14 @@ static int gmtp_write_timeout(struct sock *sk)
 		}
 
 		retry_until = TCP_RETR2;
-		/*
-		 * FIXME: see tcp_write_timout and tcp_out_of_resources
-		 */
 	}
+
+
+	/*if(sk->sk_state == GMTP_OPEN &&
+			gmtp_sk(sk)->role == GMTP_ROLE_SERVER) {
+
+		gmtp_write_xmit(sk);
+	}*/
 
 	if (icsk->icsk_retransmits >= retry_until) {
 		/* Has it gone just too far? */
@@ -327,11 +329,49 @@ out:
 	sock_put(sk);
 }
 
+
+/**
+ * gmtp_write_xmitlet  -  Workhorse for packet dequeueing interface
+ */
+/*static void gmtp_write_xmitlet(unsigned long data)
+{
+	struct sock *sk = (struct sock *)data;
+
+	bh_lock_sock(sk);
+	if (sock_owned_by_user(sk)) {
+		pr_info("sock_owned_by_user(sk)\n");
+		sk_reset_timer(sk, &gmtp_sk(sk)->xmit_timer, jiffies + 1);
+	}
+	else {
+		pr_info("timer calling gmtp_write_xmit(sk)\n");
+		gmtp_write_xmit(sk, gmtp_sk(sk)->pending_skb);
+	}
+	bh_unlock_sock(sk);
+}
+*/
+
+void gmtp_write_xmit_timer(unsigned long data)
+{
+	/*gmtp_write_xmitlet(data);
+	sock_put((struct sock *)data);*/
+	struct gmtp_packet_info *pkt_info = (struct gmtp_packet_info*) data;
+	gmtp_pr_func();
+	gmtp_write_xmit(pkt_info->sk, pkt_info->skb);
+	del_timer_sync(&gmtp_sk(pkt_info->sk)->xmit_timer);
+	kfree(pkt_info);
+}
+EXPORT_SYMBOL_GPL(gmtp_write_xmit_timer);
+
 void gmtp_init_xmit_timers(struct sock *sk)
 {
+	struct gmtp_sock *gp = gmtp_sk(sk);
 	gmtp_pr_func();
+
+	/*tasklet_init(&gp->xmitlet, gmtp_write_xmitlet, (unsigned long) sk);*/
+	/*setup_timer(&gp->xmit_timer, gmtp_write_xmit_timer,(unsigned long) sk);*/
+
 	inet_csk_init_xmit_timers(sk, &gmtp_write_timer, &gmtp_delack_timer,
-			&gmtp_keepalive_timer);
+				&gmtp_keepalive_timer);
 }
 
 

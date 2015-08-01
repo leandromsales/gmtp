@@ -133,9 +133,12 @@ static inline struct gmtp_client *jump_over_gmtp_intra(struct sk_buff *skb,
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct gmtp_client *client = gmtp_get_first_client(list_head);
 
-	gh->dport = client->port;
-	iph->daddr = client->addr;
-	ip_send_check(iph);
+	if(client != NULL) {
+		gh->dport = client->port;
+		iph->daddr = client->addr;
+		ip_send_check(iph);
+	} else
+		pr_info("There are no clients anymore!\n");
 	return client;
 }
 
