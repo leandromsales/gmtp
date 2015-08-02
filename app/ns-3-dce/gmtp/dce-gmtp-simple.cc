@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
 
 	csma.EnablePcapAll("dce-gmtp-simple");
 
-	Simulator::Stop(Seconds(600.0));
+	Simulator::Stop(Seconds(1200.0));
 	Simulator::Run();
 	Simulator::Destroy();
 

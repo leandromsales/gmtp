@@ -745,14 +745,6 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 wait:
 	delay2 += delay_budget;
 	pr_info("delay2 += delay_budget ==> %ld ms\n", delay2);
-	/*if(delay2 > 0)
-		gmtp_wait_for_delay(sk, delay2);*/
-
-	/*if(delay2 > 0) {
-		gp->pending_skb = skb;
-		sk_reset_timer(sk, &gp->xmit_timer, jiffies + delay2);
-		return;
-	}*/
 
 	/*
 	 * TODO More tests with byte_budgets...

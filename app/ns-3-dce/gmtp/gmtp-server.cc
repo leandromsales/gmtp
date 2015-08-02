@@ -6,9 +6,11 @@
 #include <iostream>
 #include <arpa/inet.h>
 #include <cstdio>
+#include <cstring>
 #include "gmtp.h"
 
 #define SERVER_PORT 2000
+#define BUFF_SIZE 64
 
 using namespace std;
 
@@ -59,12 +61,19 @@ int main(int argc, char *argv[])
 	cout << "Connected with client!" << endl;
 	time_t start = time(0);
 	int i;
-	const char *msg = "Hello, World!";
-	int total_data, total, size = strlen(msg) + 1;
+	const char *msg = "Hello, World! ";
+	int total_data, total;
 	for(i = 0; i < 50000; ++i) {
-		send(newSocket, msg, size, 0);
+		const char *num = NumStr(i+1);
+		char *buffer = new char(BUFF_SIZE);
+		strcpy(buffer, msg);
+		strcat(buffer, num);
+		int size = strlen(msg) + strlen(num)+1;
+		send(newSocket, buffer, size, 0);
 		total += size + 36 + 20;
 		total_data += size;
+		delete(buffer);
+		delete(num);
 	}
 
 	print_stats(i, start, total, total_data);

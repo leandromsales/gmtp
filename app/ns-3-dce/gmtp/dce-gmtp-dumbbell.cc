@@ -9,11 +9,11 @@
 // Network topology
 // //
 //  c0					  s
-//     \ 5 Mb/s, 2ms			 /
-//      \          1.5Mb/s, 10ms	/
-//       r0 --------------------------r1
+//     \ 10 Mb/s, 1ms			 /
+//      \          10Mb/s, 1ms		/
+//       r1 --------------------------r0
 //      /
-//     / 5 Mb/s, 2ms
+//     / 10 Mb/s, 1ms
 //   c1
 // //
 using namespace ns3;
@@ -79,20 +79,20 @@ int main(int argc, char *argv[])
 		RunIp(relays.Get(n), Seconds(2.2), "addr list sim0");
 		RunIp(relays.Get(n), Seconds(2.3), "addr list sim1");
 		//FIXME Make work with gmtp-inter
-		RunGtmpInter(relays.Get(n), Seconds(3.0), "off");
+//		RunGtmpInter(relays.Get(n), Seconds(2.5), "off");
 	}
+
+	RunGtmpInter(relays.Get(0), Seconds(2.5), "off");
 
 	DceApplicationHelper dce;
 	ApplicationContainer apps;
 
-//	dce.SetBinary("tcp-server");
 	dce.SetBinary("gmtp-server");
-	dce.SetStackSize(1 << 16);
+	dce.SetStackSize(1 << 31);
 	dce.ResetArguments();
 	apps = dce.Install(server);
 	apps.Start(Seconds(4.0));
 
-//	dce.SetBinary("tcp-client");
 	dce.SetBinary("gmtp-client");
 	dce.SetStackSize(1 << 16);
 	dce.ResetArguments();
@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
 	AsciiTraceHelper ascii;
 	csma.EnableAsciiAll(ascii.CreateFileStream("dce-gmtp-dumbbell.tr"));
 
-	Simulator::Stop (Seconds (120.0));
+	Simulator::Stop (Seconds (1200.0));
 	Simulator::Run();
 	Simulator::Destroy();
 

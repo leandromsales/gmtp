@@ -1,5 +1,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <sstream>
+#include <string>
 
 #ifndef GMTP_H_
 #define GMTP_H_
@@ -7,6 +9,11 @@
 #define SOCK_GMTP     7
 #define IPPROTO_GMTP  254
 #define SOL_GMTP      281
+
+#define NumStr(Number) static_cast<ostringstream*>( &(ostringstream() << Number) )->str().c_str()
+
+
+int Number = 123;
 
 enum gmtp_sockopt_codes {
 	GMTP_SOCKOPT_FLOWNAME = 1,

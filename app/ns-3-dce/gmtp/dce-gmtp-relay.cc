@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
 	CommandLine cmd;
 	cmd.Parse(argc, argv);
 
-	int nclients = 10;
+	int nclients = 1;
 
 	cout << "Creating nodes..." << endl;
 	Ptr<Node> server = CreateObject<Node>();
@@ -33,8 +33,6 @@ int main(int argc, char *argv[])
 	NodeContainer net1(relay, server);
 	NodeContainer net2(relay, clients);
 	NodeContainer all(relay, server, clients);
-//	NodeContainer net2(relay, clients.Get(0), clients.Get(1));
-//	NodeContainer all(relay, server, clients.Get(0), clients.Get(1));
 
 	DceManagerHelper dceManager;
 	dceManager.SetTaskManagerAttribute("FiberManagerType",
@@ -85,12 +83,6 @@ int main(int argc, char *argv[])
 	dce.SetStackSize(1 << 16);
 	dce.ResetArguments();
 	dce.AddArgument("10.1.1.2");
-//	apps = dce.Install(clients.Get(0));
-//	apps.Start(Seconds(5));
-//
-//	apps = dce.Install(clients.Get(1));
-//	apps.Start(Seconds(5.1));
-
 	apps = dce.Install(clients);
 	apps.Start(Seconds(5));
 
@@ -100,7 +92,7 @@ int main(int argc, char *argv[])
 	AsciiTraceHelper ascii;
 	csma.EnableAsciiAll(ascii.CreateFileStream("dce-gmtp-relay.tr"));
 
-	Simulator::Stop (Seconds (300.0));
+	Simulator::Stop (Seconds (1200.0));
 	Simulator::Run();
 	Simulator::Destroy();
 
