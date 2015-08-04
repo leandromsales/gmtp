@@ -80,7 +80,7 @@ unsigned char *gmtp_inter_build_relay_id(void)
 	char mac_address[6];
 
 	char buffer[50];
-	__u8 *str[30];
+	u8 *str[30];
 
 	gmtp_print_function();
 
@@ -196,20 +196,13 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 
 		struct gmtp_hdr *gh = gmtp_hdr(skb);
 
-		if(gh->type != GMTP_PKT_DATA && gh->type != GMTP_PKT_FEEDBACK) {
-			gmtp_pr_debug("GMTP packet: %s (%d)",
-					gmtp_packet_name(gh->type), gh->type);
-			print_packet(skb, true);
-			print_gmtp_packet(iph, gh);
-		}
-
-		/*if((gh->seq >= 550980189 && gh->seq <= 550980192) ||
-				(gh->seq >= 550980610))
-			print_gmtp_packet(iph, gh);*/
-
 		switch(gh->type) {
 		case GMTP_PKT_REQUEST:
-			ret = gmtp_inter_request_rcv(skb);
+			if(iph->ttl == 1) {
+				print_packet(skb, true);
+				print_gmtp_packet(iph, gh);
+				ret = gmtp_inter_request_rcv(skb);
+			}
 			break;
 		case GMTP_PKT_REGISTER_REPLY:
 			ret = gmtp_inter_register_reply_rcv(skb);
@@ -251,13 +244,6 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 	if(iph->protocol == IPPROTO_GMTP) {
 
 		struct gmtp_hdr *gh = gmtp_hdr(skb);
-
-		if(gh->type != GMTP_PKT_DATA) {
-			gmtp_print_debug("GMTP packet: %s (%d)",
-					gmtp_packet_name(gh->type), gh->type);
-			print_packet(skb, false);
-			print_gmtp_packet(iph, gh);
-		}
 
 		switch(gh->type) {
 		case GMTP_PKT_REGISTER:
@@ -307,13 +293,13 @@ int init_module()
 	if(rid == NULL) {
 		int i;
 		 __u8 id[21];
+		 unsigned long now = jiffies;
 		gmtp_pr_error("Relay ID lookup failed...\n");
 		gmtp_pr_info("Creating a random id (based on jiffies).\n");
 		memset(gmtp_inter.relay_id, 0, GMTP_FLOWNAME_LEN);
-		for(i = 0; i < GMTP_FLOWNAME_LEN; i += sizeof(jiffies)) {
-			memcpy(&gmtp_inter.relay_id[i], &jiffies, sizeof(jiffies));
+		for(i = 0; i < GMTP_FLOWNAME_LEN; i += sizeof(now)) {
+			memcpy(&gmtp_inter.relay_id[i], &now, sizeof(now));
 		}
-		pr_info("Getting relay id...\n");
 		flowname_strn(id, gmtp_inter.relay_id, MD5_LEN);
 		pr_info("Relay ID = %s\n", id);
 	} else

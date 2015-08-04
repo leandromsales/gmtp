@@ -238,6 +238,7 @@ struct gmtp_skb_cb {
 	__u8 reset_code,
 		reset_data[3];
 	__u8 elect_code:2;
+	__u8 retransmits;
 	__be32 seq;
 	__be32 server_tstamp;
 };

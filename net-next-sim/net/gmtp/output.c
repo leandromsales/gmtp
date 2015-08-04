@@ -22,7 +22,6 @@ static inline void gmtp_event_ack_sent(struct sock *sk)
 
 /* enqueue @skb on sk_send_head for retransmission, return clone to send now */
 static struct sk_buff *gmtp_skb_entail(struct sock *sk, struct sk_buff *skb) {
-	gmtp_print_function();
 	skb_set_owner_w(skb, sk);
 	WARN_ON(sk->sk_send_head);
 	sk->sk_send_head = skb;
@@ -58,6 +57,7 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 			break;
 		case GMTP_PKT_REQUEST:
 			set_ack = 0;
+			GMTP_SKB_CB(skb)->retransmits = icsk->icsk_retransmits;
 			/* Use ISS on the first (non-retransmitted) Request. */
 			if (icsk->icsk_retransmits == 0)
 				gcb->seq = gp->iss;
@@ -124,8 +124,6 @@ unsigned int gmtp_sync_mss(struct sock *sk, u32 pmtu)
 	struct gmtp_sock *gp = gmtp_sk(sk);
 	u32 cur_mps = pmtu;
 
-	gmtp_print_function();
-
 	/* Account for header lengths and IPv4/v6 option overhead */
 	/* FIXME Account variable part of GMTP Header */
 	cur_mps -= (icsk->icsk_af_ops->net_header_len + icsk->icsk_ext_hdr_len +
@@ -134,8 +132,6 @@ unsigned int gmtp_sync_mss(struct sock *sk, u32 pmtu)
 	/* And store cached results */
 	icsk->icsk_pmtu_cookie = pmtu;
 	gp->mss = cur_mps;
-
-	gmtp_print_debug("mss: %u", gp->mss);
 
 	return cur_mps;
 }

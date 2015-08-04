@@ -1,10 +1,8 @@
 #include <linux/init.h>
 #include <linux/module.h>
-
 #include <linux/err.h>
 #include <linux/errno.h>
 #include <linux/types.h>
-
 #include <net/inet_hashtables.h>
 #include <net/inet_common.h>
 #include <net/inet_connection_sock.h>
@@ -15,17 +13,20 @@
 #include <net/sock.h>
 #include <net/xfrm.h>
 #include <net/secure_seq.h>
+#include <linux/netfilter.h>
+#include <linux/netfilter_ipv4.h>
 
 #include <uapi/linux/gmtp.h>
 #include <linux/gmtp.h>
 #include "gmtp.h"
+
+static struct nf_hook_ops nfho_gmtp_out;
 
 extern int sysctl_ip_nonlocal_bind __read_mostly;
 extern struct inet_timewait_death_row gmtp_death_row;
 
 static inline __u32 gmtp_v4_init_sequence(const struct sk_buff *skb)
 {
-	gmtp_print_function();
 	return secure_gmtp_sequence_number(ip_hdr(skb)->daddr,
 			ip_hdr(skb)->saddr, gmtp_hdr(skb)->sport,
 			gmtp_hdr(skb)->dport);
@@ -51,7 +52,6 @@ struct sock* gmtp_v4_build_control_sk(struct sock *sk)
 
 int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 {
-
 	const struct sockaddr_in *usin = (struct sockaddr_in *)uaddr;
 	struct inet_sock *inet = inet_sk(sk);
 	struct gmtp_sock *gp = gmtp_sk(sk);
@@ -103,7 +103,6 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 	if(inet->inet_saddr == 0)
 		inet->inet_saddr = fl4->saddr;
 	inet->inet_rcv_saddr = inet->inet_saddr;
-
 	inet->inet_dport = usin->sin_port;
 	inet->inet_daddr = daddr;
 
@@ -177,6 +176,7 @@ void gmtp_v4_err(struct sk_buff *skb, u32 info)
 	const struct gmtp_hdr *gh = (struct gmtp_hdr *)(skb->data + offset);
 	struct gmtp_sock *gp;
 	struct inet_sock *inet;
+	struct inet_connection_sock *icsk;
 	const int type = icmp_hdr(skb)->type;
 	const int code = icmp_hdr(skb)->code;
 	struct sock *sk;
@@ -186,7 +186,7 @@ void gmtp_v4_err(struct sk_buff *skb, u32 info)
 
 	struct request_sock *req, **prev;
 
-	gmtp_print_function();
+	gmtp_pr_debug("ICMP error. Type: %d, Code: %d", type, code);
 
 	if(skb->len < offset + sizeof(*gh)) {
 		ICMP_INC_STATS_BH(net, ICMP_MIB_INERRORS);
@@ -252,8 +252,11 @@ void gmtp_v4_err(struct sk_buff *skb, u32 info)
 		goto out;
 	}
 
+	icsk = inet_csk(sk);
 	switch(sk->sk_state) {
 	case GMTP_REQUESTING:
+		if(err == EHOSTUNREACH && icsk->icsk_retransmits <= 3)
+			goto out;
 	case GMTP_REQUEST_RECV:
 		if(!sock_owned_by_user(sk)) {
 			sk->sk_err = err;
@@ -946,8 +949,10 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
 		goto drop_and_free;
 
 	ireq = inet_rsk(req);
-	ireq->ir_loc_addr = ip_hdr(skb)->daddr;
-	ireq->ir_rmt_addr = ip_hdr(skb)->saddr;
+	sk_rcv_saddr_set(req_to_sk(req), ip_hdr(skb)->daddr);
+	sk_daddr_set(req_to_sk(req), ip_hdr(skb)->saddr);
+	ireq->ireq_family = AF_INET;
+	ireq->ir_iif = sk->sk_bound_dev_if;
 
 	/*
 	 * Step 3: Process LISTEN state
@@ -965,7 +970,6 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
 	if(gmtp_v4_send_register_reply(sk, req))
 		goto drop_and_free;
 
-	gmtp_print_debug("Calling gmtp_csk_reqsk_queue_hash_add(...)");
 	inet_csk_reqsk_queue_hash_add(sk, req, GMTP_TIMEOUT_INIT);
 
 	return 0;
@@ -1209,6 +1213,32 @@ static struct pernet_operations gmtp_v4_ops = {
 		.exit = gmtp_v4_exit_net,
 };
 
+static unsigned int hook_func_gmtp_out(unsigned int hooknum, struct sk_buff *skb,
+		const struct net_device *in, const struct net_device *out,
+		int (*okfn)(struct sk_buff *))
+{
+	struct iphdr *iph = ip_hdr(skb);
+
+	if(iph->protocol == IPPROTO_GMTP) {
+
+		struct gmtp_hdr *gh = gmtp_hdr(skb);
+		int new_ttl = 1;
+
+		switch(gh->type) {
+		case GMTP_PKT_REQUEST:
+			if(GMTP_SKB_CB(skb)->retransmits <= 3) {
+				gmtp_pr_info("Changing TTL to %d\n", new_ttl);
+				iph->ttl = new_ttl;
+				ip_send_check(iph);
+			} else
+				pr_info("Keeping default TTL (%d)\n", iph->ttl);
+		}
+
+	}
+
+	return NF_ACCEPT;
+}
+
 /*************************************************************/
 static int __init gmtp_v4_init(void)
 {
@@ -1232,6 +1262,12 @@ static int __init gmtp_v4_init(void)
 	if(err)
 		goto out_destroy_ctl_sock;
 
+	nfho_gmtp_out.hook = hook_func_gmtp_out;
+	nfho_gmtp_out.hooknum = NF_INET_LOCAL_OUT;
+	nfho_gmtp_out.pf = PF_INET;
+	nfho_gmtp_out.priority = NF_IP_PRI_FIRST;
+	nf_register_hook(&nfho_gmtp_out);
+
 	return err;
 
 out_destroy_ctl_sock:
@@ -1251,6 +1287,7 @@ static void __exit gmtp_v4_exit(void)
 
 	gmtp_print_function();
 
+	nf_unregister_hook(&nfho_gmtp_out);
 	unregister_pernet_subsys(&gmtp_v4_ops);
 	inet_unregister_protosw(&gmtp_protosw);
 	inet_del_protocol(&gmtp_protocol, IPPROTO_GMTP);

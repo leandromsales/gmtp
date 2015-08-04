@@ -227,9 +227,7 @@ struct gmtp_sock {
 	int 				tx_byte_budget;
 	int				tx_adj_budget;
 
-/*	struct tasklet_struct		xmitlet;*/
 	struct timer_list		xmit_timer;
-/*	struct sk_buff			*pending_skb;*/
 };
 
 struct gmtp_packet_info {

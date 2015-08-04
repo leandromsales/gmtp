@@ -78,22 +78,22 @@ int main(int argc, char *argv[])
 	for(int n = 0; n < nrelays; n++) {
 		RunIp(relays.Get(n), Seconds(2.2), "addr list sim0");
 		RunIp(relays.Get(n), Seconds(2.3), "addr list sim1");
-		//FIXME Make work with gmtp-inter
-//		RunGtmpInter(relays.Get(n), Seconds(2.5), "off");
 	}
-
-	RunGtmpInter(relays.Get(0), Seconds(2.5), "off");
+//	RunGtmpInter(relays.Get(0), Seconds(2.5), "off");
+//	RunGtmpInter(relays.Get(1), Seconds(2.6), "off");
 
 	DceApplicationHelper dce;
 	ApplicationContainer apps;
 
 	dce.SetBinary("gmtp-server");
+//	dce.SetBinary("tcp-server");
 	dce.SetStackSize(1 << 31);
 	dce.ResetArguments();
 	apps = dce.Install(server);
 	apps.Start(Seconds(4.0));
 
 	dce.SetBinary("gmtp-client");
+//	dce.SetBinary("tcp-client");
 	dce.SetStackSize(1 << 16);
 	dce.ResetArguments();
 	dce.AddArgument("10.1.1.2");

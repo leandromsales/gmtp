@@ -1,1 +1,0 @@
-../gmtp/dce-gmtp-simple.cc

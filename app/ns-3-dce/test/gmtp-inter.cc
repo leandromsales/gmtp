@@ -1,1 +1,0 @@
-../gmtp/gmtp-inter.cc
