@@ -93,13 +93,9 @@ void gmtp_del_client_entry(struct gmtp_hashtable *table, const __u8 *key);
 /**
  * struct gmtp_server_entry - An entry in server hash table
  *
- * @srelay: 	source of route (route[route->nrelays]).
- * 			the primary key at table is 'srelay->relayid'
- * @route:	the route stored in table
- * @next: 	the next entry with the same key (hash)
  */
 struct gmtp_server_entry {
-	/* gmtp_hash_entry has to be the first member of gmtp_client_entry */
+	/* gmtp_hash_entry has to be the first member of gmtp_server_entry */
 	struct gmtp_hash_entry		entry;
 
 	struct gmtp_hashtable 		*relay_hashtable;
@@ -112,20 +108,11 @@ int gmtp_add_server_entry(struct gmtp_hashtable *table, const __u8 *flowname,
  * struct gmtp_relay_table_entry - An entry in relays hash table (in server)
  * @next: 	the next entry with the same key (hash)
  *
- * @relay: the relay info
- * @nextRelay: 	the next relay in path
- * @relay_id: the relay id (key)
- * @relay_ip: the relay ip
- *
  * @list:  the list head
  */
 struct gmtp_relay_entry {
 	struct gmtp_hash_entry		entry;
-
 	struct gmtp_relay 		relay;
-	struct gmtp_relay_entry		*nextRelay;
-	struct gmtp_relay_entry		*prevRelayList;
-
 	struct list_head 		list;
 };
 

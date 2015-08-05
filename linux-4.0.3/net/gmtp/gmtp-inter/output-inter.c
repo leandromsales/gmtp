@@ -20,17 +20,19 @@ int gmtp_inter_register_out(struct sk_buff *skb)
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct gmtp_inter_entry *entry;
 
-	gmtp_pr_func();
-
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry == NULL)
 		return NF_DROP;
+
+	print_packet(skb, false);
+	print_gmtp_packet(iph, gh);
 
 	/* FIXME Get a valid and unused port */
 	entry->info->my_addr = gmtp_inter_device_ip(skb->dev);
 	entry->info->my_port = gh->sport;
 
 	iph->saddr = entry->info->my_addr;
+	iph->ttl = 64;
 	ip_send_check(iph);
 
 	return NF_ACCEPT;
@@ -185,11 +187,13 @@ int gmtp_inter_close_out(struct sk_buff *skb)
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct gmtp_inter_entry *entry;
 
-	gmtp_pr_func();
-
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry == NULL)
 		return NF_ACCEPT;
+
+	gmtp_pr_func();
+	print_packet(skb, false);
+	print_gmtp_packet(iph, gh);
 
 	switch(entry->state) {
 	case GMTP_INTER_TRANSMITTING:
