@@ -265,6 +265,8 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 int init_module()
 {
 	int ret = 0;
+	 __u8 relay_id[21];
+
 	gmtp_pr_func();
 	gmtp_print_debug("Starting GMTP-Inter");
 
@@ -288,22 +290,15 @@ int init_module()
 	gmtp_inter.rx_rate_wnd = 1000;
 	memset(&gmtp_inter.mcst, 0, 4 * sizeof(unsigned char));
 
-/*	gmtp_inter.relay_id = kmalloc(MD5_LEN * sizeof(__u8), GFP_KERNEL);*/
 	unsigned char *rid = gmtp_inter_build_relay_id();
 	if(rid == NULL) {
-		int i;
-		 __u8 id[21];
-		 unsigned long now = jiffies;
-		gmtp_pr_error("Relay ID lookup failed...\n");
-		gmtp_pr_info("Creating a random id (based on jiffies).\n");
-		memset(gmtp_inter.relay_id, 0, GMTP_FLOWNAME_LEN);
-		for(i = 0; i < GMTP_FLOWNAME_LEN; i += sizeof(now)) {
-			memcpy(&gmtp_inter.relay_id[i], &now, sizeof(now));
-		}
-		flowname_strn(id, gmtp_inter.relay_id, MD5_LEN);
-		pr_info("Relay ID = %s\n", id);
+		gmtp_pr_error("Relay ID build failed. Creating a random id.\n");
+		get_random_bytes(gmtp_inter.relay_id, 128);
 	} else
 		memcpy(gmtp_inter.relay_id, rid, GMTP_FLOWNAME_LEN);
+
+	flowname_strn(relay_id, gmtp_inter.relay_id, MD5_LEN);
+	pr_info("Relay ID = %s\n", relay_id);
 
 	gmtp_inter.hashtable = gmtp_inter_create_hashtable(64);
 	if(gmtp_inter.hashtable == NULL) {
