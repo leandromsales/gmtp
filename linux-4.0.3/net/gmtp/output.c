@@ -563,7 +563,7 @@ static long gmtp_wait_for_delay(struct sock *sk, unsigned long delay)
 {
 	DEFINE_WAIT(wait);
 	long remaining;
-	gmtp_pr_func();
+
 	prepare_to_wait(sk_sleep(sk), &wait, TASK_INTERRUPTIBLE);
 
 	sk->sk_write_pending++;
@@ -692,9 +692,6 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 	long delay = 0, delay2 = 0, delay_budget = 0;
 	int len;
 
-	struct gmtp_packet_info *pkt_info = kmalloc(
-			sizeof(struct gmtp_packet_info), GFP_KERNEL);
-
 	/** TODO Continue tests with different scales... */
 	static const int scale = 1;
 	/*static const int scale = HZ/100;*/
@@ -707,8 +704,6 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 	/*pr_info("[%d] Tx rate: %lu bytes/s\n", gp->tx_dpkts_sent, gp->tx_total_rate);
 	 pr_info("[-] Tx rate (sample): %lu bytes/s\n", gp->tx_sample_rate);*/
 
-	pkt_info->sk = sk;
-	pkt_info->skb = skb;
 	elapsed = jiffies - gp->tx_last_stamp; /* time elapsed since last sent */
 
 	len = packet_len(skb);
@@ -725,9 +720,11 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 	if(delay2 > 0)
 		delay2 += mult_frac(delay2, get_rate_gap(gp, 1), 100);
 
-	wait: delay2 += delay_budget;
-	/*pr_info("delay2 += delay_budget ==> %ld ms\n", delay2);*/
-
+wait:
+	delay2 += delay_budget;
+	if(delay2 > 0)
+		gmtp_wait_for_delay(sk, delay2);
+		
 	/*
 	 * TODO More tests with byte_budgets...
 	 */
@@ -737,16 +734,8 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 	else
 		gp->tx_byte_budget = INT_MIN;
 
-	if(delay2 > 0) {
-		setup_timer(&gp->xmit_timer, gmtp_write_xmit_timer,
-				(unsigned long ) pkt_info);
-		mod_timer(&gp->xmit_timer, jiffies + delay2);
-		/* Never use gmtp_wait_for_delay(sk, delay2); in NS-3/dce*/
-		schedule_timeout(delay2);
-		return;
-	}
-
-	send: gmtp_xmit_packet(sk, skb);
+send:
+	gmtp_xmit_packet(sk, skb);
 
 }
 EXPORT_SYMBOL_GPL(gmtp_write_xmit);

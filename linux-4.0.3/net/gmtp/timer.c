@@ -304,7 +304,6 @@ EXPORT_SYMBOL_GPL(gmtp_write_xmit_timer);
 
 void gmtp_init_xmit_timers(struct sock *sk)
 {
-	struct gmtp_sock *gp = gmtp_sk(sk);
 	gmtp_pr_func();
 
 	inet_csk_init_xmit_timers(sk, &gmtp_write_timer, &gmtp_delack_timer,

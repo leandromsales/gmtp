@@ -652,22 +652,6 @@ out:
 
 EXPORT_SYMBOL_GPL(gmtp_recvmsg);
 
-struct sendmsg_data {
-	struct sock *sk;
-	struct sk_buff *skb;
-	struct timer_list *sendmsg_timer;
-};
-
-static void gmtp_sendmsg_callback(unsigned long data)
-{
-	struct sendmsg_data *sd = (struct sendmsg_data*) data;
-	if(!timer_pending(&gmtp_sk(sd->sk)->xmit_timer)) {
-		gmtp_write_xmit(sd->sk, sd->skb);
-		del_timer(sd->sendmsg_timer);
-	} else
-		mod_timer(sd->sendmsg_timer, jiffies + 1);
-}
-
 int gmtp_sendmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 		size_t len)
 {
@@ -710,27 +694,13 @@ int gmtp_sendmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 	/** FIXME Enqueue packets when time is pending... */
 
 	/**
-	 * Use a timer to rate-based congestion control protocols.
+	 * In GMTP/NS-3, we use a timer to rate-based congestion control protocols.
 	 * The timer will expire when congestion control permits to release
 	 * further packets into the network.
 	 *
-	 * Here, a while(timer_pending(...)) does not work for ns-3/dce
-	 * So, we use a timer...
+	 * Here, we use a delay to make congestion control...
 	 */
-	if(!timer_pending(&gp->xmit_timer)) {
-		gmtp_write_xmit(sk, skb);
-	} else {
-		struct timer_list *sendmsg_timer = kmalloc(
-				sizeof(struct timer_list), GFP_KERNEL);
-		struct sendmsg_data *sd = kmalloc(sizeof(struct sendmsg_data),
-				GFP_KERNEL);
-		sd->sk = sk;
-		sd->skb = skb;
-		sd->sendmsg_timer = sendmsg_timer;
-		setup_timer(sd->sendmsg_timer, gmtp_sendmsg_callback,
-				(unsigned long ) sd);
-		mod_timer(sd->sendmsg_timer, jiffies + 1);
-	}
+	gmtp_write_xmit(sk, skb);
 
 out_release:
 	release_sock(sk);
