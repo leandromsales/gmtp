@@ -186,7 +186,7 @@ void gmtp_v4_err(struct sk_buff *skb, u32 info)
 
 	struct request_sock *req, **prev;
 
-	gmtp_pr_debug("ICMP error. Type: %d, Code: %d", type, code);
+	gmtp_pr_debug("ICMP: Type: %d, Code: %d", type, code);
 
 	if(skb->len < offset + sizeof(*gh)) {
 		ICMP_INC_STATS_BH(net, ICMP_MIB_INERRORS);

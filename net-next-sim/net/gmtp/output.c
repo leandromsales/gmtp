@@ -46,8 +46,6 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 				gmtp_packet_hdr_variable_len(gcb->type);
 		int err, set_ack = 1;
 
-		gmtp_pr_func();
-
 		switch (gcb->type) {
 		case GMTP_PKT_DATA:
 			set_ack = 0;
@@ -100,7 +98,6 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 		if(gcb->type == GMTP_PKT_DATA) {
 			struct gmtp_hdr_data *gh_data = gmtp_hdr_data(skb);
 			gh_data->tstamp = jiffies_to_msecs(jiffies);
-			pr_info("Sending data... seq=%u\n", gh->seq);
 		}
 		if(gcb->type == GMTP_PKT_FEEDBACK) {
 			struct gmtp_hdr_feedback *fh = gmtp_hdr_feedback(skb);
@@ -647,7 +644,6 @@ static void gmtp_xmit_packet(struct sock *sk, struct sk_buff *skb) {
 		return;
 	}*/
 	err = gmtp_transmit_skb(sk, skb);
-	pr_info("gmtp_info->pkt_sent: %d\n", ++gmtp_info->pkt_sent);
 
 	/*
 	 * Register this one as sent (even if an error occurred).
@@ -712,15 +708,13 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 	static const int scale = 1;
 	/*static const int scale = HZ/100;*/
 
-	gmtp_pr_func();
-
 	if(unlikely(skb == NULL))
 		return;
 	else if(gp->tx_max_rate == 0UL)
 		goto send;
 
-	pr_info("[%d] Tx rate: %lu bytes/s\n", gp->tx_dpkts_sent, gp->tx_total_rate);
-	pr_info("[-] Tx rate (sample): %lu bytes/s\n", gp->tx_sample_rate);
+	/*pr_info("[%d] Tx rate: %lu bytes/s\n", gp->tx_dpkts_sent, gp->tx_total_rate);
+	pr_info("[-] Tx rate (sample): %lu bytes/s\n", gp->tx_sample_rate);*/
 
 	elapsed = jiffies - gp->tx_last_stamp; /* time elapsed since last sent */
 
@@ -740,7 +734,7 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 
 wait:
 	delay2 += delay_budget;
-	pr_info("delay2 += delay_budget ==> %ld ms\n", delay2);
+	/*pr_info("delay2 += delay_budget ==> %ld ms\n", delay2);*/
 
 	/*
 	 * TODO More tests with byte_budgets...

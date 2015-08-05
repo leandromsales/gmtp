@@ -301,7 +301,6 @@ out:
 void gmtp_write_xmit_timer(unsigned long data)
 {
 	struct gmtp_packet_info *pkt_info = (struct gmtp_packet_info*) data;
-	gmtp_pr_func();
 	gmtp_write_xmit(pkt_info->sk, pkt_info->skb);
 	del_timer_sync(&gmtp_sk(pkt_info->sk)->xmit_timer);
 	kfree(pkt_info);
