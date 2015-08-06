@@ -49,7 +49,7 @@ unsigned char *gmtp_build_md5(unsigned char *buf)
 	/* FIXME This fails at NS-3-DCE */
 	pr_info("output: %p | tfm: %p\n", output, tfm);
 	if(output == NULL || IS_ERR(tfm)) {
-		gmtp_pr_error("Allocation failed\n");
+		gmtp_pr_warning("Allocation failed...");
 		return NULL;
 	}
 
@@ -126,10 +126,9 @@ __be32 get_mcst_v4_addr(void)
 	gmtp_print_function();
 
 	if(channel == NULL) {
-		gmtp_print_error("Cannot assign requested multicast address");
+		gmtp_pr_error("NULL channel: Cannot assign requested address");
 		return -EADDRNOTAVAIL;
 	}
-
 	memcpy(channel, base_channel, 4 * sizeof(unsigned char));
 
 	channel[3] += gmtp_inter.mcst[3]++;
@@ -152,7 +151,11 @@ __be32 get_mcst_v4_addr(void)
 		gmtp_inter.mcst[0]++;
 	}
 	if(gmtp_inter.mcst[0] > 15) {  /* 239 - 224 */
-		gmtp_print_error("Cannot assign requested multicast address");
+		int i;
+		for(i = 0; i < 4; ++i)
+			pr_info("gmtp_inter.mcst[%d] = %u\n", i,
+					gmtp_inter.mcst[i]);
+		gmtp_pr_error("Cannot assign requested multicast address");
 		return -EADDRNOTAVAIL;
 	}
 	channel[2] += gmtp_inter.mcst[2];
@@ -265,7 +268,9 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 int init_module()
 {
 	int ret = 0;
-	 __u8 relay_id[21];
+	__u8 relay_id[21];
+	unsigned char *rid;
+	int i;
 
 	gmtp_pr_func();
 	gmtp_print_debug("Starting GMTP-Inter");
@@ -290,10 +295,10 @@ int init_module()
 	gmtp_inter.rx_rate_wnd = 1000;
 	memset(&gmtp_inter.mcst, 0, 4 * sizeof(unsigned char));
 
-	unsigned char *rid = gmtp_inter_build_relay_id();
+	rid = gmtp_inter_build_relay_id();
 	if(rid == NULL) {
-		gmtp_pr_error("Relay ID build failed. Creating a random id.\n");
-		get_random_bytes(gmtp_inter.relay_id, 128);
+		gmtp_pr_error("Relay ID build failed. Creating a random id.");
+		get_random_bytes(gmtp_inter.relay_id, GMTP_FLOWNAME_LEN);
 	} else
 		memcpy(gmtp_inter.relay_id, rid, GMTP_FLOWNAME_LEN);
 
@@ -307,7 +312,7 @@ int init_module()
 		goto out;
 	}
 
-	gmtp_info->relay_enabled = 1; /* Enables gmtp-inter */
+	gmtp_info->relay_enabled = 1; /* Enabling gmtp-inter */
 
 	nfho_in.hook = hook_func_in;
 	nfho_in.hooknum = NF_INET_PRE_ROUTING;

@@ -34,8 +34,6 @@ int main(int argc, char *argv[])
 	int max_tx = 30000; // Bps
 
 	cout << "Starting GMTP Server..." << endl;
-
-	disable_gmtp_inter();
 	welcomeSocket = socket(PF_INET, SOCK_GMTP, IPPROTO_GMTP);
 	setsockopt(welcomeSocket, SOL_GMTP, GMTP_SOCKOPT_FLOWNAME, "1234567812345678", 16);
 

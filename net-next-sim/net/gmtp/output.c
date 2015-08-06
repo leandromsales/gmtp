@@ -592,7 +592,6 @@ static inline unsigned int payload_len(struct sk_buff *skb)
 	return skb->len - (gmtp_data_hdr_len() + 20 + ETH_HLEN);
 }
 
-/*static inline void packet_sent(struct gmtp_sock *gp, int data_len)*/
 static inline void packet_sent(struct sock *sk, struct sk_buff *skb)
 {
 	struct gmtp_sock *gp = gmtp_sk(sk);
@@ -638,11 +637,6 @@ static void gmtp_xmit_packet(struct sock *sk, struct sk_buff *skb) {
 
 	GMTP_SKB_CB(skb)->type = GMTP_PKT_DATA;
 
-/*	if(gmtp_sk(sk)->gss == 550980189) {
-		pr_info("Jumping packet with seq = %d\n", 550980189 + 1);
-		gmtp_sk(sk)->gss++;
-		return;
-	}*/
 	err = gmtp_transmit_skb(sk, skb);
 
 	/*
@@ -701,8 +695,6 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 
 	struct gmtp_packet_info *pkt_info = kmalloc(
 			sizeof(struct gmtp_packet_info), GFP_KERNEL);
-	pkt_info->sk = sk;
-	pkt_info->skb = skb;
 
 	/** TODO Continue tests with different scales... */
 	static const int scale = 1;
@@ -716,6 +708,8 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 	/*pr_info("[%d] Tx rate: %lu bytes/s\n", gp->tx_dpkts_sent, gp->tx_total_rate);
 	pr_info("[-] Tx rate (sample): %lu bytes/s\n", gp->tx_sample_rate);*/
 
+	pkt_info->sk = sk;
+	pkt_info->skb = skb;
 	elapsed = jiffies - gp->tx_last_stamp; /* time elapsed since last sent */
 
 	len = packet_len(skb);
@@ -734,7 +728,6 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 
 wait:
 	delay2 += delay_budget;
-	/*pr_info("delay2 += delay_budget ==> %ld ms\n", delay2);*/
 
 	/*
 	 * TODO More tests with byte_budgets...

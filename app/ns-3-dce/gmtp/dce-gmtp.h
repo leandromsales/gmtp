@@ -13,28 +13,76 @@
 #include "ns3/dce-module.h"
 #include "ns3/internet-module.h"
 
-static void RunIp(ns3::Ptr<ns3::Node> node, ns3::Time at, std::string str)
+static void RunApp(std::string appname,
+		ns3::Ptr<ns3::Node> node, ns3::Time at,
+		std::string args)
 {
 	ns3::DceApplicationHelper process;
 	ns3::ApplicationContainer apps;
-	process.SetBinary("ip");
-	process.SetStackSize(1 << 16);
+	process.SetBinary(appname.c_str());
+	process.SetStackSize(1 << 31);
 	process.ResetArguments();
-	process.ParseArguments(str.c_str());
+	process.ParseArguments(args.c_str());
 	apps = process.Install(node);
 	apps.Start(at);
 }
 
-static void RunGtmpInter(ns3::Ptr<ns3::Node> node, ns3::Time at, std::string str)
+static void RunApp(std::string appname,
+		ns3::NodeContainer nodes, ns3::Time at,
+		std::string args)
 {
 	ns3::DceApplicationHelper process;
 	ns3::ApplicationContainer apps;
-	process.SetBinary("gmtp-inter");
-	process.SetStackSize(1 << 16);
+	process.SetBinary(appname.c_str());
+	process.SetStackSize(1 << 31);
 	process.ResetArguments();
-	process.ParseArguments(str.c_str());
+	process.ParseArguments(args.c_str());
+	apps = process.Install(nodes);
+	apps.Start(at);
+}
+
+static void RunApp(std::string appname,
+		ns3::Ptr<ns3::Node> node, ns3::Time at)
+{
+	ns3::DceApplicationHelper process;
+	ns3::ApplicationContainer apps;
+	process.SetBinary(appname.c_str());
+	process.SetStackSize(1 << 31);
+	process.ResetArguments();
 	apps = process.Install(node);
 	apps.Start(at);
+}
+
+static void RunApp(std::string appname,
+		ns3::NodeContainer nodes, ns3::Time at)
+{
+	ns3::DceApplicationHelper process;
+	ns3::ApplicationContainer apps;
+	process.SetBinary(appname.c_str());
+	process.SetStackSize(1 << 31);
+	process.ResetArguments();
+	apps = process.Install(nodes);
+	apps.Start(at);
+}
+
+static void RunIp(ns3::Ptr<ns3::Node> node, ns3::Time at, std::string args)
+{
+	RunApp("ip", node, at, args);
+}
+
+static void RunIp(ns3::NodeContainer nodes, ns3::Time at, std::string args)
+{
+	RunApp("ip", nodes, at, args);
+}
+
+static void RunGtmpInter(ns3::Ptr<ns3::Node> node, ns3::Time at, std::string args)
+{
+	RunApp("gmtp-inter", node, at, args);
+}
+
+static void RunGtmpInter(ns3::NodeContainer nodes, ns3::Time at, std::string args)
+{
+	RunApp("gmtp-inter", nodes, at, args);
 }
 
 #endif /* DCE_GMTP_H_ */

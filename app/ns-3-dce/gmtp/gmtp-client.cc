@@ -41,15 +41,12 @@ int main(int argc, char**argv)
 	char buffer[BUF_SIZE];
 
 	printf("Starting GMTP Client...\n");
-
 	if(argc < 2) {
 		printf("usage: client < ip address >\n");
 		exit(1);
 	}
 
 	serverAddr = argv[1];
-
-	disable_gmtp_inter();
 	sockfd = socket(AF_INET, SOCK_GMTP, IPPROTO_GMTP);
 	setsockopt(sockfd, SOL_GMTP, GMTP_SOCKOPT_FLOWNAME, "1234567812345678", 16);
 //	sockfd = socket(AF_INET, SOCK_STREAM, 0);

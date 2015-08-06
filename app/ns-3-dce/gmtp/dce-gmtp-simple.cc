@@ -4,6 +4,8 @@
 #include "ns3/csma-module.h"
 #include "ns3/internet-module.h"
 
+#include "dce-gmtp.h"
+
 using namespace ns3;
 
 int main(int argc, char *argv[])
@@ -32,21 +34,9 @@ int main(int argc, char *argv[])
 	Ipv4InterfaceContainer interfaces = address.Assign(devices);
 	dceManager.Install(nodes);
 
-	DceApplicationHelper dce;
-	ApplicationContainer apps;
-
-	dce.SetBinary("gmtp-server");
-	dce.SetStackSize(1 << 16);
-	dce.ResetArguments();
-	apps = dce.Install(nodes.Get(0));
-	apps.Start(Seconds(2.0));
-
-	dce.SetBinary("gmtp-client");
-	dce.SetStackSize(1 << 16);
-	dce.ResetArguments();
-	dce.AddArgument("10.0.0.1");
-	apps = dce.Install(nodes.Get(1));
-	apps.Start(Seconds(2.5));
+	RunGtmpInter(nodes, Seconds(2.0), "off");
+	RunApp("gmtp-server", nodes.Get(0), Seconds(2.5));
+	RunApp("gmtp-client", nodes.Get(1), Seconds(3.5), "10.0.0.1");
 
 	csma.EnablePcapAll("dce-gmtp-simple");
 

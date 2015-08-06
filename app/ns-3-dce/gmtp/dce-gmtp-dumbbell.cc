@@ -15,23 +15,25 @@
 //      /
 //     / 10 Mb/s, 1ms
 //   c1
+//   ...
+//   cn
 // //
 using namespace ns3;
 using namespace std;
 
 int main(int argc, char *argv[])
 {
-	CommandLine cmd;
-	cmd.Parse(argc, argv);
-
 	int nclients = 1;
-	int nrelays = 2;
+
+	CommandLine cmd;
+	cmd.AddValue ("nclients", "Number of clients in router 1 (far from server)", nclients);
+	cmd.Parse(argc, argv);
 
 	cout << "Creating nodes..." << endl;
 	Ptr<Node> server = CreateObject<Node>();
 
 	NodeContainer relays;
-	relays.Create (nrelays);
+	relays.Create (2);
 
 	NodeContainer clients;
 	clients.Create (nclients);
@@ -65,40 +67,24 @@ int main(int argc, char *argv[])
 	address.SetBase("10.1.2.0", "255.255.255.0");
 	Ipv4InterfaceContainer i2 = address.Assign(d2);
 
-	address.SetBase("10.1.3.0", "255.255.255.0");
+	address.SetBase("10.1.4.0", "255.255.255.0");
 	Ipv4InterfaceContainer i3 = address.Assign(r);
 
 	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 	LinuxStackHelper::PopulateRoutingTables ();
 
-	RunIp(server, Seconds(2.0), "addr list sim0");
-	for(int n = 0; n < nclients; n++)
-		RunIp(clients.Get(n), Seconds(2.1), "addr list sim0");
+	RunIp(all, Seconds(2.2), "addr list sim0");
+	RunIp(relays, Seconds(2.3), "addr list sim1");
 
-	for(int n = 0; n < nrelays; n++) {
-		RunIp(relays.Get(n), Seconds(2.2), "addr list sim0");
-		RunIp(relays.Get(n), Seconds(2.3), "addr list sim1");
-	}
-//	RunGtmpInter(relays.Get(0), Seconds(2.5), "off");
-//	RunGtmpInter(relays.Get(1), Seconds(2.6), "off");
+	RunGtmpInter(server, Seconds(2.5), "off");
+	RunGtmpInter(clients, Seconds(2.5), "off");
 
-	DceApplicationHelper dce;
-	ApplicationContainer apps;
+	RunApp("gmtp-server", server, Seconds(4.0));
 
-	dce.SetBinary("gmtp-server");
-//	dce.SetBinary("tcp-server");
-	dce.SetStackSize(1 << 31);
-	dce.ResetArguments();
-	apps = dce.Install(server);
-	apps.Start(Seconds(4.0));
-
-	dce.SetBinary("gmtp-client");
-//	dce.SetBinary("tcp-client");
-	dce.SetStackSize(1 << 16);
-	dce.ResetArguments();
-	dce.AddArgument("10.1.1.2");
-	apps = dce.Install(clients);
-	apps.Start(Seconds(7.0));
+//	float j = 5.0;
+//	for(int i = 0; i < nclients; ++i, j += 0.1)
+//		RunApp("gmtp-client", clients.Get(i), Seconds(j), "10.1.1.2");
+	RunApp("gmtp-client", clients, Seconds(5.0), "10.1.1.2");
 
 	csma.EnablePcapAll("dce-gmtp-dumbbell");
 

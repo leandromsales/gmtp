@@ -18,15 +18,17 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-	CommandLine cmd;
-	cmd.Parse(argc, argv);
-
 	int nclients = 1;
 
-	cout << "Creating nodes..." << endl;
+	CommandLine cmd;
+	cmd.AddValue ("nclients", "Number of clients in simulation", nclients);
+	cmd.Parse(argc, argv);
+
+	cout << "Creating server and relay nodes..." << endl;
 	Ptr<Node> server = CreateObject<Node>();
 	Ptr<Node> relay = CreateObject<Node>();
 
+	cout << "Creating " << nclients << " clients..." << endl;
 	NodeContainer clients;
 	clients.Create (nclients);
 
@@ -61,31 +63,19 @@ int main(int argc, char *argv[])
 	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 	LinuxStackHelper::PopulateRoutingTables ();
 
-	for(int n = 0; n < 2+nclients; n++) {
-//		RunIp(all.Get(n), Seconds(2), "link show");
-		RunIp(all.Get(n), Seconds(2.1), "route show table all");
-		RunIp(all.Get(n), Seconds(2.2), "addr list sim0");
-	}
-
-//	RunGtmpInter(relay, Seconds(3.0), "off");
+	RunIp(all, Seconds(2.2), "addr list sim0");
 	RunIp(relay, Seconds(2.3), "addr list sim1");
 
-	DceApplicationHelper dce;
-	ApplicationContainer apps;
+	RunGtmpInter(server, Seconds(2.5), "off");
+	RunGtmpInter(clients, Seconds(2.5), "off");
 
-	dce.SetBinary("gmtp-server");
-	dce.SetStackSize(1 << 31);
-	dce.ResetArguments();
-	apps = dce.Install(server);
-	apps.Start(Seconds(4.0));
 
-	dce.SetBinary("gmtp-client");
-	dce.SetStackSize(1 << 16);
-	dce.ResetArguments();
-	dce.AddArgument("10.1.1.2");
-	apps = dce.Install(clients);
-	apps.Start(Seconds(5));
+	RunApp("gmtp-server", server, Seconds(4.0));
 
+//	float j = 5.0;
+//	for(int i=0; i< nclients; ++i, j+=0.1)
+//		RunApp("gmtp-client", clients.Get(i), Seconds(j), "10.1.1.2");
+	RunApp("gmtp-client", clients, Seconds(5.0), "10.1.1.2");
 
 	csma.EnablePcapAll("dce-gmtp-relay");
 
