@@ -133,7 +133,7 @@ void gmtp_shutdown(struct sock *sk, int how);
 void gmtp_destroy_sock(struct sock *sk);
 void gmtp_set_state(struct sock*, const int);
 int inet_gmtp_listen(struct socket *sock, int backlog);
-const char *gmtp_packet_name(const int);
+const char *gmtp_packet_name(const __u8);
 const char *gmtp_state_name(const int);
 void flowname_str(__u8* str, const __u8 *flowname);
 void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh);
@@ -174,6 +174,7 @@ struct sk_buff *gmtp_make_register_reply(struct sock *sk, struct dst_entry *dst,
 struct sk_buff *gmtp_ctl_make_reset(struct sock *sk,
 		struct sk_buff *rcv_skb);
 /** output.c - Packet Output and Timers  */
+void gmtp_write_xmit_timer(unsigned long data);
 void gmtp_write_space(struct sock *sk);
 int gmtp_retransmit_skb(struct sock *sk);
 struct sk_buff *gmtp_ctl_make_elect_response(struct sock *sk,
@@ -200,6 +201,7 @@ unsigned int gmtp_poll(struct file *file, struct socket *sock, poll_table *wait)
 /** GMTP structs and etc **/
 struct gmtp_info {
 	unsigned char 		relay_enabled:1;
+	int pkt_sent;
 
 	struct sock		*control_sk;
 	struct sockaddr_in	*ctrl_addr;
@@ -238,6 +240,7 @@ struct gmtp_skb_cb {
 	__u8 reset_code,
 		reset_data[3];
 	__u8 elect_code:2;
+	__u8 retransmits;
 	__be32 seq;
 	__be32 server_tstamp;
 };

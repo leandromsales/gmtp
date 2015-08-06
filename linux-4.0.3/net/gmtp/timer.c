@@ -36,35 +36,14 @@ static int gmtp_write_timeout(struct sock *sk)
 			dst_negative_advice(sk);
 		retry_until = icsk->icsk_syn_retries ?
 			    : TCP_SYN_RETRIES;
+
 	} else {
 		if (icsk->icsk_retransmits >= TCP_RETR1) {
-		/* NOTE. draft-ietf-tcpimpl-pmtud-01.txt requires pmtu
-		   black hole detection. :-(
-
-		   It is place to make it. It is not made. I do not want
-		   to make it. It is disguisting. It does not work in any
-		   case. Let me to cite the same draft, which requires for
-		   us to implement this:
-
-   "The one security concern raised by this memo is that ICMP black holes
-   are often caused by over-zealous security administrators who block
-   all ICMP messages.  It is vitally important that those who design and
-   deploy security systems understand the impact of strict filtering on
-   upper-layer protocols.  The safest web site in the world is worthless
-   if most TCP implementations cannot transfer data from it.  It would
-   be far nicer to have all of the black holes fixed rather than fixing
-   all of the TCP implementations."
-
-			   Golden words :-).
-		   */
 
 			dst_negative_advice(sk);
 		}
 
 		retry_until = TCP_RETR2;
-		/*
-		 * FIXME: see tcp_write_timout and tcp_out_of_resources
-		 */
 	}
 
 	if (icsk->icsk_retransmits >= retry_until) {
@@ -89,13 +68,6 @@ static void gmtp_retransmit_timer(struct sock *sk)
 	 */
 	if (gmtp_write_timeout(sk))
 		return;
-
-	/*
-	 * We want to know the number of packets retransmitted, not the
-	 * total number of retransmissions of clones of original packets.
-	 */
-	if (icsk->icsk_retransmits == 0)
-		/* TODO Register some statistics */;
 
 	if (gmtp_retransmit_skb(sk) != 0) {
 		/*
@@ -227,7 +199,6 @@ static void gmtp_keepalive_timer(unsigned long data)
 
 	gmtp_pr_func();
 
-	pr_info("Locking socket (%p) \n", sk);
 	print_gmtp_sock(sk);
 
 	bh_lock_sock(sk);
@@ -322,11 +293,21 @@ out:
 	sock_put(sk);
 }
 
+void gmtp_write_xmit_timer(unsigned long data)
+{
+	struct gmtp_packet_info *pkt_info = (struct gmtp_packet_info*) data;
+	gmtp_write_xmit(pkt_info->sk, pkt_info->skb);
+	del_timer_sync(&gmtp_sk(pkt_info->sk)->xmit_timer);
+	kfree(pkt_info);
+}
+EXPORT_SYMBOL_GPL(gmtp_write_xmit_timer);
+
 void gmtp_init_xmit_timers(struct sock *sk)
 {
 	gmtp_pr_func();
+
 	inet_csk_init_xmit_timers(sk, &gmtp_write_timer, &gmtp_delack_timer,
-			&gmtp_keepalive_timer);
+				&gmtp_keepalive_timer);
 }
 
 

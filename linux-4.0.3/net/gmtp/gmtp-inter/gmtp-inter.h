@@ -24,7 +24,7 @@
 
 #define CAPACITY_DEFAULT 1250000 /* bytes/s => 10 Mbit/s */
 
-extern const char *gmtp_packet_name(const int);
+extern const char *gmtp_packet_name(const __u8);
 extern const char *gmtp_state_name(const int);
 extern void flowname_str(__u8* str, const __u8* flowname);
 extern void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh);
@@ -171,13 +171,14 @@ static inline void print_gmtp_data(struct sk_buff *skb, char* label)
 {
 	__u8* data = gmtp_data(skb);
 	__u32 data_len = gmtp_data_len(skb);
-
+	char *lb = (label != NULL) ? label : "Data";
 	if(data_len > 0) {
-		char *lb = (label != NULL) ? label : "Data";
 		unsigned char *data_str = kmalloc(data_len+1, GFP_KERNEL);
 		memcpy(data_str, data, data_len);
 		data_str[data_len] = '\0';
 		pr_info("%s: %s\n", lb, data_str);
+	} else {
+		pr_info("%s: <empty>\n", lb);
 	}
 }
 
