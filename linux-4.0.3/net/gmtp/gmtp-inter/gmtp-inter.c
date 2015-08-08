@@ -346,9 +346,6 @@ void cleanup_module()
 	del_timer(&gmtp_inter.gmtp_ucc_timer);
 }
 
-module_init(init_module);
-module_exit(cleanup_module);
-
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Mário André Menezes <mariomenezescosta@gmail.com>");
 MODULE_AUTHOR("Wendell Silva Soares <wss@ic.ufal.br>");

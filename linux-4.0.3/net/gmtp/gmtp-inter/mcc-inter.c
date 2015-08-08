@@ -61,12 +61,11 @@ void mcc_timer_callback(unsigned long data)
 	struct gmtp_flow_info *info = (struct gmtp_flow_info*) data;
 	struct gmtp_client *reporter, *temp;
 
-	/* FIXME FIX MCC on reporters to generate correct TX_rate... */
-/*	if(likely(info->nfeedbacks > 0))
+	if(likely(info->nfeedbacks > 0))
 		info->required_tx = DIV_ROUND_CLOSEST(info->sum_feedbacks,
 				info->nfeedbacks);
 	else
-		info->required_tx /= 2;*/
+		info->required_tx /= 2;
 
 	/*pr_info("n_feedbacks: %u\n", info->nfeedbacks);
 	pr_info("Required_tx=%u bytes/s\n", info->required_tx);*/
@@ -97,7 +96,6 @@ void mcc_timer_callback(unsigned long data)
 			(gmtp_mcc_interval(info->rtt) - jiffies));*/
 
 	/* TODO Send here an ack to server? */
-
 	mod_timer(&info->mcc_timer, gmtp_mcc_interval(info->flow_avg_rtt));
 }
 
