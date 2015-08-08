@@ -5,25 +5,40 @@
 #include <string.h>
 #include <iostream>
 #include <arpa/inet.h>
-#include <errno.h>
-#include <sys/param.h>
-
+#include <cstdio>
+#include <cstring>
 #include "gmtp.h"
 
-#define SERVER_PORT 12345
-#define MAX_CONNECTION 10
-#define PACKET_SIZE 1024
+#define SERVER_PORT 2000
+#define BUFF_SIZE 64
+
+using namespace std;
+
+static inline void print_stats(int i, time_t start, int total, int total_data)
+{
+	time_t elapsed = time(0) - start;
+	if(elapsed==0) elapsed=1;
+	cout << i << " packets sent in " << elapsed << " s!" << endl;
+	cout << total_data << " data bytes sent (" << total_data/i << " B/packet)" << endl;
+	cout << total << " bytes sent (data+hdr) (" << total/i << " B/packet)" << endl;
+	cout << "Data TX: " << total_data/elapsed << " B/s" << endl;
+	cout << "TX: " << total/elapsed << " B/s" << endl;
+}
 
 int main(int argc, char *argv[])
 {
-	int welcomeSocket, clientSocket;
+	int welcomeSocket, newSocket;
 	struct sockaddr_in serverAddr;
 	struct sockaddr_storage serverStorage;
 	socklen_t addr_size;
+	int max_tx = 30000; // Bps
 
-	disable_gmtp_inter();
-	welcomeSocket = socket(AF_INET, SOCK_GMTP, IPPROTO_GMTP);
+	cout << "Starting GMTP Server..." << endl;
+	welcomeSocket = socket(PF_INET, SOCK_GMTP, IPPROTO_GMTP);
 	setsockopt(welcomeSocket, SOL_GMTP, GMTP_SOCKOPT_FLOWNAME, "1234567812345678", 16);
+
+	cout << "Limiting tx_rate to " << max_tx << " B/s" << endl;
+	setsockopt(welcomeSocket, SOL_GMTP, GMTP_SOCKOPT_MAX_TX_RATE, &max_tx, sizeof(max_tx));
 
 	serverAddr.sin_family = AF_INET;
 	serverAddr.sin_port = htons(SERVER_PORT);
@@ -32,41 +47,41 @@ int main(int argc, char *argv[])
 
 	bind(welcomeSocket, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
 
-	if (listen(welcomeSocket, MAX_CONNECTION) == 0) {
-		std::cout << "Listening for connections\n";
-	} else {
-		std::cout << "Error while trying to listen connection. Is GMTP modules loaded?\n";
-		return 1;
-	}
+	if(listen(welcomeSocket, 5) == 0)
+		cout << "Listening\n";
+	else
+		cout << "Error\n";
+
 	addr_size = sizeof serverStorage;
-	clientSocket = accept(welcomeSocket, (struct sockaddr *)&serverStorage,
+	newSocket = accept(welcomeSocket, (struct sockaddr *)&serverStorage,
 			&addr_size);
 
+	cout << "Connected with client!" << endl;
+	time_t start = time(0);
 	int i;
-	size_t bytes_written = 0;
-	ssize_t wrote = 0;
-	char msg[] = "Hello, world!";
-	size_t size = sizeof(msg); 
-	for(i = 1; i <= 1000; ++i) {
-		while (bytes_written < size) {
-			do {
-				wrote = send (clientSocket, (char *) msg + bytes_written, MIN (PACKET_SIZE, size - bytes_written), 0);
-			} while (wrote == -1 && errno == EAGAIN);
-			if (wrote >= 0) {
-				bytes_written += wrote;
-				std::cout << "Message " << i << " sent: " << msg <<  std::endl;
-			} else {
-				std::cout << "Error writing message " << i << ". Message: " << strerror(errno) <<  std::endl;
-				break;
-			}
-		}
-		bytes_written = 0;
+	const char *msg = "Hello, World! ";
+	int total_data, total;
+	for(i = 0; i < 10000; ++i) {
+		const char *num = NumStr(i+1);
+		char *buffer = new char(BUFF_SIZE);
+		strcpy(buffer, msg);
+		strcat(buffer, num);
+		int size = strlen(msg) + strlen(num)+1;
+		send(newSocket, buffer, size, 0);
+		total += size + 36 + 20;
+		total_data += size;
+		delete(buffer);
+		delete(num);
 	}
 
-	char exit[] = "exit";
-	std::cout << "Sending exit: " << exit << std::endl;
-	send(clientSocket, &exit, strlen(exit) + 1, 0);
-	close(clientSocket);
+	print_stats(i, start, total, total_data);
+
+	const char *outstr = "out";
+	// Send 'out' 5 times for now... gmtp-inter bug...
+	for(i = 0; i < 6; ++i) {
+		printf("Sending out: %s\n", outstr);
+		send(newSocket, outstr, strlen(outstr), 0);
+	}
 
 	return 0;
 }

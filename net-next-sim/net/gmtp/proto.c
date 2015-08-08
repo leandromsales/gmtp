@@ -23,7 +23,7 @@ EXPORT_SYMBOL_GPL(gmtp_inet_hashinfo);
 struct gmtp_info* gmtp_info;
 EXPORT_SYMBOL_GPL(gmtp_info);
 
-const char *gmtp_packet_name(const int type)
+const char *gmtp_packet_name(const __u8 type)
 {
 	static const char *const gmtp_packet_names[] = {
 		[GMTP_PKT_REQUEST]  = "REQUEST",
@@ -109,8 +109,9 @@ void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh)
 {
 	__u8 flowname[GMTP_FLOWNAME_STR_LEN];
 	flowname_str(flowname, gh->flowname);
-	pr_info("%s (%d) src=%pI4@%-5d, dst=%pI4@%-5d, seq=%u, rtt=%u ms, "
-			"transm_r=%u B/s, flow=%s\n",
+
+	pr_info("%s (%u) src=%pI4@%-5d, dst=%pI4@%-5d, seq=%u, rtt=%u ms, "
+			"transm_r=%u bytes/s, flow=%s\n",
 				gmtp_packet_name(gh->type), gh->type,
 				&iph->saddr, ntohs(gh->sport),
 				&iph->daddr, ntohs(gh->dport),
@@ -218,7 +219,7 @@ int gmtp_init_sock(struct sock *sk)
 
 	gmtp_init_xmit_timers(sk);
 	icsk->icsk_rto		= GMTP_TIMEOUT_INIT;
-	icsk->icsk_syn_retries	= TCP_SYN_RETRIES;
+	icsk->icsk_syn_retries	= GMTP_SYN_RETRIES;
 	sk->sk_state		= GMTP_CLOSED;
 	sk->sk_write_space	= gmtp_write_space;
 	icsk->icsk_sync_mss	= gmtp_sync_mss;
@@ -317,7 +318,7 @@ void gmtp_close(struct sock *sk, long timeout)
 
 	gmtp_pr_func();
 
-	pr_info("state: %s, timeout: %ld", gmtp_state_name(sk->sk_state), timeout);
+	pr_info("state: %s, timeout: %ld\n", gmtp_state_name(sk->sk_state), timeout);
 
 	lock_sock(sk);
 
@@ -652,9 +653,25 @@ out:
 
 EXPORT_SYMBOL_GPL(gmtp_recvmsg);
 
+struct sendmsg_data {
+	struct sock *sk;
+	struct sk_buff *skb;
+	struct timer_list *sendmsg_timer;
+};
+
+static void gmtp_sendmsg_callback(unsigned long data)
+{
+	struct sendmsg_data *sd = (struct sendmsg_data*) data;
+	if(!timer_pending(&gmtp_sk(sd->sk)->xmit_timer)) {
+		gmtp_write_xmit(sd->sk, sd->skb);
+		del_timer(sd->sendmsg_timer);
+	} else
+		mod_timer(sd->sendmsg_timer, jiffies + 1);
+}
+
 int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 {
-	const struct gmtp_sock *gp = gmtp_sk(sk);
+	struct gmtp_sock *gp = gmtp_sk(sk);
 	const int flags = msg->msg_flags;
 	const int noblock = flags & MSG_DONTWAIT;
 	struct sk_buff *skb;
@@ -666,6 +683,7 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 
 	lock_sock(sk);
 
+	/* FIXME Check if sk queue is full */
 	timeo = sock_sndtimeo(sk, noblock);
 
 	/*
@@ -679,9 +697,7 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 
 	size = sk->sk_prot->max_header + len;
 	release_sock(sk);
-
 	skb = sock_alloc_send_skb(sk, size, noblock, &rc);
-
 	lock_sock(sk);
 	if (skb == NULL)
 		goto out_release;
@@ -691,13 +707,30 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	if (rc != 0)
 		goto out_discard;
 
+	/** FIXME Enqueue packets when time is pending... */
+
 	/**
-	 * FIXME Use a timer to rate-based congestion control protocols.
+	 * Use a timer to rate-based congestion control protocols.
 	 * The timer will expire when congestion control permits to release
-	 * further packets into the network
+	 * further packets into the network.
+	 *
+	 * Here, a while(timer_pending(...)) does not work for ns-3/dce
+	 * So, we use a timer...
 	 */
-	/*if (!timer_pending(&gp->xmit_timer))*/
-	gmtp_write_xmit(sk, skb);
+	if(!timer_pending(&gp->xmit_timer)) {
+		gmtp_write_xmit(sk, skb);
+	} else {
+		struct timer_list *sendmsg_timer = kmalloc(
+				sizeof(struct timer_list), GFP_KERNEL);
+		struct sendmsg_data *sd = kmalloc(sizeof(struct sendmsg_data),
+				GFP_KERNEL);
+		sd->sk = sk;
+		sd->skb = skb;
+		sd->sendmsg_timer = sendmsg_timer;
+		setup_timer(sd->sendmsg_timer, gmtp_sendmsg_callback,
+				(unsigned long ) sd);
+		mod_timer(sd->sendmsg_timer, jiffies + 1);
+	}
 
 out_release:
 	release_sock(sk);
@@ -771,6 +804,7 @@ static int gmtp_create_inet_hashinfo(void)
 	int rc;
 
 	gmtp_print_function();
+	pr_info("thash_entries: %d\n", thash_entries);
 
 	BUILD_BUG_ON(sizeof(struct gmtp_skb_cb) >
 	FIELD_SIZEOF(struct sk_buff, cb));
@@ -903,6 +937,7 @@ static int __init gmtp_init(void)
 		goto out;
 	}
 	gmtp_info->relay_enabled = 0;
+	gmtp_info->pkt_sent = 0;
 	gmtp_info->control_sk = NULL;
 	gmtp_info->ctrl_addr = NULL;
 

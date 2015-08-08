@@ -29,7 +29,6 @@
 
 static struct nf_hook_ops nfho_in;
 static struct nf_hook_ops nfho_out;
-
 struct gmtp_inter gmtp_inter;
 
 unsigned char *gmtp_build_md5(unsigned char *buf)
@@ -77,7 +76,7 @@ unsigned char *gmtp_inter_build_relay_id(void)
 	char mac_address[6];
 
 	char buffer[50];
-	__u8 *str[30];
+	u8 *str[30];
 
 	gmtp_print_function();
 
@@ -126,7 +125,6 @@ __be32 get_mcst_v4_addr(void)
 		gmtp_print_error("Cannot assign requested multicast address");
 		return -EADDRNOTAVAIL;
 	}
-
 	memcpy(channel, base_channel, 4 * sizeof(unsigned char));
 
 	channel[3] += gmtp_inter.mcst[3]++;
@@ -149,7 +147,11 @@ __be32 get_mcst_v4_addr(void)
 		gmtp_inter.mcst[0]++;
 	}
 	if(gmtp_inter.mcst[0] > 15) {  /* 239 - 224 */
-		gmtp_print_error("Cannot assign requested multicast address");
+		int i;
+		for(i = 0; i < 4; ++i)
+			pr_info("gmtp_inter.mcst[%d] = %u\n", i,
+					gmtp_inter.mcst[i]);
+		gmtp_pr_error("Cannot assign requested multicast address");
 		return -EADDRNOTAVAIL;
 	}
 	channel[2] += gmtp_inter.mcst[2];
@@ -182,7 +184,6 @@ struct sk_buff *gmtp_buffer_dequeue(struct gmtp_flow_info *info)
 unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 		const struct net_device *in, const struct net_device *out,
 		int (*okfn)(struct sk_buff *))
-
 {
     	int ret = NF_ACCEPT;
 	struct iphdr *iph = ip_hdr(skb);
@@ -194,17 +195,13 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
         
   		struct gmtp_hdr *gh = gmtp_hdr(skb);
 
-		if(unlikely(gh->type != GMTP_PKT_DATA
-					&& gh->type != GMTP_PKT_FEEDBACK)) {
-			gmtp_pr_debug("GMTP packet: %s (%d)",
-					gmtp_packet_name(gh->type), gh->type);
-			print_packet(skb, true);
-			print_gmtp_packet(iph, gh);
-		}
-
 		switch(gh->type) {
 		case GMTP_PKT_REQUEST:
-			ret = gmtp_inter_request_rcv(skb);
+			if(iph->ttl == 1) {
+				print_packet(skb, true);
+				print_gmtp_packet(iph, gh);
+				ret = gmtp_inter_request_rcv(skb);
+			}
 			break;
 		case GMTP_PKT_REGISTER_REPLY:
 			ret = gmtp_inter_register_reply_rcv(skb);
@@ -247,13 +244,6 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 
 		struct gmtp_hdr *gh = gmtp_hdr(skb);
 
-		if(gh->type != GMTP_PKT_DATA) {
-			gmtp_print_debug("GMTP packet: %s (%d)",
-					gmtp_packet_name(gh->type), gh->type);
-			print_packet(skb, false);
-			print_gmtp_packet(iph, gh);
-		}
-
 		switch(gh->type) {
 		case GMTP_PKT_REGISTER:
 			ret = gmtp_inter_register_out(skb);
@@ -274,6 +264,9 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 int init_module()
 {
 	int ret = 0;
+	 __u8 relay_id[21];
+	 unsigned char *rid;
+
 	gmtp_pr_func();
 	gmtp_print_debug("Starting GMTP-inter");
 
@@ -295,10 +288,17 @@ int init_module()
 	gmtp_inter.ucc_bytes = 0;
 	gmtp_inter.ucc_rx_tstamp = 0;
 	gmtp_inter.rx_rate_wnd = 1000;
-
-	memcpy(gmtp_inter.relay_id, gmtp_inter_build_relay_id(),
-			GMTP_RELAY_ID_LEN);
 	memset(&gmtp_inter.mcst, 0, 4 * sizeof(unsigned char));
+
+	rid = gmtp_inter_build_relay_id();
+	if(rid == NULL) {
+		gmtp_pr_error("Relay ID build failed. Creating a random id.\n");
+		get_random_bytes(gmtp_inter.relay_id, 128);
+	} else
+		memcpy(gmtp_inter.relay_id, rid, GMTP_FLOWNAME_LEN);
+
+	flowname_strn(relay_id, gmtp_inter.relay_id, MD5_LEN);
+	pr_info("Relay ID = %s\n", relay_id);
 
 	gmtp_inter.hashtable = gmtp_inter_create_hashtable(64);
 	if(gmtp_inter.hashtable == NULL) {
@@ -345,6 +345,9 @@ void cleanup_module()
 	nf_unregister_hook(&nfho_out);
 	del_timer(&gmtp_inter.gmtp_ucc_timer);
 }
+
+module_init(init_module);
+module_exit(cleanup_module);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Mário André Menezes <mariomenezescosta@gmail.com>");

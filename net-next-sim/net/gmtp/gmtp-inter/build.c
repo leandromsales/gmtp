@@ -78,8 +78,6 @@ struct gmtp_hdr *gmtp_inter_make_request_notify_hdr(struct sk_buff *skb,
 	int gmtp_hdr_len = sizeof(struct gmtp_hdr)
 			+ sizeof(struct gmtp_hdr_reqnotify);
 
-	gmtp_print_function();
-
 	transport_header = kmalloc(gmtp_hdr_len, gfp_any());
 	memset(transport_header, 0, gmtp_hdr_len);
 
@@ -108,7 +106,7 @@ struct gmtp_hdr *gmtp_inter_make_request_notify_hdr(struct sk_buff *skb,
 		my_reporter->nclients++;
 	}
 
-	pr_info("ReqNotify => Channel: %pI4@%-5d | Code: %u | max_nclients: %u",
+	pr_info("RNotify => Ch: %pI4@%-5d | Code: %u | max_nclients: %u\n",
 					&gh_rnotify->mcst_addr,
 					ntohs(gh_rnotify->mcst_port),
 					gh_rnotify->rn_code,

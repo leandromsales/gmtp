@@ -61,11 +61,12 @@ void mcc_timer_callback(unsigned long data)
 	struct gmtp_flow_info *info = (struct gmtp_flow_info*) data;
 	struct gmtp_client *reporter, *temp;
 
-	if(likely(info->nfeedbacks > 0))
+	/* FIXME FIX MCC on reporters to generate correct TX_rate... */
+/*	if(likely(info->nfeedbacks > 0))
 		info->required_tx = DIV_ROUND_CLOSEST(info->sum_feedbacks,
 				info->nfeedbacks);
 	else
-		info->required_tx /= 2;
+		info->required_tx /= 2;*/
 
 	/*pr_info("n_feedbacks: %u\n", info->nfeedbacks);
 	pr_info("Required_tx=%u bytes/s\n", info->required_tx);*/

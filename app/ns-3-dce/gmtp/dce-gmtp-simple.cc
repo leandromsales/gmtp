@@ -4,6 +4,8 @@
 #include "ns3/csma-module.h"
 #include "ns3/internet-module.h"
 
+#include "dce-gmtp.h"
+
 using namespace ns3;
 
 int main(int argc, char *argv[])
@@ -12,11 +14,11 @@ int main(int argc, char *argv[])
 	cmd.Parse(argc, argv);
 
 	NodeContainer nodes;
-	nodes.Create(3);
+	nodes.Create(2);
 
 	CsmaHelper csma;
-	csma.SetChannelAttribute("DataRate", StringValue("5Mbps"));
-	csma.SetChannelAttribute("Delay", StringValue("2ms"));
+	csma.SetChannelAttribute("DataRate", StringValue("10Mbps"));
+	csma.SetChannelAttribute("Delay", StringValue("1ms"));
 	NetDeviceContainer devices = csma.Install(nodes);
 
 	DceManagerHelper dceManager;
@@ -32,32 +34,13 @@ int main(int argc, char *argv[])
 	Ipv4InterfaceContainer interfaces = address.Assign(devices);
 	dceManager.Install(nodes);
 
-	DceApplicationHelper dce;
-	ApplicationContainer apps;
-
-	dce.SetBinary("gmtp-server-multi");
-	dce.SetStackSize(1 << 16);
-	dce.ResetArguments();
-	apps = dce.Install(nodes.Get(0));
-	apps.Start(Seconds(4.0));
-
-	dce.SetBinary("gmtp-client");
-	dce.SetStackSize(1 << 16);
-	dce.ResetArguments();
-	dce.AddArgument("10.0.0.1");
-	apps = dce.Install(nodes.Get(1));
-	apps.Start(Seconds(4.5));
-
-	dce.SetBinary("gmtp-client");
-	dce.SetStackSize(1 << 16);
-	dce.ResetArguments();
-	dce.AddArgument("10.0.0.1");
-	apps = dce.Install(nodes.Get(2));
-	apps.Start(Seconds(4.6));
+	RunGtmpInter(nodes, Seconds(2.0), "off");
+	RunApp("gmtp-server", nodes.Get(0), Seconds(2.5), 1 << 16);
+	RunApp("gmtp-client", nodes.Get(1), Seconds(3.5), "10.0.0.1", 1 << 16);
 
 	csma.EnablePcapAll("dce-gmtp-simple");
 
-	Simulator::Stop(Seconds(20.0));
+	Simulator::Stop(Seconds(1200.0));
 	Simulator::Run();
 	Simulator::Destroy();
 

@@ -20,10 +20,11 @@ int gmtp_inter_register_out(struct sk_buff *skb)
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct gmtp_inter_entry *entry;
 
-	gmtp_pr_func();
-
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry == NULL)
+		return NF_DROP;
+
+	if(entry->state != GMTP_INTER_WAITING_REGISTER_REPLY)
 		return NF_DROP;
 
 	/* FIXME Get a valid and unused port */
@@ -31,7 +32,11 @@ int gmtp_inter_register_out(struct sk_buff *skb)
 	entry->info->my_port = gh->sport;
 
 	iph->saddr = entry->info->my_addr;
+	iph->ttl = 64;
 	ip_send_check(iph);
+
+	print_packet(skb, false);
+	print_gmtp_packet(iph, gh);
 
 	return NF_ACCEPT;
 }
@@ -176,26 +181,24 @@ static int gmtp_inter_close_from_client(struct sk_buff *skb,
 	return NF_ACCEPT;
 }
 
-/*
- * FIXME Send close to multicast (or foreach reporter) and delete entry later...
- */
 int gmtp_inter_close_out(struct sk_buff *skb)
 {
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct gmtp_inter_entry *entry;
 
-	gmtp_pr_func();
-
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry == NULL)
 		return NF_ACCEPT;
+
+	gmtp_pr_func();
+	print_packet(skb, false);
+	print_gmtp_packet(iph, gh);
 
 	switch(entry->state) {
 	case GMTP_INTER_TRANSMITTING:
 		return gmtp_inter_close_from_client(skb, entry);
 	case GMTP_INTER_CLOSED:
-		pr_info("GMTP_INTER_CLOSED\n");
 		gh->relay = 1;
 		gh->dport = entry->channel_port;
 		iph->daddr = entry->channel_addr;
@@ -203,7 +206,6 @@ int gmtp_inter_close_out(struct sk_buff *skb)
 		gmtp_inter_del_entry(gmtp_inter.hashtable, gh->flowname);
 		return NF_ACCEPT;
 	case GMTP_INTER_CLOSE_RECEIVED:
-		pr_info("GMTP_INTER_CLOSE_RECEIVED\n");
 		entry->state = GMTP_INTER_CLOSED;
 		break;
 	}

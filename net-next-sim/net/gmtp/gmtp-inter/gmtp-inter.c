@@ -27,14 +27,10 @@
 #include "mcc-inter.h"
 #include "ucc.h"
 
-#include <asm-generic/unaligned.h>
-#include <linux/etherdevice.h>
-
 static struct nf_hook_ops nfho_in;
 static struct nf_hook_ops nfho_out;
-
 struct gmtp_inter gmtp_inter;
-
+/* FIXME This fails at NS-3-DCE */
 unsigned char *gmtp_build_md5(unsigned char *buf)
 {
 	struct scatterlist sg;
@@ -49,13 +45,10 @@ unsigned char *gmtp_build_md5(unsigned char *buf)
 	output = kmalloc(MD5_LEN * sizeof(unsigned char), GFP_KERNEL);
 	tfm = crypto_alloc_hash("md5", 0, CRYPTO_ALG_ASYNC);
 
-	/* FIXME This fails at NS-3-DCE */
-	pr_info("output: %p | tfm: %p\n", output, tfm);
 	if(output == NULL || IS_ERR(tfm)) {
-		gmtp_pr_error("Allocation failed\n");
+		gmtp_pr_warning("Allocation failed...");
 		return NULL;
 	}
-
 	desc.tfm = tfm;
 	desc.flags = 0;
 
@@ -83,7 +76,7 @@ unsigned char *gmtp_inter_build_relay_id(void)
 	char mac_address[6];
 
 	char buffer[50];
-	__u8 *str[30];
+	u8 *str[30];
 
 	gmtp_print_function();
 
@@ -113,7 +106,7 @@ __be32 gmtp_inter_device_ip(struct net_device *dev)
 	if_info = in_dev->ifa_list;
 	for(; if_info; if_info = if_info->ifa_next) {
 		pr_info("if_info->ifa_address=%pI4\n", &if_info->ifa_address);
-		/* just return the first entry for while */
+		/* just return the first entry for now */
 		return if_info->ifa_address;
 	}
 
@@ -129,10 +122,9 @@ __be32 get_mcst_v4_addr(void)
 	gmtp_print_function();
 
 	if(channel == NULL) {
-		gmtp_print_error("Cannot assign requested multicast address");
+		gmtp_pr_error("NULL channel: Cannot assign requested address");
 		return -EADDRNOTAVAIL;
 	}
-
 	memcpy(channel, base_channel, 4 * sizeof(unsigned char));
 
 	channel[3] += gmtp_inter.mcst[3]++;
@@ -155,7 +147,11 @@ __be32 get_mcst_v4_addr(void)
 		gmtp_inter.mcst[0]++;
 	}
 	if(gmtp_inter.mcst[0] > 15) {  /* 239 - 224 */
-		gmtp_print_error("Cannot assign requested multicast address");
+		int i;
+		for(i = 0; i < 4; ++i)
+			pr_info("gmtp_inter.mcst[%d] = %u\n", i,
+					gmtp_inter.mcst[i]);
+		gmtp_pr_error("Cannot assign requested multicast address");
 		return -EADDRNOTAVAIL;
 	}
 	channel[2] += gmtp_inter.mcst[2];
@@ -199,17 +195,13 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 
 		struct gmtp_hdr *gh = gmtp_hdr(skb);
 
-		if(unlikely(gh->type != GMTP_PKT_DATA
-						&& gh->type != GMTP_PKT_FEEDBACK)) {
-			gmtp_pr_debug("GMTP packet: %s (%d)",
-					gmtp_packet_name(gh->type), gh->type);
-			print_packet(skb, true);
-			print_gmtp_packet(iph, gh);
-		}
-
 		switch(gh->type) {
 		case GMTP_PKT_REQUEST:
-			ret = gmtp_inter_request_rcv(skb);
+			if(iph->ttl == 1) {
+				print_packet(skb, true);
+				print_gmtp_packet(iph, gh);
+				ret = gmtp_inter_request_rcv(skb);
+			}
 			break;
 		case GMTP_PKT_REGISTER_REPLY:
 			ret = gmtp_inter_register_reply_rcv(skb);
@@ -252,13 +244,6 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 
 		struct gmtp_hdr *gh = gmtp_hdr(skb);
 
-		if(gh->type != GMTP_PKT_DATA) {
-			gmtp_print_debug("GMTP packet: %s (%d)",
-					gmtp_packet_name(gh->type), gh->type);
-			print_packet(skb, false);
-			print_gmtp_packet(iph, gh);
-		}
-
 		switch(gh->type) {
 		case GMTP_PKT_REGISTER:
 			ret = gmtp_inter_register_out(skb);
@@ -279,6 +264,9 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
 int init_module()
 {
 	int ret = 0;
+	__u8 relay_id[21];
+	unsigned char *rid;
+
 	gmtp_pr_func();
 	gmtp_print_debug("Starting GMTP-Inter");
 
@@ -302,22 +290,15 @@ int init_module()
 	gmtp_inter.rx_rate_wnd = 1000;
 	memset(&gmtp_inter.mcst, 0, 4 * sizeof(unsigned char));
 
-/*	gmtp_inter.relay_id = kmalloc(MD5_LEN * sizeof(__u8), GFP_KERNEL);*/
-	unsigned char *rid = gmtp_inter_build_relay_id();
+	rid = gmtp_inter_build_relay_id();
 	if(rid == NULL) {
-		int i;
-		 __u8 id[21];
-		gmtp_pr_error("Relay ID lookup failed...\n");
-		gmtp_pr_info("Creating a random id (based on jiffies).\n");
-		memset(gmtp_inter.relay_id, 0, GMTP_FLOWNAME_LEN);
-		for(i = 0; i < GMTP_FLOWNAME_LEN; i += sizeof(jiffies)) {
-			memcpy(&gmtp_inter.relay_id[i], &jiffies, sizeof(jiffies));
-		}
-		pr_info("Getting relay id...\n");
-		flowname_strn(id, gmtp_inter.relay_id, MD5_LEN);
-		pr_info("Relay ID = %s\n", id);
+		gmtp_pr_error("Relay ID build failed. Creating a random id.");
+		get_random_bytes(gmtp_inter.relay_id, GMTP_FLOWNAME_LEN);
 	} else
 		memcpy(gmtp_inter.relay_id, rid, GMTP_FLOWNAME_LEN);
+
+	flowname_strn(relay_id, gmtp_inter.relay_id, MD5_LEN);
+	pr_info("Relay ID = %s\n", relay_id);
 
 	gmtp_inter.hashtable = gmtp_inter_create_hashtable(64);
 	if(gmtp_inter.hashtable == NULL) {
@@ -326,7 +307,7 @@ int init_module()
 		goto out;
 	}
 
-	gmtp_info->relay_enabled = 1; /* Enables gmtp-inter */
+	gmtp_info->relay_enabled = 1; /* Enabling gmtp-inter */
 
 	gmtp_inter.h_user = UINT_MAX; /* TODO Make it user defined */
 	gmtp_inter.last_rtt = GMTP_DEFAULT_RTT;
@@ -362,6 +343,7 @@ void cleanup_module()
 
 	nf_unregister_hook(&nfho_in);
 	nf_unregister_hook(&nfho_out);
+	del_timer(&gmtp_inter.gmtp_ucc_timer);
 }
 
 module_init(init_module);
