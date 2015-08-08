@@ -119,7 +119,7 @@ static void mcc_rx_send_feedback(struct sock *sk,
 			       gp->rx_max_rate,
 			       gp->rx_x_recv);
 
-		gmtp_send_feedback(sk, GMTP_SKB_CB(skb)->server_tstamp, skb->tstamp);
+		gmtp_send_feedback(sk, GMTP_SKB_CB(skb)->server_tstamp);
 	}
 }
 

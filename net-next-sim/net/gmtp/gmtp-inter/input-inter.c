@@ -215,14 +215,12 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
 	if(entry == NULL)
 		return NF_ACCEPT;
 
-<<<<<<< HEAD
-=======
 	if(entry->state != GMTP_INTER_WAITING_REGISTER_REPLY)
 		return NF_ACCEPT;
 
 	print_packet(skb, true);
 	print_gmtp_packet(iph, gh);
->>>>>>> multi-relay
+
 	info = entry->info;
 	info->rcv_tx_rate = gh->transm_r;
 	info->flow_rtt = (unsigned int) gh->server_rtt;
@@ -306,11 +304,7 @@ int gmtp_inter_ack_rcv(struct sk_buff *skb)
 	reporter = gmtp_get_client(&info->clients->list, iph->saddr, gh->sport);
 	gmtp_pr_debug("Reporter: %pI4:%d", &iph->saddr, gh->sport);
 	if(reporter != NULL) {
-<<<<<<< HEAD
-		pr_info("reporter->ack_rx_tstamp = jiffies_to_msecs(jiffies)\n");
-=======
 		pr_info("Reporter is not NULL!\n");
->>>>>>> multi-relay
 		reporter->ack_rx_tstamp = jiffies_to_msecs(jiffies);
 	}
 

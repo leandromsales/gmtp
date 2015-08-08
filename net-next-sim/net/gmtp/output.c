@@ -517,7 +517,7 @@ struct sk_buff *gmtp_ctl_make_ack(struct sock *sk, struct sk_buff *rcv_skb)
 }
 EXPORT_SYMBOL_GPL(gmtp_ctl_make_ack);
 
-void gmtp_send_feedback(struct sock *sk, __be32 server_tstamp, ktime_t rx_tstamp)
+void gmtp_send_feedback(struct sock *sk, __be32 server_tstamp)
 {
 	if(sk->sk_state != GMTP_CLOSED) {
 
@@ -528,7 +528,6 @@ void gmtp_send_feedback(struct sock *sk, __be32 server_tstamp, ktime_t rx_tstamp
 		skb_reserve(skb, sk->sk_prot->max_header);
 		GMTP_SKB_CB(skb)->type = GMTP_PKT_FEEDBACK;
 		GMTP_SKB_CB(skb)->server_tstamp = server_tstamp;
-		GMTP_SKB_CB(skb)->rx_tstamp = rx_tstamp;
 
 		gmtp_transmit_skb(sk, skb);
 	}

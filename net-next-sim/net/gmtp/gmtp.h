@@ -176,7 +176,7 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 void gmtp_send_ack(struct sock *sk);
 void gmtp_send_elect_request(struct sock *sk, unsigned long interval);
 void gmtp_send_elect_response(struct sock *sk, __u8 code);
-void gmtp_send_feedback(struct sock *sk, __be32 server_tstamp, ktime_t rx_tstamp);
+void gmtp_send_feedback(struct sock *sk, __be32 server_tstamp);
 void gmtp_send_close(struct sock *sk, const int active);
 int gmtp_send_reset(struct sock *sk, enum gmtp_reset_codes code);
 void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb);
@@ -256,7 +256,6 @@ struct gmtp_skb_cb {
 	__u8 retransmits;
 	__be32 seq;
 	__be32 server_tstamp;
-	ktime_t rx_tstamp;
 };
 
 #define GMTP_SKB_CB(__skb) ((struct gmtp_skb_cb *)&((__skb)->cb[0]))

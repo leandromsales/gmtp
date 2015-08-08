@@ -114,8 +114,7 @@ struct gmtp_hdr_ack {
  *
  */
 struct gmtp_hdr_feedback {
-	__be32 	orig_tstamp;
-	__be32 	wait;
+	__be32 	pkt_tstamp;
 	__u8	nclients;
 };
 

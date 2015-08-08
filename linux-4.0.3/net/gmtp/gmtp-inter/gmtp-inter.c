@@ -293,7 +293,7 @@ int init_module()
 	rid = gmtp_inter_build_relay_id();
 	if(rid == NULL) {
 		gmtp_pr_error("Relay ID build failed. Creating a random id.\n");
-		get_random_bytes(gmtp_inter.relay_id, 128);
+		get_random_bytes(gmtp_inter.relay_id, GMTP_FLOWNAME_LEN);
 	} else
 		memcpy(gmtp_inter.relay_id, rid, GMTP_FLOWNAME_LEN);
 

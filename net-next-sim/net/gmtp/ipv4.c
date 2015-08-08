@@ -310,7 +310,6 @@ static struct dst_entry* gmtp_v4_route_skb(struct net *net, struct sock *sk,
 static int gmtp_v4_send_register_reply(struct sock *sk,
 		struct request_sock *req)
 {
-
 	int err = -1;
 	struct sk_buff *skb;
 	struct dst_entry *dst;
