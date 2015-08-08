@@ -35,8 +35,8 @@ int main(int argc, char *argv[])
 	dceManager.Install(nodes);
 
 	RunGtmpInter(nodes, Seconds(2.0), "off");
-	RunApp("gmtp-server", nodes.Get(0), Seconds(2.5));
-	RunApp("gmtp-client", nodes.Get(1), Seconds(3.5), "10.0.0.1");
+	RunApp("gmtp-server", nodes.Get(0), Seconds(2.5), 1 << 16);
+	RunApp("gmtp-client", nodes.Get(1), Seconds(3.5), "10.0.0.1", 1 << 16);
 
 	csma.EnablePcapAll("dce-gmtp-simple");
 

@@ -87,6 +87,7 @@
 #define GMTP_RTO_MAX ((unsigned int)(64 * HZ))
 #define GMTP_TIMEWAIT_LEN (60 * HZ)
 #define GMTP_REQ_INTERVAL (TCP_SYNQ_INTERVAL)
+#define GMTP_SYN_RETRIES (2 * TCP_SYN_RETRIES)
 
 /* For reporters and servers keep_alive */
 #define GMTP_ACK_INTERVAL ((unsigned int)(HZ))

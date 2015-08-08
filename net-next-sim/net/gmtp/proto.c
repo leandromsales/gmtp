@@ -218,7 +218,7 @@ int gmtp_init_sock(struct sock *sk)
 
 	gmtp_init_xmit_timers(sk);
 	icsk->icsk_rto		= GMTP_TIMEOUT_INIT;
-	icsk->icsk_syn_retries	= TCP_SYN_RETRIES;
+	icsk->icsk_syn_retries	= GMTP_SYN_RETRIES;
 	sk->sk_state		= GMTP_CLOSED;
 	sk->sk_write_space	= gmtp_write_space;
 	icsk->icsk_sync_mss	= gmtp_sync_mss;
@@ -801,6 +801,7 @@ static int gmtp_create_inet_hashinfo(void)
 	int rc;
 
 	gmtp_print_function();
+	pr_info("thash_entries: %d\n", thash_entries);
 
 	BUILD_BUG_ON(sizeof(struct gmtp_skb_cb) >
 	FIELD_SIZEOF(struct sk_buff, cb));

@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 	int i;
 	const char *msg = "Hello, World! ";
 	int total_data, total;
-	for(i = 0; i < 50000; ++i) {
+	for(i = 0; i < 10000; ++i) {
 		const char *num = NumStr(i+1);
 		char *buffer = new char(BUFF_SIZE);
 		strcpy(buffer, msg);

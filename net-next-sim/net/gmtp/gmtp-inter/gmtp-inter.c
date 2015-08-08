@@ -32,6 +32,7 @@ static struct nf_hook_ops nfho_out;
 
 struct gmtp_inter gmtp_inter;
 
+/* FIXME This fails at NS-3-DCE */
 unsigned char *gmtp_build_md5(unsigned char *buf)
 {
 	struct scatterlist sg;
@@ -46,13 +47,10 @@ unsigned char *gmtp_build_md5(unsigned char *buf)
 	output = kmalloc(MD5_LEN * sizeof(unsigned char), GFP_KERNEL);
 	tfm = crypto_alloc_hash("md5", 0, CRYPTO_ALG_ASYNC);
 
-	/* FIXME This fails at NS-3-DCE */
-	pr_info("output: %p | tfm: %p\n", output, tfm);
 	if(output == NULL || IS_ERR(tfm)) {
 		gmtp_pr_warning("Allocation failed...");
 		return NULL;
 	}
-
 	desc.tfm = tfm;
 	desc.flags = 0;
 
@@ -110,7 +108,7 @@ __be32 gmtp_inter_device_ip(struct net_device *dev)
 	if_info = in_dev->ifa_list;
 	for(; if_info; if_info = if_info->ifa_next) {
 		pr_info("if_info->ifa_address=%pI4\n", &if_info->ifa_address);
-		/* just return the first entry for while */
+		/* just return the first entry for now */
 		return if_info->ifa_address;
 	}
 

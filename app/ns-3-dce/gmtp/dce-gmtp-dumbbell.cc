@@ -32,11 +32,12 @@ int main(int argc, char *argv[])
 	cout << "Creating nodes..." << endl;
 	Ptr<Node> server = CreateObject<Node>();
 
-	NodeContainer relays;
-	relays.Create (2);
-
+	cout << "Creating " << nclients << " clients..." << endl;
 	NodeContainer clients;
 	clients.Create (nclients);
+
+	NodeContainer relays;
+	relays.Create (2);
 
 	NodeContainer net1(relays.Get(0), server);
 	NodeContainer net2(relays.Get(1), clients);
@@ -67,24 +68,24 @@ int main(int argc, char *argv[])
 	address.SetBase("10.1.2.0", "255.255.255.0");
 	Ipv4InterfaceContainer i2 = address.Assign(d2);
 
-	address.SetBase("10.1.4.0", "255.255.255.0");
+	address.SetBase("10.1.3.0", "255.255.255.0");
 	Ipv4InterfaceContainer i3 = address.Assign(r);
 
 	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 	LinuxStackHelper::PopulateRoutingTables ();
 
-	RunIp(all, Seconds(2.2), "addr list sim0");
-	RunIp(relays, Seconds(2.3), "addr list sim1");
+//	RunGtmpInter(relays.Get(0), Seconds(2.0), "off");
+	RunIp(relays, Seconds(2.1), "route");
+
+	RunIp(server, Seconds(2.2), "addr list sim0");
+	RunIp(clients, Seconds(2.2), "addr list sim0");
 
 	RunGtmpInter(server, Seconds(2.5), "off");
 	RunGtmpInter(clients, Seconds(2.5), "off");
 
-	RunApp("gmtp-server", server, Seconds(4.0));
+	RunApp("gmtp-server", server, Seconds(4.0), 1 << 31);
 
-//	float j = 5.0;
-//	for(int i = 0; i < nclients; ++i, j += 0.1)
-//		RunApp("gmtp-client", clients.Get(i), Seconds(j), "10.1.1.2");
-	RunApp("gmtp-client", clients, Seconds(5.0), "10.1.1.2");
+	RunApp("gmtp-client", clients, Seconds(5.0), "10.1.1.2", 1 << 16);
 
 	csma.EnablePcapAll("dce-gmtp-dumbbell");
 

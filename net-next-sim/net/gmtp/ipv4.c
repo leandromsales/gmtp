@@ -849,6 +849,9 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 
 		list_for_each_entry(tmp, &(media_entry->clients->list), list)
 		{
+			if(!tmp)
+				goto discard_it;
+
 			sk = __inet_lookup(dev_net(skb_dst(skb)->dev),
 					&gmtp_inet_hashinfo, iph->saddr,
 					gh->sport, tmp->addr, tmp->port,

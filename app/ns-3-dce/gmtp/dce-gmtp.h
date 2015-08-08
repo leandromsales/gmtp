@@ -15,12 +15,12 @@
 
 static void RunApp(std::string appname,
 		ns3::Ptr<ns3::Node> node, ns3::Time at,
-		std::string args)
+		std::string args, uint32_t stackSize)
 {
 	ns3::DceApplicationHelper process;
 	ns3::ApplicationContainer apps;
 	process.SetBinary(appname.c_str());
-	process.SetStackSize(1 << 31);
+	process.SetStackSize(stackSize);
 	process.ResetArguments();
 	process.ParseArguments(args.c_str());
 	apps = process.Install(node);
@@ -29,12 +29,12 @@ static void RunApp(std::string appname,
 
 static void RunApp(std::string appname,
 		ns3::NodeContainer nodes, ns3::Time at,
-		std::string args)
+		std::string args, uint32_t stackSize)
 {
 	ns3::DceApplicationHelper process;
 	ns3::ApplicationContainer apps;
 	process.SetBinary(appname.c_str());
-	process.SetStackSize(1 << 31);
+	process.SetStackSize(stackSize);
 	process.ResetArguments();
 	process.ParseArguments(args.c_str());
 	apps = process.Install(nodes);
@@ -42,24 +42,24 @@ static void RunApp(std::string appname,
 }
 
 static void RunApp(std::string appname,
-		ns3::Ptr<ns3::Node> node, ns3::Time at)
+		ns3::Ptr<ns3::Node> node, ns3::Time at, uint32_t stackSize)
 {
 	ns3::DceApplicationHelper process;
 	ns3::ApplicationContainer apps;
 	process.SetBinary(appname.c_str());
-	process.SetStackSize(1 << 31);
+	process.SetStackSize(stackSize);
 	process.ResetArguments();
 	apps = process.Install(node);
 	apps.Start(at);
 }
 
 static void RunApp(std::string appname,
-		ns3::NodeContainer nodes, ns3::Time at)
+		ns3::NodeContainer nodes, ns3::Time at, uint32_t stackSize)
 {
 	ns3::DceApplicationHelper process;
 	ns3::ApplicationContainer apps;
 	process.SetBinary(appname.c_str());
-	process.SetStackSize(1 << 31);
+	process.SetStackSize(stackSize);
 	process.ResetArguments();
 	apps = process.Install(nodes);
 	apps.Start(at);
@@ -67,22 +67,22 @@ static void RunApp(std::string appname,
 
 static void RunIp(ns3::Ptr<ns3::Node> node, ns3::Time at, std::string args)
 {
-	RunApp("ip", node, at, args);
+	RunApp("ip", node, at, args, 1 << 16);
 }
 
 static void RunIp(ns3::NodeContainer nodes, ns3::Time at, std::string args)
 {
-	RunApp("ip", nodes, at, args);
+	RunApp("ip", nodes, at, args, 1 << 16);
 }
 
 static void RunGtmpInter(ns3::Ptr<ns3::Node> node, ns3::Time at, std::string args)
 {
-	RunApp("gmtp-inter", node, at, args);
+	RunApp("gmtp-inter", node, at, args, 1 << 16);
 }
 
 static void RunGtmpInter(ns3::NodeContainer nodes, ns3::Time at, std::string args)
 {
-	RunApp("gmtp-inter", nodes, at, args);
+	RunApp("gmtp-inter", nodes, at, args, 1 << 16);
 }
 
 #endif /* DCE_GMTP_H_ */

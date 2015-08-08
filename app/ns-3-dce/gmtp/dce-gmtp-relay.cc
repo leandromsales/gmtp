@@ -63,19 +63,43 @@ int main(int argc, char *argv[])
 	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 	LinuxStackHelper::PopulateRoutingTables ();
 
-	RunIp(all, Seconds(2.2), "addr list sim0");
-	RunIp(relay, Seconds(2.3), "addr list sim1");
+	RunIp(server, Seconds(2.2), "addr list sim0");
+	RunIp(clients, Seconds(2.2), "addr list sim0");
+	RunIp(relay, Seconds(2.3), "route");
 
 	RunGtmpInter(server, Seconds(2.5), "off");
 	RunGtmpInter(clients, Seconds(2.5), "off");
 
+	RunApp("gmtp-server", server, Seconds(4.0), 1 << 31);
 
-	RunApp("gmtp-server", server, Seconds(4.0));
+	DceApplicationHelper process;
+	ApplicationContainer apps;
+	process.SetBinary("gmtp-client");
+	process.SetStackSize(1 << 16);
+	process.ResetArguments();
+	process.ParseArguments("10.1.1.2");
 
-//	float j = 5.0;
-//	for(int i=0; i< nclients; ++i, j+=0.1)
-//		RunApp("gmtp-client", clients.Get(i), Seconds(j), "10.1.1.2");
-	RunApp("gmtp-client", clients, Seconds(5.0), "10.1.1.2");
+	int i=0;
+	int j=1;
+	int k = nclients/30;
+	float t = 5.0;
+	float step = 0.5;
+	cout << "k = " << k << endl;
+	for (; j < k; ++j, t+=step) {
+		cout << "i = " << i << ", j = " << j << ", t = " << t << endl;
+		for(; i < (j * nclients / k); ++i) {
+			apps = process.Install(clients.Get(i));
+			apps.Start(Seconds(t));
+		}
+	}
+
+	cout << "i = " << i << ", j = " << j << ", t = " << t << endl;
+	t+=step;
+	for(; i < nclients; ++i) {
+		apps = process.Install(clients.Get(i));
+		apps.Start(Seconds(t));
+	}
+	cout << "i = " << i << ", j = " << j << ", t = " << t << endl;
 
 	csma.EnablePcapAll("dce-gmtp-relay");
 
@@ -90,4 +114,5 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
+
 
