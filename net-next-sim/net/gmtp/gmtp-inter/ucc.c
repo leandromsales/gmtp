@@ -15,13 +15,13 @@
 
 extern struct gmtp_inter gmtp_inter;
 
-void gmtp_ucc_callback(void)
+void gmtp_ucc_callback(unsigned long data)
 {
-	unsigned int next = min(gmtp_inter.avg_rtt, gmtp_inter.h_user);
+	unsigned int next = min(gmtp_inter.worst_rtt, gmtp_inter.h_user);
 	if(next <= 0)
 		next = GMTP_DEFAULT_RTT;
 
-	gmtp_ucc(0);
+	gmtp_ucc(1);
 	mod_timer(&gmtp_inter.gmtp_ucc_timer, jiffies + msecs_to_jiffies(next));
 }
 
@@ -53,10 +53,10 @@ void gmtp_ucc(unsigned char debug)
 		y = DIV_ROUND_CLOSEST(gmtp_inter.ucc_bytes * MSEC_PER_SEC, elapsed);
 
 	/* FIXME Sane RTT before using it (in server and relays) */
-	h = gmtp_inter.avg_rtt;
-	if(h<=0) {
-		gmtp_pr_error("Error: h = %u. Assuming h = 1 ms", h);
-		h = 1;
+	h = gmtp_inter.worst_rtt;
+	if(h <= 0) {
+		gmtp_pr_error("Error: h = %u. Assuming h = 64 ms", h);
+		h = GMTP_DEFAULT_RTT;
 	}
 	H = min(h, gmtp_inter.h_user);
 	up = DIV_ROUND_CLOSEST(H, h) * (GMTP_ALPHA(GMTP_GHAMA(C)-y) - GMTP_BETA(q / h));

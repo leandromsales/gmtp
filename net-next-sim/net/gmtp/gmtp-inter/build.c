@@ -364,7 +364,7 @@ struct sk_buff *gmtp_inter_build_ack(struct gmtp_inter_entry *entry)
 
 	sock_create(AF_INET, SOCK_STREAM, 0, &sock);
 	net = sock_net(sock->sk);
-	dev_entry = dev_get_by_index_rcu(net, 2);
+	dev_entry = dev_get_by_index_rcu(net, 7);
 	sock_release(sock);
 
 	ip_len = gmtp_hdr_len + sizeof(struct iphdr);
@@ -402,10 +402,9 @@ struct sk_buff *gmtp_inter_build_ack(struct gmtp_inter_entry *entry)
 	put_unaligned(entry->info->my_addr, &(iph->saddr));
 	put_unaligned(entry->server_addr, &(iph->daddr));
 	put_unaligned(htons(skb->len), &(iph->tot_len));
-
 	ip_send_check(iph);
 
-	print_gmtp_packet(iph, gh);
+	/*print_gmtp_packet(iph, gh);*/
 
 	skb_push(skb, ETH_HLEN);
 	skb_reset_mac_header(skb);

@@ -96,7 +96,7 @@ void mcc_timer_callback(unsigned long data)
 	/*pr_info("RTT: %u ms, Next interval: %lu ms\n", info->rtt,
 			(gmtp_mcc_interval(info->rtt) - jiffies));*/
 
-	/* TODO Send here an ack to server */
+	/* TODO Send here an ack to server? */
 
 	mod_timer(&info->mcc_timer, gmtp_mcc_interval(info->flow_avg_rtt));
 }

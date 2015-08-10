@@ -86,10 +86,11 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 
 	} else {
 		__be32 mcst_addr = get_mcst_v4_addr();
-		int err = gmtp_inter_add_entry(gmtp_inter.hashtable, gh->flowname,
+		int err = gmtp_inter_add_entry(gmtp_inter.hashtable,
+				gh->flowname,
 				iph->daddr,
 				NULL,
-				gh->dport,
+				gh->dport, /* Media port */
 				mcst_addr,
 				gh->dport); /* Mcst port <- server port */
 
@@ -199,13 +200,11 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
 	gmtp_inter_add_relayid(skb);
 
 	gmtp_print_debug("UPDATING Tx Rate");
-	gmtp_inter.last_rtt = (unsigned int) gh->server_rtt;
-	gmtp_inter.avg_rtt = rtt_ewma(gmtp_inter.avg_rtt, gmtp_inter.last_rtt,
-			GMTP_RTT_WEIGHT);
+	gmtp_inter.worst_rtt = max(gmtp_inter.worst_rtt,
+			(unsigned int ) gh->server_rtt);
 
 	pr_info("Server RTT: %u ms\n", (unsigned int) gh->server_rtt);
-	pr_info("Last RTT: %u ms\n", gmtp_inter.last_rtt);
-	pr_info("RTT AVG: %u ms\n", gmtp_inter.avg_rtt);
+	pr_info("Worst RTT: %u ms\n", gmtp_inter.worst_rtt);
 
 	if(gmtp_inter.ucc_rx < gh->transm_r)
 		gh->transm_r = (__be32) gmtp_inter.ucc_rx;
@@ -374,9 +373,6 @@ static inline void gmtp_update_stats(struct gmtp_flow_info *info,
 {
 	gmtp_inter.total_bytes_rx += skblen(skb);
 	gmtp_inter.ucc_bytes += skblen(skb);
-	gmtp_inter.last_rtt = (unsigned int)gh->server_rtt;
-	gmtp_inter.avg_rtt = rtt_ewma(gmtp_inter.avg_rtt, gmtp_inter.last_rtt,
-	GMTP_RTT_WEIGHT);
 
 	info->total_bytes += skblen(skb);
 	info->recent_bytes += skblen(skb);
@@ -399,10 +395,11 @@ static inline void gmtp_update_stats(struct gmtp_flow_info *info,
 
 		info->recent_rx_tstamp = ktime_to_ms(skb->tstamp);
 		info->recent_bytes = 0;
-		pr_info("Last RTT: %u ms\n", (unsigned int) gh->server_rtt);
-		pr_info("Last RTT: %u ms\n", gmtp_inter.last_rtt);
-		pr_info("RTT AVG: %u ms\n", gmtp_inter.avg_rtt);
+		pr_info("Old worst RTT: %u ms\n", gmtp_inter.worst_rtt);
+		gmtp_inter.worst_rtt = GMTP_MIN_RTT_MS;
 	}
+	gmtp_inter.worst_rtt = max(gmtp_inter.worst_rtt,
+			(unsigned int ) gh->server_rtt);
 }
 
 

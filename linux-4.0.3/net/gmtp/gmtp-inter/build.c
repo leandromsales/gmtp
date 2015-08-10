@@ -405,10 +405,9 @@ struct sk_buff *gmtp_inter_build_ack(struct gmtp_inter_entry *entry)
 	put_unaligned(entry->info->my_addr, &(iph->saddr));
 	put_unaligned(entry->server_addr, &(iph->daddr));
 	put_unaligned(htons(skb->len), &(iph->tot_len));
-
 	ip_send_check(iph);
 
-	print_gmtp_packet(iph, gh);
+	/*print_gmtp_packet(iph, gh);*/
 
 	skb_push(skb, ETH_HLEN);
 	skb_reset_mac_header(skb);
