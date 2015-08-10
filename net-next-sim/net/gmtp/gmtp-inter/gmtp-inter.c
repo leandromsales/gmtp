@@ -310,8 +310,7 @@ int init_module()
 	gmtp_info->relay_enabled = 1; /* Enabling gmtp-inter */
 
 	gmtp_inter.h_user = UINT_MAX; /* TODO Make it user defined */
-	gmtp_inter.last_rtt = GMTP_DEFAULT_RTT;
-	gmtp_inter.avg_rtt = rtt_ewma(0, GMTP_DEFAULT_RTT, GMTP_RTT_WEIGHT);
+	gmtp_inter.worst_rtt = GMTP_MIN_RTT_MS;
 
 	pr_info("Configuring GMTP-UCC timer...\n");
 	setup_timer(&gmtp_inter.gmtp_ucc_timer, gmtp_ucc_callback, 0);

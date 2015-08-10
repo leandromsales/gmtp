@@ -86,10 +86,11 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 
 	} else {
 		__be32 mcst_addr = get_mcst_v4_addr();
-		int err = gmtp_inter_add_entry(gmtp_inter.hashtable, gh->flowname,
+		int err = gmtp_inter_add_entry(gmtp_inter.hashtable,
+				gh->flowname,
 				iph->daddr,
 				NULL,
-				gh->dport,
+				gh->dport, /* Media port */
 				mcst_addr,
 				gh->dport); /* Mcst port <- server port */
 

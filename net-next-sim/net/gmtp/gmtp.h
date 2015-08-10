@@ -69,7 +69,8 @@
  */
 #define GMTP_DEFAULT_MSS (576 - GMTP_FIXED_HDR_LEN - 20)
 
-#define GMTP_DEFAULT_RTT 64  /* milisseconds */
+#define GMTP_DEFAULT_RTT 	64  /* milisseconds */
+#define GMTP_MIN_RTT_MS 	1  /* milisseconds */
 /*
  * RTT sampling: sanity bounds and fallback RTT value from RFC 4340, section 3.4
  * Units in usec (microseconds)

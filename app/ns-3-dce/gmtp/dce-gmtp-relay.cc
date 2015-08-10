@@ -65,7 +65,8 @@ int main(int argc, char *argv[])
 
 	RunIp(server, Seconds(2.2), "addr list sim0");
 	RunIp(clients, Seconds(2.2), "addr list sim0");
-	RunIp(relay, Seconds(2.3), "route");
+	RunIp(relay, Seconds(2.3), "addr");
+	RunIp(relay, Seconds(2.4), "route");
 
 	RunGtmpInter(server, Seconds(2.5), "off");
 	RunGtmpInter(clients, Seconds(2.5), "off");
