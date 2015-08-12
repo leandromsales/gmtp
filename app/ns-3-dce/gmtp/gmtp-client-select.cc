@@ -1,22 +1,25 @@
-#include "stdio.h"    
-#include "stdlib.h"    
-#include "sys/types.h"    
-#include "sys/socket.h"    
-#include "string.h"    
-#include "netinet/in.h"    
-#include "netdb.h"  
-#include <netinet/in.h>
+#include <stdio.h>    
+#include <stdlib.h>    
+#include <sys/types.h>    
+#include <sys/socket.h>    
+#include <string.h>    
+#include <netinet/in.h>    
+#include <netdb.h>  
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <iostream>
-#include <ctime>
-#include <cstdio>
-#include <cstring>
+#include <fcntl.h>
+#include <stropts.h>
+#include <sys/ioctl.h>
+#include <string.h>
+#include <errno.h>
 
 #include "gmtp.h"
 
 #define PORT 2000
 #define BUF_SIZE 64
+
+using namespace std;
 
 inline void print_stats(int i, time_t start, int total, int total_data)
 {
@@ -36,9 +39,9 @@ int main(int argc, char**argv)
 {
 	struct sockaddr_in addr, cl_addr;
 	int sockfd, ret;
-	struct hostent * server;
-	char * serverAddr;
-	char buffer[BUF_SIZE];
+	struct hostent *server;
+	char *serverAddr;
+	char *buf = NULL;
 
 	if(argc < 2) {
 		printf("usage: client < ip address >\n");
@@ -48,8 +51,8 @@ int main(int argc, char**argv)
 
 	serverAddr = argv[1];
 	sockfd = socket(AF_INET, SOCK_GMTP, IPPROTO_GMTP);
-	setsockopt(sockfd, SOL_GMTP, GMTP_SOCKOPT_FLOWNAME, "1234567812345678", 16);
-//	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+//	setsockopt(sockfd, SOL_GMTP, GMTP_SOCKOPT_FLOWNAME, "1234567812345678", 16);
+	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if(sockfd < 0) {
 		printf("Error creating socket!\n");
 		exit(1);
@@ -73,18 +76,53 @@ int main(int argc, char**argv)
 	int total, total_data;
 	const char *outstr = "out";
 	do {
+		fd_set testfds;
+		int maxfdp1;
 		ssize_t bytes_read;
-		memset(buffer, '\0', BUF_SIZE); //Clean buffer
-		bytes_read = recv(sockfd, buffer, BUF_SIZE, 0);
-		if(bytes_read < 1) continue;
-		++i;
+		int readsize;
+
+		/* do a blocking select on the socket */
+		FD_ZERO(&testfds);
+		FD_SET(sockfd, &testfds);
+		maxfdp1 = sockfd + 1;
+
+		/* no action (0) is also an error in our case */
+		printf("Esperando dados... ");
+		if(select(maxfdp1, &testfds, NULL, NULL, 0) <= 0) {
+			printf("Select error!");
+			exit(1);
+		}
+		printf("chegou!\n");
+
+		if(ioctl(sockfd, FIONREAD, &readsize) < 0) {
+			printf("FIONREAD failed: %s", strerror(errno));
+			exit(1);
+		}
+
+		if(readsize == 0) {
+			printf("Got EOS on socket stream\n");
+			exit(1);
+		}
+
+		free(buf);
+		buf = (char *)malloc((int)readsize);
+		bytes_read = recv(sockfd, buf, (int)readsize, 0);
+
+		if(bytes_read != readsize) {
+			printf("Error while reading data");
+			exit(1);
+		}
+		i++;
 		total += bytes_read + 36 + 20;
 		total_data += bytes_read;
-//		if(i%100 == 0) {
-			printf("Received (%d): %s (%ld bytes)\n",  i, buffer, bytes_read);
-			print_stats(i, start, total, total_data);
-//		}
-	} while(strcmp(buffer, outstr) != 0);
+
+		printf("======================\n");
+		printf("message index %d\n", i);
+		printf("Bytes read %zu\n", bytes_read);
+		printf("FIONREAD size %d\n", readsize);
+		printf("Content: %s\n\n", buf);
+
+	} while(strcmp(buf, outstr) != 0);
 
 	print_stats(i, start, total, total_data);
 

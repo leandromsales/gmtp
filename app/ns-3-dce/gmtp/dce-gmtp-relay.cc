@@ -71,7 +71,8 @@ int main(int argc, char *argv[])
 	RunGtmpInter(server, Seconds(2.5), "off");
 	RunGtmpInter(clients, Seconds(2.5), "off");
 
-	RunApp("gmtp-server", server, Seconds(4.0), 1 << 31);
+//	RunApp("gmtp-server", server, Seconds(4.0), 1 << 31);
+	RunApp("gmtp-server-multi", server, Seconds(4.0), 1 << 31);
 
 	DceApplicationHelper process;
 	ApplicationContainer apps;

@@ -1,125 +1,110 @@
-#include "stdio.h"
-#include "stdlib.h"
-#include "sys/types.h"
-#include "sys/socket.h"
-#include "string.h"
-#include "netinet/in.h"
-#include "unistd.h"
-#include "arpa/inet.h"
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <string.h>
+#include <iostream>
+#include <arpa/inet.h>
+#include <cstdio>
+#include <cstring>
+#include <pthread.h>
+#include <cstdlib>
 
 #include "gmtp.h"
 
-#define BUF_SIZE 1024
-#define CLADDR_LEN 100
+#define SERVER_PORT 2000
+#define BUFF_SIZE 64
 
-#define PORT 2000
+using namespace std;
 
-void handle(int newsock, fd_set *set)
+pthread_mutex_t lock;
+
+static inline void print_stats(int i, time_t start, int total, int total_data)
 {
-	int i = 500;
-	char buffer[BUF_SIZE] = "Hello, World!";
-	char out[4] = "out";
+	time_t elapsed = time(0) - start;
+	if(elapsed==0) elapsed=1;
+	cout << i << " packets sent in " << elapsed << " s!" << endl;
+	cout << total_data << " data bytes sent (" << total_data/i << " B/packet)" << endl;
+	cout << total << " bytes sent (data+hdr) (" << total/i << " B/packet)" << endl;
+	cout << "Data TX: " << total_data/elapsed << " B/s" << endl;
+	cout << "TX: " << total/elapsed << " B/s" << endl;
+}
 
-	do {
-		send(newsock, buffer, BUF_SIZE, 0);
-	} while(--i);
-	send(newsock, out, 4, 0);
-	FD_CLR(newsock, set);
+void handle(int newsock)
+{
+	cout << "Connected with client!" << endl;
+	time_t start = time(0);
+	int i;
+	const char *msg = "Hello, World! ";
+	int total_data, total;
+	for(i = 0; i < 10000; ++i) {
+		const char *numstr = NumStr(i + 1);
+		char *buffer = new char(BUFF_SIZE);
+		strcpy(buffer, msg);
+		strcat(buffer, numstr);
+		int size = strlen(msg) + strlen(numstr) + 1;
+		send(newsock, buffer, size, 0);
+		total += (size + 36 + 20);
+		total_data += size;
+		delete (buffer);
+	}
+
+	print_stats(i, start, total, total_data);
+
+	const char *outstr = "out";
+	// FIXME Send 'out' 6 times for now... gmtp-inter bug in NS-3
+	for(i = 0; i < 6; ++i) {
+		printf("Sending out: %s\n", outstr);
+		send(newsock, outstr, strlen(outstr), 0);
+	}
 	close(newsock);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
-	struct sockaddr_in addr, cl_addr;
-	int sockfd, ret;
-	socklen_t len;
-	fd_set socks;
-	fd_set readsocks;
-	fd_set writesocks;
-	int maxsock;
-	int reuseaddr = 1;
-	int max_tx = 20000;
+	int welcomeSocket;
+	struct sockaddr_in serverAddr;
+	struct sockaddr_storage serverStorage;
+	socklen_t addr_size;
+	int max_tx = 30000; // Bps
 
-	disable_gmtp_inter();
-	sockfd = socket(AF_INET, SOCK_GMTP, IPPROTO_GMTP);
-//	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	if(sockfd < 0) {
-		printf("Error creating socket!\n");
-		exit(1);
+	cout << "Starting GMTP Server..." << endl;
+	welcomeSocket = socket(PF_INET, SOCK_GMTP, IPPROTO_GMTP);
+	setsockopt(welcomeSocket, SOL_GMTP, GMTP_SOCKOPT_FLOWNAME, "1234567812345678", 16);
+
+	cout << "Limiting tx_rate to " << max_tx << " B/s" << endl;
+	setsockopt(welcomeSocket, SOL_GMTP, GMTP_SOCKOPT_MAX_TX_RATE, &max_tx, sizeof(max_tx));
+
+	serverAddr.sin_family = AF_INET;
+	serverAddr.sin_port = htons(SERVER_PORT);
+	serverAddr.sin_addr.s_addr = INADDR_ANY;
+	memset(serverAddr.sin_zero, '\0', sizeof serverAddr.sin_zero);
+
+	bind(welcomeSocket, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
+
+	if(listen(welcomeSocket, 5) == 0)
+		cout << "Listening" << endl;
+	else
+		cout << "Error\n" << endl;
+;
+	addr_size = sizeof serverStorage;
+	while(true) {
+
+		int newSocket = accept(welcomeSocket,
+				(struct sockaddr *)&serverStorage, &addr_size);
+
+		if(newSocket > 0) {
+			cout << "New socket: " << newSocket << endl;
+			int pid = fork();
+			if(pid < 0) {
+				perror("ERROR on fork\n");
+				exit(1);
+			}
+			if(pid == 0) {
+				handle(newSocket);
+			}
+		}
 	}
-	printf("Socket created...\n");
-
-	printf("Calling setsockopt...\n");
-	setsockopt(sockfd, SOL_GMTP, GMTP_SOCKOPT_FLOWNAME, "1234567812345678", 16);
-	setsockopt(sockfd, SOL_GMTP, GMTP_SOCKOPT_MAX_TX_RATE, &max_tx, sizeof(max_tx));
-
-	memset(&addr, 0, sizeof(addr));
-	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = INADDR_ANY;
-	addr.sin_port = htons (PORT);
-
-	/* Enable the socket to reuse the address */
-	if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuseaddr,
-			sizeof(int))) {
-		perror("setsockopt");
-		return 1;
-	}
-
-	ret = bind(sockfd, (struct sockaddr *)&addr, sizeof(addr));
-	if(ret < 0) {
-		printf("Error binding!\n");
-		exit(1);
-	}
-	printf("Binding done...\n");
-
-	printf("Waiting for a connection...\n");
-	listen(sockfd, 5);
-
-	/* Set up the fd_set */
-	FD_ZERO(&socks);
-	FD_SET(sockfd, &socks);
-	maxsock = sockfd;
-
-	/* Main loop */
-	while(1) {
-	        unsigned int s;
-	        readsocks = socks;
-	        writesocks = socks;
-	        if (select(maxsock + 1, &readsocks, &writesocks, NULL, NULL) == -1) {
-	            perror("select");
-	            return 1;
-	        }
-	        for (s = 0; s <= maxsock; s++) {
-	            if (FD_ISSET(s, &readsocks) || FD_ISSET(s, &writesocks)) {
-	                printf("socket %d was ready\n", s);
-	                if (s == sockfd) {
-	                    /* New connection */
-	                    int newsockfd;
-	                    struct sockaddr_in their_addr;
-	                    socklen_t size = sizeof(struct sockaddr_in);
-	                    newsockfd = accept(sockfd, (struct sockaddr*)&their_addr, &size);
-	                    if (newsockfd == -1) {
-	                        perror("accept");
-	                    } else {
-	                        printf("Got a connection from %s on port %d\n",
-	                                inet_ntoa(their_addr.sin_addr), htons(their_addr.sin_port));
-	                        FD_SET(newsockfd, &socks);
-	                        if (newsockfd > maxsock) {
-	                            maxsock = newsockfd;
-	                        }
-	                    }
-	                } else {
-	                    /* Handle read or disconnection */
-	                    printf("Calling handle!");
-	                    handle(s, &socks);
-	                }
-	            }
-	        }
-
-	}
-
-	close(sockfd);
 
 	return 0;
 }
-

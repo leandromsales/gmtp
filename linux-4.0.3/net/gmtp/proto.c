@@ -517,7 +517,6 @@ int gmtp_ioctl(struct sock *sk, int cmd, unsigned long arg)
 {
 	int rc = -ENOTCONN;
 
-	gmtp_print_function();
 	lock_sock(sk);
 
 	if (sk->sk_state == GMTP_LISTEN)

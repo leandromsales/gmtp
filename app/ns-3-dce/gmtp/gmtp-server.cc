@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include <cstdio>
 #include <cstring>
+
 #include "gmtp.h"
 
 #define SERVER_PORT 2000
@@ -62,16 +63,15 @@ int main(int argc, char *argv[])
 	const char *msg = "Hello, World! ";
 	int total_data, total;
 	for(i = 0; i < 10000; ++i) {
-		const char *num = NumStr(i+1);
+		const char *numstr = NumStr(i+1);
 		char *buffer = new char(BUFF_SIZE);
 		strcpy(buffer, msg);
-		strcat(buffer, num);
-		int size = strlen(msg) + strlen(num)+1;
+		strcat(buffer, numstr);
+		int size = strlen(msg) + strlen(numstr)+1;
 		send(newSocket, buffer, size, 0);
 		total += size + 36 + 20;
 		total_data += size;
 		delete(buffer);
-		delete(num);
 	}
 
 	print_stats(i, start, total, total_data);
