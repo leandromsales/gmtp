@@ -459,6 +459,7 @@ int gmtp_rcv_route_notify(struct sock *sk, struct sk_buff *skb,
 
 	gmtp_print_function();
 
+	print_gmtp_packet(ip_hdr(skb), gh);
 	print_route(route);
 
 	if(route->nrelays <= 0)

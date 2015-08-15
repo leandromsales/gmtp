@@ -8,6 +8,7 @@
 #include <linux/phy.h>
 #include <linux/etherdevice.h>
 #include <net/ip.h>
+#include <net/sch_generic.h>
 
 #include <uapi/linux/gmtp.h>
 #include <linux/gmtp.h>
@@ -106,7 +107,7 @@ struct gmtp_hdr *gmtp_inter_make_request_notify_hdr(struct sk_buff *skb,
 		my_reporter->nclients++;
 	}
 
-	pr_info("RNotify => Ch: %pI4@%-5d | Code: %u | max_nclients: %u\n",
+	pr_info("ReqNotify => Ch: %pI4@%-5d | Code: %u | max_nclients: %u\n",
 					&gh_rnotify->mcst_addr,
 					ntohs(gh_rnotify->mcst_port),
 					gh_rnotify->rn_code,
@@ -203,6 +204,27 @@ struct gmtp_hdr *gmtp_inter_make_reset_hdr(struct sk_buff *skb, __u8 code)
 	return gh_cpy;
 }
 
+
+int gmtp_inter_make_reset(struct sk_buff *skb, struct gmtp_hdr *gh_reset)
+{
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct iphdr *iph = ip_hdr(skb);
+	int gmtp_hdr_len = sizeof(struct gmtp_hdr)
+			+ sizeof(struct gmtp_hdr_reset);
+
+	gmtp_pr_func();
+
+	skb_put(skb, sizeof(struct gmtp_hdr_reset));
+	memcpy(gh, gh_reset, gmtp_hdr_len);
+
+	swap(iph->saddr, iph->daddr);
+	iph->tot_len = htons(skb->len);
+	ip_send_check(iph);
+
+	return NF_ACCEPT;
+}
+
+
 struct gmtp_hdr *gmtp_inter_make_close_hdr(struct sk_buff *skb)
 {
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
@@ -234,10 +256,12 @@ struct gmtp_hdr *gmtp_inter_make_close_hdr(struct sk_buff *skb)
  * Based on netpoll_send_udp(...) (netpoll.c)
  */
 struct sk_buff *gmtp_inter_build_pkt(struct sk_buff *skb_src, __be32 saddr,
-		__be32 daddr, struct gmtp_hdr *gh_ref, bool backward)
+		__be32 daddr, struct gmtp_hdr *gh_ref,
+		enum gmtp_inter_direction direction)
 {
 	struct net_device *dev = skb_src->dev;
 	struct ethhdr *eth_src = eth_hdr(skb_src);
+	struct iphdr *iph_src = ip_hdr(skb_src);
 	struct sk_buff *skb;
 
 	struct ethhdr *eth;
@@ -254,7 +278,7 @@ struct sk_buff *gmtp_inter_build_pkt(struct sk_buff *skb_src, __be32 saddr,
 		data_len = gmtp_data_len(skb_src);
 
 	gmtp_len = gh_ref->hdrlen + data_len;
-	ip_len = gmtp_len + sizeof(*iph);
+	ip_len = gmtp_len + sizeof(*iph_src);
 	total_len = ip_len + LL_RESERVED_SPACE(dev);
 
 	skb = skb_copy(skb_src, gfp_any());
@@ -298,15 +322,107 @@ struct sk_buff *gmtp_inter_build_pkt(struct sk_buff *skb_src, __be32 saddr,
 	skb->protocol = eth->h_proto = htons(ETH_P_IP);
 
 	ether_addr_copy(eth->h_source, dev->dev_addr);
-	if(backward)
-		ether_addr_copy(eth->h_dest, eth_src->h_source);
-	else
+	switch(direction) {
+	case GMTP_INTER_FORWARD:
 		ether_addr_copy(eth->h_dest, eth_src->h_dest);
-
+		break;
+	case GMTP_INTER_BACKWARD:
+		ether_addr_copy(eth->h_dest, eth_src->h_source);
+		break;
+	case GMTP_INTER_LOCAL:
+		ether_addr_copy(eth->h_dest, eth->h_source);
+		ether_addr_copy(eth->h_source, eth_src->h_dest);
+		/*dev->qdisc->flags = 20;*/
+		break;
+	}
 	skb->dev = dev;
 
 	return skb;
 }
+
+/*
+ * Add an ip header to a skbuff and send it out.
+ * Based on netpoll_send_udp(...) (netpoll.c)
+ */
+struct sk_buff *gmtp_inter_build_multicast_pkt(struct sk_buff *skb_src,
+		struct net_device *dev)
+{
+	struct sk_buff *skb;
+	struct iphdr *iph_src = ip_hdr(skb_src);
+	struct gmtp_hdr *gh_src = gmtp_hdr(skb_src);
+
+	struct ethhdr *eth;
+	struct iphdr *iph;
+	struct gmtp_hdr *gh;
+	int total_len, ip_len, gmtp_len, data_len = 0;
+
+	data_len = gmtp_data_len(skb_src);
+	gmtp_len = gh_src->hdrlen + data_len;
+	ip_len = gmtp_len + sizeof(*iph_src);
+	total_len = ip_len + LL_RESERVED_SPACE(dev);
+
+	skb = skb_copy(skb_src, gfp_any());
+	if(skb == NULL) {
+		gmtp_print_warning("skb is null");
+		return NULL;
+	}
+
+	skb_reserve(skb, total_len);
+
+	/* Build GMTP data */
+	if(data_len > 0) {
+		unsigned char *data = skb_push(skb, data_len);
+		memcpy(data, gmtp_data(skb_src), data_len);
+	}
+
+	/* Build GMTP header */
+	skb_push(skb, gh_src->hdrlen);
+	skb_reset_transport_header(skb);
+	gh = gmtp_hdr(skb);
+	memcpy(gh,  gh_src, gh_src->hdrlen);
+
+	/* Build the IP header. */
+	skb_push(skb, sizeof(struct iphdr));
+	skb_reset_network_header(skb);
+	iph = ip_hdr(skb);
+
+	/* iph->version = 4; iph->ihl = 5; */
+	put_unaligned(0x45, (unsigned char *)iph);
+	iph->tos = 0;
+	iph->frag_off = 0;
+	iph->ttl = 64;
+	iph->protocol = IPPROTO_GMTP;
+	put_unaligned(iph_src->saddr, &(iph->saddr));
+	put_unaligned(iph_src->daddr, &(iph->daddr));
+	put_unaligned(htons(skb->len), &(iph->tot_len));
+	ip_send_check(iph);
+
+	eth = (struct ethhdr *)skb_push(skb, ETH_HLEN);
+	skb_reset_mac_header(skb);
+	skb->protocol = eth->h_proto = htons(ETH_P_IP);
+
+	ether_addr_copy(eth->h_source, dev->dev_addr);
+	ether_addr_copy(eth->h_dest, dev->dev_addr);
+
+	u8 source_str[13];
+	u8 dest_str[13];
+	int i;
+	for(i = 0; i < 6; ++i)
+		sprintf(&source_str[i*2], "%02x", eth->h_source[i]);
+
+	for(i = 0; i < 6; ++i)
+		sprintf(&dest_str[i * 2], "%02x", eth->h_dest[i]);
+
+	pr_info("src: %s, dst: %s\n", source_str, dest_str);
+
+	/*dev->qdisc->flags = 20;*/
+
+	dev->qdisc->flags = 20;
+	skb->dev = dev;
+
+	return skb;
+}
+
 
 void gmtp_inter_send_pkt(struct sk_buff *skb)
 {
@@ -320,21 +436,24 @@ void gmtp_inter_send_pkt(struct sk_buff *skb)
  * Based on netpoll_send_udp(...) (netpoll.c)
  */
 void gmtp_inter_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
-		__be32 daddr, struct gmtp_hdr *gh_ref, bool backward)
+		__be32 daddr, struct gmtp_hdr *gh_ref,
+		enum gmtp_inter_direction direction)
 {
 	struct sk_buff *skb = gmtp_inter_build_pkt(skb_src, saddr, daddr,
-			gh_ref, backward);
+			gh_ref, direction);
 
 	if(skb != NULL)
 		gmtp_inter_send_pkt(skb);
+
 }
 
-void gmtp_inter_build_and_send_skb(struct sk_buff *skb)
+void gmtp_inter_build_and_send_skb(struct sk_buff *skb,
+		enum gmtp_inter_direction direction)
 {
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 
-	gmtp_inter_build_and_send_pkt(skb, iph->saddr, iph->daddr, gh, 0);
+	gmtp_inter_build_and_send_pkt(skb, iph->saddr, iph->daddr, gh, direction);
 }
 
 void gmtp_copy_hdr(struct sk_buff *skb, struct sk_buff *src_skb)

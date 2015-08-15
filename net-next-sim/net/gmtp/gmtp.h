@@ -384,8 +384,12 @@ static inline int gmtp_delete_clients(struct list_head *list, __be32 addr, __be1
 	struct gmtp_client *client, *temp;
 	int ret = 0;
 
+	pr_info("Searching for %pI4@%-5d\n", &addr, ntohs(port));
+	pr_info("List of clients:\n");
 	list_for_each_entry_safe(client, temp, list, list)
 	{
+		pr_info("Client: %pI4@%-5d\n", &client->addr,
+							ntohs(client->port));
 		if(addr == client->addr && port == client->port) {
 			pr_info("Deleting client: %pI4@%-5d\n", &client->addr,
 					ntohs(client->port));
@@ -394,6 +398,10 @@ static inline int gmtp_delete_clients(struct list_head *list, __be32 addr, __be1
 			++ret;
 		}
 	}
+	if(ret == 0)
+		gmtp_pr_warning("Client %pI4@%-5d was not found!", &addr,
+				ntohs(port));
+
 	return ret;
 }
 

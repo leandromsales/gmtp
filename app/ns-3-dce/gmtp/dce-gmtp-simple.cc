@@ -34,11 +34,15 @@ int main(int argc, char *argv[])
 	Ipv4InterfaceContainer interfaces = address.Assign(devices);
 	dceManager.Install(nodes);
 
-	RunGtmpInter(nodes, Seconds(2.0), "off");
-//	RunApp("gmtp-server", nodes.Get(0), Seconds(2.5), 1 << 16);
-	RunApp("gmtp-server-multi", nodes.Get(0), Seconds(2.5), 1 << 16);
-	RunApp("gmtp-client", nodes.Get(1), Seconds(3.5), "10.0.0.1", 1 << 16);
-//	RunApp("gmtp-client", nodes.Get(1), Seconds(4.0), "10.0.0.1", 1 << 16);
+	RunIp(nodes.Get(0), Seconds(2.0), "addr");
+	RunIp(nodes.Get(0), Seconds(2.1), "route");
+
+//	RunGtmpInter(nodes, Seconds(2.0), "off");
+	RunGtmpInter(nodes.Get(1), Seconds(2.2), "off");
+	RunApp("gmtp-server", nodes.Get(0), Seconds(3.0), 1 << 16);
+//	RunApp("gmtp-server-select", nodes.Get(0), Seconds(2.5), 1 << 16);
+	RunApp("gmtp-client", nodes.Get(1), Seconds(4.0), "10.0.0.1", 1 << 16);
+//	RunApp("gmtp-client", nodes.Get(1), Seconds(4.5), "10.0.0.1", 1 << 16);
 
 	csma.EnablePcapAll("dce-gmtp-simple");
 

@@ -36,6 +36,8 @@ struct gmtp_inter_entry {
 
 	struct timer_list ack_timer_entry;
 
+	unsigned char request_mac_addr[6];
+
 	struct gmtp_flow_info *info;
 	struct gmtp_inter_entry *next;
 };
@@ -99,6 +101,9 @@ struct gmtp_flow_info {
 	unsigned int 		buffer_min;
 	unsigned int 		buffer_max;  /* buffer_min * 3 */
 	unsigned int 		buffer_len; /* in bytes */
+
+	struct net_device	*out;
+	struct gmtp_hdr		*route_pending;
 };
 
 static inline void gmtp_set_buffer_limits(struct gmtp_flow_info *info,

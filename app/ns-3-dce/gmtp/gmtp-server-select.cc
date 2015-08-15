@@ -48,16 +48,16 @@ void handle(int newsock, fd_set *set)
 	int total_data, total;
 	for(i = 0; i < 10000; ++i) {
 		const char *numstr = NumStr(i + 1);
-		pthread_mutex_lock(&lock);
+//		pthread_mutex_lock(&lock);
 		char *buffer = new char(BUFF_SIZE);
 		strcpy(buffer, msg);
 		strcat(buffer, numstr);
 		int size = strlen(msg) + strlen(numstr) + 1;
 		send(newsock, buffer, size, 0);
-		pthread_mutex_unlock(&lock);
 		total += (size + 36 + 20);
 		total_data += size;
 		delete (buffer);
+//		pthread_mutex_unlock(&lock);
 	}
 
 	print_stats(i, start, total, total_data);
@@ -127,22 +127,30 @@ int main()
 		unsigned int s;
 		readsocks = socks;
 		writesocks = socks;
+		printf("Before select, Max sock: %d\n", maxsock);
 		if(select(maxsock + 1, &readsocks, &writesocks, NULL, NULL)== -1) {
 			perror("Select");
 			return 1;
 		}
+
+		printf("After select, Max sock: %d\n", maxsock);
 		for(s = 0; s <= maxsock; s++) {
 			if(FD_ISSET(s, &readsocks) || FD_ISSET(s, &writesocks)) {
+
+				printf("FD_ISSET(s, &readsocks): %d\n", FD_ISSET(s, &readsocks));
+				printf("FD_ISSET(s, &writesocks): %d\n", FD_ISSET(s, &writesocks));
+
 				printf("Socket %d was ready\n", s);
 
 				if(s == sockfd) {
+					printf("s == sockfd\n");
 					/* New connection */
 					int newsockfd;
 					struct sockaddr_in their_addr;
 					socklen_t size = sizeof(struct sockaddr_in);
 					newsockfd = accept(sockfd, (struct sockaddr*)&their_addr,&size);
 					if(newsockfd == -1) {
-						perror("accept");
+						perror("error on accept");
 					} else {
 						printf("Got a connection from %s on port %d\n",
 								inet_ntoa(their_addr.sin_addr),
@@ -155,16 +163,9 @@ int main()
 				} else {
 					/* Handle read or disconnection */
 
-					int pid = fork();
-					if(pid < 0) {
-						perror("ERROR on fork");
-						exit(1);
-					}
-					if(pid == 0) {
-						/* This is the client process */
-						close(sockfd);
-						handle(s, &socks);
-					}
+					printf("else (s != sockfd)\n");
+					printf("Handling...\n-------\n\n");
+					handle(s, &socks);
 				}
 			}
 		}

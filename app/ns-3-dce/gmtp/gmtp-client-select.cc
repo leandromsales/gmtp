@@ -51,8 +51,8 @@ int main(int argc, char**argv)
 
 	serverAddr = argv[1];
 	sockfd = socket(AF_INET, SOCK_GMTP, IPPROTO_GMTP);
-//	setsockopt(sockfd, SOL_GMTP, GMTP_SOCKOPT_FLOWNAME, "1234567812345678", 16);
-	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	setsockopt(sockfd, SOL_GMTP, GMTP_SOCKOPT_FLOWNAME, "1234567812345678", 16);
+//	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if(sockfd < 0) {
 		printf("Error creating socket!\n");
 		exit(1);
@@ -66,7 +66,7 @@ int main(int argc, char**argv)
 
 	ret = connect(sockfd, (struct sockaddr *)&addr, sizeof(addr));
 	if(ret < 0) {
-		printf("Error connecting to the server!\n");
+		printf("Error connecting to the server! (%d)\n", ret);
 		exit(1);
 	}
 

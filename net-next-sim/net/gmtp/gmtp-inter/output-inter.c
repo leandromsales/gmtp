@@ -6,6 +6,8 @@
  */
 
 #include <net/ip.h>
+#include <linux/phy.h>
+#include <linux/etherdevice.h>
 
 #include <uapi/linux/gmtp.h>
 #include <linux/gmtp.h>
@@ -30,6 +32,7 @@ int gmtp_inter_register_out(struct sk_buff *skb)
 	/* FIXME Get a valid and unused port */
 	entry->info->my_addr = gmtp_inter_device_ip(skb->dev);
 	entry->info->my_port = gh->sport;
+	ether_addr_copy(entry->request_mac_addr, skb->dev->dev_addr);
 
 	iph->saddr = entry->info->my_addr;
 	iph->ttl = 64;
@@ -37,6 +40,25 @@ int gmtp_inter_register_out(struct sk_buff *skb)
 
 	print_packet(skb, false);
 	print_gmtp_packet(iph, gh);
+
+	return NF_ACCEPT;
+}
+
+/** FIXME HOOK LOCAL OUT Does not works for RegisterReply (skb->dev == NULL) */
+int gmtp_inter_register_reply_out(struct sk_buff *skb)
+{
+	struct iphdr *iph = ip_hdr(skb);
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct gmtp_inter_entry *entry;
+
+	gmtp_pr_func();
+
+	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
+	if(entry == NULL)
+		return NF_ACCEPT;
+
+	if(iph->saddr == entry->info->my_addr)
+		return gmtp_inter_register_reply_rcv(skb, GMTP_INTER_LOCAL);
 
 	return NF_ACCEPT;
 }
@@ -73,14 +95,13 @@ int gmtp_inter_data_out(struct sk_buff *skb)
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_inter_entry *entry;
 	struct gmtp_flow_info *info;
-
 	unsigned int server_tx;
 
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry == NULL) /* Failed to lookup media info in table... */
 		goto out;
-
 	info = entry->info;
+
 	if(entry->state == GMTP_INTER_TRANSMITTING) {
 		if(info->buffer->qlen > info->buffer_min) {
 			struct sk_buff *buffered = gmtp_buffer_dequeue(info);
@@ -120,8 +141,13 @@ static int gmtp_inter_close_from_client(struct sk_buff *skb,
 
 	gmtp_pr_func();
 
+	pr_info("info->nclients: %u\n", info->nclients);
 	del = gmtp_delete_clients(&info->clients->list, iph->saddr, gh->sport);
+	if(del == 0)
+		return NF_ACCEPT;
+	pr_info("del: %d\n", del);
 	info->nclients -= del;
+	pr_info("info->nclients - del: %u\n", info->nclients);
 
 	gh_reset = gmtp_inter_make_reset_hdr(skb, GMTP_RESET_CODE_CLOSED);
 	if(gh_reset == NULL)
@@ -135,9 +161,9 @@ static int gmtp_inter_close_from_client(struct sk_buff *skb,
 	if(info->nclients <= 0) {
 
 		/* Build and send back 'reset' */
-		pr_info("Sending RESET back to client");
-		gmtp_inter_build_and_send_pkt(skb, iph->daddr, iph->saddr,
-				gh_reset, true);
+		pr_info("FIXME: Sending RESET back to client");
+		/*gmtp_inter_build_and_send_pkt(skb, iph->daddr, iph->saddr,
+				gh_reset, GMTP_INTER_BACKWARD);*/
 
 		/* FIXME Transform 'reset' into 'close' before forwarding */
 		/*if(gh->type == GMTP_PKT_RESET) {
@@ -160,7 +186,10 @@ static int gmtp_inter_close_from_client(struct sk_buff *skb,
 		gmtp_inter_del_entry(gmtp_inter.hashtable, entry->flowname);
 
 	} else {
-		/* Only send 'reset' to clients, discarding 'close' */
+		/* Some clients still alive.
+		 * Only send 'reset' to clients, discarding 'close'
+		 * */
+		pr_info("Some clients still alive.\n");
 		skb_trim(skb, (skb_len - sizeof(struct gmtp_hdr)));
 		transport_header = skb_put(skb, gh_reset->hdrlen);
 		skb_reset_transport_header(skb);
@@ -173,10 +202,7 @@ static int gmtp_inter_close_from_client(struct sk_buff *skb,
 		ip_send_check(iph);
 	}
 
-	gmtp_pr_debug("%s (%u): src=%pI4@%-5d, dst=%pI4@%-5d",
-			gmtp_packet_name(gh->type), gh->type,
-			&iph->saddr, ntohs(gh->sport),
-			&iph->daddr, ntohs(gh->dport));
+	print_gmtp_packet(iph, gh);
 
 	return NF_ACCEPT;
 }
@@ -218,8 +244,15 @@ int gmtp_inter_close_out(struct sk_buff *skb)
 		}
 
 		gmtp_hdr(buffered)->relay = 1;
-		buffered->dev = skb->dev;
-		gmtp_inter_build_and_send_skb(buffered);
+
+		if(iph->saddr == entry->info->my_addr) {
+			pr_info("Local\n");
+			skb->dev = entry->info->out;
+			gmtp_inter_build_and_send_skb(buffered, GMTP_INTER_LOCAL);
+		} else {
+			buffered->dev = skb->dev;
+			gmtp_inter_build_and_send_skb(buffered, GMTP_INTER_FORWARD);
+		}
 	}
 
 	entry->state = GMTP_INTER_CLOSED;

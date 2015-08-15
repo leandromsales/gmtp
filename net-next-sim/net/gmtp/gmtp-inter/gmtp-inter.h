@@ -79,6 +79,12 @@ struct gmtp_inter {
 
 extern struct gmtp_inter gmtp_inter;
 
+enum gmtp_inter_direction {
+	GMTP_INTER_FORWARD,
+	GMTP_INTER_BACKWARD,
+	GMTP_INTER_LOCAL
+};
+
 /** gmtp-inter.c */
 __be32 get_mcst_v4_addr(void);
 void gmtp_buffer_add(struct gmtp_flow_info *info, struct sk_buff *newsk);
@@ -90,21 +96,32 @@ unsigned char *gmtp_build_md5(unsigned char *buf);
 void gmtp_timer_callback(void);
 
 /** input.c */
+int gmtp_inter_register_rcv(struct sk_buff *skb);
+struct gmtp_client *jump_over_gmtp_intra(struct sk_buff *skb,
+		struct list_head *list_head);
 int gmtp_inter_request_rcv(struct sk_buff *skb);
-int gmtp_inter_register_reply_rcv(struct sk_buff *skb);
+int gmtp_inter_register_local_in(struct sk_buff *skb);
+int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
+		enum gmtp_inter_direction direction);
 int gmtp_inter_ack_rcv(struct sk_buff *skb);
 int gmtp_inter_data_rcv(struct sk_buff *skb);
 int gmtp_inter_feedback_rcv(struct sk_buff *skb);
 int gmtp_inter_elect_resp_rcv(struct sk_buff *skb);
-int gmtp_inter_close_rcv(struct sk_buff *skb);
+int gmtp_inter_close_rcv(struct sk_buff *skb, bool in);
 
 /** Output.c */
 int gmtp_inter_register_out(struct sk_buff *skb);
+int gmtp_inter_register_reply_out(struct sk_buff *skb);
 int gmtp_inter_request_notify_out(struct sk_buff *skb);
 int gmtp_inter_data_out(struct sk_buff *skb);
 int gmtp_inter_close_out(struct sk_buff *skb);
 
 /** build.c */
+struct sk_buff *gmtp_inter_build_multicast_pkt(struct sk_buff *skb_src,
+		struct net_device *dev);
+struct sk_buff *gmtp_inter_build_pkt(struct sk_buff *skb_src, __be32 saddr,
+		__be32 daddr, struct gmtp_hdr *gh_ref,
+		enum gmtp_inter_direction direction);
 void gmtp_inter_send_pkt(struct sk_buff *skb);
 void gmtp_inter_add_relayid(struct sk_buff *skb);
 struct gmtp_hdr *gmtp_inter_make_route_hdr(struct sk_buff *skb);
@@ -120,10 +137,13 @@ int gmtp_inter_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
 		__u8 error_code);
 
 struct gmtp_hdr *gmtp_inter_make_reset_hdr(struct sk_buff *skb, __u8 code);
+int gmtp_inter_make_reset(struct sk_buff *skb, struct gmtp_hdr *gh_reset);
 struct gmtp_hdr *gmtp_inter_make_close_hdr(struct sk_buff *skb);
 void gmtp_inter_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
-		__be32 daddr, struct gmtp_hdr *gh_ref, bool backward);
-void gmtp_inter_build_and_send_skb(struct sk_buff *skb);
+		__be32 daddr, struct gmtp_hdr *gh_ref,
+		enum gmtp_inter_direction direction);
+void gmtp_inter_build_and_send_skb(struct sk_buff *skb,
+		enum gmtp_inter_direction direction);
 void gmtp_copy_hdr(struct sk_buff *skb, struct sk_buff *src_skb);
 struct sk_buff *gmtp_inter_build_ack(struct gmtp_inter_entry *entry);
 
@@ -166,8 +186,8 @@ static inline void print_packet(struct sk_buff *skb, bool in)
 {
 	struct iphdr *iph = ip_hdr(skb);
 	const char *type = in ? "IN" : "OUT";
-	pr_info("%s (%s): Src=%pI4 | Dst=%pI4 | Proto: %d | Len: %d bytes\n",
-			type, skb->dev->name,
+	pr_info("%s: Src=%pI4 | Dst=%pI4 | Proto: %d | Len: %d bytes\n",
+			type,
 			&iph->saddr, &iph->daddr,
 			iph->protocol,
 			ntohs(iph->tot_len));
