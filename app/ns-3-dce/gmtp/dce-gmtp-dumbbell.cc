@@ -74,18 +74,15 @@ int main(int argc, char *argv[])
 	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 	LinuxStackHelper::PopulateRoutingTables ();
 
-//	RunGtmpInter(relays.Get(0), Seconds(2.0), "off");
 	RunIp(relays, Seconds(2.1), "route");
 
 	RunIp(server, Seconds(2.2), "addr list sim0");
 	RunIp(clients, Seconds(2.2), "addr list sim0");
 
-	RunGtmpInter(server, Seconds(2.5), "off");
-	RunGtmpInter(clients, Seconds(2.5), "off");
+//	RunGtmpInter(server, Seconds(2.5), "off");
+//	RunGtmpInter(clients, Seconds(2.5), "off");
 
-//	RunApp("gmtp-server", server, Seconds(4.0), 1 << 31);
-	RunApp("gmtp-server-multi", server, Seconds(4.0), 1 << 31);
-
+	RunApp("gmtp-server", server, Seconds(4.0), 1 << 31);
 	RunApp("gmtp-client", clients, Seconds(5.0), "10.1.1.2", 1 << 16);
 
 	csma.EnablePcapAll("dce-gmtp-dumbbell");

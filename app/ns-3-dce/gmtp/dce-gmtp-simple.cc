@@ -36,13 +36,12 @@ int main(int argc, char *argv[])
 
 	RunIp(nodes.Get(0), Seconds(2.0), "addr");
 	RunIp(nodes.Get(0), Seconds(2.1), "route");
-
 //	RunGtmpInter(nodes, Seconds(2.0), "off");
-	RunGtmpInter(nodes.Get(1), Seconds(2.2), "off");
-	RunApp("gmtp-server", nodes.Get(0), Seconds(3.0), 1 << 16);
-//	RunApp("gmtp-server-select", nodes.Get(0), Seconds(2.5), 1 << 16);
+//	RunGtmpInter(nodes.Get(1), Seconds(2.2), "off");
+
+	RunApp("gmtp-server", nodes.Get(0), Seconds(3.0), 1 << 31);
 	RunApp("gmtp-client", nodes.Get(1), Seconds(4.0), "10.0.0.1", 1 << 16);
-//	RunApp("gmtp-client", nodes.Get(1), Seconds(4.5), "10.0.0.1", 1 << 16);
+	RunApp("gmtp-client", nodes.Get(1), Seconds(4.5), "10.0.0.1", 1 << 16);
 
 	csma.EnablePcapAll("dce-gmtp-simple");
 

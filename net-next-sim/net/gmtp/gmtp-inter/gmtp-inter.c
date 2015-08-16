@@ -106,13 +106,44 @@ __be32 gmtp_inter_device_ip(struct net_device *dev)
 	in_dev = (struct in_device *)dev->ip_ptr;
 	if_info = in_dev->ifa_list;
 	for(; if_info; if_info = if_info->ifa_next) {
-		gmtp_pr_info("%pI4", &if_info->ifa_address);
 		/* just return the first entry for now */
 		return if_info->ifa_address;
 	}
 
 	return 0;
 }
+
+bool gmtp_inter_ip_local(__be32 ip)
+{
+	struct socket *sock = NULL;
+	struct net_device *dev = NULL;
+	struct net *net;
+
+	int i, length = 0;
+	char mac_address[6];
+
+	char buffer[50];
+	u8 *str[30];
+
+	bool ret = false;
+
+	gmtp_print_function();
+
+	sock_create(AF_INET, SOCK_STREAM, 0, &sock);
+	net = sock_net(sock->sk);
+
+	for(i = 2; (dev = dev_get_by_index_rcu(net, i)) != NULL; ++i) {
+		__be32 dev_ip = gmtp_inter_device_ip(dev);
+		if(ip == dev_ip) {
+			ret = true;
+			break;
+		}
+	}
+
+	sock_release(sock);
+	return ret;
+}
+
 
 __be32 get_mcst_v4_addr(void)
 {
@@ -167,7 +198,6 @@ EXPORT_SYMBOL_GPL(get_mcst_v4_addr);
 
 void gmtp_buffer_add(struct gmtp_flow_info *info, struct sk_buff *newsk)
 {
-	gmtp_pr_func();
 	skb_queue_tail(info->buffer, skb_copy(newsk, GFP_ATOMIC));
 	info->buffer_len += newsk->len + ETH_HLEN;
 	gmtp_inter.buffer_len += newsk->len + ETH_HLEN;
@@ -199,6 +229,10 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 
 		switch(gh->type) {
 		case GMTP_PKT_REQUEST:
+			if(gmtp_inter_ip_local(iph->saddr) &&
+					iph->saddr != iph->daddr)
+				return NF_ACCEPT;
+
 			if(iph->ttl == 1) {
 				print_packet(skb, true);
 				print_gmtp_packet(iph, gh);

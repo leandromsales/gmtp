@@ -57,7 +57,7 @@ int gmtp_inter_register_reply_out(struct sk_buff *skb)
 	if(entry == NULL)
 		return NF_ACCEPT;
 
-	if(iph->saddr == entry->info->my_addr)
+	if(gmtp_inter_ip_local(iph->saddr))
 		return gmtp_inter_register_reply_rcv(skb, GMTP_INTER_LOCAL);
 
 	return NF_ACCEPT;

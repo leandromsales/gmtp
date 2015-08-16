@@ -27,7 +27,6 @@
 struct gmtp_inter_entry {
 	__u8 flowname[GMTP_FLOWNAME_LEN];
 	__be32 server_addr;
-	unsigned char server_mac_addr[6];
 	__be32 *relay;
 	__be16 media_port;
 	__be32 channel_addr;
@@ -36,6 +35,7 @@ struct gmtp_inter_entry {
 
 	struct timer_list ack_timer_entry;
 
+	unsigned char server_mac_addr[6];
 	unsigned char request_mac_addr[6];
 
 	struct gmtp_flow_info *info;

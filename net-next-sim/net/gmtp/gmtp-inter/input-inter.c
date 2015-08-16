@@ -332,6 +332,7 @@ int gmtp_inter_ack_rcv(struct sk_buff *skb)
 	}
 
 	if(info->route_pending != NULL) {
+		kfree(info->route_pending);
 		info->route_pending = NULL;
 
 		/*
@@ -461,11 +462,8 @@ int gmtp_inter_data_rcv(struct sk_buff *skb)
 
 	if(entry->state == GMTP_INTER_REGISTER_REPLY_RECEIVED)
 		entry->state = GMTP_INTER_TRANSMITTING;
-
-	gmtp_pr_func();
-	print_packet(skb, true);
-
 	info = entry->info;
+
 	if(info->buffer->qlen >= info->buffer_max)
 		goto out; /* Dont add it to buffer (equivalent to drop) */
 
