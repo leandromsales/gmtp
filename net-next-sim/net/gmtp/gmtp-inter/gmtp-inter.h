@@ -186,9 +186,10 @@ static inline void print_packet(struct sk_buff *skb, bool in)
 {
 	struct iphdr *iph = ip_hdr(skb);
 	const char *type = in ? "IN" : "OUT";
-	pr_info("%s: Src=%pI4 | Dst=%pI4 | Proto: %d | Len: %d bytes\n",
+	pr_info("%s: Src=%pI4 | Dst=%pI4 | TTL=%u | Proto: %d | Len: %d B\n",
 			type,
 			&iph->saddr, &iph->daddr,
+			iph->ttl,
 			iph->protocol,
 			ntohs(iph->tot_len));
 }

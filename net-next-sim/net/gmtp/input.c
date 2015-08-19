@@ -533,6 +533,8 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 	gmtp_print_debug("State: %s | Packet: %s", gmtp_state_name(sk->sk_state),
 			gmtp_packet_name(gh->type));
 
+	print_gmtp_packet(ip_hdr(skb), gh);
+
 	/*
 	 *  Step 3: Process LISTEN state
 	 *

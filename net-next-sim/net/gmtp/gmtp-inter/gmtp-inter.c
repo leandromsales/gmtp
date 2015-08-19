@@ -127,8 +127,6 @@ bool gmtp_inter_ip_local(__be32 ip)
 
 	bool ret = false;
 
-	gmtp_print_function();
-
 	sock_create(AF_INET, SOCK_STREAM, 0, &sock);
 	net = sock_net(sock->sk);
 
@@ -338,6 +336,14 @@ unsigned int hook_func_post_routing(unsigned int hooknum, struct sk_buff *skb,
 		struct gmtp_hdr *gh = gmtp_hdr(skb);
 
 		switch(gh->type) {
+		case GMTP_PKT_REQUEST:
+			if(gmtp_inter_ip_local(iph->saddr)
+					&& iph->saddr == iph->daddr) {
+				print_packet(skb, true);
+				print_gmtp_packet(iph, gh);
+				/*ret = gmtp_inter_request_rcv(skb);*/
+			}
+			break;
 		case GMTP_PKT_REGISTER:
 			ret = gmtp_inter_register_out(skb);
 			break;

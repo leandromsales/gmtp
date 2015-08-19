@@ -115,7 +115,7 @@ int gmtp_inter_register_local_in(struct sk_buff *skb)
 
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry == NULL)
-		return NF_DROP;
+		return NF_ACCEPT;
 
 	if(entry->state != GMTP_INTER_WAITING_REGISTER_REPLY)
 		return NF_DROP;
