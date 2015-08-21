@@ -36,11 +36,9 @@ int gmtp_inter_register_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	ether_addr_copy(entry->request_mac_addr, skb->dev->dev_addr);
 
 	iph->saddr = entry->my_addr;
+	iph->saddr = gmtp_inter_device_ip(skb->dev);
 	iph->ttl = 64;
 	ip_send_check(iph);
-
-	print_packet(skb, false);
-	print_gmtp_packet(iph, gh);
 
 	return NF_ACCEPT;
 }
@@ -95,7 +93,6 @@ int gmtp_inter_data_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 {
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct iphdr *iph = ip_hdr(skb);
-	struct ethhdr *eth = eth_hdr(skb);
 	unsigned int server_tx;
 	struct gmtp_client *relay, *temp;
 
@@ -122,9 +119,13 @@ int gmtp_inter_data_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 send:
 	list_for_each_entry_safe(relay, temp, &entry->relays->list, list)
 	{
-		gh->dport = relay->port;
-		gmtp_inter_build_and_send_pkt(skb, iph->saddr, relay->addr, gh,
-				GMTP_INTER_FORWARD);
+		if(relay->state == GMTP_OPEN) {
+			struct ethhdr *eth = eth_hdr(skb);
+			gh->dport = relay->port;
+			ether_addr_copy(eth->h_dest, relay->mac_addr);
+			gmtp_inter_build_and_send_pkt(skb, iph->saddr,
+					relay->addr, gh, GMTP_INTER_FORWARD);
+		}
 	}
 
 	iph->daddr = entry->channel_addr;

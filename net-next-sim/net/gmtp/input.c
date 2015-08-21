@@ -564,6 +564,10 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 		if(gh->type == GMTP_PKT_RESET)
 			goto discard;
 
+		/* Avoid GMTP-Inter problems */
+		if(gmtp_info->relay_enabled)
+			goto discard;
+
 		/* Caller (gmtp_v4_do_rcv) will send Reset */
 		gcb->reset_code = GMTP_RESET_CODE_NO_CONNECTION;
 		return 1;

@@ -151,6 +151,7 @@ struct gmtp_client {
 	struct sock 		*rsock;
 	struct sock 		*mysock;
 	unsigned char 		mac_addr[6];
+	enum gmtp_state		state;
 };
 
 struct gmtp_client *gmtp_create_client(__be32 addr, __be16 port, __u8 max_nclients);

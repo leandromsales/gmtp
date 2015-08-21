@@ -76,6 +76,7 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 
 		entry->dev_out = skb->dev;
 		entry->my_addr = gmtp_inter_device_ip(skb->dev);
+		pr_info("My addr: %pI4\n", &entry->my_addr);
 		entry->my_port = gh->sport;
 		code = GMTP_REQNOTIFY_CODE_WAIT;
 
@@ -157,8 +158,10 @@ int gmtp_inter_register_rcv(struct sk_buff *skb)
 
 	relay = gmtp_list_add_client(++entry->nrelays, iph->saddr, gh->sport, 0,
 			&entry->relays->list);
-	if(relay != NULL)
+	if(relay != NULL) {
 		ether_addr_copy(relay->mac_addr, eth->h_source);
+		relay->state = GMTP_CLOSED;
+	}
 
 out:
 	ghreply = gmtp_inter_make_register_reply_hdr(skb, entry, gh->dport,
@@ -347,13 +350,9 @@ send_to_clients:
 	if(first_client->max_nclients > 0)
 		cur_reporter = first_client;
 
-	pr_info("Before: \n");
-	print_gmtp_packet(ip_hdr(skb), gmtp_hdr(skb));
 	ret = gmtp_inter_make_request_notify(skb, iph->saddr, gh->sport,
 			first_client->addr, first_client->port, cur_reporter,
 			first_client->max_nclients, code);
-	pr_info("After: \n");
-	print_gmtp_packet(ip_hdr(skb), gmtp_hdr(skb));
 
 	/* Clean list of clients and keep only reporters */
 	list_for_each_entry_safe(client, tempc, &entry->clients->list, list)
@@ -393,8 +392,6 @@ send_to_clients:
 		}
 	}
 
-	pr_info("Outing: \n");
-	print_gmtp_packet(ip_hdr(skb), gmtp_hdr(skb));
 	return NF_ACCEPT;
 }
 
@@ -422,24 +419,29 @@ int gmtp_inter_ack_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	return NF_DROP;
 }
 
-/* Treat route_notify from clients */
+/* Treat route_notify from relays */
 int gmtp_inter_route_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 {
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct iphdr *iph = ip_hdr(skb);
+	struct gmtp_client *relay;
 
 	/* This is not to me */
 	if(!gmtp_inter_ip_local(iph->daddr))
 		return NF_ACCEPT;
 
+	relay = gmtp_get_client(&entry->relays->list, iph->saddr, gh->sport);
+	pr_info("Relay: %p\n", relay);
+	if(relay != NULL)
+		relay->state = GMTP_OPEN;
+
 	pr_info("entry->route_pending: %p\n", entry->route_pending);
 	if(entry->route_pending != NULL) {
 		kfree(entry->route_pending);
 		entry->route_pending = NULL;
-		return NF_ACCEPT;
 	}
 
-	return NF_DROP;
+	return NF_ACCEPT;
 }
 
 /**
@@ -541,6 +543,9 @@ int gmtp_inter_data_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 
+	if(!gmtp_inter_ip_local(iph->daddr)) /* Data is not to me */
+		return NF_ACCEPT;
+
 	if(unlikely(entry->state == GMTP_INTER_REGISTER_REPLY_RECEIVED))
 			entry->state = GMTP_INTER_TRANSMITTING;
 
@@ -555,9 +560,9 @@ int gmtp_inter_data_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	if((gh->seq > entry->seq) && entry->state == GMTP_INTER_TRANSMITTING)
 		gmtp_buffer_add(entry, skb);
 
+out:
 	gmtp_update_stats(entry, skb, gh);
 
-out:
 	return NF_ACCEPT;
 }
 

@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 	Ptr<Node> server = CreateObject<Node>();
 
 	NodeContainer relays;
-	relays.Create (2);
+	relays.Create (3);
 
 	NodeContainer clients0;
 	clients0.Create (nclients0);
@@ -32,8 +32,10 @@ int main(int argc, char *argv[])
 	clients1.Create (nclients1);
 
 	NodeContainer netserver(relays.Get(0), server);
-	NodeContainer net0(relays.Get(0), clients0);
-	NodeContainer net1(relays.Get(1), clients1);
+	NodeContainer netrelay0(relays.Get(0), relays.Get(1));
+	NodeContainer netrelay1(relays.Get(0), relays.Get(2));
+	NodeContainer net0(relays.Get(1), clients0);
+	NodeContainer net1(relays.Get(2), clients1);
 	NodeContainer clients(clients0, clients1);
 	NodeContainer all(server, relays, clients);
 
@@ -51,28 +53,44 @@ int main(int argc, char *argv[])
 	csma.SetChannelAttribute("DataRate", StringValue("10Mbps"));
 	csma.SetChannelAttribute("Delay", StringValue("1ms"));
 
-	NetDeviceContainer dserver = csma.Install(netserver);
+	NetDeviceContainer ds = csma.Install(netserver);
+	NetDeviceContainer dr0 = csma.Install(netrelay0);
+	NetDeviceContainer dr1 = csma.Install(netrelay1);
 	NetDeviceContainer d0 = csma.Install(net0);
 	NetDeviceContainer d1 = csma.Install(net1);
-	NetDeviceContainer dr = csma.Install(relays);
 
 	cout << "Create networks and assign IPv4 Addresses." << endl;
 	Ipv4AddressHelper address;
 
+	vector<Ipv4InterfaceContainer> ivector(5);
+
 	address.SetBase("10.1.1.0", "255.255.255.0");
-	Ipv4InterfaceContainer iserver = address.Assign(dserver);
+	ivector[0] = address.Assign(ds);
 
 	address.SetBase("10.1.2.0", "255.255.255.0");
-	Ipv4InterfaceContainer i0 = address.Assign(d0);
+	ivector[1] = address.Assign(dr0);
 
 	address.SetBase("10.1.3.0", "255.255.255.0");
-	Ipv4InterfaceContainer i1 = address.Assign(d1);
+	ivector[2] = address.Assign(dr1);
 
 	address.SetBase("10.1.4.0", "255.255.255.0");
-	Ipv4InterfaceContainer ir = address.Assign(dr);
+	ivector[3] = address.Assign(d0);
+
+	address.SetBase("10.1.5.0", "255.255.255.0");
+	ivector[4] = address.Assign(d1);
 
 	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 	LinuxStackHelper::PopulateRoutingTables ();
+
+	for(int i = 0; i < ivector.size(); ++i) {
+		cout << "net " << i << ":" << endl;
+		Ipv4InterfaceContainer::Iterator it;
+		for(it = ivector[i].Begin(); it != ivector[i].End(); ++it) {
+			std::pair<Ptr<Ipv4>, uint32_t> pair = *it;
+			cout << pair.first->GetAddress(0, 0) << endl;
+		}
+		cout << "------------" << endl;
+	}
 
 	cout << "Running simulation..." << endl;
 
