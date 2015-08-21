@@ -9,6 +9,7 @@
 #include <linux/etherdevice.h>
 #include <net/ip.h>
 #include <net/sch_generic.h>
+#include <linux/kernel.h>
 
 #include <uapi/linux/gmtp.h>
 #include <linux/gmtp.h>
@@ -164,6 +165,34 @@ fail:
 	return ret;
 }
 
+struct gmtp_hdr *gmtp_inter_make_register_reply_hdr(struct sk_buff *skb,
+		struct gmtp_inter_entry *entry, __be16 new_sport,
+		__be16 new_dport)
+{
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct gmtp_hdr *gh_cpy;
+	__u8 *transport_header;
+
+	int gmtp_hdr_len = sizeof(struct gmtp_hdr)
+			+ sizeof(struct gmtp_hdr_register_reply);
+
+	transport_header = kmalloc(gmtp_hdr_len, gfp_any());
+	memset(transport_header, 0, gmtp_hdr_len);
+
+	gh_cpy = (struct gmtp_hdr *)transport_header;
+	memcpy(gh_cpy, gh, sizeof(struct gmtp_hdr));
+
+	gh_cpy->version = GMTP_VERSION;
+	gh_cpy->type = GMTP_PKT_REGISTER_REPLY;
+	gh_cpy->hdrlen = gmtp_hdr_len;
+	gh_cpy->relay = 1;
+	gh_cpy->sport = new_sport;
+	gh_cpy->dport = new_dport;
+
+	return gh_cpy;
+}
+EXPORT_SYMBOL_GPL(gmtp_inter_make_register_reply_hdr);
+
 struct gmtp_hdr *gmtp_inter_make_reset_hdr(struct sk_buff *skb, __u8 code)
 {
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
@@ -277,21 +306,25 @@ struct sk_buff *gmtp_inter_build_pkt(struct sk_buff *skb_src, __be32 saddr,
 	if(gh_ref->type == GMTP_PKT_DATA)
 		data_len = gmtp_data_len(skb_src);
 
-	gmtp_len = gh_ref->hdrlen + data_len;
+	gmtp_len = data_len + gh_ref->hdrlen;
 	ip_len = gmtp_len + sizeof(*iph_src);
 	total_len = ip_len + LL_RESERVED_SPACE(dev);
 
-	skb = skb_copy(skb_src, gfp_any());
+	/*skb = skb_copy(skb_src, gfp_any());*/
+	skb = alloc_skb(GMTP_MAX_HDR_LEN, GFP_ATOMIC);
 	if(skb == NULL) {
 		gmtp_print_warning("skb is null");
 		return NULL;
 	}
 
-	skb_reserve(skb, total_len);
+	/*skb_put(skb, data_len);*/
+	/*skb_reset_tail_pointer(skb);*/
+	skb_reserve(skb, GMTP_MAX_HDR_LEN);
 
 	/* Build GMTP data */
 	if(data_len > 0) {
 		unsigned char *data = skb_push(skb, data_len);
+		skb_reset_transport_header(skb);
 		memcpy(data, gmtp_data(skb_src), data_len);
 	}
 
@@ -302,7 +335,7 @@ struct sk_buff *gmtp_inter_build_pkt(struct sk_buff *skb_src, __be32 saddr,
 	memcpy(gh, gh_ref, gh_ref->hdrlen);
 
 	/* Build the IP header. */
-	skb_push(skb, sizeof(struct iphdr));
+	skb_push(skb, sizeof(*iph));
 	skb_reset_network_header(skb);
 	iph = ip_hdr(skb);
 
@@ -356,7 +389,8 @@ struct sk_buff *gmtp_inter_build_multicast_pkt(struct sk_buff *skb_src,
 	struct gmtp_hdr *gh;
 	int total_len, ip_len, gmtp_len, data_len = 0;
 
-	data_len = gmtp_data_len(skb_src);
+	if(gh_src->type == GMTP_PKT_DATA)
+		data_len = gmtp_data_len(skb_src);
 	gmtp_len = gh_src->hdrlen + data_len;
 	ip_len = gmtp_len + sizeof(*iph_src);
 	total_len = ip_len + LL_RESERVED_SPACE(dev);

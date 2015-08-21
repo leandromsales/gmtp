@@ -74,16 +74,14 @@ int main(int argc, char *argv[])
 	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 	LinuxStackHelper::PopulateRoutingTables ();
 
+	cout << "Running simulation..." << endl;
+
 	RunIp(relays, Seconds(2.1), "route");
 
 	RunIp(server, Seconds(2.2), "addr list sim0");
 	RunIp(clients, Seconds(2.2), "addr list sim0");
 
-//	RunGtmpInter(clients, Seconds(2.5), "off");
-
 	RunApp("gmtp-server", server, Seconds(4.0), 1 << 31);
-
-//	RunApp("gmtp-client", clients, Seconds(5.0), "10.1.1.2", 1 << 16);
 
 	DceApplicationHelper process;
 	ApplicationContainer apps;

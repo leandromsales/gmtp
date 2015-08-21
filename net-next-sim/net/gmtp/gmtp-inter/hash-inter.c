@@ -159,7 +159,11 @@ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
 
 	memcpy(new_entry->flowname, flowname, GMTP_FLOWNAME_LEN);
 	new_entry->server_addr = server_addr;
-	new_entry->relay = relay; /* FIXME Add list */
+
+	new_entry->relays = kmalloc(sizeof(struct gmtp_client), GFP_KERNEL);
+	INIT_LIST_HEAD(&new_entry->relays->list);
+	new_entry->nrelays = 0;
+
 	new_entry->media_port = media_port;
 	new_entry->channel_addr = channel_addr;
 	new_entry->channel_port = channel_port;

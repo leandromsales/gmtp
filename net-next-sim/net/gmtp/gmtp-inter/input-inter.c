@@ -25,7 +25,7 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry != NULL) {
-		struct gmtp_client* cl;
+		struct gmtp_client *cl;
 		gmtp_pr_info("Media found. Sending RequestNotify.");
 		switch(entry->state) {
 		/* FIXME Make a timer to send register... */
@@ -64,25 +64,24 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 				mcst_addr,
 				gh->dport); /* Mcst port <- server port */
 
-		if(!err) {
-			entry = gmtp_inter_lookup_media(gmtp_inter.hashtable,
-					gh->flowname);
-			max_nclients = new_reporter(entry);
-
-			entry->dev_out = skb->dev;
-			entry->my_addr = gmtp_inter_device_ip(skb->dev);
-			entry->my_port = gh->sport;
-			code = GMTP_REQNOTIFY_CODE_WAIT;
-
-			gh->type = GMTP_PKT_REGISTER;
-			iph->ttl = 64;
-			ip_send_check(iph);
-
-		} else {
+		if(err) {
 			gmtp_pr_error("Failed to insert flow in table (%d)", err);
 			ret = NF_DROP;
 			goto out;
 		}
+
+		entry = gmtp_inter_lookup_media(gmtp_inter.hashtable,
+				gh->flowname);
+		max_nclients = new_reporter(entry);
+
+		entry->dev_out = skb->dev;
+		entry->my_addr = gmtp_inter_device_ip(skb->dev);
+		entry->my_port = gh->sport;
+		code = GMTP_REQNOTIFY_CODE_WAIT;
+
+		gh->type = GMTP_PKT_REGISTER;
+		iph->ttl = 64;
+		ip_send_check(iph);
 	}
 
 	if(max_nclients > 0)
@@ -101,6 +100,67 @@ out:
 	if(gh_reqnotify != NULL)
 		gmtp_inter_build_and_send_pkt(skb, iph->daddr,
 				iph->saddr, gh_reqnotify, GMTP_INTER_BACKWARD);
+
+	return ret;
+}
+
+
+/** Register to localhost only */
+int gmtp_inter_register_rcv(struct sk_buff *skb)
+{
+	int ret = NF_ACCEPT;
+	struct iphdr *iph = ip_hdr(skb);
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct ethhdr *eth = eth_hdr(skb);
+	struct gmtp_hdr *ghreply;
+	struct gmtp_inter_entry *entry;
+	struct gmtp_client *relay;
+
+	gmtp_pr_func();
+
+	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
+	if(entry != NULL) {
+		relay = gmtp_get_client(&entry->relays->list, iph->saddr, gh->sport);
+		if(relay == NULL)
+			return NF_DROP;
+		switch(entry->state) {
+		/*case GMTP_INTER_WAITING_REGISTER_REPLY:
+			break;*/
+		case GMTP_INTER_REGISTER_REPLY_RECEIVED:
+		case GMTP_INTER_TRANSMITTING:
+			gmtp_pr_info("Media found. Sending RegisterReply.");
+			ret = NF_DROP;
+			break;
+		default:
+			gmtp_pr_error("Inconsistent state: %d", entry->state);
+			ret = NF_DROP;
+		}
+	} else {
+		__be32 mcst_addr = get_mcst_v4_addr();
+		int err = gmtp_inter_add_entry(gmtp_inter.hashtable,
+				gh->flowname, iph->daddr,
+				NULL, gh->dport, /* Media port */
+				mcst_addr, gh->dport); /* Mcst port <- server port */
+		if(err) {
+			gmtp_pr_error("Failed to insert flow in table (%d)", err);
+			return NF_DROP;
+		}
+		entry = gmtp_inter_lookup_media(gmtp_inter.hashtable,
+				gh->flowname);
+
+		entry->dev_out = skb->dev;
+		entry->my_addr = gmtp_inter_device_ip(skb->dev);
+		entry->my_port = gh->sport;
+		relay = gmtp_list_add_client(++entry->nrelays, iph->saddr,
+				gh->sport, 0, &entry->relays->list);
+		if(relay != NULL)
+			ether_addr_copy(relay->mac_addr, eth->h_source);
+
+		ghreply = gmtp_inter_make_register_reply_hdr(skb, entry,
+				gh->dport, gh->sport);
+		gmtp_inter_build_and_send_pkt(skb, iph->daddr, iph->saddr,
+				ghreply, GMTP_INTER_BACKWARD);
+	}
 
 	return ret;
 }
@@ -133,16 +193,6 @@ int gmtp_inter_register_local_in(struct sk_buff *skb)
 	return NF_ACCEPT;
 }
 
-
-/** Register to localhost only */
-int gmtp_inter_register_rcv(struct sk_buff *skb)
-{
-	gmtp_pr_func();
-
-
-
-	return NF_ACCEPT;
-}
 
 /* A little trick...
  * Just get any client IP to pass over GMTP-Intra.
@@ -204,7 +254,8 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 	struct gmtp_hdr *gh_route_n;
 	struct gmtp_inter_entry *entry;
 	struct gmtp_hdr *gh_req_n;
-	struct gmtp_client *client, *temp, *first_client, *cur_reporter = NULL;
+	struct gmtp_client *client, *tempc, *first_client, *cur_reporter = NULL;
+	struct gmtp_client *relay, *tempr;
 	u8 code = GMTP_REQNOTIFY_CODE_OK;
 
 	gmtp_print_function();
@@ -212,6 +263,11 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry == NULL)
 		return NF_ACCEPT;
+
+	if(entry->state == GMTP_INTER_REGISTER_REPLY_RECEIVED) {
+		pr_info("Discarding duplicated packet...\n");
+		return NF_DROP;
+	}
 
 	print_packet(skb, true);
 	print_gmtp_packet(iph, gh);
@@ -256,23 +312,57 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 
 	entry->state = GMTP_INTER_REGISTER_REPLY_RECEIVED;
 
+	if(entry->nrelays==0) {
+		pr_info("No relays registered.\n");
+		goto send_to_clients;
+	}
+
+	list_for_each_entry_safe(relay, tempr, &entry->relays->list, list)
+	{
+		struct sk_buff *copy = skb_copy(skb, gfp_any());
+
+		if(copy != NULL) {
+			struct iphdr *iph_copy = ip_hdr(copy);
+			struct gmtp_hdr *gh_copy = gmtp_hdr(copy);
+			struct gmtp_hdr *gh_reply;
+
+			iph_copy->daddr = relay->addr;
+			ip_send_check(iph_copy);
+			gh_copy->dport = relay->port;
+
+			gh_reply = gmtp_inter_make_register_reply_hdr(copy,
+					entry, gh->sport, relay->port);
+			if(gh_reply != NULL)
+				gmtp_inter_build_and_send_pkt(skb, iph->saddr,
+						relay->addr, gh_reply,
+						GMTP_INTER_FORWARD);
+		}
+	}
+
+send_to_clients:
 	/* Send it to first client */
 	first_client = gmtp_get_first_client(&entry->clients->list);
-/*	if(first_client == NULL) {
-		pr_info("First client is NULL!\n");
+	if(first_client == NULL) {
+		pr_info("No clients registered.\n");
 		return NF_ACCEPT;
-	}*/
+	}
 
 	if(first_client->max_nclients > 0)
 		cur_reporter = first_client;
+
+	pr_info("Before: \n");
+	print_gmtp_packet(ip_hdr(skb), gmtp_hdr(skb));
 	ret = gmtp_inter_make_request_notify(skb, iph->saddr, gh->sport,
 			first_client->addr, first_client->port, cur_reporter,
 			first_client->max_nclients, code);
+	pr_info("After: \n");
+	print_gmtp_packet(ip_hdr(skb), gmtp_hdr(skb));
 
 	/* Clean list of clients and keep only reporters */
-	list_for_each_entry_safe(client, temp, &entry->clients->list, list)
+	list_for_each_entry_safe(client, tempc, &entry->clients->list, list)
 	{
 		struct sk_buff *copy = skb_copy(skb, gfp_any());
+		pr_info("Client...\n");
 
 		/* Send to other clients (not first) */
 		if(client == first_client)
@@ -306,6 +396,8 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 		}
 	}
 
+	pr_info("Outing: \n");
+	print_gmtp_packet(ip_hdr(skb), gmtp_hdr(skb));
 	return NF_ACCEPT;
 }
 
@@ -457,8 +549,8 @@ int gmtp_inter_data_rcv(struct sk_buff *skb)
 	if(entry == NULL) /* Failed to lookup media info in table... */
 		return NF_ACCEPT;
 
-	if(entry->state == GMTP_INTER_REGISTER_REPLY_RECEIVED)
-		entry->state = GMTP_INTER_TRANSMITTING;
+	if(unlikely(entry->state == GMTP_INTER_REGISTER_REPLY_RECEIVED))
+			entry->state = GMTP_INTER_TRANSMITTING;
 
 	if(entry->buffer->qlen >= entry->buffer_max)
 		goto out; /* Dont add it to buffer (equivalent to drop) */

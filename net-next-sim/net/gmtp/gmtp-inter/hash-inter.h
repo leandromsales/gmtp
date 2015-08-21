@@ -15,7 +15,8 @@
  *
  * @flowname: Name of dataflow
  * @server_addr: IP address of media server
- * @relay: list of relays
+ * @relays: list of relays connected to this relay
+ * @nrelays: number of relays connected to this relay
  * @media_port: port of media at server
  * @channel_addr: IP address of media multicast channel
  * @channel_port: Port of media multicast channel
@@ -39,8 +40,8 @@
  * @RTT: RTT from server to client (available in data packets)
  * @mcc_timer: Timer to control mcc tx reduction
  *
- * @clients: list of reporters connected to relay
- * @nclients: number of clients connected to relay
+ * @clients: list of reporters connected to this relay
+ * @nclients: number of clients connected to this relay
  * @cur_reporter: current reporter (to connect new clients)
  *
  * @buffer: buffer of GMTP-Data packets
@@ -54,7 +55,8 @@
 struct gmtp_inter_entry {
 	__u8 flowname[GMTP_FLOWNAME_LEN];
 	__be32 server_addr;
-	__be32 *relay;
+	struct gmtp_client *relays;
+	unsigned int nrelays;
 	__be16 media_port;
 	__be32 channel_addr;
 	__be16 channel_port;

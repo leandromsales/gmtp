@@ -86,6 +86,15 @@ int main(int argc, char**argv)
 //		}
 	} while(strcmp(buffer, outstr) != 0);
 
+	// Jamais remover!!!
+	// Resolve o Bug do ether_addr_copy(...):
+	//    Se o cliente morrer antes do servidor, o NS-3 não consegue
+	//    ler/copiar o mac do skb que chega da rede...
+	//     nem retorna nulo... não há como validar...
+	//     toda vez que ocorrer esse bug é porque o nó cliente não existe mais
+	//	21/08/15 - 4:00 AM
+	sleep(3);
+
 	print_stats(i, start, total, total_data);
 
 	return 0;

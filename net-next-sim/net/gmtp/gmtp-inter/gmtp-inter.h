@@ -93,6 +93,7 @@ struct sk_buff *gmtp_buffer_dequeue(struct gmtp_inter_entry *info);
 __be32 gmtp_inter_device_ip(struct net_device *dev);
 unsigned char *gmtp_build_md5(unsigned char *buf);
 void gmtp_timer_callback(void);
+bool gmtp_inter_ip_local(__be32 ip);
 
 /** input.c */
 int gmtp_inter_register_rcv(struct sk_buff *skb);
@@ -134,6 +135,9 @@ int gmtp_inter_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
 		__be16 new_sport, __be32 new_daddr, __be16 new_dport,
 		struct gmtp_client *reporter, __u8 max_nclients,
 		__u8 error_code);
+struct gmtp_hdr *gmtp_inter_make_register_reply_hdr(struct sk_buff *skb,
+		struct gmtp_inter_entry *entry, __be16 new_sport,
+		__be16 new_dport);
 
 struct gmtp_hdr *gmtp_inter_make_reset_hdr(struct sk_buff *skb, __u8 code);
 int gmtp_inter_make_reset(struct sk_buff *skb, struct gmtp_hdr *gh_reset);

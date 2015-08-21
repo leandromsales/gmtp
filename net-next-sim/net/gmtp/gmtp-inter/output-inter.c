@@ -8,6 +8,7 @@
 #include <net/ip.h>
 #include <linux/phy.h>
 #include <linux/etherdevice.h>
+#include <linux/list.h>
 
 #include <uapi/linux/gmtp.h>
 #include <linux/gmtp.h>
@@ -78,6 +79,10 @@ void gmtp_copy_data(struct sk_buff *skb, struct sk_buff *src_skb)
 
 	int diff = (int)data_len - (int)data_src_len;
 
+	/* This way does not work... */
+	/*skb_trim(skb, data_len);
+	skb_put(skb, data_src_len);*/
+
 	if(diff > 0)
 		skb_trim(skb, diff);
 	else if(diff < 0)
@@ -98,24 +103,41 @@ int gmtp_inter_data_out(struct sk_buff *skb)
 {
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct iphdr *iph = ip_hdr(skb);
+	struct ethhdr *eth = eth_hdr(skb);
 	struct gmtp_inter_entry *entry;
 	unsigned int server_tx;
+	struct gmtp_client *relay, *temp;
 
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry == NULL) /* Failed to lookup media info in table... */
 		goto out;
 
-	if(entry->state == GMTP_INTER_TRANSMITTING) {
-		if(entry->buffer->qlen > entry->buffer_min) {
-			struct sk_buff *buffered = gmtp_buffer_dequeue(entry);
-			if(buffered != NULL) {
-				entry->data_pkt_out++;
-				gmtp_copy_hdr(skb, buffered);
-				gmtp_copy_data(skb, buffered);
-			}
-		} else {
-			return NF_DROP;
+	if(unlikely(entry->state == GMTP_INTER_REGISTER_REPLY_RECEIVED))
+		entry->state = GMTP_INTER_TRANSMITTING;
+
+	/** TODO Verify close from server... */
+	if(entry->state != GMTP_INTER_TRANSMITTING)
+		return NF_DROP;
+
+	if(gmtp_inter_ip_local(iph->saddr))
+		goto send;
+
+	if(entry->buffer->qlen > entry->buffer_min) {
+		struct sk_buff *buffered = gmtp_buffer_dequeue(entry);
+		if(buffered != NULL) {
+			entry->data_pkt_out++;
+			skb = skb_copy(buffered, gfp_any());
 		}
+	} else {
+		return NF_DROP;
+	}
+
+send:
+	list_for_each_entry_safe(relay, temp, &entry->relays->list, list)
+	{
+		gh->dport = relay->port;
+		gmtp_inter_build_and_send_pkt(skb, iph->saddr, relay->addr, gh,
+				GMTP_INTER_FORWARD);
 	}
 
 	iph->daddr = entry->channel_addr;
