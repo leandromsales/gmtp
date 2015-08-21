@@ -81,7 +81,7 @@ struct gmtp_inter {
 extern struct gmtp_inter gmtp_inter;
 
 enum gmtp_inter_direction {
-	GMTP_INTER_FORWARD,
+	GMTP_INTER_FORWARD = 0,
 	GMTP_INTER_BACKWARD,
 	GMTP_INTER_LOCAL
 };
@@ -100,21 +100,28 @@ int gmtp_inter_register_rcv(struct sk_buff *skb);
 struct gmtp_client *jump_over_gmtp_intra(struct sk_buff *skb,
 		struct list_head *list_head);
 int gmtp_inter_request_rcv(struct sk_buff *skb);
-int gmtp_inter_register_local_in(struct sk_buff *skb);
+int gmtp_inter_register_local_in(struct sk_buff *skb,
+		struct gmtp_inter_entry *entry);
 int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
+		struct gmtp_inter_entry *entry,
 		enum gmtp_inter_direction direction);
-int gmtp_inter_ack_rcv(struct sk_buff *skb);
-int gmtp_inter_data_rcv(struct sk_buff *skb);
-int gmtp_inter_feedback_rcv(struct sk_buff *skb);
-int gmtp_inter_elect_resp_rcv(struct sk_buff *skb);
-int gmtp_inter_close_rcv(struct sk_buff *skb, bool in);
+int gmtp_inter_ack_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry);
+int gmtp_inter_route_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry);
+int gmtp_inter_data_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry);
+int gmtp_inter_feedback_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry);
+int gmtp_inter_elect_resp_rcv(struct sk_buff *skb,
+		struct gmtp_inter_entry *entry);
+int gmtp_inter_close_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry,
+		bool in);
 
 /** Output.c */
-int gmtp_inter_register_out(struct sk_buff *skb);
-int gmtp_inter_register_reply_out(struct sk_buff *skb);
-int gmtp_inter_request_notify_out(struct sk_buff *skb);
-int gmtp_inter_data_out(struct sk_buff *skb);
-int gmtp_inter_close_out(struct sk_buff *skb);
+int gmtp_inter_register_out(struct sk_buff *skb, struct gmtp_inter_entry *entry);
+int gmtp_inter_register_reply_out(struct sk_buff *skb,
+		struct gmtp_inter_entry *entry);
+int gmtp_inter_request_notify_out(struct sk_buff *skb,
+		struct gmtp_inter_entry *entry);
+int gmtp_inter_data_out(struct sk_buff *skb, struct gmtp_inter_entry *entry);
+int gmtp_inter_close_out(struct sk_buff *skb, struct gmtp_inter_entry *entry);
 
 /** build.c */
 struct sk_buff *gmtp_inter_build_multicast_pkt(struct sk_buff *skb_src,

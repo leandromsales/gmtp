@@ -223,43 +223,55 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 
 	if(iph->protocol == IPPROTO_GMTP) {
 
+		struct gmtp_inter_entry *entry;
 		struct gmtp_hdr *gh = gmtp_hdr(skb);
 
-		switch(gh->type) {
-		case GMTP_PKT_REQUEST:
-			if(gmtp_inter_ip_local(iph->saddr) &&
-					iph->saddr != iph->daddr)
+		if(gh->type == GMTP_PKT_REQUEST) {
+			if(gmtp_inter_ip_local(iph->saddr)
+					&& iph->saddr != iph->daddr)
 				return NF_ACCEPT;
 
 			if(iph->ttl == 1) {
 				print_packet(skb, true);
 				print_gmtp_packet(iph, gh);
-				ret = gmtp_inter_request_rcv(skb);
+				return gmtp_inter_request_rcv(skb);
 			}
-			break;
-		case GMTP_PKT_REGISTER:
+		} else if(gh->type == GMTP_PKT_REGISTER) {
+			print_packet(skb, true);
+			print_gmtp_packet(iph, gh);
 			if(gmtp_inter_ip_local(iph->daddr))
-				ret = gmtp_inter_register_rcv(skb);
-			break;
+				return gmtp_inter_register_rcv(skb);
+		}
+
+		entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
+		if(entry == NULL)
+			return NF_ACCEPT;
+
+		switch(gh->type) {
 		case GMTP_PKT_REGISTER_REPLY:
-			ret = gmtp_inter_register_reply_rcv(skb,
+			ret = gmtp_inter_register_reply_rcv(skb, entry,
 					GMTP_INTER_BACKWARD);
 			break;
 		case GMTP_PKT_ACK:
-			ret = gmtp_inter_ack_rcv(skb);
+			ret = gmtp_inter_ack_rcv(skb, entry);
+			break;
+		case GMTP_PKT_ROUTE_NOTIFY:
+			print_packet(skb, true);
+			print_gmtp_packet(iph, gh);
+			ret = gmtp_inter_route_rcv(skb, entry);
 			break;
 		case GMTP_PKT_DATA:
-			ret = gmtp_inter_data_rcv(skb);
+			ret = gmtp_inter_data_rcv(skb, entry);
 			break;
 		case GMTP_PKT_FEEDBACK:
-			ret = gmtp_inter_feedback_rcv(skb);
+			ret = gmtp_inter_feedback_rcv(skb, entry);
 			break;
 		case GMTP_PKT_ELECT_RESPONSE:
-			ret = gmtp_inter_elect_resp_rcv(skb);
+			ret = gmtp_inter_elect_resp_rcv(skb, entry);
 			break;
 		case GMTP_PKT_RESET:
 		case GMTP_PKT_CLOSE:
-			ret = gmtp_inter_close_rcv(skb, true);
+			ret = gmtp_inter_close_rcv(skb, entry, true);
 			break;
 		}
 
@@ -282,12 +294,19 @@ unsigned int hook_func_local_in(unsigned int hooknum, struct sk_buff *skb,
 	if(iph->protocol == IPPROTO_GMTP) {
 
 		struct gmtp_hdr *gh = gmtp_hdr(skb);
+		struct gmtp_inter_entry *entry = gmtp_inter_lookup_media(
+				gmtp_inter.hashtable, gh->flowname);
+		if(entry == NULL)
+			return NF_ACCEPT;
+
+		if(!gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname))
+			return NF_ACCEPT;
 
 		switch(gh->type) {
 		case GMTP_PKT_REGISTER:
 			/* Here. We need to trick the server,
 			to avoid data packets destined to 'lo' */
-			ret = gmtp_inter_register_local_in(skb);
+			ret = gmtp_inter_register_local_in(skb, entry);
 			break;
 		}
 	}
@@ -308,11 +327,15 @@ unsigned int hook_func_local_out(unsigned int hooknum, struct sk_buff *skb,
 	if(iph->protocol == IPPROTO_GMTP) {
 
 		struct gmtp_hdr *gh = gmtp_hdr(skb);
+		struct gmtp_inter_entry *entry = gmtp_inter_lookup_media(
+				gmtp_inter.hashtable, gh->flowname);
+		if(entry == NULL)
+			return NF_ACCEPT;
 
 		switch(gh->type) {
 		case GMTP_PKT_RESET:
 		case GMTP_PKT_CLOSE:
-			ret = gmtp_inter_close_rcv(skb, false);
+			ret = gmtp_inter_close_rcv(skb, entry, false);
 			break;
 		}
 	}
@@ -334,6 +357,10 @@ unsigned int hook_func_post_routing(unsigned int hooknum, struct sk_buff *skb,
 	if(iph->protocol == IPPROTO_GMTP) {
 
 		struct gmtp_hdr *gh = gmtp_hdr(skb);
+		struct gmtp_inter_entry *entry = gmtp_inter_lookup_media(gmtp_inter.hashtable,
+				gh->flowname);
+		if(entry == NULL)
+			return NF_ACCEPT;
 
 		switch(gh->type) {
 		case GMTP_PKT_REQUEST:
@@ -345,19 +372,19 @@ unsigned int hook_func_post_routing(unsigned int hooknum, struct sk_buff *skb,
 			}
 			break;
 		case GMTP_PKT_REGISTER:
-			ret = gmtp_inter_register_out(skb);
+			ret = gmtp_inter_register_out(skb, entry);
 			break;
 		case GMTP_PKT_REGISTER_REPLY:
 			/** FIXME Hook LOCAL_OUT Does not works for
 			 * RegisterReply (skb->dev == NULL) */
-			ret = gmtp_inter_register_reply_out(skb);
+			ret = gmtp_inter_register_reply_out(skb, entry);
 			break;
 		case GMTP_PKT_DATA:
-			ret = gmtp_inter_data_out(skb);
+			ret = gmtp_inter_data_out(skb, entry);
 			break;
 		case GMTP_PKT_RESET:
 		case GMTP_PKT_CLOSE:
-			ret = gmtp_inter_close_out(skb);
+			ret = gmtp_inter_close_out(skb, entry);
 			break;
 		}
 	}

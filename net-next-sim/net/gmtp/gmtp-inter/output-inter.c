@@ -17,16 +17,11 @@
 #include "gmtp-inter.h"
 #include "mcc-inter.h"
 
-int gmtp_inter_register_out(struct sk_buff *skb)
+int gmtp_inter_register_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 {
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
-	struct gmtp_inter_entry *entry;
 	struct gmtp_client* cl;
-
-	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
-	if(entry == NULL)
-		return NF_ACCEPT;
 
 	cl = gmtp_get_client(&entry->clients->list, iph->saddr, gh->sport);
 	if(cl == NULL)
@@ -51,20 +46,17 @@ int gmtp_inter_register_out(struct sk_buff *skb)
 }
 
 /** FIXME HOOK LOCAL OUT Does not works for RegisterReply (skb->dev == NULL) */
-int gmtp_inter_register_reply_out(struct sk_buff *skb)
+int gmtp_inter_register_reply_out(struct sk_buff *skb,
+		struct gmtp_inter_entry *entry)
 {
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
-	struct gmtp_inter_entry *entry;
 
 	gmtp_pr_func();
 
-	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
-	if(entry == NULL)
-		return NF_ACCEPT;
-
 	if(gmtp_inter_ip_local(iph->saddr))
-		return gmtp_inter_register_reply_rcv(skb, GMTP_INTER_LOCAL);
+		return gmtp_inter_register_reply_rcv(skb, entry,
+				GMTP_INTER_LOCAL);
 
 	return NF_ACCEPT;
 }
@@ -99,18 +91,13 @@ void gmtp_copy_data(struct sk_buff *skb, struct sk_buff *src_skb)
  *     p.port = get_multicast_port(P)
  *     send(p)
  */
-int gmtp_inter_data_out(struct sk_buff *skb)
+int gmtp_inter_data_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 {
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct iphdr *iph = ip_hdr(skb);
 	struct ethhdr *eth = eth_hdr(skb);
-	struct gmtp_inter_entry *entry;
 	unsigned int server_tx;
 	struct gmtp_client *relay, *temp;
-
-	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
-	if(entry == NULL) /* Failed to lookup media info in table... */
-		goto out;
 
 	if(unlikely(entry->state == GMTP_INTER_REGISTER_REPLY_RECEIVED))
 		entry->state = GMTP_INTER_TRANSMITTING;
@@ -149,7 +136,6 @@ send:
 			(unsigned int) gh->transm_r : entry->current_rx;
 	gmtp_inter_mcc_delay(entry, skb, (u64) server_tx);
 
-out:
 	return NF_ACCEPT;
 }
 
@@ -231,15 +217,10 @@ static int gmtp_inter_close_from_client(struct sk_buff *skb,
 	return NF_ACCEPT;
 }
 
-int gmtp_inter_close_out(struct sk_buff *skb)
+int gmtp_inter_close_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 {
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
-	struct gmtp_inter_entry *entry;
-
-	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
-	if(entry == NULL)
-		return NF_ACCEPT;
 
 	gmtp_pr_func();
 	print_packet(skb, false);
