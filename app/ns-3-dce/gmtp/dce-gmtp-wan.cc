@@ -11,28 +11,30 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-	int nclients = 1;
+	int nclients0 = 1;
+	int nclients1 = 1;
 
 	CommandLine cmd;
-	cmd.AddValue ("nclients", "Number of clients in router 1 (far from server)", nclients);
+	cmd.AddValue ("nclients0", "Number of clients in router 0 (next to server)", nclients0);
+	cmd.AddValue ("nclients1", "Number of clients in router 1 (far from server)", nclients1);
 	cmd.Parse(argc, argv);
 
 	cout << "Creating nodes..." << endl;
 	Ptr<Node> server = CreateObject<Node>();
 
-	NodeContainer clients1;
-	clients1.Create (nclients);
-
-	NodeContainer clients2;
-	clients2.Create (nclients);
-
 	NodeContainer relays;
 	relays.Create (2);
 
-	NodeContainer net0(relays.Get(0), server);
-	NodeContainer net1(relays.Get(0), clients1);
-	NodeContainer net2(relays.Get(1), clients2);
-	NodeContainer clients(clients1, clients2);
+	NodeContainer clients0;
+	clients0.Create (nclients0);
+
+	NodeContainer clients1;
+	clients1.Create (nclients1);
+
+	NodeContainer netserver(relays.Get(0), server);
+	NodeContainer net0(relays.Get(0), clients0);
+	NodeContainer net1(relays.Get(1), clients1);
+	NodeContainer clients(clients0, clients1);
 	NodeContainer all(server, relays, clients);
 
 	DceManagerHelper dceManager;
@@ -49,28 +51,30 @@ int main(int argc, char *argv[])
 	csma.SetChannelAttribute("DataRate", StringValue("10Mbps"));
 	csma.SetChannelAttribute("Delay", StringValue("1ms"));
 
+	NetDeviceContainer dserver = csma.Install(netserver);
 	NetDeviceContainer d0 = csma.Install(net0);
 	NetDeviceContainer d1 = csma.Install(net1);
-	NetDeviceContainer d2 = csma.Install(net2);
-	NetDeviceContainer r = csma.Install(relays);
+	NetDeviceContainer dr = csma.Install(relays);
 
 	cout << "Create networks and assign IPv4 Addresses." << endl;
 	Ipv4AddressHelper address;
 
 	address.SetBase("10.1.1.0", "255.255.255.0");
-	Ipv4InterfaceContainer i0 = address.Assign(d0);
+	Ipv4InterfaceContainer iserver = address.Assign(dserver);
 
 	address.SetBase("10.1.2.0", "255.255.255.0");
-	Ipv4InterfaceContainer i1 = address.Assign(d1);
+	Ipv4InterfaceContainer i0 = address.Assign(d0);
 
 	address.SetBase("10.1.3.0", "255.255.255.0");
-	Ipv4InterfaceContainer i2 = address.Assign(d2);
+	Ipv4InterfaceContainer i1 = address.Assign(d1);
 
 	address.SetBase("10.1.4.0", "255.255.255.0");
-	Ipv4InterfaceContainer i3 = address.Assign(r);
+	Ipv4InterfaceContainer ir = address.Assign(dr);
 
 	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 	LinuxStackHelper::PopulateRoutingTables ();
+
+	cout << "Running simulation..." << endl;
 
 //	RunGtmpInter(relays.Get(0), Seconds(2.0), "off");
 	RunIp(relays, Seconds(2.1), "route");
@@ -78,16 +82,10 @@ int main(int argc, char *argv[])
 	RunIp(server, Seconds(2.2), "addr list sim0");
 	RunIp(clients, Seconds(2.2), "addr list sim0");
 
-	RunGtmpInter(server, Seconds(2.5), "off");
 	RunGtmpInter(clients, Seconds(2.5), "off");
 
-//	RunApp("gmtp-server", server, Seconds(4.0), 1 << 31);
-//	RunApp("gmtp-server-multi", server, Seconds(4.0), 1 << 31);
-	RunApp("gmtp-server-select", server, Seconds(4.0), 1 << 31);
-
-//	RunApp("gmtp-client", clients, Seconds(5.0), "10.1.1.2", 1 << 16);
-	RunApp("gmtp-client-select", clients, Seconds(5.0), "10.1.1.2", 1 << 16);
-//	RunApp("gmtp-client", clients2, Seconds(5.0), "10.1.1.2", 1 << 16);
+	RunApp("gmtp-server", server, Seconds(4.0), 1 << 31);
+	RunApp("gmtp-client", clients, Seconds(5.0), "10.1.1.2", 1 << 16);
 
 	csma.EnablePcapAll("dce-gmtp-dumbbell");
 

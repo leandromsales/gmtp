@@ -194,14 +194,14 @@ __be32 get_mcst_v4_addr(void)
 }
 EXPORT_SYMBOL_GPL(get_mcst_v4_addr);
 
-void gmtp_buffer_add(struct gmtp_flow_info *info, struct sk_buff *newsk)
+void gmtp_buffer_add(struct gmtp_inter_entry *info, struct sk_buff *newsk)
 {
 	skb_queue_tail(info->buffer, skb_copy(newsk, GFP_ATOMIC));
 	info->buffer_len += newsk->len + ETH_HLEN;
 	gmtp_inter.buffer_len += newsk->len + ETH_HLEN;
 }
 
-struct sk_buff *gmtp_buffer_dequeue(struct gmtp_flow_info *info)
+struct sk_buff *gmtp_buffer_dequeue(struct gmtp_inter_entry *info)
 {
 	struct sk_buff *skb = skb_dequeue(info->buffer);
 	if(skb != NULL) {
@@ -238,8 +238,8 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 			}
 			break;
 		case GMTP_PKT_REGISTER:
-			/* TODO Register to localhost only */
-			ret = gmtp_inter_register_rcv(skb);
+			if(gmtp_inter_ip_local(iph->daddr))
+				ret = gmtp_inter_register_rcv(skb);
 			break;
 		case GMTP_PKT_REGISTER_REPLY:
 			ret = gmtp_inter_register_reply_rcv(skb,

@@ -452,6 +452,7 @@ discard:
 }
 EXPORT_SYMBOL_GPL(gmtp_rcv_established);
 
+/* The server does nothing. Local GMTP-Inter handles with it */
 int gmtp_rcv_route_notify(struct sock *sk, struct sk_buff *skb,
 			 const struct gmtp_hdr *gh)
 {
@@ -508,8 +509,9 @@ static int gmtp_rcv_request_rcv_state_process(struct sock *sk,
 		sk->sk_state_change(sk);
 		sk_wake_async(sk, SOCK_WAKE_IO, POLL_OUT);
 
-		if(gh->type == GMTP_PKT_ROUTE_NOTIFY)
-			gmtp_rcv_route_notify(sk, skb, gh);
+		/* The server does nothing. Local GMTP-Inter handles with it */
+		/*if(gh->type == GMTP_PKT_ROUTE_NOTIFY)
+			gmtp_rcv_route_notify(sk, skb, gh);*/
 
 		if (gh->type == GMTP_PKT_DATAACK)
 		{

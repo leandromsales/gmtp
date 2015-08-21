@@ -28,6 +28,7 @@ extern const char *gmtp_packet_name(const __u8);
 extern const char *gmtp_state_name(const int);
 extern void flowname_str(__u8* str, const __u8* flowname);
 extern void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh);
+extern struct gmtp_hashtable* server_hashtable;
 
 /**
  * TODO Negotiate buffer size with server
@@ -87,10 +88,8 @@ enum gmtp_inter_direction {
 
 /** gmtp-inter.c */
 __be32 get_mcst_v4_addr(void);
-void gmtp_buffer_add(struct gmtp_flow_info *info, struct sk_buff *newsk);
-struct sk_buff *gmtp_buffer_dequeue(struct gmtp_flow_info *info);
-struct gmtp_flow_info *gmtp_inter_get_info(
-		struct gmtp_inter_hashtable *hashtable, const __u8 *media);
+void gmtp_buffer_add(struct gmtp_inter_entry *info, struct sk_buff *newsk);
+struct sk_buff *gmtp_buffer_dequeue(struct gmtp_inter_entry *info);
 __be32 gmtp_inter_device_ip(struct net_device *dev);
 unsigned char *gmtp_build_md5(unsigned char *buf);
 void gmtp_timer_callback(void);

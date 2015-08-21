@@ -314,37 +314,4 @@ enum gmtp_sockopt_codes {
 };
 
 
-/**
- * struct gmtp_clients - A list of GMTP Clients
- *
- * @list: The list_head
- * @id: a number to identify and count clients
- * @addr: IP address of client
- * @port: reception port of client
- * @max_clients: for reporters, the max amount of clients.
- * 			0 means that clients is not a reporter
- * @nclients: number of occupied slots at a reporter.
- * 			It must be less or equal %max_clients
- *
- * @ack_rx_tstamp: time stamp of last received ack (or feedback)
- *
- * @clients: clients of a reporter.
- * @reporter: reporter of a client
- */
-struct gmtp_client {
-	struct list_head 	list;
-	unsigned int		id;
-	__be32 			addr;
-	__be16 			port;
-	__u8			max_nclients;
-	__u8			nclients;
-	__u32			ack_rx_tstamp;
-
-	struct gmtp_client	*clients;
-	struct gmtp_client	*reporter;
-	struct sock 		*rsock;
-	struct sock 		*mysock;
-};
-
-
 #endif /* UAPI_LINUX_GMTP_H */

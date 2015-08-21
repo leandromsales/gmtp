@@ -12,11 +12,25 @@
 #include "ns3/core-module.h"
 #include "ns3/dce-module.h"
 #include "ns3/internet-module.h"
+#include "ns3/csma-module.h"
+
+static void print_node_app(const ns3::Ptr<ns3::Node> &node, ns3::Time at, std::string appname) {
+	std::cout << "Node " << node->GetId() << " >> " << appname << " at "
+			<< at.GetSeconds() << "s" << std::endl;
+}
+
+static void print_node_app(const ns3::NodeContainer &container, ns3::Time at, std::string appname) {
+	ns3::NodeContainer::Iterator i;
+	for(i = container.Begin(); i != container.End(); ++i) {
+		print_node_app((const ns3::Ptr<ns3::Node>) (*i), at, appname);
+	}
+}
 
 static void RunApp(std::string appname,
 		ns3::Ptr<ns3::Node> node, ns3::Time at,
 		std::string args, uint32_t stackSize)
 {
+	//print_node_app(node, at, appname);
 	ns3::DceApplicationHelper process;
 	ns3::ApplicationContainer apps;
 	process.SetBinary(appname.c_str());
@@ -31,6 +45,7 @@ static void RunApp(std::string appname,
 		ns3::NodeContainer nodes, ns3::Time at,
 		std::string args, uint32_t stackSize)
 {
+	//print_node_app(nodes, at, appname);
 	ns3::DceApplicationHelper process;
 	ns3::ApplicationContainer apps;
 	process.SetBinary(appname.c_str());
@@ -44,6 +59,7 @@ static void RunApp(std::string appname,
 static void RunApp(std::string appname,
 		ns3::Ptr<ns3::Node> node, ns3::Time at, uint32_t stackSize)
 {
+	//print_node_app(node, at, appname);
 	ns3::DceApplicationHelper process;
 	ns3::ApplicationContainer apps;
 	process.SetBinary(appname.c_str());
@@ -56,6 +72,7 @@ static void RunApp(std::string appname,
 static void RunApp(std::string appname,
 		ns3::NodeContainer nodes, ns3::Time at, uint32_t stackSize)
 {
+	//print_node_app(nodes, at, appname);
 	ns3::DceApplicationHelper process;
 	ns3::ApplicationContainer apps;
 	process.SetBinary(appname.c_str());

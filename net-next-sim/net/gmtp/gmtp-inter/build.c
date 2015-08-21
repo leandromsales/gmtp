@@ -496,15 +496,15 @@ struct sk_buff *gmtp_inter_build_ack(struct gmtp_inter_entry *entry)
 	gh->type = GMTP_PKT_ACK;
 	gh->hdrlen = gmtp_hdr_len;
 	gh->relay = 1;
-	gh->seq = entry->info->seq;
+	gh->seq = entry->seq;
 	gh->dport = entry->media_port;
-	gh->sport = entry->info->my_port;
-	gh->server_rtt = entry->info->flow_rtt;
-	gh->transm_r = min(gmtp_inter.ucc_rx, entry->info->rcv_tx_rate);
+	gh->sport = entry->my_port;
+	gh->server_rtt = entry->flow_rtt;
+	gh->transm_r = min(gmtp_inter.ucc_rx, entry->rcv_tx_rate);
 	memcpy(gh->flowname, entry->flowname, GMTP_FLOWNAME_LEN);
 
 	gack = gmtp_hdr_ack(skb);
-	gack->orig_tstamp = entry->info->last_data_tstamp;
+	gack->orig_tstamp = entry->last_data_tstamp;
 
 	/* Build the IP header. */
 	skb_push(skb, sizeof(struct iphdr));
@@ -518,7 +518,7 @@ struct sk_buff *gmtp_inter_build_ack(struct gmtp_inter_entry *entry)
 	iph->ttl = 64;
 	iph->protocol = IPPROTO_GMTP;
 
-	put_unaligned(entry->info->my_addr, &(iph->saddr));
+	put_unaligned(entry->my_addr, &(iph->saddr));
 	put_unaligned(entry->server_addr, &(iph->daddr));
 	put_unaligned(htons(skb->len), &(iph->tot_len));
 	ip_send_check(iph);

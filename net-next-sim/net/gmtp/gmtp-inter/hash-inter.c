@@ -92,12 +92,10 @@ void ack_timer_callback(struct gmtp_inter_entry *entry)
 }
 
 
-struct gmtp_flow_info *__gmtp_inter_build_info(void)
+void __gmtp_inter_build_info(struct gmtp_inter_entry *info)
 {
-	struct gmtp_flow_info *info = kmalloc(sizeof(struct gmtp_flow_info),
-			GFP_KERNEL);
-	if(info == NULL)
-		goto out;
+	if(unlikely(info == NULL))
+		return;
 
 	info->total_bytes = 0;
 	info->last_rx_tstamp = 0;
@@ -122,18 +120,14 @@ struct gmtp_flow_info *__gmtp_inter_build_info(void)
 
 	setup_timer(&info->mcc_timer, mcc_timer_callback, (unsigned long) info);
 	mod_timer(&info->mcc_timer, gmtp_mcc_interval(info->flow_rtt));
-out:
-	return info;
 }
 
-struct gmtp_flow_info *gmtp_inter_build_info(unsigned int bmin)
+void gmtp_inter_build_info(struct gmtp_inter_entry *info, unsigned int bmin)
 {
-	struct gmtp_flow_info *info = __gmtp_inter_build_info();
-
-	if(info != NULL)
+	if(likely(info != NULL)) {
 		gmtp_set_buffer_limits(info, bmin);
-
-	return info;
+		__gmtp_inter_build_info(info);
+	}
 }
 
 int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
@@ -161,9 +155,7 @@ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
 		return 2; /* TODO Media already being transmitted by other
 								server? */
 
-	new_entry->info = gmtp_inter_build_info(5);
-	if(new_entry->info == NULL)
-		return 1;
+	gmtp_inter_build_info(new_entry, 5);
 
 	memcpy(new_entry->flowname, flowname, GMTP_FLOWNAME_LEN);
 	new_entry->server_addr = server_addr;
@@ -175,7 +167,7 @@ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
 	new_entry->next = hashtable->table[hashval];
 	hashtable->table[hashval] = new_entry;
 	setup_timer(&new_entry->ack_timer_entry, ack_timer_callback, new_entry);
-	mod_timer(&new_entry->ack_timer_entry, jiffies + 3*HZ);
+	mod_timer(&new_entry->ack_timer_entry, jiffies + (3 * HZ));
 
 	return 0;
 }
@@ -183,12 +175,11 @@ EXPORT_SYMBOL_GPL(gmtp_inter_add_entry);
 
 void gmtp_inter_del_clients(struct gmtp_inter_entry *entry)
 {
-	struct gmtp_flow_info *info = entry->info;
 	struct gmtp_client *client, *temp;
 
 	gmtp_pr_func();
 
-	list_for_each_entry_safe(client, temp, &info->clients->list, list)
+	list_for_each_entry_safe(client, temp, &entry->clients->list, list)
 	{
 		list_del(&client->list);
 		kfree(client);
@@ -230,10 +221,9 @@ struct gmtp_inter_entry *gmtp_inter_del_entry(
 		previous_entry->next = current_entry->next;
 
 	gmtp_inter_del_clients(current_entry);
-	skb_queue_purge(current_entry->info->buffer);
-	del_timer_sync(&current_entry->info->mcc_timer);
+	skb_queue_purge(current_entry->buffer);
+	del_timer_sync(&current_entry->mcc_timer);
 	del_timer_sync(&current_entry->ack_timer_entry);
-	kfree(current_entry->info);
 	kfree(current_entry);
 
 	gmtp_print_debug("Media entry removed successfully!");

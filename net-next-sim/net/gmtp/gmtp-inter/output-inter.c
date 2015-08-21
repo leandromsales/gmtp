@@ -21,20 +21,25 @@ int gmtp_inter_register_out(struct sk_buff *skb)
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct gmtp_inter_entry *entry;
+	struct gmtp_client* cl;
 
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry == NULL)
-		return NF_DROP;
+		return NF_ACCEPT;
+
+	cl = gmtp_get_client(&entry->clients->list, iph->saddr, gh->sport);
+	if(cl == NULL)
+		return NF_ACCEPT;
 
 	if(entry->state != GMTP_INTER_WAITING_REGISTER_REPLY)
 		return NF_DROP;
 
 	/* FIXME Get a valid and unused port */
-	entry->info->my_addr = gmtp_inter_device_ip(skb->dev);
-	entry->info->my_port = gh->sport;
+	entry->my_addr = gmtp_inter_device_ip(skb->dev);
+	entry->my_port = gh->sport;
 	ether_addr_copy(entry->request_mac_addr, skb->dev->dev_addr);
 
-	iph->saddr = entry->info->my_addr;
+	iph->saddr = entry->my_addr;
 	iph->ttl = 64;
 	ip_send_check(iph);
 
@@ -94,19 +99,17 @@ int gmtp_inter_data_out(struct sk_buff *skb)
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_inter_entry *entry;
-	struct gmtp_flow_info *info;
 	unsigned int server_tx;
 
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry == NULL) /* Failed to lookup media info in table... */
 		goto out;
-	info = entry->info;
 
 	if(entry->state == GMTP_INTER_TRANSMITTING) {
-		if(info->buffer->qlen > info->buffer_min) {
-			struct sk_buff *buffered = gmtp_buffer_dequeue(info);
+		if(entry->buffer->qlen > entry->buffer_min) {
+			struct sk_buff *buffered = gmtp_buffer_dequeue(entry);
 			if(buffered != NULL) {
-				info->data_pkt_out++;
+				entry->data_pkt_out++;
 				gmtp_copy_hdr(skb, buffered);
 				gmtp_copy_data(skb, buffered);
 			}
@@ -120,9 +123,9 @@ int gmtp_inter_data_out(struct sk_buff *skb)
 	gh->relay = 1;
 	gh->dport = entry->channel_port;
 
-	server_tx = info->current_rx <= 0 ?
-			(unsigned int) gh->transm_r : info->current_rx;
-	gmtp_inter_mcc_delay(info, skb, (u64) server_tx);
+	server_tx = entry->current_rx <= 0 ?
+			(unsigned int) gh->transm_r : entry->current_rx;
+	gmtp_inter_mcc_delay(entry, skb, (u64) server_tx);
 
 out:
 	return NF_ACCEPT;
@@ -133,7 +136,6 @@ static int gmtp_inter_close_from_client(struct sk_buff *skb,
 {
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
-	struct gmtp_flow_info *info = entry->info;
 	struct gmtp_hdr *gh_reset;
 	unsigned int skb_len = skb->len;
 	__u8 *transport_header = NULL;
@@ -141,13 +143,13 @@ static int gmtp_inter_close_from_client(struct sk_buff *skb,
 
 	gmtp_pr_func();
 
-	pr_info("info->nclients: %u\n", info->nclients);
-	del = gmtp_delete_clients(&info->clients->list, iph->saddr, gh->sport);
+	pr_info("entry->nclients: %u\n", entry->nclients);
+	del = gmtp_delete_clients(&entry->clients->list, iph->saddr, gh->sport);
 	if(del == 0)
 		return NF_ACCEPT;
 	pr_info("del: %d\n", del);
-	info->nclients -= del;
-	pr_info("info->nclients - del: %u\n", info->nclients);
+	entry->nclients -= del;
+	pr_info("entry->nclients - del: %u\n", entry->nclients);
 
 	gh_reset = gmtp_inter_make_reset_hdr(skb, GMTP_RESET_CODE_CLOSED);
 	if(gh_reset == NULL)
@@ -158,7 +160,7 @@ static int gmtp_inter_close_from_client(struct sk_buff *skb,
 	 * So, we can send 'close' to server
 	 * and send a 'reset' to client.
 	 */
-	if(info->nclients <= 0) {
+	if(entry->nclients <= 0) {
 
 		/* Build and send back 'reset' */
 		pr_info("FIXME: Sending RESET back to client");
@@ -179,8 +181,8 @@ static int gmtp_inter_close_from_client(struct sk_buff *skb,
 			iph->tot_len = ntohs(skb->len);
 		}*/
 		gh->relay = 1;
-		gh->sport = info->my_port;
-		iph->saddr = info->my_addr;
+		gh->sport = entry->my_port;
+		iph->saddr = entry->my_addr;
 		ip_send_check(iph);
 
 		gmtp_inter_del_entry(gmtp_inter.hashtable, entry->flowname);
@@ -236,8 +238,8 @@ int gmtp_inter_close_out(struct sk_buff *skb)
 		break;
 	}
 
-	while(entry->info->buffer->qlen > 0) {
-		struct sk_buff *buffered = gmtp_buffer_dequeue(entry->info);
+	while(entry->buffer->qlen > 0) {
+		struct sk_buff *buffered = gmtp_buffer_dequeue(entry);
 		if(buffered == NULL) {
 			gmtp_pr_error("Buffered is NULL...");
 			return NF_ACCEPT;
@@ -245,9 +247,9 @@ int gmtp_inter_close_out(struct sk_buff *skb)
 
 		gmtp_hdr(buffered)->relay = 1;
 
-		if(iph->saddr == entry->info->my_addr) {
+		if(iph->saddr == entry->my_addr) {
 			pr_info("Local\n");
-			skb->dev = entry->info->out;
+			skb->dev = entry->dev_out;
 			gmtp_inter_build_and_send_skb(buffered, GMTP_INTER_LOCAL);
 		} else {
 			buffered->dev = skb->dev;

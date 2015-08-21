@@ -67,7 +67,7 @@ int main(int argc, char**argv)
 		exit(1);
 	}
 
-	printf("Connected to the server...\n");
+	printf("Connected to the server...\n\n");
 	time_t start = time(0);
 	int i = 0;
 	int total, total_data;

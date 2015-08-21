@@ -10,7 +10,7 @@
 
 struct timer_list mcc_timer;
 
-void gmtp_inter_mcc_delay(struct gmtp_flow_info *info, struct sk_buff *skb,
+void gmtp_inter_mcc_delay(struct gmtp_inter_entry *info, struct sk_buff *skb,
 		unsigned int server_tx)
 {
 	u64 delay;
@@ -58,7 +58,7 @@ out:
  */
 void mcc_timer_callback(unsigned long data)
 {
-	struct gmtp_flow_info *info = (struct gmtp_flow_info*) data;
+	struct gmtp_inter_entry *info = (struct gmtp_inter_entry*) data;
 	struct gmtp_client *reporter, *temp;
 
 	/* FIXME FIX MCC on reporters to generate correct TX_rate... */
