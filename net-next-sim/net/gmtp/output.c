@@ -95,18 +95,38 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 		}
 		gh->seq = gcb->seq;
 
-		if(gcb->type == GMTP_PKT_DATA) {
+		/* Specific headers */
+		switch(gcb->type) {
+		case GMTP_PKT_DATA: {
 			struct gmtp_hdr_data *gh_data = gmtp_hdr_data(skb);
 			gh_data->tstamp = jiffies_to_msecs(jiffies);
+			break;
 		}
-		if(gcb->type == GMTP_PKT_FEEDBACK) {
+		case GMTP_PKT_FEEDBACK: {
 			struct gmtp_hdr_feedback *fh = gmtp_hdr_feedback(skb);
+			gh->seq = gcb->seq = gp->gsr;
 			gh->transm_r = gp->rx_max_rate;
 			fh->tstamp = jiffies_to_msecs(jiffies);
 			fh->nclients = gp->myself->nclients;
 
 			pr_info("[Feedback] tstamp=%u, nclients=%u, seq: %u\n",
 					fh->tstamp, fh->nclients, gh->seq);
+			break;
+		}
+		case GMTP_PKT_ELECT_REQUEST: {
+			struct gmtp_hdr_elect_request *gh_ereq;
+			gh_ereq = gmtp_hdr_elect_request(skb);
+			memcpy(gh_ereq->relay_id, gp->relay_id,
+			GMTP_RELAY_ID_LEN);
+			gh_ereq->max_nclients = 0;
+			break;
+		}
+		case GMTP_PKT_ELECT_RESPONSE: {
+			struct gmtp_hdr_elect_response *gh_eresp;
+			gh_eresp = gmtp_hdr_elect_response(skb);
+			gh_eresp->elect_code = GMTP_SKB_CB(skb)->elect_code;
+			break;
+		}
 		}
 
 		err = icsk->icsk_af_ops->queue_xmit(sk, skb, &inet->cork.fl);
@@ -375,7 +395,6 @@ EXPORT_SYMBOL_GPL(gmtp_send_ack);
 void gmtp_send_elect_request(struct sock *sk, unsigned long interval)
 {
 	struct sk_buff *skb = alloc_skb(sk->sk_prot->max_header, GFP_ATOMIC);
-	struct gmtp_hdr_elect_request *gh_ereq;
 	struct gmtp_sock *gp = gmtp_sk(sk);
 
 	gmtp_pr_func();
@@ -390,10 +409,6 @@ void gmtp_send_elect_request(struct sock *sk, unsigned long interval)
 	skb_reserve(skb, sk->sk_prot->max_header);
 	GMTP_SKB_CB(skb)->type = GMTP_PKT_ELECT_REQUEST;
 
-	gh_ereq = gmtp_hdr_elect_request(skb);
-	memcpy(gh_ereq->relay_id, gp->relay_id, GMTP_RELAY_ID_LEN);
-	gh_ereq->max_nclients = 0;
-
 	gmtp_transmit_skb(sk, skb);
 
 	if(interval > 0)
@@ -404,7 +419,6 @@ EXPORT_SYMBOL_GPL(gmtp_send_elect_request);
 void gmtp_send_elect_response(struct sock *sk, __u8 code)
 {
 	struct sk_buff *skb = alloc_skb(sk->sk_prot->max_header, GFP_ATOMIC);
-	struct gmtp_hdr_elect_response *gh_eresp;
 	struct gmtp_sock *gp = gmtp_sk(sk);
 
 	gmtp_pr_func();
@@ -416,9 +430,6 @@ void gmtp_send_elect_response(struct sock *sk, __u8 code)
 	skb_reserve(skb, sk->sk_prot->max_header);
 	GMTP_SKB_CB(skb)->type = GMTP_PKT_ELECT_RESPONSE;
 	GMTP_SKB_CB(skb)->elect_code = code;
-
-	gh_eresp = gmtp_hdr_elect_response(skb);
-	gh_eresp->elect_code = GMTP_SKB_CB(skb)->elect_code;
 
 	if(code == GMTP_ELECT_AUTO) {
 
@@ -510,7 +521,7 @@ struct sk_buff *gmtp_ctl_make_ack(struct sock *sk, struct sk_buff *rcv_skb)
 		gack = gmtp_hdr_ack(skb);
 		gack->orig_tstamp = ghd->tstamp;
 	} else {
-		pr_info("Responding a NON-DATA with a ACK");
+		pr_info("Responding a NON-DATA with a ACK\n");
 	}
 
 	return skb;

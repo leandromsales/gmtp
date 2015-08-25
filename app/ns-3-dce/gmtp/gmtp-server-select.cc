@@ -18,11 +18,8 @@
 
 #include "gmtp.h"
 
-#define BUFF_SIZE 64
 #define CLADDR_LEN 100
 #define MAX_THREADS 256
-
-#define SERVER_PORT 2000
 
 using namespace std;
 

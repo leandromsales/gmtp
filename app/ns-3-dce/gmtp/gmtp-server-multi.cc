@@ -12,9 +12,6 @@
 
 #include "gmtp.h"
 
-#define SERVER_PORT 2000
-#define BUFF_SIZE 64
-
 using namespace std;
 
 pthread_mutex_t lock;

@@ -140,6 +140,8 @@ send:
 	gh->relay = 1;
 	gh->dport = entry->channel_port;
 
+	/*print_gmtp_data(skb, "OUT");*/
+
 	if(entry->nclients > 0) {
 		server_tx = entry->current_rx <= 0 ?
 				(unsigned int)gh->transm_r : entry->current_rx;
@@ -235,11 +237,13 @@ int gmtp_inter_close_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	gmtp_pr_func();
 	print_packet(skb, false);
 	print_gmtp_packet(iph, gh);
+	gmtp_pr_info("State: %u", entry->state);
 
 	switch(entry->state) {
 	case GMTP_INTER_TRANSMITTING:
 		return gmtp_inter_close_from_client(skb, entry);
 	case GMTP_INTER_CLOSED:
+		pr_info("GMTP_CLOSED\n");
 		gh->relay = 1;
 		gh->dport = entry->channel_port;
 		iph->daddr = entry->channel_addr;
@@ -247,6 +251,7 @@ int gmtp_inter_close_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 		gmtp_inter_del_entry(gmtp_inter.hashtable, gh->flowname);
 		return NF_ACCEPT;
 	case GMTP_INTER_CLOSE_RECEIVED:
+		pr_info("GMTP_INTER_CLOSE_RECEIVED -> GMTP_INTER_CLOSED\n");
 		entry->state = GMTP_INTER_CLOSED;
 		break;
 	}
@@ -265,8 +270,12 @@ int gmtp_inter_close_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 			skb->dev = entry->dev_out;
 			gmtp_inter_build_and_send_skb(buffered, GMTP_INTER_LOCAL);
 		} else {
+			pr_info("Sending close forward! Buffered:\n");
+			print_gmtp_packet(ip_hdr(buffered), gmtp_hdr(buffered));
+
 			buffered->dev = skb->dev;
 			gmtp_inter_build_and_send_skb(buffered, GMTP_INTER_FORWARD);
+			return NF_REPEAT;
 		}
 	}
 

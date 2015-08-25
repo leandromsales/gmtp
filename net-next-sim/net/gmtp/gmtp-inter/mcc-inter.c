@@ -64,8 +64,8 @@ void mcc_timer_callback(unsigned long data)
 	if(likely(info->nfeedbacks > 0))
 		new_tx = DIV_ROUND_CLOSEST(info->sum_feedbacks,
 				info->nfeedbacks);
-	else
-		new_tx = info->required_tx / 2;
+	/*else
+		new_tx = info->required_tx / 2;*/
 
 	/* Avoid super TX reduction */
 	if(new_tx < DIV_ROUND_CLOSEST(info->transm_r, 5))
@@ -73,8 +73,7 @@ void mcc_timer_callback(unsigned long data)
 
 	info->required_tx = new_tx;
 
-/*	pr_info("info->state=%u\n", info->state);
-	pr_info("n=%u, new_tx=%u B/s\n", info->nfeedbacks, info->required_tx);*/
+	pr_info("n=%u, new_tx=%u B/s\n", info->nfeedbacks, info->required_tx);
 
 	/* FIXME Colocar isso em outro timer? */
 	list_for_each_entry_safe(reporter, temp, &info->clients->list, list)
@@ -89,11 +88,11 @@ void mcc_timer_callback(unsigned long data)
 			continue;
 		}
 
-		if(unlikely(interval > jiffies_to_msecs(GMTP_ACK_TIMEOUT))) {
+		/*if(unlikely(interval > jiffies_to_msecs(GMTP_ACK_TIMEOUT))) {
 			pr_info("Timeout: Reporter %pI4@%-5d\n",
 					&reporter->addr, ntohs(reporter->port));
 			pr_info("TODO: select new reporter and delete this.\n");
-		}
+		}*/
 	}
 
 out:
@@ -104,7 +103,9 @@ out:
 			(gmtp_mcc_interval(info->rtt) - jiffies));*/
 
 	/* TODO Send here an ack to server? */
-
-	mod_timer(&info->mcc_timer, gmtp_mcc_interval(info->flow_avg_rtt));
+	if(likely(info->state != GMTP_INTER_CLOSE_RECEIVED
+					&& info->state != GMTP_INTER_CLOSED))
+		mod_timer(&info->mcc_timer,
+				gmtp_mcc_interval(info->flow_avg_rtt));
 }
 

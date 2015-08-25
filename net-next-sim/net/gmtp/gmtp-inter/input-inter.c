@@ -563,8 +563,10 @@ int gmtp_inter_data_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	if(unlikely(entry->state == GMTP_INTER_REGISTER_REPLY_RECEIVED))
 		entry->state = GMTP_INTER_TRANSMITTING;
 
-	if(entry->buffer->qlen >= entry->buffer_max)
+	if(entry->buffer->qlen >= entry->buffer_max) {
+		pr_info("Dropping packet (seq=%u, data=%s)\n", gh->seq, gmtp_data(skb));
 		goto out; /* Dont add it to buffer (equivalent to drop) */
+	}
 
 	if(iph->daddr == entry->my_addr)
 		jump_over_gmtp_intra(skb, &entry->clients->list);
@@ -590,10 +592,11 @@ int gmtp_inter_close_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry,
 
 	print_packet(skb, in);
 	print_gmtp_packet(iph, gh);
+	gmtp_pr_info("State: %u", entry->state);
 
 	if(!in) {
 		pr_info("Local out!\n");
-		entry->state = GMTP_INTER_CLOSE_RECEIVED;
+		/*entry->state = GMTP_INTER_CLOSE_RECEIVED;*/
 		return NF_ACCEPT;
 	}
 

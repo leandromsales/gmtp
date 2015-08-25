@@ -16,9 +16,6 @@
 
 #include "gmtp.h"
 
-#define PORT 2000
-#define BUF_SIZE 64
-
 using namespace std;
 
 inline void print_stats(int i, time_t start, int total, int total_data)
@@ -62,7 +59,7 @@ int main(int argc, char**argv)
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = inet_addr(serverAddr);
-	addr.sin_port = htons (PORT);
+	addr.sin_port = htons (SERVER_PORT);
 
 	ret = connect(sockfd, (struct sockaddr *)&addr, sizeof(addr));
 	if(ret < 0) {

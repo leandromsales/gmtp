@@ -16,15 +16,11 @@
 
 #include "gmtp.h"
 
-#define PORT 2000
-#define BUF_SIZE 64
-
 struct timeval  tv;
 
 inline void print_stats(int i, double t1, int total, int total_data)
 {
-	gettimeofday(&tv, NULL);
-	double t2 = (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000; // convert tv_sec & tv_usec to millisecond
+	double t2 = time_ms(tv);
 	double time_elapsed = t2 - t1;
 
 	printf("%d packets received in %0.2f ms!\n", i, time_elapsed);
@@ -41,7 +37,7 @@ int main(int argc, char**argv)
 	int sockfd, ret;
 	struct hostent * server;
 	char * serverAddr;
-	char buffer[BUF_SIZE];
+	char buffer[BUFF_SIZE];
 
 	if(argc < 2) {
 		printf("usage: client < ip address >\n");
@@ -62,7 +58,7 @@ int main(int argc, char**argv)
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = inet_addr(serverAddr);
-	addr.sin_port = htons (PORT);
+	addr.sin_port = htons (SERVER_PORT);
 
 	ret = connect(sockfd, (struct sockaddr *)&addr, sizeof(addr));
 	if(ret < 0) {
@@ -72,24 +68,20 @@ int main(int argc, char**argv)
 
 	printf("Connected to the server...\n\n");
 
-	gettimeofday(&tv, NULL);
-	double t1 = (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000; // convert tv_sec & tv_usec to millisecond
-
+	double t1 = time_ms(tv);
 	int i = 0;
-	int total, total_data;
+	double total, total_data;
 	const char *outstr = "out";
 	do {
 		ssize_t bytes_read;
-		memset(buffer, '\0', BUF_SIZE); //Clean buffer
-		bytes_read = recv(sockfd, buffer, BUF_SIZE, 0);
-		if(bytes_read < 1) continue;
+		memset(buffer, '\0', BUFF_SIZE); //Clean buffer
+		bytes_read = recv(sockfd, buffer, BUFF_SIZE, 0);
+		if(bytes_read < 1) break;
 		++i;
 		total += bytes_read + 36 + 20;
 		total_data += bytes_read;
-//		if(i%100 == 0) {
-			printf("Received (%d): %s (%ld bytes)\n",  i, buffer, bytes_read);
-			print_stats(i, t1, total, total_data);
-//		}
+		printf("Received (%d): %s (%ld B)\n",  i, buffer, bytes_read);
+		print_stats(i, t1, total, total_data);
 	} while(strcmp(buffer, outstr) != 0);
 
 	// Jamais remover!!!
@@ -101,8 +93,7 @@ int main(int argc, char**argv)
 	//	21/08/15 - 4:00 AM
 	print_stats(i, t1, total, total_data);
 
-	gettimeofday(&tv, NULL);
-	double t2 = (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000; // convert tv_sec & tv_usec to millisecond
+	double t2 = time_ms(tv);
 
 	double diff = t2-t1;
 	printf("%0.2f ms\n", diff);

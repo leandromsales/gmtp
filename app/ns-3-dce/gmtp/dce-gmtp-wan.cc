@@ -100,17 +100,17 @@ int main(int argc, char *argv[])
 	RunIp(server, Seconds(2.2), "addr list sim0");
 	RunIp(clients, Seconds(2.2), "addr list sim0");
 
-	RunGtmpInter(clients, Seconds(2.5), "off");
+	RunGtmpInter(clients, Seconds(2.3), "off");
 
 	RunApp("gmtp-server", server, Seconds(4.0), 1 << 31);
-	RunApp("gmtp-client", clients, Seconds(5.0), "10.1.1.2", 1 << 31);
+	RunAppMulti("gmtp-client", clients, 5.0, "10.1.1.2", 1 << 16, 30);
 
 	csma.EnablePcapAll("dce-gmtp-dumbbell");
 
 	AsciiTraceHelper ascii;
 	csma.EnableAsciiAll(ascii.CreateFileStream("dce-gmtp-dumbbell.tr"));
 
-	Simulator::Stop (Seconds (8000.0));
+	Simulator::Stop (Seconds (12000.0));
 	Simulator::Run();
 	Simulator::Destroy();
 

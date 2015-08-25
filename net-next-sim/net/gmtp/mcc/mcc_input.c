@@ -112,6 +112,8 @@ static void mcc_rx_send_feedback(struct sock *sk,
 
 	if(likely(gp->role == GMTP_ROLE_REPORTER)) {
 
+		if(p > 0)
+			mcc_pr_debug("Loss rate: %u", p);
 		mcc_pr_debug("REPORT: RTT=%u us (sample=%u us), s=%u, "
 			       "p=%u, X_calc=%u B/s, X_recv=%u B/s",
 			       gp->rx_avg_rtt, sample,
