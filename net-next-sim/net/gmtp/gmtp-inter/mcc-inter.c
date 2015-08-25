@@ -26,10 +26,6 @@ void gmtp_inter_mcc_delay(struct gmtp_inter_entry *info, struct sk_buff *skb,
 	elapsed = ktime_us_delta(skb->tstamp, rx_tstamp);
 	delay2 = delay - elapsed;
 
-	/*pr_info("delay = (1000000 * %u)/%llu = %llu us\n", len, tx, delay);*/
-	/*pr_info("elapsed = %lld\n", elapsed);*/
-	/*pr_info("delay2 = %lld us (%lld ms)\n", delay2, (delay2/1000));*/
-
 	/* if delay2 <= 0, pass way... */
 	if(delay2 > 0)
 		gmtp_inter_wait_us(delay2);
@@ -60,17 +56,27 @@ void mcc_timer_callback(unsigned long data)
 {
 	struct gmtp_inter_entry *info = (struct gmtp_inter_entry*) data;
 	struct gmtp_client *reporter, *temp;
+	unsigned int new_tx = info->required_tx;
 
-	/* FIXME FIX MCC on reporters to generate correct TX_rate... */
-/*	if(likely(info->nfeedbacks > 0))
-		info->required_tx = DIV_ROUND_CLOSEST(info->sum_feedbacks,
+	if(info->nclients <= 0)
+		goto out;
+
+	if(likely(info->nfeedbacks > 0))
+		new_tx = DIV_ROUND_CLOSEST(info->sum_feedbacks,
 				info->nfeedbacks);
 	else
-		info->required_tx /= 2;*/
+		new_tx = info->required_tx / 2;
 
-	/*pr_info("n_feedbacks: %u\n", info->nfeedbacks);
-	pr_info("Required_tx=%u bytes/s\n", info->required_tx);*/
+	/* Avoid super TX reduction */
+	if(new_tx < DIV_ROUND_CLOSEST(info->transm_r, 5))
+		new_tx = DIV_ROUND_CLOSEST(info->transm_r, 5);
 
+	info->required_tx = new_tx;
+
+/*	pr_info("info->state=%u\n", info->state);
+	pr_info("n=%u, new_tx=%u B/s\n", info->nfeedbacks, info->required_tx);*/
+
+	/* FIXME Colocar isso em outro timer? */
 	list_for_each_entry_safe(reporter, temp, &info->clients->list, list)
 	{
 		unsigned int now = jiffies_to_msecs(jiffies);
@@ -90,6 +96,7 @@ void mcc_timer_callback(unsigned long data)
 		}
 	}
 
+out:
 	info->nfeedbacks = 0;
 	info->sum_feedbacks = 0;
 

@@ -103,14 +103,14 @@ int main(int argc, char *argv[])
 	RunGtmpInter(clients, Seconds(2.5), "off");
 
 	RunApp("gmtp-server", server, Seconds(4.0), 1 << 31);
-	RunApp("gmtp-client", clients, Seconds(5.0), "10.1.1.2", 1 << 16);
+	RunApp("gmtp-client", clients, Seconds(5.0), "10.1.1.2", 1 << 31);
 
 	csma.EnablePcapAll("dce-gmtp-dumbbell");
 
 	AsciiTraceHelper ascii;
 	csma.EnableAsciiAll(ascii.CreateFileStream("dce-gmtp-dumbbell.tr"));
 
-	Simulator::Stop (Seconds (1200.0));
+	Simulator::Stop (Seconds (8000.0));
 	Simulator::Run();
 	Simulator::Destroy();
 

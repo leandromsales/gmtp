@@ -105,15 +105,30 @@ out:
 	return ret;
 }
 
+struct gmtp_client *gmtp_inter_create_relay(struct sk_buff *skb,
+		struct gmtp_inter_entry *entry)
+{
+	struct iphdr *iph = ip_hdr(skb);
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct ethhdr *eth = eth_hdr(skb);
+	struct gmtp_client *relay;
+
+	relay = gmtp_list_add_client(++entry->nrelays, iph->saddr, gh->sport, 0,
+				&entry->relays->list);
+	if(relay != NULL) {
+		ether_addr_copy(relay->mac_addr, eth->h_source);
+		relay->state = GMTP_CLOSED;
+	}
+	return relay;
+}
 
 /** Register to localhost only */
 int gmtp_inter_register_rcv(struct sk_buff *skb)
 {
-	int ret = NF_ACCEPT;
+	int ret = NF_DROP;
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct ethhdr *eth = eth_hdr(skb);
-	struct gmtp_hdr *ghreply;
 	struct gmtp_inter_entry *entry;
 	struct gmtp_client *relay;
 
@@ -121,23 +136,30 @@ int gmtp_inter_register_rcv(struct sk_buff *skb)
 
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry != NULL) {
+		relay = gmtp_get_client(&entry->relays->list, iph->saddr,
+				gh->sport);
+		if(relay == NULL)
+			relay = gmtp_inter_create_relay(skb, entry);
+
 		switch(entry->state) {
 		case GMTP_INTER_WAITING_REGISTER_REPLY:
 			gmtp_pr_info("Waiting RegisterReply...");
-			break;
+			goto out;
 		case GMTP_INTER_REGISTER_REPLY_RECEIVED:
 		case GMTP_INTER_TRANSMITTING:
 			gmtp_pr_info("Media found. Sending RegisterReply.");
-			ret = NF_DROP;
 			break;
 		default:
 			gmtp_pr_error("Inconsistent state: %d", entry->state);
-			ret = NF_DROP;
 		}
-		relay = gmtp_get_client(&entry->relays->list, iph->saddr,
-				gh->sport);
-		if(relay != NULL)
-			goto out;
+		if(relay != NULL) {
+			struct gmtp_hdr *ghreply;
+			ghreply = gmtp_inter_make_register_reply_hdr(skb, entry,
+					gh->dport, gh->sport);
+			gmtp_inter_build_and_send_pkt(skb, iph->daddr,
+					iph->saddr, ghreply,
+					GMTP_INTER_BACKWARD);
+		}
 	} else {
 		__be32 mcst_addr = get_mcst_v4_addr();
 		int err = gmtp_inter_add_entry(gmtp_inter.hashtable,
@@ -154,21 +176,12 @@ int gmtp_inter_register_rcv(struct sk_buff *skb)
 		entry->dev_out = skb->dev;
 		entry->my_addr = gmtp_inter_device_ip(skb->dev);
 		entry->my_port = gh->sport;
-	}
-
-	relay = gmtp_list_add_client(++entry->nrelays, iph->saddr, gh->sport, 0,
-			&entry->relays->list);
-	if(relay != NULL) {
-		ether_addr_copy(relay->mac_addr, eth->h_source);
-		relay->state = GMTP_CLOSED;
+		relay = gmtp_inter_create_relay(skb, entry);
+		if(relay != NULL)
+			ret = NF_ACCEPT;
 	}
 
 out:
-	ghreply = gmtp_inter_make_register_reply_hdr(skb, entry, gh->dport,
-			gh->sport);
-	gmtp_inter_build_and_send_pkt(skb, iph->daddr, iph->saddr, ghreply,
-			GMTP_INTER_BACKWARD);
-
 	return ret;
 }
 
@@ -271,10 +284,16 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 	print_packet(skb, true);
 	print_gmtp_packet(iph, gh);
 
-	gh_route_n = gmtp_inter_make_route_hdr(skb);
+	entry->transm_r =  gh->transm_r;
+	entry->rcv_tx_rate = gh->transm_r;
+	entry->flow_rtt = (unsigned int)gh->server_rtt;
+	entry->flow_avg_rtt = rtt_ewma(entry->flow_avg_rtt, entry->flow_rtt,
+			GMTP_RTT_WEIGHT);
 
 	if(direction != GMTP_INTER_LOCAL) {
 		pr_info("Direction: %u\n", direction);
+
+		gh_route_n = gmtp_inter_make_route_hdr(skb);
 
 		/* Add relay information in REGISTER-REPLY packet) */
 		gmtp_inter_add_relayid(skb);
@@ -291,11 +310,6 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 
 		if(entry->state != GMTP_INTER_WAITING_REGISTER_REPLY)
 			return NF_ACCEPT;
-
-		entry->rcv_tx_rate = gh->transm_r;
-		entry->flow_rtt = (unsigned int)gh->server_rtt;
-		entry->flow_avg_rtt = rtt_ewma(entry->flow_avg_rtt,
-				entry->flow_rtt, GMTP_RTT_WEIGHT);
 
 		ether_addr_copy(entry->server_mac_addr, eth->h_source);
 
@@ -465,7 +479,7 @@ int gmtp_inter_feedback_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 		reporter->ack_rx_tstamp = jiffies_to_msecs(jiffies);
 	}
 
-	return NF_DROP;
+	return gmtp_inter_make_ack_from_feedback(skb, entry);
 }
 
 /**
@@ -506,6 +520,7 @@ static inline void gmtp_update_stats(struct gmtp_inter_entry *info,
 	GMTP_RTT_WEIGHT);
 	info->last_data_tstamp = gmtp_hdr_data(skb)->tstamp;
 
+	info->transm_r = gh->transm_r;
 	info->rcv_tx_rate = gh->transm_r;
 	gh->transm_r = min(info->rcv_tx_rate, gmtp_inter.ucc_rx);
 
@@ -519,7 +534,6 @@ static inline void gmtp_update_stats(struct gmtp_inter_entry *info,
 
 		info->recent_rx_tstamp = ktime_to_ms(skb->tstamp);
 		info->recent_bytes = 0;
-		pr_info("Old worst RTT: %u ms\n", gmtp_inter.worst_rtt);
 		gmtp_inter.worst_rtt = GMTP_MIN_RTT_MS;
 	}
 	gmtp_inter.worst_rtt = max(gmtp_inter.worst_rtt,
@@ -547,7 +561,7 @@ int gmtp_inter_data_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 		return NF_ACCEPT;
 
 	if(unlikely(entry->state == GMTP_INTER_REGISTER_REPLY_RECEIVED))
-			entry->state = GMTP_INTER_TRANSMITTING;
+		entry->state = GMTP_INTER_TRANSMITTING;
 
 	if(entry->buffer->qlen >= entry->buffer_max)
 		goto out; /* Dont add it to buffer (equivalent to drop) */

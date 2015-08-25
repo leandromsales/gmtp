@@ -102,11 +102,11 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 		if(gcb->type == GMTP_PKT_FEEDBACK) {
 			struct gmtp_hdr_feedback *fh = gmtp_hdr_feedback(skb);
 			gh->transm_r = gp->rx_max_rate;
-			fh->pkt_tstamp = gcb->server_tstamp;
+			fh->tstamp = jiffies_to_msecs(jiffies);
 			fh->nclients = gp->myself->nclients;
 
-			pr_info("[Feedback] pkt_tstamp=%u, nclients=%u, seq: %u\n",
-					fh->pkt_tstamp, fh->nclients, gh->seq);
+			pr_info("[Feedback] tstamp=%u, nclients=%u, seq: %u\n",
+					fh->tstamp, fh->nclients, gh->seq);
 		}
 
 		err = icsk->icsk_af_ops->queue_xmit(sk, skb, &inet->cork.fl);
@@ -517,7 +517,7 @@ struct sk_buff *gmtp_ctl_make_ack(struct sock *sk, struct sk_buff *rcv_skb)
 }
 EXPORT_SYMBOL_GPL(gmtp_ctl_make_ack);
 
-void gmtp_send_feedback(struct sock *sk, __be32 server_tstamp)
+void gmtp_send_feedback(struct sock *sk)
 {
 	if(sk->sk_state != GMTP_CLOSED) {
 
@@ -527,7 +527,6 @@ void gmtp_send_feedback(struct sock *sk, __be32 server_tstamp)
 		/* Reserve space for headers */
 		skb_reserve(skb, sk->sk_prot->max_header);
 		GMTP_SKB_CB(skb)->type = GMTP_PKT_FEEDBACK;
-		GMTP_SKB_CB(skb)->server_tstamp = server_tstamp;
 
 		gmtp_transmit_skb(sk, skb);
 	}

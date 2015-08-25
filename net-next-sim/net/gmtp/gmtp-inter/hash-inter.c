@@ -107,7 +107,8 @@ void __gmtp_inter_build_info(struct gmtp_inter_entry *info)
 	info->current_rx = 0;
 	info->required_tx = 0;
 	info->data_pkt_out = 0;
-	info->flow_rtt = 0;
+	info->flow_rtt = 64;
+	info->transm_r = UINT_MAX;
 
 	info->clients = kmalloc(sizeof(struct gmtp_client), GFP_KERNEL);
 	INIT_LIST_HEAD(&info->clients->list);

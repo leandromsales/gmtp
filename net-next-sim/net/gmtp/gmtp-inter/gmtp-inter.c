@@ -445,7 +445,7 @@ int init_module()
 	gmtp_inter.total_rx = 0;
 	gmtp_inter.ucc_bytes = 0;
 	gmtp_inter.ucc_rx_tstamp = 0;
-	gmtp_inter.rx_rate_wnd = 1000;
+	gmtp_inter.rx_rate_wnd = 100;
 	memset(&gmtp_inter.mcst, 0, 4 * sizeof(unsigned char));
 
 	rid = gmtp_inter_build_relay_id();

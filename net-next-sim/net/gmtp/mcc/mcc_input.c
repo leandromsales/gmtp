@@ -113,13 +113,13 @@ static void mcc_rx_send_feedback(struct sock *sk,
 	if(likely(gp->role == GMTP_ROLE_REPORTER)) {
 
 		mcc_pr_debug("REPORT: RTT=%u us (sample=%u us), s=%u, "
-			       "p=%u, X_calc=%u bytes/s, X_recv=%u bytes/s",
+			       "p=%u, X_calc=%u B/s, X_recv=%u B/s",
 			       gp->rx_avg_rtt, sample,
 			       gp->rx_s, p,
 			       gp->rx_max_rate,
 			       gp->rx_x_recv);
 
-		gmtp_send_feedback(sk, GMTP_SKB_CB(skb)->server_tstamp);
+		gmtp_send_feedback(sk);
 	}
 }
 
@@ -206,7 +206,6 @@ void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 		 */
 		gp->rx_s = rtt_ewma(gp->rx_s, payload, 900);
 		gp->rx_bytes_recv += payload;
-		GMTP_SKB_CB(skb)->server_tstamp = dh->tstamp;
 	}
 
 	/*

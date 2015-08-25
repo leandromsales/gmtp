@@ -45,6 +45,7 @@ struct gmtp_hdr *gmtp_inter_make_route_hdr(struct sk_buff *skb)
 
 	gmtp_print_function();
 
+
 	transport_header = kmalloc(gmtp_hdr_len, gfp_any());
 	memset(transport_header, 0, gmtp_hdr_len);
 
@@ -54,6 +55,8 @@ struct gmtp_hdr *gmtp_inter_make_route_hdr(struct sk_buff *skb)
 	gh_cpy->version = GMTP_VERSION;
 	gh_cpy->type = GMTP_PKT_ROUTE_NOTIFY;
 	gh_cpy->hdrlen = gmtp_hdr_len;
+	pr_info("Original gh->transm_r: %u B/s\n", gh->transm_r);
+	/*gh_cpy->transm_r = entry->transm_r;*/
 	gh_cpy->relay = 1;
 	gh_cpy->dport = gh->sport;
 	gh_cpy->sport = gh->dport;
@@ -176,6 +179,8 @@ struct gmtp_hdr *gmtp_inter_make_register_reply_hdr(struct sk_buff *skb,
 	int gmtp_hdr_len = sizeof(struct gmtp_hdr)
 			+ sizeof(struct gmtp_hdr_register_reply);
 
+	gmtp_pr_func();
+
 	transport_header = kmalloc(gmtp_hdr_len, gfp_any());
 	memset(transport_header, 0, gmtp_hdr_len);
 
@@ -185,6 +190,8 @@ struct gmtp_hdr *gmtp_inter_make_register_reply_hdr(struct sk_buff *skb,
 	gh_cpy->version = GMTP_VERSION;
 	gh_cpy->type = GMTP_PKT_REGISTER_REPLY;
 	gh_cpy->hdrlen = gmtp_hdr_len;
+	gh_cpy->transm_r = entry->transm_r;
+	gh_cpy->server_rtt = entry->flow_rtt;
 	gh_cpy->relay = 1;
 	gh_cpy->sport = new_sport;
 	gh_cpy->dport = new_dport;
@@ -499,6 +506,67 @@ void gmtp_copy_hdr(struct sk_buff *skb, struct sk_buff *src_skb)
 		memcpy(gh, gh_src, gh_src->hdrlen);
 }
 
+
+struct gmtp_hdr *gmtp_inter_make_ack_hdr(struct sk_buff *skb,
+		struct gmtp_inter_entry *entry, __be32 tstamp)
+{
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	__u8 *transport_header;
+
+	struct gmtp_hdr *gh_cpy;
+	struct gmtp_hdr_ack *gh_ack;
+
+	int gmtp_hdr_len = sizeof(struct gmtp_hdr)
+			+ sizeof(struct gmtp_hdr_reqnotify);
+
+	transport_header = kmalloc(gmtp_hdr_len, gfp_any());
+	memset(transport_header, 0, gmtp_hdr_len);
+
+	gh_cpy = (struct gmtp_hdr *)transport_header;
+	memcpy(gh_cpy, gh, sizeof(struct gmtp_hdr));
+
+	gh_cpy->version = GMTP_VERSION;
+	gh_cpy->type = GMTP_PKT_ACK;
+	gh_cpy->hdrlen = gmtp_hdr_len;
+	gh_cpy->relay = 1;
+	gh_cpy->sport = gh->dport;
+	gh_cpy->dport = gh->sport;
+	gh_cpy->server_rtt = entry->flow_rtt;
+	gh_cpy->seq = entry->seq;
+
+	gh_ack = (struct gmtp_hdr_ack*)(transport_header
+			+ sizeof(struct gmtp_hdr));
+
+	gh_ack->orig_tstamp = tstamp;
+	return gh_cpy;
+}
+
+int gmtp_inter_make_ack_from_feedback(struct sk_buff *skb,
+		struct gmtp_inter_entry *entry)
+{
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct gmtp_hdr_feedback *ghf = gmtp_hdr_feedback(skb);
+	struct iphdr *iph = ip_hdr(skb);
+	unsigned int skb_len = skb->len;
+	struct gmtp_hdr *new_gh;
+	int gmtp_hdr_len = sizeof(struct gmtp_hdr)
+			+ sizeof(struct gmtp_hdr_ack);
+
+	/* Delete FEEDBACK specific header */
+	skb_trim(skb, (skb_len - gmtp_packet_hdr_variable_len(gh->type)));
+
+	new_gh = kmalloc(gmtp_hdr_len, GFP_ATOMIC);
+	new_gh = gmtp_inter_make_ack_hdr(skb, entry, ghf->tstamp);
+
+	skb_put(skb, sizeof(struct gmtp_hdr_ack));
+	memcpy(gh, new_gh, gmtp_hdr_len);
+
+	swap(iph->saddr, iph->daddr);
+	iph->tot_len = htons(skb->len);
+	ip_send_check(iph);
+
+	return NF_ACCEPT;
+}
 
 struct sk_buff *gmtp_inter_build_ack(struct gmtp_inter_entry *entry)
 {

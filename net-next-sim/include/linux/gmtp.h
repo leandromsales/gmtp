@@ -286,6 +286,12 @@ static inline struct gmtp_hdr_ack *gmtp_hdr_ack(const struct sk_buff *skb)
 						 sizeof(struct gmtp_hdr));
 }
 
+static inline struct gmtp_hdr_dataack *gmtp_hdr_dataack(const struct sk_buff *skb)
+{
+	return (struct gmtp_hdr_dataack *)(skb_transport_header(skb) +
+						 sizeof(struct gmtp_hdr));
+}
+
 static inline struct gmtp_hdr_feedback *gmtp_hdr_feedback(const struct sk_buff *skb)
 {
 	return (struct gmtp_hdr_feedback *)(skb_transport_header(skb)

@@ -155,6 +155,10 @@ void gmtp_inter_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
 void gmtp_inter_build_and_send_skb(struct sk_buff *skb,
 		enum gmtp_inter_direction direction);
 void gmtp_copy_hdr(struct sk_buff *skb, struct sk_buff *src_skb);
+struct gmtp_hdr *gmtp_inter_make_ack_hdr(struct sk_buff *skb,
+		struct gmtp_inter_entry *entry, __be32 tstamp);
+int gmtp_inter_make_ack_from_feedback(struct sk_buff *skb,
+		struct gmtp_inter_entry *entry);
 struct sk_buff *gmtp_inter_build_ack(struct gmtp_inter_entry *entry);
 
 /**

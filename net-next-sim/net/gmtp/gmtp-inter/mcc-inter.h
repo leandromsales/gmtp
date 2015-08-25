@@ -16,13 +16,13 @@
 
 static inline unsigned long gmtp_mcc_interval(unsigned int rtt)
 {
-	/*unsigned long interval;
+	unsigned long interval;
 	if(unlikely(rtt <= 0))
-		return (jiffies + HZ);
+		return (jiffies + GMTP_ACK_INTERVAL);
 
 	interval = (unsigned long) (4 * rtt);
-	return (jiffies + msecs_to_jiffies(interval));*/
-	return (jiffies + GMTP_ACK_INTERVAL);
+	return (jiffies + msecs_to_jiffies(interval));
+	/*return (jiffies + GMTP_ACK_INTERVAL);*/
 }
 
 static inline int new_reporter(struct gmtp_inter_entry *entry)

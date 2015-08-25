@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <netdb.h>
 #include <string.h>
 #include <iostream>
@@ -13,17 +14,21 @@
 #define SERVER_PORT 2000
 #define BUFF_SIZE 64
 
+struct timeval  tv;
+
 using namespace std;
 
-static inline void print_stats(int i, time_t start, int total, int total_data)
+inline void print_stats(int i, double t1, double total, double total_data)
 {
-	time_t elapsed = time(0) - start;
-	if(elapsed==0) elapsed=1;
-	cout << i << " packets sent in " << elapsed << " s!" << endl;
-	cout << total_data << " data bytes sent (" << total_data/i << " B/packet)" << endl;
-	cout << total << " bytes sent (data+hdr) (" << total/i << " B/packet)" << endl;
-	cout << "Data TX: " << total_data/elapsed << " B/s" << endl;
-	cout << "TX: " << total/elapsed << " B/s" << endl;
+	gettimeofday(&tv, NULL);
+	double t2 = (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000; // convert tv_sec & tv_usec to millisecond
+	double elapsed = t2 - t1;
+
+	cout << i << " packets sent in " << elapsed << " ms!" << endl;
+	cout << total_data << " data bytes sent."<< endl;
+	cout << total << " bytes sent (data+hdr)" << endl;
+	cout << "Data TX: " << total_data*1000/elapsed << " B/s" << endl;
+	cout << "TX: " << total*1000/elapsed << " B/s" << endl;
 }
 
 int main(int argc, char *argv[])
@@ -58,7 +63,9 @@ int main(int argc, char *argv[])
 			&addr_size);
 
 	cout << "Connected with client!" << endl;
-	time_t start = time(0);
+	gettimeofday(&tv, NULL);
+	double t1 = (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000; // convert tv_sec & tv_usec to millisecond
+
 	int i;
 	const char *msg = "Hello, World! ";
 	int total_data, total;
@@ -74,7 +81,7 @@ int main(int argc, char *argv[])
 		delete(buffer);
 	}
 
-	print_stats(i, start, total, total_data);
+	print_stats(i, t1, total, total_data);
 
 	const char *outstr = "out";
 	// Send 'out' 5 times for now... gmtp-inter bug...

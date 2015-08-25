@@ -1,7 +1,8 @@
 #include "stdio.h"    
 #include "stdlib.h"    
 #include "sys/types.h"    
-#include "sys/socket.h"    
+#include "sys/socket.h"
+#include <sys/time.h>
 #include "string.h"    
 #include "netinet/in.h"    
 #include "netdb.h"  
@@ -18,17 +19,19 @@
 #define PORT 2000
 #define BUF_SIZE 64
 
-inline void print_stats(int i, time_t start, int total, int total_data)
-{
-	time_t time_elapsed = time(0) - start;
-	int elapsed = static_cast<int>(time_elapsed);
-	if(elapsed==0) elapsed ++;
+struct timeval  tv;
 
-	printf("%d packets received in %d s!\n", i, (int)elapsed);
-	printf("%d data bytes received (%d B/packet)\n", total_data, total/i);
-	printf("%d bytes received (%d B/packet)\n", total, total/i);
-	printf("Data RX: %d B/s\n", total_data/elapsed);
-	printf("RX: %d B/s\n", total/elapsed);
+inline void print_stats(int i, double t1, int total, int total_data)
+{
+	gettimeofday(&tv, NULL);
+	double t2 = (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000; // convert tv_sec & tv_usec to millisecond
+	double time_elapsed = t2 - t1;
+
+	printf("%d packets received in %0.2f ms!\n", i, time_elapsed);
+	printf("%d data bytes received\n", total_data);
+	printf("%d bytes received\n", total);
+	printf("Data RX: %0.2f B/s\n", ((double)total_data*1000)/time_elapsed);
+	printf("RX: %0.2f B/s\n", ((double)total*1000)/time_elapsed);
 	printf("-----------------\n");
 }
 
@@ -68,7 +71,10 @@ int main(int argc, char**argv)
 	}
 
 	printf("Connected to the server...\n\n");
-	time_t start = time(0);
+
+	gettimeofday(&tv, NULL);
+	double t1 = (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000; // convert tv_sec & tv_usec to millisecond
+
 	int i = 0;
 	int total, total_data;
 	const char *outstr = "out";
@@ -82,7 +88,7 @@ int main(int argc, char**argv)
 		total_data += bytes_read;
 //		if(i%100 == 0) {
 			printf("Received (%d): %s (%ld bytes)\n",  i, buffer, bytes_read);
-			print_stats(i, start, total, total_data);
+			print_stats(i, t1, total, total_data);
 //		}
 	} while(strcmp(buffer, outstr) != 0);
 
@@ -93,9 +99,16 @@ int main(int argc, char**argv)
 	//     nem retorna nulo... não há como validar...
 	//     toda vez que ocorrer esse bug é porque o nó cliente não existe mais
 	//	21/08/15 - 4:00 AM
-	sleep(3);
+	print_stats(i, t1, total, total_data);
 
-	print_stats(i, start, total, total_data);
+	gettimeofday(&tv, NULL);
+	double t2 = (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000; // convert tv_sec & tv_usec to millisecond
+
+	double diff = t2-t1;
+	printf("%0.2f ms\n", diff);
+	printf("RX rate: %0.2f B/s\n\n", (double)total*1000/diff);
+
+	sleep(3);
 
 	return 0;
 }

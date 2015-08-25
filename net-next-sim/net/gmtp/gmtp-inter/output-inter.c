@@ -40,6 +40,9 @@ int gmtp_inter_register_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	iph->ttl = 64;
 	ip_send_check(iph);
 
+	print_packet(skb, false);
+	print_gmtp_packet(iph, gh);
+
 	return NF_ACCEPT;
 }
 
@@ -52,9 +55,13 @@ int gmtp_inter_register_reply_out(struct sk_buff *skb,
 
 	gmtp_pr_func();
 
-	if(gmtp_inter_ip_local(iph->saddr))
+	if(gmtp_inter_ip_local(iph->saddr)) {
 		return gmtp_inter_register_reply_rcv(skb, entry,
 				GMTP_INTER_LOCAL);
+	}
+
+	print_packet(skb, false);
+	print_gmtp_packet(iph, gh);
 
 	return NF_ACCEPT;
 }
@@ -133,9 +140,11 @@ send:
 	gh->relay = 1;
 	gh->dport = entry->channel_port;
 
-	server_tx = entry->current_rx <= 0 ?
-			(unsigned int) gh->transm_r : entry->current_rx;
-	gmtp_inter_mcc_delay(entry, skb, (u64) server_tx);
+	if(entry->nclients > 0) {
+		server_tx = entry->current_rx <= 0 ?
+				(unsigned int)gh->transm_r : entry->current_rx;
+		gmtp_inter_mcc_delay(entry, skb, (u64)server_tx);
+	}
 
 	return NF_ACCEPT;
 }

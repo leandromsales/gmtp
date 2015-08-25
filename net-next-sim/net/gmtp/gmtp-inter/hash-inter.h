@@ -28,6 +28,7 @@
  * @total_bytes: amount of received bytes
  * @last_rx_tstamp: time stamp of last received data packet (milliseconds)
  * @last_data_tstamp: time stamp stored in last received data packet.
+ * @transm_r: default tx rate of server
  * @rcv_tx_rate: tx rate received from relays (or server) in path s->r
  *
  * @nfeedbacks: number of received feedbacks at last window
@@ -75,6 +76,7 @@ struct gmtp_inter_entry {
 	unsigned int total_bytes;
 	unsigned long last_rx_tstamp; /* milliseconds */
 	__be32 last_data_tstamp;
+	__be32 transm_r;
 	__be32 rcv_tx_rate;
 
 	/* GMTP-MCC */
@@ -115,7 +117,7 @@ static inline void gmtp_set_buffer_limits(struct gmtp_inter_entry *info,
  * State of a flow
  */
 enum {
-	GMTP_INTER_WAITING_REGISTER_REPLY,
+	GMTP_INTER_WAITING_REGISTER_REPLY=0,
 	GMTP_INTER_REGISTER_REPLY_RECEIVED,
 	GMTP_INTER_TRANSMITTING,
 	GMTP_INTER_CLOSE_RECEIVED,
