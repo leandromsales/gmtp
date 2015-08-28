@@ -869,7 +869,6 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 		/* Unicast packet...
 		 * Look up flow ID in table and get corresponding socket
 		 */
-
 		sk = __inet_lookup_skb(&gmtp_inet_hashinfo, skb, gh->sport,
 				gh->dport);
 

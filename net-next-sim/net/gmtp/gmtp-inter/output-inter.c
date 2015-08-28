@@ -99,7 +99,9 @@ void gmtp_copy_data(struct sk_buff *skb, struct sk_buff *src_skb)
 int gmtp_inter_data_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 {
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct gmtp_hdr_data *ghd = gmtp_hdr_data(skb);
 	struct iphdr *iph = ip_hdr(skb);
+
 	unsigned int server_tx;
 	struct gmtp_client *relay, *temp;
 
@@ -118,6 +120,9 @@ int gmtp_inter_data_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 		if(buffered != NULL) {
 			entry->data_pkt_out++;
 			skb = skb_copy(buffered, gfp_any());
+			/* skb = skb_clone(buffered, gfp_any()); */
+			/*gmtp_copy_hdr(skb, buffered);
+			gmtp_copy_data(skb, buffered);*/
 		}
 	} else {
 		return NF_DROP;
@@ -139,14 +144,14 @@ send:
 	ip_send_check(iph);
 	gh->relay = 1;
 	gh->dport = entry->channel_port;
-
-	/*print_gmtp_data(skb, "OUT");*/
+	gh->server_rtt = entry->server_rtt + entry->clients_rtt;
 
 	if(entry->nclients > 0) {
 		server_tx = entry->current_rx <= 0 ?
 				(unsigned int)gh->transm_r : entry->current_rx;
 		gmtp_inter_mcc_delay(entry, skb, (u64)server_tx);
 	}
+	ghd->tstamp = jiffies_to_msecs(jiffies);
 
 	return NF_ACCEPT;
 }

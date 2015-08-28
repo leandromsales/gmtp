@@ -170,12 +170,14 @@ struct sk_buff *gmtp_inter_build_ack(struct gmtp_inter_entry *entry);
  * and sleeping in kernel code is not allowed in atomic context.
  *
  * Calling cond_resched(), kernel call schedule() where it's possible...
+ * In NS-3 we call schedule_timeout(1L) (1 jiffy)
  */
-static inline void gmtp_inter_wait_us(s64 delay)
+static inline void gmtp_inter_wait_ms(unsigned int delay)
 {
-	ktime_t timeout = ktime_add_us(ktime_get_real(), delay);
-	while(ktime_before(ktime_get_real(), timeout)) {
-		cond_resched(); /* Do nothing, just wait... */
+	unsigned int timeout = jiffies_to_msecs(jiffies) + delay;
+	while(jiffies_to_msecs(jiffies) < timeout) {
+		/*cond_resched(); *//* Do nothing, just wait... */
+		schedule_timeout(1L);
 	}
 }
 

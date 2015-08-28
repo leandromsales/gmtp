@@ -121,7 +121,7 @@ struct gmtp_hdr_dataack {
  *
  */
 struct gmtp_hdr_feedback {
-	__be32 	tstamp;
+	__be32 	orig_tstamp;
 	__u8	nclients;
 };
 

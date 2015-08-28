@@ -87,8 +87,8 @@ struct gmtp_inter_entry {
 	unsigned int current_rx;
 	unsigned int required_tx;
 	unsigned int data_pkt_out;
-	unsigned int flow_rtt;
-	unsigned int flow_avg_rtt;
+	unsigned int server_rtt;
+	unsigned int clients_rtt;
 	struct timer_list mcc_timer;
 
 	struct gmtp_client *clients;

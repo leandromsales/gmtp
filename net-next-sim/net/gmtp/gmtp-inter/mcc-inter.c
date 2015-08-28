@@ -13,25 +13,23 @@ struct timer_list mcc_timer;
 void gmtp_inter_mcc_delay(struct gmtp_inter_entry *info, struct sk_buff *skb,
 		unsigned int server_tx)
 {
-	u64 delay;
-	s64 elapsed, delay2;
-
+	long server_delay, server_delay2, elapsed, req_delay, final_delay;
 	unsigned int len = skb->len + ETH_HLEN;
-	ktime_t rx_tstamp = ms_to_ktime(info->last_rx_tstamp);
+	unsigned long now = jiffies_to_msecs(jiffies);
 
 	if(info->required_tx <= 0 || info->required_tx >= server_tx)
-		goto out;
+		return;
 
-	delay = (u64) DIV_ROUND_CLOSEST(len * USEC_PER_SEC, info->required_tx);
-	elapsed = ktime_us_delta(skb->tstamp, rx_tstamp);
-	delay2 = delay - elapsed;
+	server_delay = (long) DIV_ROUND_CLOSEST(HZ * len, server_tx);
+	elapsed = now - info->last_rx_tstamp;
+	server_delay2 = server_delay - elapsed;
+	req_delay = (long) DIV_ROUND_CLOSEST(HZ * len, info->required_tx);
+	final_delay = req_delay - server_delay2;
 
 	/* if delay2 <= 0, pass way... */
-	if(delay2 > 0)
-		gmtp_inter_wait_us(delay2);
+	if(final_delay > 0)
+		gmtp_inter_wait_ms(final_delay);
 
-out:
-	info->last_rx_tstamp = ktime_to_ms(skb->tstamp);
 }
 
 /**
@@ -39,17 +37,16 @@ out:
  *
  * TODO update_stats RTT through feedbacks
  *
- * If the GMTP-MCC sender receives no reports from the Reporters for (4 RTTs)*,
+ * If the GMTP-MCC sender receives no reports from the Reporters for (4 RTTs),
  * the sending rate is cut in half.
  * TODO In addition, if the sender receives no reports from the Reporter for at
- * least (12 RTTs)*, it assumes that the Reporter crashed or left the group.
+ * least (12 RTTs), it assumes that the Reporter crashed or left the group.
  * A new reporter is selected, sending an elect-request to control channel.
  * The first client to respond will be the new Reporter.
  * If no one respond... There no clients... Close-Connection
  *
  * TODO Undo temporally changes:
- *   * Change from 4 RTTs to GMTP_ACK_INTERVAL
- *   ** Change from 10 RTTs to GMTP_ACK_TIMEOUT
+ *   Change from 4 RTTs to GMTP_ACK_INTERVAL
  *
  */
 void mcc_timer_callback(unsigned long data)
@@ -64,16 +61,16 @@ void mcc_timer_callback(unsigned long data)
 	if(likely(info->nfeedbacks > 0))
 		new_tx = DIV_ROUND_CLOSEST(info->sum_feedbacks,
 				info->nfeedbacks);
-	/*else
-		new_tx = info->required_tx / 2;*/
+	else
+		new_tx = info->required_tx / 2;
 
 	/* Avoid super TX reduction */
-	if(new_tx < DIV_ROUND_CLOSEST(info->transm_r, 5))
-		new_tx = DIV_ROUND_CLOSEST(info->transm_r, 5);
+	if(new_tx < DIV_ROUND_CLOSEST(info->transm_r, 8))
+		new_tx = DIV_ROUND_CLOSEST(info->transm_r, 8);
 
 	info->required_tx = new_tx;
 
-	pr_info("n=%u, new_tx=%u B/s\n", info->nfeedbacks, info->required_tx);
+	pr_info("n=%u, req_tx=%u B/s\n", info->nfeedbacks, info->required_tx);
 
 	/* FIXME Colocar isso em outro timer? */
 	list_for_each_entry_safe(reporter, temp, &info->clients->list, list)
@@ -106,6 +103,7 @@ out:
 	if(likely(info->state != GMTP_INTER_CLOSE_RECEIVED
 					&& info->state != GMTP_INTER_CLOSED))
 		mod_timer(&info->mcc_timer,
-				gmtp_mcc_interval(info->flow_avg_rtt));
+				gmtp_mcc_interval(info->server_rtt
+							+ info->clients_rtt));
 }
 

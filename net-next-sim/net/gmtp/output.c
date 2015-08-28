@@ -100,17 +100,15 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 		case GMTP_PKT_DATA: {
 			struct gmtp_hdr_data *gh_data = gmtp_hdr_data(skb);
 			gh_data->tstamp = jiffies_to_msecs(jiffies);
+			pr_info("Server RTT: %u ms\n", gh->server_rtt);
 			break;
 		}
 		case GMTP_PKT_FEEDBACK: {
 			struct gmtp_hdr_feedback *fh = gmtp_hdr_feedback(skb);
 			gh->seq = gcb->seq = gp->gsr;
 			gh->transm_r = gp->rx_max_rate;
-			fh->tstamp = jiffies_to_msecs(jiffies);
+			fh->orig_tstamp = gcb->orig_tstamp;
 			fh->nclients = gp->myself->nclients;
-
-			pr_info("[Feedback] tstamp=%u, nclients=%u, seq: %u\n",
-					fh->tstamp, fh->nclients, gh->seq);
 			break;
 		}
 		case GMTP_PKT_ELECT_REQUEST: {
@@ -538,6 +536,7 @@ void gmtp_send_feedback(struct sock *sk)
 		/* Reserve space for headers */
 		skb_reserve(skb, sk->sk_prot->max_header);
 		GMTP_SKB_CB(skb)->type = GMTP_PKT_FEEDBACK;
+		GMTP_SKB_CB(skb)->orig_tstamp = gmtp_sk(sk)->rx_last_orig_tstamp;
 
 		gmtp_transmit_skb(sk, skb);
 	}

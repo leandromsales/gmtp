@@ -197,11 +197,7 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 
 	/*** FIXME Check sequence numbers  ***/
 
-	/** First reply received and i have a relay */
-	if(gp->relay_rtt == 0 && gh->type == GMTP_PKT_REQUESTNOTIFY)
-		gp->relay_rtt = jiffies_to_msecs(jiffies) - gp->req_stamp;
-
-	gp->rx_rtt = (u32) gh->server_rtt + gp->relay_rtt;
+	gp->rx_rtt = (u32) gh->server_rtt;
 	gmtp_pr_debug("RTT: %u ms", gp->rx_rtt);
 
 	if(gh->type == GMTP_PKT_REQUESTNOTIFY) {
@@ -392,32 +388,21 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 		const struct gmtp_hdr *gh, const unsigned int len)
 {
 	struct gmtp_sock *gp = gmtp_sk(sk);
-	struct gmtp_hdr_dataack *gh_dataack;
-	struct gmtp_hdr_ack *gack;
+
 	switch (gh->type) {
 	case GMTP_PKT_DATAACK:
-		if(gmtp_role_client(sk)) {
-			gh_dataack = gmtp_hdr_dataack(skb);
-			gp->relay_rtt = jiffies_to_msecs(jiffies)
-					- gh_dataack->ack_hdr.orig_tstamp;
-			gp->rx_rtt = (u32) gh->server_rtt + gp->relay_rtt;
-		}
 	case GMTP_PKT_DATA:
 		gmtp_enqueue_skb(sk, skb);
 		return 0;
 	case GMTP_PKT_ACK:
-		gack = gmtp_hdr_ack(skb);
 		if(gp->role == GMTP_ROLE_SERVER) {
+			struct gmtp_hdr_ack *gack = gmtp_hdr_ack(skb);
 			print_gmtp_packet(ip_hdr(skb), gh);
 			gp->tx_rtt = jiffies_to_msecs(jiffies) - gack->orig_tstamp;
 			gp->tx_avg_rtt = rtt_ewma(gp->tx_avg_rtt, gp->tx_rtt,
 					GMTP_RTT_WEIGHT);
 			gp->tx_ucc_rate = min((__be32 )gp->tx_ucc_rate,
 					gh->transm_r);
-		} else if(gmtp_role_client(sk) && gh->relay == 1) {
-			gp->relay_rtt = jiffies_to_msecs(jiffies)
-					- gack->orig_tstamp;
-			gp->rx_rtt = (u32) gh->server_rtt + gp->relay_rtt;
 		}
 		goto discard;
 	case GMTP_PKT_RESET:
@@ -450,10 +435,13 @@ int gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 	if(gmtp_check_seqno(sk, skb))
 		goto discard;
 
+	gp->gsr = gh->seq;
+	gp->rx_rtt = (u32) gh->server_rtt;
+	if(gh->type == GMTP_PKT_DATA)
+		gp->rx_last_orig_tstamp = gmtp_hdr_data(skb)->tstamp;
+
 	if(gp->role == GMTP_ROLE_REPORTER)
 		gmtp_deliver_input_to_mcc(sk, skb);
-
-	gp->gsr = gh->seq;
 
 	return __gmtp_rcv_established(sk, skb, gh, len);
 discard:

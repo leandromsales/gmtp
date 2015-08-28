@@ -286,9 +286,7 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 
 	entry->transm_r =  gh->transm_r;
 	entry->rcv_tx_rate = gh->transm_r;
-	entry->flow_rtt = (unsigned int)gh->server_rtt;
-	entry->flow_avg_rtt = rtt_ewma(entry->flow_avg_rtt, entry->flow_rtt,
-			GMTP_RTT_WEIGHT);
+	entry->server_rtt = (unsigned int)gh->server_rtt;
 
 	if(direction != GMTP_INTER_LOCAL) {
 		pr_info("Direction: %u\n", direction);
@@ -458,16 +456,13 @@ int gmtp_inter_route_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	return NF_ACCEPT;
 }
 
-/**
- * FIXME Take the average of feedbacks in an window
- */
 int gmtp_inter_feedback_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 {
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct gmtp_hdr_feedback *ghf = gmtp_hdr_feedback(skb);
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_client *reporter;
-
-	/*print_gmtp_packet(iph, gh);*/
+	unsigned int now, rep_rtt;
 
 	reporter = gmtp_get_client(&entry->clients->list, iph->saddr, gh->sport);
 	if(reporter == NULL)
@@ -479,7 +474,11 @@ int gmtp_inter_feedback_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 		reporter->ack_rx_tstamp = jiffies_to_msecs(jiffies);
 	}
 
-	return gmtp_inter_make_ack_from_feedback(skb, entry);
+	now = jiffies_to_msecs(jiffies);
+	rep_rtt = now - ghf->orig_tstamp;
+	entry->clients_rtt = rtt_ewma(entry->clients_rtt, rep_rtt, 900);
+
+	return NF_DROP;
 }
 
 /**
@@ -515,24 +514,23 @@ static inline void gmtp_update_stats(struct gmtp_inter_entry *info,
 	info->total_bytes += skblen(skb);
 	info->recent_bytes += skblen(skb);
 	info->seq = (unsigned int)gh->seq;
-	info->flow_rtt = (unsigned int)gh->server_rtt;
-	info->flow_avg_rtt = rtt_ewma(info->flow_avg_rtt, info->flow_rtt,
-	GMTP_RTT_WEIGHT);
+	info->server_rtt = (unsigned int)gh->server_rtt;
 	info->last_data_tstamp = gmtp_hdr_data(skb)->tstamp;
+	info->last_rx_tstamp = jiffies_to_msecs(jiffies);
 
 	info->transm_r = gh->transm_r;
 	info->rcv_tx_rate = gh->transm_r;
 	gh->transm_r = min(info->rcv_tx_rate, gmtp_inter.ucc_rx);
 
 	if(gh->seq % gmtp_inter.rx_rate_wnd == 0) {
-		unsigned long current_time = ktime_to_ms(ktime_get_real());
+		unsigned long current_time = jiffies_to_msecs(jiffies);
 		unsigned long elapsed = current_time - info->recent_rx_tstamp;
-		if(elapsed != 0)
-			info->current_rx = DIV_ROUND_CLOSEST(
-					info->recent_bytes * MSEC_PER_SEC,
-					elapsed);
 
-		info->recent_rx_tstamp = ktime_to_ms(skb->tstamp);
+		if(elapsed != 0) {
+			info->current_rx = DIV_ROUND_CLOSEST(
+					info->recent_bytes * HZ, elapsed);
+		}
+		info->recent_rx_tstamp = jiffies_to_msecs(jiffies);
 		info->recent_bytes = 0;
 		gmtp_inter.worst_rtt = GMTP_MIN_RTT_MS;
 	}
