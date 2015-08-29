@@ -35,6 +35,13 @@ static int do_gmtp_setsockopt(struct sock *sk, int level, int optname,
 		gmtp_pr_debug("GMTP_SOCKOPT_FLOWNAME");
 		err = gmtp_setsockopt_flowname(gp, optval, optlen);
 		break;
+	case GMTP_SOCKOPT_MEDIA_RATE:
+		gmtp_pr_debug("GMTP_SOCKOPT_MEDIA_RATE");
+		if(val > 0)
+			gp->tx_media_rate = (unsigned long)val;
+		else
+			err = -EINVAL;
+		break;
 	case GMTP_SOCKOPT_MAX_TX_RATE:
 		gmtp_pr_debug("GMTP_SOCKOPT_MAX_TX_RATE");
 		if(val > 0) {
@@ -132,6 +139,9 @@ static int do_gmtp_getsockopt(struct sock *sk, int level, int optname,
 	switch (optname) {
 	case GMTP_SOCKOPT_FLOWNAME:
 		return gmtp_getsockopt_flowname(gp, optval, optlen);
+	case GMTP_SOCKOPT_MEDIA_RATE:
+		val = (int)gp->tx_media_rate;
+		break;
 	case GMTP_SOCKOPT_MAX_TX_RATE:
 		val = (int) gp->tx_max_rate;
 		break;

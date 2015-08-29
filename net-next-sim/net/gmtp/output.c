@@ -84,7 +84,7 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 
 		memcpy(gh->flowname, gp->flowname, GMTP_FLOWNAME_LEN);
 
-		gh->transm_r = (__be32) gp->tx_max_rate;
+		gh->transm_r = (__be32) gp->tx_media_rate;
 		if (gcb->type == GMTP_PKT_RESET)
 			gmtp_hdr_reset(skb)->reset_code = gcb->reset_code;
 
@@ -100,7 +100,7 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 		case GMTP_PKT_DATA: {
 			struct gmtp_hdr_data *gh_data = gmtp_hdr_data(skb);
 			gh_data->tstamp = jiffies_to_msecs(jiffies);
-			pr_info("Server RTT: %u ms\n", gh->server_rtt);
+			/*pr_info("Server RTT: %u ms\n", gh->server_rtt);*/
 			break;
 		}
 		case GMTP_PKT_FEEDBACK: {
@@ -221,7 +221,7 @@ struct sk_buff *gmtp_make_register_reply(struct sock *sk, struct dst_entry *dst,
 	gh->type	= GMTP_PKT_REGISTER_REPLY;
 	gh->seq 	= greq->gss;
 	gh->server_rtt	= GMTP_DEFAULT_RTT;
-	gh->transm_r	= (__be32) gmtp_sk(sk)->tx_max_rate;
+	gh->transm_r	= (__be32) gmtp_sk(sk)->tx_media_rate;
 	gh->hdrlen	= gmtp_header_size;
 	memcpy(gh->flowname, greq->flowname, GMTP_FLOWNAME_LEN);
 
@@ -765,6 +765,7 @@ wait:
 		gp->tx_byte_budget = INT_MIN;
 
 	if(delay2 > 0) {
+		pr_info("Delay: %ld ms\n", delay2);
 		setup_timer(&gp->xmit_timer, gmtp_write_xmit_timer,
 				(unsigned long ) pkt_info);
 		mod_timer(&gp->xmit_timer, jiffies + delay2);

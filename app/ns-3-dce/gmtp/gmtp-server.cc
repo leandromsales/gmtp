@@ -41,15 +41,15 @@ int main(int argc, char *argv[])
 	struct sockaddr_in serverAddr;
 	struct sockaddr_storage serverStorage;
 	socklen_t addr_size;
-	int max_tx = 300000; // Bps
+	int media_rate = 300000; // B/s
 
 	cout << "Starting GMTP Server..." << endl;
 	welcomeSocket = socket(PF_INET, SOCK_GMTP, IPPROTO_GMTP);
 	setsockopt(welcomeSocket, SOL_GMTP, GMTP_SOCKOPT_FLOWNAME, "1234567812345678", 16);
 //	welcomeSocket = socket(AF_INET, SOCK_STREAM, 0);
 
-	cout << "Limiting tx_rate to " << max_tx << " B/s" << endl;
-	setsockopt(welcomeSocket, SOL_GMTP, GMTP_SOCKOPT_MAX_TX_RATE, &max_tx, sizeof(max_tx));
+	cout << "Limiting tx_rate to " << media_rate << " B/s" << endl;
+	setsockopt(welcomeSocket, SOL_GMTP, GMTP_SOCKOPT_MEDIA_RATE, &media_rate, sizeof(media_rate));
 
 	serverAddr.sin_family = AF_INET;
 	serverAddr.sin_port = htons(SERVER_PORT);
@@ -76,18 +76,19 @@ int main(int argc, char *argv[])
 
 	cout << "Sending data...\n" << endl;
 	for(i = 0; i < 10000; ++i) {
-		double tmp = time_ms(tv);
-		ms_sleep(0.1);
-//		cout << "sleep: " << time_ms(tv) - tmp << " ms" << endl;
 		const char *numstr = NumStr(i+1);
 		char *buffer = new char(BUFF_SIZE);
 		strcpy(buffer, msg);
 		strcat(buffer, numstr);
-//		int size = strlen(msg) + strlen(numstr)+1;
-		int size = BUFF_SIZE;
-		send(newSocket, buffer, size, 0);
-		total += size + 36 + 20;
-		total_data += size;
+		int pkt_size = BUFF_SIZE + 36 + 20;
+
+		//Control TX rate
+		double sleep_time = (double)(pkt_size * 1000)/media_rate;
+		ms_sleep(sleep_time); //control tx rate
+
+		send(newSocket, buffer, BUFF_SIZE, 0);
+		total += pkt_size;
+		total_data += BUFF_SIZE;
 		delete(buffer);
 		if(i % 1000 == 0) {
 			print_stats(i, t1, total, total_data);

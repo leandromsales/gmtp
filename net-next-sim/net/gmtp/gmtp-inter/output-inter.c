@@ -238,6 +238,7 @@ int gmtp_inter_close_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 {
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct gmtp_client *relay, *temp;
 
 	gmtp_pr_func();
 	print_packet(skb, false);
@@ -249,6 +250,18 @@ int gmtp_inter_close_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 		return gmtp_inter_close_from_client(skb, entry);
 	case GMTP_INTER_CLOSED:
 		pr_info("GMTP_CLOSED\n");
+		list_for_each_entry_safe(relay, temp, &entry->relays->list, list)
+		{
+			if(relay->state == GMTP_OPEN) {
+				struct ethhdr *eth = eth_hdr(skb);
+				gh->dport = relay->port;
+				ether_addr_copy(eth->h_dest, relay->mac_addr);
+				gmtp_inter_build_and_send_pkt(skb, iph->saddr,
+						relay->addr, gh,
+						GMTP_INTER_FORWARD);
+			}
+		}
+
 		gh->relay = 1;
 		gh->dport = entry->channel_port;
 		iph->daddr = entry->channel_addr;

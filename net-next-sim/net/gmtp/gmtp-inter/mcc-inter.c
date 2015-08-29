@@ -96,10 +96,8 @@ out:
 	info->nfeedbacks = 0;
 	info->sum_feedbacks = 0;
 
-	/*pr_info("RTT: %u ms, Next interval: %lu ms\n", info->rtt,
-			(gmtp_mcc_interval(info->rtt) - jiffies));*/
-
 	/* TODO Send here an ack to server? */
+	pr_info("state: %u\n", info->state);
 	if(likely(info->state != GMTP_INTER_CLOSE_RECEIVED
 					&& info->state != GMTP_INTER_CLOSED))
 		mod_timer(&info->mcc_timer,

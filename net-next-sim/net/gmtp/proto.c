@@ -251,6 +251,7 @@ int gmtp_init_sock(struct sock *sk)
 
 	gp->tx_first_stamp	= 0UL;
 	gp->tx_last_stamp	= 0UL;
+	gp->tx_media_rate	= UINT_MAX;
 	gp->tx_max_rate		= UINT_MAX; /* Unlimited */
 	gp->tx_ucc_rate		= UINT_MAX; /* Unlimited */
 	gp->tx_byte_budget	= INT_MIN;

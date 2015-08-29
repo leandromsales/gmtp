@@ -310,6 +310,7 @@ static inline unsigned int gmtp_packet_hdr_variable_len(const __u8 type)
 /* GMTP socket options */
 enum gmtp_sockopt_codes {
 	GMTP_SOCKOPT_FLOWNAME = 1,
+	GMTP_SOCKOPT_MEDIA_RATE,
 	GMTP_SOCKOPT_MAX_TX_RATE,
 	GMTP_SOCKOPT_UCC_TX_RATE,
 	GMTP_SOCKOPT_GET_CUR_MSS,

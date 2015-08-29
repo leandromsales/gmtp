@@ -224,6 +224,7 @@ struct gmtp_sock {
 
 	unsigned long			tx_first_stamp;  /* jiffies */
 	unsigned long 			tx_last_stamp;	/* jiffies */
+	unsigned long			tx_media_rate;
 	unsigned long			tx_max_rate;
 	unsigned long			tx_ucc_rate;
 	int 				tx_byte_budget;

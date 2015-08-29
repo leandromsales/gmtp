@@ -594,7 +594,7 @@ int gmtp_inter_close_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry,
 
 	if(!in) {
 		pr_info("Local out!\n");
-		/*entry->state = GMTP_INTER_CLOSE_RECEIVED;*/
+		entry->state = GMTP_INTER_CLOSE_RECEIVED;
 		return NF_ACCEPT;
 	}
 

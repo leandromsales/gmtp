@@ -13,11 +13,13 @@
 
 #define SERVER_PORT 2000
 #define BUFF_SIZE 744  /* 744 + 56 = 800 B/pkt */
+#define GMTP_SAMPLE 100
 
 #define NumStr(Number) static_cast<ostringstream*>( &(ostringstream() << Number) )->str().c_str()
 
 enum gmtp_sockopt_codes {
 	GMTP_SOCKOPT_FLOWNAME = 1,
+	GMTP_SOCKOPT_MEDIA_RATE,
 	GMTP_SOCKOPT_MAX_TX_RATE,
 	GMTP_SOCKOPT_UCC_TX_RATE,
 	GMTP_SOCKOPT_GET_CUR_MSS,
