@@ -266,11 +266,15 @@ int gmtp_inter_close_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 		gh->dport = entry->channel_port;
 		iph->daddr = entry->channel_addr;
 		ip_send_check(iph);
+
+		pr_info("Deleting entry...\n");
 		gmtp_inter_del_entry(gmtp_inter.hashtable, gh->flowname);
 		return NF_ACCEPT;
 	case GMTP_INTER_CLOSE_RECEIVED:
 		pr_info("GMTP_INTER_CLOSE_RECEIVED -> GMTP_INTER_CLOSED\n");
 		entry->state = GMTP_INTER_CLOSED;
+		if(entry->nclients == 0)
+			return NF_REPEAT;
 		break;
 	}
 
@@ -284,13 +288,9 @@ int gmtp_inter_close_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 		gmtp_hdr(buffered)->relay = 1;
 
 		if(iph->saddr == entry->my_addr) {
-			pr_info("Local\n");
 			skb->dev = entry->dev_out;
 			gmtp_inter_build_and_send_skb(buffered, GMTP_INTER_LOCAL);
 		} else {
-			pr_info("Sending close forward! Buffered:\n");
-			print_gmtp_packet(ip_hdr(buffered), gmtp_hdr(buffered));
-
 			buffered->dev = skb->dev;
 			gmtp_inter_build_and_send_skb(buffered, GMTP_INTER_FORWARD);
 			return NF_REPEAT;

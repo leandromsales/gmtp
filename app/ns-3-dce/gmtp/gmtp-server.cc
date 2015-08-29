@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
 	double total_data, total;
 
 	cout << "Sending data...\n" << endl;
-	for(i = 0; i < 10000; ++i) {
+	for(i = 0; i < 100; ++i) {
 		const char *numstr = NumStr(i+1);
 		char *buffer = new char(BUFF_SIZE);
 		strcpy(buffer, msg);
