@@ -252,13 +252,16 @@ int gmtp_inter_close_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 		pr_info("GMTP_CLOSED\n");
 		list_for_each_entry_safe(relay, temp, &entry->relays->list, list)
 		{
+			pr_info("FORWARDING close to %pI4:%d\n", &relay->addr, ntohs(relay->port));
 			if(relay->state == GMTP_OPEN) {
-				struct ethhdr *eth = eth_hdr(skb);
+				struct sk_buff *new_skb = skb_copy(skb, gfp_any());
+				struct ethhdr *eth = eth_hdr(new_skb);
 				gh->dport = relay->port;
 				ether_addr_copy(eth->h_dest, relay->mac_addr);
-				gmtp_inter_build_and_send_pkt(skb, iph->saddr,
+				gmtp_inter_build_and_send_pkt(new_skb, iph->saddr,
 						relay->addr, gh,
 						GMTP_INTER_FORWARD);
+				relay->state = GMTP_CLOSED;
 			}
 		}
 
@@ -267,12 +270,14 @@ int gmtp_inter_close_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 		iph->daddr = entry->channel_addr;
 		ip_send_check(iph);
 
-		pr_info("Deleting entry...\n");
 		gmtp_inter_del_entry(gmtp_inter.hashtable, gh->flowname);
+
 		return NF_ACCEPT;
+
 	case GMTP_INTER_CLOSE_RECEIVED:
 		pr_info("GMTP_INTER_CLOSE_RECEIVED -> GMTP_INTER_CLOSED\n");
 		entry->state = GMTP_INTER_CLOSED;
+		pr_info("nclients = %d\n", entry->nclients);
 		if(entry->nclients == 0)
 			return NF_REPEAT;
 		break;

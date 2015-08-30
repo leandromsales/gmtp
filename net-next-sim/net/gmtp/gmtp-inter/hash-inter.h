@@ -101,7 +101,7 @@ struct gmtp_inter_entry {
 	unsigned int buffer_len; /* in bytes */
 
 	struct net_device *dev_out;
-	struct gmtp_hdr *route_pending;
+	bool route_pending;
 
 	struct gmtp_inter_entry *next;
 };

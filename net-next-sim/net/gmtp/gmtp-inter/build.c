@@ -485,7 +485,6 @@ void gmtp_inter_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
 
 	if(skb != NULL)
 		gmtp_inter_send_pkt(skb);
-
 }
 
 void gmtp_inter_build_and_send_skb(struct sk_buff *skb,

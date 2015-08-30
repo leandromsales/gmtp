@@ -287,6 +287,7 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 	entry->transm_r =  gh->transm_r;
 	entry->rcv_tx_rate = gh->transm_r;
 	entry->server_rtt = (unsigned int)gh->server_rtt;
+	entry->route_pending = true;
 
 	if(direction != GMTP_INTER_LOCAL) {
 		pr_info("Direction: %u\n", direction);
@@ -311,7 +312,7 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 
 		ether_addr_copy(entry->server_mac_addr, eth->h_source);
 
-		entry->route_pending = NULL;
+		/*entry->route_pending = false;*/
 		if(gh_route_n != NULL)
 			gmtp_inter_build_and_send_pkt(skb, iph->daddr,
 					iph->saddr, gh_route_n, direction);
@@ -319,7 +320,7 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 		pr_info("Direction: LOCAL\n");
 		ether_addr_copy(entry->server_mac_addr, skb->dev->dev_addr);
 		ether_addr_copy(eth->h_dest, entry->request_mac_addr);
-		entry->route_pending = gh_route_n;
+		/*entry->route_pending = true;*/
 	}
 
 	entry->state = GMTP_INTER_REGISTER_REPLY_RECEIVED;
@@ -422,9 +423,9 @@ int gmtp_inter_ack_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 		reporter->ack_rx_tstamp = jiffies_to_msecs(jiffies);
 	}
 
-	if(entry->route_pending != NULL) {
-		kfree(entry->route_pending);
-		entry->route_pending = NULL;
+	pr_info("ACK_RCV: entry->route_pending = %d\n", entry->route_pending);
+	if(entry->route_pending) {
+		entry->route_pending = false;
 		return NF_ACCEPT;
 	}
 
@@ -447,13 +448,13 @@ int gmtp_inter_route_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	if(relay != NULL)
 		relay->state = GMTP_OPEN;
 
-	pr_info("entry->route_pending: %p\n", entry->route_pending);
-	if(entry->route_pending != NULL) {
-		kfree(entry->route_pending);
-		entry->route_pending = NULL;
+	pr_info("ROUTE_rcv: entry->route_pending = %d\n", entry->route_pending);
+	if(entry->route_pending) {
+		entry->route_pending = false;
+		return NF_ACCEPT;
 	}
 
-	return NF_ACCEPT;
+	return NF_DROP;
 }
 
 int gmtp_inter_feedback_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)

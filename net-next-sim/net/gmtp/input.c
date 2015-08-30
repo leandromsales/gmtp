@@ -569,7 +569,7 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 		/* Caller (gmtp_v4_do_rcv) will send Reset */
 		gcb->reset_code = GMTP_RESET_CODE_NO_CONNECTION;
 		return 1;
-	} else if (sk->sk_state == GMTP_CLOSED) {
+	} else if (sk->sk_state == GMTP_CLOSED || sk->sk_state == GMTP_ACTIVE_CLOSEREQ) {
 		gcb->reset_code = GMTP_RESET_CODE_NO_CONNECTION;
 		return 1;
 	}
