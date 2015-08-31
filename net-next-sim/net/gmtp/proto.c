@@ -132,8 +132,10 @@ void print_route(struct gmtp_hdr_route *route)
 {
 	int i;
 
-	if(route->nrelays <= 0)
+	if(route->nrelays <= 0) {
+		pr_info("Empty route.\n");
 		return;
+	}
 
 	pr_info("Route: \n");
 	for(i = route->nrelays - 1; i >= 0; --i)

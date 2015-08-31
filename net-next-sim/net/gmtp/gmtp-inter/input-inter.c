@@ -292,8 +292,6 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 	if(direction != GMTP_INTER_LOCAL) {
 		pr_info("Direction: %u\n", direction);
 
-		gh_route_n = gmtp_inter_make_route_hdr(skb);
-
 		/* Add relay information in REGISTER-REPLY packet) */
 		gmtp_inter_add_relayid(skb);
 
@@ -313,6 +311,7 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 		ether_addr_copy(entry->server_mac_addr, eth->h_source);
 
 		/*entry->route_pending = false;*/
+		gh_route_n = gmtp_inter_make_route_hdr(skb);
 		if(gh_route_n != NULL)
 			gmtp_inter_build_and_send_pkt(skb, iph->daddr,
 					iph->saddr, gh_route_n, direction);
@@ -425,6 +424,7 @@ int gmtp_inter_ack_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 
 	pr_info("ACK_RCV: entry->route_pending = %d\n", entry->route_pending);
 	if(entry->route_pending) {
+		print_gmtp_packet(iph, gh);
 		entry->route_pending = false;
 		return NF_ACCEPT;
 	}
@@ -444,16 +444,22 @@ int gmtp_inter_route_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 		return NF_ACCEPT;
 
 	relay = gmtp_get_client(&entry->relays->list, iph->saddr, gh->sport);
-	pr_info("Relay: %p\n", relay);
 	if(relay != NULL)
 		relay->state = GMTP_OPEN;
+
+	struct gmtp_hdr_route *route = gmtp_hdr_route(skb);
+	print_gmtp_packet(iph, gh);
+
+	print_route(route);
+
+	if(route->nrelays > 0)
+		gmtp_add_server_entry(server_hashtable, gh->flowname, route);
 
 	pr_info("ROUTE_rcv: entry->route_pending = %d\n", entry->route_pending);
 	if(entry->route_pending) {
 		entry->route_pending = false;
 		return NF_ACCEPT;
 	}
-
 	return NF_DROP;
 }
 

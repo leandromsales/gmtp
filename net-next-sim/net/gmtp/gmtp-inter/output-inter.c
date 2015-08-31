@@ -270,6 +270,8 @@ int gmtp_inter_close_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 		iph->daddr = entry->channel_addr;
 		ip_send_check(iph);
 
+		server_hashtable->hash_ops.del_entry(server_hashtable,
+				gh->flowname);
 		gmtp_inter_del_entry(gmtp_inter.hashtable, gh->flowname);
 
 		return NF_ACCEPT;

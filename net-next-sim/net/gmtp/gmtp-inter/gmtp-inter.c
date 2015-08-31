@@ -256,8 +256,6 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 			ret = gmtp_inter_ack_rcv(skb, entry);
 			break;
 		case GMTP_PKT_ROUTE_NOTIFY:
-			print_packet(skb, true);
-			print_gmtp_packet(iph, gh);
 			ret = gmtp_inter_route_rcv(skb, entry);
 			break;
 		case GMTP_PKT_DATA:
