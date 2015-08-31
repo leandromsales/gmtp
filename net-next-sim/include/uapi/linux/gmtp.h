@@ -107,14 +107,21 @@ struct gmtp_hdr_ack {
 };
 
 /**
+ * struct gmtp_hdr_dataack - DATAACK packets
+ */
+struct gmtp_hdr_dataack {
+	struct gmtp_hdr_data	data_hdr;
+	struct gmtp_hdr_ack	ack_hdr;
+};
+
+/**
  * struct gmtp_hdr_feedback - Data packets
- * @orig_tstamp: time stamp of received data packet
- * @wait: time wait from reception of packet to feedback send
+ * @tstamp: time stamp of feedback packet
  * @nclients: active clients at reporter
  *
  */
 struct gmtp_hdr_feedback {
-	__be32 	pkt_tstamp;
+	__be32 	orig_tstamp;
 	__u8	nclients;
 };
 
@@ -269,7 +276,7 @@ static inline unsigned int gmtp_packet_hdr_variable_len(const __u8 type)
 		len = sizeof(struct gmtp_hdr_data);
 		break;
 	case GMTP_PKT_DATAACK:
-		len = sizeof(struct gmtp_hdr_data) + sizeof(struct gmtp_hdr_ack);
+		len = sizeof(struct gmtp_hdr_dataack);
 		break;
 	case GMTP_PKT_ACK:
 		len = sizeof(struct gmtp_hdr_ack);
@@ -303,6 +310,7 @@ static inline unsigned int gmtp_packet_hdr_variable_len(const __u8 type)
 /* GMTP socket options */
 enum gmtp_sockopt_codes {
 	GMTP_SOCKOPT_FLOWNAME = 1,
+	GMTP_SOCKOPT_MEDIA_RATE,
 	GMTP_SOCKOPT_MAX_TX_RATE,
 	GMTP_SOCKOPT_UCC_TX_RATE,
 	GMTP_SOCKOPT_GET_CUR_MSS,
@@ -311,39 +319,6 @@ enum gmtp_sockopt_codes {
 	GMTP_SOCKOPT_PULL,
 	GMTP_SOCKOPT_ROLE_RELAY,
 	GMTP_SOCKOPT_RELAY_ENABLED
-};
-
-
-/**
- * struct gmtp_clients - A list of GMTP Clients
- *
- * @list: The list_head
- * @id: a number to identify and count clients
- * @addr: IP address of client
- * @port: reception port of client
- * @max_clients: for reporters, the max amount of clients.
- * 			0 means that clients is not a reporter
- * @nclients: number of occupied slots at a reporter.
- * 			It must be less or equal %max_clients
- *
- * @ack_rx_tstamp: time stamp of last received ack (or feedback)
- *
- * @clients: clients of a reporter.
- * @reporter: reporter of a client
- */
-struct gmtp_client {
-	struct list_head 	list;
-	unsigned int		id;
-	__be32 			addr;
-	__be16 			port;
-	__u8			max_nclients;
-	__u8			nclients;
-	__u32			ack_rx_tstamp;
-
-	struct gmtp_client	*clients;
-	struct gmtp_client	*reporter;
-	struct sock 		*rsock;
-	struct sock 		*mysock;
 };
 
 

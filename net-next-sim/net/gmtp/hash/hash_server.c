@@ -63,8 +63,6 @@ int gmtp_add_route(struct gmtp_server_entry* server,
 
 		err = relay_table->hash_ops.add_entry(relay_table,
 				(struct gmtp_hash_entry*) relay);
-
-		print_gmtp_relay(&relay->relay);
 	}
 
 	return err;

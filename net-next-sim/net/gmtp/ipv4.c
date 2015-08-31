@@ -729,10 +729,13 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 
 		const struct iphdr *iph = ip_hdr(skb);
 
-		if(gmtp_info->relay_enabled) {
-			gmtp_pr_error("Relay enabled...");
+		/*if(gmtp_info->relay_enabled) {
+			gmtp_pr_error("Relay enabled (%s)",
+					gmtp_packet_name(gh->type));
+			if(gh->type == GMTP_PKT_DATA)
+				print_gmtp_packet(iph, gh);
 			goto ignore_it;
-		}
+		}*/
 
 		/* TODO Make a reset code for each error here! */
 		switch(gh->type) {
@@ -866,7 +869,6 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 		/* Unicast packet...
 		 * Look up flow ID in table and get corresponding socket
 		 */
-
 		sk = __inet_lookup_skb(&gmtp_inet_hashinfo, skb, gh->sport,
 				gh->dport);
 

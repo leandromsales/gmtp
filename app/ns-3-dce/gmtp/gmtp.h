@@ -2,6 +2,7 @@
 #include <arpa/inet.h>
 #include <sstream>
 #include <string>
+#include <sys/time.h>
 
 #ifndef GMTP_H_
 #define GMTP_H_
@@ -10,13 +11,15 @@
 #define IPPROTO_GMTP  254
 #define SOL_GMTP      281
 
+#define SERVER_PORT 2000
+#define BUFF_SIZE 744  /* 744 + 56 = 800 B/pkt */
+#define GMTP_SAMPLE 100
+
 #define NumStr(Number) static_cast<ostringstream*>( &(ostringstream() << Number) )->str().c_str()
-
-
-int Number = 123;
 
 enum gmtp_sockopt_codes {
 	GMTP_SOCKOPT_FLOWNAME = 1,
+	GMTP_SOCKOPT_MEDIA_RATE,
 	GMTP_SOCKOPT_MAX_TX_RATE,
 	GMTP_SOCKOPT_UCC_TX_RATE,
 	GMTP_SOCKOPT_GET_CUR_MSS,
@@ -45,5 +48,14 @@ inline void enable_gmtp_inter()
 {
 	set_gmtp_inter(true);
 }
+
+
+double time_ms(struct timeval &tv)
+{
+	gettimeofday(&tv, NULL);
+	double t2 = (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000; // convert tv_sec & tv_usec to millisecond
+	return t2;
+}
+
 
 #endif /* GMTP_H_ */

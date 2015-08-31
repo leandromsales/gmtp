@@ -77,7 +77,7 @@ const char *gmtp_state_name(const int state)
 	[GMTP_REQUESTING]	= "REQUESTING",
 	[GMTP_LISTEN]		= "LISTEN",
 	[GMTP_REQUEST_RECV]     = "REQUEST/REGISTER_RECEIVED",
-	[GMTP_ACTIVE_CLOSEREQ]	= "CLOSEREQ",
+	[GMTP_ACTIVE_CLOSEREQ]	= "ACTIVE_CLOSEREQ",
 	[GMTP_PASSIVE_CLOSE]	= "PASSIVE_CLOSE",
 	[GMTP_CLOSING]		= "CLOSING",
 	[GMTP_TIME_WAIT]	= "TIME_WAIT",
@@ -110,12 +110,12 @@ void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh)
 	__u8 flowname[GMTP_FLOWNAME_STR_LEN];
 	flowname_str(flowname, gh->flowname);
 
-	pr_info("%s (%u) src=%pI4@%-5d, dst=%pI4@%-5d, seq=%u, rtt=%u ms, "
-			"transm_r=%u bytes/s, flow=%s\n",
+	pr_info("%s (%u) src=%pI4@%-5d, dst=%pI4@%-5d, ttl=%u, seq=%u, "
+			"rtt=%u ms, tx=%u B/s, P=%s\n",
 				gmtp_packet_name(gh->type), gh->type,
 				&iph->saddr, ntohs(gh->sport),
 				&iph->daddr, ntohs(gh->dport),
-				gh->seq, gh->server_rtt, gh->transm_r,
+				iph->ttl, gh->seq, gh->server_rtt, gh->transm_r,
 				flowname);
 }
 EXPORT_SYMBOL_GPL(print_gmtp_packet);
@@ -132,8 +132,10 @@ void print_route(struct gmtp_hdr_route *route)
 {
 	int i;
 
-	if(route->nrelays <= 0)
+	if(route->nrelays <= 0) {
+		pr_info("Empty route.\n");
 		return;
+	}
 
 	pr_info("Route: \n");
 	for(i = route->nrelays - 1; i >= 0; --i)
@@ -235,7 +237,6 @@ int gmtp_init_sock(struct sock *sk)
 	gp->ack_tx_tstamp	= 0;
 	gp->tx_rtt		= 0;
 	gp->tx_avg_rtt		= 0;
-	gp->relay_rtt		= 0;
 
 	gp->rx_max_rate 	= 0;
 
@@ -252,6 +253,7 @@ int gmtp_init_sock(struct sock *sk)
 
 	gp->tx_first_stamp	= 0UL;
 	gp->tx_last_stamp	= 0UL;
+	gp->tx_media_rate	= UINT_MAX;
 	gp->tx_max_rate		= UINT_MAX; /* Unlimited */
 	gp->tx_ucc_rate		= UINT_MAX; /* Unlimited */
 	gp->tx_byte_budget	= INT_MIN;
@@ -515,7 +517,6 @@ int gmtp_ioctl(struct sock *sk, int cmd, unsigned long arg)
 {
 	int rc = -ENOTCONN;
 
-	gmtp_print_function();
 	lock_sock(sk);
 
 	if (sk->sk_state == GMTP_LISTEN)

@@ -197,11 +197,7 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 
 	/*** FIXME Check sequence numbers  ***/
 
-	/** First reply received and i have a relay */
-	if(gp->relay_rtt == 0 && gh->type == GMTP_PKT_REQUESTNOTIFY)
-		gp->relay_rtt = jiffies_to_msecs(jiffies) - gp->req_stamp;
-
-	gp->rx_rtt = (u32) gh->server_rtt + gp->relay_rtt;
+	gp->rx_rtt = (u32) gh->server_rtt;
 	gmtp_pr_debug("RTT: %u ms", gp->rx_rtt);
 
 	if(gh->type == GMTP_PKT_REQUESTNOTIFY) {
@@ -396,18 +392,17 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 	switch (gh->type) {
 	case GMTP_PKT_DATAACK:
 	case GMTP_PKT_DATA:
-		if(gmtp_role_client(sk))
-			gp->rx_rtt = (u32) gh->server_rtt + gp->relay_rtt;
 		gmtp_enqueue_skb(sk, skb);
 		return 0;
 	case GMTP_PKT_ACK:
 		if(gp->role == GMTP_ROLE_SERVER) {
 			struct gmtp_hdr_ack *gack = gmtp_hdr_ack(skb);
+			print_gmtp_packet(ip_hdr(skb), gh);
 			gp->tx_rtt = jiffies_to_msecs(jiffies) - gack->orig_tstamp;
 			gp->tx_avg_rtt = rtt_ewma(gp->tx_avg_rtt, gp->tx_rtt,
 					GMTP_RTT_WEIGHT);
-
-			gp->tx_ucc_rate = min(gp->tx_ucc_rate, gh->transm_r);
+			gp->tx_ucc_rate = min((__be32 )gp->tx_ucc_rate,
+					gh->transm_r);
 		}
 		goto discard;
 	case GMTP_PKT_RESET:
@@ -440,10 +435,13 @@ int gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 	if(gmtp_check_seqno(sk, skb))
 		goto discard;
 
+	gp->gsr = gh->seq;
+	gp->rx_rtt = (u32) gh->server_rtt;
+	if(gh->type == GMTP_PKT_DATA)
+		gp->rx_last_orig_tstamp = gmtp_hdr_data(skb)->tstamp;
+
 	if(gp->role == GMTP_ROLE_REPORTER)
 		gmtp_deliver_input_to_mcc(sk, skb);
-
-	gp->gsr = gh->seq;
 
 	return __gmtp_rcv_established(sk, skb, gh, len);
 discard:
@@ -452,6 +450,7 @@ discard:
 }
 EXPORT_SYMBOL_GPL(gmtp_rcv_established);
 
+/* The server does nothing. Local GMTP-Inter handles with it */
 int gmtp_rcv_route_notify(struct sock *sk, struct sk_buff *skb,
 			 const struct gmtp_hdr *gh)
 {
@@ -459,6 +458,7 @@ int gmtp_rcv_route_notify(struct sock *sk, struct sk_buff *skb,
 
 	gmtp_print_function();
 
+	print_gmtp_packet(ip_hdr(skb), gh);
 	print_route(route);
 
 	if(route->nrelays <= 0)
@@ -507,8 +507,9 @@ static int gmtp_rcv_request_rcv_state_process(struct sock *sk,
 		sk->sk_state_change(sk);
 		sk_wake_async(sk, SOCK_WAKE_IO, POLL_OUT);
 
-		if(gh->type == GMTP_PKT_ROUTE_NOTIFY)
-			gmtp_rcv_route_notify(sk, skb, gh);
+		/* The server does nothing. Local GMTP-Inter handles with it */
+		/*if(gh->type == GMTP_PKT_ROUTE_NOTIFY)
+			gmtp_rcv_route_notify(sk, skb, gh);*/
 
 		if (gh->type == GMTP_PKT_DATAACK)
 		{
@@ -531,6 +532,8 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 	gmtp_print_function();
 	gmtp_print_debug("State: %s | Packet: %s", gmtp_state_name(sk->sk_state),
 			gmtp_packet_name(gh->type));
+
+	print_gmtp_packet(ip_hdr(skb), gh);
 
 	/*
 	 *  Step 3: Process LISTEN state
@@ -559,10 +562,14 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 		if(gh->type == GMTP_PKT_RESET)
 			goto discard;
 
+		/* Avoid GMTP-Inter problems */
+		if(gmtp_info->relay_enabled)
+			goto discard;
+
 		/* Caller (gmtp_v4_do_rcv) will send Reset */
 		gcb->reset_code = GMTP_RESET_CODE_NO_CONNECTION;
 		return 1;
-	} else if (sk->sk_state == GMTP_CLOSED) {
+	} else if (sk->sk_state == GMTP_CLOSED || sk->sk_state == GMTP_ACTIVE_CLOSEREQ) {
 		gcb->reset_code = GMTP_RESET_CODE_NO_CONNECTION;
 		return 1;
 	}

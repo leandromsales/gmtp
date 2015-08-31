@@ -27,9 +27,12 @@
 #include "mcc-inter.h"
 #include "ucc.h"
 
-static struct nf_hook_ops nfho_in;
-static struct nf_hook_ops nfho_out;
+static struct nf_hook_ops nfho_pre_routing;
+static struct nf_hook_ops nfho_local_in;
+static struct nf_hook_ops nfho_local_out;
+static struct nf_hook_ops nfho_post_routing;
 struct gmtp_inter gmtp_inter;
+
 /* FIXME This fails at NS-3-DCE */
 unsigned char *gmtp_build_md5(unsigned char *buf)
 {
@@ -97,21 +100,48 @@ __be32 gmtp_inter_device_ip(struct net_device *dev)
 	struct in_device *in_dev;
 	struct in_ifaddr *if_info;
 
-	gmtp_pr_func();
-
 	if(dev == NULL)
 		return 0;
 
 	in_dev = (struct in_device *)dev->ip_ptr;
 	if_info = in_dev->ifa_list;
 	for(; if_info; if_info = if_info->ifa_next) {
-		pr_info("if_info->ifa_address=%pI4\n", &if_info->ifa_address);
 		/* just return the first entry for now */
 		return if_info->ifa_address;
 	}
 
 	return 0;
 }
+
+bool gmtp_inter_ip_local(__be32 ip)
+{
+	struct socket *sock = NULL;
+	struct net_device *dev = NULL;
+	struct net *net;
+
+	int i, length = 0;
+	char mac_address[6];
+
+	char buffer[50];
+	u8 *str[30];
+
+	bool ret = false;
+
+	sock_create(AF_INET, SOCK_STREAM, 0, &sock);
+	net = sock_net(sock->sk);
+
+	for(i = 2; (dev = dev_get_by_index_rcu(net, i)) != NULL; ++i) {
+		__be32 dev_ip = gmtp_inter_device_ip(dev);
+		if(ip == dev_ip) {
+			ret = true;
+			break;
+		}
+	}
+
+	sock_release(sock);
+	return ret;
+}
+
 
 __be32 get_mcst_v4_addr(void)
 {
@@ -164,14 +194,14 @@ __be32 get_mcst_v4_addr(void)
 }
 EXPORT_SYMBOL_GPL(get_mcst_v4_addr);
 
-void gmtp_buffer_add(struct gmtp_flow_info *info, struct sk_buff *newsk)
+void gmtp_buffer_add(struct gmtp_inter_entry *info, struct sk_buff *newsk)
 {
 	skb_queue_tail(info->buffer, skb_copy(newsk, GFP_ATOMIC));
 	info->buffer_len += newsk->len + ETH_HLEN;
 	gmtp_inter.buffer_len += newsk->len + ETH_HLEN;
 }
 
-struct sk_buff *gmtp_buffer_dequeue(struct gmtp_flow_info *info)
+struct sk_buff *gmtp_buffer_dequeue(struct gmtp_inter_entry *info)
 {
 	struct sk_buff *skb = skb_dequeue(info->buffer);
 	if(skb != NULL) {
@@ -181,46 +211,65 @@ struct sk_buff *gmtp_buffer_dequeue(struct gmtp_flow_info *info)
 	return skb;
 }
 
-unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
+unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 		const struct net_device *in, const struct net_device *out,
 		int (*okfn)(struct sk_buff *))
 {
 	int ret = NF_ACCEPT;
 	struct iphdr *iph = ip_hdr(skb);
 
-	if((gmtp_info->relay_enabled == 0) || (in == NULL))
+	if(gmtp_info->relay_enabled == 0)
 		return ret;
 
 	if(iph->protocol == IPPROTO_GMTP) {
 
+		struct gmtp_inter_entry *entry;
 		struct gmtp_hdr *gh = gmtp_hdr(skb);
 
-		switch(gh->type) {
-		case GMTP_PKT_REQUEST:
+		if(gh->type == GMTP_PKT_REQUEST) {
+			if(gmtp_inter_ip_local(iph->saddr)
+					&& iph->saddr != iph->daddr)
+				return NF_ACCEPT;
+
 			if(iph->ttl == 1) {
 				print_packet(skb, true);
 				print_gmtp_packet(iph, gh);
-				ret = gmtp_inter_request_rcv(skb);
+				return gmtp_inter_request_rcv(skb);
 			}
-			break;
+		} else if(gh->type == GMTP_PKT_REGISTER) {
+			print_packet(skb, true);
+			print_gmtp_packet(iph, gh);
+			if(gmtp_inter_ip_local(iph->daddr))
+				return gmtp_inter_register_rcv(skb);
+		}
+
+		entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
+		if(entry == NULL)
+			return NF_ACCEPT;
+
+		switch(gh->type) {
 		case GMTP_PKT_REGISTER_REPLY:
-			ret = gmtp_inter_register_reply_rcv(skb);
+			ret = gmtp_inter_register_reply_rcv(skb, entry,
+					GMTP_INTER_BACKWARD);
 			break;
 		case GMTP_PKT_ACK:
-			ret = gmtp_inter_ack_rcv(skb);
+			ret = gmtp_inter_ack_rcv(skb, entry);
+			break;
+		case GMTP_PKT_ROUTE_NOTIFY:
+			ret = gmtp_inter_route_rcv(skb, entry);
 			break;
 		case GMTP_PKT_DATA:
-			ret = gmtp_inter_data_rcv(skb);
+			ret = gmtp_inter_data_rcv(skb, entry);
 			break;
 		case GMTP_PKT_FEEDBACK:
-			ret = gmtp_inter_feedback_rcv(skb);
+			ret = gmtp_inter_feedback_rcv(skb, entry);
 			break;
 		case GMTP_PKT_ELECT_RESPONSE:
-			ret = gmtp_inter_elect_resp_rcv(skb);
+			ret = gmtp_inter_elect_resp_rcv(skb, entry);
 			break;
 		case GMTP_PKT_RESET:
 		case GMTP_PKT_CLOSE:
-			ret = gmtp_inter_close_rcv(skb);
+			ret = gmtp_inter_close_rcv(skb, entry, true);
 			break;
 		}
 
@@ -229,36 +278,143 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
 	return ret;
 }
 
-unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
+
+unsigned int hook_func_local_in(unsigned int hooknum, struct sk_buff *skb,
 		const struct net_device *in, const struct net_device *out,
 		int (*okfn)(struct sk_buff *))
 {
 	int ret = NF_ACCEPT;
 	struct iphdr *iph = ip_hdr(skb);
 
-
-	if((gmtp_info->relay_enabled == 0) || (out == NULL))
+	if(gmtp_info->relay_enabled == 0)
 		return ret;
 
 	if(iph->protocol == IPPROTO_GMTP) {
 
 		struct gmtp_hdr *gh = gmtp_hdr(skb);
+		struct gmtp_inter_entry *entry = gmtp_inter_lookup_media(
+				gmtp_inter.hashtable, gh->flowname);
+		if(entry == NULL)
+			return NF_ACCEPT;
+
+		if(!gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname))
+			return NF_ACCEPT;
 
 		switch(gh->type) {
 		case GMTP_PKT_REGISTER:
-			ret = gmtp_inter_register_out(skb);
-			break;
-		case GMTP_PKT_DATA:
-			ret = gmtp_inter_data_out(skb);
-			break;
-		case GMTP_PKT_RESET:
-		case GMTP_PKT_CLOSE:
-			ret = gmtp_inter_close_out(skb);
+			/* Here. We need to trick the server,
+			to avoid data packets destined to 'lo' */
+			ret = gmtp_inter_register_local_in(skb, entry);
 			break;
 		}
 	}
 
 	return ret;
+}
+
+unsigned int hook_func_local_out(unsigned int hooknum, struct sk_buff *skb,
+		const struct net_device *in, const struct net_device *out,
+		int (*okfn)(struct sk_buff *))
+{
+	int ret = NF_ACCEPT;
+	struct iphdr *iph = ip_hdr(skb);
+
+	if(gmtp_info->relay_enabled == 0)
+		return ret;
+
+	if(iph->protocol == IPPROTO_GMTP) {
+
+		struct gmtp_hdr *gh = gmtp_hdr(skb);
+		struct gmtp_inter_entry *entry = gmtp_inter_lookup_media(
+				gmtp_inter.hashtable, gh->flowname);
+		if(entry == NULL)
+			return NF_ACCEPT;
+
+		switch(gh->type) {
+		case GMTP_PKT_RESET:
+		case GMTP_PKT_CLOSE:
+			ret = gmtp_inter_close_rcv(skb, entry, false);
+			break;
+		}
+	}
+
+	return ret;
+}
+
+
+unsigned int hook_func_post_routing(unsigned int hooknum, struct sk_buff *skb,
+		const struct net_device *in, const struct net_device *out,
+		int (*okfn)(struct sk_buff *))
+{
+	int ret = NF_ACCEPT;
+	struct iphdr *iph = ip_hdr(skb);
+
+	if(gmtp_info->relay_enabled == 0)
+		return ret;
+
+	if(iph->protocol == IPPROTO_GMTP) {
+
+		struct gmtp_hdr *gh = gmtp_hdr(skb);
+		struct gmtp_inter_entry *entry = gmtp_inter_lookup_media(gmtp_inter.hashtable,
+				gh->flowname);
+		if(entry == NULL)
+			return NF_ACCEPT;
+
+		switch(gh->type) {
+		case GMTP_PKT_REQUEST:
+			if(gmtp_inter_ip_local(iph->saddr)
+					&& iph->saddr == iph->daddr) {
+				print_packet(skb, true);
+				print_gmtp_packet(iph, gh);
+				/*ret = gmtp_inter_request_rcv(skb);*/
+			}
+			break;
+		case GMTP_PKT_REGISTER:
+			ret = gmtp_inter_register_out(skb, entry);
+			break;
+		case GMTP_PKT_REGISTER_REPLY:
+			/** FIXME Hook LOCAL_OUT Does not works for
+			 * RegisterReply (skb->dev == NULL) */
+			ret = gmtp_inter_register_reply_out(skb, entry);
+			break;
+		case GMTP_PKT_DATA:
+			ret = gmtp_inter_data_out(skb, entry);
+			break;
+		case GMTP_PKT_RESET:
+		case GMTP_PKT_CLOSE:
+			ret = gmtp_inter_close_out(skb, entry);
+			break;
+		}
+	}
+
+	return ret;
+}
+
+static void register_hooks(void)
+{
+	nfho_pre_routing.hook = hook_func_pre_routing;
+	nfho_pre_routing.hooknum = NF_INET_PRE_ROUTING;
+	nfho_pre_routing.pf = PF_INET;
+	nfho_pre_routing.priority = NF_IP_PRI_FIRST;
+	nf_register_hook(&nfho_pre_routing);
+
+	nfho_local_in.hook = hook_func_local_in;
+	nfho_local_in.hooknum = NF_INET_LOCAL_IN;
+	nfho_local_in.pf = PF_INET;
+	nfho_local_in.priority = NF_IP_PRI_FIRST;
+	nf_register_hook(&nfho_local_in);
+
+	nfho_local_out.hook = hook_func_local_out;
+	nfho_local_out.hooknum = NF_INET_LOCAL_OUT;
+	nfho_local_out.pf = PF_INET;
+	nfho_local_out.priority = NF_IP_PRI_FIRST;
+	nf_register_hook(&nfho_local_out);
+
+	nfho_post_routing.hook = hook_func_post_routing;
+	nfho_post_routing.hooknum = NF_INET_POST_ROUTING;
+	nfho_post_routing.pf = PF_INET;
+	nfho_post_routing.priority = NF_IP_PRI_FIRST;
+	nf_register_hook(&nfho_post_routing);
 }
 
 int init_module()
@@ -287,7 +443,7 @@ int init_module()
 	gmtp_inter.total_rx = 0;
 	gmtp_inter.ucc_bytes = 0;
 	gmtp_inter.ucc_rx_tstamp = 0;
-	gmtp_inter.rx_rate_wnd = 1000;
+	gmtp_inter.rx_rate_wnd = 100;
 	memset(&gmtp_inter.mcst, 0, 4 * sizeof(unsigned char));
 
 	rid = gmtp_inter_build_relay_id();
@@ -316,20 +472,17 @@ int init_module()
 	setup_timer(&gmtp_inter.gmtp_ucc_timer, gmtp_ucc_callback, 0);
 	mod_timer(&gmtp_inter.gmtp_ucc_timer, jiffies + HZ);
 
-	nfho_in.hook = hook_func_in;
-	nfho_in.hooknum = NF_INET_PRE_ROUTING;
-	nfho_in.pf = PF_INET;
-	nfho_in.priority = NF_IP_PRI_FIRST;
-	nf_register_hook(&nfho_in);
-
-	nfho_out.hook = hook_func_out;
-	nfho_out.hooknum = NF_INET_POST_ROUTING;
-	nfho_out.pf = PF_INET;
-	nfho_out.priority = NF_IP_PRI_FIRST;
-	nf_register_hook(&nfho_out);
+	register_hooks();
 
 out:
 	return ret;
+}
+
+static void unregister_hooks(void)
+{
+	nf_unregister_hook(&nfho_pre_routing);
+	nf_unregister_hook(&nfho_local_in);
+	nf_unregister_hook(&nfho_post_routing);
 }
 
 void cleanup_module()
@@ -340,8 +493,7 @@ void cleanup_module()
 	gmtp_info->relay_enabled = 0;
 	kfree_gmtp_inter_hashtable(gmtp_inter.hashtable);
 
-	nf_unregister_hook(&nfho_in);
-	nf_unregister_hook(&nfho_out);
+	unregister_hooks();
 	del_timer(&gmtp_inter.gmtp_ucc_timer);
 }
 

@@ -84,7 +84,7 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 
 		memcpy(gh->flowname, gp->flowname, GMTP_FLOWNAME_LEN);
 
-		gh->transm_r = (__be32) gp->tx_max_rate;
+		gh->transm_r = (__be32) gp->tx_media_rate;
 		if (gcb->type == GMTP_PKT_RESET)
 			gmtp_hdr_reset(skb)->reset_code = gcb->reset_code;
 
@@ -95,18 +95,36 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 		}
 		gh->seq = gcb->seq;
 
-		if(gcb->type == GMTP_PKT_DATA) {
+		/* Specific headers */
+		switch(gcb->type) {
+		case GMTP_PKT_DATA: {
 			struct gmtp_hdr_data *gh_data = gmtp_hdr_data(skb);
 			gh_data->tstamp = jiffies_to_msecs(jiffies);
+			/*pr_info("Server RTT: %u ms\n", gh->server_rtt);*/
+			break;
 		}
-		if(gcb->type == GMTP_PKT_FEEDBACK) {
+		case GMTP_PKT_FEEDBACK: {
 			struct gmtp_hdr_feedback *fh = gmtp_hdr_feedback(skb);
+			gh->seq = gcb->seq = gp->gsr;
 			gh->transm_r = gp->rx_max_rate;
-			fh->pkt_tstamp = gcb->server_tstamp;
+			fh->orig_tstamp = gcb->orig_tstamp;
 			fh->nclients = gp->myself->nclients;
-
-			pr_info("[Feedback] pkt_tstamp=%u, nclients=%u, seq: %u\n",
-					fh->pkt_tstamp, fh->nclients, gh->seq);
+			break;
+		}
+		case GMTP_PKT_ELECT_REQUEST: {
+			struct gmtp_hdr_elect_request *gh_ereq;
+			gh_ereq = gmtp_hdr_elect_request(skb);
+			memcpy(gh_ereq->relay_id, gp->relay_id,
+			GMTP_RELAY_ID_LEN);
+			gh_ereq->max_nclients = 0;
+			break;
+		}
+		case GMTP_PKT_ELECT_RESPONSE: {
+			struct gmtp_hdr_elect_response *gh_eresp;
+			gh_eresp = gmtp_hdr_elect_response(skb);
+			gh_eresp->elect_code = GMTP_SKB_CB(skb)->elect_code;
+			break;
+		}
 		}
 
 		err = icsk->icsk_af_ops->queue_xmit(sk, skb, &inet->cork.fl);
@@ -203,7 +221,7 @@ struct sk_buff *gmtp_make_register_reply(struct sock *sk, struct dst_entry *dst,
 	gh->type	= GMTP_PKT_REGISTER_REPLY;
 	gh->seq 	= greq->gss;
 	gh->server_rtt	= GMTP_DEFAULT_RTT;
-	gh->transm_r	= (__be32) gmtp_sk(sk)->tx_max_rate;
+	gh->transm_r	= (__be32) gmtp_sk(sk)->tx_media_rate;
 	gh->hdrlen	= gmtp_header_size;
 	memcpy(gh->flowname, greq->flowname, GMTP_FLOWNAME_LEN);
 
@@ -375,7 +393,6 @@ EXPORT_SYMBOL_GPL(gmtp_send_ack);
 void gmtp_send_elect_request(struct sock *sk, unsigned long interval)
 {
 	struct sk_buff *skb = alloc_skb(sk->sk_prot->max_header, GFP_ATOMIC);
-	struct gmtp_hdr_elect_request *gh_ereq;
 	struct gmtp_sock *gp = gmtp_sk(sk);
 
 	gmtp_pr_func();
@@ -390,10 +407,6 @@ void gmtp_send_elect_request(struct sock *sk, unsigned long interval)
 	skb_reserve(skb, sk->sk_prot->max_header);
 	GMTP_SKB_CB(skb)->type = GMTP_PKT_ELECT_REQUEST;
 
-	gh_ereq = gmtp_hdr_elect_request(skb);
-	memcpy(gh_ereq->relay_id, gp->relay_id, GMTP_RELAY_ID_LEN);
-	gh_ereq->max_nclients = 0;
-
 	gmtp_transmit_skb(sk, skb);
 
 	if(interval > 0)
@@ -404,7 +417,6 @@ EXPORT_SYMBOL_GPL(gmtp_send_elect_request);
 void gmtp_send_elect_response(struct sock *sk, __u8 code)
 {
 	struct sk_buff *skb = alloc_skb(sk->sk_prot->max_header, GFP_ATOMIC);
-	struct gmtp_hdr_elect_response *gh_eresp;
 	struct gmtp_sock *gp = gmtp_sk(sk);
 
 	gmtp_pr_func();
@@ -416,9 +428,6 @@ void gmtp_send_elect_response(struct sock *sk, __u8 code)
 	skb_reserve(skb, sk->sk_prot->max_header);
 	GMTP_SKB_CB(skb)->type = GMTP_PKT_ELECT_RESPONSE;
 	GMTP_SKB_CB(skb)->elect_code = code;
-
-	gh_eresp = gmtp_hdr_elect_response(skb);
-	gh_eresp->elect_code = GMTP_SKB_CB(skb)->elect_code;
 
 	if(code == GMTP_ELECT_AUTO) {
 
@@ -510,14 +519,14 @@ struct sk_buff *gmtp_ctl_make_ack(struct sock *sk, struct sk_buff *rcv_skb)
 		gack = gmtp_hdr_ack(skb);
 		gack->orig_tstamp = ghd->tstamp;
 	} else {
-		pr_info("Responding a NON-DATA with a ACK");
+		pr_info("Responding a NON-DATA with a ACK\n");
 	}
 
 	return skb;
 }
 EXPORT_SYMBOL_GPL(gmtp_ctl_make_ack);
 
-void gmtp_send_feedback(struct sock *sk, __be32 server_tstamp)
+void gmtp_send_feedback(struct sock *sk)
 {
 	if(sk->sk_state != GMTP_CLOSED) {
 
@@ -527,7 +536,7 @@ void gmtp_send_feedback(struct sock *sk, __be32 server_tstamp)
 		/* Reserve space for headers */
 		skb_reserve(skb, sk->sk_prot->max_header);
 		GMTP_SKB_CB(skb)->type = GMTP_PKT_FEEDBACK;
-		GMTP_SKB_CB(skb)->server_tstamp = server_tstamp;
+		GMTP_SKB_CB(skb)->orig_tstamp = gmtp_sk(sk)->rx_last_orig_tstamp;
 
 		gmtp_transmit_skb(sk, skb);
 	}
@@ -756,6 +765,7 @@ wait:
 		gp->tx_byte_budget = INT_MIN;
 
 	if(delay2 > 0) {
+		pr_info("Delay: %ld ms\n", delay2);
 		setup_timer(&gp->xmit_timer, gmtp_write_xmit_timer,
 				(unsigned long ) pkt_info);
 		mod_timer(&gp->xmit_timer, jiffies + delay2);

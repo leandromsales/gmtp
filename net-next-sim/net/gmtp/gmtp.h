@@ -85,7 +85,7 @@
  * @weight: Weight to be used as damping factor, in units of 1/1000
  * 		factor 1/1000 allows better weight granularity
  */
-static inline u32 rtt_ewma(const u32 avg, const u32 newval, const u8 weight)
+static inline u32 rtt_ewma(const u32 avg, const u32 newval, const u32 weight)
 {
 	return avg ? (weight * avg + (1000 - weight) * newval) / 1000 : newval;
 }
@@ -177,7 +177,7 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 void gmtp_send_ack(struct sock *sk);
 void gmtp_send_elect_request(struct sock *sk, unsigned long interval);
 void gmtp_send_elect_response(struct sock *sk, __u8 code);
-void gmtp_send_feedback(struct sock *sk, __be32 server_tstamp);
+void gmtp_send_feedback(struct sock *sk);
 void gmtp_send_close(struct sock *sk, const int active);
 int gmtp_send_reset(struct sock *sk, enum gmtp_reset_codes code);
 void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb);
@@ -244,8 +244,7 @@ static inline void kfree_gmtp_info(struct gmtp_info *gmtp_info)
  * @reset_code: one of %gmtp_reset_codes
  * @reset_data: Data1..3 fields (depend on @gmtpd_reset_code)
  * @seq: sequence number
- * @server_tstamp: time stamp of last received packet (at server)
- * @rx_tstamp: time stamp of last received packet (at reception)
+ * @orig_tstamp: time stamp of last data packet (stamped at origin)
  *
  * This is used for transmission as well as for reception.
  */
@@ -256,7 +255,7 @@ struct gmtp_skb_cb {
 	__u8 elect_code:2;
 	__u8 retransmits;
 	__be32 seq;
-	__be32 server_tstamp;
+	__be32 orig_tstamp;
 };
 
 #define GMTP_SKB_CB(__skb) ((struct gmtp_skb_cb *)&((__skb)->cb[0]))
@@ -300,101 +299,6 @@ static inline int gmtp_data_packet(const struct sk_buff *skb)
 
 	return type == GMTP_PKT_DATA	 ||
 	       type == GMTP_PKT_DATAACK;
-}
-
-static inline struct gmtp_client *gmtp_create_client(__be32 addr, __be16 port,
-		__u8 max_nclients)
-{
-	struct gmtp_client *new = kmalloc(sizeof(struct gmtp_client),
-	GFP_ATOMIC);
-
-	if(new != NULL) {
-		new->addr = addr;
-		new->port = port;
-		new->max_nclients = max_nclients;
-		new->nclients = 0;
-		new->ack_rx_tstamp = 0;
-
-		new->clients = 0;
-		new->reporter = 0;
-		new->rsock = 0;
-		new->mysock = 0;
-	}
-	return new;
-}
-
-/**
- * Create and add a client in the list of clients
- */
-static inline struct gmtp_client *gmtp_list_add_client(unsigned int id,
-		__be32 addr, __be16 port, __u8 max_nclients, struct list_head *head)
-{
-	struct gmtp_client *newc = gmtp_create_client(addr, port, max_nclients);
-
-	if(newc == NULL) {
-		gmtp_pr_error("Error while creating new gmtp_client...");
-		return NULL;
-	}
-
-	newc->id = id;
-	gmtp_pr_info("New client (%u): ADDR=%pI4@%-5d",
-			newc->id, &addr, ntohs(port));
-
-	INIT_LIST_HEAD(&newc->list);
-	list_add_tail(&newc->list, head);
-	return newc;
-}
-
-static inline struct gmtp_client* gmtp_get_first_client(struct list_head *head)
-{
-	struct gmtp_client *client;
-	list_for_each_entry(client, head, list)
-	{
-		return client;
-	}
-	return NULL;
-}
-
-static inline struct gmtp_client* gmtp_get_client(struct list_head *head,
-		__be32 addr, __be16 port)
-{
-	struct gmtp_client *client;
-	list_for_each_entry(client, head, list)
-	{
-		if(client->addr == addr && client->port == port)
-			return client;
-	}
-	return NULL;
-}
-
-static inline struct gmtp_client* gmtp_get_client_by_id(struct list_head *head,
-		unsigned int id)
-{
-	struct gmtp_client *client;
-	list_for_each_entry(client, head, list)
-	{
-		if(client->id == id)
-			return client;
-	}
-	return NULL;
-}
-
-static inline int gmtp_delete_clients(struct list_head *list, __be32 addr, __be16 port)
-{
-	struct gmtp_client *client, *temp;
-	int ret = 0;
-
-	list_for_each_entry_safe(client, temp, list, list)
-	{
-		if(addr == client->addr && port == client->port) {
-			pr_info("Deleting client: %pI4@%-5d\n", &client->addr,
-					ntohs(client->port));
-			list_del(&client->list);
-			kfree(client);
-			++ret;
-		}
-	}
-	return ret;
 }
 
 #endif /* GMTP_H_ */

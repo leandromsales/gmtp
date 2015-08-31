@@ -9,13 +9,13 @@
 // Network topology
 // //
 //  c0					  s
-//     \ 10 Mb/s, 1ms			 /
+//     \ 				 /
 //      \          10Mb/s, 1ms		/
 //       r1 --------------------------r0
 //      /
-//     / 10 Mb/s, 1ms
+//     /
 //   c1
-//   ...
+//   ..
 //   cn
 // //
 using namespace ns3;
@@ -32,12 +32,12 @@ int main(int argc, char *argv[])
 	cout << "Creating nodes..." << endl;
 	Ptr<Node> server = CreateObject<Node>();
 
+	NodeContainer relays;
+	relays.Create (2);
+
 	cout << "Creating " << nclients << " clients..." << endl;
 	NodeContainer clients;
 	clients.Create (nclients);
-
-	NodeContainer relays;
-	relays.Create (2);
 
 	NodeContainer net1(relays.Get(0), server);
 	NodeContainer net2(relays.Get(1), clients);
@@ -74,18 +74,16 @@ int main(int argc, char *argv[])
 	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 	LinuxStackHelper::PopulateRoutingTables ();
 
-//	RunGtmpInter(relays.Get(0), Seconds(2.0), "off");
+	cout << "Running simulation..." << endl;
+
 	RunIp(relays, Seconds(2.1), "route");
 
 	RunIp(server, Seconds(2.2), "addr list sim0");
 	RunIp(clients, Seconds(2.2), "addr list sim0");
-
-	RunGtmpInter(server, Seconds(2.5), "off");
-	RunGtmpInter(clients, Seconds(2.5), "off");
+	RunGtmpInter(clients, Seconds(2.3), "off");
 
 	RunApp("gmtp-server", server, Seconds(4.0), 1 << 31);
-
-	RunApp("gmtp-client", clients, Seconds(5.0), "10.1.1.2", 1 << 16);
+	RunAppMulti("gmtp-client", clients, 5.0, "10.1.1.2", 1 << 31, 30);
 
 	csma.EnablePcapAll("dce-gmtp-dumbbell");
 

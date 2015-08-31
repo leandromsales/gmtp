@@ -15,38 +15,20 @@
  *
  * @flowname: Name of dataflow
  * @server_addr: IP address of media server
- * @relay: list of relays
+ * @relays: list of relays connected to this relay
+ * @nrelays: number of relays connected to this relay
  * @media_port: port of media at server
  * @channel_addr: IP address of media multicast channel
  * @channel_port: Port of media multicast channel
  * @state: state of media transmission
- * @info: control information for media transmission
  *
- * @next: pointer to next gmtp_inter_entry
- */
-struct gmtp_inter_entry {
-	__u8 flowname[GMTP_FLOWNAME_LEN];
-	__be32 server_addr;
-	unsigned char server_mac_addr[6];
-	__be32 *relay;
-	__be16 media_port;
-	__be32 channel_addr;
-	__be16 channel_port;
-	__u8 state :3;
-
-	struct timer_list ack_timer_entry;
-
-	struct gmtp_flow_info *info;
-	struct gmtp_inter_entry *next;
-};
-
-/**
- * struct gmtp_flow_info - Control information for media transmission
+ *  Control information for media transmission:
  *
  * @seq: sequence number of last received packet
  * @total_bytes: amount of received bytes
  * @last_rx_tstamp: time stamp of last received data packet (milliseconds)
  * @last_data_tstamp: time stamp stored in last received data packet.
+ * @transm_r: default tx rate of server
  * @rcv_tx_rate: tx rate received from relays (or server) in path s->r
  *
  * @nfeedbacks: number of received feedbacks at last window
@@ -59,8 +41,8 @@ struct gmtp_inter_entry {
  * @RTT: RTT from server to client (available in data packets)
  * @mcc_timer: Timer to control mcc tx reduction
  *
- * @clients: list of reporters connected to relay
- * @nclients: number of clients connected to relay
+ * @clients: list of reporters connected to this relay
+ * @nclients: number of clients connected to this relay
  * @cur_reporter: current reporter (to connect new clients)
  *
  * @buffer: buffer of GMTP-Data packets
@@ -68,40 +50,63 @@ struct gmtp_inter_entry {
  * @buffer_len: number of packets in GMTP-Data buffer]
  * @buffer_size: max number of packets in buffer
  * @buffer_len: buffer length in bytes
+ *
+ * @next: pointer to next gmtp_inter_entry
  */
-struct gmtp_flow_info {
-	__be32			my_addr;
-	__be16			my_port;
+struct gmtp_inter_entry {
+	__u8 flowname[GMTP_FLOWNAME_LEN];
+	__be32 server_addr;
+	struct gmtp_client *relays;
+	unsigned int nrelays;
+	__be16 media_port;
+	__be32 channel_addr;
+	__be16 channel_port;
+	__u8 state :3;
 
-	unsigned int		seq;
-	unsigned int 		total_bytes;
-	unsigned long  		last_rx_tstamp; /* milliseconds */
-	__be32 			last_data_tstamp;
-	__be32 			rcv_tx_rate;
+	struct timer_list ack_timer_entry;
+
+	unsigned char server_mac_addr[6];
+	unsigned char request_mac_addr[6];
+
+	/* Information of transmission state */
+	__be32 my_addr;
+	__be16 my_port;
+
+	unsigned int seq;
+	unsigned int total_bytes;
+	unsigned long last_rx_tstamp; /* milliseconds */
+	__be32 last_data_tstamp;
+	__be32 transm_r;
+	__be32 rcv_tx_rate;
 
 	/* GMTP-MCC */
-	unsigned int		nfeedbacks;
-	unsigned int		sum_feedbacks;
-	unsigned int        	recent_bytes;
-	unsigned long  		recent_rx_tstamp;
-	unsigned int 		current_rx;
-	unsigned int 		required_tx;
-	unsigned int 		data_pkt_out;
-	unsigned int 		flow_rtt;
-	unsigned int 		flow_avg_rtt;
-	struct timer_list 	mcc_timer;
+	unsigned int nfeedbacks;
+	unsigned int sum_feedbacks;
+	unsigned int recent_bytes;
+	unsigned long recent_rx_tstamp;
+	unsigned int current_rx;
+	unsigned int required_tx;
+	unsigned int data_pkt_out;
+	unsigned int server_rtt;
+	unsigned int clients_rtt;
+	struct timer_list mcc_timer;
 
-	struct gmtp_client	*clients;
-	unsigned int 		nclients;
-	struct gmtp_client 	*cur_reporter;
+	struct gmtp_client *clients;
+	unsigned int nclients;
+	struct gmtp_client *cur_reporter;
 
-	struct sk_buff_head 	*buffer;
-	unsigned int 		buffer_min;
-	unsigned int 		buffer_max;  /* buffer_min * 3 */
-	unsigned int 		buffer_len; /* in bytes */
+	struct sk_buff_head *buffer;
+	unsigned int buffer_min;
+	unsigned int buffer_max; /* buffer_min * 3 */
+	unsigned int buffer_len; /* in bytes */
+
+	struct net_device *dev_out;
+	bool route_pending;
+
+	struct gmtp_inter_entry *next;
 };
 
-static inline void gmtp_set_buffer_limits(struct gmtp_flow_info *info,
+static inline void gmtp_set_buffer_limits(struct gmtp_inter_entry *info,
 		unsigned int buffer_min)
 {
 	info->buffer_min = buffer_min;
@@ -112,7 +117,7 @@ static inline void gmtp_set_buffer_limits(struct gmtp_flow_info *info,
  * State of a flow
  */
 enum {
-	GMTP_INTER_WAITING_REGISTER_REPLY,
+	GMTP_INTER_WAITING_REGISTER_REPLY=0,
 	GMTP_INTER_REGISTER_REPLY_RECEIVED,
 	GMTP_INTER_TRANSMITTING,
 	GMTP_INTER_CLOSE_RECEIVED,
