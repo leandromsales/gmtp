@@ -455,7 +455,7 @@ int gmtp_inter_route_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	if(route->nrelays > 0)
 		gmtp_add_server_entry(server_hashtable, gh->flowname, route);
 
-	pr_info("ROUTE_rcv: entry->route_pending = %d\n", entry->route_pending);
+	pr_info("ROUTE_RCV: entry->route_pending = %d\n", entry->route_pending);
 	if(entry->route_pending) {
 		entry->route_pending = false;
 		return NF_ACCEPT;

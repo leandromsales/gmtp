@@ -395,6 +395,10 @@ def build_dce_examples(module, bld):
     module.add_example(needed = ['core', 'network', 'dce', 'point-to-point', 'applications', 'internet', 'csma'],
                        target='bin/dce-gmtp-wan',
                        source=['example/dce-gmtp-wan.cc'])
+                       
+    module.add_example(needed = ['core', 'network', 'dce', 'point-to-point', 'applications', 'internet', 'csma'],
+                       target='bin/dce-gmtp-internet',
+                       source=['example/dce-gmtp-internet.cc'])
 
     if bld.env['LIB_ASPECT_PATH']:
         module.add_example(needed = ['core', 'network', 'internet', 'dce', 'point-to-point', 'csma', 'applications'],
