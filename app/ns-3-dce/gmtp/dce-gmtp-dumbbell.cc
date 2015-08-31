@@ -9,13 +9,13 @@
 // Network topology
 // //
 //  c0					  s
-//     \ 10 Mb/s, 1ms			 /
+//     \ 				 /
 //      \          10Mb/s, 1ms		/
 //       r1 --------------------------r0
 //      /
-//     / 10 Mb/s, 1ms
+//     /
 //   c1
-//   ...
+//   ..
 //   cn
 // //
 using namespace ns3;
@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
 	RunGtmpInter(clients, Seconds(2.3), "off");
 
 	RunApp("gmtp-server", server, Seconds(4.0), 1 << 31);
-	RunAppMulti("gmtp-client", clients, 5.0, "10.1.1.2", 1 << 16, 30);
+	RunAppMulti("gmtp-client", clients, 5.0, "10.1.1.2", 1 << 31, 30);
 
 	csma.EnablePcapAll("dce-gmtp-dumbbell");
 

@@ -9,6 +9,18 @@
 using namespace ns3;
 using namespace std;
 
+// Network topology
+// //
+//  c0			  s		 c0
+//     \ 		 /		 /
+//      \          	/		/
+//       r1 -----------r0-------------r2
+//      /				\
+//     /  				 \
+//   c1					  c1
+//   ..				  	  ..
+//   cn					  cn
+// //
 int main(int argc, char *argv[])
 {
 	int nclients0 = 1;
