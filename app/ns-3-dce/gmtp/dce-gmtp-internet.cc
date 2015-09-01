@@ -18,8 +18,8 @@ using namespace std;
 //     \ 		 /		 /
 //      \          	/		/
 //       r1-----r4-----r3------r5------r2
-//      /				\
-//     /  				 \
+//      /		|		\
+//     /  	       (c)		 \
 //   c1.2				 c2.2
 //    ..				  ..
 //   c1.n				 c2.m
@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 	cout << "Create networks and assign IPv4 Addresses." << endl;
 	Ipv4AddressHelper address;
 
-	vector<Ipv4InterfaceContainer> ivector(7);
+	vector<Ipv4InterfaceContainer> ivector(8);
 
 	address.SetBase("10.0.0.0", "255.0.0.0");
 	ivector[0] = address.Assign(iw);
@@ -107,6 +107,16 @@ int main(int argc, char *argv[])
 	ivector[5] = address.Assign(nc2);
 	address.SetBase("10.3.1.0", "255.255.255.0");
 	ivector[6] = address.Assign(snc2);
+
+	Ptr<Node> client_r3 = CreateObject<Node>();
+	clients.Add(client_r3);
+	NodeContainer subnet_r3(relays.Get(3), client_r3);
+	stack.Install(client_r3);
+	dceManager.Install(client_r3);
+	NetDeviceContainer snr3 = csma.Install(subnet_r3);
+	address.SetBase("10.1.2.0", "255.255.255.0");
+	Ipv4InterfaceContainer ic = address.Assign(snr3);
+	RunApp("gmtp-client", client_r3, Seconds(4.5), 1 << 31);
 
 	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 	LinuxStackHelper::PopulateRoutingTables ();

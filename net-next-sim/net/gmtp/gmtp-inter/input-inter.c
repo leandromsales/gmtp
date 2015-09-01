@@ -160,7 +160,7 @@ int gmtp_inter_register_rcv(struct sk_buff *skb)
 					iph->saddr, ghreply,
 					GMTP_INTER_BACKWARD);
 		}
-	} else {
+	} else /*if(gmtp_inter_ip_local(iph->daddr))*/ {
 		__be32 mcst_addr = get_mcst_v4_addr();
 		int err = gmtp_inter_add_entry(gmtp_inter.hashtable,
 				gh->flowname, iph->daddr,
@@ -179,7 +179,10 @@ int gmtp_inter_register_rcv(struct sk_buff *skb)
 		relay = gmtp_inter_create_relay(skb, entry);
 		if(relay != NULL)
 			ret = NF_ACCEPT;
-	}
+	} /*else {
+		return NF_ACCEPT;
+	}*/
+
 
 out:
 	return ret;
@@ -276,13 +279,13 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 
 	gmtp_print_function();
 
+	print_packet(skb, true);
+	print_gmtp_packet(iph, gh);
+
 	if(entry->state == GMTP_INTER_REGISTER_REPLY_RECEIVED) {
 		pr_info("Discarding duplicated packet...\n");
 		return NF_DROP;
 	}
-
-	print_packet(skb, true);
-	print_gmtp_packet(iph, gh);
 
 	entry->transm_r =  gh->transm_r;
 	entry->rcv_tx_rate = gh->transm_r;
@@ -295,7 +298,7 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 		/* Add relay information in REGISTER-REPLY packet) */
 		gmtp_inter_add_relayid(skb);
 
-		pr_info("UPDATING Tx Rate");
+		pr_info("UPDATING Tx Rate...\n");
 		gmtp_inter.worst_rtt = max(gmtp_inter.worst_rtt,
 				(unsigned int ) gh->server_rtt);
 

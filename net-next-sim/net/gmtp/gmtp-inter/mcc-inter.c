@@ -97,7 +97,6 @@ out:
 	info->sum_feedbacks = 0;
 
 	/* TODO Send here an ack to server? */
-	pr_info("state: %u\n", info->state);
 	if(likely(info->state != GMTP_INTER_CLOSE_RECEIVED
 					&& info->state != GMTP_INTER_CLOSED))
 		mod_timer(&info->mcc_timer,

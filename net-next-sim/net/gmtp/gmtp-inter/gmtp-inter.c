@@ -223,8 +223,9 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 
 	if(iph->protocol == IPPROTO_GMTP) {
 
-		struct gmtp_inter_entry *entry;
 		struct gmtp_hdr *gh = gmtp_hdr(skb);
+		struct gmtp_inter_entry *entry;
+		struct gmtp_client *relay, *client;
 
 		if(gh->type == GMTP_PKT_REQUEST) {
 			if(gmtp_inter_ip_local(iph->saddr)
@@ -243,9 +244,21 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 				return gmtp_inter_register_rcv(skb);
 		}
 
-		entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
+		entry = gmtp_inter_lookup_media(gmtp_inter.hashtable,
+				gh->flowname);
 		if(entry == NULL)
 			return NF_ACCEPT;
+
+		if(gh->type == GMTP_PKT_ROUTE_NOTIFY)
+			return gmtp_inter_route_rcv(skb, entry);
+		else if(gh->type == GMTP_PKT_FEEDBACK)
+			return gmtp_inter_feedback_rcv(skb, entry);
+		else {
+			relay = gmtp_get_client(&entry->relays->list,
+					iph->daddr, gh->dport);
+			if(!gmtp_inter_ip_local(iph->daddr) && (relay == NULL))
+				return NF_ACCEPT;
+		}
 
 		switch(gh->type) {
 		case GMTP_PKT_REGISTER_REPLY:
@@ -255,14 +268,8 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 		case GMTP_PKT_ACK:
 			ret = gmtp_inter_ack_rcv(skb, entry);
 			break;
-		case GMTP_PKT_ROUTE_NOTIFY:
-			ret = gmtp_inter_route_rcv(skb, entry);
-			break;
 		case GMTP_PKT_DATA:
 			ret = gmtp_inter_data_rcv(skb, entry);
-			break;
-		case GMTP_PKT_FEEDBACK:
-			ret = gmtp_inter_feedback_rcv(skb, entry);
 			break;
 		case GMTP_PKT_ELECT_RESPONSE:
 			ret = gmtp_inter_elect_resp_rcv(skb, entry);
@@ -355,10 +362,20 @@ unsigned int hook_func_post_routing(unsigned int hooknum, struct sk_buff *skb,
 	if(iph->protocol == IPPROTO_GMTP) {
 
 		struct gmtp_hdr *gh = gmtp_hdr(skb);
-		struct gmtp_inter_entry *entry = gmtp_inter_lookup_media(gmtp_inter.hashtable,
+		struct gmtp_inter_entry *entry;
+		struct gmtp_client *relay, *client;
+
+		entry = gmtp_inter_lookup_media(gmtp_inter.hashtable,
 				gh->flowname);
 		if(entry == NULL)
 			return NF_ACCEPT;
+
+		if(gh->type == GMTP_PKT_DATA) {
+			relay = gmtp_get_client(&entry->relays->list,
+					iph->daddr, gh->dport);
+			if(!gmtp_inter_ip_local(iph->daddr) && (relay == NULL))
+				return NF_ACCEPT;
+		}
 
 		switch(gh->type) {
 		case GMTP_PKT_REQUEST:
@@ -373,8 +390,6 @@ unsigned int hook_func_post_routing(unsigned int hooknum, struct sk_buff *skb,
 			ret = gmtp_inter_register_out(skb, entry);
 			break;
 		case GMTP_PKT_REGISTER_REPLY:
-			/** FIXME Hook LOCAL_OUT Does not works for
-			 * RegisterReply (skb->dev == NULL) */
 			ret = gmtp_inter_register_reply_out(skb, entry);
 			break;
 		case GMTP_PKT_DATA:
