@@ -9,6 +9,22 @@
 using namespace ns3;
 using namespace std;
 
+// Network topology
+// //
+//			     s
+//			    /
+//			   /
+//  c1.0		  r0		c2.0
+//     \ 		 /		 /
+//      \          	/		/
+//       r1-----r4-----r3------r5------r2
+//      /				\
+//     /  				 \
+//   c1.2				 c2.2
+//    ..				  ..
+//   c1.n				 c2.m
+// //
+
 int main(int argc, char *argv[])
 {
 	int nclients0 = 1;
@@ -20,10 +36,11 @@ int main(int argc, char *argv[])
 	cmd.Parse(argc, argv);
 
 	cout << "Creating nodes..." << endl;
+
 	Ptr<Node> server = CreateObject<Node>();
 
 	NodeContainer relays;
-	relays.Create (5);
+	relays.Create (6);
 
 	NodeContainer clients1;
 	clients1.Create (nclients0);
@@ -34,12 +51,16 @@ int main(int argc, char *argv[])
 	NodeContainer clients(clients1, clients2);
 	NodeContainer all(server, relays, clients);
 
-	NodeContainer subnet1(relays.Get(1), clients1);
-	NodeContainer subnet2(relays.Get(2), clients2);
-	NodeContainer net_clients(relays.Get(3), relays.Get(1), relays.Get(2));
+	NodeContainer internet(relays.Get(3), relays.Get(4), relays.Get(5));
+
+	NodeContainer net_server(relays.Get(3), relays.Get(0));
 	NodeContainer subnet_server(relays.Get(0), server);
-	NodeContainer net_server(relays.Get(4), relays.Get(0));
-	NodeContainer net(relays.Get(3), relays.Get(4));
+
+	NodeContainer net_clients1(relays.Get(1), relays.Get(4));
+	NodeContainer subnet_clients1(relays.Get(1), clients1);
+
+	NodeContainer net_clients2(relays.Get(2), relays.Get(5));
+	NodeContainer subnet_clients2(relays.Get(2), clients2);
 
 	DceManagerHelper dceManager;
 	dceManager.SetTaskManagerAttribute("FiberManagerType",
@@ -53,22 +74,24 @@ int main(int argc, char *argv[])
 
 	CsmaHelper csma;
 	csma.SetChannelAttribute("DataRate", StringValue("10Mbps"));
+//	csma.SetChannelAttribute("DataRate", StringValue("1024Mbps"));
 	csma.SetChannelAttribute("Delay", StringValue("1ms"));
 
-	NetDeviceContainer sn1 = csma.Install(subnet1);
-	NetDeviceContainer sn2 = csma.Install(subnet2);
-	NetDeviceContainer nc = csma.Install(net_clients);
-	NetDeviceContainer sns = csma.Install(subnet_server);
+	NetDeviceContainer iw = csma.Install(internet);
 	NetDeviceContainer ns = csma.Install(net_server);
-	NetDeviceContainer n = csma.Install(net);
+	NetDeviceContainer sns = csma.Install(subnet_server);
+	NetDeviceContainer nc1 = csma.Install(net_clients1);
+	NetDeviceContainer snc1 = csma.Install(subnet_clients1);
+	NetDeviceContainer nc2 = csma.Install(net_clients2);
+	NetDeviceContainer snc2 = csma.Install(subnet_clients2);
 
 	cout << "Create networks and assign IPv4 Addresses." << endl;
 	Ipv4AddressHelper address;
 
-	vector<Ipv4InterfaceContainer> ivector(6);
+	vector<Ipv4InterfaceContainer> ivector(7);
 
 	address.SetBase("10.0.0.0", "255.0.0.0");
-	ivector[0] = address.Assign(n);
+	ivector[0] = address.Assign(iw);
 
 	address.SetBase("10.1.0.0", "255.255.0.0");
 	ivector[1] = address.Assign(ns);
@@ -76,11 +99,14 @@ int main(int argc, char *argv[])
 	ivector[2] = address.Assign(sns);
 
 	address.SetBase("10.2.0.0", "255.255.0.0");
-	ivector[3] = address.Assign(nc);
+	ivector[3] = address.Assign(nc1);
 	address.SetBase("10.2.1.0", "255.255.255.0");
-	ivector[4] = address.Assign(sn1);
-	address.SetBase("10.2.2.0", "255.255.255.0");
-	ivector[5] = address.Assign(sn2);
+	ivector[4] = address.Assign(snc1);
+
+	address.SetBase("10.3.0.0", "255.255.0.0");
+	ivector[5] = address.Assign(nc2);
+	address.SetBase("10.3.1.0", "255.255.255.0");
+	ivector[6] = address.Assign(snc2);
 
 	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 	LinuxStackHelper::PopulateRoutingTables ();
@@ -98,12 +124,15 @@ int main(int argc, char *argv[])
 	cout << "Running simulation..." << endl;
 
 //	RunGtmpInter(relays.Get(0), Seconds(2.0), "off");
-	RunIp(relays, Seconds(2.1), "route");
+	RunIp(all, Seconds(2.1), "route");
 
 	RunIp(server, Seconds(2.2), "addr list sim0");
 	RunIp(clients, Seconds(2.2), "addr list sim0");
 
 	RunGtmpInter(clients, Seconds(2.3), "off");
+
+//	RunApp("tcp-server", server, Seconds(4.0), 1 << 31);
+//	RunAppMulti("tcp-client", clients.Get(0), 5.0, "10.1.1.2", 1 << 16, 30);
 
 	RunApp("gmtp-server", server, Seconds(4.0), 1 << 31);
 	RunAppMulti("gmtp-client", clients, 5.0, "10.1.1.2", 1 << 16, 30);
