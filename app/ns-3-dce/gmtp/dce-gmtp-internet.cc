@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
 	dceManager.Install(all);
 
 	CsmaHelper csma;
-	csma.SetChannelAttribute("DataRate", StringValue("10Mbps"));
+	csma.SetChannelAttribute("DataRate", StringValue("100Mbps"));
 //	csma.SetChannelAttribute("DataRate", StringValue("1024Mbps"));
 	csma.SetChannelAttribute("Delay", StringValue("1ms"));
 

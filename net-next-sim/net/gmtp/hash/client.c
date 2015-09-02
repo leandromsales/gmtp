@@ -113,3 +113,9 @@ int gmtp_delete_clients(struct list_head *list, __be32 addr, __be16 port)
 	return ret;
 }
 
+void print_gmtp_client(struct gmtp_client *c)
+{
+	pr_info("C: %pI4@%-5d\n", &c->addr, ntohs(c->port));
+}
+EXPORT_SYMBOL_GPL(print_gmtp_client);
+

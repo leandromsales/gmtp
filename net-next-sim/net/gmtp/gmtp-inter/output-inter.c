@@ -36,7 +36,7 @@ int gmtp_inter_register_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	ether_addr_copy(entry->request_mac_addr, skb->dev->dev_addr);
 
 	iph->saddr = entry->my_addr;
-	iph->saddr = gmtp_inter_device_ip(skb->dev);
+	pr_info("My addr: %pI4\n", &entry->my_addr);
 	iph->ttl = 64;
 	ip_send_check(iph);
 
@@ -135,6 +135,7 @@ send:
 			struct ethhdr *eth = eth_hdr(skb);
 			gh->dport = relay->port;
 			ether_addr_copy(eth->h_dest, relay->mac_addr);
+			skb->dev = relay->dev;
 			gmtp_inter_build_and_send_pkt(skb, iph->saddr,
 					relay->addr, gh, GMTP_INTER_FORWARD);
 		}
@@ -258,6 +259,7 @@ int gmtp_inter_close_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 				struct ethhdr *eth = eth_hdr(new_skb);
 				gh->dport = relay->port;
 				ether_addr_copy(eth->h_dest, relay->mac_addr);
+				skb->dev = relay->dev;
 				gmtp_inter_build_and_send_pkt(new_skb, iph->saddr,
 						relay->addr, gh,
 						GMTP_INTER_FORWARD);

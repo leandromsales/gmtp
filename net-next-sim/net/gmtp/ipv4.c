@@ -729,13 +729,15 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 
 		const struct iphdr *iph = ip_hdr(skb);
 
-		/*if(gmtp_info->relay_enabled) {
-			gmtp_pr_error("Relay enabled (%s)",
-					gmtp_packet_name(gh->type));
-			if(gh->type == GMTP_PKT_DATA)
-				print_gmtp_packet(iph, gh);
-			goto ignore_it;
-		}*/
+		if(gmtp_info->relay_enabled) {
+			/*gmtp_pr_error("Relay enabled (%s)",
+					gmtp_packet_name(gh->type));*/
+			if(gh->type == GMTP_PKT_DATA) {
+				gmtp_pr_info("Data pkt received...");
+				/*print_gmtp_packet(iph, gh);*/
+				goto ignore_it;
+			}
+		}
 
 		/* TODO Make a reset code for each error here! */
 		switch(gh->type) {

@@ -85,8 +85,12 @@ struct gmtp_inter_entry *gmtp_inter_lookup_media(
 void ack_timer_callback(struct gmtp_inter_entry *entry)
 {
 	struct sk_buff *skb = gmtp_inter_build_ack(entry);
-	if(skb != NULL)
+	if(skb != NULL) {
+		pr_info("Sending ACK: src=%pI4@%-5d, dst=%pI4@%-5d\n",
+			&ip_hdr(skb)->saddr, ntohs(gmtp_hdr(skb)->sport),
+			&ip_hdr(skb)->daddr, ntohs(gmtp_hdr(skb)->dport));
 		gmtp_inter_send_pkt(skb);
+	}
 
 	mod_timer(&entry->ack_timer_entry, jiffies + HZ);
 }
@@ -120,7 +124,6 @@ void __gmtp_inter_build_info(struct gmtp_inter_entry *info)
 	gmtp_set_buffer_limits(info, 1);
 
 	setup_timer(&info->mcc_timer, mcc_timer_callback, (unsigned long) info);
-	mod_timer(&info->mcc_timer, gmtp_mcc_interval(info->server_rtt));
 }
 
 void gmtp_inter_build_info(struct gmtp_inter_entry *info, unsigned int bmin)
@@ -172,7 +175,6 @@ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
 	new_entry->next = hashtable->table[hashval];
 	hashtable->table[hashval] = new_entry;
 	setup_timer(&new_entry->ack_timer_entry, ack_timer_callback, new_entry);
-	mod_timer(&new_entry->ack_timer_entry, jiffies + (3 * HZ));
 
 	return 0;
 }

@@ -151,6 +151,7 @@ struct gmtp_client {
 	struct sock 		*rsock;
 	struct sock 		*mysock;
 	unsigned char 		mac_addr[6];
+	struct net_device	*dev;
 	enum gmtp_state		state;
 };
 
@@ -167,6 +168,7 @@ struct gmtp_client* gmtp_get_client(struct list_head *head, __be32 addr, __be16 
 struct gmtp_client* gmtp_get_client_by_id(struct list_head *head, u32 id);
 
 int gmtp_delete_clients(struct list_head *list, __be32 addr, __be16 port);
+void print_gmtp_client(struct gmtp_client *c);
 
 
 #endif /* HASH_H_ */
