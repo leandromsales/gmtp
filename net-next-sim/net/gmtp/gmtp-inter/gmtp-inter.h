@@ -22,7 +22,7 @@
 #define H_USER 	1024
 #define MD5_LEN GMTP_RELAY_ID_LEN
 
-#define CAPACITY_DEFAULT 1250000 /* bytes/s => 10 Mbit/s */
+#define CAPACITY_DEFAULT 1250000 /* B/s => 10 Mbps */
 
 extern const char *gmtp_packet_name(const __u8);
 extern const char *gmtp_state_name(const int);

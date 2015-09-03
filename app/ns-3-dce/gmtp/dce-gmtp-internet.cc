@@ -27,12 +27,12 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-	int nclients0 = 1;
 	int nclients1 = 1;
+	int nclients2 = 1;
 
 	CommandLine cmd;
-	cmd.AddValue ("nclients0", "Number of clients in router 0 (next to server)", nclients0);
-	cmd.AddValue ("nclients1", "Number of clients in router 1 (far from server)", nclients1);
+	cmd.AddValue ("nclients1", "Number of clients in router 1", nclients1);
+	cmd.AddValue ("nclients2", "Number of clients in router 2", nclients2);
 	cmd.Parse(argc, argv);
 
 	cout << "Creating nodes..." << endl;
@@ -43,10 +43,10 @@ int main(int argc, char *argv[])
 	relays.Create (6);
 
 	NodeContainer clients1;
-	clients1.Create (nclients0);
+	clients1.Create (nclients1);
 
 	NodeContainer clients2;
-	clients2.Create (nclients1);
+	clients2.Create (nclients2);
 
 	NodeContainer clients(clients1, clients2);
 	NodeContainer all(server, relays, clients);
@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
 	dceManager.Install(all);
 
 	CsmaHelper csma;
-	csma.SetChannelAttribute("DataRate", StringValue("100Mbps"));
+	csma.SetChannelAttribute("DataRate", StringValue("10Mbps"));
 //	csma.SetChannelAttribute("DataRate", StringValue("1024Mbps"));
 	csma.SetChannelAttribute("Delay", StringValue("1ms"));
 

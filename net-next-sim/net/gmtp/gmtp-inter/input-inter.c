@@ -303,6 +303,8 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 	if(direction != GMTP_INTER_LOCAL) {
 		pr_info("Direction: %u\n", direction);
 
+		entry->dev_in = skb->dev;
+
 		/* Add relay information in REGISTER-REPLY packet) */
 		gmtp_inter_add_relayid(skb);
 
@@ -326,7 +328,7 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 		if(gh_route_n != NULL)
 			gmtp_inter_build_and_send_pkt(skb, iph->daddr,
 					iph->saddr, gh_route_n, direction);
-		mod_timer(&entry->ack_timer_entry, jiffies + (3 * HZ));
+		mod_timer(&entry->ack_timer, jiffies + (3 * HZ));
 	} else {
 		pr_info("Direction: LOCAL\n");
 		ether_addr_copy(entry->server_mac_addr, skb->dev->dev_addr);
@@ -425,24 +427,24 @@ int gmtp_inter_ack_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_client *reporter, *relay;
 
-	print_gmtp_packet(iph, gh);
-
 	reporter = gmtp_get_client(&entry->clients->list, iph->saddr,
 			gh->sport);
 	if(reporter != NULL)
 		reporter->ack_rx_tstamp = jiffies_to_msecs(jiffies);
 
 	relay = gmtp_get_client(&entry->relays->list, iph->saddr, gh->sport);
-	if(relay != NULL && !entry->route_pending)
-		goto out;
+	if(relay != NULL) /** FIXME This else if will be deleted... */
+		entry->rcv_tx_rate = gh->transm_r;
 
-	if(entry->route_pending && gmtp_inter_ip_local(iph->daddr)) {
-		print_gmtp_packet(iph, gh);
-		entry->route_pending = false;
-		return NF_ACCEPT;
+	if(gmtp_inter_ip_local(iph->daddr)) {
+		if(entry->route_pending) {
+			entry->route_pending = false;
+			return NF_ACCEPT;
+		} else if(relay != NULL) {
+			return NF_ACCEPT;
+		}
 	}
 
-out:
 	return NF_DROP;
 }
 
@@ -546,8 +548,10 @@ static inline void gmtp_update_stats(struct gmtp_inter_entry *info,
 	info->last_rx_tstamp = jiffies_to_msecs(jiffies);
 
 	info->transm_r = gh->transm_r;
-	info->rcv_tx_rate = gh->transm_r;
-	gh->transm_r = min(info->rcv_tx_rate, gmtp_inter.ucc_rx);
+
+	/* FIXME Make a timer to update this */
+	/*info->rcv_tx_rate = gh->transm_r;
+	gh->transm_r = min(info->rcv_tx_rate, gmtp_inter.ucc_rx);*/
 
 	if(gh->seq % gmtp_inter.rx_rate_wnd == 0) {
 		unsigned long current_time = jiffies_to_msecs(jiffies);

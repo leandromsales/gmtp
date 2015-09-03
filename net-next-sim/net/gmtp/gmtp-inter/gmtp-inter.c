@@ -240,8 +240,7 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 		} else if(gh->type == GMTP_PKT_REGISTER) {
 			print_packet(skb, true);
 			print_gmtp_packet(iph, gh);
-			/*if(gmtp_inter_ip_local(iph->daddr))*/
-				return gmtp_inter_register_rcv(skb);
+			return gmtp_inter_register_rcv(skb);
 		}
 
 		entry = gmtp_inter_lookup_media(gmtp_inter.hashtable,
@@ -373,13 +372,6 @@ unsigned int hook_func_post_routing(unsigned int hooknum, struct sk_buff *skb,
 		if(entry == NULL)
 			return NF_ACCEPT;
 
-		/*if(gh->type == GMTP_PKT_DATA) {
-			relay = gmtp_get_client(&entry->relays->list,
-					iph->daddr, gh->dport);
-			if(relay == NULL)
-				return NF_ACCEPT;
-		}*/
-
 		switch(gh->type) {
 		case GMTP_PKT_REQUEST:
 			if(gmtp_inter_ip_local(iph->saddr)
@@ -488,7 +480,7 @@ int init_module()
 
 	pr_info("Configuring GMTP-UCC timer...\n");
 	setup_timer(&gmtp_inter.gmtp_ucc_timer, gmtp_ucc_callback, 0);
-	mod_timer(&gmtp_inter.gmtp_ucc_timer, jiffies + HZ);
+	mod_timer(&gmtp_inter.gmtp_ucc_timer, jiffies + 1);
 
 	register_hooks();
 

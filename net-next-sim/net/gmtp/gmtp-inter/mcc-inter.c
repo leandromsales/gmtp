@@ -70,7 +70,7 @@ void mcc_timer_callback(unsigned long data)
 
 	info->required_tx = new_tx;
 
-	pr_info("n=%u, req_tx=%u B/s\n", info->nfeedbacks, info->required_tx);
+	/*pr_info("n=%u, req_tx=%u B/s\n", info->nfeedbacks, info->required_tx);*/
 
 	/* FIXME Colocar isso em outro timer? */
 	list_for_each_entry_safe(reporter, temp, &info->clients->list, list)

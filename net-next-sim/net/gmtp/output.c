@@ -728,7 +728,7 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 	if(unlikely(skb == NULL))
 		return;
 
-	if(tx_rate == UINT_MAX)
+	if(tx_rate == UINT_MAX /*|| tx_rate >= gp->tx_media_rate*/)
 		goto send;
 
 	/*pr_info("[%d] Tx rate: %lu bytes/s\n", gp->tx_dpkts_sent, gp->tx_total_rate);
@@ -765,7 +765,6 @@ wait:
 		gp->tx_byte_budget = INT_MIN;
 
 	if(delay2 > 0) {
-		pr_info("Delay: %ld ms\n", delay2);
 		setup_timer(&gp->xmit_timer, gmtp_write_xmit_timer,
 				(unsigned long ) pkt_info);
 		mod_timer(&gp->xmit_timer, jiffies + delay2);

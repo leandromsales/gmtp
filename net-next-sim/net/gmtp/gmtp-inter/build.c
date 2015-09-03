@@ -514,16 +514,11 @@ struct sk_buff *gmtp_inter_build_ack(struct gmtp_inter_entry *entry)
 	struct gmtp_hdr *gh;
 	struct gmtp_hdr_ack *gack;
 
-	struct socket *sock = NULL;
 	struct net_device *dev_entry = NULL;
-	struct net *net;
 	int gmtp_hdr_len = sizeof(struct gmtp_hdr) + sizeof(struct gmtp_hdr_ack);
 	int total_len, ip_len = 0;
 
-	sock_create(AF_INET, SOCK_STREAM, 0, &sock);
-	net = sock_net(sock->sk);
-	dev_entry = dev_get_by_index_rcu(net, 7);
-	sock_release(sock);
+	dev_entry = entry->dev_in;
 
 	ip_len = gmtp_hdr_len + sizeof(struct iphdr);
 	total_len = ip_len + LL_RESERVED_SPACE(dev_entry);
@@ -573,7 +568,6 @@ struct sk_buff *gmtp_inter_build_ack(struct gmtp_inter_entry *entry)
 	ether_addr_copy(eth->h_dest, entry->server_mac_addr);
 
 	skb->dev = dev_entry;
-
 	return skb;
 }
 

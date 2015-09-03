@@ -82,17 +82,29 @@ struct gmtp_inter_entry *gmtp_inter_lookup_media(
 	return NULL;
 }
 
-void ack_timer_callback(struct gmtp_inter_entry *entry)
+static inline unsigned long gmtp_ucc_interval(unsigned int rtt)
 {
-	struct sk_buff *skb = gmtp_inter_build_ack(entry);
-	if(skb != NULL) {
-		pr_info("Sending ACK: src=%pI4@%-5d, dst=%pI4@%-5d\n",
-			&ip_hdr(skb)->saddr, ntohs(gmtp_hdr(skb)->sport),
-			&ip_hdr(skb)->daddr, ntohs(gmtp_hdr(skb)->dport));
-		gmtp_inter_send_pkt(skb);
-	}
+	unsigned long interval;
+	if(unlikely(rtt <= 0))
+		return (jiffies + GMTP_ACK_INTERVAL);
 
-	mod_timer(&entry->ack_timer_entry, jiffies + HZ);
+	interval = (unsigned long)(rtt);
+	return (jiffies + msecs_to_jiffies(interval));
+}
+
+void ack_timer_callback(unsigned long data)
+{
+	struct gmtp_inter_entry *entry = (struct gmtp_inter_entry*) data;
+
+	gmtp_ucc(GMTP_UCC_DEBUG);
+	struct sk_buff *skb = gmtp_inter_build_ack(entry);
+
+	pr_info("Sending ack with new rate: %u B/s\n", gmtp_hdr(skb)->transm_r);
+	if(skb != NULL)
+		gmtp_inter_send_pkt(skb);
+
+	/*mod_timer(&entry->ack_timer, jiffies + HZ);*/
+	mod_timer(&entry->ack_timer, gmtp_ucc_interval(gmtp_inter.worst_rtt));
 }
 
 
@@ -103,6 +115,7 @@ void __gmtp_inter_build_info(struct gmtp_inter_entry *info)
 
 	info->total_bytes = 0;
 	info->last_rx_tstamp = 0;
+	info->rcv_tx_rate = UINT_MAX;
 
 	info->nfeedbacks = 0;
 	info->sum_feedbacks = 0;
@@ -158,7 +171,6 @@ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
 	if(current_entry != NULL)
 		return 2; /* TODO Media already being transmitted by other
 								server? */
-
 	gmtp_inter_build_info(new_entry, 5);
 
 	memcpy(new_entry->flowname, flowname, GMTP_FLOWNAME_LEN);
@@ -174,7 +186,8 @@ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
 	new_entry->state = GMTP_INTER_WAITING_REGISTER_REPLY;
 	new_entry->next = hashtable->table[hashval];
 	hashtable->table[hashval] = new_entry;
-	setup_timer(&new_entry->ack_timer_entry, ack_timer_callback, new_entry);
+	setup_timer(&new_entry->ack_timer, ack_timer_callback,
+			(unsigned long) new_entry);
 
 	return 0;
 }
@@ -230,7 +243,7 @@ struct gmtp_inter_entry *gmtp_inter_del_entry(
 	gmtp_inter_del_clients(current_entry);
 	skb_queue_purge(current_entry->buffer);
 	del_timer_sync(&current_entry->mcc_timer);
-	del_timer_sync(&current_entry->ack_timer_entry);
+	del_timer_sync(&current_entry->ack_timer);
 	kfree(current_entry);
 
 	gmtp_print_debug("Media entry removed successfully!");

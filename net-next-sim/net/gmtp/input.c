@@ -397,12 +397,13 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 	case GMTP_PKT_ACK:
 		if(gp->role == GMTP_ROLE_SERVER) {
 			struct gmtp_hdr_ack *gack = gmtp_hdr_ack(skb);
-			print_gmtp_packet(ip_hdr(skb), gh);
 			gp->tx_rtt = jiffies_to_msecs(jiffies) - gack->orig_tstamp;
 			gp->tx_avg_rtt = rtt_ewma(gp->tx_avg_rtt, gp->tx_rtt,
 					GMTP_RTT_WEIGHT);
-			gp->tx_ucc_rate = min((__be32 )gp->tx_ucc_rate,
+			gp->tx_ucc_rate = min((__be32 )gp->tx_max_rate,
 					gh->transm_r);
+
+			pr_info("ucc tx: %lu B/s\n", gp->tx_ucc_rate);
 		}
 		goto discard;
 	case GMTP_PKT_RESET:
