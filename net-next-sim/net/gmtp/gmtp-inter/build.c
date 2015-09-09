@@ -20,7 +20,7 @@
 void gmtp_inter_add_relayid(struct sk_buff *skb)
 {
 	struct gmtp_hdr_register_reply *gh_rply = gmtp_hdr_register_reply(skb);
-	struct gmtp_relay relay;
+	struct gmtp_hdr_relay relay;
 
 	gmtp_print_function();
 

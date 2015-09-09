@@ -26,7 +26,7 @@ const struct gmtp_hash_ops gmtp_relay_hash_ops = {
 };
 
 static struct gmtp_relay_entry *gmtp_build_relay_entry(
-		const struct gmtp_relay *relay)
+		const struct gmtp_hdr_relay *relay)
 {
 	struct gmtp_relay_entry *relay_entry;
 
@@ -35,7 +35,7 @@ static struct gmtp_relay_entry *gmtp_build_relay_entry(
 		return NULL;
 
 	memcpy(relay_entry->entry.key, relay->relay_id, GMTP_HASH_KEY_LEN);
-	memcpy(&relay_entry->relay, relay, sizeof(struct gmtp_relay));
+	memcpy(&relay_entry->relay, relay, sizeof(struct gmtp_hdr_relay));
 
 	return relay_entry;
 }

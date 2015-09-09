@@ -137,13 +137,12 @@ struct gmtp_hdr_reset {
 };
 
 /**
- * struct gmtp_hdr_register_reply - Register reply from servers
+ * struct gmtp_hdr_relay- Store data of a single relay in GMTP headers
  *
- * @nrelays: number of relays
  * @relay_id: unique id of relay
  * @relay_ip: IP address of relay
  */
-struct gmtp_relay {
+struct gmtp_hdr_relay {
 	__u8 			relay_id[GMTP_RELAY_ID_LEN];
 	__be32 			relay_ip;
 };
@@ -156,7 +155,7 @@ struct gmtp_relay {
  */
 struct gmtp_hdr_register_reply {
 	__u8 			nrelays;
-	struct gmtp_relay 	relay_list[GMTP_MAX_RELAY_NUM];
+	struct gmtp_hdr_relay 	relay_list[GMTP_MAX_RELAY_NUM];
 };
 
 /**
@@ -167,7 +166,7 @@ struct gmtp_hdr_register_reply {
  */
 struct gmtp_hdr_route {
 	__u8 			nrelays;
-	struct gmtp_relay 	relay_list[GMTP_MAX_RELAY_NUM];
+	struct gmtp_hdr_relay 	relay_list[GMTP_MAX_RELAY_NUM];
 };
 
 /**

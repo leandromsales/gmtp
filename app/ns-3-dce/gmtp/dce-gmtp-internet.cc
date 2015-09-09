@@ -29,10 +29,14 @@ int main(int argc, char *argv[])
 {
 	int nclients1 = 1;
 	int nclients2 = 1;
+	std::string data_rate = "10Mbps";
+	std::string delay = "1ms";
 
 	CommandLine cmd;
 	cmd.AddValue ("nclients1", "Number of clients in router 1", nclients1);
 	cmd.AddValue ("nclients2", "Number of clients in router 2", nclients2);
+	cmd.AddValue ("data-rate", "Link capacity. Default value is 10Mbps", data_rate);
+	cmd.AddValue ("delay", "Channel delay. Default value is 1ms", delay);
 	cmd.Parse(argc, argv);
 
 	cout << "Creating nodes..." << endl;
@@ -73,9 +77,8 @@ int main(int argc, char *argv[])
 	dceManager.Install(all);
 
 	CsmaHelper csma;
-	csma.SetChannelAttribute("DataRate", StringValue("10Mbps"));
-//	csma.SetChannelAttribute("DataRate", StringValue("1024Mbps"));
-	csma.SetChannelAttribute("Delay", StringValue("1ms"));
+	csma.SetChannelAttribute("DataRate", StringValue(data_rate));
+	csma.SetChannelAttribute("Delay", StringValue(delay));
 
 	NetDeviceContainer iw = csma.Install(internet);
 	NetDeviceContainer ns = csma.Install(net_server);
@@ -116,7 +119,7 @@ int main(int argc, char *argv[])
 	NetDeviceContainer snr3 = csma.Install(subnet_r3);
 	address.SetBase("10.1.2.0", "255.255.255.0");
 	Ipv4InterfaceContainer ic = address.Assign(snr3);
-	RunApp("gmtp-client", client_r3, Seconds(4.5), 1 << 31);
+	RunApp("gmtp-client", client_r3, Seconds(7.5), "10.1.1.2", 1 << 31);
 
 	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 	LinuxStackHelper::PopulateRoutingTables ();

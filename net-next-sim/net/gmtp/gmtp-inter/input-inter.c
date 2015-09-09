@@ -105,23 +105,6 @@ out:
 	return ret;
 }
 
-struct gmtp_client *gmtp_inter_create_relay(struct sk_buff *skb,
-		struct gmtp_inter_entry *entry)
-{
-	struct iphdr *iph = ip_hdr(skb);
-	struct gmtp_hdr *gh = gmtp_hdr(skb);
-	struct ethhdr *eth = eth_hdr(skb);
-	struct gmtp_client *relay;
-
-	relay = gmtp_list_add_client(++entry->nrelays, iph->saddr, gh->sport, 0,
-				&entry->relays->list);
-	if(relay != NULL) {
-		ether_addr_copy(relay->mac_addr, eth->h_source);
-		relay->state = GMTP_CLOSED;
-	}
-	return relay;
-}
-
 /** Register to localhost only */
 int gmtp_inter_register_rcv(struct sk_buff *skb)
 {
@@ -130,13 +113,13 @@ int gmtp_inter_register_rcv(struct sk_buff *skb)
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct ethhdr *eth = eth_hdr(skb);
 	struct gmtp_inter_entry *entry;
-	struct gmtp_client *relay;
+	struct gmtp_relay *relay;
 
 	gmtp_pr_func();
 
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry != NULL) {
-		relay = gmtp_get_client(&entry->relays->list, iph->saddr,
+		relay = gmtp_get_relay(&entry->relays->list, iph->saddr,
 				gh->sport);
 		if(relay == NULL)
 			relay = gmtp_inter_create_relay(skb, entry);
@@ -282,7 +265,7 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 	struct gmtp_hdr *gh_route_n;
 	struct gmtp_hdr *gh_req_n;
 	struct gmtp_client *client, *tempc, *first_client, *cur_reporter = NULL;
-	struct gmtp_client *relay, *tempr;
+	struct gmtp_relay *relay, *tempr;
 	u8 code = GMTP_REQNOTIFY_CODE_OK;
 
 	gmtp_print_function();
@@ -425,14 +408,15 @@ int gmtp_inter_ack_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 {
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct iphdr *iph = ip_hdr(skb);
-	struct gmtp_client *reporter, *relay;
+	struct gmtp_client *reporter;
+	struct gmtp_relay *relay;
 
 	reporter = gmtp_get_client(&entry->clients->list, iph->saddr,
 			gh->sport);
 	if(reporter != NULL)
 		reporter->ack_rx_tstamp = jiffies_to_msecs(jiffies);
 
-	relay = gmtp_get_client(&entry->relays->list, iph->saddr, gh->sport);
+	relay = gmtp_get_relay(&entry->relays->list, iph->saddr, gh->sport);
 	if(relay != NULL) /** FIXME This else if will be deleted... */
 		entry->rcv_tx_rate = gh->transm_r;
 
@@ -455,12 +439,12 @@ int gmtp_inter_route_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	struct gmtp_hdr_route *route = gmtp_hdr_route(skb);
 	struct iphdr *iph = ip_hdr(skb);
 	struct ethhdr *eth = eth_hdr(skb);
-	struct gmtp_client *relay;
+	struct gmtp_relay *relay;
 
 	print_gmtp_packet(iph, gh);
 	print_route(route);
 
-	relay = gmtp_get_client(&entry->relays->list, iph->saddr, gh->sport);
+	relay = gmtp_get_relay(&entry->relays->list, iph->saddr, gh->sport);
 	pr_info("Relay: %p\n", relay);
 	if(relay == NULL)
 		return NF_ACCEPT;

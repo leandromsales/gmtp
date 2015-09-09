@@ -103,7 +103,6 @@ void ack_timer_callback(unsigned long data)
 	if(skb != NULL)
 		gmtp_inter_send_pkt(skb);
 
-	/*mod_timer(&entry->ack_timer, jiffies + HZ);*/
 	mod_timer(&entry->ack_timer, gmtp_ucc_interval(gmtp_inter.worst_rtt));
 }
 
@@ -176,7 +175,7 @@ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
 	memcpy(new_entry->flowname, flowname, GMTP_FLOWNAME_LEN);
 	new_entry->server_addr = server_addr;
 
-	new_entry->relays = kmalloc(sizeof(struct gmtp_client), GFP_KERNEL);
+	new_entry->relays = kmalloc(sizeof(struct gmtp_relay), GFP_KERNEL);
 	INIT_LIST_HEAD(&new_entry->relays->list);
 	new_entry->nrelays = 0;
 

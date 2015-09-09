@@ -120,13 +120,13 @@ void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh)
 }
 EXPORT_SYMBOL_GPL(print_gmtp_packet);
 
-void print_gmtp_relay(const struct gmtp_relay *relay)
+void print_gmtp_hdr_relay(const struct gmtp_hdr_relay *relay)
 {
 	unsigned char relayid[GMTP_FLOWNAME_STR_LEN];
 	flowname_str(relayid, relay->relay_id);
 	pr_info("%s :: %pI4\n", relayid, &relay->relay_ip);
 }
-EXPORT_SYMBOL_GPL(print_gmtp_relay);
+EXPORT_SYMBOL_GPL(print_gmtp_hdr_relay);
 
 void print_route(struct gmtp_hdr_route *route)
 {
@@ -139,7 +139,7 @@ void print_route(struct gmtp_hdr_route *route)
 
 	pr_info("Route: \n");
 	for(i = route->nrelays - 1; i >= 0; --i)
-		print_gmtp_relay(&route->relay_list[i]);
+		print_gmtp_hdr_relay(&route->relay_list[i]);
 }
 EXPORT_SYMBOL_GPL(print_route);
 

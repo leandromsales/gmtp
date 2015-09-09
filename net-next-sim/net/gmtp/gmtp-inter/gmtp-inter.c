@@ -225,7 +225,7 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 
 		struct gmtp_hdr *gh = gmtp_hdr(skb);
 		struct gmtp_inter_entry *entry;
-		struct gmtp_client *relay;
+		struct gmtp_relay *relay;
 
 		if(gh->type == GMTP_PKT_REQUEST) {
 			if(gmtp_inter_ip_local(iph->saddr)
@@ -259,7 +259,7 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 			ret = gmtp_inter_feedback_rcv(skb, entry);
 			break;
 		default:
-			relay = gmtp_get_client(&entry->relays->list,
+			relay = gmtp_get_relay(&entry->relays->list,
 					iph->daddr, gh->dport);
 			if(!gmtp_inter_ip_local(iph->daddr) && (relay == NULL))
 				return NF_ACCEPT;

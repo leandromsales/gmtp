@@ -10,6 +10,9 @@
 
 #define GMTP_HASH_KEY_LEN  16
 
+#include <linux/netdevice.h>
+#include "../hash.h"
+
 /**
  * struct gmtp_inter_entry: entry in GMTP-inter Relay Table
  *
@@ -57,7 +60,7 @@
 struct gmtp_inter_entry {
 	__u8 flowname[GMTP_FLOWNAME_LEN];
 	__be32 server_addr;
-	struct gmtp_client *relays;
+	struct gmtp_relay *relays;
 	unsigned int nrelays;
 	__be16 media_port;
 	__be32 channel_addr;
@@ -146,5 +149,36 @@ struct gmtp_inter_entry *gmtp_inter_del_entry(
 		struct gmtp_inter_hashtable *hashtable, __u8 *media);
 
 void kfree_gmtp_inter_hashtable(struct gmtp_inter_hashtable *hashtable);
+
+/**
+ * struct gmtp_relay - A list of GMTP Relays
+ *
+ * @client: the relay data inherited from struct client
+ * @state: state of relay
+ * @dev: struct net_device of incoming request from client
+ */
+struct gmtp_relay {
+	struct gmtp_client client;
+	struct list_head list;
+	__be32 addr;
+	__be16 port;
+	unsigned char mac_addr[6];
+
+	enum gmtp_state state;
+	struct net_device *dev;
+};
+
+/** Relay.c **/
+
+struct gmtp_relay *gmtp_create_relay(__be32 addr, __be16 port);
+struct gmtp_relay *gmtp_list_add_relay(__be32 addr, __be16 port,
+		struct list_head *head);
+struct gmtp_relay *gmtp_inter_create_relay(struct sk_buff *skb,
+		struct gmtp_inter_entry *entry);
+struct gmtp_relay* gmtp_get_relay(struct list_head *head,
+		__be32 addr, __be16 port);
+int gmtp_delete_relays(struct list_head *list, __be32 addr, __be16 port);
+void print_gmtp_relay(struct gmtp_relay *r);
+
 
 #endif /* HASH_INTER_H_ */

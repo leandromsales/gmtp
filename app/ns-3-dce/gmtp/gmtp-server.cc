@@ -89,7 +89,8 @@ int main(int argc, char *argv[])
 		send(newSocket, buffer, BUFF_SIZE, 0);
 		total += pkt_size;
 		total_data += BUFF_SIZE;
-		delete(buffer);
+		delete buffer;
+		delete [] numstr;
 		if(i % 1000 == 0) {
 			print_stats(i, t1, total, total_data);
 			cout << endl;
@@ -108,6 +109,9 @@ int main(int argc, char *argv[])
 	printf("Closing server...\n");
 	close(newSocket);
 	close(welcomeSocket);
+
+	delete [] outstr;
+	delete [] msg;
 
 	printf("Server closed!\n\n");
 

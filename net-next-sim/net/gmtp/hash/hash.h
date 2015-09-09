@@ -112,7 +112,7 @@ int gmtp_add_server_entry(struct gmtp_hashtable *table, const __u8 *flowname,
  */
 struct gmtp_relay_entry {
 	struct gmtp_hash_entry		entry;
-	struct gmtp_relay 		relay;
+	struct gmtp_hdr_relay 		relay;
 	struct list_head 		list;
 };
 
@@ -136,6 +136,9 @@ struct gmtp_relay_entry {
  *
  * @clients: clients of a reporter.
  * @reporter: reporter of a client
+ * @rsock: socket to reporter
+ * @mysock: socket of the client
+ * @mac_addr: MAC addr of client
  */
 struct gmtp_client {
 	struct list_head 	list;
@@ -151,15 +154,9 @@ struct gmtp_client {
 	struct sock 		*rsock;
 	struct sock 		*mysock;
 	unsigned char 		mac_addr[6];
-	struct net_device	*dev;
-	enum gmtp_state		state;
 };
 
 struct gmtp_client *gmtp_create_client(__be32 addr, __be16 port, __u8 max_nclients);
-
-/**
- * Create and add a client in the list of clients
- */
 struct gmtp_client *gmtp_list_add_client(u32 id, __be32 addr, __be16 port,
 		__u8 max_nclients, struct list_head *head);
 
