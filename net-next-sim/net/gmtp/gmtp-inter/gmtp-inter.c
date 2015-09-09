@@ -373,14 +373,6 @@ unsigned int hook_func_post_routing(unsigned int hooknum, struct sk_buff *skb,
 			return NF_ACCEPT;
 
 		switch(gh->type) {
-		case GMTP_PKT_REQUEST:
-			if(gmtp_inter_ip_local(iph->saddr)
-					&& iph->saddr == iph->daddr) {
-				print_packet(skb, true);
-				print_gmtp_packet(iph, gh);
-				/*ret = gmtp_inter_request_rcv(skb);*/
-			}
-			break;
 		case GMTP_PKT_REGISTER:
 			ret = gmtp_inter_register_out(skb, entry);
 			break;
@@ -479,7 +471,7 @@ int init_module()
 	gmtp_inter.worst_rtt = GMTP_MIN_RTT_MS;
 
 	pr_info("Configuring GMTP-UCC timer...\n");
-	setup_timer(&gmtp_inter.gmtp_ucc_timer, gmtp_ucc_callback, 0);
+	setup_timer(&gmtp_inter.gmtp_ucc_timer, gmtp_ucc_equation_callback, 0);
 	mod_timer(&gmtp_inter.gmtp_ucc_timer, jiffies + 1);
 
 	register_hooks();

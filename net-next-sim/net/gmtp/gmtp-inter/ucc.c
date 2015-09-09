@@ -15,7 +15,7 @@
 
 extern struct gmtp_inter gmtp_inter;
 
-void gmtp_ucc_callback(unsigned long data)
+void gmtp_ucc_equation_callback(unsigned long data)
 {
 	/*unsigned int next = min(gmtp_inter.worst_rtt, gmtp_inter.h_user);
 	if(next <= 0)
@@ -23,7 +23,7 @@ void gmtp_ucc_callback(unsigned long data)
 
 	unsigned int next = GMTP_DEFAULT_RTT;
 	gmtp_pr_func();
-	gmtp_ucc(GMTP_UCC_DEBUG);
+	gmtp_ucc_equation(GMTP_UCC_DEBUG);
 	mod_timer(&gmtp_inter.gmtp_ucc_timer, jiffies + msecs_to_jiffies(next));
 }
 
@@ -38,7 +38,7 @@ unsigned int gmtp_relay_queue_size()
  * FIXME Work with MSEC in RTT and TX.
  * After convert to SEC...
  */
-void gmtp_ucc(enum gmtp_ucc_log_level log_level)
+void gmtp_ucc_equation(enum gmtp_ucc_log_level log_level)
 {
 	int up, delta;
 	unsigned int r = 0, H, h;
@@ -129,5 +129,104 @@ void gmtp_ucc(enum gmtp_ucc_log_level log_level)
 	}
 
 }
-EXPORT_SYMBOL_GPL(gmtp_ucc);
+EXPORT_SYMBOL_GPL(gmtp_ucc_equation);
+
+int gmtp_inter_build_ucc(struct gmtp_ucc_protocol *ucc,
+		enum gmtp_ucc_type ucc_type)
+{
+	switch(ucc_type) {
+	case GMTP_DELAY_UCC:
+		ucc->congestion_control = gmtp_delay_cc;
+		break;
+	case GMTP_MEDIA_ADAPT_UCC:
+		ucc->congestion_control = gmtp_media_adapt_cc;
+		break;
+	default:
+		return 1;
+		break;
+	}
+
+	return 0;
+}
+
+
+void gmtp_inter_xmit_timer(unsigned long data)
+{
+	struct gmtp_inter_ucc_info *info = (struct gmtp_inter_ucc_info*) data;
+	gmtp_delay_cc(info->skb, info->entry, info->relay);
+	del_timer_sync(&info->relay->xmit_timer);
+	kfree(info);
+}
+EXPORT_SYMBOL_GPL(gmtp_inter_xmit_timer);
+
+int gmtp_delay_cc(struct sk_buff *skb, struct gmtp_inter_entry *entry,
+		struct gmtp_relay *relay)
+{
+	unsigned long elapsed = 0;
+	long delay = 0, delay2 = 0, delay_budget = 0;
+	unsigned long tx_rate = relay->tx_rate;
+	struct gmtp_inter_ucc_info *info;
+	int len;
+
+	/** TODO Continue tests with different scales... */
+	static const int scale = 1;
+	/*static const int scale = HZ/100;*/
+
+	if(unlikely(skb == NULL))
+		return NF_DROP;
+
+	if(tx_rate == UINT_MAX)
+		goto send;
+
+	info = kmalloc(sizeof(struct gmtp_inter_ucc_info), GFP_KERNEL);
+	info->skb = skb;
+	info->entry = entry;
+	info->relay = relay;
+	elapsed = jiffies - entry->last_data_tstamp;
+
+	len = skb->len + (gmtp_data_hdr_len() + 20 + ETH_HLEN);
+	if(relay->tx_byte_budget >= mult_frac(len, 3, 4)) {
+		goto send;
+	} else if(relay->tx_byte_budget != INT_MIN) {
+		delay_budget = scale;
+		goto wait;
+	}
+
+	delay = DIV_ROUND_CLOSEST((HZ * len), tx_rate);
+	delay2 = delay - elapsed;
+
+	/*if(delay2 > 0)
+		delay2 += mult_frac(delay2, get_rate_gap(gp, 1), 100);*/
+
+wait:
+	delay2 += delay_budget;
+
+	/*
+	 * FIXME More tests with byte_budgets...
+	 */
+	if(delay <= 0)
+		relay->tx_byte_budget =	mult_frac(scale, tx_rate, HZ) /*-
+			mult_frac(relay->tx_byte_budget,
+					(int) get_rate_gap(gp, 0), 100)*/;
+	else
+		relay->tx_byte_budget = INT_MIN;
+
+	if(delay2 > 0) {
+		setup_timer(&relay->xmit_timer, gmtp_inter_xmit_timer,
+				(unsigned long ) info);
+		mod_timer(&relay->xmit_timer, jiffies + delay2);
+		schedule_timeout(delay2);
+		return NF_ACCEPT;
+	}
+
+send:
+	return NF_ACCEPT;
+
+}
+
+int gmtp_media_adapt_cc(struct sk_buff *skb, struct gmtp_inter_entry *entry,
+			struct gmtp_relay *relay)
+{
+	return NF_ACCEPT;
+}
 

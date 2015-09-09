@@ -45,7 +45,6 @@ struct gmtp_hdr *gmtp_inter_make_route_hdr(struct sk_buff *skb)
 
 	gmtp_print_function();
 
-
 	transport_header = kmalloc(gmtp_hdr_len, gfp_any());
 	memset(transport_header, 0, gmtp_hdr_len);
 

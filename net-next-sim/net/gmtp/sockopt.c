@@ -50,6 +50,13 @@ static int do_gmtp_setsockopt(struct sock *sk, int level, int optname,
 		} else
 			err = -EINVAL;
 		break;
+	case GMTP_SOCKOPT_UCC_TYPE:
+		gmtp_pr_debug("GMTP_SOCKOPT_UCC_TYPE");
+		if(val > 0)
+			gp->tx_ucc_type = (enum gmtp_ucc_type)val;
+		else
+			err = -EINVAL;
+		break;
 	case GMTP_SOCKOPT_SERVER_TIMEWAIT:
 		gmtp_pr_debug("GMTP_SOCKOPT_SERVER_TIMEWAIT");
 		if(gp->role != GMTP_ROLE_SERVER)

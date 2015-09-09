@@ -225,6 +225,8 @@ struct sk_buff *gmtp_make_register_reply(struct sock *sk, struct dst_entry *dst,
 	gh->hdrlen	= gmtp_header_size;
 	memcpy(gh->flowname, greq->flowname, GMTP_FLOWNAME_LEN);
 
+	gmtp_hdr_register_reply(skb)->ucc_type = greq->tx_ucc_type;
+
 	/* We use `acked' to remember that a Register-Reply was already sent. */
 	inet_rsk(req)->acked = 1;
 
@@ -716,10 +718,8 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 	unsigned long elapsed = 0;
 	long delay = 0, delay2 = 0, delay_budget = 0;
 	unsigned long tx_rate = min(gp->tx_max_rate, gp->tx_ucc_rate);
+	struct gmtp_packet_info *pkt_info;
 	int len;
-
-	struct gmtp_packet_info *pkt_info = kmalloc(
-			sizeof(struct gmtp_packet_info), GFP_KERNEL);
 
 	/** TODO Continue tests with different scales... */
 	static const int scale = 1;
@@ -731,9 +731,13 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 	if(tx_rate == UINT_MAX /*|| tx_rate >= gp->tx_media_rate*/)
 		goto send;
 
+	/** FIXME Testing */
+	goto send;
+
 	/*pr_info("[%d] Tx rate: %lu bytes/s\n", gp->tx_dpkts_sent, gp->tx_total_rate);
 	pr_info("[-] Tx rate (sample): %lu bytes/s\n", gp->tx_sample_rate);*/
 
+	pkt_info = kmalloc(sizeof(struct gmtp_packet_info), GFP_KERNEL);
 	pkt_info->sk = sk;
 	pkt_info->skb = skb;
 	elapsed = jiffies - gp->tx_last_stamp; /* time elapsed since last sent */

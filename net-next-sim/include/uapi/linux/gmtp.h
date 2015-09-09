@@ -154,6 +154,7 @@ struct gmtp_hdr_relay {
  * @relay_list:	list of relays in path
  */
 struct gmtp_hdr_register_reply {
+	__u8			ucc_type:2;
 	__u8 			nrelays;
 	struct gmtp_hdr_relay 	relay_list[GMTP_MAX_RELAY_NUM];
 };
@@ -306,6 +307,13 @@ static inline unsigned int gmtp_packet_hdr_variable_len(const __u8 type)
 	return len;
 }
 
+enum gmtp_ucc_type {
+	GMTP_DELAY_UCC = 1,
+	GMTP_MEDIA_ADAPT_UCC,
+
+	GMTP_MAX_UCC_TYPES
+};
+
 /* GMTP socket options */
 enum gmtp_sockopt_codes {
 	GMTP_SOCKOPT_FLOWNAME = 1,
@@ -317,7 +325,8 @@ enum gmtp_sockopt_codes {
 	GMTP_SOCKOPT_SERVER_TIMEWAIT,
 	GMTP_SOCKOPT_PULL,
 	GMTP_SOCKOPT_ROLE_RELAY,
-	GMTP_SOCKOPT_RELAY_ENABLED
+	GMTP_SOCKOPT_RELAY_ENABLED,
+	GMTP_SOCKOPT_UCC_TYPE
 };
 
 

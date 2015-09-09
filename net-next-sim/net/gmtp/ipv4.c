@@ -966,6 +966,7 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
 	greq->gsr = greq->isr;
 	greq->iss = greq->isr;
 	greq->gss = greq->iss;
+	greq->tx_ucc_type = gp->tx_ucc_type;
 	if(memcmp(gh->flowname, gp->flowname, GMTP_FLOWNAME_LEN))
 		goto reset;
 

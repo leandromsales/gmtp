@@ -281,6 +281,8 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 	entry->transm_r =  gh->transm_r;
 	entry->rcv_tx_rate = gh->transm_r;
 	entry->server_rtt = (unsigned int)gh->server_rtt;
+	entry->ucc_type = gmtp_hdr_register_reply(skb)->ucc_type;
+	gmtp_inter_build_ucc(&entry->ucc, entry->ucc_type);
 	entry->route_pending = true;
 
 	if(direction != GMTP_INTER_LOCAL) {
@@ -306,7 +308,6 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 
 		ether_addr_copy(entry->server_mac_addr, eth->h_source);
 
-		/*entry->route_pending = false;*/
 		gh_route_n = gmtp_inter_make_route_hdr(skb);
 		if(gh_route_n != NULL)
 			gmtp_inter_build_and_send_pkt(skb, iph->daddr,
@@ -316,7 +317,6 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 		pr_info("Direction: LOCAL\n");
 		ether_addr_copy(entry->server_mac_addr, skb->dev->dev_addr);
 		ether_addr_copy(eth->h_dest, entry->request_mac_addr);
-		/*entry->route_pending = true;*/
 	}
 
 	entry->state = GMTP_INTER_REGISTER_REPLY_RECEIVED;

@@ -12,6 +12,7 @@
 
 #include <linux/netdevice.h>
 #include "../hash.h"
+#include "gmtp-inter.h"
 
 /**
  * struct gmtp_inter_entry: entry in GMTP-inter Relay Table
@@ -82,6 +83,8 @@ struct gmtp_inter_entry {
 	__be32 last_data_tstamp;
 	__be32 transm_r;
 	__be32 rcv_tx_rate;
+	__u8 ucc_type;
+	struct gmtp_ucc_protocol ucc;
 
 	/* GMTP-MCC */
 	unsigned int nfeedbacks;
@@ -153,12 +156,13 @@ void kfree_gmtp_inter_hashtable(struct gmtp_inter_hashtable *hashtable);
 /**
  * struct gmtp_relay - A list of GMTP Relays
  *
- * @client: the relay data inherited from struct client
  * @state: state of relay
  * @dev: struct net_device of incoming request from client
+ *
+ * @tx_rate: max tx rate to relay
+ * @tx_byte_budget: the amount of bytes that can be sent immediately.
  */
 struct gmtp_relay {
-	struct gmtp_client client;
 	struct list_head list;
 	__be32 addr;
 	__be16 port;
@@ -166,6 +170,11 @@ struct gmtp_relay {
 
 	enum gmtp_state state;
 	struct net_device *dev;
+
+	/** GMTP-UCC */
+	unsigned long tx_rate;
+	int tx_byte_budget;
+	struct timer_list xmit_timer;
 };
 
 /** Relay.c **/

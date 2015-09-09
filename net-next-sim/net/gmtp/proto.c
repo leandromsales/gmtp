@@ -718,9 +718,9 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	 * Here, a while(timer_pending(...)) does not work for ns-3/dce
 	 * So, we use a timer...
 	 */
-	if(!timer_pending(&gp->xmit_timer)) {
+	/*if(!timer_pending(&gp->xmit_timer)) {*/
 		gmtp_write_xmit(sk, skb);
-	} else {
+	/*} else {
 		struct timer_list *sendmsg_timer = kmalloc(
 				sizeof(struct timer_list), GFP_KERNEL);
 		struct sendmsg_data *sd = kmalloc(sizeof(struct sendmsg_data),
@@ -731,7 +731,7 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 		setup_timer(sd->sendmsg_timer, gmtp_sendmsg_callback,
 				(unsigned long ) sd);
 		mod_timer(sd->sendmsg_timer, jiffies + 1);
-	}
+	}*/
 
 out_release:
 	release_sock(sk);

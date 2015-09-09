@@ -42,6 +42,7 @@ int main(int argc, char *argv[])
 	struct sockaddr_storage serverStorage;
 	socklen_t addr_size;
 	int media_rate = 300000; // B/s
+	int ucc_type = GMTP_DELAY_UCC;
 
 	cout << "Starting GMTP Server..." << endl;
 	welcomeSocket = socket(PF_INET, SOCK_GMTP, IPPROTO_GMTP);
@@ -50,6 +51,7 @@ int main(int argc, char *argv[])
 
 	cout << "Limiting tx_rate to " << media_rate << " B/s" << endl;
 	setsockopt(welcomeSocket, SOL_GMTP, GMTP_SOCKOPT_MEDIA_RATE, &media_rate, sizeof(media_rate));
+	setsockopt(welcomeSocket, SOL_GMTP, GMTP_SOCKOPT_UCC_TYPE, &ucc_type, sizeof(ucc_type));
 
 	serverAddr.sin_family = AF_INET;
 	serverAddr.sin_port = htons(SERVER_PORT);
