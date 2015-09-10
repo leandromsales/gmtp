@@ -718,7 +718,6 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 	unsigned long elapsed = 0;
 	long delay = 0, delay2 = 0, delay_budget = 0;
 	unsigned long tx_rate = min(gp->tx_max_rate, gp->tx_ucc_rate);
-	struct gmtp_packet_info *pkt_info;
 	int len;
 
 	/** TODO Continue tests with different scales... */
@@ -731,15 +730,9 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 	if(tx_rate == UINT_MAX /*|| tx_rate >= gp->tx_media_rate*/)
 		goto send;
 
-	/** FIXME Testing */
-	goto send;
-
 	/*pr_info("[%d] Tx rate: %lu bytes/s\n", gp->tx_dpkts_sent, gp->tx_total_rate);
 	pr_info("[-] Tx rate (sample): %lu bytes/s\n", gp->tx_sample_rate);*/
 
-	pkt_info = kmalloc(sizeof(struct gmtp_packet_info), GFP_KERNEL);
-	pkt_info->sk = sk;
-	pkt_info->skb = skb;
 	elapsed = jiffies - gp->tx_last_stamp; /* time elapsed since last sent */
 
 	len = packet_len(skb);
@@ -769,9 +762,15 @@ wait:
 		gp->tx_byte_budget = INT_MIN;
 
 	if(delay2 > 0) {
+		struct gmtp_packet_info *pkt_info;
+		pkt_info = kmalloc(sizeof(struct gmtp_packet_info), GFP_KERNEL);
+		pkt_info->sk = sk;
+		pkt_info->skb = skb;
+
 		setup_timer(&gp->xmit_timer, gmtp_write_xmit_timer,
 				(unsigned long ) pkt_info);
 		mod_timer(&gp->xmit_timer, jiffies + delay2);
+
 		/* Never use gmtp_wait_for_delay(sk, delay2); in NS-3/dce*/
 		schedule_timeout(delay2);
 		return;

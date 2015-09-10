@@ -53,6 +53,15 @@ struct gmtp_relay *gmtp_inter_create_relay(struct sk_buff *skb,
 	return relay;
 }
 
+void init_relay_buffer(struct gmtp_relay *relay)
+{
+	setup_timer(&relay->xmit_timer, gmtp_inter_xmit_timer,
+			(unsigned long ) relay);
+	relay->buffer = kmalloc(sizeof(struct sk_buff_head), GFP_KERNEL);
+	skb_queue_head_init(relay->buffer);
+}
+EXPORT_SYMBOL_GPL(init_relay_buffer);
+
 struct gmtp_relay* gmtp_get_relay(struct list_head *head,
 		__be32 addr, __be16 port)
 {

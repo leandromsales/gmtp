@@ -33,23 +33,24 @@ struct gmtp_relay;
 struct gmtp_inter_entry;
 
 struct gmtp_ucc_protocol {
-	int (*congestion_control)(struct sk_buff *skb,
-			struct gmtp_inter_entry *entry,
+	void (*congestion_control)(struct gmtp_inter_entry *entry,
 			struct gmtp_relay *relay);
 };
 
 int gmtp_inter_build_ucc(struct gmtp_ucc_protocol *ucc,
 		enum gmtp_ucc_type ucc_type);
 
-int gmtp_delay_cc(struct sk_buff *skb, struct gmtp_inter_entry *entry,
-		struct gmtp_relay *relay);
-int gmtp_media_adapt_cc(struct sk_buff *skb, struct gmtp_inter_entry *entry,
+void gmtp_inter_xmit_timer(unsigned long data);
+
+void gmtp_delay_cc(struct gmtp_inter_entry *entry, struct gmtp_relay *relay);
+void gmtp_media_adapt_cc(struct gmtp_inter_entry *entry,
 		struct gmtp_relay *relay);
 
 struct gmtp_inter_ucc_info {
 	struct sk_buff *skb;
 	struct gmtp_inter_entry *entry;
 	struct gmtp_relay *relay;
+	struct timer_list *timer;
 };
 
 #endif /* UCC_H_ */

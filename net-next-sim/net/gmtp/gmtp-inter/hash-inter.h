@@ -175,6 +175,11 @@ struct gmtp_relay {
 	unsigned long tx_rate;
 	int tx_byte_budget;
 	struct timer_list xmit_timer;
+
+	struct sk_buff_head *buffer;
+	struct sk_buff *next_skb;
+	struct iphdr *next_iph;
+	struct gmtp_hdr *next_gh;
 };
 
 /** Relay.c **/
@@ -184,6 +189,7 @@ struct gmtp_relay *gmtp_list_add_relay(__be32 addr, __be16 port,
 		struct list_head *head);
 struct gmtp_relay *gmtp_inter_create_relay(struct sk_buff *skb,
 		struct gmtp_inter_entry *entry);
+void init_relay_buffer(struct gmtp_relay *relay);
 struct gmtp_relay* gmtp_get_relay(struct list_head *head,
 		__be32 addr, __be16 port);
 int gmtp_delete_relays(struct list_head *list, __be32 addr, __be16 port);

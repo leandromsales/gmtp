@@ -149,7 +149,7 @@ int gmtp_inter_register_rcv(struct sk_buff *skb)
 					iph->saddr, ghreply,
 					GMTP_INTER_BACKWARD);
 		}
-	} else if(gmtp_inter_ip_local(iph->daddr)) { /* I am the server */
+	} else if(!gmtp_inter_ip_local(iph->daddr)) { /* I am not the server */
 
 		__be32 mcst_addr = get_mcst_v4_addr();
 		int err = gmtp_inter_add_entry(gmtp_inter.hashtable,
@@ -452,11 +452,12 @@ int gmtp_inter_route_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	relay->state = GMTP_OPEN;
 	ether_addr_copy(relay->mac_addr, eth->h_source);
 	relay->dev = skb->dev;
+	init_relay_buffer(relay);
 
 	if(gmtp_inter_ip_local(iph->daddr)) { /* I am the server itself */
 		if(route->nrelays > 0)
-			gmtp_add_server_entry(server_hashtable, gh->flowname,
-					route);
+			/*gmtp_add_server_entry(server_hashtable, gh->flowname,
+					route)*/;
 		pr_info("ROUTE_RCV: entry->route_pending = %d\n",
 				entry->route_pending);
 		if(entry->route_pending) {

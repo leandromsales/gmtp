@@ -88,20 +88,20 @@ struct gmtp_client_entry *gmtp_lookup_client(struct gmtp_hashtable *table,
 		const __u8 *key);
 void gmtp_del_client_entry(struct gmtp_hashtable *table, const __u8 *key);
 
+
+
 /** Servers **/
 
 /**
  * struct gmtp_server_entry - An entry in server hash table
- *
  */
 struct gmtp_server_entry {
-	/* gmtp_hash_entry has to be the first member of gmtp_server_entry */
 	struct gmtp_hash_entry		entry;
-
 	struct gmtp_hashtable 		*relay_hashtable;
+	struct gmtp_relay_entry		*relay_head;
 };
 
-int gmtp_add_server_entry(struct gmtp_hashtable *table, const __u8 *flowname,
+int gmtp_add_server_entry(struct gmtp_hashtable *table, struct sock *sk,
 		struct gmtp_hdr_route *route);
 
 /**
@@ -114,6 +114,7 @@ struct gmtp_relay_entry {
 	struct gmtp_hash_entry		entry;
 	struct gmtp_hdr_relay 		relay;
 	struct list_head 		list;
+	struct sock 			*sk;
 };
 
 

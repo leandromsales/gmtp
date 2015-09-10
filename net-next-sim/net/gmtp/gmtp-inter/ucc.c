@@ -8,6 +8,8 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/ktime.h>
+#include <linux/kthread.h>
+#include <linux/sched.h>
 
 #include "../gmtp.h"
 #include "gmtp-inter.h"
@@ -152,36 +154,32 @@ int gmtp_inter_build_ucc(struct gmtp_ucc_protocol *ucc,
 
 void gmtp_inter_xmit_timer(unsigned long data)
 {
-	struct gmtp_inter_ucc_info *info = (struct gmtp_inter_ucc_info*) data;
-	gmtp_delay_cc(info->skb, info->entry, info->relay);
-	del_timer_sync(&info->relay->xmit_timer);
-	kfree(info);
+	struct gmtp_relay *relay = (struct gmtp_relay *) data;
+
+	gmtp_inter_build_and_send_pkt(relay->next_skb, relay->next_iph->saddr,
+			relay->addr, relay->next_gh, GMTP_INTER_FORWARD);
 }
 EXPORT_SYMBOL_GPL(gmtp_inter_xmit_timer);
 
-int gmtp_delay_cc(struct sk_buff *skb, struct gmtp_inter_entry *entry,
-		struct gmtp_relay *relay)
+void gmtp_delay_cc(struct gmtp_inter_entry *entry, struct gmtp_relay *relay)
 {
+	/*struct sk_buff *skb = skb_dequeue(relay->buffer);*/
+
+	struct sk_buff *skb = relay->next_skb;
 	unsigned long elapsed = 0;
 	long delay = 0, delay2 = 0, delay_budget = 0;
 	unsigned long tx_rate = relay->tx_rate;
-	struct gmtp_inter_ucc_info *info;
 	int len;
 
 	/** TODO Continue tests with different scales... */
 	static const int scale = 1;
 	/*static const int scale = HZ/100;*/
 
-	if(unlikely(skb == NULL))
-		return NF_DROP;
+	/*relay->next_skb = skb;*/
 
 	if(tx_rate == UINT_MAX)
 		goto send;
 
-	info = kmalloc(sizeof(struct gmtp_inter_ucc_info), GFP_KERNEL);
-	info->skb = skb;
-	info->entry = entry;
-	info->relay = relay;
 	elapsed = jiffies - entry->last_data_tstamp;
 
 	len = skb->len + (gmtp_data_hdr_len() + 20 + ETH_HLEN);
@@ -201,9 +199,6 @@ int gmtp_delay_cc(struct sk_buff *skb, struct gmtp_inter_entry *entry,
 wait:
 	delay2 += delay_budget;
 
-	/*
-	 * FIXME More tests with byte_budgets...
-	 */
 	if(delay <= 0)
 		relay->tx_byte_budget =	mult_frac(scale, tx_rate, HZ) /*-
 			mult_frac(relay->tx_byte_budget,
@@ -211,22 +206,21 @@ wait:
 	else
 		relay->tx_byte_budget = INT_MIN;
 
+	pr_info("delay2: %ld\n", delay2);
+
 	if(delay2 > 0) {
-		setup_timer(&relay->xmit_timer, gmtp_inter_xmit_timer,
-				(unsigned long ) info);
 		mod_timer(&relay->xmit_timer, jiffies + delay2);
-		schedule_timeout(delay2);
-		return NF_ACCEPT;
+		return;
 	}
 
 send:
-	return NF_ACCEPT;
+	gmtp_inter_xmit_timer((unsigned long) relay);
 
 }
 
-int gmtp_media_adapt_cc(struct sk_buff *skb, struct gmtp_inter_entry *entry,
-			struct gmtp_relay *relay)
+void gmtp_media_adapt_cc(struct gmtp_inter_entry *entry,
+		struct gmtp_relay *relay)
 {
-	return NF_ACCEPT;
+	;
 }
 

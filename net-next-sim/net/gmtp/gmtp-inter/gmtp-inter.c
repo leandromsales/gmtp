@@ -237,11 +237,11 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 				print_gmtp_packet(iph, gh);
 				return gmtp_inter_request_rcv(skb);
 			}
-		} else if(gh->type == GMTP_PKT_REGISTER) {
+		} /*else if(gh->type == GMTP_PKT_REGISTER) {
 			print_packet(skb, true);
 			print_gmtp_packet(iph, gh);
 			return gmtp_inter_register_rcv(skb);
-		}
+		}*/
 
 		entry = gmtp_inter_lookup_media(gmtp_inter.hashtable,
 				gh->flowname);

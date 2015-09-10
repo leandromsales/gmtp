@@ -58,6 +58,7 @@ int gmtp_add_route(struct gmtp_server_entry* server,
 		if(i == 0) {
 			INIT_LIST_HEAD(&relay->list);
 			head = &relay->list;
+			server->relay_head = relay;
 		}
 		list_add_tail(&relay->list, head);
 
@@ -68,10 +69,11 @@ int gmtp_add_route(struct gmtp_server_entry* server,
 	return err;
 }
 
-int gmtp_add_server_entry(struct gmtp_hashtable *table, const __u8 *flowname,
+int gmtp_add_server_entry(struct gmtp_hashtable *table, struct sock *sk,
 		struct gmtp_hdr_route *route)
 {
 	struct gmtp_server_entry *server;
+	const __u8 *flowname = gmtp_sk(sk)->flowname;
 
 	gmtp_pr_func();
 
@@ -89,6 +91,8 @@ int gmtp_add_server_entry(struct gmtp_hashtable *table, const __u8 *flowname,
 
 	if(gmtp_add_route(server, route))
 		return 1;
+
+	server->relay_head->sk = sk;
 
 	return table->hash_ops.add_entry(table, (struct gmtp_hash_entry*)server);
 }

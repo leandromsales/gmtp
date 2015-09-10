@@ -220,6 +220,7 @@ int gmtp_init_sock(struct sock *sk)
 	gmtp_pr_func();
 
 	gmtp_init_xmit_timers(sk);
+
 	icsk->icsk_rto		= GMTP_TIMEOUT_INIT;
 	icsk->icsk_syn_retries	= GMTP_SYN_RETRIES;
 	sk->sk_state		= GMTP_CLOSED;
@@ -670,7 +671,7 @@ static void gmtp_sendmsg_callback(unsigned long data)
 		mod_timer(sd->sendmsg_timer, jiffies + 1);
 }
 
-int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
+int gmtp_do_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 {
 	struct gmtp_sock *gp = gmtp_sk(sk);
 	const int flags = msg->msg_flags;
@@ -740,6 +741,28 @@ out_discard:
 	kfree_skb(skb);
 	goto out_release;
 
+}
+
+int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
+{
+	struct gmtp_sock *gp = gmtp_sk(sk);
+	struct gmtp_hash_entry *entry;
+	int ret = 0;
+
+	unsigned int hashval = server_hashtable->hash_ops.hash(server_hashtable, gp->flowname);
+
+	entry = server_hashtable->entry[hashval];
+
+	if(entry == NULL)
+		return gmtp_do_sendmsg(sk, msg, len);
+
+	/* For every socket(P) in server, send the same data */
+	for(; entry != NULL; entry = entry->next) {
+		struct gmtp_server_entry *se = (struct gmtp_server_entry*) se;
+		ret = gmtp_do_sendmsg(se->relay_head->sk, msg, len);
+	}
+
+	return ret;
 }
 EXPORT_SYMBOL_GPL(gmtp_sendmsg);
 
