@@ -465,7 +465,7 @@ int gmtp_rcv_route_notify(struct sock *sk, struct sk_buff *skb,
 	if(route->nrelays <= 0)
 		return 0;
 
-	gmtp_add_server_entry(server_hashtable, gh->flowname, route);
+	gmtp_add_server_entry(server_hashtable, sk, route);
 
 	return 0;
 }
@@ -509,8 +509,8 @@ static int gmtp_rcv_request_rcv_state_process(struct sock *sk,
 		sk_wake_async(sk, SOCK_WAKE_IO, POLL_OUT);
 
 		/* The server does nothing. Local GMTP-Inter handles with it */
-		/*if(gh->type == GMTP_PKT_ROUTE_NOTIFY)
-			gmtp_rcv_route_notify(sk, skb, gh);*/
+		if(gh->type == GMTP_PKT_ROUTE_NOTIFY)
+			gmtp_rcv_route_notify(sk, skb, gh);
 
 		if (gh->type == GMTP_PKT_DATAACK)
 		{

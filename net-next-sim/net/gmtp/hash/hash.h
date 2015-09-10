@@ -11,13 +11,13 @@
 #define GMTP_HASH_KEY_LEN  16
 
 struct gmtp_hashtable;
+struct gmtp_hash_entry;
 
 /**
  * struct gmtp_hash_ops - The GMTP hash table operations
  */
 struct gmtp_hash_ops {
-	unsigned int (*hash)(struct gmtp_hashtable *table, const __u8 *key);
-	struct gmtp_hash_entry *(*lookup)(struct gmtp_hashtable *table,
+	unsigned int (*hashval)(struct gmtp_hashtable *table,
 			const __u8 *key);
 	int (*add_entry)(struct gmtp_hashtable *table,
 			struct gmtp_hash_entry *entry);
@@ -52,12 +52,19 @@ struct gmtp_hashtable {
 
 	struct gmtp_hash_entry		**entry;
 	struct gmtp_hash_ops		hash_ops;
+
+	unsigned int (*hashval)(struct gmtp_hashtable *table,
+			const __u8 *key);
+	int (*add_entry)(struct gmtp_hashtable *table,
+			struct gmtp_hash_entry *entry);
+	void (*del_entry)(struct gmtp_hashtable *table, const __u8 *key);
+	void (*destroy)(struct gmtp_hashtable *table);
 };
 
 /** hash.c */
 struct gmtp_hashtable *gmtp_build_hashtable(unsigned int size,
 		struct gmtp_hash_ops hash_ops);
-unsigned int gmtp_hash(struct gmtp_hashtable *table, const __u8 *key);
+unsigned int gmtp_hashval(struct gmtp_hashtable *table, const __u8 *key);
 struct gmtp_hash_entry *gmtp_lookup_entry(struct gmtp_hashtable *table,
 		const __u8 *key);
 int gmtp_add_entry(struct gmtp_hashtable *table, struct gmtp_hash_entry *entry);

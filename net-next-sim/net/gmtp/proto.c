@@ -749,17 +749,29 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	struct gmtp_hash_entry *entry;
 	int ret = 0;
 
-	unsigned int hashval = server_hashtable->hash_ops.hash(server_hashtable, gp->flowname);
+	char fl[GMTP_FLOWNAME_STR_LEN];
+	flowname_str(fl, gp->flowname);
 
-	entry = server_hashtable->entry[hashval];
+	entry = gmtp_lookup_entry(server_hashtable, gp->flowname);
+
+	pr_info("flow: %s, entry: %p\n", fl, entry);
+
 
 	if(entry == NULL)
 		return gmtp_do_sendmsg(sk, msg, len);
 
 	/* For every socket(P) in server, send the same data */
 	for(; entry != NULL; entry = entry->next) {
-		struct gmtp_server_entry *se = (struct gmtp_server_entry*) se;
-		ret = gmtp_do_sendmsg(se->relay_head->sk, msg, len);
+		struct gmtp_server_entry *se = (struct gmtp_server_entry*) entry;
+
+		pr_info("head: %p\n", se->relay_head);
+		if(se->relay_head != NULL) {
+			pr_info("socket: %p\n", se->relay_head->sk);
+			pr_info("Sending to:     ");
+			print_gmtp_sock(se->relay_head->sk);
+
+			ret = gmtp_do_sendmsg(se->relay_head->sk, msg, len);
+		}
 	}
 
 	return ret;

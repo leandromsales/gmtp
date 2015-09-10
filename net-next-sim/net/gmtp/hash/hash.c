@@ -38,6 +38,10 @@ struct gmtp_hashtable *gmtp_build_hashtable(unsigned int size,
 
 	new_table->size = size;
 	new_table->hash_ops = hash_ops;
+	new_table->hashval = hash_ops.hashval;
+	new_table->add_entry = hash_ops.add_entry;
+	new_table->del_entry = hash_ops.del_entry;
+	new_table->destroy = hash_ops.destroy;
 
 	return new_table;
 }
@@ -45,11 +49,11 @@ EXPORT_SYMBOL_GPL(gmtp_build_hashtable);
 
 void kfree_gmtp_hashtable(struct gmtp_hashtable *table)
 {
-	table->hash_ops.destroy(table);
+	table->destroy(table);
 }
 EXPORT_SYMBOL_GPL(kfree_gmtp_hashtable);
 
-unsigned int gmtp_hash(struct gmtp_hashtable *table, const __u8 *key)
+unsigned int gmtp_hashval(struct gmtp_hashtable *table, const __u8 *key)
 {
 	unsigned int hashval;
 	int i;
@@ -71,7 +75,9 @@ struct gmtp_hash_entry *gmtp_lookup_entry(struct gmtp_hashtable *table,
 		const __u8 *key)
 {
 	struct gmtp_hash_entry *entry;
-	unsigned int hashval = table->hash_ops.hash(table, key);
+	unsigned int hashval = table->hashval(table, key);
+
+	pr_info("hahsval: %u\n", hashval);
 
 	/* Error */
 	if(hashval < 0)
@@ -91,12 +97,12 @@ int gmtp_add_entry(struct gmtp_hashtable *table, struct gmtp_hash_entry *entry)
 
 	gmtp_print_function();
 
-	hashval = table->hash_ops.hash(table, entry->key);
+	hashval = table->hashval(table, entry->key);
 	if(hashval < 0)
 		return hashval;
 
 	/** Primary key at client hashtable is flowname */
-	cur_entry = table->hash_ops.lookup(table, entry->key);
+	cur_entry = gmtp_lookup_entry(table, entry->key);
 	if(cur_entry != NULL)
 		return 1; /* Entry already exists */
 
@@ -121,7 +127,7 @@ void destroy_gmtp_hashtable(struct gmtp_hashtable *table)
 		while(entry != NULL) {
 			tmp = entry;
 			entry = entry->next;
-			table->hash_ops.del_entry(table, tmp->key);
+			table->del_entry(table, tmp->key);
 		}
 	}
 
