@@ -100,18 +100,6 @@ void gmtp_del_client_entry(struct gmtp_hashtable *table, const __u8 *key);
 /** Servers **/
 
 /**
- * struct gmtp_server_entry - An entry in server hash table
- */
-struct gmtp_server_entry {
-	struct gmtp_hash_entry		entry;
-	struct gmtp_hashtable 		*relay_hashtable;
-	struct gmtp_relay_entry		*relay_head;
-};
-
-int gmtp_add_server_entry(struct gmtp_hashtable *table, struct sock *sk,
-		struct gmtp_hdr_route *route);
-
-/**
  * struct gmtp_relay_table_entry - An entry in relays hash table (in server)
  * @next: 	the next entry with the same key (hash)
  *
@@ -123,6 +111,19 @@ struct gmtp_relay_entry {
 	struct list_head 		list;
 	struct sock 			*sk;
 };
+
+/**
+ * struct gmtp_server_entry - An entry in server hash table
+ */
+struct gmtp_server_entry {
+	struct gmtp_hash_entry		entry;
+	struct gmtp_hashtable 		*relay_hashtable;
+	struct gmtp_relay_entry		relay_list; /* copy */
+	unsigned int 			len;
+};
+
+int gmtp_add_server_entry(struct gmtp_hashtable *table, struct sock *sk,
+		struct gmtp_hdr_route *route);
 
 
 

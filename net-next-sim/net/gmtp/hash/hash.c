@@ -77,8 +77,6 @@ struct gmtp_hash_entry *gmtp_lookup_entry(struct gmtp_hashtable *table,
 	struct gmtp_hash_entry *entry;
 	unsigned int hashval = table->hashval(table, key);
 
-	pr_info("hahsval: %u\n", hashval);
-
 	/* Error */
 	if(hashval < 0)
 		return NULL;

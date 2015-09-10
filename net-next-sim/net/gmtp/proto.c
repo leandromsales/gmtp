@@ -720,7 +720,7 @@ int gmtp_do_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	 * So, we use a timer...
 	 */
 	/*if(!timer_pending(&gp->xmit_timer)) {*/
-		gmtp_write_xmit(sk, skb);
+	gmtp_write_xmit(sk, skb);
 	/*} else {
 		struct timer_list *sendmsg_timer = kmalloc(
 				sizeof(struct timer_list), GFP_KERNEL);
@@ -740,40 +740,32 @@ out_release:
 out_discard:
 	kfree_skb(skb);
 	goto out_release;
-
 }
 
 int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 {
 	struct gmtp_sock *gp = gmtp_sk(sk);
-	struct gmtp_hash_entry *entry;
-	int ret = 0;
+	struct gmtp_server_entry *s;
+	struct gmtp_relay_entry *r;
+	int ret = 0, j = 0;
 
-	char fl[GMTP_FLOWNAME_STR_LEN];
-	flowname_str(fl, gp->flowname);
+	s = (struct gmtp_server_entry*)gmtp_lookup_entry(server_hashtable,
+			gp->flowname);
 
-	entry = gmtp_lookup_entry(server_hashtable, gp->flowname);
-
-	pr_info("flow: %s, entry: %p\n", fl, entry);
-
-
-	if(entry == NULL)
+	if(s == NULL)
 		return gmtp_do_sendmsg(sk, msg, len);
 
 	/* For every socket(P) in server, send the same data */
-	for(; entry != NULL; entry = entry->next) {
-		struct gmtp_server_entry *se = (struct gmtp_server_entry*) entry;
-
-		pr_info("head: %p\n", se->relay_head);
-		if(se->relay_head != NULL) {
-			pr_info("socket: %p\n", se->relay_head->sk);
-			pr_info("Sending to:     ");
-			print_gmtp_sock(se->relay_head->sk);
-
-			ret = gmtp_do_sendmsg(se->relay_head->sk, msg, len);
-		}
+	list_for_each_entry(r, &s->relay_list.list, list) {
+		struct msghdr *msgcpy = kmalloc(len, gfp_any());
+		memcpy(msgcpy, msg, len);
+		ret = gmtp_do_sendmsg(r->sk, msgcpy, len);
+		kfree(msgcpy);
+		if(++j >= s->len)
+			break;
 	}
 
+	kfree(msg);
 	return ret;
 }
 EXPORT_SYMBOL_GPL(gmtp_sendmsg);

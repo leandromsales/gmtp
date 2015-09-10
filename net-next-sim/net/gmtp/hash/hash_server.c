@@ -39,7 +39,7 @@ static struct gmtp_relay_entry *gmtp_build_relay_entry(
 	return relay_entry;
 }
 
-int gmtp_add_route(struct gmtp_server_entry* server,
+int gmtp_add_route(struct gmtp_server_entry* server, struct sock *sk,
 		struct gmtp_hdr_route *route_hdr)
 {
 	struct gmtp_hashtable *relay_table = server->relay_hashtable;
@@ -57,7 +57,10 @@ int gmtp_add_route(struct gmtp_server_entry* server,
 		if(i == 0) {
 			INIT_LIST_HEAD(&relay->list);
 			head = &relay->list;
-			server->relay_head = relay;
+			relay->sk = sk;
+			/* add it on the list of relays at server */
+			list_add_tail(&relay->list, &server->relay_list.list);
+			++server->len;
 		}
 		list_add_tail(&relay->list, head);
 
@@ -83,15 +86,15 @@ int gmtp_add_server_entry(struct gmtp_hashtable *table, struct sock *sk,
 		if(server == NULL)
 			return 1;
 
+		server->len = 0;
+		INIT_LIST_HEAD(&server->relay_list.list);
 		memcpy(server->entry.key, gp->flowname, GMTP_HASH_KEY_LEN);
 		server->relay_hashtable = gmtp_build_hashtable(U8_MAX,
 				gmtp_relay_hash_ops);
 	}
 
-	if(gmtp_add_route(server, route))
+	if(gmtp_add_route(server, sk, route))
 		return 1;
-
-	server->relay_head->sk = sk;
 
 	return table->add_entry(table, (struct gmtp_hash_entry*)server);
 }

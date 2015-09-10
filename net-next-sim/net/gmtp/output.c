@@ -661,7 +661,6 @@ static void gmtp_xmit_packet(struct sock *sk, struct sk_buff *skb) {
 	int err;
 
 	GMTP_SKB_CB(skb)->type = GMTP_PKT_DATA;
-
 	err = gmtp_transmit_skb(sk, skb);
 
 	/*
