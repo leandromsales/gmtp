@@ -761,6 +761,8 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 
 	/* For every socket(P) in server, send the same data */
 	list_for_each_entry(r, &s->relay_list.list, list) {
+
+
 		struct msghdr *msgcpy = kmalloc(len, gfp_any());
 		memcpy(msgcpy, msg, len);
 		ret = gmtp_do_sendmsg(r->sk, msgcpy, len);

@@ -750,8 +750,10 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 				goto no_gmtp_socket;
 			break;
 		case GMTP_PKT_ACK:
-			if(gmtp_v4_reporter_rcv_ack(skb))
+			if(gmtp_v4_reporter_rcv_ack(skb)) {
+				print_gmtp_packet(iph, gh);
 				goto no_gmtp_socket;
+			}
 			break;
 			/* FIXME Manage close from server... */
 			/*case GMTP_PKT_CLOSE:

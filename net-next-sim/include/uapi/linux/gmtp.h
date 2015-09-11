@@ -150,6 +150,7 @@ struct gmtp_hdr_relay {
 /**
  * struct gmtp_hdr_register_reply - Register reply from servers
  *
+ * @ucc_type: type of UCC
  * @nrelays: 	number of relays
  * @relay_list:	list of relays in path
  */
@@ -173,12 +174,16 @@ struct gmtp_hdr_route {
 /**
  * struct gmtp_hdr_reqnotify - RequestNotify to clients
  *
- * @error_code: One of gmtp_reqnotify_error_code
- * @channel_addr: multicast channel address
+ * @rn_code: One of gmtp_reqnotify_error_code
+ * @mcst_addr: multicast channel address
  * @mcst_port: multicast channel port
+ * @relay_id: Relay ID
+ * @reporter_addr: reporter IP address
+ * @reporter_port: reporter port
+ * @max_nclients: max amount of clients connected to a reporter
  */
 struct gmtp_hdr_reqnotify {
-	__u8			rn_code:3;
+	__u8			rn_code:2;
 	__be32			mcst_addr;
 	__be16  		mcst_port;
 	__u8 			relay_id[GMTP_RELAY_ID_LEN];
