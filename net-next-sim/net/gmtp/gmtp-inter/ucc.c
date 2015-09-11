@@ -25,7 +25,7 @@ void gmtp_ucc_equation_callback(unsigned long data)
 
 	unsigned int next = GMTP_DEFAULT_RTT;
 	gmtp_pr_func();
-	gmtp_ucc_equation(GMTP_UCC_DEBUG);
+	gmtp_ucc_equation(GMTP_UCC_NONE);
 	mod_timer(&gmtp_inter.gmtp_ucc_timer, jiffies + msecs_to_jiffies(next));
 }
 

@@ -96,10 +96,9 @@ void ack_timer_callback(unsigned long data)
 {
 	struct gmtp_inter_entry *entry = (struct gmtp_inter_entry*) data;
 
-	gmtp_ucc_equation(GMTP_UCC_DEBUG);
+	gmtp_ucc_equation(GMTP_UCC_NONE);
 	struct sk_buff *skb = gmtp_inter_build_ack(entry);
 
-	pr_info("Sending ack with new rate: %u B/s\n", gmtp_hdr(skb)->transm_r);
 	if(skb != NULL)
 		gmtp_inter_send_pkt(skb);
 

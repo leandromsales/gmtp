@@ -111,15 +111,15 @@ int main(int argc, char *argv[])
 	address.SetBase("10.3.1.0", "255.255.255.0");
 	ivector[6] = address.Assign(snc2);
 
-	Ptr<Node> client_r3 = CreateObject<Node>();
-	clients.Add(client_r3);
-	NodeContainer subnet_r3(relays.Get(3), client_r3);
-	stack.Install(client_r3);
-	dceManager.Install(client_r3);
-	NetDeviceContainer snr3 = csma.Install(subnet_r3);
-	address.SetBase("10.1.2.0", "255.255.255.0");
-	Ipv4InterfaceContainer ic = address.Assign(snr3);
-	RunApp("gmtp-client", client_r3, Seconds(4.5), "10.1.1.2", 1 << 31);
+//	Ptr<Node> client_r3 = CreateObject<Node>();
+//	clients.Add(client_r3);
+//	NodeContainer subnet_r3(relays.Get(3), client_r3);
+//	stack.Install(client_r3);
+//	dceManager.Install(client_r3);
+//	NetDeviceContainer snr3 = csma.Install(subnet_r3);
+//	address.SetBase("10.1.2.0", "255.255.255.0");
+//	Ipv4InterfaceContainer ic = address.Assign(snr3);
+//	RunApp("gmtp-client", client_r3, Seconds(4.5), "10.1.1.2", 1 << 31);
 
 	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 	LinuxStackHelper::PopulateRoutingTables ();

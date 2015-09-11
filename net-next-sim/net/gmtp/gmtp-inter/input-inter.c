@@ -28,13 +28,16 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 		struct gmtp_client *cl;
 		gmtp_pr_info("Media found. Sending RequestNotify.");
 		switch(entry->state) {
-		/* FIXME Make a timer to send register... */
+
 		case GMTP_INTER_WAITING_REGISTER_REPLY:
+			gmtp_pr_info("Waiting Register-Reply from server...");
+			/* FIXME Make a timer to send register again... */
 			code = GMTP_REQNOTIFY_CODE_WAIT;
-			/* GMTP-Request shall not pass */
-			gh->type = GMTP_PKT_REGISTER;
+			/*
+			gh->type = GMTP_PKT_REGISTER;  Request shall not pass
 			iph->ttl = 64;
-			ip_send_check(iph);
+			ip_send_check(iph);*/
+			ret = NF_DROP;
 			break;
 		case GMTP_INTER_REGISTER_REPLY_RECEIVED:
 		case GMTP_INTER_TRANSMITTING:
@@ -60,7 +63,7 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 				gh->flowname,
 				iph->daddr,
 				NULL,
-				gh->dport, /* Media port */
+				gh->dport, /* Server port */
 				mcst_addr,
 				gh->dport); /* Mcst port <- server port */
 

@@ -32,9 +32,9 @@ int gmtp_inter_register_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 
 	/* FIXME Get a valid and unused port */
 	entry->my_addr = gmtp_inter_device_ip(skb->dev);
-	entry->my_port = gh->sport;
 	ether_addr_copy(entry->request_mac_addr, skb->dev->dev_addr);
 
+	gh->sport = entry->my_port;
 	iph->saddr = entry->my_addr;
 	pr_info("My addr: %pI4\n", &entry->my_addr);
 	iph->ttl = 64;

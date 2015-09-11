@@ -742,6 +742,10 @@ out_discard:
 	goto out_release;
 }
 
+/**
+ * FIXME Make it multithreading.
+ * FIXME Send msg to remote clients (without relays)
+ */
 int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 {
 	struct gmtp_sock *gp = gmtp_sk(sk);
@@ -760,7 +764,7 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 		struct msghdr *msgcpy = kmalloc(len, gfp_any());
 		memcpy(msgcpy, msg, len);
 		ret = gmtp_do_sendmsg(r->sk, msgcpy, len);
-		kfree(msgcpy);
+		/*kfree(msgcpy);*/
 		if(++j >= s->len)
 			break;
 	}

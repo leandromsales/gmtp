@@ -141,10 +141,11 @@ struct sock *gmtp_check_req(struct sock *sk, struct sk_buff *skb,
 	if(!(seq >= greq->iss && seq <= greq->gss)) {
 		gmtp_print_debug(
 				"Invalid Seq number: "
-				"seq=%llu, iss=%llu, gss=%llu\n",
+				"seq=%llu, iss=%llu, gss=%llu",
 				(unsigned long long ) seq,
 				(unsigned long long ) greq->iss,
 				(unsigned long long ) greq->gss);
+		print_gmtp_packet(ip_hdr(skb), gmtp_hdr(skb));
 		goto drop;
 	}
 
