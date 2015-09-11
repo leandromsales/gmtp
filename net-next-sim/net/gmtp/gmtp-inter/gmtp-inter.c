@@ -237,11 +237,7 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 				print_gmtp_packet(iph, gh);
 				return gmtp_inter_request_rcv(skb);
 			}
-		} /*else if(gh->type == GMTP_PKT_REGISTER) {
-			print_packet(skb, true);
-			print_gmtp_packet(iph, gh);
-			return gmtp_inter_register_rcv(skb);
-		}*/
+		}
 
 		entry = gmtp_inter_lookup_media(gmtp_inter.hashtable,
 				gh->flowname);
@@ -249,6 +245,10 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 			return NF_ACCEPT;
 
 		switch(gh->type) {
+		case GMTP_PKT_REGISTER:
+			if(!gmtp_inter_ip_local(iph->daddr))
+				ret = gmtp_inter_register_rcv(skb);
+			break;
 		case GMTP_PKT_ROUTE_NOTIFY:
 			ret = gmtp_inter_route_rcv(skb, entry);
 			break;

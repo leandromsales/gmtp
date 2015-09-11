@@ -119,6 +119,8 @@ int gmtp_inter_register_rcv(struct sk_buff *skb)
 	struct gmtp_relay *relay;
 
 	gmtp_pr_func();
+	print_packet(skb, true);
+	print_gmtp_packet(iph, gh);
 
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry != NULL) {
@@ -152,7 +154,7 @@ int gmtp_inter_register_rcv(struct sk_buff *skb)
 					iph->saddr, ghreply,
 					GMTP_INTER_BACKWARD);
 		}
-	} else if(!gmtp_inter_ip_local(iph->daddr)) { /* I am not the server */
+	} else { /* I am not the server */
 
 		__be32 mcst_addr = get_mcst_v4_addr();
 		int err = gmtp_inter_add_entry(gmtp_inter.hashtable,
@@ -173,10 +175,7 @@ int gmtp_inter_register_rcv(struct sk_buff *skb)
 
 		if(relay != NULL)
 			ret = NF_ACCEPT;
-	} else {
-		return NF_ACCEPT;
 	}
-
 
 out:
 	return ret;

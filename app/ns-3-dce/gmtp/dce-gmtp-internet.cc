@@ -29,12 +29,14 @@ int main(int argc, char *argv[])
 {
 	int nclients1 = 1;
 	int nclients2 = 1;
+	bool middleman = false;
 	std::string data_rate = "10Mbps";
 	std::string delay = "1ms";
 
 	CommandLine cmd;
 	cmd.AddValue ("nclients1", "Number of clients in router 1", nclients1);
 	cmd.AddValue ("nclients2", "Number of clients in router 2", nclients2);
+	cmd.AddValue ("middleman", "Middleman intercepting requests", middleman);
 	cmd.AddValue ("data-rate", "Link capacity. Default value is 10Mbps", data_rate);
 	cmd.AddValue ("delay", "Channel delay. Default value is 1ms", delay);
 	cmd.Parse(argc, argv);
@@ -111,15 +113,18 @@ int main(int argc, char *argv[])
 	address.SetBase("10.3.1.0", "255.255.255.0");
 	ivector[6] = address.Assign(snc2);
 
-//	Ptr<Node> client_r3 = CreateObject<Node>();
-//	clients.Add(client_r3);
-//	NodeContainer subnet_r3(relays.Get(3), client_r3);
-//	stack.Install(client_r3);
-//	dceManager.Install(client_r3);
-//	NetDeviceContainer snr3 = csma.Install(subnet_r3);
-//	address.SetBase("10.1.2.0", "255.255.255.0");
-//	Ipv4InterfaceContainer ic = address.Assign(snr3);
-//	RunApp("gmtp-client", client_r3, Seconds(4.5), "10.1.1.2", 1 << 31);
+	if(middleman) {
+		Ptr<Node> client_r3 = CreateObject<Node>();
+		clients.Add(client_r3);
+		NodeContainer subnet_r3(relays.Get(3), client_r3);
+		stack.Install(client_r3);
+		dceManager.Install(client_r3);
+		NetDeviceContainer snr3 = csma.Install(subnet_r3);
+		address.SetBase("10.1.2.0", "255.255.255.0");
+		Ipv4InterfaceContainer ic = address.Assign(snr3);
+		RunApp("gmtp-client", client_r3, Seconds(4.5), "10.1.1.2",
+				1 << 31);
+	}
 
 	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 	LinuxStackHelper::PopulateRoutingTables ();
