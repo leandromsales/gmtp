@@ -14,6 +14,7 @@ struct gmtp_relay *gmtp_create_relay(__be32 addr, __be16 port)
 		new->addr = addr;
 		new->port = port;
 		new->state = GMTP_CLOSED;
+		new->tx_rate = UINT_MAX;
 	}
 	return new;
 }
@@ -49,18 +50,10 @@ struct gmtp_relay *gmtp_inter_create_relay(struct sk_buff *skb,
 		++entry->nrelays;
 		ether_addr_copy(relay->mac_addr, eth->h_source);
 		relay->state = GMTP_CLOSED;
+		relay->losses = 0;
 	}
 	return relay;
 }
-
-void init_relay_buffer(struct gmtp_relay *relay)
-{
-	setup_timer(&relay->xmit_timer, gmtp_inter_xmit_timer,
-			(unsigned long ) relay);
-	relay->buffer = kmalloc(sizeof(struct sk_buff_head), GFP_KERNEL);
-	skb_queue_head_init(relay->buffer);
-}
-EXPORT_SYMBOL_GPL(init_relay_buffer);
 
 struct gmtp_relay* gmtp_get_relay(struct list_head *head,
 		__be32 addr, __be16 port)

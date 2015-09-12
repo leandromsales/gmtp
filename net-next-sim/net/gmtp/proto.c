@@ -3,6 +3,7 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/types.h>
+#include <linux/kthread.h>
 
 #include <net/inet_hashtables.h>
 #include <net/sock.h>
@@ -529,6 +530,7 @@ int gmtp_ioctl(struct sock *sk, int cmd, unsigned long arg)
 		unsigned long amount = 0;
 
 		skb = skb_peek(&sk->sk_receive_queue);
+
 		if (skb != NULL) {
 			/*
 			 * We will only return the amount of this packet since
@@ -655,7 +657,7 @@ out:
 
 EXPORT_SYMBOL_GPL(gmtp_recvmsg);
 
-struct sendmsg_data {
+struct gmtp_sendmsg_data {
 	struct sock *sk;
 	struct sk_buff *skb;
 	struct timer_list *sendmsg_timer;
@@ -663,10 +665,11 @@ struct sendmsg_data {
 
 static void gmtp_sendmsg_callback(unsigned long data)
 {
-	struct sendmsg_data *sd = (struct sendmsg_data*) data;
+	struct gmtp_sendmsg_data *sd = (struct gmtp_sendmsg_data*) data;
 	if(!timer_pending(&gmtp_sk(sd->sk)->xmit_timer)) {
 		gmtp_write_xmit(sd->sk, sd->skb);
 		del_timer(sd->sendmsg_timer);
+		kfree(sd->sendmsg_timer);
 	} else
 		mod_timer(sd->sendmsg_timer, jiffies + 1);
 }
@@ -719,12 +722,12 @@ int gmtp_do_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	 * Here, a while(timer_pending(...)) does not work for ns-3/dce
 	 * So, we use a timer...
 	 */
-	/*if(!timer_pending(&gp->xmit_timer)) {*/
-	gmtp_write_xmit(sk, skb);
-	/*} else {
+	if(!timer_pending(&gp->xmit_timer)) {
+		gmtp_write_xmit(sk, skb);
+	} else {
 		struct timer_list *sendmsg_timer = kmalloc(
 				sizeof(struct timer_list), GFP_KERNEL);
-		struct sendmsg_data *sd = kmalloc(sizeof(struct sendmsg_data),
+		struct gmtp_sendmsg_data *sd = kmalloc(sizeof(struct gmtp_sendmsg_data),
 				GFP_KERNEL);
 		sd->sk = sk;
 		sd->skb = skb;
@@ -732,7 +735,7 @@ int gmtp_do_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 		setup_timer(sd->sendmsg_timer, gmtp_sendmsg_callback,
 				(unsigned long ) sd);
 		mod_timer(sd->sendmsg_timer, jiffies + 1);
-	}*/
+	}
 
 out_release:
 	release_sock(sk);
@@ -741,6 +744,19 @@ out_discard:
 	kfree_skb(skb);
 	goto out_release;
 }
+
+/*struct gmtp_sendmsg_data {
+	struct sock *sk;
+	struct msghdr *msg;
+	size_t len;
+};*/
+
+/*int gmtp_do_sendmsg_thread_func(void *data)
+{
+	struct gmtp_sendmsg_data *smd = (struct gmtp_sendmsg_data*) data;
+
+	return gmtp_do_sendmsg(smd->sk, smd->msg, smd->len);
+}*/
 
 /**
  * FIXME Make it multithreading.
@@ -762,13 +778,35 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	/* For every socket(P) in server, send the same data */
 	list_for_each_entry(r, &s->relay_list.list, list) {
 
+		struct msghdr *msgcpy;
+		/*struct gmtp_sendmsg_data *smd = kmalloc(
+		 sizeof(struct gmtp_sendmsg_data), gfp_any());
+		 struct task_struct *task;*/
 
-		struct msghdr *msgcpy = kmalloc(len, gfp_any());
+		if(r->sk == NULL)
+			goto count_cl;
+
+		msgcpy = kmalloc(len, gfp_any());
+
 		memcpy(msgcpy, msg, len);
+
+		/*smd->sk = sk;
+		smd->msg = msgcpy;
+		smd->len = len;
+
+		task = kthread_run(&gmtp_do_sendmsg_thread_func, (void *)smd, "pradeep");
+		printk(KERN_INFO "Kernel Thread: %s\n",task->comm);
+
+		ret = kthread_stop(task);*/
+
 		ret = gmtp_do_sendmsg(r->sk, msgcpy, len);
+
 		/*kfree(msgcpy);*/
+		/*kfree(smd);*/
+	count_cl:
 		if(++j >= s->len)
 			break;
+
 	}
 
 	kfree(msg);

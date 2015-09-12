@@ -33,6 +33,7 @@
  * @last_rx_tstamp: time stamp of last received data packet (milliseconds)
  * @last_data_tstamp: time stamp stored in last received data packet.
  * @transm_r: default tx rate of server
+ *
  * FIXME now, rcv_tx_rate is updated via acks (r -> s). his is wrong...
  * @rcv_tx_rate: tx rate received from relays (or server) in path s->r
  *
@@ -84,7 +85,7 @@ struct gmtp_inter_entry {
 	__be32 transm_r;
 	__be32 rcv_tx_rate;
 	__u8 ucc_type;
-	struct gmtp_ucc_protocol ucc;
+	struct gmtp_inter_ucc_protocol ucc;
 
 	/* GMTP-MCC */
 	unsigned int nfeedbacks;
@@ -175,11 +176,7 @@ struct gmtp_relay {
 	unsigned long tx_rate;
 	int tx_byte_budget;
 	struct timer_list xmit_timer;
-
-	struct sk_buff_head *buffer;
-	struct sk_buff *next_skb;
-	struct iphdr *next_iph;
-	struct gmtp_hdr *next_gh;
+	int losses;
 };
 
 /** Relay.c **/
@@ -189,7 +186,6 @@ struct gmtp_relay *gmtp_list_add_relay(__be32 addr, __be16 port,
 		struct list_head *head);
 struct gmtp_relay *gmtp_inter_create_relay(struct sk_buff *skb,
 		struct gmtp_inter_entry *entry);
-void init_relay_buffer(struct gmtp_relay *relay);
 struct gmtp_relay* gmtp_get_relay(struct list_head *head,
 		__be32 addr, __be16 port);
 int gmtp_delete_relays(struct list_head *list, __be32 addr, __be16 port);

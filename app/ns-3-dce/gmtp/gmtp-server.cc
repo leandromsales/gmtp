@@ -43,6 +43,7 @@ int main(int argc, char *argv[])
 	socklen_t addr_size;
 	int media_rate = 300000; // B/s
 	int ucc_type = GMTP_DELAY_UCC;
+//	int ucc_type = GMTP_MEDIA_ADAPT_UCC;
 
 	cout << "Starting GMTP Server..." << endl;
 	welcomeSocket = socket(PF_INET, SOCK_GMTP, IPPROTO_GMTP);
@@ -79,7 +80,7 @@ int main(int argc, char *argv[])
 	cout << "Sending data...\n" << endl;
 	for(i = 0; i < 10000; ++i) {
 		const char *numstr = NumStr(i+1);
-		char *buffer = new char(BUFF_SIZE);
+		char *buffer = new char[BUFF_SIZE];
 		strcpy(buffer, msg);
 		strcat(buffer, numstr);
 		int pkt_size = BUFF_SIZE + 36 + 20;

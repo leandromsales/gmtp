@@ -13,6 +13,7 @@
 #include <ctime>
 #include <cstdio>
 #include <cstring>
+#include <sys/ioctl.h>
 
 #include "gmtp.h"
 

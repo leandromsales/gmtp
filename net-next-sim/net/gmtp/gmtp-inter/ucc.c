@@ -133,15 +133,15 @@ void gmtp_ucc_equation(enum gmtp_ucc_log_level log_level)
 }
 EXPORT_SYMBOL_GPL(gmtp_ucc_equation);
 
-int gmtp_inter_build_ucc(struct gmtp_ucc_protocol *ucc,
+int gmtp_inter_build_ucc(struct gmtp_inter_ucc_protocol *ucc,
 		enum gmtp_ucc_type ucc_type)
 {
 	switch(ucc_type) {
 	case GMTP_DELAY_UCC:
-		ucc->congestion_control = gmtp_delay_cc;
+		ucc->congestion_control = gmtp_inter_delay_cc;
 		break;
 	case GMTP_MEDIA_ADAPT_UCC:
-		ucc->congestion_control = gmtp_media_adapt_cc;
+		ucc->congestion_control = gmtp_inter_media_adapt_cc;
 		break;
 	default:
 		return 1;
@@ -151,21 +151,27 @@ int gmtp_inter_build_ucc(struct gmtp_ucc_protocol *ucc,
 	return 0;
 }
 
+struct gmtp_delay_cc_data {
+	struct sk_buff *skb;
+	struct gmtp_inter_entry *entry;
+	struct gmtp_relay *relay;
+	struct timer_list *delay_cc_timer;
+};
 
 void gmtp_inter_xmit_timer(unsigned long data)
 {
-	struct gmtp_relay *relay = (struct gmtp_relay *) data;
-
-	gmtp_inter_build_and_send_pkt(relay->next_skb, relay->next_iph->saddr,
-			relay->addr, relay->next_gh, GMTP_INTER_FORWARD);
+	struct gmtp_delay_cc_data *cc_data = (struct gmtp_delay_cc_data *) data;
+	gmtp_inter_delay_cc(cc_data->skb, cc_data->entry, cc_data->relay);
+	del_timer(cc_data->delay_cc_timer);
+	kfree(cc_data->delay_cc_timer);
 }
-EXPORT_SYMBOL_GPL(gmtp_inter_xmit_timer);
 
-void gmtp_delay_cc(struct gmtp_inter_entry *entry, struct gmtp_relay *relay)
+void gmtp_inter_delay_cc(struct sk_buff *skb, struct gmtp_inter_entry *entry,
+		struct gmtp_relay *relay)
 {
-	/*struct sk_buff *skb = skb_dequeue(relay->buffer);*/
+	struct iphdr *iph = ip_hdr(skb);
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
 
-	struct sk_buff *skb = relay->next_skb;
 	unsigned long elapsed = 0;
 	long delay = 0, delay2 = 0, delay_budget = 0;
 	unsigned long tx_rate = relay->tx_rate;
@@ -175,14 +181,11 @@ void gmtp_delay_cc(struct gmtp_inter_entry *entry, struct gmtp_relay *relay)
 	static const int scale = 1;
 	/*static const int scale = HZ/100;*/
 
-	/*relay->next_skb = skb;*/
-
 	if(tx_rate == UINT_MAX)
 		goto send;
 
 	elapsed = jiffies - entry->last_data_tstamp;
-
-	len = skb->len + (gmtp_data_hdr_len() + 20 + ETH_HLEN);
+	len = skb->len;
 	if(relay->tx_byte_budget >= mult_frac(len, 3, 4)) {
 		goto send;
 	} else if(relay->tx_byte_budget != INT_MIN) {
@@ -196,6 +199,7 @@ void gmtp_delay_cc(struct gmtp_inter_entry *entry, struct gmtp_relay *relay)
 	/*if(delay2 > 0)
 		delay2 += mult_frac(delay2, get_rate_gap(gp, 1), 100);*/
 
+	pr_info("delay2: %ld\n", delay2);
 wait:
 	delay2 += delay_budget;
 
@@ -206,21 +210,80 @@ wait:
 	else
 		relay->tx_byte_budget = INT_MIN;
 
-	pr_info("delay2: %ld\n", delay2);
-
 	if(delay2 > 0) {
-		mod_timer(&relay->xmit_timer, jiffies + delay2);
+		struct gmtp_delay_cc_data *cc_data;
+		cc_data = kmalloc(sizeof(struct gmtp_delay_cc_data), GFP_KERNEL);
+		cc_data->skb = skb;
+		cc_data->entry = entry;
+		cc_data->relay = relay;
+		cc_data->delay_cc_timer = kmalloc(sizeof(struct timer_list),
+				GFP_KERNEL);
+
+		setup_timer(cc_data->delay_cc_timer, gmtp_inter_xmit_timer,
+				(unsigned long) cc_data);
+		mod_timer(cc_data->delay_cc_timer, jiffies + delay2);
+
+		schedule_timeout(delay2);
 		return;
 	}
 
 send:
-	gmtp_inter_xmit_timer((unsigned long) relay);
+	gmtp_inter_build_and_send_pkt(skb, iph->saddr, relay->addr, gh,
+			GMTP_INTER_FORWARD);
 
 }
 
-void gmtp_media_adapt_cc(struct gmtp_inter_entry *entry,
+void gmtp_inter_media_adapt_cc(struct sk_buff *skb, struct gmtp_inter_entry *entry,
 		struct gmtp_relay *relay)
 {
-	;
+	struct iphdr *iph = ip_hdr(skb);
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct sk_buff *copy = skb_copy(skb, gfp_any());
+
+	unsigned int len, hdrlen, datalen, datalen30, datalen60, datalen90;
+	unsigned int rate, new_datalen, reduce;
+
+	copy = skb_copy(skb, gfp_any());
+	if(relay->tx_rate >= entry->transm_r)
+		goto send;
+
+	hdrlen = gmtp_data_hdr_len() + ip_hdrlen(skb) + ETH_HLEN;
+	datalen = skb->len - hdrlen;
+
+	rate = DIV_ROUND_CLOSEST(1000 * (unsigned int) entry->transm_r,
+			(unsigned int) relay->tx_rate);
+
+	if(rate == 0)
+		goto send;
+
+	datalen30 = DIV_ROUND_CLOSEST(300 * datalen, 1000);
+	datalen60 = DIV_ROUND_CLOSEST(600 * datalen, 1000);
+	datalen90 = DIV_ROUND_CLOSEST(900 * datalen, 1000);
+
+	new_datalen = DIV_ROUND_CLOSEST(datalen * 1000, rate);
+
+	if(new_datalen >= datalen90)
+		new_datalen = datalen90;
+	else if(new_datalen >= datalen60)
+		new_datalen = datalen60;
+	else if(new_datalen >= datalen30)
+		new_datalen = datalen30;
+	else
+		return; /* drop */
+
+	reduce = datalen - new_datalen;
+	pr_info("\nNew len: %u B (reducing %u B)\n", new_datalen, reduce);
+	print_gmtp_data(skb, "Reduced");
+
+	skb_trim(copy, reduce);
+
+send:
+	gmtp_inter_build_and_send_pkt(copy, iph->saddr, relay->addr, gh,
+				GMTP_INTER_FORWARD);
+
+	/*gmtp_inter_build_and_send_pkt(skb, iph->saddr, relay->addr, gh,
+				GMTP_INTER_FORWARD);*/
 }
+
+
 

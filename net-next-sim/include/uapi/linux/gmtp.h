@@ -25,10 +25,10 @@
  * Register-Reply->nrelays: 8
  * Register-Reply->relay_list 1400
  *
- * 1400/20 = 70
+ * 1400/20 = 70 (-1 (ucc_type))
  *
  */
-#define GMTP_MAX_RELAY_NUM 70
+#define GMTP_MAX_RELAY_NUM 69
 
 /**
  * GMTP packet header
@@ -313,7 +313,7 @@ static inline unsigned int gmtp_packet_hdr_variable_len(const __u8 type)
 }
 
 enum gmtp_ucc_type {
-	GMTP_DELAY_UCC = 1,
+	GMTP_DELAY_UCC = 0,
 	GMTP_MEDIA_ADAPT_UCC,
 
 	GMTP_MAX_UCC_TYPES

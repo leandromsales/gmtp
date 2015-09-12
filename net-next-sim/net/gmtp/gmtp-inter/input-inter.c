@@ -413,17 +413,16 @@ int gmtp_inter_ack_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	struct gmtp_client *reporter;
 	struct gmtp_relay *relay;
 
-	gmtp_pr_func();
-	print_gmtp_packet(iph, gh);
-
 	reporter = gmtp_get_client(&entry->clients->list, iph->saddr,
 			gh->sport);
 	if(reporter != NULL)
 		reporter->ack_rx_tstamp = jiffies_to_msecs(jiffies);
 
 	relay = gmtp_get_relay(&entry->relays->list, iph->saddr, gh->sport);
-	if(relay != NULL) /** FIXME Study new manner of Rates and RTTs... */
+	if(relay != NULL) {/** FIXME Study new manner of Rates and RTTs... */
 		entry->rcv_tx_rate = gh->transm_r;
+		relay->tx_rate = gh->transm_r;
+	}
 
 	if(gmtp_inter_ip_local(iph->daddr)) {
 		if(entry->route_pending) {
@@ -434,7 +433,6 @@ int gmtp_inter_ack_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 		}
 	}
 
-	pr_info("Dropping...\n");
 	return NF_DROP;
 }
 
@@ -458,7 +456,6 @@ int gmtp_inter_route_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	relay->state = GMTP_OPEN;
 	ether_addr_copy(relay->mac_addr, eth->h_source);
 	relay->dev = skb->dev;
-	init_relay_buffer(relay);
 
 	if(gmtp_inter_ip_local(iph->daddr)) { /* I am the server itself */
 		if(route->nrelays > 0)

@@ -114,6 +114,7 @@ int main(int argc, char *argv[])
 	ivector[6] = address.Assign(snc2);
 
 	if(middleman) {
+		cout << "Starting new relay here...\n";
 		Ptr<Node> client_r3 = CreateObject<Node>();
 		clients.Add(client_r3);
 		NodeContainer subnet_r3(relays.Get(3), client_r3);

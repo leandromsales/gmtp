@@ -403,7 +403,8 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 			gp->tx_ucc_rate = min((__be32 )gp->tx_max_rate,
 					gh->transm_r);
 
-			pr_info("ucc tx: %lu B/s\n", gp->tx_ucc_rate);
+			pr_info("ucc tx: %lu B/s, from: %pI4\n", gp->tx_ucc_rate,
+					&ip_hdr(skb)->saddr);
 		}
 		goto discard;
 	case GMTP_PKT_RESET:
