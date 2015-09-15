@@ -94,6 +94,7 @@ struct gmtp_inter_entry {
 	unsigned long recent_rx_tstamp;
 	unsigned int current_rx;
 	unsigned int required_tx;
+	unsigned int data_pkt_in;
 	unsigned int data_pkt_out;
 	unsigned int server_rtt;
 	unsigned int clients_rtt;

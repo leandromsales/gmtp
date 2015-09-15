@@ -199,7 +199,6 @@ void gmtp_inter_delay_cc(struct sk_buff *skb, struct gmtp_inter_entry *entry,
 	/*if(delay2 > 0)
 		delay2 += mult_frac(delay2, get_rate_gap(gp, 1), 100);*/
 
-	pr_info("delay2: %ld\n", delay2);
 wait:
 	delay2 += delay_budget;
 

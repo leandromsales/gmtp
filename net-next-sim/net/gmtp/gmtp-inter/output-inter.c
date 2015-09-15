@@ -135,6 +135,8 @@ send:
 			skb->dev = relay->dev;
 
 			entry->ucc.congestion_control(skb, entry, relay);
+			/*gmtp_inter_build_and_send_pkt(skb, iph->saddr,
+					relay->addr, gh, GMTP_INTER_FORWARD);*/
 		}
 	}
 

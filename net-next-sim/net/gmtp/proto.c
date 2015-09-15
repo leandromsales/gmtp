@@ -778,28 +778,29 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	/* For every socket(P) in server, send the same data */
 	list_for_each_entry(r, &s->relay_list.list, list) {
 
-		struct msghdr *msgcpy;
+
 		/*struct gmtp_sendmsg_data *smd = kmalloc(
 		 sizeof(struct gmtp_sendmsg_data), gfp_any());
 		 struct task_struct *task;*/
 
-		if(r->sk == NULL)
-			goto count_cl;
+		if(likely(r->sk != NULL)) {
+			struct msghdr *msgcpy;
 
-		msgcpy = kmalloc(len, gfp_any());
+			msgcpy = kmalloc(len, gfp_any());
 
-		memcpy(msgcpy, msg, len);
+			memcpy(msgcpy, msg, len);
 
-		/*smd->sk = sk;
-		smd->msg = msgcpy;
-		smd->len = len;
+			/*smd->sk = sk;
+			 smd->msg = msgcpy;
+			 smd->len = len;
 
-		task = kthread_run(&gmtp_do_sendmsg_thread_func, (void *)smd, "pradeep");
-		printk(KERN_INFO "Kernel Thread: %s\n",task->comm);
+			 task = kthread_run(&gmtp_do_sendmsg_thread_func, (void *)smd, "pradeep");
+			 printk(KERN_INFO "Kernel Thread: %s\n",task->comm);
 
-		ret = kthread_stop(task);*/
+			 ret = kthread_stop(task);*/
 
-		ret = gmtp_do_sendmsg(r->sk, msgcpy, len);
+			ret = gmtp_do_sendmsg(r->sk, msgcpy, len);
+		}
 
 		/*kfree(msgcpy);*/
 		/*kfree(smd);*/

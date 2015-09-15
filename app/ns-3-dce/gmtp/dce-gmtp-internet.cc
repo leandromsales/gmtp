@@ -116,14 +116,14 @@ int main(int argc, char *argv[])
 	if(middleman) {
 		cout << "Starting new relay here...\n";
 		Ptr<Node> client_r3 = CreateObject<Node>();
-		clients.Add(client_r3);
 		NodeContainer subnet_r3(relays.Get(3), client_r3);
 		stack.Install(client_r3);
 		dceManager.Install(client_r3);
 		NetDeviceContainer snr3 = csma.Install(subnet_r3);
 		address.SetBase("10.1.2.0", "255.255.255.0");
 		Ipv4InterfaceContainer ic = address.Assign(snr3);
-		RunApp("gmtp-client", client_r3, Seconds(4.5), "10.1.1.2",
+		RunGtmpInter(client_r3, Seconds(2.3), "off");
+		RunApp("gmtp-client", client_r3, Seconds(3.5), "10.1.1.2",
 				1 << 31);
 	}
 
@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
 //	RunApp("tcp-server", server, Seconds(4.0), 1 << 31);
 //	RunAppMulti("tcp-client", clients.Get(0), 5.0, "10.1.1.2", 1 << 16, 30);
 
-	RunApp("gmtp-server", server, Seconds(4.0), 1 << 31);
+	RunApp("gmtp-server", server, Seconds(3.0), 1 << 31);
 	RunAppMulti("gmtp-client", clients, 5.0, "10.1.1.2", 1 << 16, 30);
 
 	csma.EnablePcapAll("dce-gmtp-internet");

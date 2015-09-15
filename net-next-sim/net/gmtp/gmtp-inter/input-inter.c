@@ -314,7 +314,8 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 		if(gh_route_n != NULL)
 			gmtp_inter_build_and_send_pkt(skb, iph->daddr,
 					iph->saddr, gh_route_n, direction);
-		mod_timer(&entry->ack_timer, jiffies + (3 * HZ));
+		mod_timer(&entry->ack_timer,
+				jiffies + msecs_to_jiffies(2*GMTP_DEFAULT_RTT));
 	} else {
 		pr_info("Direction: LOCAL\n");
 		ether_addr_copy(entry->server_mac_addr, skb->dev->dev_addr);
@@ -534,6 +535,7 @@ static inline void gmtp_update_stats(struct gmtp_inter_entry *info,
 	info->server_rtt = (unsigned int)gh->server_rtt;
 	info->last_data_tstamp = gmtp_hdr_data(skb)->tstamp;
 	info->last_rx_tstamp = jiffies_to_msecs(jiffies);
+	info->data_pkt_in++;
 
 	info->transm_r = gh->transm_r;
 
