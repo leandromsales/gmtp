@@ -163,10 +163,12 @@ struct gmtp_hdr_register_reply {
 /**
  * struct gmtp_hdr_route_notify - RouteNotify to servers
  *
+ * @ucc_type: type of UCC
  * @nrelays: number of relays
  * @relay_list - list of relays in path
  */
 struct gmtp_hdr_route {
+	__u8			ucc_type:2;
 	__u8 			nrelays;
 	struct gmtp_hdr_relay 	relay_list[GMTP_MAX_RELAY_NUM];
 };

@@ -59,6 +59,8 @@ int gmtp_add_route(struct gmtp_server_entry* server, struct sock *sk,
 			head = &relay->list;
 			relay->sk = sk;
 			/* add it on the list of relays at server */
+
+			pr_info("Adding relay on list...\n");
 			list_add_tail(&relay->list, &server->relay_list.list);
 			++server->len;
 		}

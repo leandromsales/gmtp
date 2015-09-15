@@ -769,7 +769,7 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	struct gmtp_relay_entry *r;
 	int ret = 0, j = 0;
 
-	s = (struct gmtp_server_entry*)gmtp_lookup_entry(server_hashtable,
+	s = (struct gmtp_server_entry*) gmtp_lookup_entry(server_hashtable,
 			gp->flowname);
 
 	if(s == NULL)
@@ -777,7 +777,6 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 
 	/* For every socket(P) in server, send the same data */
 	list_for_each_entry(r, &s->relay_list.list, list) {
-
 
 		/*struct gmtp_sendmsg_data *smd = kmalloc(
 		 sizeof(struct gmtp_sendmsg_data), gfp_any());
