@@ -535,7 +535,6 @@ static inline void gmtp_update_stats(struct gmtp_inter_entry *info,
 	info->server_rtt = (unsigned int)gh->server_rtt;
 	info->last_data_tstamp = gmtp_hdr_data(skb)->tstamp;
 	info->last_rx_tstamp = jiffies_to_msecs(jiffies);
-	info->data_pkt_in++;
 
 	info->transm_r = gh->transm_r;
 
@@ -543,15 +542,16 @@ static inline void gmtp_update_stats(struct gmtp_inter_entry *info,
 	/*info->rcv_tx_rate = gh->transm_r;
 	gh->transm_r = min(info->rcv_tx_rate, gmtp_inter.ucc_rx);*/
 
-	if(gh->seq % gmtp_inter.rx_rate_wnd == 0) {
-		unsigned long current_time = jiffies_to_msecs(jiffies);
+	if(++info->data_pkt_in % gmtp_inter.rx_rate_wnd == 0) {
+		unsigned long current_time = ktime_to_ms(ktime_get_real());
 		unsigned long elapsed = current_time - info->recent_rx_tstamp;
 
 		if(elapsed != 0) {
 			info->current_rx = DIV_ROUND_CLOSEST(
-					info->recent_bytes * HZ, elapsed);
+					info->recent_bytes * MSEC_PER_SEC, elapsed);
 		}
-		info->recent_rx_tstamp = jiffies_to_msecs(jiffies);
+		info->recent_rx_tstamp = ktime_to_ms(ktime_get_real());
+
 		info->recent_bytes = 0;
 		gmtp_inter.worst_rtt = GMTP_MIN_RTT_MS;
 	}

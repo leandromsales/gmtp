@@ -12,7 +12,7 @@
 #define SOL_GMTP      281
 
 #define SERVER_PORT 2000
-#define BUFF_SIZE (int) 744  /* 744 + 56 = 800 B/pkt */
+#define BUFF_SIZE (int) 744  /* 544 + 56 = 600 B/pkt */
 #define GMTP_SAMPLE 100
 
 #define NumStr(Number) static_cast<ostringstream*>( &(ostringstream() << Number) )->str().c_str()

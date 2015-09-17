@@ -124,8 +124,9 @@ int gmtp_inter_data_out(struct sk_buff *skb, struct gmtp_inter_entry *entry);
 int gmtp_inter_close_out(struct sk_buff *skb, struct gmtp_inter_entry *entry);
 
 /** build.c */
-struct sk_buff *gmtp_inter_build_multicast_pkt(struct sk_buff *skb_src,
-		struct net_device *dev);
+struct sk_buff *gmtp_inter_build_pkt_len(struct sk_buff *skb_src, __be32 saddr,
+		__be32 daddr, struct gmtp_hdr *gh_ref, int data_len,
+		enum gmtp_inter_direction direction);
 struct sk_buff *gmtp_inter_build_pkt(struct sk_buff *skb_src, __be32 saddr,
 		__be32 daddr, struct gmtp_hdr *gh_ref,
 		enum gmtp_inter_direction direction);
@@ -151,6 +152,9 @@ int gmtp_inter_make_reset(struct sk_buff *skb, struct gmtp_hdr *gh_reset);
 struct gmtp_hdr *gmtp_inter_make_close_hdr(struct sk_buff *skb);
 void gmtp_inter_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
 		__be32 daddr, struct gmtp_hdr *gh_ref,
+		enum gmtp_inter_direction direction);
+void gmtp_inter_build_and_send_pkt_len(struct sk_buff *skb_src, __be32 saddr,
+		__be32 daddr, struct gmtp_hdr *gh_ref, int data_len,
 		enum gmtp_inter_direction direction);
 void gmtp_inter_build_and_send_skb(struct sk_buff *skb,
 		enum gmtp_inter_direction direction);

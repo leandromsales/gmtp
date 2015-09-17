@@ -237,51 +237,60 @@ void gmtp_inter_media_adapt_cc(struct sk_buff *skb, struct gmtp_inter_entry *ent
 {
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
-	struct sk_buff *copy = skb_copy(skb, gfp_any());
 
-	unsigned int len, hdrlen, datalen, datalen30, datalen60, datalen90;
-	unsigned int rate, new_datalen, reduce;
+	unsigned int len, hdrlen, datalen, datalen20, datalen40, datalen80;
+	unsigned int rate, new_datalen;
+	unsigned int rx_rate = entry->current_rx <= 0 ?
+			(unsigned int) entry->transm_r : entry->current_rx;
 
-	copy = skb_copy(skb, gfp_any());
-	if(relay->tx_rate >= entry->transm_r)
+	hdrlen = gmtp_data_hdr_len() + ip_hdrlen(skb);
+	new_datalen = datalen = skb->len - hdrlen;
+
+	if(relay->tx_rate >= rx_rate)
 		goto send;
 
-	hdrlen = gmtp_data_hdr_len() + ip_hdrlen(skb) + ETH_HLEN;
-	datalen = skb->len - hdrlen;
-
-	rate = DIV_ROUND_CLOSEST(1000 * (unsigned int) entry->transm_r,
+	rate = DIV_ROUND_CLOSEST(1000 * rx_rate,
 			(unsigned int) relay->tx_rate);
 
 	if(rate == 0)
 		goto send;
 
-	datalen30 = DIV_ROUND_CLOSEST(300 * datalen, 1000);
-	datalen60 = DIV_ROUND_CLOSEST(600 * datalen, 1000);
-	datalen90 = DIV_ROUND_CLOSEST(900 * datalen, 1000);
+	datalen20 = DIV_ROUND_CLOSEST(200 * skb->len, 1000) - hdrlen;
+	datalen40 = DIV_ROUND_CLOSEST(400 * skb->len, 1000) - hdrlen;
+	datalen80 = DIV_ROUND_CLOSEST(800 * skb->len, 1000) - hdrlen;
 
-	new_datalen = DIV_ROUND_CLOSEST(datalen * 1000, rate);
+	new_datalen = DIV_ROUND_CLOSEST(skb->len * 1000, rate) - hdrlen;
 
-	if(new_datalen >= datalen90)
-		new_datalen = datalen90;
-	else if(new_datalen >= datalen60)
-		new_datalen = datalen60;
-	else if(new_datalen >= datalen30)
-		new_datalen = datalen30;
-	else
-		return; /* drop */
+	char label[90];
 
-	reduce = datalen - new_datalen;
-	pr_info("\nNew len: %u B (reducing %u B)\n", new_datalen, reduce);
-	print_gmtp_data(skb, "Reduced");
+	if(new_datalen >= datalen80)
+		new_datalen = datalen80;
+	else if(new_datalen >= datalen40)
+		new_datalen = datalen40;
+	else if(new_datalen >= datalen20)
+		new_datalen = datalen20;
+	else {
+		goto drop;
+	}
 
-	skb_trim(copy, reduce);
+	if(new_datalen < 0) {
+		goto drop;
+
+	}
+
+	sprintf(label, "Cur_RX: %u B/s, TX: %lu B/s. Data to %pI4, reducing to %u B (-%u B): ",
+			rx_rate, relay->tx_rate, &relay->addr, new_datalen,
+			(datalen - new_datalen));
+	print_gmtp_data(skb, label);
 
 send:
-	gmtp_inter_build_and_send_pkt(copy, iph->saddr, relay->addr, gh,
-				GMTP_INTER_FORWARD);
-
-	/*gmtp_inter_build_and_send_pkt(skb, iph->saddr, relay->addr, gh,
-				GMTP_INTER_FORWARD);*/
+	gmtp_inter_build_and_send_pkt_len(skb, iph->saddr, relay->addr,
+			gh, new_datalen, GMTP_INTER_FORWARD);
+	return;
+drop:
+	sprintf(label, "Cur_RX: %u B/s, TX: %lu B/s. Dropping packet to %pI4: ",
+			rx_rate, relay->tx_rate, &relay->addr);
+	print_gmtp_data(skb, label);
 }
 
 

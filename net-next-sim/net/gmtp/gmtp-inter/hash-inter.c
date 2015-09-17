@@ -133,7 +133,7 @@ void __gmtp_inter_build_info(struct gmtp_inter_entry *info)
 	skb_queue_head_init(info->buffer);
 	info->buffer_len = 0;
 	/*gmtp_set_buffer_limits(info, 40);*/
-	gmtp_set_buffer_limits(info, 1);
+	gmtp_set_buffer_limits(info, 40);
 
 	setup_timer(&info->mcc_timer, mcc_timer_callback, (unsigned long) info);
 }

@@ -438,7 +438,7 @@ int init_module()
 	gmtp_inter.buffer_len = 0;
 	gmtp_inter.kreporter = GMTP_REPORTER_DEFAULT_PROPORTION - 1;
 
-	/* TODO Why initial rx per flow is 10% of capacity of channel? */
+	/* TODO Why initial rx per flow is 5% of capacity of channel? */
 	gmtp_inter.ucc_rx = DIV_ROUND_CLOSEST(gmtp_inter.capacity * 10, 100);
 
 	gmtp_inter.total_bytes_rx = 0;

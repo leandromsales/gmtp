@@ -148,6 +148,8 @@ unsigned int gmtp_sync_mss(struct sock *sk, u32 pmtu)
 	icsk->icsk_pmtu_cookie = pmtu;
 	gp->mss = cur_mps;
 
+	pr_info("MSS: %u\n", gp->mss);
+
 	return cur_mps;
 }
 EXPORT_SYMBOL_GPL(gmtp_sync_mss);
