@@ -40,17 +40,18 @@ static struct gmtp_relay_entry *gmtp_build_relay_entry(
 }
 
 int gmtp_add_route(struct gmtp_server_entry* server, struct sock *sk,
-		struct gmtp_hdr_route *route_hdr)
+		struct sk_buff *skb)
 {
 	struct gmtp_hashtable *relay_table = server->relay_hashtable;
+	struct gmtp_hdr_relay *relay_list = gmtp_hdr_relay(skb);
 	struct list_head *head;
 	int i, err = 0;
 
 	gmtp_pr_func();
 
-	for(i = 0; i < route_hdr->nrelays; ++i) {
+	for(i = 0; i < gmtp_hdr_route(skb)->nrelays; ++i) {
 		struct gmtp_relay_entry *relay;
-		relay = gmtp_build_relay_entry(&route_hdr->relay_list[i]);
+		relay = gmtp_build_relay_entry(&relay_list[i]);
 		if(relay == NULL)
 			return 1;
 
@@ -74,8 +75,9 @@ int gmtp_add_route(struct gmtp_server_entry* server, struct sock *sk,
 }
 
 int gmtp_add_server_entry(struct gmtp_hashtable *table, struct sock *sk,
-		struct gmtp_hdr_route *route)
+		struct sk_buff *skb)
 {
+	struct gmtp_hdr_route *route = gmtp_hdr_route(skb);
 	struct gmtp_sock *gp = gmtp_sk(sk);
 	struct gmtp_server_entry *server;
 
@@ -95,7 +97,7 @@ int gmtp_add_server_entry(struct gmtp_hashtable *table, struct sock *sk,
 				gmtp_relay_hash_ops);
 	}
 
-	if(gmtp_add_route(server, sk, route))
+	if(gmtp_add_route(server, sk, skb))
 		return 1;
 
 	return table->add_entry(table, (struct gmtp_hash_entry*)server);

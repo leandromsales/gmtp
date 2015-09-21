@@ -461,12 +461,12 @@ int gmtp_rcv_route_notify(struct sock *sk, struct sk_buff *skb,
 	gmtp_print_function();
 
 	print_gmtp_packet(ip_hdr(skb), gh);
-	print_route(route);
+	print_route(skb);
 
 	if(route->nrelays <= 0)
 		return 0;
 
-	gmtp_add_server_entry(server_hashtable, sk, route);
+	gmtp_add_server_entry(server_hashtable, sk, skb);
 
 	return 0;
 }

@@ -111,12 +111,13 @@ void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh)
 	__u8 flowname[GMTP_FLOWNAME_STR_LEN];
 	flowname_str(flowname, gh->flowname);
 
-	pr_info("%s (%u) src=%pI4@%-5d, dst=%pI4@%-5d, ttl=%u, seq=%u, "
+	pr_info("%s (%u) src=%pI4@%-5d, dst=%pI4@%-5d, ttl=%u, len=%u B, seq=%u, "
 			"rtt=%u ms, tx=%u B/s, P=%s\n",
 				gmtp_packet_name(gh->type), gh->type,
 				&iph->saddr, ntohs(gh->sport),
 				&iph->daddr, ntohs(gh->dport),
-				iph->ttl, gh->seq, gh->server_rtt, gh->transm_r,
+				iph->ttl, ntohs(iph->tot_len),
+				gh->seq, gh->server_rtt, gh->transm_r,
 				flowname);
 }
 EXPORT_SYMBOL_GPL(print_gmtp_packet);
@@ -129,9 +130,11 @@ void print_gmtp_hdr_relay(const struct gmtp_hdr_relay *relay)
 }
 EXPORT_SYMBOL_GPL(print_gmtp_hdr_relay);
 
-void print_route(struct gmtp_hdr_route *route)
+void print_route(struct sk_buff *skb)
 {
 	int i;
+	struct gmtp_hdr_route *route = gmtp_hdr_route(skb);
+	struct gmtp_hdr_relay *relay_list = gmtp_hdr_relay(skb);
 
 	if(route->nrelays <= 0) {
 		pr_info("Empty route.\n");
@@ -140,7 +143,7 @@ void print_route(struct gmtp_hdr_route *route)
 
 	pr_info("Route: \n");
 	for(i = route->nrelays - 1; i >= 0; --i)
-		print_gmtp_hdr_relay(&route->relay_list[i]);
+		print_gmtp_hdr_relay(&relay_list[i]);
 }
 EXPORT_SYMBOL_GPL(print_route);
 

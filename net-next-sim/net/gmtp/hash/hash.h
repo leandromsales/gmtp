@@ -123,7 +123,7 @@ struct gmtp_server_entry {
 };
 
 int gmtp_add_server_entry(struct gmtp_hashtable *table, struct sock *sk,
-		struct gmtp_hdr_route *route);
+		struct sk_buff *skb);
 
 
 

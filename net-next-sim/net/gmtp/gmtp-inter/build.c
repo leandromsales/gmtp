@@ -19,16 +19,24 @@
 
 void gmtp_inter_add_relayid(struct sk_buff *skb)
 {
+	struct iphdr *iph = ip_hdr(skb);
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct gmtp_hdr_register_reply *gh_rply = gmtp_hdr_register_reply(skb);
-	struct gmtp_hdr_relay relay;
+	struct gmtp_hdr_relay *relay;
+	int relay_len = sizeof(struct gmtp_hdr_relay);
 
 	gmtp_print_function();
 
-	memcpy(relay.relay_id, gmtp_inter.relay_id, GMTP_RELAY_ID_LEN);
-	relay.relay_ip =  gmtp_inter_device_ip(skb->dev);
-
-	gh_rply->relay_list[gh_rply->nrelays] = relay;
+	relay = (struct gmtp_hdr_relay*) skb_put(skb, relay_len);
+	memcpy(relay->relay_id, gmtp_inter.relay_id, GMTP_RELAY_ID_LEN);
+	relay->relay_ip =  gmtp_inter_device_ip(skb->dev);
 	++gh_rply->nrelays;
+
+	gh->hdrlen += relay_len;
+	put_unaligned(htons(skb->len), &(iph->tot_len));
+	ip_send_check(iph);
+
+	print_route(skb);
 }
 
 struct gmtp_hdr *gmtp_inter_make_route_hdr(struct sk_buff *skb)
@@ -38,18 +46,19 @@ struct gmtp_hdr *gmtp_inter_make_route_hdr(struct sk_buff *skb)
 
 	struct gmtp_hdr *gh_cpy;
 	struct gmtp_hdr_route *gh_rn;
-	struct gmtp_hdr_register_reply *gh_reply;
+	struct gmtp_hdr_register_reply *gh_reply = gmtp_hdr_register_reply(skb);
 
 	int gmtp_hdr_len = sizeof(struct gmtp_hdr) +
-			sizeof(struct gmtp_hdr_route);
+			sizeof(struct gmtp_hdr_route) +
+			(gh_reply->nrelays * sizeof(struct gmtp_hdr_relay));
 
-	gmtp_print_function();
+	gmtp_pr_func();
 
 	transport_header = kmalloc(gmtp_hdr_len, gfp_any());
 	memset(transport_header, 0, gmtp_hdr_len);
 
 	gh_cpy = (struct gmtp_hdr *) transport_header;
-	memcpy(gh_cpy, gh, sizeof(struct gmtp_hdr));
+	memcpy(gh_cpy, gh, gmtp_hdr_len /*sizeof(struct gmtp_hdr)*/);
 
 	gh_cpy->version = GMTP_VERSION;
 	gh_cpy->type = GMTP_PKT_ROUTE_NOTIFY;
@@ -59,11 +68,6 @@ struct gmtp_hdr *gmtp_inter_make_route_hdr(struct sk_buff *skb)
 	gh_cpy->relay = 1;
 	gh_cpy->dport = gh->sport;
 	gh_cpy->sport = gh->dport;
-
-	gh_rn = (struct gmtp_hdr_route *)(transport_header
-			+ sizeof(struct gmtp_hdr));
-	gh_reply = gmtp_hdr_register_reply(skb);
-	memcpy(gh_rn, gh_reply,	sizeof(*gh_reply));
 
 	return gh_cpy;
 }
@@ -173,6 +177,7 @@ struct gmtp_hdr *gmtp_inter_make_register_reply_hdr(struct sk_buff *skb,
 {
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct gmtp_hdr *gh_cpy;
+	struct gmtp_hdr_register_reply *gh_reply;
 	__u8 *transport_header;
 
 	int gmtp_hdr_len = sizeof(struct gmtp_hdr)
@@ -194,6 +199,10 @@ struct gmtp_hdr *gmtp_inter_make_register_reply_hdr(struct sk_buff *skb,
 	gh_cpy->relay = 1;
 	gh_cpy->sport = new_sport;
 	gh_cpy->dport = new_dport;
+
+	gh_reply = (struct gmtp_hdr_register_reply*)(transport_header
+				+ sizeof(struct gmtp_hdr));
+	gh_reply->ucc_type = entry->ucc_type;
 
 	return gh_cpy;
 }
