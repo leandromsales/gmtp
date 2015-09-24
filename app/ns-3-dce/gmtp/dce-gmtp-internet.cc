@@ -123,8 +123,8 @@ int main(int argc, char *argv[])
 		address.SetBase("10.1.2.0", "255.255.255.0");
 		Ipv4InterfaceContainer ic = address.Assign(snr3);
 		RunGtmpInter(client_r3, Seconds(2.3), "off");
-		RunApp("gmtp-client", client_r3, Seconds(3.5), "10.1.1.2",
-				1 << 31);
+		RunApp("gmtp-client", client_r3, Seconds(3.5), "10.1.1.2", 1 << 31);
+//		RunApp("gmtp-client", client_r3, Seconds(6.5), "10.1.1.2", 1 << 31);
 	}
 
 	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();

@@ -105,6 +105,7 @@ int gmtp_inter_data_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	unsigned int server_tx;
 	struct gmtp_relay *relay, *temp;
 
+
 	if(unlikely(entry->state == GMTP_INTER_REGISTER_REPLY_RECEIVED))
 		entry->state = GMTP_INTER_TRANSMITTING;
 
@@ -126,6 +127,7 @@ int gmtp_inter_data_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	}
 
 send:
+	GMTP_SKB_CB(skb)->jumped = 0;
 	list_for_each_entry_safe(relay, temp, &entry->relays->list, list)
 	{
 		if(relay->state == GMTP_OPEN) {

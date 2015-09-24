@@ -220,6 +220,7 @@ struct gmtp_client *jump_over_gmtp_intra(struct sk_buff *skb,
 		gh->dport = client->port;
 		iph->daddr = client->addr;
 		ip_send_check(iph);
+		GMTP_SKB_CB(skb)->jumped = 1;
 	} else
 		pr_info("There are no clients anymore!\n");
 	return client;
@@ -585,21 +586,21 @@ int gmtp_inter_data_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	}
 
 	if(entry->buffer->qlen >= entry->buffer_max) {
-		pr_info("GMTP-Inter: dropping packet (seq=%u, data=%s)\n",
-				gh->seq, gmtp_data(skb));
+		pr_info("GMTP-Inter: dropping pkt (to %pI4, seq=%u, data=%s)\n",
+				&iph->daddr, gh->seq, gmtp_data(skb));
 		goto out;
 		/* Dont add it to buffer (equivalent to drop) */
 	}
-
-	if(iph->daddr == entry->my_addr)
-		jump_over_gmtp_intra(skb, &entry->clients->list);
-	else
-		skb->dev = entry->dev_out;
 
 	if((gh->seq > entry->seq) && entry->state == GMTP_INTER_TRANSMITTING)
 		gmtp_buffer_add(entry, skb);
 
 out:
+	if(iph->daddr == entry->my_addr)
+		jump_over_gmtp_intra(skb, &entry->clients->list);
+	else
+		skb->dev = entry->dev_out;
+
 	gmtp_update_stats(entry, skb, gh);
 
 	return NF_ACCEPT;

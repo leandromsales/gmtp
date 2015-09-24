@@ -1007,8 +1007,12 @@ struct sock *gmtp_v4_request_recv_sock(struct sock *sk, struct sk_buff *skb,
 
 	gmtp_print_function();
 
-	if(sk_acceptq_is_full(sk))
+	sk->sk_ack_backlog = 0;
+
+	if(sk_acceptq_is_full(sk)) {
+		pr_info("sk_acceptq_is_full(sk)\n");
 		goto exit_overflow;
+	}
 
 	newsk = gmtp_create_openreq_child(sk, req, skb);
 	if(newsk == NULL)
@@ -1025,9 +1029,8 @@ struct sock *gmtp_v4_request_recv_sock(struct sock *sk, struct sk_buff *skb,
 	newinet->mc_ttl = ip_hdr(skb)->ttl;
 	newinet->inet_id = jiffies;
 
-	if(dst == NULL
-			&& (dst = inet_csk_route_child_sock(sk, newsk, req))
-					== NULL)
+	if(dst == NULL	&&
+			(dst = inet_csk_route_child_sock(sk, newsk, req)) == NULL)
 		goto put_and_exit;
 
 	sk_setup_caps(newsk, dst);

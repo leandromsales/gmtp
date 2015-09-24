@@ -122,6 +122,26 @@ void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh)
 }
 EXPORT_SYMBOL_GPL(print_gmtp_packet);
 
+/*
+ * Print Data of GMTP-Data packets
+ */
+void print_gmtp_data(struct sk_buff *skb, char* label)
+{
+	__u8* data = gmtp_data(skb);
+	__u32 data_len = gmtp_data_len(skb);
+	char *lb = (label != NULL) ? label : "Data";
+	if(data_len > 0) {
+		unsigned char *data_str = kmalloc(data_len+1, GFP_KERNEL);
+		memcpy(data_str, data, data_len);
+		data_str[data_len] = '\0';
+		pr_info("%s: %s\n", lb, data_str);
+		kfree(data_str);
+	} else {
+		pr_info("%s: <empty>\n", lb);
+	}
+}
+EXPORT_SYMBOL_GPL(print_gmtp_data);
+
 void print_gmtp_hdr_relay(const struct gmtp_hdr_relay *relay)
 {
 	unsigned char relayid[GMTP_FLOWNAME_STR_LEN];
@@ -761,6 +781,54 @@ out_discard:
 	return gmtp_do_sendmsg(smd->sk, smd->msg, smd->len);
 }*/
 
+size_t gmtp_media_adapt_cc(struct sock *sk, struct msghdr *msg, size_t len)
+{
+	struct gmtp_sock *gp = gmtp_sk(sk);
+	unsigned long tx_rate = min(gp->tx_max_rate, gp->tx_ucc_rate);
+
+	unsigned int hdrlen, datalen, datalen20, datalen40, datalen80;
+	unsigned int rate, new_len;
+
+	new_len = len;
+
+	if(tx_rate == UINT_MAX || gp->tx_ucc_type != GMTP_MEDIA_ADAPT_UCC)
+		return len;
+
+	if(gp->tx_total_rate <= tx_rate)
+		return len;
+
+	rate = DIV_ROUND_CLOSEST(1000 * tx_rate, gp->tx_total_rate);
+
+	if(rate == 0)
+		return len;
+
+	datalen20 = DIV_ROUND_CLOSEST(200 * len, 1000) - hdrlen;
+	datalen40 = DIV_ROUND_CLOSEST(400 * len, 1000) - hdrlen;
+	datalen80 = DIV_ROUND_CLOSEST(800 * len, 1000) - hdrlen;
+
+	new_len = DIV_ROUND_CLOSEST(len * 1000, rate) - hdrlen;
+
+	char label[90];
+
+	if(new_len >= datalen80)
+		new_len = datalen80;
+	else if(new_len >= datalen40)
+		new_len = datalen40;
+	else if(new_len >= datalen20)
+		new_len = datalen20;
+	else {
+		return 0;
+	}
+
+	if(new_len < 0) {
+		return 0;
+	}
+
+	pr_info("Cur_TX: %u B/s, UCC_TX: %lu B/s. reducing to %u B (-%u B) \n",
+			gp->tx_total_rate, tx_rate, new_len, len - new_len);
+	return new_len;
+}
+
 /**
  * FIXME Make it multithreading.
  * FIXME Send msg to remote clients (without relays)
@@ -788,9 +856,13 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 		if(likely(r->sk != NULL)) {
 			struct msghdr *msgcpy;
 
-			msgcpy = kmalloc(len, gfp_any());
+			size_t nlen = gmtp_media_adapt_cc(r->sk, msg, len);
 
-			memcpy(msgcpy, msg, len);
+			if(nlen < 0)
+				goto count_cl;
+
+			msgcpy = kmalloc(nlen, gfp_any());
+			memcpy(msgcpy, msg, nlen);
 
 			/*smd->sk = sk;
 			 smd->msg = msgcpy;

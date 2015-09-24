@@ -665,6 +665,11 @@ static void gmtp_xmit_packet(struct sock *sk, struct sk_buff *skb) {
 	GMTP_SKB_CB(skb)->type = GMTP_PKT_DATA;
 	err = gmtp_transmit_skb(sk, skb);
 
+	char label[30];
+	sprintf(label, "To %pI4 (%d pkts sent, err=%d)", &sk->sk_daddr,
+			gmtp_sk(sk)->tx_dpkts_sent, err);
+	print_gmtp_data(skb, label);
+
 	/*
 	 * Register this one as sent (even if an error occurred).
 	 * To the remote end a local packet drop is indistinguishable from
@@ -728,7 +733,7 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 	if(unlikely(skb == NULL))
 		return;
 
-	if(tx_rate == UINT_MAX /*|| tx_rate >= gp->tx_media_rate*/)
+	if(tx_rate == UINT_MAX || gp->tx_ucc_type != GMTP_DELAY_UCC)
 		goto send;
 
 	/*pr_info("[%d] Tx rate: %lu bytes/s\n", gp->tx_dpkts_sent, gp->tx_total_rate);
