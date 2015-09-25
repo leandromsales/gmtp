@@ -699,10 +699,12 @@ static void gmtp_xmit_packet(struct sock *sk, struct sk_buff *skb) {
 	GMTP_SKB_CB(skb)->type = GMTP_PKT_DATA;
 	err = gmtp_transmit_skb(sk, skb);
 
+	/*
 	char label[30];
 	sprintf(label, "To %pI4 (%d pkts sent, err=%d)", &sk->sk_daddr,
 			gmtp_sk(sk)->tx_dpkts_sent, err);
 	print_gmtp_data(skb, label);
+	*/
 
 	/*
 	 * Register this one as sent (even if an error occurred).

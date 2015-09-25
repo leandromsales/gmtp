@@ -150,7 +150,7 @@ void print_gmtp_hdr_relay(const struct gmtp_hdr_relay *relay)
 }
 EXPORT_SYMBOL_GPL(print_gmtp_hdr_relay);
 
-void print_route(struct sk_buff *skb)
+void print_route_from_skb(struct sk_buff *skb)
 {
 	int i;
 	struct gmtp_hdr_route *route = gmtp_hdr_route(skb);
@@ -165,7 +165,7 @@ void print_route(struct sk_buff *skb)
 	for(i = route->nrelays - 1; i >= 0; --i)
 		print_gmtp_hdr_relay(&relay_list[i]);
 }
-EXPORT_SYMBOL_GPL(print_route);
+EXPORT_SYMBOL_GPL(print_route_from_skb);
 
 const char *gmtp_sock_type_name(const int type)
 {

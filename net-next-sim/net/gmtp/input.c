@@ -407,12 +407,26 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 					&ip_hdr(skb)->saddr);
 		}
 		goto discard;
+	case GMTP_PKT_ROUTE_NOTIFY:
+		gp->tx_rtt = jiffies_to_msecs(jiffies) - gmtp_sk(sk)->reply_stamp;
+		gp->tx_rtt = gp->tx_rtt > 0? gp->tx_rtt : 1;
+		gp->tx_avg_rtt = rtt_ewma(gp->tx_avg_rtt, gp->tx_rtt,
+		GMTP_RTT_WEIGHT);
+
+		gmtp_pr_debug("RTT: %u ms | RTT_AVG: %u ms", gp->tx_rtt,
+				gp->tx_avg_rtt);
+
+		/** TODO Update routes */
+		gmtp_rcv_route_notify(sk, skb, gh);
+
+		goto discard;
 	case GMTP_PKT_REGISTER: {
 		int err;
 		struct inet_sock *inet = inet_sk(sk);
 		const struct inet_connection_sock *icsk = inet_csk(sk);
 		struct sk_buff *new_skb = gmtp_make_register_reply_open(sk, skb);
 		if(new_skb != NULL) {
+			gmtp_sk(sk)->reply_stamp = jiffies_to_msecs(jiffies);
 			err = icsk->icsk_af_ops->queue_xmit(sk, new_skb,
 					&inet->cork.fl);
 			return net_xmit_eval(err);
@@ -473,7 +487,7 @@ int gmtp_rcv_route_notify(struct sock *sk, struct sk_buff *skb,
 	gmtp_print_function();
 
 	print_gmtp_packet(ip_hdr(skb), gh);
-	print_route(skb);
+	print_route_from_skb(skb);
 
 	if(route->nrelays <= 0)
 		return 0;
@@ -503,7 +517,6 @@ static int gmtp_rcv_request_rcv_state_process(struct sock *sk,
 		if (sk->sk_state == GMTP_REQUEST_RECV)
 			break;
 	/* ROUTE_NOTIFY is a special ack */
-	/** TODO Atualizar tx_rate dos caminhos */
 	case GMTP_PKT_ROUTE_NOTIFY:
 	case GMTP_PKT_DATAACK:
 	case GMTP_PKT_ACK:
@@ -521,7 +534,6 @@ static int gmtp_rcv_request_rcv_state_process(struct sock *sk,
 		sk->sk_state_change(sk);
 		sk_wake_async(sk, SOCK_WAKE_IO, POLL_OUT);
 
-		/* The server does nothing. Local GMTP-Inter handles with it */
 		if(gh->type == GMTP_PKT_ROUTE_NOTIFY)
 			gmtp_rcv_route_notify(sk, skb, gh);
 

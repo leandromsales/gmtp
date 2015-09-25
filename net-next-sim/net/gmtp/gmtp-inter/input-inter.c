@@ -480,7 +480,7 @@ int gmtp_inter_route_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	struct gmtp_relay *relay;
 
 	print_gmtp_packet(iph, gh);
-	print_route(skb);
+	print_route_from_skb(skb);
 
 	relay = gmtp_get_relay(&entry->relays->list, iph->saddr, gh->sport);
 	pr_info("Relay: %p\n", relay);

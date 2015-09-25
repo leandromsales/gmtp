@@ -36,7 +36,7 @@ void gmtp_inter_add_relayid(struct sk_buff *skb)
 	put_unaligned(htons(skb->len), &(iph->tot_len));
 	ip_send_check(iph);
 
-	print_route(skb);
+	print_route_from_skb(skb);
 }
 
 struct gmtp_hdr *gmtp_inter_make_route_hdr(struct sk_buff *skb)

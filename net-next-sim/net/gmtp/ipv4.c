@@ -833,8 +833,8 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 	GMTP_SKB_CB(skb)->seq = gh->seq;
 	GMTP_SKB_CB(skb)->type = gh->type;
 
-	if(unlikely(gh->type != GMTP_PKT_DATA && gh->type != GMTP_PKT_ACK)) {
-		gmtp_pr_func();
+	if(unlikely(gh->type != GMTP_PKT_DATA && gh->type != GMTP_PKT_ACK
+			&& gh->type != GMTP_PKT_ROUTE_NOTIFY)) {
 		print_gmtp_packet(iph, gh);
 	}
 
