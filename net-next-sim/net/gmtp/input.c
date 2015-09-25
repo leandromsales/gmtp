@@ -407,6 +407,18 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 					&ip_hdr(skb)->saddr);
 		}
 		goto discard;
+	case GMTP_PKT_REGISTER: {
+		int err;
+		struct inet_sock *inet = inet_sk(sk);
+		const struct inet_connection_sock *icsk = inet_csk(sk);
+		struct sk_buff *new_skb = gmtp_make_register_reply_open(sk, skb);
+		if(new_skb != NULL) {
+			err = icsk->icsk_af_ops->queue_xmit(sk, new_skb,
+					&inet->cork.fl);
+			return net_xmit_eval(err);
+		}
+	}
+		break;
 	case GMTP_PKT_RESET:
 		/*
 		 *  Step 9: Process Reset

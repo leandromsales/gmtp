@@ -163,6 +163,7 @@ struct gmtp_hdr *gmtp_inter_make_ack_hdr(struct sk_buff *skb,
 		struct gmtp_inter_entry *entry, __be32 tstamp);
 int gmtp_inter_make_ack_from_feedback(struct sk_buff *skb,
 		struct gmtp_inter_entry *entry);
+struct sk_buff *gmtp_inter_build_register(struct gmtp_inter_entry *entry);
 struct sk_buff *gmtp_inter_build_ack(struct gmtp_inter_entry *entry);
 
 /**

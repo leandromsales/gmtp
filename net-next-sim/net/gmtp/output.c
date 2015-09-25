@@ -237,6 +237,40 @@ struct sk_buff *gmtp_make_register_reply(struct sock *sk, struct dst_entry *dst,
 EXPORT_SYMBOL_GPL(gmtp_make_register_reply);
 
 
+struct sk_buff *gmtp_make_register_reply_open(struct sock *sk,
+		struct sk_buff *rcv_skb)
+{
+	struct sk_buff *skb;
+	struct gmtp_hdr *rxgh = gmtp_hdr(rcv_skb), *gh;
+	const u32 gmtp_hdr_len = sizeof(struct gmtp_hdr) +
+			gmtp_packet_hdr_variable_len(GMTP_PKT_REGISTER_REPLY);
+
+	gmtp_print_function();
+
+	skb = alloc_skb(sk->sk_prot->max_header, GFP_ATOMIC);
+	if(skb == NULL)
+		return NULL;
+
+	skb_reserve(skb, sk->sk_prot->max_header);
+
+	gh = gmtp_zeroed_hdr(skb, gmtp_hdr_len);
+
+	gh->type = GMTP_PKT_REGISTER_REPLY;
+	gh->seq = rxgh->seq;
+	gh->sport = rxgh->dport;
+	gh->dport = rxgh->sport;
+	gh->hdrlen = gmtp_hdr_len;
+	gh->server_rtt = rxgh->server_rtt;
+	gh->transm_r = rxgh->transm_r;
+	memcpy(gh->flowname, rxgh->flowname, GMTP_FLOWNAME_LEN);
+
+	gmtp_hdr_register_reply(skb)->ucc_type = gmtp_sk(sk)->tx_ucc_type;
+
+	return skb;
+}
+EXPORT_SYMBOL_GPL(gmtp_make_register_reply_open);
+
+
 /* answer offending packet in @rcv_skb with Reset from control socket @ctl */
 struct sk_buff *gmtp_ctl_make_reset(struct sock *sk, struct sk_buff *rcv_skb)
 {

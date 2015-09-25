@@ -441,6 +441,66 @@ void gmtp_copy_hdr(struct sk_buff *skb, struct sk_buff *src_skb)
 		memcpy(gh, gh_src, gh_src->hdrlen);
 }
 
+
+struct sk_buff *gmtp_inter_build_register(struct gmtp_inter_entry *entry)
+{
+	struct sk_buff *skb = alloc_skb(GMTP_MAX_HDR_LEN, GFP_ATOMIC);
+
+	struct ethhdr *eth;
+	struct iphdr *iph;
+	struct gmtp_hdr *gh;
+
+	struct net_device *dev_entry = entry->dev_in;
+	int gmtp_hdr_len = sizeof(struct gmtp_hdr);
+	int total_len, ip_len = 0;
+
+	ip_len = gmtp_hdr_len + sizeof(struct iphdr);
+	total_len = ip_len + LL_RESERVED_SPACE(dev_entry);
+	skb_reserve(skb, total_len);
+
+	gh = gmtp_zeroed_hdr(skb, gmtp_hdr_len);
+
+	gh->version = GMTP_VERSION;
+	gh->type = GMTP_PKT_REGISTER;
+	gh->hdrlen = gmtp_hdr_len;
+	gh->relay = 1;
+	gh->seq = entry->seq;
+	gh->dport = entry->media_port;
+	gh->sport = entry->my_port;
+	gh->server_rtt = entry->server_rtt;
+	gh->transm_r = min(gmtp_inter.ucc_rx, entry->rcv_tx_rate);
+	memcpy(gh->flowname, entry->flowname, GMTP_FLOWNAME_LEN);
+
+	/* Build the IP header. */
+	skb_push(skb, sizeof(struct iphdr));
+	skb_reset_network_header(skb);
+	iph = ip_hdr(skb);
+
+	/* iph->version = 4; iph->ihl = 5; */
+	put_unaligned(0x45, (unsigned char *)iph);
+	iph->tos = 0;
+	iph->frag_off = 0;
+	iph->ttl = 64;
+	iph->protocol = IPPROTO_GMTP;
+
+	put_unaligned(entry->my_addr, &(iph->saddr));
+	put_unaligned(entry->server_addr, &(iph->daddr));
+	put_unaligned(htons(skb->len), &(iph->tot_len));
+	ip_send_check(iph);
+
+	skb_push(skb, ETH_HLEN);
+	skb_reset_mac_header(skb);
+	eth = eth_hdr(skb);
+	skb->protocol = eth->h_proto = htons(ETH_P_IP);
+
+	ether_addr_copy(eth->h_source, dev_entry->dev_addr);
+	ether_addr_copy(eth->h_dest, entry->server_mac_addr);
+
+	skb->dev = dev_entry;
+
+	return skb;
+}
+
 struct sk_buff *gmtp_inter_build_ack(struct gmtp_inter_entry *entry)
 {
 	struct sk_buff *skb = alloc_skb(GMTP_MAX_HDR_LEN, GFP_ATOMIC);

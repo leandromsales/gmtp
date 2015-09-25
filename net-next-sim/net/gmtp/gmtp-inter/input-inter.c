@@ -226,37 +226,140 @@ struct gmtp_client *jump_over_gmtp_intra(struct sk_buff *skb,
 	return client;
 }
 
-/**
- * Algorithm 2:: onReceiveGMTPRegisterReply(p.type == GMTP-Register-Reply)
- *
- * The node r (relay) executes this algorithm when receives a packet of type
- * GMTP-Register-Reply, as response for a registration of participation
- * sent to a s(server) node.
- *
- * begin
- * state(P) = GMTP_inter_REGISTER_REPLY_RECEIVED
- * if (packet p is OK):
- *     W = p.way
- *     s = p.server (ip:port)
- *     P = p.flowname
- *     if P != NULL:
- *         if s enabled security layer:
- *             getAndStoreServerPublicKey(s)
- *         endif
- *         channel = createMulticastChannel(s, P)
- *         Update flow reception table with channel
- *         respondToClients(GMTPRequestReply(channel))
- *         startRelay(channel);
- *      endif
- *      updateFlowReceptionTable(s)
- *      Send ack to server (ack.w = W) //Send way back to server
- * else
- *      // s refused to accept the registration of participation.
- *      errorCode = p.error
- *      respondToClients(GMTPRequestReply(errorCode, P))
- * endif
- * end
- */
+static int gmtp_inter_transmitting_register_reply_rcv(struct sk_buff *skb,
+		struct gmtp_inter_entry *entry)
+{
+	int ret = NF_DROP;
+
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct iphdr *iph = ip_hdr(skb);
+	struct ethhdr *eth = eth_hdr(skb);
+	struct gmtp_hdr *gh_route_n;
+
+	gmtp_inter_add_relayid(skb);
+
+	gh_route_n = gmtp_inter_make_route_hdr(skb);
+
+	ether_addr_copy(entry->server_mac_addr, eth->h_source);
+
+	if(gh_route_n != NULL)
+		gmtp_inter_build_and_send_pkt(skb, iph->daddr, iph->saddr,
+				gh_route_n, GMTP_INTER_BACKWARD);
+
+	return ret;
+}
+
+static void gmtp_inter_send_reply_to_relay(struct sk_buff *skb,
+		struct gmtp_inter_entry *entry, struct gmtp_relay *relay)
+{
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct iphdr *iph = ip_hdr(skb);
+
+	struct sk_buff *copy = skb_copy(skb, gfp_any());
+
+	if(copy != NULL) {
+		struct iphdr *iph_copy = ip_hdr(copy);
+		struct gmtp_hdr *gh_copy = gmtp_hdr(copy);
+		struct gmtp_hdr *gh_reply;
+
+		iph_copy->daddr = relay->addr;
+		ip_send_check(iph_copy);
+		gh_copy->dport = relay->port;
+
+		gh_reply = gmtp_inter_make_register_reply_hdr(copy, entry,
+				gh->sport, relay->port);
+		if(gh_reply != NULL)
+			gmtp_inter_build_and_send_pkt(skb, iph->saddr,
+					relay->addr, gh_reply,
+					GMTP_INTER_FORWARD);
+	}
+}
+static void gmtp_inter_send_reply_to_relays(struct sk_buff *skb,
+		struct gmtp_inter_entry *entry)
+{
+	struct gmtp_relay *relay, *tempr;
+
+	list_for_each_entry_safe(relay, tempr, &entry->relays->list, list)
+	{
+		gmtp_inter_send_reply_to_relay(skb, entry, relay);
+	}
+
+}
+
+static void gmtp_inter_send_reqnotify_to_client(struct sk_buff *skb,
+		struct gmtp_inter_entry *entry, struct gmtp_client *client,
+		struct gmtp_client *cur_reporter, __u8 code)
+{
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct iphdr *iph = ip_hdr(skb);
+
+	struct sk_buff *copy = skb_copy(skb, gfp_any());
+
+	if(copy != NULL) {
+		struct iphdr *iph_copy = ip_hdr(copy);
+		struct gmtp_hdr *gh_copy = gmtp_hdr(copy);
+		struct gmtp_hdr *gh_req_n;
+
+		iph_copy->daddr = client->addr;
+		ip_send_check(iph_copy);
+		gh_copy->dport = client->port;
+
+		gh_req_n = gmtp_inter_make_request_notify_hdr(copy, entry,
+				gh->sport, client->port, cur_reporter,
+				client->max_nclients, code);
+		if(gh_req_n != NULL)
+			gmtp_inter_build_and_send_pkt(skb, iph->saddr,
+					client->addr, gh_req_n,
+					GMTP_INTER_FORWARD);
+	}
+}
+
+static int gmtp_inter_send_reqnotify_to_clients(struct sk_buff *skb,
+		struct gmtp_inter_entry *entry)
+{
+	int ret = NF_ACCEPT;
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct iphdr *iph = ip_hdr(skb);
+	struct gmtp_client *client, *tempc, *first_client, *cur_reporter = NULL;
+	__u8 code = GMTP_REQNOTIFY_CODE_OK;
+
+	/* Send it to first client */
+	first_client = gmtp_get_first_client(&entry->clients->list);
+	if(first_client == NULL) {
+		pr_info("No clients registered.\n");
+		return NF_ACCEPT;
+	}
+
+	if(first_client->max_nclients > 0)
+		cur_reporter = first_client;
+
+	ret = gmtp_inter_make_request_notify(skb, iph->saddr, gh->sport,
+			first_client->addr, first_client->port, cur_reporter,
+			first_client->max_nclients, code);
+
+	/* Clean list of clients and keep only reporters */
+	list_for_each_entry_safe(client, tempc, &entry->clients->list, list)
+	{
+		/* Send to other clients (not first) */
+		if(client == first_client)
+			continue;
+
+		if(client->max_nclients > 0)
+			cur_reporter = client;
+
+		gmtp_inter_send_reqnotify_to_client(skb, entry, client,
+				cur_reporter, code);
+
+		/** Deleting non-reporters */
+		if(client->max_nclients <= 0) {
+			list_del(&client->list);
+			kfree(client);
+		}
+	}
+
+	return ret;
+}
+
 int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 		struct gmtp_inter_entry *entry,
 		enum gmtp_inter_direction direction)
@@ -266,20 +369,18 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 	struct iphdr *iph = ip_hdr(skb);
 	struct ethhdr *eth = eth_hdr(skb);
 	struct gmtp_hdr *gh_route_n;
-	struct gmtp_hdr *gh_req_n;
-	struct gmtp_client *client, *tempc, *first_client, *cur_reporter = NULL;
-	struct gmtp_relay *relay, *tempr;
-	u8 code = GMTP_REQNOTIFY_CODE_OK;
+
+	__u8 code = GMTP_REQNOTIFY_CODE_OK;
 
 	gmtp_print_function();
 
 	print_packet(skb, true);
 	print_gmtp_packet(iph, gh);
 
-	if(entry->state == GMTP_INTER_REGISTER_REPLY_RECEIVED) {
-		pr_info("Discarding duplicated register_reply...\n");
+	if(entry->state == GMTP_INTER_REGISTER_REPLY_RECEIVED)
 		return NF_DROP;
-	}
+	else if(entry->state == GMTP_INTER_TRANSMITTING)
+		return gmtp_inter_transmitting_register_reply_rcv(skb, entry);
 
 	entry->transm_r =  gh->transm_r;
 	entry->rcv_tx_rate = gh->transm_r;
@@ -330,81 +431,12 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 		goto send_to_clients;
 	}
 
-	list_for_each_entry_safe(relay, tempr, &entry->relays->list, list)
-	{
-		struct sk_buff *copy = skb_copy(skb, gfp_any());
-
-		if(copy != NULL) {
-			struct iphdr *iph_copy = ip_hdr(copy);
-			struct gmtp_hdr *gh_copy = gmtp_hdr(copy);
-			struct gmtp_hdr *gh_reply;
-
-			iph_copy->daddr = relay->addr;
-			ip_send_check(iph_copy);
-			gh_copy->dport = relay->port;
-
-			gh_reply = gmtp_inter_make_register_reply_hdr(copy,
-					entry, gh->sport, relay->port);
-			if(gh_reply != NULL)
-				gmtp_inter_build_and_send_pkt(skb, iph->saddr,
-						relay->addr, gh_reply,
-						GMTP_INTER_FORWARD);
-		}
-	}
+	gmtp_inter_send_reply_to_relays(skb, entry);
 
 send_to_clients:
-	/* Send it to first client */
-	first_client = gmtp_get_first_client(&entry->clients->list);
-	if(first_client == NULL) {
-		pr_info("No clients registered.\n");
-		return NF_ACCEPT;
-	}
+	ret = gmtp_inter_send_reqnotify_to_clients(skb,	entry);
 
-	if(first_client->max_nclients > 0)
-		cur_reporter = first_client;
-
-	ret = gmtp_inter_make_request_notify(skb, iph->saddr, gh->sport,
-			first_client->addr, first_client->port, cur_reporter,
-			first_client->max_nclients, code);
-
-	/* Clean list of clients and keep only reporters */
-	list_for_each_entry_safe(client, tempc, &entry->clients->list, list)
-	{
-		struct sk_buff *copy = skb_copy(skb, gfp_any());
-
-		/* Send to other clients (not first) */
-		if(client == first_client)
-			continue;
-
-		if(client->max_nclients > 0)
-			cur_reporter = client;
-
-		if(copy != NULL) {
-			struct iphdr *iph_copy = ip_hdr(copy);
-			struct gmtp_hdr *gh_copy = gmtp_hdr(copy);
-
-			iph_copy->daddr = client->addr;
-			ip_send_check(iph_copy);
-			gh_copy->dport = client->port;
-
-			gh_req_n = gmtp_inter_make_request_notify_hdr(copy,
-					entry, gh->sport, client->port,
-					cur_reporter, client->max_nclients,
-					code);
-			if(gh_req_n != NULL)
-				gmtp_inter_build_and_send_pkt(skb, iph->saddr,
-						client->addr, gh_req_n,
-						GMTP_INTER_FORWARD);
-		}
-
-		/** Deleting non-reporters */
-		if(client->max_nclients <= 0) {
-			list_del(&client->list);
-			kfree(client);
-		}
-	}
-
-	return NF_ACCEPT;
+	return ret;
 }
 
 /* Treat acks from clients */

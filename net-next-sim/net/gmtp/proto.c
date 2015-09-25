@@ -786,7 +786,7 @@ size_t gmtp_media_adapt_cc(struct sock *sk, struct msghdr *msg, size_t len)
 	struct gmtp_sock *gp = gmtp_sk(sk);
 	unsigned long tx_rate = min(gp->tx_max_rate, gp->tx_ucc_rate);
 
-	unsigned int hdrlen, datalen, datalen20, datalen40, datalen80;
+	unsigned int datalen, datalen20, datalen40, datalen80;
 	unsigned int rate, new_len;
 
 	new_len = len;
@@ -802,11 +802,11 @@ size_t gmtp_media_adapt_cc(struct sock *sk, struct msghdr *msg, size_t len)
 	if(rate == 0)
 		return len;
 
-	datalen20 = DIV_ROUND_CLOSEST(200 * len, 1000) - hdrlen;
-	datalen40 = DIV_ROUND_CLOSEST(400 * len, 1000) - hdrlen;
-	datalen80 = DIV_ROUND_CLOSEST(800 * len, 1000) - hdrlen;
+	datalen20 = DIV_ROUND_CLOSEST(200 * len, 1000);
+	datalen40 = DIV_ROUND_CLOSEST(400 * len, 1000);
+	datalen80 = DIV_ROUND_CLOSEST(800 * len, 1000);
 
-	new_len = DIV_ROUND_CLOSEST(len * 1000, rate) - hdrlen;
+	new_len = DIV_ROUND_CLOSEST(len * 1000, rate);
 
 	char label[90];
 
@@ -824,7 +824,7 @@ size_t gmtp_media_adapt_cc(struct sock *sk, struct msghdr *msg, size_t len)
 		return 0;
 	}
 
-	pr_info("Cur_TX: %u B/s, UCC_TX: %lu B/s. reducing to %u B (-%u B) \n",
+	pr_info("Cur_TX: %lu B/s, UCC_TX: %lu B/s. reducing to %u B (-%lu B) \n",
 			gp->tx_total_rate, tx_rate, new_len, len - new_len);
 	return new_len;
 }

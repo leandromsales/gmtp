@@ -105,7 +105,6 @@ int gmtp_inter_data_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	unsigned int server_tx;
 	struct gmtp_relay *relay, *temp;
 
-
 	if(unlikely(entry->state == GMTP_INTER_REGISTER_REPLY_RECEIVED))
 		entry->state = GMTP_INTER_TRANSMITTING;
 

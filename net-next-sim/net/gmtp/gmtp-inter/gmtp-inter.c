@@ -227,13 +227,6 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 		struct gmtp_inter_entry *entry;
 		struct gmtp_relay *relay;
 
-		if(gh->type == GMTP_PKT_DATA) {
-			char label[30];
-			sprintf(label, "To %pI4 (%d)", &iph->daddr,
-					gmtp_inter_ip_local(iph->daddr));
-			print_gmtp_data(skb, label);
-		}
-
 		if(gh->type == GMTP_PKT_REQUEST) {
 			if(gmtp_inter_ip_local(iph->saddr)
 					&& iph->saddr != iph->daddr)

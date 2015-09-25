@@ -14,6 +14,7 @@
 #include "gmtp-inter.h"
 #include "hash-inter.h"
 #include "mcc-inter.h"
+#include "ucc.h"
 
 struct gmtp_inter_hashtable *gmtp_inter_create_hashtable(unsigned int size)
 {
@@ -81,30 +82,6 @@ struct gmtp_inter_entry *gmtp_inter_lookup_media(
 
 	return NULL;
 }
-
-static inline unsigned long gmtp_ucc_interval(unsigned int rtt)
-{
-	unsigned long interval;
-	if(unlikely(rtt <= 0))
-		return (jiffies + GMTP_ACK_INTERVAL);
-
-	interval = (unsigned long)(rtt);
-	return (jiffies + msecs_to_jiffies(interval));
-}
-
-void ack_timer_callback(unsigned long data)
-{
-	struct gmtp_inter_entry *entry = (struct gmtp_inter_entry*) data;
-
-	gmtp_ucc_equation(GMTP_UCC_NONE);
-	struct sk_buff *skb = gmtp_inter_build_ack(entry);
-
-	if(skb != NULL)
-		gmtp_inter_send_pkt(skb);
-
-	mod_timer(&entry->ack_timer, gmtp_ucc_interval(gmtp_inter.worst_rtt));
-}
-
 
 void __gmtp_inter_build_info(struct gmtp_inter_entry *info)
 {
@@ -185,7 +162,7 @@ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
 	new_entry->state = GMTP_INTER_WAITING_REGISTER_REPLY;
 	new_entry->next = hashtable->table[hashval];
 	hashtable->table[hashval] = new_entry;
-	setup_timer(&new_entry->ack_timer, ack_timer_callback,
+	setup_timer(&new_entry->ack_timer, register_timer_callback,
 			(unsigned long) new_entry);
 
 	return 0;

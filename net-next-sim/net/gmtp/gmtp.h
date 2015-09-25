@@ -185,6 +185,8 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb);
 unsigned int gmtp_sync_mss(struct sock *sk, u32 pmtu);
 struct sk_buff *gmtp_make_register_reply(struct sock *sk, struct dst_entry *dst,
 		struct request_sock *req);
+struct sk_buff *gmtp_make_register_reply_open(struct sock *sk,
+		struct sk_buff *rcv_skb);
 struct sk_buff *gmtp_ctl_make_reset(struct sock *sk,
 		struct sk_buff *rcv_skb);
 /** output.c - Packet Output and Timers  */
