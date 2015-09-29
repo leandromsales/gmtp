@@ -42,6 +42,8 @@ int main(int argc, char *argv[])
 	struct sockaddr_storage serverStorage;
 	socklen_t addr_size;
 	int media_rate = 300000; // B/s
+	int ucc_type = GMTP_DELAY_UCC;
+//	int ucc_type = GMTP_MEDIA_ADAPT_UCC;
 
 	cout << "Starting GMTP Server..." << endl;
 	welcomeSocket = socket(PF_INET, SOCK_GMTP, IPPROTO_GMTP);
@@ -50,6 +52,7 @@ int main(int argc, char *argv[])
 
 	cout << "Limiting tx_rate to " << media_rate << " B/s" << endl;
 	setsockopt(welcomeSocket, SOL_GMTP, GMTP_SOCKOPT_MEDIA_RATE, &media_rate, sizeof(media_rate));
+	setsockopt(welcomeSocket, SOL_GMTP, GMTP_SOCKOPT_UCC_TYPE, &ucc_type, sizeof(ucc_type));
 
 	serverAddr.sin_family = AF_INET;
 	serverAddr.sin_port = htons(SERVER_PORT);
@@ -75,9 +78,9 @@ int main(int argc, char *argv[])
 	double total_data, total;
 
 	cout << "Sending data...\n" << endl;
-	for(i = 0; i < 100; ++i) {
+	for(i = 0; i < 10000; ++i) {
 		const char *numstr = NumStr(i+1);
-		char *buffer = new char(BUFF_SIZE);
+		char *buffer = new char[BUFF_SIZE];
 		strcpy(buffer, msg);
 		strcat(buffer, numstr);
 		int pkt_size = BUFF_SIZE + 36 + 20;
@@ -89,7 +92,8 @@ int main(int argc, char *argv[])
 		send(newSocket, buffer, BUFF_SIZE, 0);
 		total += pkt_size;
 		total_data += BUFF_SIZE;
-		delete(buffer);
+		delete buffer;
+		delete [] numstr;
 		if(i % 1000 == 0) {
 			print_stats(i, t1, total, total_data);
 			cout << endl;
@@ -108,6 +112,9 @@ int main(int argc, char *argv[])
 	printf("Closing server...\n");
 	close(newSocket);
 	close(welcomeSocket);
+
+	delete [] outstr;
+	delete [] msg;
 
 	printf("Server closed!\n\n");
 

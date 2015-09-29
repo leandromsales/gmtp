@@ -70,7 +70,7 @@ void mcc_timer_callback(unsigned long data)
 
 	info->required_tx = new_tx;
 
-	pr_info("n=%u, req_tx=%u B/s\n", info->nfeedbacks, info->required_tx);
+	/*pr_info("n=%u, req_tx=%u B/s\n", info->nfeedbacks, info->required_tx);*/
 
 	/* FIXME Colocar isso em outro timer? */
 	list_for_each_entry_safe(reporter, temp, &info->clients->list, list)
@@ -97,7 +97,6 @@ out:
 	info->sum_feedbacks = 0;
 
 	/* TODO Send here an ack to server? */
-	pr_info("state: %u\n", info->state);
 	if(likely(info->state != GMTP_INTER_CLOSE_RECEIVED
 					&& info->state != GMTP_INTER_CLOSED))
 		mod_timer(&info->mcc_timer,

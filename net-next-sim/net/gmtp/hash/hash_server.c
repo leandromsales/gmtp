@@ -18,15 +18,14 @@ EXPORT_SYMBOL_GPL(server_hashtable);
 void gmtp_del_relay_hash_entry(struct gmtp_hashtable *table, const __u8 *key);
 
 const struct gmtp_hash_ops gmtp_relay_hash_ops = {
-		.hash = gmtp_hash,
-		.lookup = gmtp_lookup_entry,
+		.hashval = gmtp_hashval,
 		.add_entry = gmtp_add_entry,
 		.del_entry = gmtp_del_relay_hash_entry,
 		.destroy = destroy_gmtp_hashtable,
 };
 
 static struct gmtp_relay_entry *gmtp_build_relay_entry(
-		const struct gmtp_relay *relay)
+		const struct gmtp_hdr_relay *relay)
 {
 	struct gmtp_relay_entry *relay_entry;
 
@@ -35,12 +34,12 @@ static struct gmtp_relay_entry *gmtp_build_relay_entry(
 		return NULL;
 
 	memcpy(relay_entry->entry.key, relay->relay_id, GMTP_HASH_KEY_LEN);
-	memcpy(&relay_entry->relay, relay, sizeof(struct gmtp_relay));
+	memcpy(&relay_entry->relay, relay, sizeof(struct gmtp_hdr_relay));
 
 	return relay_entry;
 }
 
-int gmtp_add_route(struct gmtp_server_entry* server,
+int gmtp_add_route(struct gmtp_server_entry* server, struct sock *sk,
 		struct gmtp_hdr_route *route_hdr)
 {
 	struct gmtp_hashtable *relay_table = server->relay_hashtable;
@@ -58,39 +57,48 @@ int gmtp_add_route(struct gmtp_server_entry* server,
 		if(i == 0) {
 			INIT_LIST_HEAD(&relay->list);
 			head = &relay->list;
+			relay->sk = sk;
+			/* add it on the list of relays at server */
+
+			pr_info("Adding relay on list...\n");
+			list_add_tail(&relay->list, &server->relay_list.list);
+			++server->len;
 		}
 		list_add_tail(&relay->list, head);
 
-		err = relay_table->hash_ops.add_entry(relay_table,
+		err = relay_table->add_entry(relay_table,
 				(struct gmtp_hash_entry*) relay);
 	}
 
 	return err;
 }
 
-int gmtp_add_server_entry(struct gmtp_hashtable *table, const __u8 *flowname,
+int gmtp_add_server_entry(struct gmtp_hashtable *table, struct sock *sk,
 		struct gmtp_hdr_route *route)
 {
+	struct gmtp_sock *gp = gmtp_sk(sk);
 	struct gmtp_server_entry *server;
 
 	gmtp_pr_func();
 
-	server = (struct gmtp_server_entry*) table->hash_ops.lookup(table, flowname);
+	server = (struct gmtp_server_entry*) gmtp_lookup_entry(table, gp->flowname);
 
 	if(server == NULL) {
 		server = kmalloc(sizeof(struct gmtp_server_entry), GFP_KERNEL);
 		if(server == NULL)
 			return 1;
 
-		memcpy(server->entry.key, flowname, GMTP_HASH_KEY_LEN);
+		server->len = 0;
+		INIT_LIST_HEAD(&server->relay_list.list);
+		memcpy(server->entry.key, gp->flowname, GMTP_HASH_KEY_LEN);
 		server->relay_hashtable = gmtp_build_hashtable(U8_MAX,
 				gmtp_relay_hash_ops);
 	}
 
-	if(gmtp_add_route(server, route))
+	if(gmtp_add_route(server, sk, route))
 		return 1;
 
-	return table->hash_ops.add_entry(table, (struct gmtp_hash_entry*)server);
+	return table->add_entry(table, (struct gmtp_hash_entry*)server);
 }
 EXPORT_SYMBOL_GPL(gmtp_add_server_entry);
 
@@ -111,7 +119,7 @@ void gmtp_del_relay_hash_entry(struct gmtp_hashtable *table, const __u8 *key)
 
 	gmtp_print_function();
 
-	hashval = table->hash_ops.hash(table, key);
+	hashval = table->hashval(table, key);
 	if(hashval < 0)
 		return;
 
@@ -129,20 +137,19 @@ void gmtp_del_server_hash_entry(struct gmtp_hashtable *table, const __u8 *key)
 
 	gmtp_print_function();
 
-	hashval = table->hash_ops.hash(table, key);
+	hashval = table->hashval(table, key);
 	if(hashval < 0)
 		return;
 
 	entry = (struct gmtp_server_entry*) table->entry[hashval];
 	if(entry != NULL) {
-		/*entry->relay_hashtable->hash_ops.destroy(entry->relay_hashtable);*/
+		/*entry->relay_hashtable->destroy(entry->relay_hashtable);*/
 		kfree(entry);
 	}
 }
 
 const struct gmtp_hash_ops gmtp_server_hash_ops = {
-		.hash = gmtp_hash,
-		.lookup = gmtp_lookup_entry,
+		.hashval = gmtp_hashval,
 		.add_entry = gmtp_add_entry,
 		.del_entry = gmtp_del_server_hash_entry,
 		.destroy = destroy_gmtp_hashtable,

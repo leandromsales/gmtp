@@ -150,7 +150,7 @@ const char *gmtp_packet_name(const __u8);
 const char *gmtp_state_name(const int);
 void flowname_str(__u8* str, const __u8 *flowname);
 void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh);
-void print_gmtp_relay(const struct gmtp_relay *relay);
+void print_gmtp_hdr_relay(const struct gmtp_hdr_relay *relay);
 void print_route(struct gmtp_hdr_route *route);
 void print_gmtp_sock(struct sock *sk);
 

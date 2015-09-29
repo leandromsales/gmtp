@@ -111,6 +111,7 @@ struct gmtp_request_sock {
 	__u64			 gss;
 	__u64			 isr;
 	__u64			 gsr;
+	enum gmtp_ucc_type	tx_ucc_type;
 	
 	__u8 flowname[GMTP_FLOWNAME_LEN];
 };
@@ -229,6 +230,7 @@ struct gmtp_sock {
 	unsigned long			tx_ucc_rate;
 	int 				tx_byte_budget;
 	int				tx_adj_budget;
+	enum gmtp_ucc_type		tx_ucc_type;
 
 	struct timer_list		xmit_timer;
 };

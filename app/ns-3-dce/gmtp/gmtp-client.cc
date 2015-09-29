@@ -13,6 +13,7 @@
 #include <ctime>
 #include <cstdio>
 #include <cstring>
+#include <sys/ioctl.h>
 
 #include "gmtp.h"
 
@@ -107,7 +108,6 @@ int main(int argc, char**argv)
 
 	} while(strcmp(buffer, outstr) != 0);
 
-
 	update_stats(i, t1, rcv, rcv_data);
 
 	double t2 = time_ms(tv);
@@ -124,6 +124,8 @@ int main(int argc, char**argv)
 	//     toda vez que ocorrer esse bug é porque o nó cliente não existe mais
 	//	21/08/15 - 4:00 AM
 	sleep(3);
+
+	delete [] outstr;
 
 	return 0;
 }

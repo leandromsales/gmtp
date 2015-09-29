@@ -12,11 +12,19 @@
 #define SOL_GMTP      281
 
 #define SERVER_PORT 2000
-#define BUFF_SIZE 744  /* 744 + 56 = 800 B/pkt */
+#define BUFF_SIZE (int) 744  /* 544 + 56 = 600 B/pkt */
 #define GMTP_SAMPLE 100
 
 #define NumStr(Number) static_cast<ostringstream*>( &(ostringstream() << Number) )->str().c_str()
 
+enum gmtp_ucc_type {
+	GMTP_DELAY_UCC = 0,
+	GMTP_MEDIA_ADAPT_UCC,
+
+	GMTP_MAX_UCC_TYPES
+};
+
+/* GMTP socket options */
 enum gmtp_sockopt_codes {
 	GMTP_SOCKOPT_FLOWNAME = 1,
 	GMTP_SOCKOPT_MEDIA_RATE,
@@ -27,7 +35,8 @@ enum gmtp_sockopt_codes {
 	GMTP_SOCKOPT_SERVER_TIMEWAIT,
 	GMTP_SOCKOPT_PULL,
 	GMTP_SOCKOPT_ROLE_RELAY,
-	GMTP_SOCKOPT_RELAY_ENABLED
+	GMTP_SOCKOPT_RELAY_ENABLED,
+	GMTP_SOCKOPT_UCC_TYPE
 };
 
 void set_gmtp_inter(int actived)

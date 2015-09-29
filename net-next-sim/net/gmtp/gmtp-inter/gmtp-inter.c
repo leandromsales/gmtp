@@ -223,8 +223,9 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 
 	if(iph->protocol == IPPROTO_GMTP) {
 
-		struct gmtp_inter_entry *entry;
 		struct gmtp_hdr *gh = gmtp_hdr(skb);
+		struct gmtp_inter_entry *entry;
+		struct gmtp_relay *relay;
 
 		if(gh->type == GMTP_PKT_REQUEST) {
 			if(gmtp_inter_ip_local(iph->saddr)
@@ -236,33 +237,41 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 				print_gmtp_packet(iph, gh);
 				return gmtp_inter_request_rcv(skb);
 			}
-		} else if(gh->type == GMTP_PKT_REGISTER) {
-			print_packet(skb, true);
-			print_gmtp_packet(iph, gh);
-			if(gmtp_inter_ip_local(iph->daddr))
-				return gmtp_inter_register_rcv(skb);
 		}
 
-		entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
+		entry = gmtp_inter_lookup_media(gmtp_inter.hashtable,
+				gh->flowname);
 		if(entry == NULL)
 			return NF_ACCEPT;
+
+		switch(gh->type) {
+		case GMTP_PKT_REGISTER:
+			if(!gmtp_inter_ip_local(iph->daddr))
+				ret = gmtp_inter_register_rcv(skb);
+			break;
+		case GMTP_PKT_ROUTE_NOTIFY:
+			ret = gmtp_inter_route_rcv(skb, entry);
+			break;
+		case GMTP_PKT_ACK:
+			ret = gmtp_inter_ack_rcv(skb, entry);
+			break;
+		case GMTP_PKT_FEEDBACK:
+			ret = gmtp_inter_feedback_rcv(skb, entry);
+			break;
+		default:
+			relay = gmtp_get_relay(&entry->relays->list,
+					iph->daddr, gh->dport);
+			if(!gmtp_inter_ip_local(iph->daddr) && (relay == NULL))
+				return NF_ACCEPT;
+		}
 
 		switch(gh->type) {
 		case GMTP_PKT_REGISTER_REPLY:
 			ret = gmtp_inter_register_reply_rcv(skb, entry,
 					GMTP_INTER_BACKWARD);
 			break;
-		case GMTP_PKT_ACK:
-			ret = gmtp_inter_ack_rcv(skb, entry);
-			break;
-		case GMTP_PKT_ROUTE_NOTIFY:
-			ret = gmtp_inter_route_rcv(skb, entry);
-			break;
 		case GMTP_PKT_DATA:
 			ret = gmtp_inter_data_rcv(skb, entry);
-			break;
-		case GMTP_PKT_FEEDBACK:
-			ret = gmtp_inter_feedback_rcv(skb, entry);
 			break;
 		case GMTP_PKT_ELECT_RESPONSE:
 			ret = gmtp_inter_elect_resp_rcv(skb, entry);
@@ -355,26 +364,19 @@ unsigned int hook_func_post_routing(unsigned int hooknum, struct sk_buff *skb,
 	if(iph->protocol == IPPROTO_GMTP) {
 
 		struct gmtp_hdr *gh = gmtp_hdr(skb);
-		struct gmtp_inter_entry *entry = gmtp_inter_lookup_media(gmtp_inter.hashtable,
+		struct gmtp_inter_entry *entry;
+		struct gmtp_client *relay, *client;
+
+		entry = gmtp_inter_lookup_media(gmtp_inter.hashtable,
 				gh->flowname);
 		if(entry == NULL)
 			return NF_ACCEPT;
 
 		switch(gh->type) {
-		case GMTP_PKT_REQUEST:
-			if(gmtp_inter_ip_local(iph->saddr)
-					&& iph->saddr == iph->daddr) {
-				print_packet(skb, true);
-				print_gmtp_packet(iph, gh);
-				/*ret = gmtp_inter_request_rcv(skb);*/
-			}
-			break;
 		case GMTP_PKT_REGISTER:
 			ret = gmtp_inter_register_out(skb, entry);
 			break;
 		case GMTP_PKT_REGISTER_REPLY:
-			/** FIXME Hook LOCAL_OUT Does not works for
-			 * RegisterReply (skb->dev == NULL) */
 			ret = gmtp_inter_register_reply_out(skb, entry);
 			break;
 		case GMTP_PKT_DATA:
@@ -436,7 +438,7 @@ int init_module()
 	gmtp_inter.buffer_len = 0;
 	gmtp_inter.kreporter = GMTP_REPORTER_DEFAULT_PROPORTION - 1;
 
-	/* TODO Why initial rx per flow is 10% of capacity of channel? */
+	/* TODO Why initial rx per flow is 5% of capacity of channel? */
 	gmtp_inter.ucc_rx = DIV_ROUND_CLOSEST(gmtp_inter.capacity * 10, 100);
 
 	gmtp_inter.total_bytes_rx = 0;
@@ -469,8 +471,8 @@ int init_module()
 	gmtp_inter.worst_rtt = GMTP_MIN_RTT_MS;
 
 	pr_info("Configuring GMTP-UCC timer...\n");
-	setup_timer(&gmtp_inter.gmtp_ucc_timer, gmtp_ucc_callback, 0);
-	mod_timer(&gmtp_inter.gmtp_ucc_timer, jiffies + HZ);
+	setup_timer(&gmtp_inter.gmtp_ucc_timer, gmtp_ucc_equation_callback, 0);
+	mod_timer(&gmtp_inter.gmtp_ucc_timer, jiffies + 1);
 
 	register_hooks();
 

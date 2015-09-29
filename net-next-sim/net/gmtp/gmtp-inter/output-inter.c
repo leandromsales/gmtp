@@ -32,11 +32,11 @@ int gmtp_inter_register_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 
 	/* FIXME Get a valid and unused port */
 	entry->my_addr = gmtp_inter_device_ip(skb->dev);
-	entry->my_port = gh->sport;
 	ether_addr_copy(entry->request_mac_addr, skb->dev->dev_addr);
 
+	gh->sport = entry->my_port;
 	iph->saddr = entry->my_addr;
-	iph->saddr = gmtp_inter_device_ip(skb->dev);
+	pr_info("My addr: %pI4\n", &entry->my_addr);
 	iph->ttl = 64;
 	ip_send_check(iph);
 
@@ -103,7 +103,7 @@ int gmtp_inter_data_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	struct iphdr *iph = ip_hdr(skb);
 
 	unsigned int server_tx;
-	struct gmtp_client *relay, *temp;
+	struct gmtp_relay *relay, *temp;
 
 	if(unlikely(entry->state == GMTP_INTER_REGISTER_REPLY_RECEIVED))
 		entry->state = GMTP_INTER_TRANSMITTING;
@@ -120,9 +120,6 @@ int gmtp_inter_data_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 		if(buffered != NULL) {
 			entry->data_pkt_out++;
 			skb = skb_copy(buffered, gfp_any());
-			/* skb = skb_clone(buffered, gfp_any()); */
-			/*gmtp_copy_hdr(skb, buffered);
-			gmtp_copy_data(skb, buffered);*/
 		}
 	} else {
 		return NF_DROP;
@@ -135,8 +132,11 @@ send:
 			struct ethhdr *eth = eth_hdr(skb);
 			gh->dport = relay->port;
 			ether_addr_copy(eth->h_dest, relay->mac_addr);
-			gmtp_inter_build_and_send_pkt(skb, iph->saddr,
-					relay->addr, gh, GMTP_INTER_FORWARD);
+			skb->dev = relay->dev;
+
+			entry->ucc.congestion_control(skb, entry, relay);
+			/*gmtp_inter_build_and_send_pkt(skb, iph->saddr,
+					relay->addr, gh, GMTP_INTER_FORWARD);*/
 		}
 	}
 
@@ -238,7 +238,7 @@ int gmtp_inter_close_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 {
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
-	struct gmtp_client *relay, *temp;
+	struct gmtp_relay *relay, *temp;
 
 	gmtp_pr_func();
 	print_packet(skb, false);
@@ -250,14 +250,19 @@ int gmtp_inter_close_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 		return gmtp_inter_close_from_client(skb, entry);
 	case GMTP_INTER_CLOSED:
 		pr_info("GMTP_CLOSED\n");
-		list_for_each_entry_safe(relay, temp, &entry->relays->list, list)
+		list_for_each_entry_safe(relay, temp,
+				&entry->relays->list, list)
 		{
-			pr_info("FORWARDING close to %pI4:%d\n", &relay->addr, ntohs(relay->port));
+			/* FIXME Wait send all data pending */
+			pr_info("FORWARDING close to %pI4:%d\n",
+					&relay->addr,
+					ntohs(relay->port));
 			if(relay->state == GMTP_OPEN) {
 				struct sk_buff *new_skb = skb_copy(skb, gfp_any());
 				struct ethhdr *eth = eth_hdr(new_skb);
 				gh->dport = relay->port;
 				ether_addr_copy(eth->h_dest, relay->mac_addr);
+				skb->dev = relay->dev;
 				gmtp_inter_build_and_send_pkt(new_skb, iph->saddr,
 						relay->addr, gh,
 						GMTP_INTER_FORWARD);

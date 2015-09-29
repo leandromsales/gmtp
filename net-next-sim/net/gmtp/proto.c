@@ -3,6 +3,7 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/types.h>
+#include <linux/kthread.h>
 
 #include <net/inet_hashtables.h>
 #include <net/sock.h>
@@ -120,13 +121,13 @@ void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh)
 }
 EXPORT_SYMBOL_GPL(print_gmtp_packet);
 
-void print_gmtp_relay(const struct gmtp_relay *relay)
+void print_gmtp_hdr_relay(const struct gmtp_hdr_relay *relay)
 {
 	unsigned char relayid[GMTP_FLOWNAME_STR_LEN];
 	flowname_str(relayid, relay->relay_id);
 	pr_info("%s :: %pI4\n", relayid, &relay->relay_ip);
 }
-EXPORT_SYMBOL_GPL(print_gmtp_relay);
+EXPORT_SYMBOL_GPL(print_gmtp_hdr_relay);
 
 void print_route(struct gmtp_hdr_route *route)
 {
@@ -139,7 +140,7 @@ void print_route(struct gmtp_hdr_route *route)
 
 	pr_info("Route: \n");
 	for(i = route->nrelays - 1; i >= 0; --i)
-		print_gmtp_relay(&route->relay_list[i]);
+		print_gmtp_hdr_relay(&route->relay_list[i]);
 }
 EXPORT_SYMBOL_GPL(print_route);
 
@@ -220,6 +221,7 @@ int gmtp_init_sock(struct sock *sk)
 	gmtp_pr_func();
 
 	gmtp_init_xmit_timers(sk);
+
 	icsk->icsk_rto		= GMTP_TIMEOUT_INIT;
 	icsk->icsk_syn_retries	= GMTP_SYN_RETRIES;
 	sk->sk_state		= GMTP_CLOSED;
@@ -528,6 +530,7 @@ int gmtp_ioctl(struct sock *sk, int cmd, unsigned long arg)
 		unsigned long amount = 0;
 
 		skb = skb_peek(&sk->sk_receive_queue);
+
 		if (skb != NULL) {
 			/*
 			 * We will only return the amount of this packet since
@@ -654,7 +657,7 @@ out:
 
 EXPORT_SYMBOL_GPL(gmtp_recvmsg);
 
-struct sendmsg_data {
+struct gmtp_sendmsg_data {
 	struct sock *sk;
 	struct sk_buff *skb;
 	struct timer_list *sendmsg_timer;
@@ -662,15 +665,16 @@ struct sendmsg_data {
 
 static void gmtp_sendmsg_callback(unsigned long data)
 {
-	struct sendmsg_data *sd = (struct sendmsg_data*) data;
+	struct gmtp_sendmsg_data *sd = (struct gmtp_sendmsg_data*) data;
 	if(!timer_pending(&gmtp_sk(sd->sk)->xmit_timer)) {
 		gmtp_write_xmit(sd->sk, sd->skb);
 		del_timer(sd->sendmsg_timer);
+		kfree(sd->sendmsg_timer);
 	} else
 		mod_timer(sd->sendmsg_timer, jiffies + 1);
 }
 
-int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
+int gmtp_do_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 {
 	struct gmtp_sock *gp = gmtp_sk(sk);
 	const int flags = msg->msg_flags;
@@ -723,7 +727,7 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	} else {
 		struct timer_list *sendmsg_timer = kmalloc(
 				sizeof(struct timer_list), GFP_KERNEL);
-		struct sendmsg_data *sd = kmalloc(sizeof(struct sendmsg_data),
+		struct gmtp_sendmsg_data *sd = kmalloc(sizeof(struct gmtp_sendmsg_data),
 				GFP_KERNEL);
 		sd->sk = sk;
 		sd->skb = skb;
@@ -739,7 +743,74 @@ out_release:
 out_discard:
 	kfree_skb(skb);
 	goto out_release;
+}
 
+/*struct gmtp_sendmsg_data {
+	struct sock *sk;
+	struct msghdr *msg;
+	size_t len;
+};*/
+
+/*int gmtp_do_sendmsg_thread_func(void *data)
+{
+	struct gmtp_sendmsg_data *smd = (struct gmtp_sendmsg_data*) data;
+
+	return gmtp_do_sendmsg(smd->sk, smd->msg, smd->len);
+}*/
+
+/**
+ * FIXME Make it multithreading.
+ * FIXME Send msg to remote clients (without relays)
+ */
+int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
+{
+	struct gmtp_sock *gp = gmtp_sk(sk);
+	struct gmtp_server_entry *s;
+	struct gmtp_relay_entry *r;
+	int ret = 0, j = 0;
+
+	s = (struct gmtp_server_entry*) gmtp_lookup_entry(server_hashtable,
+			gp->flowname);
+
+	if(s == NULL)
+		return gmtp_do_sendmsg(sk, msg, len);
+
+	/* For every socket(P) in server, send the same data */
+	list_for_each_entry(r, &s->relay_list.list, list) {
+
+		/*struct gmtp_sendmsg_data *smd = kmalloc(
+		 sizeof(struct gmtp_sendmsg_data), gfp_any());
+		 struct task_struct *task;*/
+
+		if(likely(r->sk != NULL)) {
+			struct msghdr *msgcpy;
+
+			msgcpy = kmalloc(len, gfp_any());
+
+			memcpy(msgcpy, msg, len);
+
+			/*smd->sk = sk;
+			 smd->msg = msgcpy;
+			 smd->len = len;
+
+			 task = kthread_run(&gmtp_do_sendmsg_thread_func, (void *)smd, "pradeep");
+			 printk(KERN_INFO "Kernel Thread: %s\n",task->comm);
+
+			 ret = kthread_stop(task);*/
+
+			ret = gmtp_do_sendmsg(r->sk, msgcpy, len);
+		}
+
+		/*kfree(msgcpy);*/
+		/*kfree(smd);*/
+	count_cl:
+		if(++j >= s->len)
+			break;
+
+	}
+
+	kfree(msg);
+	return ret;
 }
 EXPORT_SYMBOL_GPL(gmtp_sendmsg);
 

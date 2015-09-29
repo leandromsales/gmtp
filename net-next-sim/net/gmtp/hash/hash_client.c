@@ -34,22 +34,21 @@ int gmtp_add_client_entry(struct gmtp_hashtable *table,
 	new_entry->channel_addr = channel_addr;
 	new_entry->channel_port = channel_port;
 
-	return table->hash_ops.add_entry(table,
-			(struct gmtp_hash_entry*) new_entry);
+	return table->add_entry(table, (struct gmtp_hash_entry*) new_entry);
 }
 EXPORT_SYMBOL_GPL(gmtp_add_client_entry);
 
 struct gmtp_client_entry *gmtp_lookup_client(struct gmtp_hashtable *table,
 		const __u8 *key)
 {
-	return (struct gmtp_client_entry *) table->hash_ops.lookup(table, key);
+	return (struct gmtp_client_entry *) gmtp_lookup_entry(table, key);
 }
 EXPORT_SYMBOL_GPL(gmtp_lookup_client);
 
 void gmtp_del_client_entry(struct gmtp_hashtable *table, const __u8 *key)
 {
 	gmtp_pr_func();
-	table->hash_ops.del_entry(table, key);
+	table->del_entry(table, key);
 }
 EXPORT_SYMBOL_GPL(gmtp_del_client_entry);
 
@@ -74,7 +73,7 @@ void gmtp_del_client_hash_entry(struct gmtp_hashtable *table, const __u8 *key)
 
 	gmtp_print_function();
 
-	entry = (struct gmtp_client_entry *) table->hash_ops.lookup(table, key);
+	entry = (struct gmtp_client_entry *) gmtp_lookup_entry(table, key);
 	if(entry != NULL) {
 		gmtp_del_client_list(entry);
 		/*kfree(entry);*/
@@ -82,8 +81,7 @@ void gmtp_del_client_hash_entry(struct gmtp_hashtable *table, const __u8 *key)
 }
 
 const struct gmtp_hash_ops gmtp_client_hash_ops = {
-		.hash = gmtp_hash,
-		.lookup = gmtp_lookup_entry,
+		.hashval = gmtp_hashval,
 		.add_entry = gmtp_add_entry,
 		.del_entry = gmtp_del_client_hash_entry,
 		.destroy = destroy_gmtp_hashtable,

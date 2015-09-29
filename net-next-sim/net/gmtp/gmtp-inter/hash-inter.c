@@ -82,13 +82,27 @@ struct gmtp_inter_entry *gmtp_inter_lookup_media(
 	return NULL;
 }
 
-void ack_timer_callback(struct gmtp_inter_entry *entry)
+static inline unsigned long gmtp_ucc_interval(unsigned int rtt)
 {
+	unsigned long interval;
+	if(unlikely(rtt <= 0))
+		return (jiffies + GMTP_ACK_INTERVAL);
+
+	interval = (unsigned long)(rtt);
+	return (jiffies + msecs_to_jiffies(interval));
+}
+
+void ack_timer_callback(unsigned long data)
+{
+	struct gmtp_inter_entry *entry = (struct gmtp_inter_entry*) data;
+
+	gmtp_ucc_equation(GMTP_UCC_NONE);
 	struct sk_buff *skb = gmtp_inter_build_ack(entry);
+
 	if(skb != NULL)
 		gmtp_inter_send_pkt(skb);
 
-	mod_timer(&entry->ack_timer_entry, jiffies + HZ);
+	mod_timer(&entry->ack_timer, gmtp_ucc_interval(gmtp_inter.worst_rtt));
 }
 
 
@@ -99,6 +113,7 @@ void __gmtp_inter_build_info(struct gmtp_inter_entry *info)
 
 	info->total_bytes = 0;
 	info->last_rx_tstamp = 0;
+	info->rcv_tx_rate = UINT_MAX;
 
 	info->nfeedbacks = 0;
 	info->sum_feedbacks = 0;
@@ -117,10 +132,10 @@ void __gmtp_inter_build_info(struct gmtp_inter_entry *info)
 	info->buffer = kmalloc(sizeof(struct sk_buff_head), GFP_KERNEL);
 	skb_queue_head_init(info->buffer);
 	info->buffer_len = 0;
-	gmtp_set_buffer_limits(info, 1);
+	/*gmtp_set_buffer_limits(info, 40);*/
+	gmtp_set_buffer_limits(info, 40);
 
 	setup_timer(&info->mcc_timer, mcc_timer_callback, (unsigned long) info);
-	mod_timer(&info->mcc_timer, gmtp_mcc_interval(info->server_rtt));
 }
 
 void gmtp_inter_build_info(struct gmtp_inter_entry *info, unsigned int bmin)
@@ -155,13 +170,12 @@ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
 	if(current_entry != NULL)
 		return 2; /* TODO Media already being transmitted by other
 								server? */
-
 	gmtp_inter_build_info(new_entry, 5);
 
 	memcpy(new_entry->flowname, flowname, GMTP_FLOWNAME_LEN);
 	new_entry->server_addr = server_addr;
 
-	new_entry->relays = kmalloc(sizeof(struct gmtp_client), GFP_KERNEL);
+	new_entry->relays = kmalloc(sizeof(struct gmtp_relay), GFP_KERNEL);
 	INIT_LIST_HEAD(&new_entry->relays->list);
 	new_entry->nrelays = 0;
 
@@ -171,8 +185,8 @@ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
 	new_entry->state = GMTP_INTER_WAITING_REGISTER_REPLY;
 	new_entry->next = hashtable->table[hashval];
 	hashtable->table[hashval] = new_entry;
-	setup_timer(&new_entry->ack_timer_entry, ack_timer_callback, new_entry);
-	mod_timer(&new_entry->ack_timer_entry, jiffies + (3 * HZ));
+	setup_timer(&new_entry->ack_timer, ack_timer_callback,
+			(unsigned long) new_entry);
 
 	return 0;
 }
@@ -228,7 +242,7 @@ struct gmtp_inter_entry *gmtp_inter_del_entry(
 	gmtp_inter_del_clients(current_entry);
 	skb_queue_purge(current_entry->buffer);
 	del_timer_sync(&current_entry->mcc_timer);
-	del_timer_sync(&current_entry->ack_timer_entry);
+	del_timer_sync(&current_entry->ack_timer);
 	kfree(current_entry);
 
 	gmtp_print_debug("Media entry removed successfully!");

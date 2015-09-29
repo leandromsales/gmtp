@@ -729,13 +729,15 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 
 		const struct iphdr *iph = ip_hdr(skb);
 
-		/*if(gmtp_info->relay_enabled) {
-			gmtp_pr_error("Relay enabled (%s)",
-					gmtp_packet_name(gh->type));
-			if(gh->type == GMTP_PKT_DATA)
-				print_gmtp_packet(iph, gh);
-			goto ignore_it;
-		}*/
+		if(gmtp_info->relay_enabled) {
+			/*gmtp_pr_error("Relay enabled (%s)",
+					gmtp_packet_name(gh->type));*/
+			if(gh->type == GMTP_PKT_DATA) {
+				gmtp_pr_info("Data pkt received...");
+				/*print_gmtp_packet(iph, gh);*/
+				goto ignore_it;
+			}
+		}
 
 		/* TODO Make a reset code for each error here! */
 		switch(gh->type) {
@@ -748,8 +750,10 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 				goto no_gmtp_socket;
 			break;
 		case GMTP_PKT_ACK:
-			if(gmtp_v4_reporter_rcv_ack(skb))
+			if(gmtp_v4_reporter_rcv_ack(skb)) {
+				print_gmtp_packet(iph, gh);
 				goto no_gmtp_socket;
+			}
 			break;
 			/* FIXME Manage close from server... */
 			/*case GMTP_PKT_CLOSE:
@@ -964,6 +968,7 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
 	greq->gsr = greq->isr;
 	greq->iss = greq->isr;
 	greq->gss = greq->iss;
+	greq->tx_ucc_type = gp->tx_ucc_type;
 	if(memcmp(gh->flowname, gp->flowname, GMTP_FLOWNAME_LEN))
 		goto reset;
 

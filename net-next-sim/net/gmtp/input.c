@@ -397,12 +397,14 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 	case GMTP_PKT_ACK:
 		if(gp->role == GMTP_ROLE_SERVER) {
 			struct gmtp_hdr_ack *gack = gmtp_hdr_ack(skb);
-			print_gmtp_packet(ip_hdr(skb), gh);
 			gp->tx_rtt = jiffies_to_msecs(jiffies) - gack->orig_tstamp;
 			gp->tx_avg_rtt = rtt_ewma(gp->tx_avg_rtt, gp->tx_rtt,
 					GMTP_RTT_WEIGHT);
-			gp->tx_ucc_rate = min((__be32 )gp->tx_ucc_rate,
+			gp->tx_ucc_rate = min((__be32 )gp->tx_max_rate,
 					gh->transm_r);
+
+			pr_info("ucc tx: %lu B/s, from: %pI4\n", gp->tx_ucc_rate,
+					&ip_hdr(skb)->saddr);
 		}
 		goto discard;
 	case GMTP_PKT_RESET:
@@ -464,7 +466,7 @@ int gmtp_rcv_route_notify(struct sock *sk, struct sk_buff *skb,
 	if(route->nrelays <= 0)
 		return 0;
 
-	gmtp_add_server_entry(server_hashtable, gh->flowname, route);
+	gmtp_add_server_entry(server_hashtable, sk, route);
 
 	return 0;
 }
@@ -508,8 +510,8 @@ static int gmtp_rcv_request_rcv_state_process(struct sock *sk,
 		sk_wake_async(sk, SOCK_WAKE_IO, POLL_OUT);
 
 		/* The server does nothing. Local GMTP-Inter handles with it */
-		/*if(gh->type == GMTP_PKT_ROUTE_NOTIFY)
-			gmtp_rcv_route_notify(sk, skb, gh);*/
+		if(gh->type == GMTP_PKT_ROUTE_NOTIFY)
+			gmtp_rcv_route_notify(sk, skb, gh);
 
 		if (gh->type == GMTP_PKT_DATAACK)
 		{

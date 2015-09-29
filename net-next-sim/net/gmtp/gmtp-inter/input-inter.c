@@ -28,13 +28,16 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 		struct gmtp_client *cl;
 		gmtp_pr_info("Media found. Sending RequestNotify.");
 		switch(entry->state) {
-		/* FIXME Make a timer to send register... */
+
 		case GMTP_INTER_WAITING_REGISTER_REPLY:
+			gmtp_pr_info("Waiting Register-Reply from server...");
+			/* FIXME Make a timer to send register again... */
 			code = GMTP_REQNOTIFY_CODE_WAIT;
-			/* GMTP-Request shall not pass */
-			gh->type = GMTP_PKT_REGISTER;
+			/*
+			gh->type = GMTP_PKT_REGISTER;  Request shall not pass
 			iph->ttl = 64;
-			ip_send_check(iph);
+			ip_send_check(iph);*/
+			ret = NF_DROP;
 			break;
 		case GMTP_INTER_REGISTER_REPLY_RECEIVED:
 		case GMTP_INTER_TRANSMITTING:
@@ -60,7 +63,7 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 				gh->flowname,
 				iph->daddr,
 				NULL,
-				gh->dport, /* Media port */
+				gh->dport, /* Server port */
 				mcst_addr,
 				gh->dport); /* Mcst port <- server port */
 
@@ -105,23 +108,6 @@ out:
 	return ret;
 }
 
-struct gmtp_client *gmtp_inter_create_relay(struct sk_buff *skb,
-		struct gmtp_inter_entry *entry)
-{
-	struct iphdr *iph = ip_hdr(skb);
-	struct gmtp_hdr *gh = gmtp_hdr(skb);
-	struct ethhdr *eth = eth_hdr(skb);
-	struct gmtp_client *relay;
-
-	relay = gmtp_list_add_client(++entry->nrelays, iph->saddr, gh->sport, 0,
-				&entry->relays->list);
-	if(relay != NULL) {
-		ether_addr_copy(relay->mac_addr, eth->h_source);
-		relay->state = GMTP_CLOSED;
-	}
-	return relay;
-}
-
 /** Register to localhost only */
 int gmtp_inter_register_rcv(struct sk_buff *skb)
 {
@@ -130,13 +116,15 @@ int gmtp_inter_register_rcv(struct sk_buff *skb)
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct ethhdr *eth = eth_hdr(skb);
 	struct gmtp_inter_entry *entry;
-	struct gmtp_client *relay;
+	struct gmtp_relay *relay;
 
 	gmtp_pr_func();
+	print_packet(skb, true);
+	print_gmtp_packet(iph, gh);
 
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
 	if(entry != NULL) {
-		relay = gmtp_get_client(&entry->relays->list, iph->saddr,
+		relay = gmtp_get_relay(&entry->relays->list, iph->saddr,
 				gh->sport);
 		if(relay == NULL)
 			relay = gmtp_inter_create_relay(skb, entry);
@@ -149,6 +137,12 @@ int gmtp_inter_register_rcv(struct sk_buff *skb)
 		case GMTP_INTER_TRANSMITTING:
 			gmtp_pr_info("Media found. Sending RegisterReply.");
 			break;
+		case GMTP_INTER_CLOSE_RECEIVED:
+		case GMTP_INTER_CLOSED:
+			/* TODO Send a reset to requester */
+			gmtp_pr_warning("Server is already closed! "
+					"(TODO: send a reset to requester)\n");
+			break;
 		default:
 			gmtp_pr_error("Inconsistent state: %d", entry->state);
 		}
@@ -160,7 +154,8 @@ int gmtp_inter_register_rcv(struct sk_buff *skb)
 					iph->saddr, ghreply,
 					GMTP_INTER_BACKWARD);
 		}
-	} else {
+	} else { /* I am not the server */
+
 		__be32 mcst_addr = get_mcst_v4_addr();
 		int err = gmtp_inter_add_entry(gmtp_inter.hashtable,
 				gh->flowname, iph->daddr,
@@ -177,6 +172,7 @@ int gmtp_inter_register_rcv(struct sk_buff *skb)
 		entry->my_addr = gmtp_inter_device_ip(skb->dev);
 		entry->my_port = gh->sport;
 		relay = gmtp_inter_create_relay(skb, entry);
+
 		if(relay != NULL)
 			ret = NF_ACCEPT;
 	}
@@ -271,31 +267,35 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 	struct gmtp_hdr *gh_route_n;
 	struct gmtp_hdr *gh_req_n;
 	struct gmtp_client *client, *tempc, *first_client, *cur_reporter = NULL;
-	struct gmtp_client *relay, *tempr;
+	struct gmtp_relay *relay, *tempr;
 	u8 code = GMTP_REQNOTIFY_CODE_OK;
 
 	gmtp_print_function();
 
-	if(entry->state == GMTP_INTER_REGISTER_REPLY_RECEIVED) {
-		pr_info("Discarding duplicated packet...\n");
-		return NF_DROP;
-	}
-
 	print_packet(skb, true);
 	print_gmtp_packet(iph, gh);
+
+	if(entry->state == GMTP_INTER_REGISTER_REPLY_RECEIVED) {
+		pr_info("Discarding duplicated register_reply...\n");
+		return NF_DROP;
+	}
 
 	entry->transm_r =  gh->transm_r;
 	entry->rcv_tx_rate = gh->transm_r;
 	entry->server_rtt = (unsigned int)gh->server_rtt;
+	entry->ucc_type = gmtp_hdr_register_reply(skb)->ucc_type;
+	gmtp_inter_build_ucc(&entry->ucc, entry->ucc_type);
 	entry->route_pending = true;
 
 	if(direction != GMTP_INTER_LOCAL) {
 		pr_info("Direction: %u\n", direction);
 
+		entry->dev_in = skb->dev;
+
 		/* Add relay information in REGISTER-REPLY packet) */
 		gmtp_inter_add_relayid(skb);
 
-		pr_info("UPDATING Tx Rate");
+		pr_info("UPDATING Tx Rate...\n");
 		gmtp_inter.worst_rtt = max(gmtp_inter.worst_rtt,
 				(unsigned int ) gh->server_rtt);
 
@@ -310,16 +310,16 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 
 		ether_addr_copy(entry->server_mac_addr, eth->h_source);
 
-		/*entry->route_pending = false;*/
 		gh_route_n = gmtp_inter_make_route_hdr(skb);
 		if(gh_route_n != NULL)
 			gmtp_inter_build_and_send_pkt(skb, iph->daddr,
 					iph->saddr, gh_route_n, direction);
+		mod_timer(&entry->ack_timer,
+				jiffies + msecs_to_jiffies(2*GMTP_DEFAULT_RTT));
 	} else {
 		pr_info("Direction: LOCAL\n");
 		ether_addr_copy(entry->server_mac_addr, skb->dev->dev_addr);
 		ether_addr_copy(eth->h_dest, entry->request_mac_addr);
-		/*entry->route_pending = true;*/
 	}
 
 	entry->state = GMTP_INTER_REGISTER_REPLY_RECEIVED;
@@ -370,7 +370,6 @@ send_to_clients:
 	list_for_each_entry_safe(client, tempc, &entry->clients->list, list)
 	{
 		struct sk_buff *copy = skb_copy(skb, gfp_any());
-		pr_info("Client...\n");
 
 		/* Send to other clients (not first) */
 		if(client == first_client)
@@ -413,20 +412,26 @@ int gmtp_inter_ack_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_client *reporter;
+	struct gmtp_relay *relay;
 
 	reporter = gmtp_get_client(&entry->clients->list, iph->saddr,
 			gh->sport);
-	if(reporter != NULL) {
-		gmtp_pr_debug("ACK from reporter: %pI4:%d", &iph->saddr,
-				gh->sport);
+	if(reporter != NULL)
 		reporter->ack_rx_tstamp = jiffies_to_msecs(jiffies);
+
+	relay = gmtp_get_relay(&entry->relays->list, iph->saddr, gh->sport);
+	if(relay != NULL) {/** FIXME Study new manner of Rates and RTTs... */
+		entry->rcv_tx_rate = gh->transm_r;
+		relay->tx_rate = gh->transm_r;
 	}
 
-	pr_info("ACK_RCV: entry->route_pending = %d\n", entry->route_pending);
-	if(entry->route_pending) {
-		print_gmtp_packet(iph, gh);
-		entry->route_pending = false;
-		return NF_ACCEPT;
+	if(gmtp_inter_ip_local(iph->daddr)) {
+		if(entry->route_pending) {
+			entry->route_pending = false;
+			return NF_ACCEPT;
+		} else if(relay != NULL) {
+			return NF_ACCEPT;
+		}
 	}
 
 	return NF_DROP;
@@ -436,30 +441,36 @@ int gmtp_inter_ack_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 int gmtp_inter_route_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 {
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
-	struct iphdr *iph = ip_hdr(skb);
-	struct gmtp_client *relay;
-
-	/* This is not to me */
-	if(!gmtp_inter_ip_local(iph->daddr))
-		return NF_ACCEPT;
-
-	relay = gmtp_get_client(&entry->relays->list, iph->saddr, gh->sport);
-	if(relay != NULL)
-		relay->state = GMTP_OPEN;
-
 	struct gmtp_hdr_route *route = gmtp_hdr_route(skb);
-	print_gmtp_packet(iph, gh);
+	struct iphdr *iph = ip_hdr(skb);
+	struct ethhdr *eth = eth_hdr(skb);
+	struct gmtp_relay *relay;
 
+	print_gmtp_packet(iph, gh);
 	print_route(route);
 
-	if(route->nrelays > 0)
-		gmtp_add_server_entry(server_hashtable, gh->flowname, route);
-
-	pr_info("ROUTE_RCV: entry->route_pending = %d\n", entry->route_pending);
-	if(entry->route_pending) {
-		entry->route_pending = false;
+	relay = gmtp_get_relay(&entry->relays->list, iph->saddr, gh->sport);
+	pr_info("Relay: %p\n", relay);
+	if(relay == NULL)
 		return NF_ACCEPT;
+
+	relay->state = GMTP_OPEN;
+	ether_addr_copy(relay->mac_addr, eth->h_source);
+	relay->dev = skb->dev;
+
+	if(gmtp_inter_ip_local(iph->daddr)) { /* I am the server itself */
+		if(route->nrelays > 0)
+			/*gmtp_add_server_entry(server_hashtable, gh->flowname,
+					route)*/;
+		pr_info("ROUTE_RCV: entry->route_pending = %d\n",
+				entry->route_pending);
+		if(entry->route_pending) {
+			entry->route_pending = false;
+			return NF_ACCEPT;
+		}
 	}
+
+	pr_info("Dropping Route...\n");
 	return NF_DROP;
 }
 
@@ -526,18 +537,21 @@ static inline void gmtp_update_stats(struct gmtp_inter_entry *info,
 	info->last_rx_tstamp = jiffies_to_msecs(jiffies);
 
 	info->transm_r = gh->transm_r;
-	info->rcv_tx_rate = gh->transm_r;
-	gh->transm_r = min(info->rcv_tx_rate, gmtp_inter.ucc_rx);
 
-	if(gh->seq % gmtp_inter.rx_rate_wnd == 0) {
-		unsigned long current_time = jiffies_to_msecs(jiffies);
+	/* FIXME Make a timer to update this */
+	/*info->rcv_tx_rate = gh->transm_r;
+	gh->transm_r = min(info->rcv_tx_rate, gmtp_inter.ucc_rx);*/
+
+	if(++info->data_pkt_in % gmtp_inter.rx_rate_wnd == 0) {
+		unsigned long current_time = ktime_to_ms(ktime_get_real());
 		unsigned long elapsed = current_time - info->recent_rx_tstamp;
 
 		if(elapsed != 0) {
 			info->current_rx = DIV_ROUND_CLOSEST(
-					info->recent_bytes * HZ, elapsed);
+					info->recent_bytes * MSEC_PER_SEC, elapsed);
 		}
-		info->recent_rx_tstamp = jiffies_to_msecs(jiffies);
+		info->recent_rx_tstamp = ktime_to_ms(ktime_get_real());
+
 		info->recent_bytes = 0;
 		gmtp_inter.worst_rtt = GMTP_MIN_RTT_MS;
 	}
@@ -565,12 +579,16 @@ int gmtp_inter_data_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	if(!gmtp_inter_ip_local(iph->daddr)) /* Data is not to me */
 		return NF_ACCEPT;
 
-	if(unlikely(entry->state == GMTP_INTER_REGISTER_REPLY_RECEIVED))
+	if(unlikely(entry->state == GMTP_INTER_REGISTER_REPLY_RECEIVED)) {
 		entry->state = GMTP_INTER_TRANSMITTING;
+		mod_timer(&entry->mcc_timer, gmtp_mcc_interval(entry->server_rtt));
+	}
 
 	if(entry->buffer->qlen >= entry->buffer_max) {
-		pr_info("Dropping packet (seq=%u, data=%s)\n", gh->seq, gmtp_data(skb));
-		goto out; /* Dont add it to buffer (equivalent to drop) */
+		pr_info("GMTP-Inter: dropping packet (seq=%u, data=%s)\n",
+				gh->seq, gmtp_data(skb));
+		goto out;
+		/* Dont add it to buffer (equivalent to drop) */
 	}
 
 	if(iph->daddr == entry->my_addr)
@@ -613,6 +631,10 @@ int gmtp_inter_close_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry,
 	if(entry->state == GMTP_INTER_TRANSMITTING) {
 		struct gmtp_hdr *gh_reset;
 		entry->state = GMTP_INTER_CLOSE_RECEIVED;
+
+		pr_info("Deleting timers...\n");
+		del_timer_sync(&entry->mcc_timer);
+		del_timer_sync(&entry->ack_timer);
 
 		gh_reset = gmtp_inter_make_reset_hdr(skb, GMTP_RESET_CODE_CLOSED);
 

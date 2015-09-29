@@ -148,6 +148,8 @@ unsigned int gmtp_sync_mss(struct sock *sk, u32 pmtu)
 	icsk->icsk_pmtu_cookie = pmtu;
 	gp->mss = cur_mps;
 
+	pr_info("MSS: %u\n", gp->mss);
+
 	return cur_mps;
 }
 EXPORT_SYMBOL_GPL(gmtp_sync_mss);
@@ -224,6 +226,8 @@ struct sk_buff *gmtp_make_register_reply(struct sock *sk, struct dst_entry *dst,
 	gh->transm_r	= (__be32) gmtp_sk(sk)->tx_media_rate;
 	gh->hdrlen	= gmtp_header_size;
 	memcpy(gh->flowname, greq->flowname, GMTP_FLOWNAME_LEN);
+
+	gmtp_hdr_register_reply(skb)->ucc_type = greq->tx_ucc_type;
 
 	/* We use `acked' to remember that a Register-Reply was already sent. */
 	inet_rsk(req)->acked = 1;
@@ -659,7 +663,6 @@ static void gmtp_xmit_packet(struct sock *sk, struct sk_buff *skb) {
 	int err;
 
 	GMTP_SKB_CB(skb)->type = GMTP_PKT_DATA;
-
 	err = gmtp_transmit_skb(sk, skb);
 
 	/*
@@ -718,9 +721,6 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 	unsigned long tx_rate = min(gp->tx_max_rate, gp->tx_ucc_rate);
 	int len;
 
-	struct gmtp_packet_info *pkt_info = kmalloc(
-			sizeof(struct gmtp_packet_info), GFP_KERNEL);
-
 	/** TODO Continue tests with different scales... */
 	static const int scale = 1;
 	/*static const int scale = HZ/100;*/
@@ -728,14 +728,12 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 	if(unlikely(skb == NULL))
 		return;
 
-	if(tx_rate == UINT_MAX)
+	if(tx_rate == UINT_MAX /*|| tx_rate >= gp->tx_media_rate*/)
 		goto send;
 
 	/*pr_info("[%d] Tx rate: %lu bytes/s\n", gp->tx_dpkts_sent, gp->tx_total_rate);
 	pr_info("[-] Tx rate (sample): %lu bytes/s\n", gp->tx_sample_rate);*/
 
-	pkt_info->sk = sk;
-	pkt_info->skb = skb;
 	elapsed = jiffies - gp->tx_last_stamp; /* time elapsed since last sent */
 
 	len = packet_len(skb);
@@ -765,10 +763,15 @@ wait:
 		gp->tx_byte_budget = INT_MIN;
 
 	if(delay2 > 0) {
-		pr_info("Delay: %ld ms\n", delay2);
+		struct gmtp_packet_info *pkt_info;
+		pkt_info = kmalloc(sizeof(struct gmtp_packet_info), GFP_KERNEL);
+		pkt_info->sk = sk;
+		pkt_info->skb = skb;
+
 		setup_timer(&gp->xmit_timer, gmtp_write_xmit_timer,
 				(unsigned long ) pkt_info);
 		mod_timer(&gp->xmit_timer, jiffies + delay2);
+
 		/* Never use gmtp_wait_for_delay(sk, delay2); in NS-3/dce*/
 		schedule_timeout(delay2);
 		return;

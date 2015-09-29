@@ -25,10 +25,10 @@
  * Register-Reply->nrelays: 8
  * Register-Reply->relay_list 1400
  *
- * 1400/20 = 70
+ * 1400/20 = 70 (-1 (ucc_type))
  *
  */
-#define GMTP_MAX_RELAY_NUM 70
+#define GMTP_MAX_RELAY_NUM 69
 
 /**
  * GMTP packet header
@@ -137,13 +137,12 @@ struct gmtp_hdr_reset {
 };
 
 /**
- * struct gmtp_hdr_register_reply - Register reply from servers
+ * struct gmtp_hdr_relay- Store data of a single relay in GMTP headers
  *
- * @nrelays: number of relays
  * @relay_id: unique id of relay
  * @relay_ip: IP address of relay
  */
-struct gmtp_relay {
+struct gmtp_hdr_relay {
 	__u8 			relay_id[GMTP_RELAY_ID_LEN];
 	__be32 			relay_ip;
 };
@@ -151,34 +150,42 @@ struct gmtp_relay {
 /**
  * struct gmtp_hdr_register_reply - Register reply from servers
  *
+ * @ucc_type: type of UCC
  * @nrelays: 	number of relays
  * @relay_list:	list of relays in path
  */
 struct gmtp_hdr_register_reply {
+	__u8			ucc_type:2;
 	__u8 			nrelays;
-	struct gmtp_relay 	relay_list[GMTP_MAX_RELAY_NUM];
+	struct gmtp_hdr_relay 	relay_list[GMTP_MAX_RELAY_NUM];
 };
 
 /**
  * struct gmtp_hdr_route_notify - RouteNotify to servers
  *
+ * @ucc_type: type of UCC
  * @nrelays: number of relays
  * @relay_list - list of relays in path
  */
 struct gmtp_hdr_route {
+	__u8			ucc_type:2;
 	__u8 			nrelays;
-	struct gmtp_relay 	relay_list[GMTP_MAX_RELAY_NUM];
+	struct gmtp_hdr_relay 	relay_list[GMTP_MAX_RELAY_NUM];
 };
 
 /**
  * struct gmtp_hdr_reqnotify - RequestNotify to clients
  *
- * @error_code: One of gmtp_reqnotify_error_code
- * @channel_addr: multicast channel address
+ * @rn_code: One of gmtp_reqnotify_error_code
+ * @mcst_addr: multicast channel address
  * @mcst_port: multicast channel port
+ * @relay_id: Relay ID
+ * @reporter_addr: reporter IP address
+ * @reporter_port: reporter port
+ * @max_nclients: max amount of clients connected to a reporter
  */
 struct gmtp_hdr_reqnotify {
-	__u8			rn_code:3;
+	__u8			rn_code:2;
 	__be32			mcst_addr;
 	__be16  		mcst_port;
 	__u8 			relay_id[GMTP_RELAY_ID_LEN];
@@ -307,6 +314,13 @@ static inline unsigned int gmtp_packet_hdr_variable_len(const __u8 type)
 	return len;
 }
 
+enum gmtp_ucc_type {
+	GMTP_DELAY_UCC = 0,
+	GMTP_MEDIA_ADAPT_UCC,
+
+	GMTP_MAX_UCC_TYPES
+};
+
 /* GMTP socket options */
 enum gmtp_sockopt_codes {
 	GMTP_SOCKOPT_FLOWNAME = 1,
@@ -318,7 +332,8 @@ enum gmtp_sockopt_codes {
 	GMTP_SOCKOPT_SERVER_TIMEWAIT,
 	GMTP_SOCKOPT_PULL,
 	GMTP_SOCKOPT_ROLE_RELAY,
-	GMTP_SOCKOPT_RELAY_ENABLED
+	GMTP_SOCKOPT_RELAY_ENABLED,
+	GMTP_SOCKOPT_UCC_TYPE
 };
 
 
