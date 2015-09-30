@@ -47,9 +47,15 @@ static inline unsigned long gmtp_ucc_interval(unsigned int rtt)
 void register_timer_callback(unsigned long data)
 {
 	struct gmtp_inter_entry *entry = (struct gmtp_inter_entry*) data;
+	struct sk_buff *skb;
 
 	gmtp_ucc_equation(GMTP_UCC_NONE);
-	struct sk_buff *skb = gmtp_inter_build_register(entry);
+
+	if(likely(jiffies % HZ))
+		skb = gmtp_inter_build_ack(entry);
+	else
+		/** FIXME Server does not receive register... */
+		skb = gmtp_inter_build_register(entry);
 
 	if(skb != NULL)
 		gmtp_inter_send_pkt(skb);
