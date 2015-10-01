@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
 
 	cout << "Sending data...\n" << endl;
 	for(i = 0; i < 10000; ++i) {
-		const char *numstr = NumStr(i+1);
+		const char *numstr = NumStr(i+1); //Do not delete this.
 		char *buffer = new char[BUFF_SIZE];
 		strcpy(buffer, msg);
 		strcat(buffer, numstr);
@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
 		total += pkt_size;
 		total_data += BUFF_SIZE;
 		delete buffer;
-		delete [] numstr;
+		//delete [] numstr;
 		if(i % 1000 == 0) {
 			print_stats(i, t1, total, total_data);
 			cout << endl;
@@ -113,8 +113,8 @@ int main(int argc, char *argv[])
 	close(newSocket);
 	close(welcomeSocket);
 
-	delete [] outstr;
-	delete [] msg;
+//	delete [] outstr;
+//	delete [] msg;
 
 	printf("Server closed!\n\n");
 

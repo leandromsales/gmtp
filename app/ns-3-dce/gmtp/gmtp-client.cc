@@ -125,7 +125,7 @@ int main(int argc, char**argv)
 	//	21/08/15 - 4:00 AM
 	sleep(3);
 
-	delete [] outstr;
+//	delete [] outstr;
 
 	return 0;
 }
