@@ -70,6 +70,7 @@ struct gmtp_inter_entry {
 	__u8 state :3;
 
 	struct timer_list ack_timer;
+	struct timer_list register_timer;
 
 	unsigned char server_mac_addr[6];
 	unsigned char request_mac_addr[6];

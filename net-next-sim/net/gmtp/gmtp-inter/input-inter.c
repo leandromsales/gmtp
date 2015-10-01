@@ -418,6 +418,9 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 					iph->saddr, gh_route_n, direction);
 		mod_timer(&entry->ack_timer,
 				jiffies + msecs_to_jiffies(2*GMTP_DEFAULT_RTT));
+
+		/** FIXME This causes congestion... ! Why? */
+		/*mod_timer(&entry->register_timer, jiffies + HZ);*/
 	} else {
 		pr_info("Direction: LOCAL\n");
 		ether_addr_copy(entry->server_mac_addr, skb->dev->dev_addr);
@@ -668,6 +671,7 @@ int gmtp_inter_close_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry,
 		pr_info("Deleting timers...\n");
 		del_timer_sync(&entry->mcc_timer);
 		del_timer_sync(&entry->ack_timer);
+		del_timer_sync(&entry->register_timer);
 
 		gh_reset = gmtp_inter_make_reset_hdr(skb, GMTP_RESET_CODE_CLOSED);
 

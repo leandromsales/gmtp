@@ -162,8 +162,11 @@ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
 	new_entry->state = GMTP_INTER_WAITING_REGISTER_REPLY;
 	new_entry->next = hashtable->table[hashval];
 	hashtable->table[hashval] = new_entry;
-	setup_timer(&new_entry->ack_timer, register_timer_callback,
-			(unsigned long) new_entry);
+	setup_timer(&new_entry->ack_timer, gmtp_inter_ack_timer_callback,
+			(unsigned long ) new_entry);
+	setup_timer(&new_entry->register_timer,
+			gmtp_inter_register_timer_callback,
+			(unsigned long ) new_entry);
 
 	return 0;
 }
