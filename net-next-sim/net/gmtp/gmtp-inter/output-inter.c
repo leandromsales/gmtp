@@ -46,7 +46,7 @@ int gmtp_inter_register_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	return NF_ACCEPT;
 }
 
-/** FIXME HOOK LOCAL OUT Does not works for RegisterReply (skb->dev == NULL) */
+/** XXX HOOK LOCAL OUT Does not works for RegisterReply (skb->dev == NULL) */
 int gmtp_inter_register_reply_out(struct sk_buff *skb,
 		struct gmtp_inter_entry *entry)
 {

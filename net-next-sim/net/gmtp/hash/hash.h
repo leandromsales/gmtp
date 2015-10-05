@@ -106,9 +106,10 @@ void gmtp_del_client_entry(struct gmtp_hashtable *table, const __u8 *key);
  * @list:  the list head
  */
 struct gmtp_relay_entry {
+	struct list_head 		list;
 	struct gmtp_hash_entry		entry;
 	struct gmtp_hdr_relay 		relay;
-	struct list_head 		list;
+	__u8 				nrelays;
 	struct sock 			*sk;
 };
 

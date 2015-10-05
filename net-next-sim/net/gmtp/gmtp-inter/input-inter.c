@@ -126,6 +126,7 @@ int gmtp_inter_register_rcv(struct sk_buff *skb)
 	if(entry != NULL) {
 		relay = gmtp_get_relay(&entry->relays->list, iph->saddr,
 				gh->sport);
+
 		if(relay == NULL)
 			relay = gmtp_inter_create_relay(skb, entry);
 
@@ -229,14 +230,17 @@ struct gmtp_client *jump_over_gmtp_intra(struct sk_buff *skb,
 static int gmtp_inter_transmitting_register_reply_rcv(struct sk_buff *skb,
 		struct gmtp_inter_entry *entry)
 {
-	int ret = NF_DROP;
-
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct iphdr *iph = ip_hdr(skb);
 	struct ethhdr *eth = eth_hdr(skb);
 	struct gmtp_hdr *gh_route_n;
 
+	/* TODO write my ucc tx_rate here... */
+
 	gmtp_inter_add_relayid(skb);
+
+	if(!gmtp_inter_ip_local(iph->daddr))
+		return NF_ACCEPT;
 
 	gh_route_n = gmtp_inter_make_route_hdr(skb);
 
@@ -246,7 +250,7 @@ static int gmtp_inter_transmitting_register_reply_rcv(struct sk_buff *skb,
 		gmtp_inter_build_and_send_pkt(skb, iph->daddr, iph->saddr,
 				gh_route_n, GMTP_INTER_BACKWARD);
 
-	return ret;
+	return NF_DROP;
 }
 
 static void gmtp_inter_send_reply_to_relay(struct sk_buff *skb,
@@ -420,7 +424,7 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 				jiffies + msecs_to_jiffies(2*GMTP_DEFAULT_RTT));
 
 		/** FIXME This causes congestion... ! Why? */
-		/*mod_timer(&entry->register_timer, jiffies + HZ);*/
+		mod_timer(&entry->register_timer, jiffies + HZ);
 	} else {
 		pr_info("Direction: LOCAL\n");
 		ether_addr_copy(entry->server_mac_addr, skb->dev->dev_addr);
@@ -442,7 +446,7 @@ send_to_clients:
 	return ret;
 }
 
-/* Treat acks from clients */
+/* TODO Separate functions to clients and relays */
 int gmtp_inter_ack_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 {
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
@@ -456,9 +460,14 @@ int gmtp_inter_ack_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 		reporter->ack_rx_tstamp = jiffies_to_msecs(jiffies);
 
 	relay = gmtp_get_relay(&entry->relays->list, iph->saddr, gh->sport);
-	if(relay != NULL) {/** FIXME Study new manner of Rates and RTTs... */
+	if(relay != NULL) {
 		entry->rcv_tx_rate = gh->transm_r;
 		relay->tx_rate = gh->transm_r;
+	}
+
+	if(!gmtp_inter_ip_local(iph->daddr)) {
+		if(reporter == NULL && relay == NULL)
+			return NF_ACCEPT;
 	}
 
 	if(gmtp_inter_ip_local(iph->daddr)) {

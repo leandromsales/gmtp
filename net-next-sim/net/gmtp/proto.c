@@ -855,7 +855,7 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 
 		if(likely(r->sk != NULL)) {
 			struct msghdr *msgcpy;
-
+			struct inet_sock *inet = inet_sk(r->sk);
 			size_t nlen = gmtp_media_adapt_cc(r->sk, msg, len);
 
 			if(nlen < 0)
@@ -872,6 +872,8 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 			 printk(KERN_INFO "Kernel Thread: %s\n",task->comm);
 
 			 ret = kthread_stop(task);*/
+
+			pr_info("Sending to %pI4 (%u)\n", &inet->inet_daddr, gp->gss);
 
 			ret = gmtp_do_sendmsg(r->sk, msgcpy, len);
 		}
