@@ -43,12 +43,14 @@ struct gmtp_hash_entry {
  * struct gmtp_hashtable - The GMTP hash table
  *
  * @size: 		the max number of entries in hash table (fixed)
+ * @len: 		the current number of entries in hash table
  * @gmtp_hash_ops: 	the operations of hashtable
  * @table:		the array of table entries
  * 			(it can be a client or a server entry)
  */
 struct gmtp_hashtable {
-	int 				size;
+	unsigned int 			size;
+	unsigned int			len;
 
 	struct gmtp_hash_entry		**entry;
 	struct gmtp_hash_ops		hash_ops;
