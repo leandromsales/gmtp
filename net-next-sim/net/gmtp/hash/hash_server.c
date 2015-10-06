@@ -30,17 +30,12 @@ static void gmtp_print_server_entry(struct gmtp_server_entry *entry)
 	struct gmtp_relay_entry *relay = &entry->relay_list;
 	int i;
 
-	pr_info("Relays in hash: %u\n", entry->relay_hashtable->len);
-	pr_info("Relays in list: %u\n", entry->len);
+	pr_info("All relays on hash table: %u\n", entry->relay_hashtable->len);
+	pr_info("All routes in the server: %u\n", entry->nroutes);
 
-	/*for(i = 0; i < entry->len; relay = relay->list.next, ++i) {
-		print_gmtp_hdr_relay(&relay->relay);
-	}*/
-
-	pr_info("-----\n");
 	list_for_each_entry(relay, &entry->relay_list.list, list)
 	{
-		print_gmtp_hdr_relay(&relay->relay);
+		print_route_from_list(relay, &relay->list);
 		if(relay->list.next == &relay->list)
 			break;
 	}
@@ -64,28 +59,7 @@ static struct gmtp_relay_entry *gmtp_build_relay_entry(
 static struct gmtp_relay_entry *gmtp_get_relay_entry(
 		struct gmtp_hashtable *relay_table, const __u8 *key)
 {
-	struct gmtp_hash_entry *entry;
-	struct gmtp_relay_entry *relay;
-
-	unsigned int hashval;
-
-	gmtp_pr_func();
-
-	hashval = relay_table->hashval(relay_table, key);
-	/*relay_entry = (struct gmtp_relay_entry*) relay_table->entry[hashval];*/
-
-	pr_info("hashval: %u\n", hashval);
-	entry = relay_table->entry[hashval];
-	pr_info("entry: %p\n", entry);
-	relay = (struct gmtp_relay_entry*) entry;
-	pr_info("relay_entry: %p\n", relay);
-
-	entry = gmtp_lookup_entry(relay_table, key);
-	pr_info("entry: %p\n", entry);
-	relay = (struct gmtp_relay_entry*) entry;
-	pr_info("relay_entry: %p\n", relay);
-
-	return relay;
+	return ((struct gmtp_relay_entry*) gmtp_lookup_entry(relay_table, key));
 }
 
 static int gmtp_add_new_route(struct gmtp_server_entry* server_entry,
@@ -116,7 +90,7 @@ static int gmtp_add_new_route(struct gmtp_server_entry* server_entry,
 			/* add it on the list of relays at server */
 			pr_info("Adding relay on list...\n");
 			list_add_tail(&relay_entry->list, &server_entry->relay_list.list);
-			server_entry->len++; /* Number of routes */
+			server_entry->nroutes++; /* Number of routes */
 		}
 		list_add_tail(&relay_entry->list, head);
 
@@ -126,19 +100,40 @@ static int gmtp_add_new_route(struct gmtp_server_entry* server_entry,
 	return err;
 }
 
-static int gmtp_update_route(struct gmtp_server_entry* entry,
-		struct gmtp_relay_entry *relay,
-		struct gmtp_hdr_relay *relay_list, __u8 nrelays)
+static void gmtp_update_route_add_tail(struct gmtp_hashtable *relay_table,
+		struct gmtp_hdr_relay *relay_list, __u8 nrelays,
+		struct list_head *list)
 {
-	/** TODO Implement update route */
+	int i;
+	for(i = nrelays - 2; i >= 0; --i) {
+		struct gmtp_relay_entry *new_relay_entry;
+		new_relay_entry = gmtp_build_relay_entry(&relay_list[i]);
+		list_add_tail(&new_relay_entry->list, list);
+		relay_table->add_entry(relay_table, &new_relay_entry->entry);
+	}
+}
 
-	pr_info("Number of relays: %u -> %u\n", relay->nrelays, nrelays);
-	if(nrelays != relay->nrelays)
-		pr_info("TODO update relay added/removed!\n");
-	else if(memcmp(&relay->relay, relay_list, sizeof(relay->relay)))
-		pr_info("Content change!");
-	else
+int gmtp_update_route(struct gmtp_server_entry *server_entry,
+	struct gmtp_relay_entry *relay_entry, struct sock *sk,
+	struct sk_buff *skb)
+{
+	struct gmtp_hashtable *relay_table = server_entry->relay_hashtable;
+	struct gmtp_hdr_relay *relay_list = gmtp_hdr_relay(skb);
+	__u8  nrelays = gmtp_hdr_route(skb)->nrelays;
+
+	pr_info("Number of relays: %u -> %u\n", relay_entry->nrelays, nrelays);
+	if(nrelays > relay_entry->nrelays && nrelays >= 2) {
+
+		/* FIXME Update routes correctly... */
+		/*gmtp_update_route_add_tail(relay_table, relay_list, nrelays,
+				&relay_entry->list);*/
+
+	} else if(memcmp(&relay_entry->relay, relay_list,
+			sizeof(relay_entry->relay))) {
+		pr_info("Content changed!");
+	} else {
 		pr_info("Equal!\n");
+	}
 
 	return 1;
 }
@@ -153,13 +148,13 @@ int gmtp_add_route(struct gmtp_server_entry* entry, struct sock *sk,
 	if(nrelays > 0) {
 		struct gmtp_relay_entry *relay;
 		relay = gmtp_get_relay_entry(relay_table, relay_list[(nrelays-1)].relay_id);
-		pr_info("Last relay: %p\n", relay);
 		if(relay == NULL)
 			return gmtp_add_new_route(entry, sk, skb);
 		else {
 			pr_info("Relay already exists:   ");
 			print_gmtp_hdr_relay(&relay->relay);
-			return gmtp_update_route(entry, relay, relay_list, nrelays);
+			/*return do_gmtp_update_route(entry, relay, relay_list, nrelays);*/
+			return gmtp_update_route(entry, relay, sk, skb);
 		}
 	}
 
@@ -183,15 +178,13 @@ int gmtp_add_server_entry(struct gmtp_hashtable *table, struct sock *sk,
 		if(entry == NULL)
 			return 1;
 
-		entry->len = 0;
+		entry->nroutes = 0;
 		INIT_LIST_HEAD(&entry->relay_list.list);
 		memcpy(entry->entry.key, gp->flowname, GMTP_HASH_KEY_LEN);
 		entry->relay_hashtable = gmtp_build_hashtable(U8_MAX,
 				gmtp_relay_hash_ops);
 	}
 
-	pr_info("Table len: %u\n", table->len);
-	pr_info("All relays:\n");
 	gmtp_print_server_entry(entry);
 
 	if(gmtp_add_route(entry, sk, skb))
@@ -201,11 +194,12 @@ int gmtp_add_server_entry(struct gmtp_hashtable *table, struct sock *sk,
 }
 EXPORT_SYMBOL_GPL(gmtp_add_server_entry);
 
-void gmtp_del_relay_list(struct gmtp_relay_entry *entry)
+/* FIXME This function crashes all... */
+void gmtp_del_relay_list(struct list_head *list_head)
 {
 	struct gmtp_relay_entry *relay, *temp;
 	gmtp_pr_func();
-	list_for_each_entry_safe(relay, temp, &entry->list, list)
+	list_for_each_entry_safe(relay, temp, list_head, list)
 	{
 		list_del(&relay->list);
 		kfree(relay);
@@ -225,7 +219,7 @@ void gmtp_del_relay_hash_entry(struct gmtp_hashtable *table, const __u8 *key)
 
 	entry = (struct gmtp_relay_entry*) table->entry[hashval];
 	if(entry != NULL) {
-		gmtp_del_relay_list(entry);
+		gmtp_del_relay_list(&entry->list);
 		table->len--;
 		kfree(entry);
 	}

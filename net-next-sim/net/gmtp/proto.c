@@ -161,11 +161,30 @@ void print_route_from_skb(struct sk_buff *skb)
 		return;
 	}
 
-	pr_info("Route: \n");
+	pr_info("Route to %pI4: \n", &(ip_hdr(skb)->saddr));
 	for(i = route->nrelays - 1; i >= 0; --i)
 		print_gmtp_hdr_relay(&relay_list[i]);
 }
 EXPORT_SYMBOL_GPL(print_route_from_skb);
+
+void print_route_from_list(struct gmtp_relay_entry *relay_list,
+		struct list_head *list_head)
+{
+	struct gmtp_relay_entry *relay_entry;
+
+	if(relay_list->nrelays <= 0) {
+		pr_info("Empty route.\n");
+		return;
+	}
+
+	pr_info("Route to %pI4: \n", &relay_list->relay.relay_ip);
+	list_for_each_entry(relay_entry, list_head, list) {
+		print_gmtp_hdr_relay(&relay_entry->relay);
+		if(relay_entry->list.next == &relay_entry->list)
+			break;
+	}
+}
+EXPORT_SYMBOL_GPL(print_route_from_list);
 
 const char *gmtp_sock_type_name(const int type)
 {
@@ -881,7 +900,7 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 		/*kfree(msgcpy);*/
 		/*kfree(smd);*/
 	count_cl:
-		if(++j >= s->len)
+		if(++j >= s->nroutes)
 			break;
 
 	}

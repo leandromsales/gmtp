@@ -153,6 +153,8 @@ void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh);
 void print_gmtp_data(struct sk_buff *skb, char* label);
 void print_gmtp_hdr_relay(const struct gmtp_hdr_relay *relay);
 void print_route_from_skb(struct sk_buff *skb);
+void print_route_from_list(struct gmtp_relay_entry *relay_list,
+		struct list_head *list_head);
 void print_gmtp_sock(struct sock *sk);
 
 /** sockopt.c */
