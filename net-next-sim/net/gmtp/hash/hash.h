@@ -43,12 +43,14 @@ struct gmtp_hash_entry {
  * struct gmtp_hashtable - The GMTP hash table
  *
  * @size: 		the max number of entries in hash table (fixed)
+ * @len: 		the current number of entries in hash table
  * @gmtp_hash_ops: 	the operations of hashtable
  * @table:		the array of table entries
  * 			(it can be a client or a server entry)
  */
 struct gmtp_hashtable {
-	int 				size;
+	unsigned int 			size;
+	unsigned int			len;
 
 	struct gmtp_hash_entry		**entry;
 	struct gmtp_hash_ops		hash_ops;
@@ -73,10 +75,11 @@ void kfree_gmtp_hashtable(struct gmtp_hashtable *table);
 
 /**
  * struct gmtp_client_entry - An entry in client hash table
+ * @entry: hash entry
  *
- * clients: clients connected to flowname
- * channel_addr: multicast channel to receive media
- * channel_port: multicast port to receive media
+ * @clients: list of clients connected to media P
+ * @channel_addr: multicast channel to receive media
+ * @channel_port: multicast port to receive media
  */
 struct gmtp_client_entry {
 	/* gmtp_hash_entry has to be the first member of gmtp_client_entry */
@@ -101,29 +104,43 @@ void gmtp_del_client_entry(struct gmtp_hashtable *table, const __u8 *key);
 
 /**
  * struct gmtp_relay_table_entry - An entry in relays hash table (in server)
- * @next: 	the next entry with the same key (hash)
  *
- * @list:  the list head
+ * @entry: hash entry
+ *
+ * @relay_list:  the list head of
+ *
+ * @relay: ID and IP of relay
+ * @nrelays: number of relays of route (if this is the last relay of route)
+ * @sk: socket to last relay of route
  */
 struct gmtp_relay_entry {
 	struct gmtp_hash_entry		entry;
+
+	struct list_head 		relay_list;
+	struct list_head 		path_list;
+
 	struct gmtp_hdr_relay 		relay;
-	struct list_head 		list;
+	__u8 				nrelays;
 	struct sock 			*sk;
 };
 
 /**
  * struct gmtp_server_entry - An entry in server hash table
+ *
+ * @entry: hash entry
+ * @relay_hashtable: a hash table of all relays in network
+ * @relay_list: a list of all relays in network (relay tree)
+ * @nroutes: the number of routes stored in server for media P
  */
 struct gmtp_server_entry {
 	struct gmtp_hash_entry		entry;
 	struct gmtp_hashtable 		*relay_hashtable;
-	struct gmtp_relay_entry		relay_list; /* copy */
-	unsigned int 			len;
+	struct gmtp_relay_entry		relays; /* list of routes */
+	unsigned int 			nrelays;
 };
 
 int gmtp_add_server_entry(struct gmtp_hashtable *table, struct sock *sk,
-		struct gmtp_hdr_route *route);
+		struct sk_buff *skb);
 
 
 

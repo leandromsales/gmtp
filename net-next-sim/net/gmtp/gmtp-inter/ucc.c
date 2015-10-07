@@ -34,6 +34,39 @@ unsigned int gmtp_relay_queue_size()
 	return gmtp_inter.total_bytes_rx;
 }
 
+static inline unsigned long gmtp_ucc_interval(unsigned int rtt)
+{
+	unsigned long interval;
+	if(unlikely(rtt <= 0))
+		return (jiffies + GMTP_ACK_INTERVAL);
+
+	interval = (unsigned long)(rtt);
+	return (jiffies + msecs_to_jiffies(interval));
+}
+
+void gmtp_inter_ack_timer_callback(unsigned long data)
+{
+	struct gmtp_inter_entry *entry = (struct gmtp_inter_entry*) data;
+	struct sk_buff *skb;
+
+	gmtp_ucc_equation(GMTP_UCC_NONE);
+	skb = gmtp_inter_build_ack(entry);
+	if(skb != NULL)
+		gmtp_inter_send_pkt(skb);
+
+	mod_timer(&entry->ack_timer, gmtp_ucc_interval(gmtp_inter.worst_rtt));
+}
+
+void gmtp_inter_register_timer_callback(unsigned long data)
+{
+	struct gmtp_inter_entry *entry = (struct gmtp_inter_entry*) data;
+	struct sk_buff *skb = gmtp_inter_build_register(entry);
+
+	if(skb != NULL)
+		gmtp_inter_send_pkt(skb);
+	mod_timer(&entry->register_timer, jiffies + HZ);
+}
+
 /**
  * Get TX rate, via RCP
  *

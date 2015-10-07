@@ -26,6 +26,9 @@ enum gmtp_ucc_log_level {
 /** gmtp-ucc. */
 void gmtp_ucc_equation_callback(unsigned long);
 unsigned int gmtp_relay_queue_size(void);
+void gmtp_inter_ack_timer_callback(unsigned long data);
+void gmtp_inter_register_timer_callback(unsigned long data);
+
 void gmtp_ucc_equation(enum gmtp_ucc_log_level log_level);
 
 

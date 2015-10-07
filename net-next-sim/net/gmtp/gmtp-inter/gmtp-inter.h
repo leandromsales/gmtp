@@ -163,6 +163,7 @@ struct gmtp_hdr *gmtp_inter_make_ack_hdr(struct sk_buff *skb,
 		struct gmtp_inter_entry *entry, __be32 tstamp);
 int gmtp_inter_make_ack_from_feedback(struct sk_buff *skb,
 		struct gmtp_inter_entry *entry);
+struct sk_buff *gmtp_inter_build_register(struct gmtp_inter_entry *entry);
 struct sk_buff *gmtp_inter_build_ack(struct gmtp_inter_entry *entry);
 
 /**
@@ -212,24 +213,6 @@ static inline void print_packet(struct sk_buff *skb, bool in)
 			iph->ttl,
 			iph->protocol,
 			ntohs(iph->tot_len));
-}
-
-/*
- * Print Data of GMTP-Data packets
- */
-static inline void print_gmtp_data(struct sk_buff *skb, char* label)
-{
-	__u8* data = gmtp_data(skb);
-	__u32 data_len = gmtp_data_len(skb);
-	char *lb = (label != NULL) ? label : "Data";
-	if(data_len > 0) {
-		unsigned char *data_str = kmalloc(data_len+1, GFP_KERNEL);
-		memcpy(data_str, data, data_len);
-		data_str[data_len] = '\0';
-		pr_info("%s: %s\n", lb, data_str);
-	} else {
-		pr_info("%s: <empty>\n", lb);
-	}
 }
 
 static inline int bytes_added(int sprintf_return)

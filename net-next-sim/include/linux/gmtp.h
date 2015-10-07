@@ -313,6 +313,19 @@ static inline struct gmtp_hdr_route *gmtp_hdr_route(const struct sk_buff *skb)
 						 sizeof(struct gmtp_hdr));
 }
 
+static inline struct gmtp_hdr_relay *gmtp_hdr_relay(const struct sk_buff *skb)
+{
+	__u8 *relay_list = NULL;
+	if(gmtp_hdr(skb)->type == GMTP_PKT_REGISTER_REPLY) {
+		relay_list = (__u8 *) gmtp_hdr_register_reply(skb)
+				+ sizeof(struct gmtp_hdr_register_reply);
+	} else if(gmtp_hdr(skb)->type == GMTP_PKT_ROUTE_NOTIFY) {
+		relay_list = (__u8 *) gmtp_hdr_route(skb)
+				+ sizeof(struct gmtp_hdr_route);
+	}
+	return (struct gmtp_hdr_relay *)relay_list;
+}
+
 static inline struct gmtp_hdr_reqnotify *gmtp_hdr_reqnotify(
 		const struct sk_buff *skb)
 {

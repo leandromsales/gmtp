@@ -337,8 +337,7 @@ out:
 	return err;
 }
 
-static void gmtp_v4_ctl_send_packet(struct sock *sk, struct sk_buff *rxskb,
-		__u8 type)
+static void gmtp_v4_ctl_send_packet(struct sock *sk, struct sk_buff *rxskb, __u8 type)
 {
 	int err;
 	const struct iphdr *rxiph;
@@ -432,7 +431,6 @@ int gmtp_v4_do_rcv(struct sock *sk, struct sk_buff *skb)
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 
 	if(sk->sk_state == GMTP_OPEN) { /* Fast path */
-
 		if(gmtp_rcv_established(sk, skb, gh, skb->len))
 			goto reset;
 		return 0;
@@ -835,8 +833,11 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 	GMTP_SKB_CB(skb)->seq = gh->seq;
 	GMTP_SKB_CB(skb)->type = gh->type;
 
-	if(unlikely(gh->type != GMTP_PKT_DATA && gh->type != GMTP_PKT_ACK))
+	if(unlikely(gh->type != GMTP_PKT_DATA && gh->type != GMTP_PKT_ACK
+			&& gh->type != GMTP_PKT_ROUTE_NOTIFY)) {
 		print_gmtp_packet(iph, gh);
+	}
+
 
 	/**
 	 * FIXME Change Election algorithm to fully distributed using multicast
@@ -907,7 +908,7 @@ static struct request_sock_ops gmtp_request_sock_ops __read_mostly = {
 };
 
 /*
- * Called by SERVER when it received a request from client/relay
+ * Called by SERVER when it received a request/register from client/relay
  */
 int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
 {
@@ -1007,8 +1008,12 @@ struct sock *gmtp_v4_request_recv_sock(struct sock *sk, struct sk_buff *skb,
 
 	gmtp_print_function();
 
-	if(sk_acceptq_is_full(sk))
+	sk->sk_ack_backlog = 0;
+
+	if(sk_acceptq_is_full(sk)) {
+		pr_info("sk_acceptq_is_full(sk)\n");
 		goto exit_overflow;
+	}
 
 	newsk = gmtp_create_openreq_child(sk, req, skb);
 	if(newsk == NULL)
@@ -1025,9 +1030,8 @@ struct sock *gmtp_v4_request_recv_sock(struct sock *sk, struct sk_buff *skb,
 	newinet->mc_ttl = ip_hdr(skb)->ttl;
 	newinet->inet_id = jiffies;
 
-	if(dst == NULL
-			&& (dst = inet_csk_route_child_sock(sk, newsk, req))
-					== NULL)
+	if(dst == NULL	&&
+			(dst = inet_csk_route_child_sock(sk, newsk, req)) == NULL)
 		goto put_and_exit;
 
 	sk_setup_caps(newsk, dst);

@@ -76,6 +76,7 @@ void gmtp_del_client_hash_entry(struct gmtp_hashtable *table, const __u8 *key)
 	entry = (struct gmtp_client_entry *) gmtp_lookup_entry(table, key);
 	if(entry != NULL) {
 		gmtp_del_client_list(entry);
+		table->len--;
 		/*kfree(entry);*/
 	}
 }

@@ -150,8 +150,10 @@ const char *gmtp_packet_name(const __u8);
 const char *gmtp_state_name(const int);
 void flowname_str(__u8* str, const __u8 *flowname);
 void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh);
+void print_gmtp_data(struct sk_buff *skb, char* label);
 void print_gmtp_hdr_relay(const struct gmtp_hdr_relay *relay);
-void print_route(struct gmtp_hdr_route *route);
+void print_route_from_skb(struct sk_buff *skb);
+void print_route_from_list(struct gmtp_relay_entry *relay_list);
 void print_gmtp_sock(struct sock *sk);
 
 /** sockopt.c */
@@ -184,6 +186,8 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb);
 unsigned int gmtp_sync_mss(struct sock *sk, u32 pmtu);
 struct sk_buff *gmtp_make_register_reply(struct sock *sk, struct dst_entry *dst,
 		struct request_sock *req);
+struct sk_buff *gmtp_make_register_reply_open(struct sock *sk,
+		struct sk_buff *rcv_skb);
 struct sk_buff *gmtp_ctl_make_reset(struct sock *sk,
 		struct sk_buff *rcv_skb);
 /** output.c - Packet Output and Timers  */
@@ -245,6 +249,7 @@ static inline void kfree_gmtp_info(struct gmtp_info *gmtp_info)
  * @reset_data: Data1..3 fields (depend on @gmtpd_reset_code)
  * @seq: sequence number
  * @orig_tstamp: time stamp of last data packet (stamped at origin)
+ * @jumped: used in gmtp-inter. It is 1 if "jump_over_gmtp_intra" was called.
  *
  * This is used for transmission as well as for reception.
  */
@@ -256,6 +261,7 @@ struct gmtp_skb_cb {
 	__u8 retransmits;
 	__be32 seq;
 	__be32 orig_tstamp;
+	__u8 jumped;
 };
 
 #define GMTP_SKB_CB(__skb) ((struct gmtp_skb_cb *)&((__skb)->cb[0]))

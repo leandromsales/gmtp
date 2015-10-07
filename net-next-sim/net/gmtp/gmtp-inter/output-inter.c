@@ -46,7 +46,7 @@ int gmtp_inter_register_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	return NF_ACCEPT;
 }
 
-/** FIXME HOOK LOCAL OUT Does not works for RegisterReply (skb->dev == NULL) */
+/** XXX HOOK LOCAL OUT Does not works for RegisterReply (skb->dev == NULL) */
 int gmtp_inter_register_reply_out(struct sk_buff *skb,
 		struct gmtp_inter_entry *entry)
 {
@@ -126,6 +126,7 @@ int gmtp_inter_data_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	}
 
 send:
+	GMTP_SKB_CB(skb)->jumped = 0;
 	list_for_each_entry_safe(relay, temp, &entry->relays->list, list)
 	{
 		if(relay->state == GMTP_OPEN) {

@@ -111,38 +111,78 @@ void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh)
 	__u8 flowname[GMTP_FLOWNAME_STR_LEN];
 	flowname_str(flowname, gh->flowname);
 
-	pr_info("%s (%u) src=%pI4@%-5d, dst=%pI4@%-5d, ttl=%u, seq=%u, "
+	pr_info("%s (%u) src=%pI4@%-5d, dst=%pI4@%-5d, ttl=%u, len=%u B, seq=%u, "
 			"rtt=%u ms, tx=%u B/s, P=%s\n",
 				gmtp_packet_name(gh->type), gh->type,
 				&iph->saddr, ntohs(gh->sport),
 				&iph->daddr, ntohs(gh->dport),
-				iph->ttl, gh->seq, gh->server_rtt, gh->transm_r,
+				iph->ttl, ntohs(iph->tot_len),
+				gh->seq, gh->server_rtt, gh->transm_r,
 				flowname);
 }
 EXPORT_SYMBOL_GPL(print_gmtp_packet);
+
+/*
+ * Print Data of GMTP-Data packets
+ */
+void print_gmtp_data(struct sk_buff *skb, char* label)
+{
+	__u8* data = gmtp_data(skb);
+	__u32 data_len = gmtp_data_len(skb);
+	char *lb = (label != NULL) ? label : "Data";
+	if(data_len > 0) {
+		unsigned char *data_str = kmalloc(data_len+1, GFP_KERNEL);
+		memcpy(data_str, data, data_len);
+		data_str[data_len] = '\0';
+		pr_info("%s: %s\n", lb, data_str);
+		kfree(data_str);
+	} else {
+		pr_info("%s: <empty>\n", lb);
+	}
+}
+EXPORT_SYMBOL_GPL(print_gmtp_data);
 
 void print_gmtp_hdr_relay(const struct gmtp_hdr_relay *relay)
 {
 	unsigned char relayid[GMTP_FLOWNAME_STR_LEN];
 	flowname_str(relayid, relay->relay_id);
-	pr_info("%s :: %pI4\n", relayid, &relay->relay_ip);
+	pr_info("\t%s :: %pI4\n", relayid, &relay->relay_ip);
 }
 EXPORT_SYMBOL_GPL(print_gmtp_hdr_relay);
 
-void print_route(struct gmtp_hdr_route *route)
+void print_route_from_skb(struct sk_buff *skb)
 {
 	int i;
+	struct gmtp_hdr_route *route = gmtp_hdr_route(skb);
+	struct gmtp_hdr_relay *relay_list = gmtp_hdr_relay(skb);
 
+	pr_info("On packet -> Path to %pI4: \n", &(ip_hdr(skb)->saddr));
 	if(route->nrelays <= 0) {
-		pr_info("Empty route.\n");
+		pr_info("\tEmpty route.\n");
 		return;
 	}
 
-	pr_info("Route: \n");
 	for(i = route->nrelays - 1; i >= 0; --i)
-		print_gmtp_hdr_relay(&route->relay_list[i]);
+		print_gmtp_hdr_relay(&relay_list[i]);
 }
-EXPORT_SYMBOL_GPL(print_route);
+EXPORT_SYMBOL_GPL(print_route_from_skb);
+
+void print_route_from_list(struct gmtp_relay_entry *relay_list)
+{
+	struct gmtp_relay_entry *relay;
+
+	pr_info("On list -> Path to %pI4: \n", &relay_list->relay.relay_ip);
+	if(relay_list->nrelays <= 0) {
+		pr_info("\tEmpty route.\n");
+		return;
+	}
+
+	print_gmtp_hdr_relay(&relay_list->relay);
+	list_for_each_entry(relay, &relay_list->path_list, path_list) {
+		print_gmtp_hdr_relay(&relay->relay);
+	}
+}
+EXPORT_SYMBOL_GPL(print_route_from_list);
 
 const char *gmtp_sock_type_name(const int type)
 {
@@ -758,6 +798,54 @@ out_discard:
 	return gmtp_do_sendmsg(smd->sk, smd->msg, smd->len);
 }*/
 
+size_t gmtp_media_adapt_cc(struct sock *sk, struct msghdr *msg, size_t len)
+{
+	struct gmtp_sock *gp = gmtp_sk(sk);
+	unsigned long tx_rate = min(gp->tx_max_rate, gp->tx_ucc_rate);
+
+	unsigned int datalen, datalen20, datalen40, datalen80;
+	unsigned int rate, new_len;
+
+	new_len = len;
+
+	if(tx_rate == UINT_MAX || gp->tx_ucc_type != GMTP_MEDIA_ADAPT_UCC)
+		return len;
+
+	if(gp->tx_total_rate <= tx_rate)
+		return len;
+
+	rate = DIV_ROUND_CLOSEST(1000 * tx_rate, gp->tx_total_rate);
+
+	if(rate == 0)
+		return len;
+
+	datalen20 = DIV_ROUND_CLOSEST(200 * len, 1000);
+	datalen40 = DIV_ROUND_CLOSEST(400 * len, 1000);
+	datalen80 = DIV_ROUND_CLOSEST(800 * len, 1000);
+
+	new_len = DIV_ROUND_CLOSEST(len * 1000, rate);
+
+	char label[90];
+
+	if(new_len >= datalen80)
+		new_len = datalen80;
+	else if(new_len >= datalen40)
+		new_len = datalen40;
+	else if(new_len >= datalen20)
+		new_len = datalen20;
+	else {
+		return 0;
+	}
+
+	if(new_len < 0) {
+		return 0;
+	}
+
+	pr_info("Cur_TX: %lu B/s, UCC_TX: %lu B/s. reducing to %u B (-%lu B) \n",
+			gp->tx_total_rate, tx_rate, new_len, len - new_len);
+	return new_len;
+}
+
 /**
  * FIXME Make it multithreading.
  * FIXME Send msg to remote clients (without relays)
@@ -776,7 +864,7 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 		return gmtp_do_sendmsg(sk, msg, len);
 
 	/* For every socket(P) in server, send the same data */
-	list_for_each_entry(r, &s->relay_list.list, list) {
+	list_for_each_entry(r, &s->relays.relay_list, relay_list) {
 
 		/*struct gmtp_sendmsg_data *smd = kmalloc(
 		 sizeof(struct gmtp_sendmsg_data), gfp_any());
@@ -784,10 +872,14 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 
 		if(likely(r->sk != NULL)) {
 			struct msghdr *msgcpy;
+			struct inet_sock *inet = inet_sk(r->sk);
+			size_t nlen = gmtp_media_adapt_cc(r->sk, msg, len);
 
-			msgcpy = kmalloc(len, gfp_any());
+			if(nlen < 0)
+				goto count_cl;
 
-			memcpy(msgcpy, msg, len);
+			msgcpy = kmalloc(nlen, gfp_any());
+			memcpy(msgcpy, msg, nlen);
 
 			/*smd->sk = sk;
 			 smd->msg = msgcpy;
@@ -798,13 +890,15 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 
 			 ret = kthread_stop(task);*/
 
+			pr_info("Sending to %pI4 (%u)\n", &inet->inet_daddr, gp->gss);
+
 			ret = gmtp_do_sendmsg(r->sk, msgcpy, len);
 		}
 
 		/*kfree(msgcpy);*/
 		/*kfree(smd);*/
 	count_cl:
-		if(++j >= s->len)
+		if(++j >= s->nrelays)
 			break;
 
 	}
