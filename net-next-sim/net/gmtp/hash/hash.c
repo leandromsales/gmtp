@@ -105,7 +105,6 @@ int gmtp_add_entry(struct gmtp_hashtable *table, struct gmtp_hash_entry *entry)
 	if(cur_entry != NULL)
 		return 1; /* Entry already exists */
 
-	pr_info("Storing new relay at hahsval: %u\n", hashval);
 	entry->next = table->entry[hashval];
 	table->entry[hashval] = entry;
 	table->len++;

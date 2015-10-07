@@ -146,7 +146,7 @@ void print_gmtp_hdr_relay(const struct gmtp_hdr_relay *relay)
 {
 	unsigned char relayid[GMTP_FLOWNAME_STR_LEN];
 	flowname_str(relayid, relay->relay_id);
-	pr_info("%s :: %pI4\n", relayid, &relay->relay_ip);
+	pr_info("\t%s :: %pI4\n", relayid, &relay->relay_ip);
 }
 EXPORT_SYMBOL_GPL(print_gmtp_hdr_relay);
 
@@ -156,32 +156,30 @@ void print_route_from_skb(struct sk_buff *skb)
 	struct gmtp_hdr_route *route = gmtp_hdr_route(skb);
 	struct gmtp_hdr_relay *relay_list = gmtp_hdr_relay(skb);
 
+	pr_info("On packet -> Path to %pI4: \n", &(ip_hdr(skb)->saddr));
 	if(route->nrelays <= 0) {
-		pr_info("Empty route.\n");
+		pr_info("\tEmpty route.\n");
 		return;
 	}
 
-	pr_info("Route to %pI4: \n", &(ip_hdr(skb)->saddr));
 	for(i = route->nrelays - 1; i >= 0; --i)
 		print_gmtp_hdr_relay(&relay_list[i]);
 }
 EXPORT_SYMBOL_GPL(print_route_from_skb);
 
-void print_route_from_list(struct gmtp_relay_entry *relay_list,
-		struct list_head *list_head)
+void print_route_from_list(struct gmtp_relay_entry *relay_list)
 {
-	struct gmtp_relay_entry *relay_entry;
+	struct gmtp_relay_entry *relay;
 
+	pr_info("On list -> Path to %pI4: \n", &relay_list->relay.relay_ip);
 	if(relay_list->nrelays <= 0) {
-		pr_info("Empty route.\n");
+		pr_info("\tEmpty route.\n");
 		return;
 	}
 
-	pr_info("Route to %pI4: \n", &relay_list->relay.relay_ip);
-	list_for_each_entry(relay_entry, list_head, list) {
-		print_gmtp_hdr_relay(&relay_entry->relay);
-		if(relay_entry->list.next == &relay_entry->list)
-			break;
+	print_gmtp_hdr_relay(&relay_list->relay);
+	list_for_each_entry(relay, &relay_list->path_list, path_list) {
+		print_gmtp_hdr_relay(&relay->relay);
 	}
 }
 EXPORT_SYMBOL_GPL(print_route_from_list);
@@ -866,7 +864,7 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 		return gmtp_do_sendmsg(sk, msg, len);
 
 	/* For every socket(P) in server, send the same data */
-	list_for_each_entry(r, &s->relay_list.list, list) {
+	list_for_each_entry(r, &s->relays.relay_list, relay_list) {
 
 		/*struct gmtp_sendmsg_data *smd = kmalloc(
 		 sizeof(struct gmtp_sendmsg_data), gfp_any());
@@ -900,7 +898,7 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 		/*kfree(msgcpy);*/
 		/*kfree(smd);*/
 	count_cl:
-		if(++j >= s->nroutes)
+		if(++j >= s->nrelays)
 			break;
 
 	}

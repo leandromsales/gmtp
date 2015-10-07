@@ -106,8 +106,8 @@ void gmtp_del_client_entry(struct gmtp_hashtable *table, const __u8 *key);
  * struct gmtp_relay_table_entry - An entry in relays hash table (in server)
  *
  * @entry: hash entry
- * @list:  the list head
- * @next: the next entry with the same key (hash)
+ *
+ * @relay_list:  the list head of
  *
  * @relay: ID and IP of relay
  * @nrelays: number of relays of route (if this is the last relay of route)
@@ -115,7 +115,10 @@ void gmtp_del_client_entry(struct gmtp_hashtable *table, const __u8 *key);
  */
 struct gmtp_relay_entry {
 	struct gmtp_hash_entry		entry;
-	struct list_head 		list;
+
+	struct list_head 		relay_list;
+	struct list_head 		path_list;
+
 	struct gmtp_hdr_relay 		relay;
 	__u8 				nrelays;
 	struct sock 			*sk;
@@ -132,8 +135,8 @@ struct gmtp_relay_entry {
 struct gmtp_server_entry {
 	struct gmtp_hash_entry		entry;
 	struct gmtp_hashtable 		*relay_hashtable;
-	struct gmtp_relay_entry		relay_list; /* list of routes */
-	unsigned int 			nroutes;
+	struct gmtp_relay_entry		relays; /* list of routes */
+	unsigned int 			nrelays;
 };
 
 int gmtp_add_server_entry(struct gmtp_hashtable *table, struct sock *sk,
