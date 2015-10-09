@@ -46,6 +46,8 @@ const char *gmtp_packet_name(const __u8 type)
 		[GMTP_PKT_CLOSE]    = "CLOSE",
 		[GMTP_PKT_RESET]    = "RESET",
 		[GMTP_PKT_FEEDBACK]    = "REPORTER_FEEDBACK",
+		[GMTP_PKT_DELEGATE]    = "DELEGATE",
+		[GMTP_PKT_DELEGATE_REPLY]    = "DELEGATE_REPLY",
 	};
 
 	if (type >= GMTP_NR_PKT_TYPES)

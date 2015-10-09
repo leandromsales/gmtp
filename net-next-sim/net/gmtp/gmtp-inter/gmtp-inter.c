@@ -263,6 +263,9 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 		case GMTP_PKT_FEEDBACK:
 			ret = gmtp_inter_feedback_rcv(skb, entry);
 			break;
+		case GMTP_PKT_DELEGATE:
+			ret = gmtp_inter_delegate_rcv(skb, entry);
+			break;
 		default:
 			relay = gmtp_get_relay(&entry->relays->list,
 					iph->daddr, gh->dport);

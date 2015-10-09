@@ -124,10 +124,20 @@ int gmtp_update_route(struct gmtp_server_entry *server_entry,
 	pr_info("Relays in path: from %u to %u\n", relay_entry->nrelays, nrelays);
 	if(nrelays > relay_entry->nrelays && nrelays >= 2) {
 
-		pr_info("Updating path to %pI4...\n", &relay_entry->relay.relay_ip);
+		struct gmtp_relay_entry *new_relay;
+		struct sk_buff *delegate_skb;
+
 		gmtp_update_route_add_tail(relay_table, relay_list, nrelays,
 				&relay_entry->path_list);
 		relay_entry->nrelays = nrelays;
+
+		pr_info("Sending a GMTP-Delegate to new relay...\n");
+		new_relay = gmtp_get_relay_entry(relay_table, relay_list[nrelays-2].relay_id);
+		if(new_relay != NULL) {
+			delegate_skb = gmtp_make_delegate(new_relay->sk, skb);
+			print_gmtp_packet(ip_hdr(delegate_skb), gmtp_hdr(delegate_skb));
+			gmtp_transmit_built_skb(new_relay->sk, delegate_skb);
+		}
 
 	} else if(memcmp(&relay_entry->relay, relay_list,
 			sizeof(relay_entry->relay))) {

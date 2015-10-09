@@ -233,6 +233,16 @@ enum gmtp_elect_codes {
 };
 
 /**
+ * struct gmtp_hdr_delegate - Delegate register/request to a relay
+ *
+ * @elect_code: One of %gmtp_ack_codes
+ */
+struct gmtp_hdr_delegate {
+	__be32 	relay_addr;
+	__be16  relay_port;
+};
+
+/**
  * see www.gmtp-protocol.org
  */
 enum gmtp_pkt_type {
@@ -256,6 +266,8 @@ enum gmtp_pkt_type {
 	GMTP_PKT_RESET,
 
 	GMTP_PKT_FEEDBACK,
+	GMTP_PKT_DELEGATE,
+	GMTP_PKT_DELEGATE_REPLY,
 
 	GMTP_PKT_INVALID,
 	GMTP_PKT_MAX_STATES
@@ -309,6 +321,9 @@ static inline unsigned int gmtp_packet_hdr_variable_len(const __u8 type)
 		break;
 	case GMTP_PKT_ELECT_RESPONSE:
 		len = sizeof(struct gmtp_hdr_elect_response);
+		break;
+	case GMTP_PKT_DELEGATE:
+		len = sizeof(struct gmtp_hdr_delegate);
 		break;
 	case GMTP_PKT_RESET:
 		len = sizeof(struct gmtp_hdr_reset);

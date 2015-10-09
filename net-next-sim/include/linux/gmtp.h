@@ -347,6 +347,13 @@ static inline struct gmtp_hdr_elect_response *gmtp_hdr_elect_response(
 						 sizeof(struct gmtp_hdr));
 }
 
+static inline struct gmtp_hdr_delegate *gmtp_hdr_delegate(
+		const struct sk_buff *skb)
+{
+	return (struct gmtp_hdr_delegate *)(skb_transport_header(skb) +
+						 sizeof(struct gmtp_hdr));
+}
+
 static inline struct gmtp_hdr_reset *gmtp_hdr_reset(const struct sk_buff *skb)
 {
 	return (struct gmtp_hdr_reset *)(skb_transport_header(skb) +

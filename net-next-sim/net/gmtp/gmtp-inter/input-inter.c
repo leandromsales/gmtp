@@ -544,6 +544,22 @@ int gmtp_inter_feedback_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	return NF_DROP;
 }
 
+int gmtp_inter_delegate_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
+{
+	struct iphdr *iph = ip_hdr(skb);
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct gmtp_hdr_delegate *ghd = gmtp_hdr_delegate(skb);
+
+	if(gh->type == GMTP_PKT_DELEGATE)
+		print_gmtp_packet(iph, gh);
+
+	pr_info("\t[relay_addr:port] = %pI4:%d\n", &ghd->relay_addr,
+			ntohs(ghd->relay_port));
+
+	return NF_DROP;
+}
+
+
 /**
  * FIXME This works only with auto promoted reporters
  */

@@ -421,15 +421,10 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 
 		goto discard;
 	case GMTP_PKT_REGISTER: {
-		int err;
-		struct inet_sock *inet = inet_sk(sk);
-		const struct inet_connection_sock *icsk = inet_csk(sk);
 		struct sk_buff *new_skb = gmtp_make_register_reply_open(sk, skb);
 		if(new_skb != NULL) {
 			gmtp_sk(sk)->reply_stamp = jiffies_to_msecs(jiffies);
-			err = icsk->icsk_af_ops->queue_xmit(sk, new_skb,
-					&inet->cork.fl);
-			return net_xmit_eval(err);
+			return gmtp_transmit_built_skb(sk, new_skb);
 		}
 	}
 		break;

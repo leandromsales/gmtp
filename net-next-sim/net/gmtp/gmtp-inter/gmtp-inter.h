@@ -109,6 +109,7 @@ int gmtp_inter_ack_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry);
 int gmtp_inter_route_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry);
 int gmtp_inter_data_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry);
 int gmtp_inter_feedback_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry);
+int gmtp_inter_delegate_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry);
 int gmtp_inter_elect_resp_rcv(struct sk_buff *skb,
 		struct gmtp_inter_entry *entry);
 int gmtp_inter_close_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry,
