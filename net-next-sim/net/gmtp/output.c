@@ -291,7 +291,8 @@ struct sk_buff *gmtp_make_register_reply_open(struct sock *sk,
 }
 EXPORT_SYMBOL_GPL(gmtp_make_register_reply_open);
 
-struct sk_buff *gmtp_make_delegate(struct sock *sk, struct sk_buff *rcv_skb)
+struct sk_buff *gmtp_make_delegate(struct sock *sk, struct sk_buff *rcv_skb,
+		__u8 *rid)
 {
 	struct sk_buff *skb;
 	struct gmtp_hdr *rxgh = gmtp_hdr(rcv_skb), *gh;
@@ -317,7 +318,8 @@ struct sk_buff *gmtp_make_delegate(struct sock *sk, struct sk_buff *rcv_skb)
 	gh->transm_r = rxgh->transm_r;
 	memcpy(gh->flowname, rxgh->flowname, GMTP_FLOWNAME_LEN);
 
-	gmtp_hdr_delegate(skb)->relay_addr = ip_hdr(rcv_skb)->saddr;
+	memcpy(gmtp_hdr_delegate(skb)->relay.relay_id, rid, GMTP_RELAY_ID_LEN);
+	gmtp_hdr_delegate(skb)->relay.relay_ip = ip_hdr(rcv_skb)->saddr;
 	gmtp_hdr_delegate(skb)->relay_port = rxgh->sport;
 
 	return skb;

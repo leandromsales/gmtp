@@ -208,6 +208,39 @@ struct gmtp_hdr *gmtp_inter_make_register_reply_hdr(struct sk_buff *skb,
 }
 EXPORT_SYMBOL_GPL(gmtp_inter_make_register_reply_hdr);
 
+int gmtp_inter_make_delegate_reply(struct sk_buff *skb, struct gmtp_relay *relay,
+		struct gmtp_inter_entry *entry)
+{
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct iphdr *iph = ip_hdr(skb);
+	struct ethhdr *eth = eth_hdr(skb);
+	struct gmtp_hdr_delegate *ghd;
+	unsigned int skb_len = skb->len;
+	int gmtp_hdr_len = sizeof(struct gmtp_hdr)
+			+ sizeof(struct gmtp_hdr_delegate);
+
+	/* Delete ACK specific header */
+	skb_trim(skb, (skb_len - gmtp_packet_hdr_variable_len(gh->type)));
+
+	gh->type = GMTP_PKT_DELEGATE_REPLY;
+	gh->hdrlen = gmtp_hdr_len;
+	gh->sport = entry->my_port;
+
+	ghd = (struct gmtp_hdr_delegate*)skb_put(skb,
+			sizeof(struct gmtp_hdr_delegate));
+	memcpy(ghd->relay.relay_id, relay->relay_id, GMTP_RELAY_ID_LEN);
+	ghd->relay.relay_ip = relay->addr;
+	ghd->relay_port = relay->port;
+
+	iph->saddr = entry->my_addr;
+	iph->tot_len = htons(skb->len);
+	ip_send_check(iph);
+
+	ether_addr_copy(eth->h_source, entry->dev_in->dev_addr);
+
+	return NF_ACCEPT;
+}
+
 struct gmtp_hdr *gmtp_inter_make_reset_hdr(struct sk_buff *skb, __u8 code)
 {
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
@@ -441,6 +474,31 @@ void gmtp_copy_hdr(struct sk_buff *skb, struct sk_buff *src_skb)
 		memcpy(gh, gh_src, gh_src->hdrlen);
 }
 
+int gmtp_inter_make_register(struct sk_buff *skb)
+{
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct iphdr *iph = ip_hdr(skb);
+	struct gmtp_hdr_register *gr;
+	unsigned int skb_len = skb->len;
+	int gmtp_hdr_len = sizeof(struct gmtp_hdr)
+			+ sizeof(struct gmtp_hdr_register);
+
+	/* Delete ACK specific header */
+	skb_trim(skb, (skb_len - gmtp_packet_hdr_variable_len(gh->type)));
+
+	gh->type = GMTP_PKT_REGISTER;
+	gh->hdrlen = gmtp_hdr_len;
+
+	gr = (struct gmtp_hdr_register*)skb_put(skb,
+			sizeof(struct gmtp_hdr_register));
+	memcpy(gr->relay_id, gmtp_inter.relay_id, GMTP_RELAY_ID_LEN);
+
+	iph->ttl = 64;
+	iph->tot_len = htons(skb->len);
+	ip_send_check(iph);
+
+	return NF_ACCEPT;
+}
 
 struct sk_buff *gmtp_inter_build_register(struct gmtp_inter_entry *entry)
 {
@@ -449,10 +507,12 @@ struct sk_buff *gmtp_inter_build_register(struct gmtp_inter_entry *entry)
 	struct ethhdr *eth;
 	struct iphdr *iph;
 	struct gmtp_hdr *gh;
+	struct gmtp_hdr_register *gr;
 
 	struct net_device *dev_entry = entry->dev_in;
-	int gmtp_hdr_len = sizeof(struct gmtp_hdr);
 	int total_len, ip_len = 0;
+	int gmtp_hdr_len = sizeof(struct gmtp_hdr)
+					+ sizeof(struct gmtp_hdr_register);
 
 	ip_len = gmtp_hdr_len + sizeof(struct iphdr);
 	total_len = ip_len + LL_RESERVED_SPACE(dev_entry);
@@ -470,6 +530,9 @@ struct sk_buff *gmtp_inter_build_register(struct gmtp_inter_entry *entry)
 	gh->server_rtt = entry->server_rtt;
 	gh->transm_r = min(gmtp_inter.ucc_rx, entry->rcv_tx_rate);
 	memcpy(gh->flowname, entry->flowname, GMTP_FLOWNAME_LEN);
+
+	gr = (struct gmtp_hdr_register*) gh + sizeof(struct gmtp_hdr);
+	memcpy(gr->relay_id, gmtp_inter.relay_id, GMTP_RELAY_ID_LEN);
 
 	/* Build the IP header. */
 	skb_push(skb, sizeof(struct iphdr));

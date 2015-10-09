@@ -189,7 +189,8 @@ struct sk_buff *gmtp_make_register_reply(struct sock *sk, struct dst_entry *dst,
 		struct request_sock *req);
 struct sk_buff *gmtp_make_register_reply_open(struct sock *sk,
 		struct sk_buff *rcv_skb);
-struct sk_buff *gmtp_make_delegate(struct sock *sk, struct sk_buff *rcv_skb);
+struct sk_buff *gmtp_make_delegate(struct sock *sk, struct sk_buff *rcv_skb,
+		__u8 *rid);
 struct sk_buff *gmtp_ctl_make_reset(struct sock *sk,
 		struct sk_buff *rcv_skb);
 /** output.c - Packet Output and Timers  */

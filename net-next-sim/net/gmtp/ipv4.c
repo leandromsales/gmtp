@@ -833,8 +833,7 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 	GMTP_SKB_CB(skb)->seq = gh->seq;
 	GMTP_SKB_CB(skb)->type = gh->type;
 
-	if(unlikely(gh->type != GMTP_PKT_DATA && gh->type != GMTP_PKT_ACK
-			&& gh->type != GMTP_PKT_ROUTE_NOTIFY)) {
+	if(unlikely(gh->type != GMTP_PKT_DATA && gh->type != GMTP_PKT_ACK)) {
 		print_gmtp_packet(iph, gh);
 	}
 
@@ -916,6 +915,7 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
 
 	struct gmtp_sock *gp = gmtp_sk(sk);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct gmtp_hdr_register *gr = gmtp_hdr_register(skb);
 
 	struct request_sock *req;
 	struct gmtp_request_sock *greq;
@@ -974,6 +974,7 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
 		goto reset;
 
 	memcpy(greq->flowname, gp->flowname, GMTP_FLOWNAME_LEN);
+	memcpy(gp->relay_id, gr->relay_id, GMTP_RELAY_ID_LEN);
 
 	if(gmtp_v4_send_register_reply(sk, req))
 		goto drop_and_free;

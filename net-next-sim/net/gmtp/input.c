@@ -376,6 +376,41 @@ static void gmtp_deliver_input_to_mcc(struct sock *sk, struct sk_buff *skb)
 		mcc_tx_packet_recv(sk, skb);*/
 }
 
+static int gmtp_rcv_route_notify(struct sock *sk, struct sk_buff *skb,
+			 const struct gmtp_hdr *gh)
+{
+	struct gmtp_hdr_route *route = gmtp_hdr_route(skb);
+
+	print_route_from_skb(skb);
+
+	if(route->nrelays <= 0)
+		return 0;
+
+	gmtp_add_server_entry(server_hashtable, sk, skb);
+
+	return 0;
+}
+
+static int gmtp_rcv_delegate_reply(struct sock *sk, struct sk_buff *skb,
+		 const struct gmtp_hdr *gh)
+{
+	struct gmtp_hdr_delegate *dh = gmtp_hdr_delegate(skb);
+	struct gmtp_server_entry *s;
+	struct gmtp_relay_entry *r;
+
+	print_gmtp_hdr_relay(&dh->relay);
+
+	s = (struct gmtp_server_entry*) gmtp_lookup_entry(server_hashtable,
+				gh->flowname);
+	if(s != NULL) {
+		r = (struct gmtp_relay_entry*) gmtp_lookup_entry(s->relay_hashtable,
+						dh->relay.relay_id);
+		pr_info("Found: %pI4\n", &r->relay.relay_ip);
+		gmtp_set_state(r->sk, GMTP_DELEGATED);
+	}
+
+	return 0;
+}
 
 /* TODO Implement check sequence number */
 static int gmtp_check_seqno(struct sock *sk, struct sk_buff *skb)
@@ -419,6 +454,9 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 		/** TODO Update routes */
 		gmtp_rcv_route_notify(sk, skb, gh);
 
+		goto discard;
+	case GMTP_PKT_DELEGATE_REPLY:
+		gmtp_rcv_delegate_reply(sk, skb, gh);
 		goto discard;
 	case GMTP_PKT_REGISTER: {
 		struct sk_buff *new_skb = gmtp_make_register_reply_open(sk, skb);
@@ -472,26 +510,6 @@ discard:
 	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_rcv_established);
-
-/* The server does nothing. Local GMTP-Inter handles with it */
-int gmtp_rcv_route_notify(struct sock *sk, struct sk_buff *skb,
-			 const struct gmtp_hdr *gh)
-{
-	struct gmtp_hdr_route *route = gmtp_hdr_route(skb);
-
-	gmtp_print_function();
-
-	print_gmtp_packet(ip_hdr(skb), gh);
-	print_route_from_skb(skb);
-
-	if(route->nrelays <= 0)
-		return 0;
-
-	gmtp_add_server_entry(server_hashtable, sk, skb);
-
-	return 0;
-}
-EXPORT_SYMBOL_GPL(gmtp_rcv_route_notify);
 
 static int gmtp_rcv_request_rcv_state_process(struct sock *sk,
 						   struct sk_buff *skb,

@@ -402,6 +402,9 @@ unsigned int hook_func_post_routing(unsigned int hooknum, struct sk_buff *skb,
 				ret = gmtp_inter_data_out(skb, entry);
 			}
 			break;
+		case GMTP_PKT_ACK:
+			ret = gmtp_inter_ack_out(skb, entry);
+			break;
 		case GMTP_PKT_RESET:
 		case GMTP_PKT_CLOSE:
 			ret = gmtp_inter_close_out(skb, entry);

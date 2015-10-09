@@ -85,6 +85,7 @@ const char *gmtp_state_name(const int state)
 	[GMTP_CLOSING]		= "CLOSING",
 	[GMTP_TIME_WAIT]	= "TIME_WAIT",
 	[GMTP_CLOSED]		= "CLOSED",
+	[GMTP_DELEGATED]	= "DELEGATED",
 	};
 
 	if (state >= GMTP_PKT_INVALID)
@@ -868,41 +869,34 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	/* For every socket(P) in server, send the same data */
 	list_for_each_entry(r, &s->relays.relay_list, relay_list) {
 
-		/*struct gmtp_sendmsg_data *smd = kmalloc(
-		 sizeof(struct gmtp_sendmsg_data), gfp_any());
-		 struct task_struct *task;*/
-
 		if(likely(r->sk != NULL)) {
+
 			struct msghdr *msgcpy;
 			struct inet_sock *inet = inet_sk(r->sk);
-			size_t nlen = gmtp_media_adapt_cc(r->sk, msg, len);
+			size_t nlen;
 
+			if(unlikely(r->sk->sk_state == GMTP_DELEGATED))
+				continue;
+				/*goto count_cl;*/
+
+			nlen = gmtp_media_adapt_cc(r->sk, msg, len);
 			if(nlen < 0)
-				goto count_cl;
+				continue;
+				/*goto count_cl;*/
 
 			msgcpy = kmalloc(nlen, gfp_any());
 			memcpy(msgcpy, msg, nlen);
 
-			/*smd->sk = sk;
-			 smd->msg = msgcpy;
-			 smd->len = len;
-
-			 task = kthread_run(&gmtp_do_sendmsg_thread_func, (void *)smd, "pradeep");
-			 printk(KERN_INFO "Kernel Thread: %s\n",task->comm);
-
-			 ret = kthread_stop(task);*/
-
-			pr_info("Sending to %pI4 (%u)\n", &inet->inet_daddr, gp->gss);
+			pr_info("Sending to %pI4:%d (%u)\n", &inet->inet_daddr,
+					htons(inet->inet_dport),
+					gmtp_sk(r->sk)->gss);
 
 			ret = gmtp_do_sendmsg(r->sk, msgcpy, len);
 		}
 
-		/*kfree(msgcpy);*/
-		/*kfree(smd);*/
-	count_cl:
+/*count_cl:
 		if(++j >= s->nrelays)
-			break;
-
+			break;*/
 	}
 
 	kfree(msg);

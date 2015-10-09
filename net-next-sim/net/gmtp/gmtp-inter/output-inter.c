@@ -66,6 +66,30 @@ int gmtp_inter_register_reply_out(struct sk_buff *skb,
 	return NF_ACCEPT;
 }
 
+/* In some cases, turn ACK into a DELEGATE_REPLY */
+int gmtp_inter_ack_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
+{
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct iphdr *iph = ip_hdr(skb);
+	struct gmtp_relay *relay;
+
+	pr_info("Out: Ack from %pI4\n", &iph->saddr);
+
+	relay = gmtp_get_relay(&entry->relays->list, iph->saddr, gh->sport);
+	if(relay != NULL) {
+
+		pr_info("relay: %pI4 (%s)\n", &relay->addr,
+				gmtp_state_name(relay->state));
+
+		if(relay->state == GMTP_CLOSED) {
+			gmtp_inter_make_delegate_reply(skb, relay, entry);
+			relay->state = GMTP_OPEN;
+		}
+	}
+
+	return NF_ACCEPT;
+}
+
 void gmtp_copy_data(struct sk_buff *skb, struct sk_buff *src_skb)
 {
 	__u8* data = gmtp_data(skb);
@@ -135,6 +159,9 @@ send:
 			ether_addr_copy(eth->h_dest, relay->mac_addr);
 			skb->dev = relay->dev;
 
+			pr_info("Sending to %pI4:%d (%u)\n", &relay->addr,
+								htons(relay->port),
+								gh->seq);
 			entry->ucc.congestion_control(skb, entry, relay);
 			/*gmtp_inter_build_and_send_pkt(skb, iph->saddr,
 					relay->addr, gh, GMTP_INTER_FORWARD);*/

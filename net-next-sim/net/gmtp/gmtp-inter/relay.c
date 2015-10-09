@@ -38,7 +38,7 @@ struct gmtp_relay *gmtp_list_add_relay(__be32 addr, __be16 port,
 }
 
 struct gmtp_relay *gmtp_inter_create_relay(struct sk_buff *skb,
-		struct gmtp_inter_entry *entry)
+		struct gmtp_inter_entry *entry, __u8 *relay_id)
 {
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
@@ -51,6 +51,24 @@ struct gmtp_relay *gmtp_inter_create_relay(struct sk_buff *skb,
 		ether_addr_copy(relay->mac_addr, eth->h_source);
 		relay->state = GMTP_CLOSED;
 		relay->losses = 0;
+		memcpy(relay->relay_id, relay_id, GMTP_RELAY_ID_LEN);
+	}
+	return relay;
+}
+
+struct gmtp_relay *gmtp_inter_create_relay_from_delegate(
+		struct gmtp_inter_entry *entry, __be32 addr, __be16 port,
+		__u8 *relay_id)
+{
+	struct gmtp_relay *relay;
+
+	relay = gmtp_list_add_relay(addr, port, &entry->relays->list);
+	if(relay != NULL) {
+		++entry->nrelays;
+		/*ether_addr_copy(relay->mac_addr, eth->h_source);*/
+		relay->state = GMTP_CLOSED;
+		relay->losses = 0;
+		memcpy(relay->relay_id, relay_id, GMTP_RELAY_ID_LEN);
 	}
 	return relay;
 }

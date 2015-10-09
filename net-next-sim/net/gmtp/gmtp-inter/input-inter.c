@@ -83,9 +83,7 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 		entry->my_port = gh->sport;
 		code = GMTP_REQNOTIFY_CODE_WAIT;
 
-		gh->type = GMTP_PKT_REGISTER;
-		iph->ttl = 64;
-		ip_send_check(iph);
+		gmtp_inter_make_register(skb);
 	}
 
 	if(max_nclients > 0)
@@ -114,6 +112,7 @@ int gmtp_inter_register_rcv(struct sk_buff *skb)
 	int ret = NF_DROP;
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct gmtp_hdr_register *gr = gmtp_hdr_register(skb);
 	struct ethhdr *eth = eth_hdr(skb);
 	struct gmtp_inter_entry *entry;
 	struct gmtp_relay *relay;
@@ -128,7 +127,7 @@ int gmtp_inter_register_rcv(struct sk_buff *skb)
 				gh->sport);
 
 		if(relay == NULL)
-			relay = gmtp_inter_create_relay(skb, entry);
+			relay = gmtp_inter_create_relay(skb, entry, gr->relay_id);
 
 		switch(entry->state) {
 		case GMTP_INTER_WAITING_REGISTER_REPLY:
@@ -172,7 +171,7 @@ int gmtp_inter_register_rcv(struct sk_buff *skb)
 		entry->dev_out = skb->dev;
 		entry->my_addr = gmtp_inter_device_ip(skb->dev);
 		entry->my_port = gh->sport;
-		relay = gmtp_inter_create_relay(skb, entry);
+		relay = gmtp_inter_create_relay(skb, entry, gr->relay_id);
 
 		if(relay != NULL)
 			ret = NF_ACCEPT;
@@ -463,6 +462,13 @@ int gmtp_inter_ack_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	if(relay != NULL) {
 		entry->rcv_tx_rate = gh->transm_r;
 		relay->tx_rate = gh->transm_r;
+
+		if(relay->state == GMTP_CLOSED) {
+			struct ethhdr *eth = eth_hdr(skb);
+			relay->dev = skb->dev;
+			ether_addr_copy(relay->mac_addr, eth->h_source);
+			return NF_ACCEPT;
+		}
 	}
 
 	if(!gmtp_inter_ip_local(iph->daddr)) {
@@ -549,12 +555,22 @@ int gmtp_inter_delegate_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct gmtp_hdr_delegate *ghd = gmtp_hdr_delegate(skb);
+	struct gmtp_relay *relay;
 
 	if(gh->type == GMTP_PKT_DELEGATE)
 		print_gmtp_packet(iph, gh);
 
-	pr_info("\t[relay_addr:port] = %pI4:%d\n", &ghd->relay_addr,
+	pr_info("\t[relay_addr:port] = %pI4:%d\n", &ghd->relay.relay_ip,
 			ntohs(ghd->relay_port));
+
+	if(entry->state != GMTP_INTER_TRANSMITTING)
+		return NF_DROP;
+
+	relay = gmtp_get_relay(&entry->relays->list, iph->saddr, gh->sport);
+	if(relay == NULL)
+		relay = gmtp_inter_create_relay_from_delegate(entry,
+				ghd->relay.relay_ip, ghd->relay_port,
+				ghd->relay.relay_id);
 
 	return NF_DROP;
 }

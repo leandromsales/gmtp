@@ -134,7 +134,8 @@ int gmtp_update_route(struct gmtp_server_entry *server_entry,
 		pr_info("Sending a GMTP-Delegate to new relay...\n");
 		new_relay = gmtp_get_relay_entry(relay_table, relay_list[nrelays-2].relay_id);
 		if(new_relay != NULL) {
-			delegate_skb = gmtp_make_delegate(new_relay->sk, skb);
+			delegate_skb = gmtp_make_delegate(new_relay->sk, skb,
+					relay_entry->relay.relay_id);
 			print_gmtp_packet(ip_hdr(delegate_skb), gmtp_hdr(delegate_skb));
 			gmtp_transmit_built_skb(new_relay->sk, delegate_skb);
 		}
