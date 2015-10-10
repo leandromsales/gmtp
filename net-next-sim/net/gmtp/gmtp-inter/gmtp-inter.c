@@ -246,8 +246,7 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 
 		switch(gh->type) {
 		case GMTP_PKT_REGISTER:
-			if(!gmtp_inter_ip_local(iph->daddr) &&
-					gh->server_rtt == 0)
+			if(!gmtp_inter_ip_local(iph->daddr))
 				ret = gmtp_inter_register_rcv(skb);
 			break;
 		case GMTP_PKT_REGISTER_REPLY:
@@ -354,6 +353,21 @@ unsigned int hook_func_local_out(unsigned int hooknum, struct sk_buff *skb,
 	return ret;
 }
 
+static int gmtp_inter_has_clients(struct sk_buff *skb,
+		struct gmtp_inter_entry *entry)
+{
+	struct iphdr *iph = ip_hdr(skb);
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+
+	struct gmtp_relay *relay = gmtp_get_relay(&entry->relays->list,
+			iph->daddr, gh->dport);
+	struct gmtp_reporter *reporter = gmtp_get_client(&entry->clients->list,
+			iph->daddr, gh->dport);
+
+	if(relay == NULL && reporter == NULL)
+		return 1;
+	return 0;
+}
 
 unsigned int hook_func_post_routing(unsigned int hooknum, struct sk_buff *skb,
 		const struct net_device *in, const struct net_device *out,
@@ -369,24 +383,18 @@ unsigned int hook_func_post_routing(unsigned int hooknum, struct sk_buff *skb,
 
 		struct gmtp_hdr *gh = gmtp_hdr(skb);
 		struct gmtp_inter_entry *entry;
-		struct gmtp_client *relay, *client;
 
 		entry = gmtp_inter_lookup_media(gmtp_inter.hashtable,
 				gh->flowname);
 		if(entry == NULL)
 			return NF_ACCEPT;
 
-		if(gh->type == GMTP_PKT_DATA && !gmtp_inter_ip_local(iph->daddr)) {
-			struct gmtp_relay *relay = gmtp_get_relay(
-					&entry->relays->list, iph->daddr,
-					gh->dport);
-			struct gmtp_reporter *reporter = gmtp_get_client(
-					&entry->clients->list, iph->saddr,
-					gh->sport);
-
-			if(relay == NULL && reporter == NULL)
-				return NF_ACCEPT;
-
+		if(gh->type == GMTP_PKT_DATA) {
+			if(!gmtp_inter_ip_local(iph->daddr) ||
+			    GMTP_SKB_CB(skb)->jumped) {
+				if(gmtp_inter_has_clients(skb, entry))
+					return NF_ACCEPT;
+			}
 		}
 
 		switch(gh->type) {

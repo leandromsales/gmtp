@@ -877,12 +877,10 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 
 			if(unlikely(r->sk->sk_state == GMTP_DELEGATED))
 				continue;
-				/*goto count_cl;*/
 
 			nlen = gmtp_media_adapt_cc(r->sk, msg, len);
 			if(nlen < 0)
 				continue;
-				/*goto count_cl;*/
 
 			msgcpy = kmalloc(nlen, gfp_any());
 			memcpy(msgcpy, msg, nlen);
@@ -894,9 +892,6 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 			ret = gmtp_do_sendmsg(r->sk, msgcpy, len);
 		}
 
-/*count_cl:
-		if(++j >= s->nrelays)
-			break;*/
 	}
 
 	kfree(msg);

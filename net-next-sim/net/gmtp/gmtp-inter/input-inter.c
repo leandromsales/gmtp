@@ -106,7 +106,6 @@ out:
 	return ret;
 }
 
-/** Register to localhost only */
 int gmtp_inter_register_rcv(struct sk_buff *skb)
 {
 	int ret = NF_DROP;
@@ -126,8 +125,13 @@ int gmtp_inter_register_rcv(struct sk_buff *skb)
 		relay = gmtp_get_relay(&entry->relays->list, iph->saddr,
 				gh->sport);
 
-		if(relay == NULL)
-			relay = gmtp_inter_create_relay(skb, entry, gr->relay_id);
+		if(relay == NULL) {
+			if(gh->server_rtt == 0)
+				relay = gmtp_inter_create_relay(skb, entry,
+						gr->relay_id);
+			else
+				return NF_ACCEPT;
+		}
 
 		switch(entry->state) {
 		case GMTP_INTER_WAITING_REGISTER_REPLY:

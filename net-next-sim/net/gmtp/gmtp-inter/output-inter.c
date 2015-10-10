@@ -77,7 +77,6 @@ int gmtp_inter_ack_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 
 	relay = gmtp_get_relay(&entry->relays->list, iph->saddr, gh->sport);
 	if(relay != NULL) {
-
 		pr_info("relay: %pI4 (%s)\n", &relay->addr,
 				gmtp_state_name(relay->state));
 
