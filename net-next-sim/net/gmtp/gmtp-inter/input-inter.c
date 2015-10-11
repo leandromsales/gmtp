@@ -663,6 +663,11 @@ int gmtp_inter_data_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	if(unlikely(entry->state == GMTP_INTER_REGISTER_REPLY_RECEIVED)) {
 		entry->state = GMTP_INTER_TRANSMITTING;
 		mod_timer(&entry->mcc_timer, gmtp_mcc_interval(entry->server_rtt));
+
+		/** Accept the first one. Do not remove this!!! Never!
+		 *  This makes GMTP-Delegate work properly
+		 */
+		return NF_ACCEPT;
 	}
 
 	if(entry->buffer->qlen >= entry->buffer_max) {
