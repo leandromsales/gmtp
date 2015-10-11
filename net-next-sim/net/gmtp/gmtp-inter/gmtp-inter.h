@@ -109,6 +109,7 @@ int gmtp_inter_ack_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry);
 int gmtp_inter_route_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry);
 int gmtp_inter_data_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry);
 int gmtp_inter_feedback_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry);
+int gmtp_inter_delegate_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry);
 int gmtp_inter_elect_resp_rcv(struct sk_buff *skb,
 		struct gmtp_inter_entry *entry);
 int gmtp_inter_close_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry,
@@ -120,6 +121,7 @@ int gmtp_inter_register_reply_out(struct sk_buff *skb,
 		struct gmtp_inter_entry *entry);
 int gmtp_inter_request_notify_out(struct sk_buff *skb,
 		struct gmtp_inter_entry *entry);
+int gmtp_inter_ack_out(struct sk_buff *skb, struct gmtp_inter_entry *entry);
 int gmtp_inter_data_out(struct sk_buff *skb, struct gmtp_inter_entry *entry);
 int gmtp_inter_close_out(struct sk_buff *skb, struct gmtp_inter_entry *entry);
 
@@ -134,6 +136,7 @@ void gmtp_inter_send_pkt(struct sk_buff *skb);
 void gmtp_inter_add_relayid(struct sk_buff *skb);
 struct gmtp_hdr *gmtp_inter_make_route_hdr(struct sk_buff *skb);
 
+int gmtp_inter_make_register(struct sk_buff *skb);
 struct gmtp_hdr *gmtp_inter_make_request_notify_hdr(struct sk_buff *skb,
 		struct gmtp_inter_entry *media_info, __be16 new_sport,
 		__be16 new_dport, struct gmtp_client *reporter,
@@ -146,6 +149,9 @@ int gmtp_inter_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
 struct gmtp_hdr *gmtp_inter_make_register_reply_hdr(struct sk_buff *skb,
 		struct gmtp_inter_entry *entry, __be16 new_sport,
 		__be16 new_dport);
+
+int gmtp_inter_make_delegate_reply(struct sk_buff *skb, struct gmtp_relay *relay,
+		struct gmtp_inter_entry *entry);
 
 struct gmtp_hdr *gmtp_inter_make_reset_hdr(struct sk_buff *skb, __u8 code);
 int gmtp_inter_make_reset(struct sk_buff *skb, struct gmtp_hdr *gh_reset);

@@ -170,6 +170,8 @@ struct gmtp_relay {
 	__be16 port;
 	unsigned char mac_addr[6];
 
+	__u8  relay_id[GMTP_RELAY_ID_LEN];
+
 	enum gmtp_state state;
 	struct net_device *dev;
 
@@ -186,7 +188,10 @@ struct gmtp_relay *gmtp_create_relay(__be32 addr, __be16 port);
 struct gmtp_relay *gmtp_list_add_relay(__be32 addr, __be16 port,
 		struct list_head *head);
 struct gmtp_relay *gmtp_inter_create_relay(struct sk_buff *skb,
-		struct gmtp_inter_entry *entry);
+		struct gmtp_inter_entry *entry, __u8 *relay_id);
+struct gmtp_relay *gmtp_inter_create_relay_from_delegate(
+		struct gmtp_inter_entry *entry, __be32 addr, __be16 port,
+		__u8 *relay_id);
 struct gmtp_relay* gmtp_get_relay(struct list_head *head,
 		__be32 addr, __be16 port);
 int gmtp_delete_relays(struct list_head *list, __be32 addr, __be16 port);

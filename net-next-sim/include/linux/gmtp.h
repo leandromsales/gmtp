@@ -7,7 +7,6 @@
 #include <linux/types.h>
 #include <uapi/linux/gmtp.h>
 
-//TODO Study states
 enum gmtp_state {
 	GMTP_OPEN	     = TCP_ESTABLISHED,
 	GMTP_REQUESTING	     = TCP_SYN_SENT,
@@ -18,6 +17,7 @@ enum gmtp_state {
 	GMTP_CLOSING	     = TCP_CLOSING,
 	GMTP_TIME_WAIT	     = TCP_TIME_WAIT,
 	GMTP_CLOSED	     = TCP_CLOSE,
+	GMTP_DELEGATED	     = TCP_NEW_SYN_RECV,
 	GMTP_MAX_STATES
 };
 
@@ -307,6 +307,13 @@ static inline struct gmtp_hdr_register_reply *gmtp_hdr_register_reply(
 						 sizeof(struct gmtp_hdr));
 }
 
+static inline struct gmtp_hdr_register *gmtp_hdr_register(
+		const struct sk_buff *skb)
+{
+	return (struct gmtp_hdr_register *)(skb_transport_header(skb) +
+						 sizeof(struct gmtp_hdr));
+}
+
 static inline struct gmtp_hdr_route *gmtp_hdr_route(const struct sk_buff *skb)
 {
 	return (struct gmtp_hdr_route *)(skb_transport_header(skb) +
@@ -344,6 +351,13 @@ static inline struct gmtp_hdr_elect_response *gmtp_hdr_elect_response(
 		const struct sk_buff *skb)
 {
 	return (struct gmtp_hdr_elect_response *)(skb_transport_header(skb) +
+						 sizeof(struct gmtp_hdr));
+}
+
+static inline struct gmtp_hdr_delegate *gmtp_hdr_delegate(
+		const struct sk_buff *skb)
+{
+	return (struct gmtp_hdr_delegate *)(skb_transport_header(skb) +
 						 sizeof(struct gmtp_hdr));
 }
 

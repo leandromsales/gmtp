@@ -137,6 +137,16 @@ struct gmtp_hdr_reset {
 };
 
 /**
+ * struct gmtp_hdr_register - Register from relays
+ *
+ * @relay_id: unique id of relay
+ */
+struct gmtp_hdr_register {
+	__u8 			relay_id[GMTP_RELAY_ID_LEN];
+};
+
+
+/**
  * struct gmtp_hdr_relay - Store data of a single relay in GMTP headers
  *
  * @relay_id: unique id of relay
@@ -233,6 +243,16 @@ enum gmtp_elect_codes {
 };
 
 /**
+ * struct gmtp_hdr_delegate - Delegate register/request to a relay
+ *
+ * @elect_code: One of %gmtp_ack_codes
+ */
+struct gmtp_hdr_delegate {
+	struct gmtp_hdr_relay relay;
+	__be16 relay_port;
+};
+
+/**
  * see www.gmtp-protocol.org
  */
 enum gmtp_pkt_type {
@@ -256,6 +276,8 @@ enum gmtp_pkt_type {
 	GMTP_PKT_RESET,
 
 	GMTP_PKT_FEEDBACK,
+	GMTP_PKT_DELEGATE,
+	GMTP_PKT_DELEGATE_REPLY,
 
 	GMTP_PKT_INVALID,
 	GMTP_PKT_MAX_STATES
@@ -295,6 +317,9 @@ static inline unsigned int gmtp_packet_hdr_variable_len(const __u8 type)
 	case GMTP_PKT_FEEDBACK:
 		len = sizeof(struct gmtp_hdr_feedback);
 		break;
+	case GMTP_PKT_REGISTER:
+		len = sizeof(struct gmtp_hdr_register);
+		break;
 	case GMTP_PKT_REGISTER_REPLY:
 		len = sizeof(struct gmtp_hdr_register_reply);
 		break;
@@ -309,6 +334,10 @@ static inline unsigned int gmtp_packet_hdr_variable_len(const __u8 type)
 		break;
 	case GMTP_PKT_ELECT_RESPONSE:
 		len = sizeof(struct gmtp_hdr_elect_response);
+		break;
+	case GMTP_PKT_DELEGATE:
+	case GMTP_PKT_DELEGATE_REPLY:
+		len = sizeof(struct gmtp_hdr_delegate);
 		break;
 	case GMTP_PKT_RESET:
 		len = sizeof(struct gmtp_hdr_reset);

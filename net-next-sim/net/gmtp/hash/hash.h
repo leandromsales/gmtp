@@ -137,6 +137,7 @@ struct gmtp_server_entry {
 	struct gmtp_hashtable 		*relay_hashtable;
 	struct gmtp_relay_entry		relays; /* list of routes */
 	unsigned int 			nrelays;
+	struct sock 			*first_sk;
 };
 
 int gmtp_add_server_entry(struct gmtp_hashtable *table, struct sock *sk,

@@ -27,6 +27,7 @@ static struct sk_buff *gmtp_skb_entail(struct sock *sk, struct sk_buff *skb) {
 	sk->sk_send_head = skb;
 	return skb_clone(sk->sk_send_head, gfp_any());
 }
+
 /*
  * All SKB's seen here are completely headerless. It is our
  * job to build the GMTP header, and pass the packet down to
@@ -132,6 +133,26 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 	}
 	return -ENOBUFS;
 }
+
+/*
+ * All SKB's seen here are completely header full.
+ * Here, we don't build the GMTP header. We only pass the packet down to
+ * IP so it can do the same plus pass the packet off to the device.
+ */
+int gmtp_transmit_built_skb(struct sock *sk, struct sk_buff *skb) {
+
+	if (likely(skb != NULL)) {
+
+		const struct inet_connection_sock *icsk = inet_csk(sk);
+		struct inet_sock *inet = inet_sk(sk);
+		int err;
+
+		err = icsk->icsk_af_ops->queue_xmit(sk, skb, &inet->cork.fl);
+		return net_xmit_eval(err);
+	}
+	return -ENOBUFS;
+}
+EXPORT_SYMBOL_GPL(gmtp_transmit_built_skb);
 
 unsigned int gmtp_sync_mss(struct sock *sk, u32 pmtu)
 {
@@ -270,6 +291,40 @@ struct sk_buff *gmtp_make_register_reply_open(struct sock *sk,
 }
 EXPORT_SYMBOL_GPL(gmtp_make_register_reply_open);
 
+struct sk_buff *gmtp_make_delegate(struct sock *sk, struct sk_buff *rcv_skb,
+		__u8 *rid)
+{
+	struct sk_buff *skb;
+	struct gmtp_hdr *rxgh = gmtp_hdr(rcv_skb), *gh;
+	const u32 gmtp_hdr_len = sizeof(struct gmtp_hdr)
+			+ gmtp_packet_hdr_variable_len(GMTP_PKT_DELEGATE);
+
+	gmtp_print_function();
+
+	skb = alloc_skb(sk->sk_prot->max_header, GFP_ATOMIC);
+	if(skb == NULL)
+		return NULL;
+
+	skb_reserve(skb, sk->sk_prot->max_header);
+
+	gh = gmtp_zeroed_hdr(skb, gmtp_hdr_len);
+
+	gh->type = GMTP_PKT_DELEGATE;
+	gh->seq = rxgh->seq;
+	gh->sport = rxgh->dport;
+	gh->dport = sk->sk_dport;
+	gh->hdrlen = gmtp_hdr_len;
+	gh->server_rtt = gmtp_sk(sk)->tx_avg_rtt;
+	gh->transm_r = rxgh->transm_r;
+	memcpy(gh->flowname, rxgh->flowname, GMTP_FLOWNAME_LEN);
+
+	memcpy(gmtp_hdr_delegate(skb)->relay.relay_id, rid, GMTP_RELAY_ID_LEN);
+	gmtp_hdr_delegate(skb)->relay.relay_ip = ip_hdr(rcv_skb)->saddr;
+	gmtp_hdr_delegate(skb)->relay_port = rxgh->sport;
+
+	return skb;
+}
+EXPORT_SYMBOL_GPL(gmtp_make_delegate);
 
 /* answer offending packet in @rcv_skb with Reset from control socket @ctl */
 struct sk_buff *gmtp_ctl_make_reset(struct sock *sk, struct sk_buff *rcv_skb)
