@@ -79,14 +79,22 @@ static int gmtp_add_new_route(struct gmtp_server_entry* server_entry,
 			return 2;
 
 		if(i == (nrelays-1)) {
-			INIT_LIST_HEAD(&relay_entry->path_list);
-			path_list_head = &relay_entry->path_list;
+			struct gmtp_sock *gp = gmtp_sk(sk);
+			struct gmtp_sock *sgp = gmtp_sk(server_entry->first_sk);
+			gp->isr = sgp->isr;
+			gp->gsr = sgp->gsr;
+			gp->iss = sgp->iss;
+			gp->gss = sgp->gss;
+
 			relay_entry->sk = sk;
 			relay_entry->nrelays++;
 
 			/* add it on the list of relays at server */
 			pr_info("Adding relay %pI4 on server list...\n",
 					&relay_entry->relay.relay_ip);
+
+			INIT_LIST_HEAD(&relay_entry->path_list);
+			path_list_head = &relay_entry->path_list;
 			list_add(&relay_entry->relay_list,
 					&server_entry->relays.relay_list);
 			server_entry->nrelays++; /* Number of routes */
@@ -131,6 +139,15 @@ int gmtp_update_route(struct gmtp_server_entry *server_entry,
 				&relay_entry->path_list);
 		relay_entry->nrelays = nrelays;
 
+		/*{
+			unsigned char *deny = "\x0a\x02\x00\x01";  10.2.0.1
+			__be32 deny_addr = *(unsigned int *)deny;
+			if(relay_entry->relay.relay_ip == deny_addr) {
+				pr_info("We dont delegate %pI4\n", &deny_addr);
+				return 1;
+			}
+		}*/
+
 		pr_info("Sending a GMTP-Delegate to new relay...\n");
 		new_relay = gmtp_get_relay_entry(relay_table, relay_list[nrelays-2].relay_id);
 		if(new_relay != NULL) {
@@ -166,7 +183,6 @@ int gmtp_add_route(struct gmtp_server_entry* entry, struct sock *sk,
 			return gmtp_add_new_route(entry, sk, skb);
 		else {
 			pr_info("Relay %pI4 already exists\n", &relay->relay.relay_ip);
-			/*return do_gmtp_update_route(entry, relay, relay_list, nrelays);*/
 			return gmtp_update_route(entry, relay, sk, skb);
 		}
 	}
@@ -192,6 +208,7 @@ int gmtp_add_server_entry(struct gmtp_hashtable *table, struct sock *sk,
 			return 1;
 
 		entry->nrelays = 0;
+		entry->first_sk = sk;
 		INIT_LIST_HEAD(&entry->relays.relay_list);
 		memcpy(entry->entry.key, gp->flowname, GMTP_HASH_KEY_LEN);
 		entry->relay_hashtable = gmtp_build_hashtable(U8_MAX,

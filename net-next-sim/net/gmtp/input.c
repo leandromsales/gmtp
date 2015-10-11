@@ -415,7 +415,24 @@ static int gmtp_rcv_delegate_reply(struct sock *sk, struct sk_buff *skb,
 /* TODO Implement check sequence number */
 static int gmtp_check_seqno(struct sock *sk, struct sk_buff *skb)
 {
-	/* TODO: Implement check sequence number */
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct gmtp_sock *gp = gmtp_sk(sk);
+
+	if(gh->type == GMTP_PKT_DATA) {
+		if(unlikely(gp->rx_state == MCC_RSTATE_NO_DATA)) {
+			pr_info("Setting first seqno to %u \n", gh->seq);
+			gp->gsr = gh->seq;
+			gp->isr = gh->seq;
+			gp->iss = gh->seq;
+			gp->gss = gh->seq;
+			return 0;
+		} else if(gh->seq < gp->gsr) {
+			pr_info("Seqno error => Received: %u. GSR: %u.\n",
+					gh->seq, gp->gsr);
+			return 1;
+		}
+	}
+
 	return 0;
 }
 
