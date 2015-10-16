@@ -1,0 +1,22 @@
+#!/bin/bash        
+
+NS3DIR="../../net-next-sim/tools/testing/libos/buildtop/source/ns-3-dce/"
+old="wscript.orig"
+
+for i in $( ls gmtp ); do
+    echo Deleting link to: $i
+    rm -f $NS3DIR/example/$i
+done
+
+ls -l $NS3DIR/example/ | grep gmtp
+
+echo Restoring old wscript...
+for j in $( ls $NS3DIR | grep $old ); do
+    rm $NS3DIR/wscript
+    mv -f $NS3DIR/$j $NS3DIR/wscript
+done
+
+ls -l $NS3DIR | grep wscript
+
+echo
+

@@ -1,0 +1,57 @@
+1. What is GMTP?
+-----------------
+
+TBD
+
+2. What is gst-plugin-gmtp
+--------------------------
+
+TBD
+
+3. Compiling
+------------
+
+	3.1 Test GStreamer
+
+		http://gstreamer.freedesktop.org/data/doc/gstreamer/head/faq/html/chapter-using.html
+		./gst-launch-1.0 -v filesrc location=~/sweetchildomine.mp3 ! decodebin ! alsasink
+		./gst-launch-1.0 -v filesrc location=~/sweetchildomine.mp3 ! mpegaudioparse ! mad ! alsasink
+
+	3.2 Compiling gst-plugin-gmtp
+
+		export PKG_CONFIG_PATH=/home/wendell/gst-bin/lib/pkgconfig
+		export LD_LIBRARY_PATH=/home/wendell/gst-bin/lib
+		./autogen.sh && ./configure --prefix=/home/wendell/gst-bin && make
+
+		./gst-launch-1.0 -v filesrc location=~/sweetchildomine.mp3 ! mpegaudioparse ! gmtpserversink port=9011 ccid=2
+		./gst-launch-1.0 -v gmtpclientsrc host=localhost port=9011 ccid=2 ! decodebin ! alsasink
+
+	3.3 Pipeline examples
+		* Play local mp3 and save it to a new file at the same time
+		gst-launch-1.0 -v filesrc location=~/sweetchildomine.mp3 ! tee name=tp tp. ! queue ! filesink location=/tmp/scom2.mp3 tp. ! queue ! decodebin ! alsasink
+		* Play remote mp3 and save it to a new file at the same time
+		gst-launch-1.0 -v gmtpclientsrc host=192.168.25.58 port=12345 ! tee name=tp tp. ! queue ! filesink location=/tmp/scom3.mp3 tp. ! queue ! decodebin ! alsasink
+
+4. Porting to GStreamer 1.0
+---------------------------
+
+See http://cgit.freedesktop.org/gstreamer/gstreamer/tree/docs/random/porting-to-1.0.txt
+
+HOW TO USE THE TEMPLATE PLUGIN
+------------------------------
+
+To use it, either make a copy for yourself and rename the parts or use the
+make_element script in tools. To create sources for "myfilter" based on the
+"gsttransform" template run:
+
+cd src;
+../tools/make_element myfilter gsttransform
+
+This will create gstmyfilter.c and gstmyfilter.h. Open them in an editor and
+start editing. There are several occurances of the string "template", update
+those with real values. The plugin will be called 'myfilter' and it will have
+one element called 'myfilter' too. Also look for "FIXME:" markers that point you
+to places where you need to edit the code.
+
+You still need to adjust the Makefile.am.
+

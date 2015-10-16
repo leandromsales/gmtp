@@ -7,20 +7,23 @@ import fcntl
 import struct
 import md5
 
-socket.SOCK_GMTP = 7
-socket.IPPROTO_GMTP = 254
-socket.SOL_GMTP = 281
-
 GMTP_HDR_LEN = 36
 IP_HDR_LEN = 20
 ETH_HDR_LEN = 14
 
-socket.GMTP_SOCKOPT_SERVER_RTT = 1
-socket.GMTP_SOCKOPT_PULL = 2
-socket.GMTP_SOCKOPT_RELAY = 3
-socket.GMTP_SOCKOPT_MAX_TX_RATE = 4
-socket.GMTP_SOCKOPT_FLOWNAME = 5
-socket.GMTP_SOCKOPT_GETMSS = 6
+socket.SOCK_GMTP = 7
+socket.IPPROTO_GMTP = 254
+socket.SOL_GMTP = 281
+
+socket.GMTP_SOCKOPT_FLOWNAME = 1
+socket.GMTP_SOCKOPT_MAX_TX_RATE = 2
+socket.GMTP_SOCKOPT_UCC_TX_RATE = 3
+socket.GMTP_SOCKOPT_GET_CUR_MSS = 4
+socket.GMTP_SOCKOPT_SERVER_RTT = 5
+socket.GMTP_SOCKOPT_SERVER_TIMEWAIT = 6
+socket.GMTP_SOCKOPT_PULL = 7
+socket.GMTP_SOCKOPT_ROLE_RELAY = 8
+socket.GMTP_SOCKOPT_RELAY_ENABLED = 9
 
 def get_ip_address(ifname):
 	a = 'b'

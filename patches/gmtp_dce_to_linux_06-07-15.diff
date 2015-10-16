@@ -1,0 +1,189 @@
+diff --git a/net-next-sim/net/gmtp/gmtp-inter/build.c b/net-next-sim/net/gmtp/gmtp-inter/build.c
+index 9cdf7be..358d673 100644
+--- a/net-next-sim/net/gmtp/gmtp-inter/build.c
++++ b/net-next-sim/net/gmtp/gmtp-inter/build.c
+@@ -238,11 +238,13 @@ struct gmtp_hdr *gmtp_inter_make_close_hdr(struct sk_buff *skb)
+ struct sk_buff *gmtp_inter_build_pkt(struct sk_buff *skb_src, __be32 saddr,
+ 		__be32 daddr, struct gmtp_hdr *gh_ref, bool backward)
+ {
++	int err = 0;
+ 	struct net_device *dev = skb_src->dev;
+ 	struct ethhdr *eth_src = eth_hdr(skb_src);
++	struct sk_buff *skb;
++	struct skb_shared_info *shinfo;
+ 
+-	struct sk_buff *skb = alloc_skb(gh_ref->hdrlen, gfp_any());
+-	struct skb_shared_info *shinfo = skb_shinfo(skb);
++	/*struct sk_buff *skb = alloc_skb(gh_ref->hdrlen, gfp_any());*/
+ 
+ 	struct ethhdr *eth;
+ 	struct iphdr *iph;
+@@ -254,11 +256,6 @@ struct sk_buff *gmtp_inter_build_pkt(struct sk_buff *skb_src, __be32 saddr,
+ 		return NULL;
+ 	}
+ 
+-	if (skb == NULL) {
+-		gmtp_print_warning("skb is null");
+-		return NULL;
+-	}
+-
+ 	if(gh_ref->type == GMTP_PKT_DATA)
+ 		data_len = gmtp_data_len(skb_src);
+ 
+@@ -266,6 +263,12 @@ struct sk_buff *gmtp_inter_build_pkt(struct sk_buff *skb_src, __be32 saddr,
+ 	ip_len = gmtp_len + sizeof(*iph);
+ 	total_len = ip_len + LL_RESERVED_SPACE(dev);
+ 
++	skb = skb_copy(skb_src, gfp_any());
++	if(skb == NULL) {
++		gmtp_print_warning("skb is null");
++		return NULL;
++	}
++
+ 	skb_reserve(skb, total_len);
+ 
+ 	/* Build GMTP data */
+@@ -307,7 +310,6 @@ struct sk_buff *gmtp_inter_build_pkt(struct sk_buff *skb_src, __be32 saddr,
+ 		ether_addr_copy(eth->h_dest, eth_src->h_dest);
+ 
+ 	skb->dev = dev;
+-	shinfo->frag_list = NULL;
+ 
+ 	return skb;
+ }
+@@ -315,7 +317,6 @@ struct sk_buff *gmtp_inter_build_pkt(struct sk_buff *skb_src, __be32 saddr,
+ void gmtp_inter_send_pkt(struct sk_buff *skb)
+ {
+ 	int err = dev_queue_xmit(skb);
+-	/*int err = dev_queue_xmit_sk(NULL, skb);*/
+ 	if(err)
+ 		gmtp_pr_error("Error %d trying send packet (%p)", err, skb);
+ }
+@@ -330,6 +331,8 @@ void gmtp_inter_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
+ 	struct sk_buff *skb = gmtp_inter_build_pkt(skb_src, saddr, daddr,
+ 			gh_ref, backward);
+ 
++	gmtp_pr_func();
++
+ 	if(skb != NULL)
+ 		gmtp_inter_send_pkt(skb);
+ }
+diff --git a/net-next-sim/net/gmtp/gmtp-inter/input-inter.c b/net-next-sim/net/gmtp/gmtp-inter/input-inter.c
+index 0238318..e656c1a 100644
+--- a/net-next-sim/net/gmtp/gmtp-inter/input-inter.c
++++ b/net-next-sim/net/gmtp/gmtp-inter/input-inter.c
+@@ -67,6 +67,7 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
+ 		switch(entry->state) {
+ 		case GMTP_INTER_WAITING_REGISTER_REPLY:
+ 			code = 	GMTP_REQNOTIFY_CODE_WAIT;
++			gh->type = GMTP_PKT_REGISTER;
+ 			break;
+ 		case GMTP_INTER_REGISTER_REPLY_RECEIVED:
+ 		case GMTP_INTER_TRANSMITTING:
+@@ -421,6 +422,8 @@ int gmtp_inter_close_rcv(struct sk_buff *skb)
+ 		gh_reset = gmtp_inter_make_reset_hdr(skb,
+ 				GMTP_RESET_CODE_CLOSED);
+ 		if(gh_reset != NULL) {
++
++			/* FIXME Crashing ns-3 */
+ 			gmtp_inter_build_and_send_pkt(skb, iph->daddr,
+ 					iph->saddr, gh_reset, true);
+ 			gmtp_pr_debug("Reset: src=%pI4@%-5d, dst=%pI4@%-5d",
+diff --git a/net-next-sim/net/gmtp/gmtp-inter/mcc-inter.c b/net-next-sim/net/gmtp/gmtp-inter/mcc-inter.c
+index d7bae75..cf50b88 100644
+--- a/net-next-sim/net/gmtp/gmtp-inter/mcc-inter.c
++++ b/net-next-sim/net/gmtp/gmtp-inter/mcc-inter.c
+@@ -39,6 +39,8 @@ out:
+ }
+ 
+ /**
++ * FIXME Dont start timer if we are Waiting Register Reply...
++ *
+  * TODO update_stats RTT through feedbacks
+  *
+  * If the GMTP-MCC sender receives no reports from the Reporters for (4 RTTs)*,
+diff --git a/net-next-sim/net/gmtp/input.c b/net-next-sim/net/gmtp/input.c
+index c3574f7..0b6f6db 100644
+--- a/net-next-sim/net/gmtp/input.c
++++ b/net-next-sim/net/gmtp/input.c
+@@ -194,15 +194,6 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
+ 
+ 	/*** FIXME Check sequence numbers  ***/
+ 
+-	/* Stop the REQUEST timer */
+-	inet_csk_clear_xmit_timer(sk, ICSK_TIME_RETRANS);
+-	WARN_ON(sk->sk_send_head == NULL);
+-	kfree_skb(sk->sk_send_head);
+-	sk->sk_send_head = NULL;
+-
+-	gp->gsr = gp->isr = GMTP_SKB_CB(skb)->seq;
+-	gmtp_sync_mss(sk, icsk->icsk_pmtu_cookie);
+-
+ 	/** First reply received and i have a relay */
+ 	if(gp->relay_rtt == 0 && gh->type == GMTP_PKT_REQUESTNOTIFY)
+ 		gp->relay_rtt = jiffies_to_msecs(jiffies) - gp->req_stamp;
+@@ -220,23 +211,25 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
+ 				gh_rnotify->rn_code,
+ 				gh_rnotify->max_nclients);
+ 
+-		pr_info("Reporter: %pI4@%-5d\n", &gh_rnotify->reporter_addr,
+-				ntohs(gh_rnotify->reporter_port));
+-
+-		memcpy(gp->relay_id, gh_rnotify->relay_id, GMTP_RELAY_ID_LEN);
+-
+-		gp->myself->max_nclients = gh_rnotify->max_nclients;
+-		if(gp->myself->max_nclients > 0) {
+-			gp->role = GMTP_ROLE_REPORTER;
+-			gp->myself->clients = kmalloc(sizeof(struct gmtp_client),
+-								GFP_ATOMIC);
+-			INIT_LIST_HEAD(&gp->myself->clients->list);
+-		}
+-
+ 		switch(gh_rnotify->rn_code) {
+ 		case GMTP_REQNOTIFY_CODE_OK: /* Process packet */
++			pr_info("Reporter: %pI4@%-5d\n",
++					&gh_rnotify->reporter_addr,
++					ntohs(gh_rnotify->reporter_port));
++			memcpy(gp->relay_id, gh_rnotify->relay_id,
++					GMTP_RELAY_ID_LEN);
++
++			gp->myself->max_nclients = gh_rnotify->max_nclients;
++			if(gp->myself->max_nclients > 0) {
++				gp->role = GMTP_ROLE_REPORTER;
++				gp->myself->clients = kmalloc(
++						sizeof(struct gmtp_client),
++						GFP_ATOMIC);
++				INIT_LIST_HEAD(&gp->myself->clients->list);
++			}
+ 			break;
+ 		case GMTP_REQNOTIFY_CODE_WAIT: /* Do nothing... */
++			/*goto wait_received;*/
+ 			return 0;
+ 			/* FIXME Del entry in table when receiving error... */
+ 		case GMTP_REQNOTIFY_CODE_ERROR:
+@@ -276,6 +269,15 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
+ 
+ 	}
+ 
++	/* Stop the REQUEST timer */
++	inet_csk_clear_xmit_timer(sk, ICSK_TIME_RETRANS);
++	WARN_ON(sk->sk_send_head == NULL);
++	kfree_skb(sk->sk_send_head);
++	sk->sk_send_head = NULL;
++
++	gp->gsr = gp->isr = GMTP_SKB_CB(skb)->seq;
++	gmtp_sync_mss(sk, icsk->icsk_pmtu_cookie);
++
+ 	gmtp_set_state(sk, GMTP_OPEN);
+ 
+ 	/* Make sure socket is routed, for correct metrics. */
+@@ -311,6 +313,9 @@ out_invalid_packet:
+  	GMTP_SKB_CB(skb)->reset_code = GMTP_RESET_CODE_PACKET_ERROR;
+  	return 1;
+ 
++wait_received:
++	return 1;
++
+ err:
+  	/*
+  	 * We mark this socket as no longer usable, so that the loop in

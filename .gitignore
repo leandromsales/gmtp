@@ -1,5 +1,7 @@
 # Ignored files
 
+app/python/results
+
 # Output files
 *.wav
 app/python/results/*
@@ -31,7 +33,7 @@ app/python/results/*
 *.save
 
 # Linux Kernel Docs
-linux-3.17.1/Documentation/*
+linux-*/Documentation/*
 
 # Latex
 *.aux

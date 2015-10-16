@@ -1,0 +1,519 @@
+diff --git a/linux-4.0.3/include/linux/gmtp.h b/linux-4.0.3/include/linux/gmtp.h
+index 1af86a0..1128218 100644
+--- a/linux-4.0.3/include/linux/gmtp.h
++++ b/linux-4.0.3/include/linux/gmtp.h
+@@ -211,6 +211,7 @@ struct gmtp_sock {
+ 
+ 	/** Tx variables */
+ 	u32 				tx_rtt;
++	u32				tx_avg_rtt;
+ 	u32	 			tx_dpkts_sent;
+ 	u32				tx_data_sent;
+ 	u32				tx_bytes_sent;
+diff --git a/linux-4.0.3/include/uapi/linux/gmtp.h b/linux-4.0.3/include/uapi/linux/gmtp.h
+index 8cd03bd..fd31b36 100644
+--- a/linux-4.0.3/include/uapi/linux/gmtp.h
++++ b/linux-4.0.3/include/uapi/linux/gmtp.h
+@@ -104,7 +104,6 @@ struct gmtp_hdr_data {
+  */
+ struct gmtp_hdr_ack {
+ 	__be32 orig_tstamp;
+-	__be32 wait;
+ };
+ 
+ /**
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/build.c b/linux-4.0.3/net/gmtp/gmtp-inter/build.c
+index 8883bad..142271d 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/build.c
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/build.c
+@@ -385,14 +385,12 @@ struct sk_buff *gmtp_inter_build_ack(struct gmtp_inter_entry *entry)
+ 	gh->seq = entry->info->seq;
+ 	gh->dport = entry->media_port;
+ 	gh->sport = entry->info->my_port;
+-	gh->server_rtt = entry->info->rtt;
+-	gh->transm_r = gmtp_inter.ucc_rx;
++	gh->server_rtt = entry->info->flow_rtt;
++	gh->transm_r = min(gmtp_inter.ucc_rx, entry->info->rcv_tx_rate);
+ 	memcpy(gh->flowname, entry->flowname, GMTP_FLOWNAME_LEN);
+ 
+ 	gack = gmtp_hdr_ack(skb);
+ 	gack->orig_tstamp = entry->info->last_data_tstamp;
+-	gack->wait = (__be32)(ktime_to_ms(ktime_get_real())
+-			- entry->info->last_rx_tstamp);
+ 
+ 	/* Build the IP header. */
+ 	skb_push(skb, sizeof(struct iphdr));
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.c b/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.c
+index d0cfb52..d820a55 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.c
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.c
+@@ -271,13 +271,6 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
+ 	return ret;
+ }
+ 
+-void gmtp_timer_callback(void)
+-{
+-	gmtp_ucc(0);
+-	mod_timer(&gmtp_inter.gmtp_ucc_timer,
+-			jiffies + min(gmtp_inter.h, gmtp_inter.h_user));
+-}
+-
+ int init_module()
+ {
+ 	int ret = 0;
+@@ -316,10 +309,12 @@ int init_module()
+ 
+ 	gmtp_info->relay_enabled = 1; /* Enables gmtp-inter */
+ 
+-	gmtp_inter.h = 0;
+ 	gmtp_inter.h_user = UINT_MAX; /* TODO Make it user defined */
+ 	gmtp_inter.last_rtt = GMTP_DEFAULT_RTT;
+-	setup_timer(&gmtp_inter.gmtp_ucc_timer, gmtp_timer_callback, 0);
++	gmtp_inter.avg_rtt = rtt_ewma(0, GMTP_DEFAULT_RTT, GMTP_RTT_WEIGHT);
++
++	pr_info("Configuring GMTP-UCC timer...\n");
++	setup_timer(&gmtp_inter.gmtp_ucc_timer, gmtp_ucc_callback, 0);
+ 	mod_timer(&gmtp_inter.gmtp_ucc_timer, jiffies + HZ);
+ 
+ 	nfho_in.hook = hook_func_in;
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.h b/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.h
+index f0ee742..9392c2c 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.h
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.h
+@@ -65,7 +65,7 @@ struct gmtp_inter {
+ 	unsigned int        	ucc_bytes;
+ 	unsigned long  		ucc_rx_tstamp;
+ 	unsigned int 		rx_rate_wnd;
+-	unsigned int 		h;
++	unsigned int 		avg_rtt;
+ 	unsigned int		h_user;
+ 	unsigned int 		last_rtt;
+ 
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.c b/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.c
+index 37001c1..adeb4cc 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.c
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.c
+@@ -109,7 +109,7 @@ struct gmtp_flow_info *__gmtp_inter_build_info(void)
+ 	info->current_rx = 0;
+ 	info->required_tx = 0;
+ 	info->data_pkt_out = 0;
+-	info->rtt = 0;
++	info->flow_rtt = 0;
+ 
+ 	info->clients = kmalloc(sizeof(struct gmtp_client), GFP_KERNEL);
+ 	INIT_LIST_HEAD(&info->clients->list);
+@@ -121,7 +121,7 @@ struct gmtp_flow_info *__gmtp_inter_build_info(void)
+ 	gmtp_set_buffer_limits(info, 1);
+ 
+ 	setup_timer(&info->mcc_timer, mcc_timer_callback, (unsigned long) info);
+-	mod_timer(&info->mcc_timer, gmtp_mcc_interval(info->rtt));
++	mod_timer(&info->mcc_timer, gmtp_mcc_interval(info->flow_rtt));
+ out:
+ 	return info;
+ }
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.h b/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.h
+index ca13502..d6585b4 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.h
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.h
+@@ -47,6 +47,7 @@ struct gmtp_inter_entry {
+  * @total_bytes: amount of received bytes
+  * @last_rx_tstamp: time stamp of last received data packet (milliseconds)
+  * @last_data_tstamp: time stamp stored in last received data packet.
++ * @rcv_tx_rate: tx rate received from relays (or server) in path s->r
+  *
+  * @nfeedbacks: number of received feedbacks at last window
+  * @sum_feedbacks: sum of all feedbacks tx rates received at last window
+@@ -76,6 +77,7 @@ struct gmtp_flow_info {
+ 	unsigned int 		total_bytes;
+ 	unsigned long  		last_rx_tstamp; /* milliseconds */
+ 	__be32 			last_data_tstamp;
++	__be32 			rcv_tx_rate;
+ 
+ 	/* GMTP-MCC */
+ 	unsigned int		nfeedbacks;
+@@ -85,7 +87,8 @@ struct gmtp_flow_info {
+ 	unsigned int 		current_rx;
+ 	unsigned int 		required_tx;
+ 	unsigned int 		data_pkt_out;
+-	unsigned int 		rtt;
++	unsigned int 		flow_rtt;
++	unsigned int 		flow_avg_rtt;
+ 	struct timer_list 	mcc_timer;
+ 
+ 	struct gmtp_client	*clients;
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/input-inter.c b/linux-4.0.3/net/gmtp/gmtp-inter/input-inter.c
+index 9d89e99..80612d9 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/input-inter.c
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/input-inter.c
+@@ -191,7 +191,14 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
+ 	gmtp_inter_add_relayid(skb);
+ 
+ 	gmtp_print_debug("UPDATING Tx Rate");
+-	gmtp_inter.last_rtt = gh->server_rtt;
++	gmtp_inter.last_rtt = (unsigned int) gh->server_rtt;
++	gmtp_inter.avg_rtt = rtt_ewma(gmtp_inter.avg_rtt, gmtp_inter.last_rtt,
++			GMTP_RTT_WEIGHT);
++
++	pr_info("Server RTT: %u ms\n", (unsigned int) gh->server_rtt);
++	pr_info("Last RTT: %u ms\n", gmtp_inter.last_rtt);
++	pr_info("RTT AVG: %u ms\n", gmtp_inter.avg_rtt);
++
+ 	if(gmtp_inter.ucc_rx < gh->transm_r)
+ 		gh->transm_r = (__be32) gmtp_inter.ucc_rx;
+ 
+@@ -200,7 +207,11 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb)
+ 		return NF_ACCEPT;
+ 
+ 	info = entry->info;
+-	info->rtt = (unsigned int) gh->server_rtt;
++	info->rcv_tx_rate = gh->transm_r;
++	info->flow_rtt = (unsigned int) gh->server_rtt;
++	info->flow_avg_rtt = rtt_ewma(info->flow_avg_rtt, info->flow_rtt,
++			GMTP_RTT_WEIGHT);
++
+ 	ether_addr_copy(entry->server_mac_addr, eth->h_source);
+ 
+ 	gh_route_n = gmtp_inter_make_route_hdr(skb);
+@@ -344,12 +355,23 @@ int gmtp_inter_elect_resp_rcv(struct sk_buff *skb)
+ static inline void gmtp_update_stats(struct gmtp_flow_info *info,
+ 		struct sk_buff *skb, struct gmtp_hdr *gh)
+ {
++	gmtp_inter.total_bytes_rx += skblen(skb);
++	gmtp_inter.ucc_bytes += skblen(skb);
++	gmtp_inter.last_rtt = (unsigned int)gh->server_rtt;
++	gmtp_inter.avg_rtt = rtt_ewma(gmtp_inter.avg_rtt, gmtp_inter.last_rtt,
++	GMTP_RTT_WEIGHT);
++
+ 	info->total_bytes += skblen(skb);
+ 	info->recent_bytes += skblen(skb);
+-	info->seq = (unsigned int) gh->seq;
+-	info->rtt = (unsigned int) gh->server_rtt;
++	info->seq = (unsigned int)gh->seq;
++	info->flow_rtt = (unsigned int)gh->server_rtt;
++	info->flow_avg_rtt = rtt_ewma(info->flow_avg_rtt, info->flow_rtt,
++	GMTP_RTT_WEIGHT);
+ 	info->last_data_tstamp = gmtp_hdr_data(skb)->tstamp;
+ 
++	info->rcv_tx_rate = gh->transm_r;
++	gh->transm_r = min(info->rcv_tx_rate, gmtp_inter.ucc_rx);
++
+ 	if(gh->seq % gmtp_inter.rx_rate_wnd == 0) {
+ 		unsigned long current_time = ktime_to_ms(ktime_get_real());
+ 		unsigned long elapsed = current_time - info->recent_rx_tstamp;
+@@ -360,11 +382,10 @@ static inline void gmtp_update_stats(struct gmtp_flow_info *info,
+ 
+ 		info->recent_rx_tstamp = ktime_to_ms(skb->tstamp);
+ 		info->recent_bytes = 0;
++		pr_info("Last RTT: %u ms\n", (unsigned int) gh->server_rtt);
++		pr_info("Last RTT: %u ms\n", gmtp_inter.last_rtt);
++		pr_info("RTT AVG: %u ms\n", gmtp_inter.avg_rtt);
+ 	}
+-
+-	gmtp_inter.total_bytes_rx += skblen(skb);
+-	gmtp_inter.ucc_bytes += skblen(skb);
+-	gmtp_inter.last_rtt = (unsigned int) gh->server_rtt;
+ }
+ 
+ /**
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/mcc-inter.c b/linux-4.0.3/net/gmtp/gmtp-inter/mcc-inter.c
+index 259395e..32ed72e 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/mcc-inter.c
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/mcc-inter.c
+@@ -97,6 +97,6 @@ void mcc_timer_callback(unsigned long data)
+ 
+ 	/* TODO Send here an ack to server? */
+ 
+-	mod_timer(&info->mcc_timer, gmtp_mcc_interval(info->rtt));
++	mod_timer(&info->mcc_timer, gmtp_mcc_interval(info->flow_avg_rtt));
+ }
+ 
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/ucc.c b/linux-4.0.3/net/gmtp/gmtp-inter/ucc.c
+index d7531c3..071e884 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/ucc.c
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/ucc.c
+@@ -7,30 +7,22 @@
+ 
+ #include <linux/kernel.h>
+ #include <linux/module.h>
++#include <linux/ktime.h>
+ 
++#include "../gmtp.h"
+ #include "gmtp-inter.h"
+ #include "ucc.h"
+ 
+-#include <linux/ktime.h>
+-
+ extern struct gmtp_inter gmtp_inter;
+ 
+-unsigned int gmtp_rtt_average(unsigned char debug)
++void gmtp_ucc_callback(void)
+ {
+-	unsigned int old_h = gmtp_inter.h;
+-
+-	gmtp_inter.h = GMTP_THETA(gmtp_inter.last_rtt) +
+-			GMTP_ONE_MINUS_THETA(old_h);
++	unsigned int next = min(gmtp_inter.avg_rtt, gmtp_inter.h_user);
++	if(next <= 0)
++		next = GMTP_DEFAULT_RTT;
+ 
+-	if(unlikely(!!debug)) {
+-		gmtp_pr_debug("h0 = 0.02 * RTT + (1-0.02)* h0");
+-		gmtp_pr_debug("h0 = 0.02 * %u + (1-0.02)* %u",
+-				gmtp_inter.last_rtt, old_h);
+-		gmtp_pr_debug("h0 = %u + %u", GMTP_THETA(gmtp_inter.last_rtt),
+-				GMTP_ONE_MINUS_THETA(old_h));
+-		gmtp_pr_debug("New h0 = %u ms", gmtp_inter.h);
+-	}
+-	return gmtp_inter.h;
++	gmtp_ucc(0);
++	mod_timer(&gmtp_inter.gmtp_ucc_timer, jiffies + msecs_to_jiffies(next));
+ }
+ 
+ unsigned int gmtp_relay_queue_size()
+@@ -60,10 +52,15 @@ void gmtp_ucc(unsigned char debug)
+ 	if(elapsed != 0)
+ 		y = DIV_ROUND_CLOSEST(gmtp_inter.ucc_bytes * MSEC_PER_SEC, elapsed);
+ 
+-	h = gmtp_rtt_average(debug);
++	/* FIXME Sane RTT before using it (in server and relays) */
++	h = gmtp_inter.avg_rtt;
++	if(h<=0) {
++		gmtp_pr_error("Error: h = %u. Assuming h = 1 ms", h);
++		h = 1;
++	}
+ 	H = min(h, gmtp_inter.h_user);
+-	up = (H / h) * (GMTP_ALPHA(GMTP_GHAMA(C)-y) - GMTP_BETA(q / h));
+-	delta = ((int)(r_prev) * up) / GMTP_GHAMA(C);
++	up = DIV_ROUND_CLOSEST(H, h) * (GMTP_ALPHA(GMTP_GHAMA(C)-y) - GMTP_BETA(q / h));
++	delta = DIV_ROUND_CLOSEST( ((int)(r_prev) * up), GMTP_GHAMA(C));
+ 
+ 	/**
+ 	 * r = r_prev * (1 + up/GHAMA(C)) =>
+@@ -94,7 +91,7 @@ void gmtp_ucc(unsigned char debug)
+ 		gmtp_pr_debug("C: %u bytes/s", C);
+ 		gmtp_pr_debug("y(t): %u bytes/s", y);
+ 		gmtp_pr_debug("q(t): %u bytes\n", q);
+-		gmtp_pr_debug("H/h0: %u", (H / h));
++		gmtp_pr_debug("H/h0: %u", DIV_ROUND_CLOSEST(H, h));
+ 		gmtp_pr_debug("GHAMA(C): %u", GMTP_GHAMA(C));
+ 		gmtp_pr_debug("ALPHA(GHAMA(C)-y): %u", GMTP_ALPHA(GMTP_GHAMA(C)-y));
+ 		gmtp_pr_debug("q/h: %u", q / h);
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/ucc.h b/linux-4.0.3/net/gmtp/gmtp-inter/ucc.h
+index 589bd30..f376c4e 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/ucc.h
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/ucc.h
+@@ -15,7 +15,7 @@
+ #define GMTP_ONE_MINUS_THETA(X) DIV_ROUND_CLOSEST(X * 98000, 100000) /* X*(1-0.02) */
+ 
+ /** gmtp-ucc. */
+-unsigned int gmtp_rtt_average(unsigned char debug);
++void gmtp_ucc_callback(void);
+ unsigned int gmtp_relay_queue_size(void);
+ void gmtp_ucc(unsigned char debug);
+ 
+diff --git a/linux-4.0.3/net/gmtp/gmtp.h b/linux-4.0.3/net/gmtp/gmtp.h
+index 16e1e46..7d13cb4 100644
+--- a/linux-4.0.3/net/gmtp/gmtp.h
++++ b/linux-4.0.3/net/gmtp/gmtp.h
+@@ -77,6 +77,17 @@
+ #define GMTP_SANE_RTT_MIN	100		    /* 0.1 ms */
+ #define GMTP_FALLBACK_RTT	((GMTP_DEFAULT_RTT * USEC_PER_MSEC) / 5)
+ #define GMTP_SANE_RTT_MAX	(3 * USEC_PER_SEC)  /* 3 s    */
++#define GMTP_RTT_WEIGHT		20 	/* 0.02 */
++
++/**
++ * rtt_ewma  -  Exponentially weighted moving average
++ * @weight: Weight to be used as damping factor, in units of 1/1000
++ * 		factor 1/1000 allows better weight granularity
++ */
++static inline u32 rtt_ewma(const u32 avg, const u32 newval, const u8 weight)
++{
++	return avg ? (weight * avg + (1000 - weight) * newval) / 1000 : newval;
++}
+ 
+ /* initial RTO value
+  * The back-off value for retransmissions. This is needed for
+diff --git a/linux-4.0.3/net/gmtp/input.c b/linux-4.0.3/net/gmtp/input.c
+index 63f121f..2da6a51 100644
+--- a/linux-4.0.3/net/gmtp/input.c
++++ b/linux-4.0.3/net/gmtp/input.c
+@@ -72,8 +72,7 @@ static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
+ 		/* FIXME: Implement gmtp_del_server_entry() */
+ 		/*
+ 		else if(gp->role == GMTP_ROLE_SERVER)
+-			gmtp_print_error("FIXME: "
+-					"Implement gmtp_del_server_entry()");*/
++			gmtp_print_error("FIXME: Implement gmtp_del_server_entry()");*/
+ 
+ 		/* Give waiting application a chance to read pending data */
+ 		queued = 1;
+@@ -399,8 +398,10 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
+ 	case GMTP_PKT_ACK:
+ 		if(gp->role == GMTP_ROLE_SERVER) {
+ 			struct gmtp_hdr_ack *gack = gmtp_hdr_ack(skb);
+-			gp->tx_rtt = (u32)jiffies_to_msecs(jiffies) -
+-					(u32)(gack->orig_tstamp + gack->wait);
++			gp->tx_rtt = jiffies_to_msecs(jiffies) - gack->orig_tstamp;
++			gp->tx_avg_rtt = rtt_ewma(gp->tx_avg_rtt, gp->tx_rtt,
++					GMTP_RTT_WEIGHT);
++
+ 			gp->tx_ucc_rate = min(gp->tx_ucc_rate, gh->transm_r);
+ 		}
+ 		goto discard;
+@@ -470,7 +471,7 @@ static int gmtp_rcv_request_rcv_state_process(struct sock *sk,
+ 						   const unsigned int len)
+ {
+ 	struct inet_connection_sock *icsk = inet_csk(sk);
+-	__u32 elapsed = 0;
++	struct gmtp_sock *gp = gmtp_sk(sk);
+ 	int queued = 0;
+ 
+ 	gmtp_print_function();
+@@ -483,12 +484,15 @@ static int gmtp_rcv_request_rcv_state_process(struct sock *sk,
+ 		if (sk->sk_state == GMTP_REQUEST_RECV)
+ 			break;
+ 	/* ROUTE_NOTIFY is a special ack */
++	/** TODO Atualizar tx_rate dos caminhos */
+ 	case GMTP_PKT_ROUTE_NOTIFY:
+ 	case GMTP_PKT_DATAACK:
+ 	case GMTP_PKT_ACK:
+-		elapsed = jiffies_to_msecs(jiffies) - gmtp_sk(sk)->reply_stamp;
+-		gmtp_sk(sk)->tx_rtt = elapsed;
+-		gmtp_print_debug("RTT: %u ms", gmtp_sk(sk)->tx_rtt);
++		gp->tx_rtt = jiffies_to_msecs(jiffies) - gmtp_sk(sk)->reply_stamp;
++		gp->tx_avg_rtt = rtt_ewma(gp->tx_avg_rtt, gp->tx_rtt,
++							GMTP_RTT_WEIGHT);
++		gmtp_pr_debug("RTT: %u ms | RTT_AVG: %u ms", gp->tx_rtt,
++				gp->tx_avg_rtt);
+ 
+ 		inet_csk_clear_xmit_timer(sk, ICSK_TIME_DACK);
+ 
+diff --git a/linux-4.0.3/net/gmtp/mcc/mcc_input.c b/linux-4.0.3/net/gmtp/mcc/mcc_input.c
+index bd26862..d345a4f 100644
+--- a/linux-4.0.3/net/gmtp/mcc/mcc_input.c
++++ b/linux-4.0.3/net/gmtp/mcc/mcc_input.c
+@@ -89,7 +89,7 @@ static void mcc_rx_send_feedback(struct sock *sk,
+ 	sample = gp->rx_rtt * USEC_PER_MSEC;
+ 
+ 	if(sample != 0)
+-		gp->rx_avg_rtt = mcc_ewma(gp->rx_avg_rtt, sample, 9);
++		gp->rx_avg_rtt = rtt_ewma(gp->rx_avg_rtt, sample, 900);
+ 
+ 	if(gp->rx_avg_rtt <= 0)
+ 		gp->rx_avg_rtt = GMTP_SANE_RTT_MIN;
+@@ -204,7 +204,7 @@ void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
+ 		/*
+ 		 * Update moving-average of s and the sum of received payload bytes
+ 		 */
+-		gp->rx_s = mcc_ewma(gp->rx_s, payload, 9);
++		gp->rx_s = rtt_ewma(gp->rx_s, payload, 900);
+ 		gp->rx_bytes_recv += payload;
+ 		GMTP_SKB_CB(skb)->server_tstamp = dh->tstamp;
+ 	}
+@@ -236,7 +236,7 @@ void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
+ 		 * computation of p when the first loss occurs; RFC 3448, 6.3.1.
+ 		 */
+ 		if(sample != 0)
+-			gp->rx_avg_rtt = mcc_ewma(gp->rx_avg_rtt, sample, 9);
++			gp->rx_avg_rtt = rtt_ewma(gp->rx_avg_rtt, sample, 900);
+ 
+ 	} else if(mcc_lh_update_i_mean(&gp->rx_li_hist, skb)) {
+ 		/*
+diff --git a/linux-4.0.3/net/gmtp/mcc/mcc_proto.h b/linux-4.0.3/net/gmtp/mcc/mcc_proto.h
+index 615e8b1..1fb093d 100644
+--- a/linux-4.0.3/net/gmtp/mcc/mcc_proto.h
++++ b/linux-4.0.3/net/gmtp/mcc/mcc_proto.h
+@@ -46,15 +46,6 @@ static inline u32 scaled_div32(u64 a, u64 b)
+ 	return result;
+ }
+ 
+-/**
+- * mcc_ewma  -  Exponentially weighted moving average
+- * @weight: Weight to be used as damping factor, in units of 1/10
+- */
+-static inline u32 mcc_ewma(const u32 avg, const u32 newval, const u8 weight)
+-{
+-	return avg ? (weight * avg + (10 - weight) * newval) / 10 : newval;
+-}
+-
+ u32 mcc_calc_x(u16 s, u32 R, u32 p);
+ u32 mcc_calc_x_reverse_lookup(u32 fvalue);
+ u32 mcc_invert_loss_event_rate(u32 loss_event_rate);
+diff --git a/linux-4.0.3/net/gmtp/output.c b/linux-4.0.3/net/gmtp/output.c
+index c1d9645..9b80447 100644
+--- a/linux-4.0.3/net/gmtp/output.c
++++ b/linux-4.0.3/net/gmtp/output.c
+@@ -80,7 +80,7 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
+ 		gh->dport = inet->inet_dport;
+ 		gh->hdrlen = gmtp_header_size;
+ 		gh->server_rtt = gp->role == GMTP_ROLE_SERVER ?
+-				TO_U12(gp->tx_rtt) : TO_U12(gp->rx_rtt);
++				TO_U12(gp->tx_avg_rtt) : TO_U12(gp->rx_rtt);
+ 
+ 		memcpy(gh->flowname, gp->flowname, GMTP_FLOWNAME_LEN);
+ 
+@@ -209,7 +209,7 @@ struct sk_buff *gmtp_make_register_reply(struct sock *sk, struct dst_entry *dst,
+ 	gh->dport	= inet_rsk(req)->ir_rmt_port;
+ 	gh->type	= GMTP_PKT_REGISTER_REPLY;
+ 	gh->seq 	= greq->gss;
+-	gh->server_rtt	= TO_U12(gmtp_sk(sk)->tx_rtt);
++	gh->server_rtt	= GMTP_DEFAULT_RTT;
+ 	gh->transm_r	= (__be32) gmtp_sk(sk)->tx_max_rate;
+ 	gh->hdrlen	= gmtp_header_size;
+ 	memcpy(gh->flowname, greq->flowname, GMTP_FLOWNAME_LEN);
+@@ -516,7 +516,6 @@ struct sk_buff *gmtp_ctl_make_ack(struct sock *sk, struct sk_buff *rcv_skb)
+ 		pr_info("Responding a DATA with a ACK");
+ 		gack = gmtp_hdr_ack(skb);
+ 		gack->orig_tstamp = ghd->tstamp;
+-		gack->wait = ktime_sub_ms_be32(ktime_get_real(), rcv_skb->tstamp);
+ 	} else {
+ 		pr_info("Responding a NON-DATA with a ACK");
+ 	}
+@@ -715,7 +714,7 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
+ 	if(unlikely(sk == NULL || skb == NULL))
+ 		return;
+ 
+-	if(gp->tx_max_rate == 0UL)
++	if(gp->tx_max_rate == UINT_MAX)
+ 		goto send;
+ 	else
+ 		tx_rate = min(gp->tx_max_rate, gp->tx_ucc_rate);
+diff --git a/linux-4.0.3/net/gmtp/proto.c b/linux-4.0.3/net/gmtp/proto.c
+index 8fb6dc5..c960c62 100644
+--- a/linux-4.0.3/net/gmtp/proto.c
++++ b/linux-4.0.3/net/gmtp/proto.c
+@@ -111,11 +111,11 @@ void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh)
+ 	__u8 flowname[GMTP_FLOWNAME_STR_LEN];
+ 	flowname_str(flowname, gh->flowname);
+ 	pr_info("%s (%d) src=%pI4@%-5d, dst=%pI4@%-5d, seq=%u, rtt=%u ms, "
+-			"transm_r=%u bytes/s, flow=%s\n",
++			"transm_r=%u B/s, flow=%s\n",
+ 				gmtp_packet_name(gh->type), gh->type,
+ 				&iph->saddr, ntohs(gh->sport),
+ 				&iph->daddr, ntohs(gh->dport),
+-				gh->seq, /*(u32)*/ gh->server_rtt, gh->transm_r,
++				gh->seq, gh->server_rtt, gh->transm_r,
+ 				flowname);
+ }
+ EXPORT_SYMBOL_GPL(print_gmtp_packet);
+@@ -233,7 +233,8 @@ int gmtp_init_sock(struct sock *sk)
+ 	gp->req_stamp		= 0;
+ 	gp->ack_rx_tstamp	= 0;
+ 	gp->ack_tx_tstamp	= 0;
+-	gp->tx_rtt		= GMTP_DEFAULT_RTT;
++	gp->tx_rtt		= 0;
++	gp->tx_avg_rtt		= 0;
+ 	gp->relay_rtt		= 0;
+ 
+ 	gp->rx_max_rate 	= 0;
+@@ -251,8 +252,8 @@ int gmtp_init_sock(struct sock *sk)
+ 
+ 	gp->tx_first_stamp	= 0UL;
+ 	gp->tx_last_stamp	= 0UL;
+-	gp->tx_max_rate		= 0UL; /* Unlimited */
+-	gp->tx_ucc_rate		= 0UL; /* Unlimited */
++	gp->tx_max_rate		= UINT_MAX; /* Unlimited */
++	gp->tx_ucc_rate		= UINT_MAX; /* Unlimited */
+ 	gp->tx_byte_budget	= INT_MIN;
+ 	gp->tx_adj_budget	= 0;
+ 

@@ -1,0 +1,850 @@
+diff --git a/linux-4.0.3/drivers/staging/speakup/kobjects.c b/linux-4.0.3/drivers/staging/speakup/kobjects.c
+index 71e5955..3708bc1 100644
+--- a/linux-4.0.3/drivers/staging/speakup/kobjects.c
++++ b/linux-4.0.3/drivers/staging/speakup/kobjects.c
+@@ -56,7 +56,7 @@ static ssize_t chars_chartab_show(struct kobject *kobj,
+ 				cp = "NUM";
+ 			else if (IS_TYPE(i, A_CAP))
+ 				cp = "A_CAP";
+-			else if (IS_TYPE(i, GMTP_ALPHA))
++			else if (IS_TYPE(i, ALPHA))
+ 				cp = "ALPHA";
+ 			else if (IS_TYPE(i, B_CAPSYM))
+ 				cp = "B_CAPSYM";
+diff --git a/linux-4.0.3/drivers/staging/speakup/main.c b/linux-4.0.3/drivers/staging/speakup/main.c
+index 1671a6a..e9f0c15 100644
+--- a/linux-4.0.3/drivers/staging/speakup/main.c
++++ b/linux-4.0.3/drivers/staging/speakup/main.c
+@@ -210,10 +210,10 @@ static u_short default_chartab[256] = {
+ 	A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP,	/* HIJKLMNO */
+ 	A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP,	/* PQRSTUVW */
+ 	A_CAP, A_CAP, A_CAP, PUNC, PUNC, PUNC, PUNC, PUNC,	/* XYZ[\]^_ */
+-	PUNC, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA,	/* `abcdefg */
+-	GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA,	/* hijklmno */
+-	GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA,	/* pqrstuvw */
+-	GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, PUNC, PUNC, PUNC, PUNC, 0,	/* xyz{|}~ */
++	PUNC, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA,	/* `abcdefg */
++	ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA,	/* hijklmno */
++	ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA,	/* pqrstuvw */
++	ALPHA, ALPHA, ALPHA, PUNC, PUNC, PUNC, PUNC, 0,	/* xyz{|}~ */
+ 	B_CAPSYM, B_CAPSYM, B_SYM, B_SYM, B_SYM, B_SYM, B_SYM, /* 128-134 */
+ 	B_SYM,	/* 135 */
+ 	B_SYM, B_SYM, B_SYM, B_SYM, B_SYM, B_SYM, B_SYM, /* 136-142 */
+@@ -230,11 +230,11 @@ static u_short default_chartab[256] = {
+ 	A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP,	/* 192-199 */
+ 	A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP,	/* 200-207 */
+ 	A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, B_SYM,	/* 208-215 */
+-	A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, GMTP_ALPHA,	/* 216-223 */
+-	GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA,	/* 224-231 */
+-	GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA,	/* 232-239 */
+-	GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, B_SYM,	/* 240-247 */
+-	GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA	/* 248-255 */
++	A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, ALPHA,	/* 216-223 */
++	ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA,	/* 224-231 */
++	ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA,	/* 232-239 */
++	ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, B_SYM,	/* 240-247 */
++	ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA	/* 248-255 */
+ };
+ 
+ struct task_struct *speakup_task;
+diff --git a/linux-4.0.3/drivers/staging/speakup/speakup.h b/linux-4.0.3/drivers/staging/speakup/speakup.h
+index 81a4a66..898dce5 100644
+--- a/linux-4.0.3/drivers/staging/speakup/speakup.h
++++ b/linux-4.0.3/drivers/staging/speakup/speakup.h
+@@ -19,7 +19,7 @@
+ 
+ #define SYNTH_OK 0x0001
+ #define B_ALPHA 0x0002
+-#define GMTP_ALPHA 0x0003
++#define ALPHA 0x0003
+ #define B_CAP 0x0004
+ #define A_CAP 0x0007
+ #define B_NUM 0x0008
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/build.c b/linux-4.0.3/net/gmtp/gmtp-inter/build.c
+index 7681f3e..9cceeef 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/build.c
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/build.c
+@@ -346,69 +346,3 @@ void gmtp_copy_hdr(struct sk_buff *skb, struct sk_buff *src_skb)
+ 	if(gh->type == gh_src->type)
+ 		memcpy(gh, gh_src, gh_src->hdrlen);
+ }
+-
+-void gmtp_ack_build(struct gmtp_relay_entry *entry)
+-{
+-	struct sk_buff *skb = alloc_skb(GMTP_MAX_HDR_LEN, GFP_ATOMIC);
+-	struct gmtp_hdr *gh;
+-	int gmtp_hdr_len = sizeof(struct gmtp_hdr);
+-	
+-	struct ethhdr *eth = eth_hdr(skb);
+-	struct iphdr *iph;
+-	struct socket *sock = NULL;
+-	struct net_device *dev_entry = NULL;
+-	struct net *net;
+-	int total_len, ip_len = 0;
+-
+-	sock_create(AF_INET, SOCK_STREAM, 0, &sock);
+-	net = sock_net(sock->sk);
+-	dev_entry = dev_get_by_index_rcu(net, 2);
+-	sock_release(sock);
+-
+-	ip_len = gmtp_hdr_len + sizeof(*iph);
+-	total_len = ip_len + LL_RESERVED_SPACE(dev_entry);
+-	skb_reserve(skb, total_len);
+-
+-	gh = gmtp_zeroed_hdr(skb, gmtp_hdr_len);
+-
+-	gh->version = GMTP_VERSION;
+-	gh->type = GMTP_PKT_ACK;
+-	gh->hdrlen = gmtp_hdr_len;
+-	gh->relay = 1;
+-	gh->dport = entry->media_port;
+-	gh->sport = entry->info->my_port;
+-	gh->transm_r = gmtp_inter.ucc_rx;
+-	memcpy(gh->flowname, entry->flowname, GMTP_FLOWNAME_LEN);
+-
+-	/* Build the IP header. */
+-	skb_push(skb, sizeof(struct iphdr));
+-	skb_reset_network_header(skb);
+-	iph = ip_hdr(skb);
+-
+-	/* iph->version = 4; iph->ihl = 5; */
+-	put_unaligned(0x45, (unsigned char *)iph);
+-	iph->tos = 0;
+-	iph->frag_off = 0;
+-	iph->ttl = 64;
+-	iph->protocol = IPPROTO_GMTP;
+-
+-	put_unaligned(entry->info->my_addr, &(iph->saddr));
+-	put_unaligned(entry->server_addr, &(iph->daddr));
+-	put_unaligned(htons(skb->len), &(iph->tot_len));
+-
+-	ip_send_check(iph);
+-
+-	print_gmtp_packet(iph, gh);
+-
+-	eth = (struct ethhdr *)skb_push(skb, ETH_HLEN);
+-	skb_reset_mac_header(skb);
+-	skb->protocol = eth->h_proto = htons(ETH_P_IP);
+-
+-	ether_addr_copy(eth->h_source, dev_entry->dev_addr);
+-	ether_addr_copy(eth->h_dest, entry->server_mac_addr);
+-
+-	skb->dev = dev_entry;
+-
+-	gmtp_inter_send_pkt(skb);
+-}
+-
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.c b/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.c
+index 7060cae..a0420c8 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.c
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.c
+@@ -27,9 +27,6 @@
+ #include "mcc-inter.h"
+ #include "ucc.h"
+ 
+-#include <asm-generic/unaligned.h>
+-#include <linux/etherdevice.h>
+-
+ static struct nf_hook_ops nfho_in;
+ static struct nf_hook_ops nfho_out;
+ 
+@@ -185,18 +182,15 @@ struct sk_buff *gmtp_buffer_dequeue(struct gmtp_flow_info *info)
+ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
+ 		const struct net_device *in, const struct net_device *out,
+ 		int (*okfn)(struct sk_buff *))
+-
+ {
+-    	int ret = NF_ACCEPT;
++	int ret = NF_ACCEPT;
+ 	struct iphdr *iph = ip_hdr(skb);
+ 
+ 	if((gmtp_info->relay_enabled == 0) || (in == NULL))
+ 		return ret;
+ 
+ 	if(iph->protocol == IPPROTO_GMTP) {
+-        
+-        struct ethhdr *eth = eth_hdr(skb);
+-	    struct gmtp_relay_entry *entry;
++
+ 		struct gmtp_hdr *gh = gmtp_hdr(skb);
+ 
+ 		if(gh->type != GMTP_PKT_DATA && gh->type != GMTP_PKT_FEEDBACK) {
+@@ -211,19 +205,6 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
+ 			ret = gmtp_inter_request_rcv(skb);
+ 			break;
+ 		case GMTP_PKT_REGISTER_REPLY:
+-            /*****************************/ 
+-
+-            entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
+-
+-            /*TODO verificar se o mac do server esta sendo pego, ou usar h_dest*/
+-	        if(entry != NULL)
+-                ether_addr_copy(entry->server_mac_addr, eth->h_source);
+-                /*memcpy(&entry->server_mac_addr, eth->h_source, 6);*/
+-		        /*entry->server_mac_addr = eth->h_source;*/
+-
+-            /****************************/
+-    
+-
+ 			ret = gmtp_inter_register_reply_rcv(skb);
+ 			break;
+ 		case GMTP_PKT_ACK:
+@@ -288,14 +269,6 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
+ 	return ret;
+ }
+ 
+-void gmtp_timer_callback(void)
+-{
+-	gmtp_print_function();
+-    gmtp_ucc(UINT_MAX,1);    
+-	mod_timer(&gmtp_inter.gmtp_timer, jiffies + msecs_to_jiffies(1000));
+-    
+-}
+-
+ int init_module()
+ {
+ 	int ret = 0;
+@@ -308,9 +281,6 @@ int init_module()
+ 		goto out;
+ 	}
+ 
+-    setup_timer(&gmtp_inter.gmtp_timer, gmtp_timer_callback, 0);
+-   	mod_timer(&gmtp_inter.gmtp_timer, jiffies + msecs_to_jiffies(1000)); 
+-
+ 	gmtp_inter.capacity = CAPACITY_DEFAULT;
+ 	gmtp_inter.buffer_len = 0;
+ 	gmtp_inter.kreporter = GMTP_REPORTER_DEFAULT_PROPORTION - 1;
+@@ -363,7 +333,6 @@ void cleanup_module()
+ 
+ 	nf_unregister_hook(&nfho_in);
+ 	nf_unregister_hook(&nfho_out);
+-    del_timer(&gmtp_inter.gmtp_timer);
+ }
+ 
+ MODULE_LICENSE("GPL");
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.h b/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.h
+index 9536448..a11bd9b 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.h
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.h
+@@ -68,8 +68,6 @@ struct gmtp_inter {
+ 
+ 	unsigned char		kreporter;
+ 
+-    struct timer_list gmtp_timer;    
+-
+ 	struct gmtp_inter_hashtable *hashtable;
+ };
+ 
+@@ -83,7 +81,6 @@ struct gmtp_flow_info *gmtp_inter_get_info(
+ 		struct gmtp_inter_hashtable *hashtable, const __u8 *media);
+ __be32 gmtp_inter_device_ip(struct net_device *dev);
+ unsigned char *gmtp_build_md5(unsigned char *buf);
+-void gmtp_timer_callback(void);
+ 
+ /** input.c */
+ int gmtp_inter_request_rcv(struct sk_buff *skb);
+@@ -120,7 +117,7 @@ void gmtp_inter_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
+ 		__be32 daddr, struct gmtp_hdr *gh_ref, bool backward);
+ void gmtp_inter_build_and_send_skb(struct sk_buff *skb);
+ void gmtp_copy_hdr(struct sk_buff *skb, struct sk_buff *src_skb);
+-void gmtp_ack_build(struct gmtp_relay_entry *entry);
++
+ /**
+  * A very ugly delayer, to GMTP-inter...
+  *
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.c b/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.c
+index 27955cf..a88528d 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.c
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.c
+@@ -82,16 +82,22 @@ struct gmtp_relay_entry *gmtp_inter_lookup_media(
+ 	return NULL;
+ }
+ 
+-void ack_timer_callback(struct gmtp_relay_entry *entry)
++void ack_timer_callback(struct gmtp_inter_hashtable *hashtable)
+ {
+-	gmtp_print_function();
+-	gmtp_print_debug("Servidor %x", entry->server_addr);
+-	mod_timer(&entry->ack_timer_entry, jiffies + msecs_to_jiffies(1000));
+-    
+-    gmtp_ack_build(entry);
++	struct gmtp_relay_entry *entry;
++	unsigned int hashval;
++
++    for(hashval = 0; hashtable->table[hashval] != NULL; ++hashval){
+ 
+-	/*TODO send ACK to servers*/
+-	return;
++        for(entry = hashtable->table[hashval]; 
++            entry != NULL; entry = entry->next){
++
++            gmtp_print_debug("Media entry founded at index %d", hashval);
++            gmtp_print_debug("Server Founded with addr %x",
++                            entry->server_addr);
++            /*TODO send ACK to servers*/
++        }
++    }
+ }
+ 
+ 
+@@ -126,7 +132,10 @@ struct gmtp_flow_info *__gmtp_inter_build_info(void)
+ 	setup_timer(&info->mcc_timer, mcc_timer_callback, (unsigned long) info);
+ 	mod_timer(&info->mcc_timer, gmtp_mcc_interval(info->rtt));
+ 
+-    
++    setup_timer(&info->ack_timer, ack_timer_callback, gmtp_inter.hashtable);
++	mod_timer(&info->mcc_timer, jiffies + msecs_to_jiffies(1000));
++
++
+ out:
+ 	return info;
+ }
+@@ -178,10 +187,8 @@ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
+ 	new_entry->channel_port = channel_port;
+ 	new_entry->state = GMTP_INTER_WAITING_REGISTER_REPLY;
+ 	new_entry->next = hashtable->table[hashval];
++
+ 	hashtable->table[hashval] = new_entry;
+-	setup_timer(&new_entry->ack_timer_entry, ack_timer_callback, new_entry);
+-	mod_timer(&new_entry->ack_timer_entry,
+-			jiffies + msecs_to_jiffies(1000));
+ 
+ 	return 0;
+ }
+@@ -238,7 +245,7 @@ struct gmtp_relay_entry *gmtp_inter_del_entry(
+ 	gmtp_inter_del_clients(current_entry);
+ 	skb_queue_purge(current_entry->info->buffer);
+ 	del_timer_sync(&current_entry->info->mcc_timer);
+-	del_timer_sync(&current_entry->ack_timer_entry);
++    del_timer_sync(&current_entry->info->ack_timer);
+ 	kfree(current_entry->info);
+ 	kfree(current_entry);
+ 
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.h b/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.h
+index b1dc775..ea75865 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.h
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.h
+@@ -27,15 +27,12 @@
+ struct gmtp_relay_entry {
+ 	__u8 flowname[GMTP_FLOWNAME_LEN];
+ 	__be32 server_addr;
+-	unsigned char server_mac_addr[6];
+ 	__be32 *relay;
+ 	__be16 media_port;
+ 	__be32 channel_addr;
+ 	__be16 channel_port;
+ 	__u8 state :3;
+ 
+-	struct timer_list ack_timer_entry;
+-
+ 	struct gmtp_flow_info *info;
+ 	struct gmtp_relay_entry *next;
+ };
+@@ -85,6 +82,7 @@ struct gmtp_flow_info {
+ 	unsigned int 		data_pkt_out;
+ 	unsigned int 		rtt;
+ 	struct timer_list 	mcc_timer;
++    struct timer_list  ack_timer;
+ 
+ 	struct gmtp_client	*clients;
+ 	unsigned int 		nclients;
+@@ -126,7 +124,6 @@ struct gmtp_inter_hashtable {
+ struct gmtp_inter_hashtable *gmtp_inter_create_hashtable(unsigned int size);
+ struct gmtp_relay_entry *gmtp_inter_lookup_media(
+ 		struct gmtp_inter_hashtable *hashtable, const __u8 *media);
+-void ack_timer_callback(struct gmtp_relay_entry *entry);
+ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
+ 		__be32 server_addr, __be32 *relay, __be16 media_port,
+ 		__be32 channel_addr, __be16 channel_port);
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/input-inter.c b/linux-4.0.3/net/gmtp/gmtp-inter/input-inter.c
+index fdf0639..e142a94 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/input-inter.c
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/input-inter.c
+@@ -84,7 +84,7 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
+ 		int err = gmtp_inter_add_entry(gmtp_inter.hashtable, gh->flowname,
+ 				iph->daddr,
+ 				NULL,
+-				gh->dport,
++				gh->sport,
+ 				mcst_addr,
+ 				gh->dport); /* Mcst port <- server port */
+ 
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/ucc.c b/linux-4.0.3/net/gmtp/gmtp-inter/ucc.c
+index daca304..8e8c6ea 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/ucc.c
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/ucc.c
+@@ -59,8 +59,8 @@ void gmtp_ucc(unsigned int h_user, unsigned char debug)
+ 
+ 	h = gmtp_rtt_average();
+ 	H = (h < h_user) ? h : h_user;
+-	up = (H / h) * (GMTP_ALPHA(GMTP_GHAMA(C)-y) - GMTP_BETA(q / h));
+-	delta = ((int)(r_prev) * up) / GMTP_GHAMA(C);
++	up = (H / h) * (ALPHA(GHAMA(C)-y) - BETA(q / h));
++	delta = ((int)(r_prev) * up) / GHAMA(C);
+ 
+ 	/**
+ 	 * r = r_prev * (1 + up/GHAMA(C)) =>
+@@ -90,21 +90,21 @@ void gmtp_ucc(unsigned int h_user, unsigned char debug)
+ 		gmtp_pr_debug("y(t): %u bytes/s", y);
+ 		gmtp_pr_debug("q(t): %u bytes\n", q);
+ 		gmtp_pr_debug("H/h0: %u", (H / h));
+-		gmtp_pr_debug("GHAMA(C): %u", GMTP_GHAMA(C));
+-		gmtp_pr_debug("ALPHA(GHAMA(C)-y): %u", GMTP_ALPHA(GMTP_GHAMA(C)-y));
++		gmtp_pr_debug("GHAMA(C): %u", GHAMA(C));
++		gmtp_pr_debug("ALPHA(GHAMA(C)-y): %u", ALPHA(GHAMA(C)-y));
+ 		gmtp_pr_debug("q/h: %u", q / h);
+-		gmtp_pr_debug("BETA(q/h): %u", GMTP_BETA(q/h));
++		gmtp_pr_debug("BETA(q/h): %u", BETA(q/h));
+ 		gmtp_pr_debug("ALPHA(GHAMA(C)-y) - BETA(q/h):");
+-		gmtp_pr_debug("%u - %u: %d\n", GMTP_ALPHA(GMTP_GHAMA(C)-y), GMTP_BETA(q/h),
+-				(GMTP_ALPHA(GMTP_GHAMA(C)-y) - GMTP_BETA(q/h)));
++		gmtp_pr_debug("%u - %u: %d\n", ALPHA(GHAMA(C)-y), BETA(q/h),
++				(ALPHA(GHAMA(C)-y) - BETA(q/h)));
+ 
+ 		gmtp_pr_debug("up = ((H / h) * [ALPHA(GHAMA(C)-y) - BETA(q / h)])");
+-		gmtp_pr_debug("up = %u * [%u - %u]", H / h, GMTP_ALPHA(GMTP_GHAMA(C)-y),
+-				GMTP_BETA(q / h));
++		gmtp_pr_debug("up = %u * [%u - %u]", H / h, ALPHA(GHAMA(C)-y),
++				BETA(q / h));
+ 		gmtp_pr_debug("up = %d\n", up);
+ 		gmtp_pr_debug("delta = ((r_prev * up)/GHAMA(C))");
+ 		gmtp_pr_debug("delta = (%d * %u)/%u", (int )(r_prev), up,
+-				GMTP_GHAMA(C));
++				GHAMA(C));
+ 		gmtp_pr_debug("delta = %d\n", delta);
+ 
+ 		gmtp_pr_debug("new_r = (int)(r_prev) + delta");
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/ucc.h b/linux-4.0.3/net/gmtp/gmtp-inter/ucc.h
+index ebae26f..9cfb5a5 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/ucc.h
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/ucc.h
+@@ -8,10 +8,12 @@
+ #ifndef UCC_H_
+ #define UCC_H_
+ 
+-#define GMTP_ALPHA(X) DIV_ROUND_CLOSEST(X * 30, 100) /* X*0.3 */
+-#define GMTP_BETA(X)  DIV_ROUND_CLOSEST(X * 60, 100) /* X*0.6 */
+-#define GMTP_GHAMA(X) (X) /* DIV_ROUND_CLOSEST(X * 100, 100)*/ /* X*1.0 */
+-#define GMTP_THETA(X) DIV_ROUND_CLOSEST(X * 20, 100) /* X*0.02 */
++#define ALPHA(X) (((X)*3)/10)  /* X*0.3 */
++#define BETA(X)  (((X)*6)/10)  /* X*0.6 */
++#define GHAMA(X) (((X)*10)/10) /* X*1.0 */
++#define THETA(X) (((X)*2)/100) /* X*0.02 */
++
++#define MOD(X)   ((X > 0) ? (X) : -(X))
+ 
+ /** gmtp-ucc. */
+ unsigned int gmtp_rtt_average(void);
+diff --git a/linux-4.0.3/drivers/staging/speakup/kobjects.c b/linux-4.0.3/drivers/staging/speakup/kobjects.c
+index 71e5955..3708bc1 100644
+--- a/linux-4.0.3/drivers/staging/speakup/kobjects.c
++++ b/linux-4.0.3/drivers/staging/speakup/kobjects.c
+@@ -56,7 +56,7 @@ static ssize_t chars_chartab_show(struct kobject *kobj,
+ 				cp = "NUM";
+ 			else if (IS_TYPE(i, A_CAP))
+ 				cp = "A_CAP";
+-			else if (IS_TYPE(i, GMTP_ALPHA))
++			else if (IS_TYPE(i, ALPHA))
+ 				cp = "ALPHA";
+ 			else if (IS_TYPE(i, B_CAPSYM))
+ 				cp = "B_CAPSYM";
+diff --git a/linux-4.0.3/drivers/staging/speakup/main.c b/linux-4.0.3/drivers/staging/speakup/main.c
+index 1671a6a..e9f0c15 100644
+--- a/linux-4.0.3/drivers/staging/speakup/main.c
++++ b/linux-4.0.3/drivers/staging/speakup/main.c
+@@ -210,10 +210,10 @@ static u_short default_chartab[256] = {
+ 	A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP,	/* HIJKLMNO */
+ 	A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP,	/* PQRSTUVW */
+ 	A_CAP, A_CAP, A_CAP, PUNC, PUNC, PUNC, PUNC, PUNC,	/* XYZ[\]^_ */
+-	PUNC, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA,	/* `abcdefg */
+-	GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA,	/* hijklmno */
+-	GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA,	/* pqrstuvw */
+-	GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, PUNC, PUNC, PUNC, PUNC, 0,	/* xyz{|}~ */
++	PUNC, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA,	/* `abcdefg */
++	ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA,	/* hijklmno */
++	ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA,	/* pqrstuvw */
++	ALPHA, ALPHA, ALPHA, PUNC, PUNC, PUNC, PUNC, 0,	/* xyz{|}~ */
+ 	B_CAPSYM, B_CAPSYM, B_SYM, B_SYM, B_SYM, B_SYM, B_SYM, /* 128-134 */
+ 	B_SYM,	/* 135 */
+ 	B_SYM, B_SYM, B_SYM, B_SYM, B_SYM, B_SYM, B_SYM, /* 136-142 */
+@@ -230,11 +230,11 @@ static u_short default_chartab[256] = {
+ 	A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP,	/* 192-199 */
+ 	A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP,	/* 200-207 */
+ 	A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, B_SYM,	/* 208-215 */
+-	A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, GMTP_ALPHA,	/* 216-223 */
+-	GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA,	/* 224-231 */
+-	GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA,	/* 232-239 */
+-	GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, B_SYM,	/* 240-247 */
+-	GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA, GMTP_ALPHA	/* 248-255 */
++	A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, A_CAP, ALPHA,	/* 216-223 */
++	ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA,	/* 224-231 */
++	ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA,	/* 232-239 */
++	ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, B_SYM,	/* 240-247 */
++	ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA, ALPHA	/* 248-255 */
+ };
+ 
+ struct task_struct *speakup_task;
+diff --git a/linux-4.0.3/drivers/staging/speakup/speakup.h b/linux-4.0.3/drivers/staging/speakup/speakup.h
+index 81a4a66..898dce5 100644
+--- a/linux-4.0.3/drivers/staging/speakup/speakup.h
++++ b/linux-4.0.3/drivers/staging/speakup/speakup.h
+@@ -19,7 +19,7 @@
+ 
+ #define SYNTH_OK 0x0001
+ #define B_ALPHA 0x0002
+-#define GMTP_ALPHA 0x0003
++#define ALPHA 0x0003
+ #define B_CAP 0x0004
+ #define A_CAP 0x0007
+ #define B_NUM 0x0008
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/build.c b/linux-4.0.3/net/gmtp/gmtp-inter/build.c
+index 7681f3e..9cceeef 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/build.c
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/build.c
+@@ -346,69 +346,3 @@ void gmtp_copy_hdr(struct sk_buff *skb, struct sk_buff *src_skb)
+ 	if(gh->type == gh_src->type)
+ 		memcpy(gh, gh_src, gh_src->hdrlen);
+ }
+-
+-void gmtp_ack_build(struct gmtp_relay_entry *entry)
+-{
+-	struct sk_buff *skb = alloc_skb(GMTP_MAX_HDR_LEN, GFP_ATOMIC);
+-	struct gmtp_hdr *gh;
+-	int gmtp_hdr_len = sizeof(struct gmtp_hdr);
+-	
+-	struct ethhdr *eth = eth_hdr(skb);
+-	struct iphdr *iph;
+-	struct socket *sock = NULL;
+-	struct net_device *dev_entry = NULL;
+-	struct net *net;
+-	int total_len, ip_len = 0;
+-
+-	sock_create(AF_INET, SOCK_STREAM, 0, &sock);
+-	net = sock_net(sock->sk);
+-	dev_entry = dev_get_by_index_rcu(net, 2);
+-	sock_release(sock);
+-
+-	ip_len = gmtp_hdr_len + sizeof(*iph);
+-	total_len = ip_len + LL_RESERVED_SPACE(dev_entry);
+-	skb_reserve(skb, total_len);
+-
+-	gh = gmtp_zeroed_hdr(skb, gmtp_hdr_len);
+-
+-	gh->version = GMTP_VERSION;
+-	gh->type = GMTP_PKT_ACK;
+-	gh->hdrlen = gmtp_hdr_len;
+-	gh->relay = 1;
+-	gh->dport = entry->media_port;
+-	gh->sport = entry->info->my_port;
+-	gh->transm_r = gmtp_inter.ucc_rx;
+-	memcpy(gh->flowname, entry->flowname, GMTP_FLOWNAME_LEN);
+-
+-	/* Build the IP header. */
+-	skb_push(skb, sizeof(struct iphdr));
+-	skb_reset_network_header(skb);
+-	iph = ip_hdr(skb);
+-
+-	/* iph->version = 4; iph->ihl = 5; */
+-	put_unaligned(0x45, (unsigned char *)iph);
+-	iph->tos = 0;
+-	iph->frag_off = 0;
+-	iph->ttl = 64;
+-	iph->protocol = IPPROTO_GMTP;
+-
+-	put_unaligned(entry->info->my_addr, &(iph->saddr));
+-	put_unaligned(entry->server_addr, &(iph->daddr));
+-	put_unaligned(htons(skb->len), &(iph->tot_len));
+-
+-	ip_send_check(iph);
+-
+-	print_gmtp_packet(iph, gh);
+-
+-	eth = (struct ethhdr *)skb_push(skb, ETH_HLEN);
+-	skb_reset_mac_header(skb);
+-	skb->protocol = eth->h_proto = htons(ETH_P_IP);
+-
+-	ether_addr_copy(eth->h_source, dev_entry->dev_addr);
+-	ether_addr_copy(eth->h_dest, entry->server_mac_addr);
+-
+-	skb->dev = dev_entry;
+-
+-	gmtp_inter_send_pkt(skb);
+-}
+-
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.c b/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.c
+index 7060cae..a0420c8 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.c
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.c
+@@ -27,9 +27,6 @@
+ #include "mcc-inter.h"
+ #include "ucc.h"
+ 
+-#include <asm-generic/unaligned.h>
+-#include <linux/etherdevice.h>
+-
+ static struct nf_hook_ops nfho_in;
+ static struct nf_hook_ops nfho_out;
+ 
+@@ -185,18 +182,15 @@ struct sk_buff *gmtp_buffer_dequeue(struct gmtp_flow_info *info)
+ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
+ 		const struct net_device *in, const struct net_device *out,
+ 		int (*okfn)(struct sk_buff *))
+-
+ {
+-    	int ret = NF_ACCEPT;
++	int ret = NF_ACCEPT;
+ 	struct iphdr *iph = ip_hdr(skb);
+ 
+ 	if((gmtp_info->relay_enabled == 0) || (in == NULL))
+ 		return ret;
+ 
+ 	if(iph->protocol == IPPROTO_GMTP) {
+-        
+-        struct ethhdr *eth = eth_hdr(skb);
+-	    struct gmtp_relay_entry *entry;
++
+ 		struct gmtp_hdr *gh = gmtp_hdr(skb);
+ 
+ 		if(gh->type != GMTP_PKT_DATA && gh->type != GMTP_PKT_FEEDBACK) {
+@@ -211,19 +205,6 @@ unsigned int hook_func_in(unsigned int hooknum, struct sk_buff *skb,
+ 			ret = gmtp_inter_request_rcv(skb);
+ 			break;
+ 		case GMTP_PKT_REGISTER_REPLY:
+-            /*****************************/ 
+-
+-            entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
+-
+-            /*TODO verificar se o mac do server esta sendo pego, ou usar h_dest*/
+-	        if(entry != NULL)
+-                ether_addr_copy(entry->server_mac_addr, eth->h_source);
+-                /*memcpy(&entry->server_mac_addr, eth->h_source, 6);*/
+-		        /*entry->server_mac_addr = eth->h_source;*/
+-
+-            /****************************/
+-    
+-
+ 			ret = gmtp_inter_register_reply_rcv(skb);
+ 			break;
+ 		case GMTP_PKT_ACK:
+@@ -288,14 +269,6 @@ unsigned int hook_func_out(unsigned int hooknum, struct sk_buff *skb,
+ 	return ret;
+ }
+ 
+-void gmtp_timer_callback(void)
+-{
+-	gmtp_print_function();
+-    gmtp_ucc(UINT_MAX,1);    
+-	mod_timer(&gmtp_inter.gmtp_timer, jiffies + msecs_to_jiffies(1000));
+-    
+-}
+-
+ int init_module()
+ {
+ 	int ret = 0;
+@@ -308,9 +281,6 @@ int init_module()
+ 		goto out;
+ 	}
+ 
+-    setup_timer(&gmtp_inter.gmtp_timer, gmtp_timer_callback, 0);
+-   	mod_timer(&gmtp_inter.gmtp_timer, jiffies + msecs_to_jiffies(1000)); 
+-
+ 	gmtp_inter.capacity = CAPACITY_DEFAULT;
+ 	gmtp_inter.buffer_len = 0;
+ 	gmtp_inter.kreporter = GMTP_REPORTER_DEFAULT_PROPORTION - 1;
+@@ -363,7 +333,6 @@ void cleanup_module()
+ 
+ 	nf_unregister_hook(&nfho_in);
+ 	nf_unregister_hook(&nfho_out);
+-    del_timer(&gmtp_inter.gmtp_timer);
+ }
+ 
+ MODULE_LICENSE("GPL");
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.h b/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.h
+index 9536448..a11bd9b 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.h
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/gmtp-inter.h
+@@ -68,8 +68,6 @@ struct gmtp_inter {
+ 
+ 	unsigned char		kreporter;
+ 
+-    struct timer_list gmtp_timer;    
+-
+ 	struct gmtp_inter_hashtable *hashtable;
+ };
+ 
+@@ -83,7 +81,6 @@ struct gmtp_flow_info *gmtp_inter_get_info(
+ 		struct gmtp_inter_hashtable *hashtable, const __u8 *media);
+ __be32 gmtp_inter_device_ip(struct net_device *dev);
+ unsigned char *gmtp_build_md5(unsigned char *buf);
+-void gmtp_timer_callback(void);
+ 
+ /** input.c */
+ int gmtp_inter_request_rcv(struct sk_buff *skb);
+@@ -120,7 +117,7 @@ void gmtp_inter_build_and_send_pkt(struct sk_buff *skb_src, __be32 saddr,
+ 		__be32 daddr, struct gmtp_hdr *gh_ref, bool backward);
+ void gmtp_inter_build_and_send_skb(struct sk_buff *skb);
+ void gmtp_copy_hdr(struct sk_buff *skb, struct sk_buff *src_skb);
+-void gmtp_ack_build(struct gmtp_relay_entry *entry);
++
+ /**
+  * A very ugly delayer, to GMTP-inter...
+  *
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.c b/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.c
+index 27955cf..49ea46a 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.c
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.c
+@@ -82,19 +82,6 @@ struct gmtp_relay_entry *gmtp_inter_lookup_media(
+ 	return NULL;
+ }
+ 
+-void ack_timer_callback(struct gmtp_relay_entry *entry)
+-{
+-	gmtp_print_function();
+-	gmtp_print_debug("Servidor %x", entry->server_addr);
+-	mod_timer(&entry->ack_timer_entry, jiffies + msecs_to_jiffies(1000));
+-    
+-    gmtp_ack_build(entry);
+-
+-	/*TODO send ACK to servers*/
+-	return;
+-}
+-
+-
+ struct gmtp_flow_info *__gmtp_inter_build_info(void)
+ {
+ 	struct gmtp_flow_info *info = kmalloc(sizeof(struct gmtp_flow_info),
+@@ -126,7 +113,6 @@ struct gmtp_flow_info *__gmtp_inter_build_info(void)
+ 	setup_timer(&info->mcc_timer, mcc_timer_callback, (unsigned long) info);
+ 	mod_timer(&info->mcc_timer, gmtp_mcc_interval(info->rtt));
+ 
+-    
+ out:
+ 	return info;
+ }
+@@ -178,10 +164,8 @@ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
+ 	new_entry->channel_port = channel_port;
+ 	new_entry->state = GMTP_INTER_WAITING_REGISTER_REPLY;
+ 	new_entry->next = hashtable->table[hashval];
++
+ 	hashtable->table[hashval] = new_entry;
+-	setup_timer(&new_entry->ack_timer_entry, ack_timer_callback, new_entry);
+-	mod_timer(&new_entry->ack_timer_entry,
+-			jiffies + msecs_to_jiffies(1000));
+ 
+ 	return 0;
+ }
+@@ -238,7 +222,6 @@ struct gmtp_relay_entry *gmtp_inter_del_entry(
+ 	gmtp_inter_del_clients(current_entry);
+ 	skb_queue_purge(current_entry->info->buffer);
+ 	del_timer_sync(&current_entry->info->mcc_timer);
+-	del_timer_sync(&current_entry->ack_timer_entry);
+ 	kfree(current_entry->info);
+ 	kfree(current_entry);
+ 
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.h b/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.h
+index b1dc775..c5c4f4d 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.h
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/hash-inter.h
+@@ -27,15 +27,12 @@
+ struct gmtp_relay_entry {
+ 	__u8 flowname[GMTP_FLOWNAME_LEN];
+ 	__be32 server_addr;
+-	unsigned char server_mac_addr[6];
+ 	__be32 *relay;
+ 	__be16 media_port;
+ 	__be32 channel_addr;
+ 	__be16 channel_port;
+ 	__u8 state :3;
+ 
+-	struct timer_list ack_timer_entry;
+-
+ 	struct gmtp_flow_info *info;
+ 	struct gmtp_relay_entry *next;
+ };
+@@ -126,7 +123,6 @@ struct gmtp_inter_hashtable {
+ struct gmtp_inter_hashtable *gmtp_inter_create_hashtable(unsigned int size);
+ struct gmtp_relay_entry *gmtp_inter_lookup_media(
+ 		struct gmtp_inter_hashtable *hashtable, const __u8 *media);
+-void ack_timer_callback(struct gmtp_relay_entry *entry);
+ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
+ 		__be32 server_addr, __be32 *relay, __be16 media_port,
+ 		__be32 channel_addr, __be16 channel_port);
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/input-inter.c b/linux-4.0.3/net/gmtp/gmtp-inter/input-inter.c
+index fdf0639..e142a94 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/input-inter.c
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/input-inter.c
+@@ -84,7 +84,7 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
+ 		int err = gmtp_inter_add_entry(gmtp_inter.hashtable, gh->flowname,
+ 				iph->daddr,
+ 				NULL,
+-				gh->dport,
++				gh->sport,
+ 				mcst_addr,
+ 				gh->dport); /* Mcst port <- server port */
+ 
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/ucc.c b/linux-4.0.3/net/gmtp/gmtp-inter/ucc.c
+index daca304..8e8c6ea 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/ucc.c
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/ucc.c
+@@ -59,8 +59,8 @@ void gmtp_ucc(unsigned int h_user, unsigned char debug)
+ 
+ 	h = gmtp_rtt_average();
+ 	H = (h < h_user) ? h : h_user;
+-	up = (H / h) * (GMTP_ALPHA(GMTP_GHAMA(C)-y) - GMTP_BETA(q / h));
+-	delta = ((int)(r_prev) * up) / GMTP_GHAMA(C);
++	up = (H / h) * (ALPHA(GHAMA(C)-y) - BETA(q / h));
++	delta = ((int)(r_prev) * up) / GHAMA(C);
+ 
+ 	/**
+ 	 * r = r_prev * (1 + up/GHAMA(C)) =>
+@@ -90,21 +90,21 @@ void gmtp_ucc(unsigned int h_user, unsigned char debug)
+ 		gmtp_pr_debug("y(t): %u bytes/s", y);
+ 		gmtp_pr_debug("q(t): %u bytes\n", q);
+ 		gmtp_pr_debug("H/h0: %u", (H / h));
+-		gmtp_pr_debug("GHAMA(C): %u", GMTP_GHAMA(C));
+-		gmtp_pr_debug("ALPHA(GHAMA(C)-y): %u", GMTP_ALPHA(GMTP_GHAMA(C)-y));
++		gmtp_pr_debug("GHAMA(C): %u", GHAMA(C));
++		gmtp_pr_debug("ALPHA(GHAMA(C)-y): %u", ALPHA(GHAMA(C)-y));
+ 		gmtp_pr_debug("q/h: %u", q / h);
+-		gmtp_pr_debug("BETA(q/h): %u", GMTP_BETA(q/h));
++		gmtp_pr_debug("BETA(q/h): %u", BETA(q/h));
+ 		gmtp_pr_debug("ALPHA(GHAMA(C)-y) - BETA(q/h):");
+-		gmtp_pr_debug("%u - %u: %d\n", GMTP_ALPHA(GMTP_GHAMA(C)-y), GMTP_BETA(q/h),
+-				(GMTP_ALPHA(GMTP_GHAMA(C)-y) - GMTP_BETA(q/h)));
++		gmtp_pr_debug("%u - %u: %d\n", ALPHA(GHAMA(C)-y), BETA(q/h),
++				(ALPHA(GHAMA(C)-y) - BETA(q/h)));
+ 
+ 		gmtp_pr_debug("up = ((H / h) * [ALPHA(GHAMA(C)-y) - BETA(q / h)])");
+-		gmtp_pr_debug("up = %u * [%u - %u]", H / h, GMTP_ALPHA(GMTP_GHAMA(C)-y),
+-				GMTP_BETA(q / h));
++		gmtp_pr_debug("up = %u * [%u - %u]", H / h, ALPHA(GHAMA(C)-y),
++				BETA(q / h));
+ 		gmtp_pr_debug("up = %d\n", up);
+ 		gmtp_pr_debug("delta = ((r_prev * up)/GHAMA(C))");
+ 		gmtp_pr_debug("delta = (%d * %u)/%u", (int )(r_prev), up,
+-				GMTP_GHAMA(C));
++				GHAMA(C));
+ 		gmtp_pr_debug("delta = %d\n", delta);
+ 
+ 		gmtp_pr_debug("new_r = (int)(r_prev) + delta");
+diff --git a/linux-4.0.3/net/gmtp/gmtp-inter/ucc.h b/linux-4.0.3/net/gmtp/gmtp-inter/ucc.h
+index ebae26f..9cfb5a5 100644
+--- a/linux-4.0.3/net/gmtp/gmtp-inter/ucc.h
++++ b/linux-4.0.3/net/gmtp/gmtp-inter/ucc.h
+@@ -8,10 +8,12 @@
+ #ifndef UCC_H_
+ #define UCC_H_
+ 
+-#define GMTP_ALPHA(X) DIV_ROUND_CLOSEST(X * 30, 100) /* X*0.3 */
+-#define GMTP_BETA(X)  DIV_ROUND_CLOSEST(X * 60, 100) /* X*0.6 */
+-#define GMTP_GHAMA(X) (X) /* DIV_ROUND_CLOSEST(X * 100, 100)*/ /* X*1.0 */
+-#define GMTP_THETA(X) DIV_ROUND_CLOSEST(X * 20, 100) /* X*0.02 */
++#define ALPHA(X) (((X)*3)/10)  /* X*0.3 */
++#define BETA(X)  (((X)*6)/10)  /* X*0.6 */
++#define GHAMA(X) (((X)*10)/10) /* X*1.0 */
++#define THETA(X) (((X)*2)/100) /* X*0.02 */
++
++#define MOD(X)   ((X > 0) ? (X) : -(X))
+ 
+ /** gmtp-ucc. */
+ unsigned int gmtp_rtt_average(void);
