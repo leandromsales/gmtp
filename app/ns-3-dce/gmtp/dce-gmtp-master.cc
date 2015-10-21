@@ -38,11 +38,18 @@ int main(int argc, char *argv[])
 	relays.Create (nrelays);
 
 	NodeContainer clients;
-	clients.Create (nclients);
+	vector<NodeContainer> vclients(nrelays);
+	for(int i=0; i < vclients.size(); ++i) {
+		vclients[i].Create(nclients);
+		clients.Add(vclients[i]);
+	}
 
-	NodeContainer net1(relays, server);
-	NodeContainer net2(relays, clients);
 	NodeContainer all(server, relays, clients);
+	NodeContainer snet(relays.Get(0), server);
+	vector<NodeContainer> net(nrelays);
+	for(int i = 0; i < net.size(); ++i) {
+		net[i] = NodeContainer(relays.Get(i), vclients[i]);
+	}
 
 	DceManagerHelper dceManager;
 	dceManager.SetTaskManagerAttribute("FiberManagerType",
@@ -58,23 +65,43 @@ int main(int argc, char *argv[])
 	csma.SetChannelAttribute("DataRate", StringValue(data_rate));
 	csma.SetChannelAttribute("Delay", StringValue(delay));
 
-	NetDeviceContainer d1 = csma.Install(net1);
-	NetDeviceContainer d2 = csma.Install(net2);
+	NetDeviceContainer ds = csma.Install(snet);
+	NetDeviceContainer dr = csma.Install(relays);
 	NetDeviceContainer dall = csma.Install(all);
+	vector<NetDeviceContainer> devices(nrelays);
+	for(int i = 0; i < devices.size(); ++i) {
+		devices[i] = csma.Install(net[i]);
+	}
 
-	cout << "Create networks and assign IPv4 Addresses." << endl;
+	cout << "Create networks and assign IPv4 Addresses...\n" << endl;
 	Ipv4AddressHelper address;
-	vector<Ipv4InterfaceContainer> ivector(3);
+	Ipv4InterfaceContainer iserver;
+	Ipv4InterfaceContainer irelays;
+	vector<Ipv4InterfaceContainer> ivector(nrelays);
 
 	address.SetBase("10.1.1.0", "255.255.255.0");
-	ivector[0] = address.Assign(d1);
+	iserver = address.Assign(ds);
 
-	address.SetBase("10.1.2.0", "255.255.255.0");
-	ivector[1] = address.Assign(d2);
+	address.SetBase("10.2.0.0", "255.255.0.0");
+	irelays = address.Assign(dr);
+
+	/*
+	 * To calculate the decimal address from a dotted string, perform the following calculation.
+	 * (first octet * 256³) + (second octet * 256²) + (third octet * 256) + (fourth octet)
+	 *
+	 * 10.2.1.0 = 0x0A020100
+	 */
+	uint32_t netaddr = 0xA030200;
+	Ipv4Mask mask(0xFFFFFF00); //255.255.255.0
+	for(int i=0; i < devices.size(); ++i, netaddr+=0x100) {
+		address.SetBase(Ipv4Address(netaddr), mask);
+		ivector[i] = address.Assign(devices[i]);
+	}
 
 	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 	LinuxStackHelper::PopulateRoutingTables ();
 
+	cout << "Server: " << iserver.GetAddress(0, 0) << endl << endl;
 	for(int i = 0; i < ivector.size(); ++i) {
 		cout << "net " << i << ":" << endl;
 		Ipv4InterfaceContainer::Iterator it;
@@ -85,7 +112,7 @@ int main(int argc, char *argv[])
 		cout << "------------" << endl;
 	}
 
-	cout << "Configuring simulation details..." << endl;
+	cout << "Configuring simulation details..." << endl << endl;
 
 	RunGtmpInter(server, Seconds(2.0), "off");
 	RunIp(all, Seconds(2.1), "route");
@@ -106,7 +133,7 @@ int main(int argc, char *argv[])
 	AsciiTraceHelper ascii;
 	csma.EnableAsciiAll(ascii.CreateFileStream("dce-gmtp-master.tr"));
 
-	cout << "Running simulation..." << endl;
+	cout << "\nRunning simulation..." << endl;
 	Simulator::Stop (Seconds (12000.0));
 	Simulator::Run();
 	Simulator::Destroy();
