@@ -33,9 +33,12 @@ int main(int argc, char *argv[])
 		cout << "Error! nrelays and nclients must be greater than 0\n";
 
 	Ptr<Node> server = CreateObject<Node>();
+	Ptr<Node> r0 = CreateObject<Node>();
+	NodeContainer snet(r0, server);
 
-	NodeContainer relays;
-	relays.Create (nrelays);
+	NodeContainer rx;
+	rx.Create(nrelays);
+	NodeContainer relays(r0, rx);
 
 	NodeContainer clients;
 	vector<NodeContainer> vclients(nrelays);
@@ -44,12 +47,12 @@ int main(int argc, char *argv[])
 		clients.Add(vclients[i]);
 	}
 
-	NodeContainer all(server, relays, clients);
-	NodeContainer snet(relays.Get(0), server);
 	vector<NodeContainer> net(nrelays);
 	for(int i = 0; i < net.size(); ++i) {
-		net[i] = NodeContainer(relays.Get(i), vclients[i]);
+		net[i] = NodeContainer(rx.Get(i), vclients[i]);
 	}
+
+	NodeContainer all(snet, rx, clients);
 
 	DceManagerHelper dceManager;
 	dceManager.SetTaskManagerAttribute("FiberManagerType",
@@ -67,17 +70,17 @@ int main(int argc, char *argv[])
 
 	NetDeviceContainer ds = csma.Install(snet);
 	NetDeviceContainer dr = csma.Install(relays);
-	NetDeviceContainer dall = csma.Install(all);
-	vector<NetDeviceContainer> devices(nrelays);
-	for(int i = 0; i < devices.size(); ++i) {
-		devices[i] = csma.Install(net[i]);
+	vector<NetDeviceContainer> dc(nrelays);
+	for(int i = 0; i < dc.size(); ++i) {
+		dc[i] = csma.Install(net[i]);
 	}
+	NetDeviceContainer dall = csma.Install(all);
 
 	cout << "Create networks and assign IPv4 Addresses...\n" << endl;
 	Ipv4AddressHelper address;
 	Ipv4InterfaceContainer iserver;
 	Ipv4InterfaceContainer irelays;
-	vector<Ipv4InterfaceContainer> ivector(nrelays);
+	vector<Ipv4InterfaceContainer> iclients(nrelays);
 
 	address.SetBase("10.1.1.0", "255.255.255.0");
 	iserver = address.Assign(ds);
@@ -89,28 +92,37 @@ int main(int argc, char *argv[])
 	 * To calculate the decimal address from a dotted string, perform the following calculation.
 	 * (first octet * 256³) + (second octet * 256²) + (third octet * 256) + (fourth octet)
 	 *
-	 * 10.2.1.0 = 0x0A020100
+	 * 10.3.1.0 = 0x0A030100
 	 */
-	uint32_t netaddr = 0xA030200;
+	uint32_t netaddr = 0xA030300;
 	Ipv4Mask mask(0xFFFFFF00); //255.255.255.0
-	for(int i=0; i < devices.size(); ++i, netaddr+=0x100) {
+	for(int i=0; i < iclients.size(); ++i, netaddr+=0x100) {
 		address.SetBase(Ipv4Address(netaddr), mask);
-		ivector[i] = address.Assign(devices[i]);
+		iclients[i] = address.Assign(dc[i]);
 	}
 
 	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 	LinuxStackHelper::PopulateRoutingTables ();
 
-	cout << "Server: " << iserver.GetAddress(0, 0) << endl << endl;
-	for(int i = 0; i < ivector.size(); ++i) {
-		cout << "net " << i << ":" << endl;
-		Ipv4InterfaceContainer::Iterator it;
-		for(it = ivector[i].Begin(); it != ivector[i].End(); ++it) {
-			std::pair<Ptr<Ipv4>, uint32_t> pair = *it;
-			cout << pair.first->GetAddress(0, 0) << endl;
+	cout << "Total nodes: " << dall.GetN() << endl << endl;
+	cout << "S (files-0): " << iserver.GetAddress(1, 0) << endl;
+
+	int i;
+	Ipv4InterfaceContainer::Iterator itr;
+	for(i = 0, itr = irelays.Begin(); itr != irelays.End(); ++i, ++itr) {
+		std::pair<Ptr<Ipv4>, uint32_t> rpair = *itr;
+		cout << "R (files-" << i+1 << "): " << rpair.first->GetAddress(0, 0).GetLocal() << endl;
+
+		int j = i - 1;
+		if(j < 0) { cout << endl; continue; }
+		Ipv4InterfaceContainer::Iterator itc;
+		for(itc = iclients[j].Begin(); itc != iclients[j].End(); ++itc) {
+			std::pair<Ptr<Ipv4>, uint32_t> cpair = *itc;
+			cout << "\t" << cpair.first->GetAddress(0, 0).GetLocal() << endl;
 		}
 		cout << "------------" << endl;
 	}
+
 
 	cout << "Configuring simulation details..." << endl << endl;
 
@@ -122,10 +134,11 @@ int main(int argc, char *argv[])
 
 	RunGtmpInter(clients, Seconds(2.3), "off");
 
-//	RunApp("tcp-server", server, Seconds(4.0), 1 << 31);
-//	RunAppMulti("tcp-client", clients.Get(0), 5.0, "10.1.1.2", 1 << 16, 30);
+/*	RunApp("tcp-server", server, Seconds(4.0), 1 << 31);
+	RunApp("tcp-client", clients.Get(nrelays-1), Seconds(5.0), "10.1.1.2", 1 << 16);*/
 
 	RunApp("gmtp-server", server, Seconds(3.0), 1 << 31);
+//	RunApp("gmtp-client", clients.Get(0), Seconds(5.0), "10.1.1.2", 1 << 16);
 	RunAppMulti("gmtp-client", clients, 5.0, "10.1.1.2", 1 << 16, 30);
 
 	csma.EnablePcapAll("dce-gmtp-master");
