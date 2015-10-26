@@ -59,13 +59,12 @@ int main(int argc, char**argv)
 	char * serverAddr;
 	char buffer[BUFF_SIZE];
 
-	memset(&hist, 0, sizeof(hist));
-
 	if(argc < 2) {
 		printf("usage: client < ip address >\n");
 		exit(1);
 	}
 	printf("Starting GMTP Client...\n");
+	memset(&hist, 0, sizeof(hist));
 
 	serverAddr = argv[1];
 	sockfd = socket(AF_INET, SOCK_GMTP, IPPROTO_GMTP);

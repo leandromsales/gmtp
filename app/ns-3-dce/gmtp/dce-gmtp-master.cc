@@ -3,6 +3,7 @@
 #include "ns3/dce-module.h"
 #include "ns3/csma-module.h"
 #include "ns3/internet-module.h"
+#include "ns3/attribute.h"
 
 #include "dce-gmtp.h"
 
@@ -17,14 +18,17 @@ int main(int argc, char *argv[])
 {
 	int nclients = 1;
 	int nrelays = 1;
-	std::string data_rate = "10Mbps";
-	std::string delay = "1ms";
+	std::string local_data_rate = "10Mbps";
+	std::string relay_data_rate = "32Mbps";
+	std::string local_delay = "1ms";
+	std::string relay_delay = "1ms";
+
+	std::string endr = "000000bps";
+	std::string nendr = "Mbps";
 
 	CommandLine cmd;
 	cmd.AddValue ("nrelays", "Number of clients in router 1", nrelays);
 	cmd.AddValue ("nclients", "Number of clients in router 1", nclients);
-	cmd.AddValue ("data-rate", "Link capacity. Default value is 10Mbps", data_rate);
-	cmd.AddValue ("delay", "Channel delay. Default value is 1ms", delay);
 	cmd.Parse(argc, argv);
 
 	cout << "Creating nodes..." << endl;
@@ -64,17 +68,23 @@ int main(int argc, char *argv[])
 	stack.Install(all);
 	dceManager.Install(all);
 
-	CsmaHelper csma;
-	csma.SetChannelAttribute("DataRate", StringValue(data_rate));
-	csma.SetChannelAttribute("Delay", StringValue(delay));
+	CsmaHelper local_csma;
+	local_csma.SetChannelAttribute("DataRate", StringValue(local_data_rate));
+	local_csma.SetChannelAttribute("Delay", StringValue(relay_delay));
 
-	NetDeviceContainer ds = csma.Install(snet);
-	NetDeviceContainer dr = csma.Install(relays);
+	CsmaHelper relay_csma;
+	relay_csma.SetChannelAttribute("DataRate", StringValue(relay_data_rate));
+	relay_csma.SetChannelAttribute("Delay", StringValue(relay_delay));
+
+//	NetDeviceContainer ds = local_csma.Install(snet);
+	NetDeviceContainer ds = relay_csma.Install(snet);
+	NetDeviceContainer dr = relay_csma.Install(relays);
 	vector<NetDeviceContainer> dc(nrelays);
 	for(int i = 0; i < dc.size(); ++i) {
-		dc[i] = csma.Install(net[i]);
+		dc[i] = local_csma.Install(net[i]);
 	}
-	NetDeviceContainer dall = csma.Install(all);
+
+	/*NetDeviceContainer dall = local_csma.Install(all);*/
 
 	cout << "Create networks and assign IPv4 Addresses...\n" << endl;
 	Ipv4AddressHelper address;
@@ -104,21 +114,31 @@ int main(int argc, char *argv[])
 	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 	LinuxStackHelper::PopulateRoutingTables ();
 
-	cout << "Total nodes: " << dall.GetN() << endl << endl;
+	cout << "Total nodes: " << all.GetN() << endl << endl;
 	cout << "S (files-0): " << iserver.GetAddress(1, 0) << endl;
 
 	int i;
 	Ipv4InterfaceContainer::Iterator itr;
 	for(i = 0, itr = irelays.Begin(); itr != irelays.End(); ++i, ++itr) {
 		std::pair<Ptr<Ipv4>, uint32_t> rpair = *itr;
-		cout << "R (files-" << i+1 << "): " << rpair.first->GetAddress(0, 0).GetLocal() << endl;
+		cout << "R (files-" << i+1 << "): ";
+		for(int j = 0; j < rpair.first->GetNInterfaces(); ++j) {
+			StringValue data_rate;
+			rpair.first->GetNetDevice(j)->GetChannel()->GetAttribute("DataRate", data_rate);
+			cout << rpair.first->GetAddress(j, 0).GetLocal() << " (" <<  data_rate.Get().replace(2, 10, nendr) << "), ";
+		}
+		cout << endl;
+		int k = i - 1;
+		if(k < 0) { cout << endl; continue; }
 
-		int j = i - 1;
-		if(j < 0) { cout << endl; continue; }
+		int w = 0;
 		Ipv4InterfaceContainer::Iterator itc;
-		for(itc = iclients[j].Begin(); itc != iclients[j].End(); ++itc) {
+		for(itc = iclients[k].Begin(); itc != iclients[k].End(); ++itc, ++w) {
+			if(w == 0) continue; //Jump first node (relay)
+			StringValue data_rate;
 			std::pair<Ptr<Ipv4>, uint32_t> cpair = *itc;
-			cout << "\t" << cpair.first->GetAddress(0, 0).GetLocal() << endl;
+			cpair.first->GetNetDevice(0)->GetChannel()->GetAttribute("DataRate", data_rate);
+			cout << "\t" << cpair.first->GetAddress(0, 0).GetLocal() << " (" << data_rate.Get().replace(2, 10, nendr) << ")" << endl;
 		}
 		cout << "------------" << endl;
 	}
@@ -138,13 +158,16 @@ int main(int argc, char *argv[])
 	RunApp("tcp-client", clients.Get(nrelays-1), Seconds(5.0), "10.1.1.2", 1 << 16);*/
 
 	RunApp("gmtp-server", server, Seconds(3.0), 1 << 31);
-//	RunApp("gmtp-client", clients.Get(0), Seconds(5.0), "10.1.1.2", 1 << 16);
-	RunAppMulti("gmtp-client", clients, 5.0, "10.1.1.2", 1 << 16, 30);
+	for(int i=0; i < clients.GetN(); ++i) {
+		RunApp("gmtp-client", clients.Get(i), Seconds(5.0), "10.1.1.2", 1 << 16);
+	}
+//	RunApp("gmtp-client", clients, Seconds(5.0), "10.1.1.2", 1 << 16);
+//	RunAppMulti("gmtp-client", clients, 5.0, "10.1.1.2", 1 << 16, 30);
 
-	csma.EnablePcapAll("dce-gmtp-master");
+	local_csma.EnablePcapAll("dce-gmtp-master");
 
 	AsciiTraceHelper ascii;
-	csma.EnableAsciiAll(ascii.CreateFileStream("dce-gmtp-master.tr"));
+	local_csma.EnableAsciiAll(ascii.CreateFileStream("dce-gmtp-master.tr"));
 
 	cout << "\nRunning simulation..." << endl;
 	Simulator::Stop (Seconds (12000.0));

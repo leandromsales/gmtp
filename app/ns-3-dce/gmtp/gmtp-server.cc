@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 
 	bind(welcomeSocket, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
 
-	if(listen(welcomeSocket, 5) == 0)
+	if(listen(welcomeSocket, 50) == 0)
 		cout << "Listening\n";
 	else
 		cout << "Error\n";

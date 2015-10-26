@@ -45,7 +45,6 @@ static void RunApp(std::string appname,
 		ns3::NodeContainer nodes, ns3::Time at,
 		std::string args, uint32_t stackSize)
 {
-	//print_node_app(nodes, at, appname);
 	ns3::DceApplicationHelper process;
 	ns3::ApplicationContainer apps;
 	process.SetBinary(appname.c_str());
