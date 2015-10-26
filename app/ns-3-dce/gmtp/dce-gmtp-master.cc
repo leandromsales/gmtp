@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
 	int nclients = 1;
 	int nrelays = 1;
 	std::string local_data_rate = "10Mbps";
-	std::string relay_data_rate = "32Mbps";
+	std::string relay_data_rate = "332Mbps";
 	std::string local_delay = "1ms";
 	std::string relay_delay = "1ms";
 
@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 	vector<NodeContainer> vclients(nrelays);
 	for(int i=0; i < vclients.size(); ++i) {
 		vclients[i].Create(nclients);
-		clients.Add(vclients[i]);
+		clients.Add(vclients[i].Get(0));
 	}
 
 	vector<NodeContainer> net(nrelays);
@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 		for(int j = 0; j < rpair.first->GetNInterfaces(); ++j) {
 			StringValue data_rate;
 			rpair.first->GetNetDevice(j)->GetChannel()->GetAttribute("DataRate", data_rate);
-			cout << rpair.first->GetAddress(j, 0).GetLocal() << " (" <<  data_rate.Get().replace(2, 10, nendr) << "), ";
+			cout << rpair.first->GetAddress(j, 0).GetLocal() << " (" <<  data_rate.Get()/*.replace(2, 10, nendr)*/ << "), ";
 		}
 		cout << endl;
 		int k = i - 1;
@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
 			StringValue data_rate;
 			std::pair<Ptr<Ipv4>, uint32_t> cpair = *itc;
 			cpair.first->GetNetDevice(0)->GetChannel()->GetAttribute("DataRate", data_rate);
-			cout << "\t" << cpair.first->GetAddress(0, 0).GetLocal() << " (" << data_rate.Get().replace(2, 10, nendr) << ")" << endl;
+			cout << "\t" << cpair.first->GetAddress(0, 0).GetLocal() << " (" << data_rate.Get()/*.replace(2, 10, nendr)*/ << ")" << endl;
 		}
 		cout << "------------" << endl;
 	}
@@ -158,6 +158,8 @@ int main(int argc, char *argv[])
 	RunApp("tcp-client", clients.Get(nrelays-1), Seconds(5.0), "10.1.1.2", 1 << 16);*/
 
 	RunApp("gmtp-server", server, Seconds(3.0), 1 << 31);
+
+	cout << "We have " << clients.GetN() << " clients." << endl;
 	for(int i=0; i < clients.GetN(); ++i) {
 		RunApp("gmtp-client", clients.Get(i), Seconds(5.0), "10.1.1.2", 1 << 16);
 	}

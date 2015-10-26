@@ -933,8 +933,15 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
 	 * evidently real one.
 	 */
 	gcb->reset_code = GMTP_RESET_CODE_TOO_BUSY;
-	if(inet_csk_reqsk_queue_is_full(sk))
+	if(inet_csk_reqsk_queue_is_full(sk)) {
+		pr_info("inet_csk_reqsk_queue_is_full(sk)\n");
 		goto drop;
+	}
+
+	/**
+	 * FIXME Update sk->sk_ack_backlog correctly
+	 */
+	sk->sk_ack_backlog = 0;
 
 	/*
 	 * Accept backlog is full. If we have already queued enough
@@ -942,8 +949,13 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
 	 * clogging syn queue with openreqs with exponentially increasing
 	 * timeout.
 	 */
-	if(sk_acceptq_is_full(sk) && inet_csk_reqsk_queue_young(sk) > 1)
+	if(sk_acceptq_is_full(sk) && inet_csk_reqsk_queue_young(sk) > 1) {
+		pr_info("Accept backlog is full!\n");
+		pr_info("%u > %u? %u\n", sk->sk_ack_backlog,
+				sk->sk_max_ack_backlog, sk_acceptq_is_full(sk));
+		pr_info("inet_csk_reqsk_queue_young(sk) > 1: %u\n", inet_csk_reqsk_queue_young(sk) > 1);
 		goto drop;
+	}
 
 	req = inet_reqsk_alloc(&gmtp_request_sock_ops, sk);
 	if(req == NULL)
@@ -984,12 +996,15 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
 	return 0;
 
 reset:
+	pr_info("Sending RESET...\n");
 	gcb->reset_code = GMTP_RESET_CODE_BAD_FLOWNAME;
 	gmtp_v4_ctl_send_reset(sk, skb);
 
 drop_and_free:
+	pr_info("reqsk_free(req)...\n");
 	reqsk_free(req);
 drop:
+	pr_info("drop...\n");
 	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_conn_request);
