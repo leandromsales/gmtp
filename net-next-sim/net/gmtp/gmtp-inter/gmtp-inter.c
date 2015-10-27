@@ -227,6 +227,9 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 		struct gmtp_inter_entry *entry;
 		struct gmtp_relay *relay;
 
+		pr_info("IN: ");
+		print_gmtp_packet(iph, gh);
+
 		if(gh->type == GMTP_PKT_REQUEST) {
 			if(gmtp_inter_ip_local(iph->saddr)
 					&& iph->saddr != iph->daddr)
@@ -304,6 +307,10 @@ unsigned int hook_func_local_in(unsigned int hooknum, struct sk_buff *skb,
 	if(iph->protocol == IPPROTO_GMTP) {
 
 		struct gmtp_hdr *gh = gmtp_hdr(skb);
+
+		pr_info("LOCAL_IN: ");
+		print_gmtp_packet(iph, gh);
+
 		struct gmtp_inter_entry *entry = gmtp_inter_lookup_media(
 				gmtp_inter.hashtable, gh->flowname);
 		if(entry == NULL)
@@ -337,6 +344,10 @@ unsigned int hook_func_local_out(unsigned int hooknum, struct sk_buff *skb,
 	if(iph->protocol == IPPROTO_GMTP) {
 
 		struct gmtp_hdr *gh = gmtp_hdr(skb);
+
+		pr_info("LOCAL_OUT: ");
+		print_gmtp_packet(iph, gh);
+
 		struct gmtp_inter_entry *entry = gmtp_inter_lookup_media(
 				gmtp_inter.hashtable, gh->flowname);
 		if(entry == NULL)
@@ -383,6 +394,9 @@ unsigned int hook_func_post_routing(unsigned int hooknum, struct sk_buff *skb,
 
 		struct gmtp_hdr *gh = gmtp_hdr(skb);
 		struct gmtp_inter_entry *entry;
+
+		pr_info("OUT: ");
+		print_gmtp_packet(iph, gh);
 
 		entry = gmtp_inter_lookup_media(gmtp_inter.hashtable,
 				gh->flowname);
