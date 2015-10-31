@@ -39,7 +39,6 @@ int main(int argc, char *argv[])
 	CommandLine cmd;
 	cmd.AddValue ("nclients", "Number of clients in each router", nclients);
 	cmd.AddValue ("ncores", "Number of cores in network (except server core)", ncores);
-	//cmd.AddValue ("middleman", "Middleman intercepting requests", middleman);
 	cmd.AddValue ("data-rate", "Link capacity. Default value is 10Mbps", data_rate);
 	cmd.AddValue ("delay", "Channel delay. Default value is 1ms", delay);
 	cmd.Parse(argc, argv);
@@ -49,12 +48,12 @@ int main(int argc, char *argv[])
 	/* Server */
 	Ptr<Node> server = CreateObject<Node>();
 	Ptr<Node> rserver = CreateObject<Node>();
+	NodeContainer subnet_server(rserver, server);
 
 	NodeContainer internet;
 	internet.Create(1);
 
 	NodeContainer net_server(internet.Get(0), rserver);
-	NodeContainer subnet_server(rserver, server);
 
 	/* Internet Core */
 	NodeContainer core;
@@ -95,25 +94,29 @@ int main(int argc, char *argv[])
 	stack.Install(all);
 	dceManager.Install(all);
 
-	CsmaHelper csma;
-	csma.SetChannelAttribute("DataRate", StringValue(data_rate));
-	csma.SetChannelAttribute("Delay", StringValue(delay));
+	CsmaHelper core_csma;
+	core_csma.SetChannelAttribute("DataRate", StringValue(data_rate));
+	core_csma.SetChannelAttribute("Delay", StringValue(delay));
 
-	NetDeviceContainer dci = csma.Install(internet);
-	NetDeviceContainer dcs = csma.Install(net_server);
-	NetDeviceContainer dcss = csma.Install(subnet_server);
+	CsmaHelper local_csma;
+	local_csma.SetChannelAttribute("DataRate", StringValue(data_rate));
+	local_csma.SetChannelAttribute("Delay", StringValue(delay));
+
+	NetDeviceContainer dci = core_csma.Install(internet);
+	NetDeviceContainer dcs = core_csma.Install(net_server);
+	NetDeviceContainer dcss = local_csma.Install(subnet_server);
 
 	vector<NetDeviceContainer> dcr(ncores);
 	for(int i = 0; i < ncores; ++i) {
-		dcr[i] = csma.Install(vrelays[i]);
+		dcr[i] = core_csma.Install(vrelays[i]);
 	}
 
 	vector<NetDeviceContainer> dcc(relays.GetN());
 	for(int i = 0; i < relays.GetN(); ++i) {
-		dcc[i] = csma.Install(vclients[i]);
+		dcc[i] = local_csma.Install(vclients[i]);
 	}
 
-	cout << "Create networks and assign IPv4 Addresses." << endl;
+	cout << "Create networks and assign IPv4 Addresses.\n" << endl;
 	Ipv4AddressHelper address;
 
 	address.SetBase("10.0.0.0", "255.0.0.0");
@@ -124,42 +127,85 @@ int main(int argc, char *argv[])
 	address.SetBase("10.1.1.0", "255.255.255.0");
 	Ipv4InterfaceContainer iss = address.Assign(dcss);
 
+
 	/*
 	 * To calculate the decimal address from a dotted string, perform the following calculation.
 	 * (first octet * 256³) + (second octet * 256²) + (third octet * 256) + (fourth octet)
 	 *
 	 * 10.2.0.0 = 0x0A020000
 	 */
-	uint32_t netaddr = 0xA020000;
+	uint32_t base_addr = 0xA020000;
+	uint32_t netaddr = base_addr;
 	Ipv4Mask wmask(0xFFFF0000); //255.255.0.0
 	vector<Ipv4InterfaceContainer> irelays(ncores);
 	for(int i = 0; i < ncores; ++i, netaddr += 0x10000) {
-		address.SetBase(Ipv4Address(netaddr), wmask);
+		address.SetBase(Ipv4Address(netaddr), "255.255.0.0");
 		irelays[i] = address.Assign(dcr[i]);
+	}
+
+	//Setting clients addr separated...
+	netaddr = base_addr;
+	for(int i = 0; i < ncores; ++i, netaddr += 0x10000) {
+		cout << "wan [" << i << "]: " << Ipv4Address(netaddr) << endl;
 
 		uint32_t laddr = netaddr + 0x100;
 		Ipv4Mask lmask(0xFFFFFF00); //255.255.255.0
 		vector<Ipv4InterfaceContainer> iclients(relays.GetN());
 		for(int j = 0; j < relays.GetN(); ++j, laddr += 0x100) {
-			cout << "Network Addr (" << i << "): " << Ipv4Address(netaddr) << endl;
-			cout << "Local Addr (" << j << "): "   << Ipv4Address(laddr) << endl;
-			address.SetBase(Ipv4Address(laddr), lmask);
+			cout << "lan [" << i << "][" << j << "]: " << Ipv4Address(laddr) << endl << "\t> ";
+			address.SetBase(Ipv4Address(laddr), "255.255.255.0");
 			iclients[j] = address.Assign(dcc[j]);
+
+			Ipv4InterfaceContainer::Iterator itc;
+			for(itc = iclients[j].Begin(); itc != iclients[j].End(); ++itc) {
+				std::pair<Ptr<Ipv4>, uint32_t> cpair = *itc;
+				cout << "cl: " << cpair.first->GetAddress(0, 0).GetLocal() << ", ";
+			}
+			cout << endl;
 		}
+		cout << "------------" << endl;
 	}
 
-	if(middleman) {
-		cout << "Starting new relay here...\n";
-		Ptr<Node> client_r3 = CreateObject<Node>();
-		NodeContainer subnet_r3(internet.Get(0), client_r3);
-		stack.Install(client_r3);
-		dceManager.Install(client_r3);
-		NetDeviceContainer snr3 = csma.Install(subnet_r3);
-		address.SetBase("10.1.2.0", "255.255.255.0");
-		Ipv4InterfaceContainer ic = address.Assign(snr3);
-		RunGtmpInter(client_r3, Seconds(2.3), "off");
-//		RunApp("gmtp-client", client_r3, Seconds(3.5), "10.1.1.2", 1 << 31);
-		RunApp("gmtp-client", client_r3, Seconds(6.5), "10.1.1.2", 1 << 31);
+	// Just printing IPs
+	cout << "Server (files-0): " << iss.GetAddress(1, 0) << endl;
+	cout << "Relay  (files-1): " << iss.GetAddress(0, 0) << ", lan(" << is.GetAddress(1, 0) << ")" << endl;
+	cout << "Router (files-2): wan(" << iw.GetAddress(0, 0) << "), lan(" << is.GetAddress(0, 0) << ")" << endl << endl;
+
+	int i = 0;
+	Ipv4InterfaceContainer::Iterator it;
+	for(it = iw.Begin(); it != iw.End(); ++i, ++it) {
+		std::pair<Ptr<Ipv4>, uint32_t> pair = *it;
+		cout << "Core (files-" << i+2 << "): ";
+		for(int j = 0; j < pair.first->GetNInterfaces(); ++j) {
+			StringValue data_rate;
+			pair.first->GetNetDevice(j)->GetChannel()->GetAttribute("DataRate", data_rate);
+			cout << pair.first->GetAddress(j, 0).GetLocal();
+//			cout << " ("<< data_rate.Get() << ")";
+			cout << ", ";
+		}
+		cout << endl;
+		int k = i - 1;
+		if(k < 0) {
+			cout << endl;
+			continue;
+		}
+
+		Ipv4InterfaceContainer::Iterator itr;
+		for(itr = irelays[k].Begin(); itr != irelays[k].End(); ++itr) {
+			cout << "\t=> Router: ";
+			std::pair<Ptr<Ipv4>, uint32_t> rpair = *itr;
+			for(int m = 0; m < rpair.first->GetNInterfaces(); ++m) {
+				StringValue data_rate;
+				rpair.first->GetNetDevice(m)->GetChannel()->GetAttribute(
+						"DataRate", data_rate);
+				cout << rpair.first->GetAddress(m, 0).GetLocal();
+//				cout << " (" << data_rate.Get() << ")";
+				cout << ", ";
+			}
+			cout << endl;
+			cout << "------------" << endl;
+		}
+		cout << "------------" << endl;
 	}
 
 	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
@@ -179,13 +225,15 @@ int main(int argc, char *argv[])
 //	RunAppMulti("tcp-client", clients.Get(0), 5.0, "10.1.1.2", 1 << 16, 30);
 
 	RunApp("gmtp-server", server, Seconds(3.0), 1 << 31);
-//	RunAppMulti("gmtp-client", clients, 5.0, "10.1.1.2", 1 << 16, 30);
-	RunApp("gmtp-client", clients.Get(1), Seconds(5.0), "10.1.1.2", 1 << 16);
+	RunAppMulti("gmtp-client", clients, 5.0, "10.1.1.2", 1 << 16, 30);
+//	RunApp("gmtp-client", clients.Get(1), Seconds(5.0), "10.1.1.2", 1 << 16);
 
-	csma.EnablePcapAll("dce-gmtp-master");
+	local_csma.EnablePcapAll("dce-gmtp-master");
+	core_csma.EnablePcapAll("dce-gmtp-master");
 
 	AsciiTraceHelper ascii;
-	csma.EnableAsciiAll(ascii.CreateFileStream("dce-gmtp-master.tr"));
+	local_csma.EnableAsciiAll(ascii.CreateFileStream("dce-gmtp-master.tr"));
+	core_csma.EnableAsciiAll(ascii.CreateFileStream("dce-gmtp-master.tr"));
 
 	Simulator::Stop (Seconds (12000.0));
 	Simulator::Run();
