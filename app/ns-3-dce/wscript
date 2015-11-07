@@ -311,7 +311,8 @@ def build_dce_examples(module, bld):
                     ['gmtp-server-multi', []],
                     ['gmtp-server-select', []],
                     ['gmtp-client', []],
-                    ['gmtp-client-select', []],
+                    ['udp-mcst-server', []],
+                    ['udp-mcst-client', []],
 #                   ['little-cout', []],
                     ]
 
