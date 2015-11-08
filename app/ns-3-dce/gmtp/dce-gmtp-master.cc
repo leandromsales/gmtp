@@ -93,6 +93,17 @@ int main(int argc, char *argv[])
 	NodeContainer all(subnet_server, internet, relays, coreclients, clients);
 	cout << "The simulation has " << all.GetN() << " modes (total).\n" << endl;
 
+	cout << "Core routers: ";
+	for(int i=0; i < internet.GetN(); ++i)
+		cout << "files-" << internet.Get(i)->GetId() << ", ";
+	cout << endl << "Relays: ";
+	for(int i=0; i<relays.GetN(); ++i)
+		cout << "files-" << relays.Get(i)->GetId() << ", ";
+	cout << endl << "Clients: ";
+	for(int i=0; i<clients.GetN(); ++i)
+		cout << "files-" << clients.Get(i)->GetId() << ", ";
+	cout << endl;
+
 	DceManagerHelper dceManager;
 	dceManager.SetTaskManagerAttribute("FiberManagerType",
 			StringValue("UcontextFiberManager"));

@@ -80,6 +80,17 @@ int main(int argc, char *argv[])
 	NodeContainer all(subnet_server, internet, relays, clients);
 	cout << "The simulation has " << all.GetN() << " nodes (total).\n" << endl;
 
+	cout << "Core routers: ";
+	for(int i=0; i < internet.GetN(); ++i)
+		cout << "files-" << internet.Get(i)->GetId() << ", ";
+	cout << endl << "Relays: ";
+	for(int i=0; i<relays.GetN(); ++i)
+		cout << "files-" << relays.Get(i)->GetId() << ", ";
+	cout << endl << "Clients: ";
+	for(int i=0; i<clients.GetN(); ++i)
+		cout << "files-" << clients.Get(i)->GetId() << ", ";
+	cout << endl;
+
 	DceManagerHelper dceManager;
 //	dceManager.SetNetworkStack("ns3::LinuxSocketFdFactory",
 //				"Library", StringValue("liblinux.so"));
@@ -164,9 +175,6 @@ int main(int argc, char *argv[])
 	cout << "Relay  (files-1): " << iss.GetAddress(0, 0) << ", lan(" << is.GetAddress(1, 0) << ")" << endl;
 	cout << "Router (files-2): wan(" << iw.GetAddress(0, 0) << "), lan(" << is.GetAddress(0, 0) << ")" << endl << endl;
 
-	Ipv4GlobalRoutingHelper::PopulateRoutingTables();
-	//LinuxStackHelper::PopulateRoutingTables();
-
 	if(proto == UDP) {
 //	if(false) {
 
@@ -189,10 +197,10 @@ int main(int argc, char *argv[])
 		Ipv4StaticRoutingHelper multicast;
 
 		// 1) Configure a (static) multicast route on node n2 (multicastRouter)
-		Ptr<Node> multicastRouter = rserver;  // The node in question
-		Ptr<NetDevice> inputIf = dcss.Get(0);  // The input NetDevice
-		NetDeviceContainer outputDevices;  // A container of output NetDevices
-		outputDevices.Add(dcs.Get(1));  // (we only need one NetDevice here)
+//		Ptr<Node> multicastRouter = rserver;  // The node in question
+//		Ptr<NetDevice> inputIf = dcss.Get(0);  // The input NetDevice
+//		NetDeviceContainer outputDevices;  // A container of output NetDevices
+//		outputDevices.Add(dcs.Get(1));  // (we only need one NetDevice here)
 
 		//multicast.AddMulticastRoute(multicastRouter, multicastSource,
 		//		multicastGroup, inputIf, outputDevices);
@@ -206,24 +214,32 @@ int main(int argc, char *argv[])
 					multicastGroup, dcs.Get(0), dci.Get(0));
 
 		cout << "Adding route from internet to routers..." << endl;
-		for(int i=1; i < ncores; ++i) {
+		for(int i=1; i < internet.GetN(); ++i) {
 			multicast.AddMulticastRoute(internet.Get(i),
 					multicastSource, multicastGroup,
 					dci.Get(i), internet.Get(i)->GetDevice(2));
 		}
 
 		cout << "Adding route from routers to clients..." << endl;
-		for(int i=1; i < nrelays; ++i) {
-//			multicast.AddMulticastRoute(relays.Get(i),
-//					multicastSource, multicastGroup,
-//					dcr[i].Get(0), relays.Get(i)->GetDevice(1));
-			multicast.SetDefaultMulticastRoute (relays.Get(i), relays.Get(i)->GetDevice(2));
+		for(int j = 0; j < relays.GetN(); ++j) {
+			multicast.AddMulticastRoute(relays.Get(j),
+					multicastSource, multicastGroup,
+					relays.Get(j)->GetDevice(1),
+					relays.Get(j)->GetDevice(2));
 		}
 
 		// 2) Set up a default multicast route on the sender (server)
 		Ptr<NetDevice> serverIf = dcss.Get(1);
 		multicast.SetDefaultMulticastRoute (server, serverIf);
 	}
+
+	Ipv4GlobalRoutingHelper::PopulateRoutingTables();
+	//LinuxStackHelper::PopulateRoutingTables();
+
+	Ipv4GlobalRoutingHelper g;
+	Ptr<OutputStreamWrapper> routingStream = Create<OutputStreamWrapper>
+	("routes.routes", std::ios::out);
+	 g.PrintRoutingTableAllAt (Seconds (3.0), routingStream);
 
 	cout << "Running ";
 
