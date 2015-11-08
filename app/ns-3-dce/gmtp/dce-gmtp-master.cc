@@ -26,34 +26,22 @@ using namespace std;
 //   c1.n				 c2.m
 // //
 
-
-enum protocol {
-	GMTP,
-	UDP,
-	TCP
-};
-
-
 int main(int argc, char *argv[])
 {
 	int nclients = 1;
 	int ncores = 1;
 	int nrelays = 1;
-	bool print = false;
+	bool middleman = false;
 	std::string data_rate = "100Mbps";
 	std::string delay = "1ms";
-	int proton = GMTP;
 
 	CommandLine cmd;
 	cmd.AddValue ("nclients", "Number of clients in each router", nclients);
 	cmd.AddValue ("ncores", "Number of cores in network (except server core)", ncores);
 	cmd.AddValue ("data-rate", "Link capacity. Default value is 10Mbps", data_rate);
 	cmd.AddValue ("delay", "Channel delay. Default value is 1ms", delay);
-	cmd.AddValue ("print", "Print details of nodes", print);
-	cmd.AddValue ("proto", "Protocol of simulation (GMTP=0, UDP=1, TCP=2)", proton);
+	cmd.AddValue ("middleman", "Middleman intercepting requests", middleman);
 	cmd.Parse(argc, argv);
-
-	enum protocol proto = (enum protocol) proton;
 
 	cout << "Creating nodes..." << endl;
 
@@ -107,17 +95,11 @@ int main(int argc, char *argv[])
 	DceManagerHelper dceManager;
 	dceManager.SetTaskManagerAttribute("FiberManagerType",
 			StringValue("UcontextFiberManager"));
+	dceManager.SetNetworkStack("ns3::LinuxSocketFdFactory", "Library",
+			StringValue("liblinux.so"));
 
-	if(proto == GMTP) {
-		dceManager.SetNetworkStack("ns3::LinuxSocketFdFactory",
-				"Library", StringValue("liblinux.so"));
-
-		LinuxStackHelper stack;
-		stack.Install(all);
-	} else {
-		InternetStackHelper stack;
-		stack.Install(all);
-	}
+	LinuxStackHelper stack;
+	stack.Install(all);
 	dceManager.Install(all);
 
 	CsmaHelper core_csma;
@@ -146,14 +128,14 @@ int main(int argc, char *argv[])
 	cout << "Create networks and assign IPv4 Addresses.\n" << endl;
 	Ipv4AddressHelper address;
 
-	address.SetBase("10.1.1.0", "255.255.255.0");
-	Ipv4InterfaceContainer iss = address.Assign(dcss);
+	address.SetBase("10.0.0.0", "255.0.0.0");
+	Ipv4InterfaceContainer iw = address.Assign(dci);
 
 	address.SetBase("10.1.0.0", "255.255.0.0");
 	Ipv4InterfaceContainer is = address.Assign(dcs);
+	address.SetBase("10.1.1.0", "255.255.255.0");
+	Ipv4InterfaceContainer iss = address.Assign(dcss);
 
-	address.SetBase("10.0.0.0", "255.0.0.0");
-	Ipv4InterfaceContainer iw = address.Assign(dci);
 
 	/*
 	 * To calculate the decimal address from a dotted string, perform the following calculation.
@@ -190,136 +172,91 @@ int main(int argc, char *argv[])
 			Ipv4InterfaceContainer::Iterator itc;
 			for(itc = iclients[j].Begin(); itc != iclients[j].End(); ++itc) {
 				std::pair<Ptr<Ipv4>, uint32_t> cpair = *itc;
-				if(proto == GMTP)
-					cout << "cl: " << cpair.first->GetAddress(0, 0).GetLocal() << ", ";
-				else
-					cout << "cl: " << cpair.first->GetAddress(1, 0).GetLocal() << ", ";
+				cout << "cl: " << cpair.first->GetAddress(0, 0).GetLocal() << ", ";
 			}
 			cout << endl;
 		}
 		cout << "------------" << endl;
 	}
 
-
-	Ipv4GlobalRoutingHelper::PopulateRoutingTables();
-	if(proto == GMTP)
-		LinuxStackHelper::PopulateRoutingTables();
-
-	if(proto == UDP) {
-		//
-		// Now we can configure multicasting.  As described above, the multicast
-		// source is at node zero, which we assigned the IP address of 10.1.1.1
-		// earlier.  We need to define a multicast group to send packets to.  This
-		// can be any multicast address from 224.0.0.0 through 239.255.255.255
-		// (avoiding the reserved routing protocol addresses).
-		//
-		Ipv4Address multicastSource ("10.1.1.2");
-		Ipv4Address multicastGroup ("225.1.2.4");
-
-		// Now, we will set up multicast routing.  We need to do three things:
-		// 1) Configure a (static) multicast route on node n2
-		// 2) Set up a default multicast route on the sender n0
-		// 3) Have node n4 join the multicast group
-		// We have a helper that can help us with static multicast
-		Ipv4StaticRoutingHelper multicast;
-
-		// 1) Configure a (static) multicast route on node n2 (multicastRouter)
-		Ptr<Node> multicastRouter = rserver;  // The node in question
-		Ptr<NetDevice> inputIf = dcss.Get(0);  // The input NetDevice
-		NetDeviceContainer outputDevices;  // A container of output NetDevices
-		outputDevices.Add(dcs.Get(1));  // (we only need one NetDevice here)
-
-		multicast.AddMulticastRoute(multicastRouter, multicastSource,
-				multicastGroup, inputIf, outputDevices);
-
-		// 2) Set up a default multicast route on the sender (server)
-		Ptr<NetDevice> senderIf = dcss.Get(1);
-		multicast.SetDefaultMulticastRoute(server, senderIf);
-	}
-
-
 	// Just printing IPs
 	cout << "Server (files-0): " << iss.GetAddress(1, 0) << endl;
 	cout << "Relay  (files-1): " << iss.GetAddress(0, 0) << ", lan(" << is.GetAddress(1, 0) << ")" << endl;
 	cout << "Router (files-2): wan(" << iw.GetAddress(0, 0) << "), lan(" << is.GetAddress(0, 0) << ")" << endl << endl;
 
-	if(print) {
-		int i = 0;
-		Ipv4InterfaceContainer::Iterator it;
-		for(it = iw.Begin(); it != iw.End(); ++i, ++it) {
-			std::pair<Ptr<Ipv4>, uint32_t> pair = *it;
-			cout << "Core (files-" << i+2 << "): ";
-			for(int j = 0; j < pair.first->GetNInterfaces(); ++j) {
+	int i = 0;
+	Ipv4InterfaceContainer::Iterator it;
+	for(it = iw.Begin(); it != iw.End(); ++i, ++it) {
+		std::pair<Ptr<Ipv4>, uint32_t> pair = *it;
+		cout << "Core (files-" << i+2 << "): ";
+		for(int j = 0; j < pair.first->GetNInterfaces(); ++j) {
+			StringValue data_rate;
+			pair.first->GetNetDevice(j)->GetChannel()->GetAttribute("DataRate", data_rate);
+			cout << pair.first->GetAddress(j, 0).GetLocal();
+//			cout << " ("<< data_rate.Get() << ")";
+			cout << ", ";
+		}
+		cout << endl;
+		int k = i - 1;
+		if(k < 0) {
+			cout << endl;
+			continue;
+		}
+
+		Ipv4InterfaceContainer::Iterator itr;
+		for(itr = irelays[k].Begin(); itr != irelays[k].End(); ++itr) {
+			cout << "\t=> Router: ";
+			std::pair<Ptr<Ipv4>, uint32_t> rpair = *itr;
+			for(int m = 0; m < rpair.first->GetNInterfaces(); ++m) {
 				StringValue data_rate;
-				pair.first->GetNetDevice(j)->GetChannel()->GetAttribute("DataRate", data_rate);
-				cout << pair.first->GetAddress(j, 0).GetLocal();
-				//			cout << " ("<< data_rate.Get() << ")";
+				rpair.first->GetNetDevice(m)->GetChannel()->GetAttribute(
+						"DataRate", data_rate);
+				cout << rpair.first->GetAddress(m, 0).GetLocal();
+//				cout << " (" << data_rate.Get() << ")";
 				cout << ", ";
 			}
 			cout << endl;
-			int k = i - 1;
-			if(k < 0) {
-				cout << endl;
-				continue;
-			}
-
-			Ipv4InterfaceContainer::Iterator itr;
-			for(itr = irelays[k].Begin(); itr != irelays[k].End(); ++itr) {
-				cout << "\t=> Router: ";
-				std::pair<Ptr<Ipv4>, uint32_t> rpair = *itr;
-				for(int m = 0; m < rpair.first->GetNInterfaces(); ++m) {
-					StringValue data_rate;
-					rpair.first->GetNetDevice(m)->GetChannel()->GetAttribute(
-							"DataRate", data_rate);
-					cout << rpair.first->GetAddress(m, 0).GetLocal();
-					//				cout << " (" << data_rate.Get() << ")";
-					cout << ", ";
-				}
-				cout << endl;
-				cout << "------------" << endl;
-			}
 			cout << "------------" << endl;
 		}
+		cout << "------------" << endl;
 	}
 
-	cout << "Running ";
 
-	switch(proto) {
-	case GMTP:
-		cout << "GMTP simulation..." << endl;
-		RunGtmpInter(server, Seconds(2.0), "off");
-		RunIp(all, Seconds(2.1), "route");
+	if(middleman) {
+		cout << "Starting new relay here...\n";
+		Ptr<Node> client_r3 = CreateObject<Node>();
+		NodeContainer subnet_r3(core.Get(0), client_r3);
+		stack.Install(client_r3);
+		dceManager.Install(client_r3);
+		NetDeviceContainer snr3 = local_csma.Install(subnet_r3);
+		address.SetBase("10.128.0.0", "255.255.255.0");
+		Ipv4InterfaceContainer ic = address.Assign(snr3);
+		RunGtmpInter(client_r3, Seconds(2.3), "off");
+		//		RunApp("gmtp-client", client_r3, Seconds(3.5), "10.1.1.2", 1 << 31);
+		RunApp("gmtp-client", client_r3, Seconds(6.5), "10.1.1.2", 1 << 31);
+	}
 
-		RunIp(server, Seconds(2.2), "addr list sim0");
-		RunIp(clients, Seconds(2.2), "addr list sim0");
-		RunIp(rserver, Seconds(2.2), "addr list sim0");
-		RunIp(rserver, Seconds(2.2), "addr list sim1");
+	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
+	LinuxStackHelper::PopulateRoutingTables ();
 
-		RunGtmpInter(coreclients, Seconds(2.3), "off");
-		RunGtmpInter(clients, Seconds(2.3), "off");
+	cout << "Running GMTP simulation... ";
 
-		RunApp("gmtp-server", server, Seconds(3.0), 1 << 31);
-		RunAppMulti("gmtp-client", coreclients, 3.5, "10.1.1.2", 1 << 16, 30);
-		RunAppMulti("gmtp-client", clients, 4.0, "10.1.1.2", 1 << 16, 30);
+	RunGtmpInter(server, Seconds(2.0), "off");
+	RunIp(all, Seconds(2.1), "route");
+
+	RunIp(server, Seconds(2.2), "addr list sim0");
+	RunIp(clients, Seconds(2.2), "addr list sim0");
+	RunIp(rserver, Seconds(2.2), "addr list sim0");
+	RunIp(rserver, Seconds(2.2), "addr list sim1");
+
+	RunGtmpInter(coreclients, Seconds(2.3), "off");
+	RunGtmpInter(clients, Seconds(2.3), "off");
+
+	cout << "GMTP simulation..." << endl;
+	RunApp("gmtp-server", server, Seconds(3.0), 1 << 31);
+//	RunAppMulti("gmtp-client", coreclients, 3.5, "10.1.1.2", 1 << 16, 30);
+	RunAppMulti("gmtp-client", clients, 4.0, "10.1.1.2", 1 << 16, 30);
 	//	RunApp("gmtp-client", clients.Get(1), Seconds(5.0), "10.1.1.2", 1 << 16);
-		break;
-	case UDP:
-		cout << "UDP simulation..." << endl;
-		RunApp("udp-mcst-server", server, Seconds(5.0), "10.1.1.2", 1 << 31);
-		RunApp("udp-mcst-client", rserver, Seconds(4.0), "sim1", 1 << 31);
-//		RunAppMulti("udp-mcst-client", clients.Get(0), 4.0, "10.1.1.2", 1 << 16, 30);
-//		char *addr = clients.Get(0)->GetDevice(0)->GetAttribute()
-//		RunApp("udp-mcst-client", clients.Get(0), Seconds(4.0), , 1 << 16);
-//		RunAppMulti("udp-mcst-client", clients, 4.0, "sim0", 1 << 16, 30);
-		break;
-	case TCP:
-		cout << "TCP simulation..." << endl;
-		RunApp("tcp-server", server, Seconds(4.0), 1 << 31);
-		RunAppMulti("tcp-client", /*clients.Get(0)*/internet.Get(0), 5.0, "10.1.1.2", 1 << 16, 30);
-//		RunAppMulti("tcp-client", clients, 5.0, "10.1.1.2", 1 << 16, 30);
-		break;
-	}
-
 
 	local_csma.EnablePcapAll("dce-gmtp-master");
 	core_csma.EnablePcapAll("dce-gmtp-master");
