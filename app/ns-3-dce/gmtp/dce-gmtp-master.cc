@@ -38,6 +38,7 @@ int main(int argc, char *argv[])
 	CommandLine cmd;
 	cmd.AddValue ("nclients", "Number of clients in each router", nclients);
 	cmd.AddValue ("ncores", "Number of cores in network (except server core)", ncores);
+	cmd.AddValue ("nrelays", "Number of relays for each core", nrelays);
 	cmd.AddValue ("data-rate", "Link capacity. Default value is 10Mbps", data_rate);
 	cmd.AddValue ("delay", "Channel delay. Default value is 1ms", delay);
 	cmd.AddValue ("middleman", "Middleman intercepting requests", middleman);
