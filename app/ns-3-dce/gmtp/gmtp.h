@@ -2,6 +2,7 @@
 #include <arpa/inet.h>
 #include <sstream>
 #include <string>
+#include <iostream>
 #include <sys/time.h>
 
 #ifndef GMTP_H_
@@ -16,6 +17,8 @@
 #define GMTP_SAMPLE 100
 
 #define NumStr(Number) static_cast<ostringstream*>( &(ostringstream() << Number) )->str().c_str()
+
+static struct timeval  tv;
 
 enum gmtp_ucc_type {
 	GMTP_DELAY_UCC = 0,
@@ -64,6 +67,26 @@ double time_ms(struct timeval &tv)
 	gettimeofday(&tv, NULL);
 	double t2 = (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000; // convert tv_sec & tv_usec to millisecond
 	return t2;
+}
+
+static void ms_sleep(double ms)
+{
+	struct timespec slt;
+	slt.tv_nsec = (long)(ms * 1000000.0);
+	slt.tv_sec = 0;
+	nanosleep(&slt, NULL);
+}
+
+static void print_stats(int i, double t1, double total, double total_data)
+{
+	double t2 = time_ms(tv);
+	double elapsed = t2 - t1;
+
+	std::cout << i << " packets sent in " << elapsed << " ms!" << std::endl;
+	std::cout << total_data << " data bytes sent."<< std::endl;
+	std::cout << total << " bytes sent (data+hdr)" << std::endl;
+	std::cout << "Data TX: " << total_data*1000/elapsed << " B/s" << std::endl;
+	std::cout << "TX: " << (total*1000)/elapsed << " B/s" << std::endl;
 }
 
 

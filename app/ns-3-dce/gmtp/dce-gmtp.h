@@ -114,7 +114,7 @@ static void RunAppMulti(std::string appname, ns3::NodeContainer nodes,
 
 	int i = 0;
 	int j = 1;
-	int k = nodes.GetN() / 30;
+	int k = nodes.GetN() / factor;
 	double t = start;
 	double step = 0.5;
 	std::cout << "k = " << k << std::endl;

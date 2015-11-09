@@ -308,8 +308,6 @@ def build_dce_examples(module, bld):
                     ['freebsd-iproute', []],
                     ['gmtp-inter', []],
                     ['gmtp-server', []],
-                    ['gmtp-server-multi', []],
-                    ['gmtp-server-select', []],
                     ['gmtp-client', []],
                     ['udp-mcst-server', []],
                     ['udp-mcst-client', []],

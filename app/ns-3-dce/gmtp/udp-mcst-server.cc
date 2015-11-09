@@ -7,14 +7,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct in_addr localInterface;
-struct sockaddr_in groupSock;
-int sd;
-char databuf[1024] = "Multicast test message lol!";
-int datalen = sizeof(databuf);
+#include "gmtp.h"
+
+using namespace std;
 
 int main(int argc, char *argv[])
 {
+	struct in_addr localInterface;
+	struct sockaddr_in groupSock;
+	int sd;
+	char buffer[BUFF_SIZE];
+
 	if(argc < 2) {
 		printf("usage: server < local ip address >\n");
 		exit(1);
@@ -35,7 +38,7 @@ int main(int argc, char *argv[])
 	memset((char *)&groupSock, 0, sizeof(groupSock));
 	groupSock.sin_family = AF_INET;
 	groupSock.sin_addr.s_addr = inet_addr("225.1.2.4");
-	groupSock.sin_port = htons(4321);
+	groupSock.sin_port = htons(SERVER_PORT);
 
 	/* Disable loopback so you do not receive your own datagrams.
 	 {
@@ -62,31 +65,47 @@ int main(int argc, char *argv[])
 		exit(1);
 	} else
 		printf("Setting the local interface...OK\n");
-	/* Send a message to the multicast group specified by the*/
-	/* groupSock sockaddr structure. */
-	/*int datalen = 1024;*/
 
-	int i = 0;
-	do {
-		if(sendto(sd, databuf, datalen, 0, (struct sockaddr*)&groupSock,
-				sizeof(groupSock)) < 0) {
+	double t1  = time_ms(tv);
+	int i;
+	const char *msg = " Hello, World!";
+	double total_data, total;
+	int media_rate = 300000; // B/s
+
+	printf("Sending data...\n");
+	for(i = 0; i < 10000; ++i) {
+		const char *numstr = NumStr(i + 1); //Do not delete this.
+		char *buffer = new char[BUFF_SIZE ];
+		strcpy(buffer, numstr);
+		strcat(buffer, msg);
+		int pkt_size = BUFF_SIZE + 36 + 20;
+
+		//Control TX rate
+		double sleep_time = (double)(pkt_size * 1000) / media_rate;
+		ms_sleep(sleep_time); //control tx rate
+
+		int ret = sendto(sd, buffer, BUFF_SIZE, 0, (struct sockaddr*)&groupSock,
+				sizeof(groupSock));
+		if(ret < 0) {
 			printf("Sending datagram message error");
-		} else
-			printf("%d - Sending datagram message...OK\n", i);
-	} while(++i < 10000);
+		} else {
+			total += pkt_size;
+			total_data += BUFF_SIZE;
+			if(i % 1000 == 0) {
+				print_stats(i, t1, total, total_data);
+				cout << endl;
+			}
+		}
+		delete buffer;
+	}
 
-	/* Try the re-read from the socket if the loopback is not disable
-	 if(read(sd, databuf, datalen) < 0)
-	 {
-	 printf("Reading datagram message error\n");
-	 close(sd);
-	 exit(1);
-	 }
-	 else
-	 {
-	 printf("Reading datagram message from client...OK\n");
-	 printf("The message is: %s\n", databuf);
-	 }
-	 */
+	const char *outstr = "out";
+	printf("Sending out: %s\n", outstr);
+	sendto(sd, outstr, strlen(outstr), 0, (struct sockaddr*)&groupSock,
+					sizeof(groupSock));
+
+	printf("Closing server...\n");
+	printf("Server closed!\n\n");
+
 	return 0;
 }

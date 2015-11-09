@@ -23,7 +23,8 @@ int main(int argc, char *argv[])
 	int nclients = 1;
 	int ncores = 1;
 	int nrelays = 1;
-	std::string data_rate = "100Mbps";
+	std::string core_rate = "64Mbps";
+	std::string local_rate = "10Mbps";
 	std::string delay = "1ms";
 	int proton = UDP;
 
@@ -31,7 +32,6 @@ int main(int argc, char *argv[])
 	cmd.AddValue ("nclients", "Number of clients in each router", nclients);
 	cmd.AddValue ("ncores", "Number of cores in network (except server core)", ncores);
 	cmd.AddValue ("nrelays", "Number of relays for each core", nrelays);
-	cmd.AddValue ("data-rate", "Link capacity. Default value is 10Mbps", data_rate);
 	cmd.AddValue ("delay", "Channel delay. Default value is 1ms", delay);
 	cmd.AddValue ("proto", "Protocol of simulation (UDP=0, TCP=1)", proton);
 	cmd.Parse(argc, argv);
@@ -101,11 +101,11 @@ int main(int argc, char *argv[])
 	dceManager.Install(all);
 
 	CsmaHelper core_csma;
-	core_csma.SetChannelAttribute("DataRate", StringValue(data_rate));
+	core_csma.SetChannelAttribute("DataRate", StringValue(core_rate));
 	core_csma.SetChannelAttribute("Delay", StringValue(delay));
 
 	CsmaHelper local_csma;
-	local_csma.SetChannelAttribute("DataRate", StringValue(data_rate));
+	local_csma.SetChannelAttribute("DataRate", StringValue(local_rate));
 	local_csma.SetChannelAttribute("Delay", StringValue(delay));
 
 	NetDeviceContainer dci = core_csma.Install(internet);
@@ -151,23 +151,18 @@ int main(int argc, char *argv[])
 	//Setting clients addr separated...
 	netaddr = base_addr;
 	for(int i = 0; i < ncores; ++i, netaddr += 0x10000) {
-		cout << "wan [" << i << "]: " << Ipv4Address(netaddr) << endl;
-
 		uint32_t laddr = netaddr + 0x100;
 		vector<Ipv4InterfaceContainer> iclients(relays.GetN());
 		for(int j = 0; j < relays.GetN(); ++j, laddr += 0x100) {
-			cout << "lan [" << i << "][" << j << "]: " << Ipv4Address(laddr) << endl << "\t> ";
+//			cout << "lan [" << i << "][" << j << "]: " << Ipv4Address(laddr) << endl << "\t> ";
 			address.SetBase(Ipv4Address(laddr), "255.255.255.0");
 			iclients[j] = address.Assign(dcc[j]);
 
 			Ipv4InterfaceContainer::Iterator itc;
 			for(itc = iclients[j].Begin(); itc != iclients[j].End(); ++itc) {
 				std::pair<Ptr<Ipv4>, uint32_t> cpair = *itc;
-				cout << "cl: " << cpair.first->GetAddress(1, 0).GetLocal() << ", ";
 			}
-			cout << endl;
 		}
-		cout << "------------" << endl;
 	}
 
 	// Just printing IPs
@@ -176,7 +171,6 @@ int main(int argc, char *argv[])
 	cout << "Router (files-2): wan(" << iw.GetAddress(0, 0) << "), lan(" << is.GetAddress(0, 0) << ")" << endl << endl;
 
 	if(proto == UDP) {
-//	if(false) {
 
 		cout << "Routing UDP..." << endl;
 
@@ -247,9 +241,6 @@ int main(int argc, char *argv[])
 	case UDP:
 		cout << "UDP simulation..." << endl;
 		RunApp("udp-mcst-server", server, Seconds(5.0), "10.1.1.2", 1 << 31);
-		RunApp("udp-mcst-client", rserver, Seconds(4.0), "sim1", 1 << 31);
-		RunAppMulti("udp-mcst-client", internet, 4.0, "sim0", 1 << 31, 30);
-		RunAppMulti("udp-mcst-client", relays, 4.0, "sim0", 1 << 31, 30);
 		RunAppMulti("udp-mcst-client", clients, 4.5, "sim0", 1 << 16, 30);
 		break;
 	case TCP:
