@@ -42,6 +42,8 @@ inline void update_stats(int i, int seq, double begin, double rcv, double rcv_da
 	double total_time = now - begin;
 	int index = (i-1) % GMTP_SAMPLE;
 	int next = (index == (GMTP_SAMPLE-1)) ? 0 : (index + 1);
+    int prev = (index == 0) ? (GMTP_SAMPLE-1) : (index - 1);
+    double elapsed = 0;
 
 	hist[index][TOTAL_BYTES] = rcv;
 	hist[index][DATA_BYTES] = rcv_data;
@@ -50,9 +52,11 @@ inline void update_stats(int i, int seq, double begin, double rcv, double rcv_da
 	double rcv_sample = hist[index][TOTAL_BYTES] - hist[next][TOTAL_BYTES];
 	double rcv_data_sample = hist[index][DATA_BYTES] - hist[next][DATA_BYTES];
 	double instant = hist[index][TSTAMP] - hist[next][TSTAMP];
+    if(i > 1)
+        elapsed = hist[index][TSTAMP] - hist[prev][TSTAMP];
 
-	//index, seq, time, elapsed, bytes_rcv, rx_rate, inst_rx_rate
-	printf("%d\t%d\t%0.2f\t%0.2f\t%0.2f\t%0.2f\t%0.2f\r\n", i, seq, now, total_time, rcv,
+	//index, seq, elapsed, bytes_rcv, rx_rate, inst_rx_rate
+	printf("%d\t%d\t%0.2f\t%0.2f\t%0.2f\t%0.2f\r\n", i, seq, elapsed, rcv,
 			rcv*1000 / total_time, rcv_sample*1000 / instant);
 
 }
@@ -95,7 +99,7 @@ int main(int argc, char**argv)
 
 	printf("Connected to the server...\r\n\r\n");
 
-	printf("idx\tseq\t\ttime\telapsed\tbytes_rcv\trx_rate\tinst_rx_rate\r\n\r\n");
+	printf("idx\tseq\telapsed\tbytes_rcv\trx_rate\tinst_rx_rate\r\n\r\n");
 
 	int i = 0, seq;
 	double rcv=0, rcv_data=0;
