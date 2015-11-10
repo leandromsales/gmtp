@@ -4,6 +4,7 @@
 #include <string>
 #include <iostream>
 #include <sys/time.h>
+#include <cstdio>
 
 #ifndef GMTP_H_
 #define GMTP_H_
@@ -87,6 +88,47 @@ static void print_stats(int i, double t1, double total, double total_data)
 	std::cout << total << " bytes sent (data+hdr)" << std::endl;
 	std::cout << "Data TX: " << total_data*1000/elapsed << " B/s" << std::endl;
 	std::cout << "TX: " << (total*1000)/elapsed << " B/s" << std::endl;
+}
+
+
+#define print_log_header() fprintf(stderr, "idx\tseq\telapsed\tbytes_rcv\trx_rate\tinst_rx_rate\r\n\r\n");
+
+enum {
+	TOTAL_BYTES,
+	DATA_BYTES,
+	TSTAMP
+};
+
+/**
+ * @i Sequence number
+ * @begin
+ * @rcv bytes received
+ * @rcv_data data bytes received
+ */
+static void update_client_stats(int i, int seq, double begin, double rcv,
+		double rcv_data, double hist[][3])
+{
+	double now = time_ms(tv);
+	double total_time = now - begin;
+	int index = (i-1) % GMTP_SAMPLE;
+	int next = (index == (GMTP_SAMPLE-1)) ? 0 : (index + 1);
+	int prev = (index == 0) ? (GMTP_SAMPLE-1) : (index - 1);
+	double elapsed = 0;
+
+	hist[index][TOTAL_BYTES] = rcv;
+	hist[index][DATA_BYTES] = rcv_data;
+	hist[index][TSTAMP] = now;
+
+	double rcv_sample = hist[index][TOTAL_BYTES] - hist[next][TOTAL_BYTES];
+	double rcv_data_sample = hist[index][DATA_BYTES] - hist[next][DATA_BYTES];
+	double instant = hist[index][TSTAMP] - hist[next][TSTAMP];
+	if(i > 1)
+		elapsed = hist[index][TSTAMP] - hist[prev][TSTAMP];
+
+	//index, seq, elapsed, bytes_rcv, rx_rate, inst_rx_rate
+	fprintf(stderr, "%d\t%d\t%0.2f\t%0.2f\t%0.2f\t%0.2f\r\n", i, seq, elapsed, rcv,
+			rcv*1000 / total_time, rcv_sample*1000 / instant);
+
 }
 
 

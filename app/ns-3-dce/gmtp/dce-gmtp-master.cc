@@ -255,7 +255,6 @@ int main(int argc, char *argv[])
 
 	RunGtmpInter(clients, Seconds(2.3), "off");
 
-	cout << "GMTP simulation..." << endl;
 	RunApp("gmtp-server", server, Seconds(3.0), 1 << 31);
 	RunAppMulti("gmtp-client", clients, 4.0, "10.1.1.2", 1 << 16, 3);
 

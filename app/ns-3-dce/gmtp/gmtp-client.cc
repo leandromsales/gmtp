@@ -18,48 +18,6 @@
 
 #include "gmtp.h"
 
-double last_rcv=0, last_data_rcv=0;
-
-// Col 0: total bytes
-// Col 1: data bytes
-// Col 2: tstamp
-double hist[GMTP_SAMPLE][3];
-enum {
-	TOTAL_BYTES,
-	DATA_BYTES,
-	TSTAMP
-};
-
-/**
- * @i Sequence number
- * @begin
- * @rcv bytes received
- * @rcv_data data bytes received
- */
-inline void update_stats(int i, int seq, double begin, double rcv, double rcv_data)
-{
-	double now = time_ms(tv);
-	double total_time = now - begin;
-	int index = (i-1) % GMTP_SAMPLE;
-	int next = (index == (GMTP_SAMPLE-1)) ? 0 : (index + 1);
-    int prev = (index == 0) ? (GMTP_SAMPLE-1) : (index - 1);
-    double elapsed = 0;
-
-	hist[index][TOTAL_BYTES] = rcv;
-	hist[index][DATA_BYTES] = rcv_data;
-	hist[index][TSTAMP] = now;
-
-	double rcv_sample = hist[index][TOTAL_BYTES] - hist[next][TOTAL_BYTES];
-	double rcv_data_sample = hist[index][DATA_BYTES] - hist[next][DATA_BYTES];
-	double instant = hist[index][TSTAMP] - hist[next][TSTAMP];
-    if(i > 1)
-        elapsed = hist[index][TSTAMP] - hist[prev][TSTAMP];
-
-	//index, seq, elapsed, bytes_rcv, rx_rate, inst_rx_rate
-	printf("%d\t%d\t%0.2f\t%0.2f\t%0.2f\t%0.2f\r\n", i, seq, elapsed, rcv,
-			rcv*1000 / total_time, rcv_sample*1000 / instant);
-
-}
 
 int main(int argc, char**argv)
 {
@@ -68,6 +26,11 @@ int main(int argc, char**argv)
 	struct hostent * server;
 	char * serverAddr;
 	char buffer[BUFF_SIZE];
+
+	// Col 0: total bytes
+	// Col 1: data bytes
+	// Col 2: tstamp
+	double hist[GMTP_SAMPLE][3];
 
 	if(argc < 2) {
 		printf("usage: client < ip address >\n");
@@ -98,8 +61,7 @@ int main(int argc, char**argv)
 	}
 
 	printf("Connected to the server...\r\n\r\n");
-
-	printf("idx\tseq\telapsed\tbytes_rcv\trx_rate\tinst_rx_rate\r\n\r\n");
+	print_log_header();
 
 	int i = 0, seq;
 	double rcv=0, rcv_data=0;
@@ -115,9 +77,11 @@ int main(int argc, char**argv)
 		rcv_data += bytes_read;
 
 		char *seqstr = strtok(buffer, " ");
-		update_stats(i, atoi(seqstr), t1, rcv, rcv_data);
+		update_client_stats(i, atoi(seqstr), t1, rcv, rcv_data, hist);
 
 	} while(strcmp(buffer, outstr) != 0);
+
+	printf("End of simulation...\n");
 
 	// Jamais remover!!!
 	// Resolve o Bug do ether_addr_copy(...):

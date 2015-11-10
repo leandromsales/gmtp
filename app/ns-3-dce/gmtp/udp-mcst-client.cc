@@ -13,45 +13,6 @@
 
 #include "gmtp.h"
 
-double last_rcv=0, last_data_rcv=0;
-
-// Col 0: total bytes
-// Col 1: data bytes
-// Col 2: tstamp
-double hist[GMTP_SAMPLE][3];
-enum {
-	TOTAL_BYTES,
-	DATA_BYTES,
-	TSTAMP
-};
-
-/**
- * @i Sequence number
- * @begin
- * @rcv bytes received
- * @rcv_data data bytes received
- */
-inline void update_stats(int i, int seq, double begin, double rcv, double rcv_data)
-{
-	double now = time_ms(tv);
-	double total_time = now - begin;
-	int index = (i-1) % GMTP_SAMPLE;
-	int next = (index == (GMTP_SAMPLE-1)) ? 0 : (index + 1);
-
-	hist[index][TOTAL_BYTES] = rcv;
-	hist[index][DATA_BYTES] = rcv_data;
-	hist[index][TSTAMP] = now;
-
-	double rcv_sample = hist[index][TOTAL_BYTES] - hist[next][TOTAL_BYTES];
-	double rcv_data_sample = hist[index][DATA_BYTES] - hist[next][DATA_BYTES];
-	double instant = hist[index][TSTAMP] - hist[next][TSTAMP];
-
-	//index, seq, time, elapsed, bytes_rcv, rx_rate, inst_rx_rate
-	printf("%d\t%d\t%0.2f\t%0.2f\t%0.2f\t%0.2f\t%0.2f\r\n", i, seq, now, total_time, rcv,
-			rcv*1000 / total_time, rcv_sample*1000 / instant);
-
-}
-
 char* get_addr(const char *interface) {
 
 	struct ifreq ifr;
@@ -78,6 +39,11 @@ int main(int argc, char *argv[])
 	int sd;
 
 	char buffer[BUFF_SIZE];
+
+	// Col 0: total bytes
+	// Col 1: data bytes
+	// Col 2: tstamp
+	double hist[GMTP_SAMPLE][3];
 
 	if(argc < 2) {
 		printf("usage: client < interface0 >\n");
@@ -135,7 +101,7 @@ int main(int argc, char *argv[])
 		printf("Adding multicast group...OK.\n");
 
 	printf("Waiting data...\r\n\r\n");
-	printf("idx\tseq\t\ttime\telapsed\tbytes_rcv\trx_rate\tinst_rx_rate\r\n\r\n");
+	print_log_header();
 
 	/* Read from the socket. */
 	int i = 0, seq;
@@ -153,11 +119,11 @@ int main(int argc, char *argv[])
 		rcv_data += bytes_read;
 
 		char *seqstr = strtok(buffer, " ");
-		update_stats(i, atoi(seqstr), t1, rcv, rcv_data);
+		update_client_stats(i, atoi(seqstr), t1, rcv, rcv_data, hist);
 
 	} while(strcmp(buffer, outstr) != 0);
 
-	printf("End of messages\n");
+	printf("End of simulation...\n");
 
 	sleep(3);
 
