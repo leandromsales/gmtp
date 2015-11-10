@@ -1,0 +1,3 @@
+#!/bin/bash        
+
+NS3DIR="../../net-next-sim/tools/testing/libos/buildtop/source/ns-3-dce/"

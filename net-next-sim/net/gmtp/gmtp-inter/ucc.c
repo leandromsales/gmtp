@@ -49,7 +49,8 @@ void gmtp_inter_ack_timer_callback(unsigned long data)
 	struct gmtp_inter_entry *entry = (struct gmtp_inter_entry*) data;
 	struct sk_buff *skb;
 
-	gmtp_ucc_equation(GMTP_UCC_NONE);
+//	gmtp_ucc_equation(GMTP_UCC_NONE);
+	gmtp_ucc_equation(GMTP_UCC_ALL);
 	skb = gmtp_inter_build_ack(entry);
 	if(skb != NULL)
 		gmtp_inter_send_pkt(skb);
@@ -242,7 +243,8 @@ wait:
 	else
 		relay->tx_byte_budget = INT_MIN;
 
-	if(delay2 > 0) {
+	/* Subcaminhos GMTP-UCC... */
+	 if(delay2 > 0) {
 		struct gmtp_delay_cc_data *cc_data;
 		cc_data = kmalloc(sizeof(struct gmtp_delay_cc_data), GFP_KERNEL);
 		cc_data->skb = skb;

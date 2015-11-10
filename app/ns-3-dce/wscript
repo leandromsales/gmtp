@@ -308,10 +308,9 @@ def build_dce_examples(module, bld):
                     ['freebsd-iproute', []],
                     ['gmtp-inter', []],
                     ['gmtp-server', []],
-                    ['gmtp-server-multi', []],
-                    ['gmtp-server-select', []],
                     ['gmtp-client', []],
-                    ['gmtp-client-select', []],
+                    ['udp-mcst-server', []],
+                    ['udp-mcst-client', []],
 #                   ['little-cout', []],
                     ]
 
@@ -399,6 +398,14 @@ def build_dce_examples(module, bld):
     module.add_example(needed = ['core', 'network', 'dce', 'point-to-point', 'applications', 'internet', 'csma'],
                        target='bin/dce-gmtp-internet',
                        source=['example/dce-gmtp-internet.cc'])
+                       
+    module.add_example(needed = ['core', 'network', 'dce', 'point-to-point', 'applications', 'internet', 'csma'],
+                       target='bin/dce-gmtp-master',
+                       source=['example/dce-gmtp-master.cc'])
+                       
+    module.add_example(needed = ['core', 'network', 'dce', 'point-to-point', 'applications', 'internet', 'csma'],
+                       target='bin/dce-multicast-master',
+                       source=['example/dce-multicast-master.cc'])
 
     if bld.env['LIB_ASPECT_PATH']:
         module.add_example(needed = ['core', 'network', 'internet', 'dce', 'point-to-point', 'csma', 'applications'],
