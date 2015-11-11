@@ -32,11 +32,11 @@ int main(int argc, char *argv[])
 	int ncores = 1;
 	int nrelays = 1;
 	bool verbose = false;
-//	std::string core_rate = "100Mbps";
-//	std::string local_rate = "12Mbps";
+	std::string core_rate = "100Mbps";
+	std::string local_rate = "10Mbps";
 
-	std::string core_rate = "1000Mbps";
-	std::string local_rate = "120Mbps";
+//	std::string core_rate = "1000Mbps";
+//	std::string local_rate = "120Mbps";
 
 	std::string delay = "1ms";
 	bool middleman = false;
@@ -237,7 +237,8 @@ int main(int argc, char *argv[])
 			Ipv4InterfaceContainer ic = address.Assign(snr3);
 			RunGtmpInter(midc, Seconds(2.3), "off");
 			//		RunApp("gmtp-client", client_r3, Seconds(3.5), "10.1.1.2", 1 << 16);
-			if(i==2)
+			/*if(i%2)*/
+			if(i==4)
 				RunApp("gmtp-client", midc, Seconds(3.5), "10.1.1.2", 1 << 16);
 			/*else
 				RunApp("gmtp-client", midc, Seconds(4.5), "10.1.1.2", 1 << 16);*/
