@@ -194,11 +194,10 @@ __be32 get_mcst_v4_addr(void)
 }
 EXPORT_SYMBOL_GPL(get_mcst_v4_addr);
 
-void gmtp_buffer_add(struct gmtp_inter_entry *info, struct sk_buff *newsk)
+void gmtp_buffer_add(struct gmtp_inter_entry *info, struct sk_buff *newskb)
 {
-	skb_queue_tail(info->buffer, skb_copy(newsk, GFP_ATOMIC));
-	info->buffer_len += newsk->len + ETH_HLEN;
-	gmtp_inter.buffer_len += newsk->len + ETH_HLEN;
+	skb_queue_tail(info->buffer, skb_copy(newskb, GFP_ATOMIC));
+	info->buffer_len += newskb->len + ETH_HLEN;
 }
 
 struct sk_buff *gmtp_buffer_dequeue(struct gmtp_inter_entry *info)
@@ -206,7 +205,6 @@ struct sk_buff *gmtp_buffer_dequeue(struct gmtp_inter_entry *info)
 	struct sk_buff *skb = skb_dequeue(info->buffer);
 	if(skb != NULL) {
 		info->buffer_len -= (skb->len + ETH_HLEN);
-		gmtp_inter.buffer_len -= (skb->len + ETH_HLEN);
 	}
 	return skb;
 }
@@ -217,6 +215,8 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 {
 	int ret = NF_ACCEPT;
 	struct iphdr *iph = ip_hdr(skb);
+
+	gmtp_inter.buffer_len += skb->len + ETH_HLEN;
 
 	if(gmtp_info->relay_enabled == 0)
 		return ret;
@@ -380,6 +380,10 @@ unsigned int hook_func_post_routing(unsigned int hooknum, struct sk_buff *skb,
 {
 	int ret = NF_ACCEPT;
 	struct iphdr *iph = ip_hdr(skb);
+
+	gmtp_inter.buffer_len -= skb->len + ETH_HLEN;
+	if(gmtp_inter.buffer_len < 0)
+		gmtp_inter.buffer_len = 0;
 
 	if(gmtp_info->relay_enabled == 0)
 		return ret;

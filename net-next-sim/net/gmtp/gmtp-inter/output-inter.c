@@ -154,10 +154,14 @@ send:
 	list_for_each_entry_safe(relay, temp, &entry->relays->list, list)
 	{
 		if(relay->state == GMTP_OPEN) {
-			/*struct ethhdr *eth = eth_hdr(skb);
+		/*	struct ethhdr *eth = eth_hdr(skb);
 			gh->dport = relay->port;
 			ether_addr_copy(eth->h_dest, relay->mac_addr);
-			skb->dev = relay->dev;*/
+			skb->dev = relay->dev;
+
+			pr_info("Sending to %pI4:%d (%u)\n", &relay->addr,
+					htons(relay->port), gh->seq);
+			entry->ucc.congestion_control(skb, entry, relay);*/
 
 			struct sk_buff *buffered = skb_copy(skb, gfp_any());
 			struct ethhdr *eth = eth_hdr(buffered);
@@ -169,8 +173,9 @@ send:
 
 			pr_info("Sending to %pI4:%d (%u)\n", &relay->addr,
 								htons(relay->port),
-								/*gh->seq*/ buffgh->seq);
-			entry->ucc.congestion_control(/*skb*/ buffered, entry, relay);
+								buffgh->seq);
+			entry->ucc.congestion_control(buffered, entry, relay);
+
 			/*gmtp_inter_build_and_send_pkt(skb, iph->saddr,
 					relay->addr, gh, GMTP_INTER_FORWARD);*/
 		}

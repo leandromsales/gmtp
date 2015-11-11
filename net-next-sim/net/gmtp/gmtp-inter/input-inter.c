@@ -673,12 +673,13 @@ int gmtp_inter_data_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 		return NF_ACCEPT;
 	}
 
-	if(entry->buffer->qlen >= entry->buffer_max) {
+	/*if(entry->buffer->qlen >= entry->buffer_max) {
 		print_drop(skb, iph->daddr, gh->seq, "buffer overflow");
-		/*goto out;*/
-		return NF_DROP;
+		goto out;
+
+		/*return NF_DROP;*/
 		/* Dont add it to buffer (equivalent to drop) */
-	} /*else if(gh->seq < entry->seq) {
+	/*}*/ /*else if(gh->seq < entry->seq) {
 		print_drop(skb, iph->daddr, gh->seq, "incorrect seq number");
 		return NF_DROP;
 		goto out;
@@ -688,7 +689,12 @@ int gmtp_inter_data_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 		gmtp_buffer_add(entry, skb);
 	}*/
 
+
+
 out:
+	pr_info("Receiving (to %pI4:%d, seq: %u)\n", &iph->daddr,
+			htons(gh->dport), gh->seq);
+
 	if(iph->daddr == entry->my_addr)
 		jump_over_gmtp_intra(skb, &entry->clients->list);
 	else
