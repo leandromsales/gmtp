@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
 	// Col 0: total bytes
 	// Col 1: data bytes
 	// Col 2: tstamp
-	double hist[GMTP_SAMPLE][3];
+	double hist[GMTP_SAMPLE][4];
 
 	if(argc < 2) {
 		printf("usage: client < interface0 >\n");

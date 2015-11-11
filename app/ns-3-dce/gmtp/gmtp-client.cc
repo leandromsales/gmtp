@@ -30,7 +30,7 @@ int main(int argc, char**argv)
 	// Col 0: total bytes
 	// Col 1: data bytes
 	// Col 2: tstamp
-	double hist[GMTP_SAMPLE][3];
+	double hist[GMTP_SAMPLE][4];
 
 	if(argc < 2) {
 		printf("usage: client < ip address >\n");
@@ -75,7 +75,7 @@ int main(int argc, char**argv)
 		++i;
 		rcv += bytes_read + 36 + 20;
 		rcv_data += bytes_read;
-
+		printf("Received (%d): %s\n", i, buffer);
 		char *seqstr = strtok(buffer, " ");
 		update_client_stats(i, atoi(seqstr), t1, rcv, rcv_data, hist);
 

@@ -431,6 +431,7 @@ int gmtp_v4_do_rcv(struct sock *sk, struct sk_buff *skb)
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 
 	if(sk->sk_state == GMTP_OPEN) { /* Fast path */
+		pr_info("OPEN...\n");
 		if(gmtp_rcv_established(sk, skb, gh, skb->len))
 			goto reset;
 		return 0;
@@ -723,6 +724,8 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 {
 	const struct gmtp_hdr *gh = gmtp_hdr(skb);
 
+	pr_info("sk: %p\n", sk);
+
 	if(sk == NULL) {
 
 		const struct iphdr *iph = ip_hdr(skb);
@@ -776,18 +779,21 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 	 *		Drop packet and return
 	 */
 	if(sk->sk_state == GMTP_TIME_WAIT) {
+		pr_info("sk->sk_state == GMTP_TIME_WAIT\n");
 		inet_twsk_put(inet_twsk(sk));
 		goto no_gmtp_socket;
 	}
 
 	if(!xfrm4_policy_check(sk, XFRM_POLICY_IN, skb)) {
+		pr_info("xfrm4_policy_check(sk, XFRM_POLICY_IN, skb)\n");
 		sock_put(sk);
 		goto discard_it;
 	}
 
-
+	pr_info("calling nf_reset(skb)\n");
 	nf_reset(skb);
 
+	pr_info("return sk_receive_skb(sk, skb, 1)\n");
 	return sk_receive_skb(sk, skb, 1);
 
 no_gmtp_socket:
@@ -846,6 +852,8 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 		struct gmtp_client *tmp;
 		struct gmtp_client_entry *media_entry = gmtp_lookup_client(
 				client_hashtable, gh->flowname);
+
+		pr_info("Multicast... MediaEntry: %p\n", media_entry);
 
 		if(media_entry == NULL)
 			goto discard_it;

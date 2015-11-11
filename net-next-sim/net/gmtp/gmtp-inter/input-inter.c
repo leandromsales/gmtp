@@ -125,20 +125,18 @@ int gmtp_inter_register_rcv(struct sk_buff *skb)
 		relay = gmtp_get_relay(&entry->relays->list, iph->saddr,
 				gh->sport);
 
-		if(relay == NULL) {
-			if(gh->server_rtt == 0)
-				relay = gmtp_inter_create_relay(skb, entry,
-						gr->relay_id);
-			else
-				return NF_ACCEPT;
-		}
+		if(relay == NULL && gh->server_rtt != 0)
+			return NF_ACCEPT;
 
 		switch(entry->state) {
 		case GMTP_INTER_WAITING_REGISTER_REPLY:
 			gmtp_pr_info("Waiting RegisterReply...");
+			ret = NF_ACCEPT;
 			goto out;
 		case GMTP_INTER_REGISTER_REPLY_RECEIVED:
 		case GMTP_INTER_TRANSMITTING:
+			if(relay == NULL)
+				relay = gmtp_inter_create_relay(skb, entry, gr->relay_id);
 			gmtp_pr_info("Media found. Sending RegisterReply.");
 			break;
 		case GMTP_INTER_CLOSE_RECEIVED:
@@ -641,6 +639,11 @@ static inline void gmtp_update_stats(struct gmtp_inter_entry *info,
 }
 
 
+static inline void print_drop(struct sk_buff *skb, __be32 daddr, __be32 seq, char *info)
+{
+	pr_info("Dropping pkt (%s - to %pI4, seq=%u, data=%s)\n",
+					info, &daddr, seq, gmtp_data(skb));
+}
 
 /**
  * P = p.flowname
@@ -671,14 +674,19 @@ int gmtp_inter_data_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	}
 
 	if(entry->buffer->qlen >= entry->buffer_max) {
-		pr_info("GMTP-Inter: dropping pkt (to %pI4, seq=%u, data=%s)\n",
-				&iph->daddr, gh->seq, gmtp_data(skb));
-		goto out;
+		print_drop(skb, iph->daddr, gh->seq, "buffer overflow");
+		/*goto out;*/
+		return NF_DROP;
 		/* Dont add it to buffer (equivalent to drop) */
-	}
+	} /*else if(gh->seq < entry->seq) {
+		print_drop(skb, iph->daddr, gh->seq, "incorrect seq number");
+		return NF_DROP;
+		goto out;
+	}*/
 
-	if((gh->seq > entry->seq) && entry->state == GMTP_INTER_TRANSMITTING)
+	/*if((gh->seq > entry->seq) && entry->state == GMTP_INTER_TRANSMITTING) {
 		gmtp_buffer_add(entry, skb);
+	}*/
 
 out:
 	if(iph->daddr == entry->my_addr)

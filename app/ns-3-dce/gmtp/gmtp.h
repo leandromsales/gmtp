@@ -91,12 +91,13 @@ static void print_stats(int i, double t1, double total, double total_data)
 }
 
 
-#define print_log_header() fprintf(stderr, "idx\tseq\telapsed\tbytes_rcv\trx_rate\tinst_rx_rate\r\n\r\n");
+#define print_log_header() fprintf(stderr, "idx\tseq\tloss\telapsed\tbytes_rcv\trx_rate\tinst_rx_rate\r\n\r\n");
 
 enum {
 	TOTAL_BYTES,
 	DATA_BYTES,
-	TSTAMP
+	TSTAMP,
+	SEQ
 };
 
 /**
@@ -106,7 +107,7 @@ enum {
  * @rcv_data data bytes received
  */
 static void update_client_stats(int i, int seq, double begin, double rcv,
-		double rcv_data, double hist[][3])
+		double rcv_data, double hist[][4])
 {
 	double now = time_ms(tv);
 	double total_time = now - begin;
@@ -114,19 +115,23 @@ static void update_client_stats(int i, int seq, double begin, double rcv,
 	int next = (index == (GMTP_SAMPLE-1)) ? 0 : (index + 1);
 	int prev = (index == 0) ? (GMTP_SAMPLE-1) : (index - 1);
 	double elapsed = 0;
+	int loss = 0;
 
 	hist[index][TOTAL_BYTES] = rcv;
 	hist[index][DATA_BYTES] = rcv_data;
 	hist[index][TSTAMP] = now;
+	hist[index][SEQ] = seq;
 
 	double rcv_sample = hist[index][TOTAL_BYTES] - hist[next][TOTAL_BYTES];
 	double rcv_data_sample = hist[index][DATA_BYTES] - hist[next][DATA_BYTES];
 	double instant = hist[index][TSTAMP] - hist[next][TSTAMP];
-	if(i > 1)
+	if(i > 1) {
 		elapsed = hist[index][TSTAMP] - hist[prev][TSTAMP];
+		loss = (hist[index][SEQ] - hist[prev][SEQ]) - 1;
+	}
 
-	//index, seq, elapsed, bytes_rcv, rx_rate, inst_rx_rate
-	fprintf(stderr, "%d\t%d\t%0.2f\t%0.2f\t%0.2f\t%0.2f\r\n", i, seq, elapsed, rcv,
+	//index, seq, loss, elapsed, bytes_rcv, rx_rate, inst_rx_rate
+	fprintf(stderr, "%d\t%d\t%d\t%0.2f\t%0.2f\t%0.2f\t%0.2f\r\n", i, seq, loss, elapsed, rcv,
 			rcv*1000 / total_time, rcv_sample*1000 / instant);
 
 }

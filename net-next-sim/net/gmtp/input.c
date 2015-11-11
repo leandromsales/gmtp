@@ -21,6 +21,8 @@ static void gmtp_enqueue_skb(struct sock *sk, struct sk_buff *skb)
 	__skb_pull(skb, gmtp_hdr(skb)->hdrlen);
 	__skb_queue_tail(&sk->sk_receive_queue, skb);
 	skb_set_owner_r(skb, sk);
+
+	pr_info("Data ready! %p\n", sk);
 	sk->sk_data_ready(sk);
 }
 
@@ -441,9 +443,12 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 {
 	struct gmtp_sock *gp = gmtp_sk(sk);
 
+	gmtp_pr_func();
+
 	switch (gh->type) {
 	case GMTP_PKT_DATAACK:
 	case GMTP_PKT_DATA:
+		pr_info("Data: gmtp_enqueue_skb(sk, skb)\n");
 		gmtp_enqueue_skb(sk, skb);
 		return 0;
 	case GMTP_PKT_ACK:
@@ -509,18 +514,24 @@ int gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 {
 	struct gmtp_sock *gp = gmtp_sk(sk);
 
+	gmtp_pr_func();
 	/* Check sequence numbers... */
-	if(gmtp_check_seqno(sk, skb))
+	if(gmtp_check_seqno(sk, skb)) {
+		pr_info("gmtp_check_seqno(sk, skb) returned wrong...\n");
 		goto discard;
+	}
 
 	gp->gsr = gh->seq;
 	gp->rx_rtt = (u32) gh->server_rtt;
 	if(gh->type == GMTP_PKT_DATA)
 		gp->rx_last_orig_tstamp = gmtp_hdr_data(skb)->tstamp;
 
-	if(gp->role == GMTP_ROLE_REPORTER)
+	if(gp->role == GMTP_ROLE_REPORTER) {
+		pr_info("calling gmtp_deliver_input_to_mcc(sk, skb)\n");
 		gmtp_deliver_input_to_mcc(sk, skb);
+	}
 
+	pr_info("calling __gmtp_rcv_established(sk, skb, gh, len)\n");
 	return __gmtp_rcv_established(sk, skb, gh, len);
 discard:
 	__kfree_skb(skb);
