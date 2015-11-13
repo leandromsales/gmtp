@@ -91,7 +91,7 @@ static void print_stats(int i, double t1, double total, double total_data)
 }
 
 
-#define print_log_header() fprintf(stderr, "idx\tseq\tloss\telapsed\tbytes_rcv\trx_rate\tinst_rx_rate\r\n\r\n");
+#define print_log_header(log) fprintf(log, "idx\tseq\tloss\telapsed\tbytes_rcv\trx_rate\tinst_rx_rate\r\n\r\n");
 
 enum {
 	TOTAL_BYTES,
@@ -107,7 +107,7 @@ enum {
  * @rcv_data data bytes received
  */
 static void update_client_stats(int i, int seq, double begin, double rcv,
-		double rcv_data, double hist[][4])
+		double rcv_data, double hist[][4], FILE *log)
 {
 	double now = time_ms(tv);
 	double total_time = now - begin;
@@ -131,7 +131,7 @@ static void update_client_stats(int i, int seq, double begin, double rcv,
 	}
 
 	//index, seq, loss, elapsed, bytes_rcv, rx_rate, inst_rx_rate
-	fprintf(stderr, "%d\t%d\t%d\t%0.2f\t%0.2f\t%0.2f\t%0.2f\r\n", i, seq, loss, elapsed, rcv,
+	fprintf(log, "%d\t%d\t%d\t%0.2f\t%0.2f\t%0.2f\t%0.2f\r\n", i, seq, loss, elapsed, rcv,
 			rcv*1000 / total_time, rcv_sample*1000 / instant);
 
 }

@@ -1,3 +1,13 @@
 #!/bin/bash        
-
 NS3DIR="../../net-next-sim/tools/testing/libos/buildtop/source/ns-3-dce/"
+results="results"
+
+for i in $( ls $NS3DIR | grep "files-" ); do
+    echo Reading i: $i
+    for j in $( ls $NS3DIR/$i | grep ".log" ); do
+        echo "  $j"
+        cp $NS3DIR/$i/$j $results/
+    done
+done
+
+echo

@@ -3,7 +3,6 @@
 #include "sys/types.h"    
 #include "sys/socket.h"
 #include <sys/time.h>
-#include "string.h"    
 #include "netinet/in.h"    
 #include "netdb.h"  
 #include <netinet/in.h>
@@ -13,11 +12,13 @@
 #include <ctime>
 #include <cstdio>
 #include <cstring>
+#include <cstdlib>
 #include <string>
 #include <sys/ioctl.h>
 
 #include "gmtp.h"
 
+#define MY_TIME(time) (time - (double)1262300000000 + (double)(rand()%1000000))
 
 int main(int argc, char**argv)
 {
@@ -26,6 +27,18 @@ int main(int argc, char**argv)
 	struct hostent * server;
 	char * serverAddr;
 	char buffer[BUFF_SIZE];
+	srand(time(NULL));
+
+	double tlog = time_ms(tv);
+	char filename[17];
+	sprintf(filename, "gmtp-%0.0f.log", MY_TIME(time_ms(tv)));
+	FILE *log;
+	log = fopen (filename,"w");
+	if (log == NULL) {
+		printf("Error while creating file\n");
+		exit(1);
+	}
+	//symlink(filename, "gmtp.log");
 
 	// Col 0: total bytes
 	// Col 1: data bytes
@@ -37,6 +50,7 @@ int main(int argc, char**argv)
 		exit(1);
 	}
 	printf("Starting GMTP Client...\n");
+	printf("Logfile: %s\n", filename);
 	memset(&hist, 0, sizeof(hist));
 
 	serverAddr = argv[1];
@@ -61,7 +75,7 @@ int main(int argc, char**argv)
 	}
 
 	printf("Connected to the server...\r\n\r\n");
-	print_log_header();
+	print_log_header(log);
 
 	int i = 0, seq;
 	double rcv=0, rcv_data=0;
@@ -77,7 +91,7 @@ int main(int argc, char**argv)
 		rcv_data += bytes_read;
 		printf("Received (%d): %s\n", i, buffer);
 		char *seqstr = strtok(buffer, " ");
-		update_client_stats(i, atoi(seqstr), t1, rcv, rcv_data, hist);
+		update_client_stats(i, atoi(seqstr), t1, rcv, rcv_data, hist, log);
 
 	} while(strcmp(buffer, outstr) != 0);
 
@@ -91,6 +105,7 @@ int main(int argc, char**argv)
 	//     toda vez que ocorrer esse bug é porque o nó cliente não existe mais
 	//	21/08/15 - 4:00 AM
 	sleep(3);
+	fclose(log);
 
 	return 0;
 }

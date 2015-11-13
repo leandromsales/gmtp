@@ -34,6 +34,7 @@ int main(int argc, char *argv[])
 	bool verbose = false;
 	std::string core_rate = "100Mbps";
 	std::string local_rate = "10Mbps";
+	srand(time(NULL));
 
 //	std::string core_rate = "1000Mbps";
 //	std::string local_rate = "120Mbps";
@@ -248,7 +249,7 @@ int main(int argc, char *argv[])
 	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 	LinuxStackHelper::PopulateRoutingTables ();
 
-	cout << "Running GMTP simulation... ";
+	cout << "Running GMTP simulation..." << endl;
 
 	RunGtmpInter(server, Seconds(2.0), "off");
 	RunIp(all, Seconds(2.1), "route");
@@ -271,8 +272,9 @@ int main(int argc, char *argv[])
 	process.ParseArguments("10.1.1.2");
 
 	int i, j;
-	double t = 4.0;
+	double t = 3.5 + (double)(rand()%1000)/10000;
 	double step = 0.2;
+	cout << "Starting clients at " << t << " secs" << endl;
 	//for(i = clients.GetN()-1; i >= 0; --i, t += step) {
 	for(i = 0; i < clients.GetN(); ++i, t += step) {
 		apps = process.Install(clients.Get(i));
