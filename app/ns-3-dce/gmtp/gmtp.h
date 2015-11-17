@@ -46,7 +46,11 @@ enum gmtp_sockopt_codes {
 void set_gmtp_inter(int actived)
 {
 	int ok = 1;
+
+	std::cout << GMTP_SOCKOPT_ROLE_RELAY << ", " << GMTP_SOCKOPT_RELAY_ENABLED << std::endl;
+
 	int rsock = socket(PF_INET, SOCK_GMTP, IPPROTO_GMTP);
+
 	setsockopt(rsock, SOL_GMTP, GMTP_SOCKOPT_ROLE_RELAY, &ok, sizeof(int));
 	setsockopt(rsock, SOL_GMTP, GMTP_SOCKOPT_RELAY_ENABLED, &actived,
 			sizeof(int));

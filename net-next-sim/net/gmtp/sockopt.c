@@ -57,13 +57,17 @@ static int do_gmtp_setsockopt(struct sock *sk, int level, int optname,
 		else
 			err = -EINVAL;
 		break;
+
 	case GMTP_SOCKOPT_SERVER_TIMEWAIT:
+		/** FIXME Gotos to fix strange error... */
+		goto role_relay;
 		gmtp_pr_debug("GMTP_SOCKOPT_SERVER_TIMEWAIT");
 		if(gp->role != GMTP_ROLE_SERVER)
 			err = -EOPNOTSUPP;
 		else
 			gp->server_timewait = (val != 0)? 1 : 0;
 		break;
+role_relay:
 	case GMTP_SOCKOPT_ROLE_RELAY:
 		gmtp_pr_debug("GMTP_SOCKOPT_ROLE_RELAY");
 		if(val != 0 && gp->role == GMTP_ROLE_UNDEFINED)
@@ -73,6 +77,7 @@ static int do_gmtp_setsockopt(struct sock *sk, int level, int optname,
 		else
 			err = -EOPNOTSUPP;
 		break;
+relay_enabled:
 	case GMTP_SOCKOPT_RELAY_ENABLED:
 		gmtp_pr_debug("GMTP_SOCKOPT_RELAY_ENABLED");
 		if(gp->role != GMTP_ROLE_RELAY)
@@ -81,6 +86,8 @@ static int do_gmtp_setsockopt(struct sock *sk, int level, int optname,
 			gmtp_info->relay_enabled = (val != 0) ? 1 : 0;
 		break;
 	default:
+		/** FIXME Gotos to fix strange error... */
+		goto relay_enabled;
 		err = -ENOPROTOOPT;
 		break;
 	}

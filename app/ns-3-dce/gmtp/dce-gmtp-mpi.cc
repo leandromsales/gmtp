@@ -1,33 +1,42 @@
-#include "ns3/network-module.h"
 #include "ns3/core-module.h"
-#include "ns3/dce-module.h"
-#include "ns3/csma-module.h"
+#include "ns3/network-module.h"
 #include "ns3/internet-module.h"
-#include "ns3/attribute.h"
+#include "ns3/applications-module.h"
+#include "ns3/dce-module.h"
+#include "ns3/mpi-module.h"
+#include "ns3/csma-module.h"
 
 #include "dce-gmtp.h"
 
 using namespace ns3;
 using namespace std;
 
-// Network topology
-// //
-//			     s
-//			    /
-//			   /
-//  c1.0		  r0		c2.0
-//     \ 		 /		 /
-//      \          	/		/
-//       r1-----r4-----r3------r5------r2
-//      /		|		\
-//     /  	       (c)		 \
-//   c1.2				 c2.2
-//    ..				  ..
-//   c1.n				 c2.m
-// //
+// Run Hint :  $ mpirun -np 2 dce-gmtp-mpi
 
 int main(int argc, char *argv[])
 {
+	// Distributed simulation setup
+	MpiInterface::Enable(&argc, &argv);
+	GlobalValue::Bind("SimulatorImplementationType",
+			StringValue("ns3::DistributedSimulatorImpl"));
+
+	uint32_t systemId = MpiInterface::GetSystemId();
+	uint32_t systemCount = MpiInterface::GetSize();
+
+	// Check for valid distributed parameters.
+	// Must have 2 and only 2 Logical Processors (LPs)
+
+	cout << "systemId: " << systemId << ", systemCount: " << systemCount << endl;
+
+	if(systemCount != 2) {
+		std::cout << "This simulation requires 2 and only 2 logical processors." << std::endl;
+		return 1;
+	} else {
+		std::cout << "Simulation running with 2 logical processors." << std::endl;
+	}
+
+	//-------------------------------------------------
+
 	int nclients = 1;
 	int ncores = 1;
 	int nrelays = 1;
@@ -39,20 +48,24 @@ int main(int argc, char *argv[])
 	std::string delay = "1ms";
 	bool middleman = false;
 
+	//-------------------------------------------------
+
 	CommandLine cmd;
-	cmd.AddValue ("nclients", "Number of clients in each router", nclients);
-	cmd.AddValue ("ncores", "Number of cores in network (except server core)", ncores);
-	cmd.AddValue ("nrelays", "Number of relays for each core", nrelays);
-	cmd.AddValue ("delay", "Channel delay. Default value is 1ms", delay);
-	cmd.AddValue ("verbose", "Print routing details", verbose);
-	cmd.AddValue ("middleman", "Middleman intercepting requests", middleman);
+	cmd.AddValue("nclients", "Number of clients in each router", nclients);
+	cmd.AddValue("ncores",	"Number of cores in network (except server core)", ncores);
+	cmd.AddValue("nrelays", "Number of relays for each core", nrelays);
+	cmd.AddValue("delay", "Channel delay. Default value is 1ms", delay);
+	cmd.AddValue("verbose", "Print routing details", verbose);
+	cmd.AddValue("middleman", "Middleman intercepting requests", middleman);
 	cmd.Parse(argc, argv);
+
+	//-------------------------------------------------
 
 	cout << "Creating nodes..." << endl;
 
 	/* Server */
-	Ptr<Node> server = CreateObject<Node>();
-	Ptr<Node> rserver = CreateObject<Node>();
+	Ptr<Node> server = CreateObject<Node>(0);
+	Ptr<Node> rserver = CreateObject<Node>(0);
 	NodeContainer subnet_server(rserver, server);
 
 	NodeContainer internet;
@@ -101,6 +114,8 @@ int main(int argc, char *argv[])
 		cout << "files-" << clients.Get(i)->GetId() << ", ";
 	cout << endl;
 
+	//-------------------------------------------------
+
 	DceManagerHelper dceManager;
 	dceManager.SetTaskManagerAttribute("FiberManagerType",
 			StringValue("UcontextFiberManager"));
@@ -132,6 +147,8 @@ int main(int argc, char *argv[])
 	for(int i = 0; i < relays.GetN(); ++i) {
 		dcc[i] = local_csma.Install(vclients[i]);
 	}
+
+	//-------------------------------------------------
 
 	cout << "Create networks and assign IPv4 Addresses.\n" << endl;
 	Ipv4AddressHelper address;
@@ -174,6 +191,8 @@ int main(int argc, char *argv[])
 			}
 		}
 	}
+
+	//-------------------------------------------------
 
 	// Just printing IPs
 	cout << "Server (files-0): " << iss.GetAddress(1, 0) << endl;
@@ -219,6 +238,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	//-------------------------------------------------
 
 	if(middleman) {
 		uint32_t b_addr = 0xA800000; /* 10.128.0.0 */
@@ -239,45 +259,111 @@ int main(int argc, char *argv[])
 			if(i==4)
 				RunApp("gmtp-client", midc, Seconds(3.5), "10.1.1.2", 1 << 16);
 			/*else
-				RunApp("gmtp-client", midc, Seconds(4.5), "10.1.1.2", 1 << 16);*/
+					RunApp("gmtp-client", midc, Seconds(4.5), "10.1.1.2", 1 << 16);*/
 		}
 	}
 
+	//-------------------------------------------------
 	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 	LinuxStackHelper::PopulateRoutingTables ();
 
+	//-------------------------------------------------
+
 	cout << "Running GMTP simulation..." << endl;
 
-	RunGtmpInter(server, Seconds(2.0), "off");
-	RunIp(all, Seconds(2.1), "route");
+	DceApplicationHelper dce;
+	ApplicationContainer apps;
+	dce.SetStackSize (1 << 16);
 
-	RunIp(server, Seconds(2.2), "addr list sim0");
-	RunIp(clients, Seconds(2.2), "addr list sim0");
-	RunIp(rserver, Seconds(2.2), "addr list sim0");
-	RunIp(rserver, Seconds(2.2), "addr list sim1");
+	if(1 == systemId) {
+		cout << "Disabling GMTP-Inter at server..." << endl;
+		dce.SetBinary ("gmtp-inter");
+		dce.ResetArguments ();
+		dce.ParseArguments("off");
+		apps = dce.Install (server);
+		apps.Start (Seconds (2.0));
+//		RunGtmpInter(server, Seconds(2.0), "off");
 
-	RunGtmpInter(clients, Seconds(2.3), "off");
+		RunIp(all, Seconds(2.1), "route");
+		RunIp(server, Seconds(2.2), "addr list sim0");
+		RunIp(clients, Seconds(2.2), "addr list sim0");
+		RunIp(rserver, Seconds(2.2), "addr list sim0");
+		RunIp(rserver, Seconds(2.2), "addr list sim1");
 
-	RunApp("gmtp-server", server, Seconds(3.0), 1 << 31);
+		for(int i=0; i<clients.GetN(); ++i) {
+			cout << "Disabling GMTP-Inter at client " << i << "..." << endl;
+			dce.SetBinary("gmtp-inter");
+			dce.ResetArguments();
+			dce.ParseArguments("off");
+			apps = dce.Install (clients.Get(i));
+			apps.Start (Seconds (2.5));
+		}
+//		RunGtmpInter(clients, Seconds(2.3), "off");
+
+		cout << "Starting GMTP server..." << endl;
+		dce.SetStackSize (1 << 31);
+		dce.SetBinary("udp-server");
+		dce.ResetArguments();
+		apps = dce.Install(server);
+		apps.Start(Seconds(3.0));
+//		RunApp("gmtp-server", server, Seconds(3.0), 1 << 31);
+	}
 	/*RunAppMulti("gmtp-client", clients, 4.0, "10.1.1.2", 1 << 16, 3);*/
 
-	ns3::DceApplicationHelper process;
-	ns3::ApplicationContainer apps;
-	process.SetBinary("gmtp-client");
-	process.SetStackSize(1 << 16);
-	process.ResetArguments();
-	process.ParseArguments("10.1.1.2");
-
-	int i, j;
-	double t = 3.5 + (double)(rand()%1000)/10000;
-	double step = 0.2;
-	cout << "Starting clients at " << t << " secs" << endl;
-	//for(i = clients.GetN()-1; i >= 0; --i, t += step) {
-	for(i = 0; i < clients.GetN(); ++i, t += step) {
-		apps = process.Install(clients.Get(i));
-		apps.Start(ns3::Seconds(t));
+	if(0 == systemId) {
+		cout << "Starting GMTP client..." << endl;
+		dce.SetBinary("udp-client");
+		dce.SetStackSize(1 << 16);
+		dce.ResetArguments();
+		dce.ParseArguments("10.1.1.2");
+		apps = dce.Install(clients.Get(0));
+		apps.Start(Seconds(3.5));
 	}
 
+//	if(0 == systemId) {
+//		int i, j;
+//		double t = 3.5 + (double)(rand()%1000)/10000;
+//		double step = 0.2;
+//		cout << "Starting clients at " << t << " secs" << endl;
+//		for(i = 0; i < clients.GetN(); i+=2, t += step) {
+//			cout << "i(0): " << i << endl;
+//			cout << clients.Get(i) << endl;
+////			apps = process.Install(clients.Get(i));
+////			apps.Start(ns3::Seconds(t));
+//		}
+//	}
+//
+//	if(1 == systemId) {
+//		int i, j;
+//		double t = 3.6 + (double)(rand()%1000)/10000;
+//		double step = 0.2;
+//		cout << "Starting clients at " << t << " secs" << endl;
+//		for(i = 1; i < clients.GetN(); i+=2, t += step) {
+//			cout << "i(1): " << i << endl;
+//			cout << clients.Get(i) << endl;
+////			apps = process.Install(clients.Get(i));
+////			apps.Start(ns3::Seconds(t));
+//		}
+//	}
+
+	//-------------------------------------------------
+
+//	if(0 == systemId) {
+//		dce.SetBinary("gmtp-server");
+//		dce.ResetArguments();
+//		apps = dce.Install(server);
+//		apps.Start(Seconds(4.0));
+//	}
+//
+//	if(1 == systemId) {
+//		dce.SetBinary("gmtp-client");
+//		dce.ResetArguments();
+//		dce.AddArgument("10.1.1.1");
+//		apps = dce.Install(node2);
+//		apps.Start(Seconds(4.5));
+//	}
+
+	//-------------------------------------------------
 	local_csma.EnablePcapAll("dce-gmtp-master");
 	core_csma.EnablePcapAll("dce-gmtp-master");
 
@@ -291,6 +377,10 @@ int main(int argc, char *argv[])
 
 	cout << "Done." << endl;
 
+	//-------------------------------------------------
+
+	// Exit the MPI execution environment
+	MpiInterface::Disable();
 	return 0;
 
 }

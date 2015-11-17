@@ -5,7 +5,6 @@ table_from_file <- function(filename) {
 
 table_from_files <- function(logfiles, key) {
   table <- table_from_file(logfiles[1])
-  
   i <- 2
   while(i <= length(logfiles)){
     sprintf ("Logfile: %s", logfiles[i])
@@ -26,7 +25,7 @@ percent <- function(val, total) {
 
 plot_graph <- function(colunm, mainlabel, datalabel, extra=0){
   #hist(colunm, nclass=40, main=mainlabel, xlab=datalabel)
-  plot(colunm, type="n", main=mainlabel, xlab="Tempo", ylab=datalabel)
+  plot(colunm, type="n", main=mainlabel, xlab="Pacotes Recebidos", ylab=datalabel)
   lines(colunm)
   if(extra) {
     lines(lowess(colunm), col="yellow", lwd=3)
@@ -59,13 +58,12 @@ sub_table <- function(table, col, key){
      m[i,2] <- (sum(tmp)/ncol(tmp))
    }
    new_table <- merge(new_table, m, by=key)
-  
   return(new_table)
 }
 
 ## ============== START ===========
 print("======= Starting ========")
-gmtp_logs <- Sys.glob("results/gmtp-*.log")
+gmtp_logs <- Sys.glob("~/gmtp/app/ns-3-dce/results/gmtp-*.log")
 gmtp_len <- length(gmtp_logs)
 
 gmtp <- table_from_files(gmtp_logs, "idx")
@@ -80,25 +78,37 @@ main_label <- "GMTP"
 
 ## ============== LOSSES ===========
 report(seq_gmtp$mean)
-plot(seq_gmtp$mean, type="n", main="GMTP - Número de Sequencia", xlab="Tempo", ylab="Número de Sequencia")
+plot(seq_gmtp$mean, type="n", main="GMTP - Número de Sequencia", xlab="Pacotes Recebidos", ylab="Número de Sequencia")
 lines(seq_gmtp$mean, lwd=3)
 lines(gmtp$idx, col="red", lwd=2)
 
 report(loss_gmtp$mean)
-plot(loss_gmtp$mean, type="n", main="GMTP - Perdas", xlab="Tempo", ylab="Número de Perdas")
+plot(loss_gmtp$mean, type="n", main="GMTP - Perdas", xlab="Pacotes Recebidos", ylab="Número de Perdas")
 lines(loss_gmtp$mean, lwd=3)
 
-#pkts_sent <- gmtp$seq[length(gmtp$seq)]  - gmtp$seq[1]
-#pkts_rcv <- length(gmtp$idx)
-#losses01 <- pkts_sent - pkts_rcv
-#perc_losses01 = percent(losses01, pkts_sent)
+# pkts_sent <- c(ncol(seq_gmtp))
+# pkts_rcv <- length(seq_gmtp$idx);
+# losses01 <- c(ncol(seq_gmtp));
+# perc_losses01 <- c(ncol(seq_gmtp));
+# for(i in (2:ncol(seq_gmtp)-1))
+# {
+#   pkts_sent[i] <- seq_gmtp[length(seq_gmtp$idx), i] - seq_gmtp[1, i];
+#   losses01[i] <- pkts_sent[i]- pkts_rcv;
+#   perc_losses01[i] = percent(losses01[i], pkts_sent[i])
+# }
+# #report(losses01);
+# report(perc_losses01);
 # 
+# losses02 <- sum(loss_gmtp$mean);
+# perc_losses02 = percent(losses02, length(loss_gmtp$idx))
+# cat("Losses (2): "); cat(perc_losses02); cat("%");
+
 #losses <- sum(loss_gmtp$mean)
 #perc_losses = percent(losses, pkts_sent)
 #cat("Losses: "); print(perc_losses); cat("%");
 
 report(elapsed_gmtp$mean)
-plot(elapsed_gmtp$mean, type="n", main="GMTP - Intervalo entre dois pacotes", xlab="Tempo", ylab="Intervalo entre dois pacotes (ms)")
+plot(elapsed_gmtp$mean, type="n", main="GMTP - Intervalo entre dois pacotes", xlab="Pacotes Recebidos", ylab="Intervalo entre dois pacotes (ms)")
 points(elapsed_gmtp$mean)
 lines(lowess(elapsed_gmtp$mean), col="yellow", lwd=3)
 abline(lm(elapsed_gmtp$mean~gmtp$idx), col="green", lwd=3)
@@ -112,8 +122,8 @@ plot_graph(rate_gmtp$mean, "GMTP - Taxa de Recepção Total", "Taxa de Recepçã
 
 report(inst_rate_gmtp$mean)
 plot_graph(inst_rate_gmtp$mean, "GMTP - Taxa de Recepção", "Taxa de Recepção (B/s)")
-# lines(inst_rate_gmtp$inst_rx_rate.x, col="red")
-# lines(inst_rate_gmtp$inst_rx_rate.y, col="green")
-# lines(inst_rate_gmtp$inst_rx_rate, col="blue")
+#  lines(inst_rate_gmtp$inst_rx_rate.x, col="red")
+#  lines(inst_rate_gmtp$inst_rx_rate.y, col="green")
+#  lines(inst_rate_gmtp$inst_rx_rate, col="blue")
 
 
