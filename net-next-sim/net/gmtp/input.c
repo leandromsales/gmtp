@@ -298,6 +298,7 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 	if(gh->type == GMTP_PKT_REGISTER_REPLY) {
 		gmtp_add_relayid(skb);
 		gmtp_send_route_notify(sk, skb);
+		gp->role = GMTP_ROLE_REPORTER;
 	} else
 		gmtp_send_ack(sk);
 
@@ -452,15 +453,31 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 		gmtp_enqueue_skb(sk, skb);
 		return 0;
 	case GMTP_PKT_ACK:
+	case GMTP_PKT_FEEDBACK:
 		if(gp->role == GMTP_ROLE_SERVER) {
-			struct gmtp_hdr_ack *gack = gmtp_hdr_ack(skb);
-			gp->tx_rtt = jiffies_to_msecs(jiffies) - gack->orig_tstamp;
+			__be32 otstamp;
+			__be32 new_tx = gh->transm_r;
+
+			if(gh->type == GMTP_PKT_ACK)
+				otstamp = gmtp_hdr_ack(skb)->orig_tstamp;
+			else
+				otstamp = gmtp_hdr_feedback(skb)->orig_tstamp;
+
+			gp->tx_rtt = jiffies_to_msecs(jiffies) - otstamp;
 			gp->tx_avg_rtt = rtt_ewma(gp->tx_avg_rtt, gp->tx_rtt,
 					GMTP_RTT_WEIGHT);
-			gp->tx_ucc_rate = min((__be32 )gp->tx_max_rate,
-					gh->transm_r);
 
-			pr_info("ucc tx: %lu B/s, from: %pI4\n", gp->tx_ucc_rate,
+			/* Avoid super TX reduction */
+			if(new_tx < DIV_ROUND_CLOSEST(gp->tx_media_rate, 8)) {
+				pr_info("Avoiding super TX reduction...\n");
+				pr_info("gh->tx = %u\n", gh->transm_r);
+				pr_info("max_tx: %lu\n", gp->tx_media_rate);
+				new_tx = DIV_ROUND_CLOSEST(gp->tx_media_rate, 8);
+			}
+
+			gp->tx_ucc_rate = min((__be32 )gp->tx_max_rate, new_tx);
+
+			pr_info("cong. control tx: %lu B/s, from: %pI4\n", gp->tx_ucc_rate,
 					&ip_hdr(skb)->saddr);
 		}
 		goto discard;
