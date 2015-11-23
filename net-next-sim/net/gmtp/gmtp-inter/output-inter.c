@@ -55,7 +55,7 @@ int gmtp_inter_register_reply_out(struct sk_buff *skb,
 
 	gmtp_pr_func();
 
-	if(gmtp_inter_ip_local(iph->saddr)) {
+	if(gmtp_local_ip(iph->saddr)) {
 		return gmtp_inter_register_reply_rcv(skb, entry,
 				GMTP_INTER_LOCAL);
 	}
@@ -135,7 +135,7 @@ int gmtp_inter_data_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	if(entry->state != GMTP_INTER_TRANSMITTING)
 		return NF_DROP;
 
-	if(gmtp_inter_ip_local(iph->saddr))
+	if(gmtp_local_ip(iph->saddr))
 		goto send;
 
 	/*if(entry->buffer->qlen > entry->buffer_min) {

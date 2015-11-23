@@ -238,9 +238,9 @@ static int gmtp_inter_transmitting_register_reply_rcv(struct sk_buff *skb,
 
 	/* TODO write my ucc tx_rate here... */
 
-	gmtp_inter_add_relayid(skb);
+	gmtp_add_relayid(skb);
 
-	if(!gmtp_inter_ip_local(iph->daddr))
+	if(!gmtp_local_ip(iph->daddr))
 		return NF_ACCEPT;
 
 	gh_route_n = gmtp_inter_make_route_hdr(skb);
@@ -473,12 +473,12 @@ int gmtp_inter_ack_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 		}
 	}
 
-	if(!gmtp_inter_ip_local(iph->daddr)) {
+	if(!gmtp_local_ip(iph->daddr)) {
 		if(reporter == NULL && relay == NULL)
 			return NF_ACCEPT;
 	}
 
-	if(gmtp_inter_ip_local(iph->daddr)) {
+	if(gmtp_local_ip(iph->daddr)) {
 		if(entry->route_pending) {
 			entry->route_pending = false;
 			return NF_ACCEPT;
@@ -511,7 +511,7 @@ int gmtp_inter_route_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	ether_addr_copy(relay->mac_addr, eth->h_source);
 	relay->dev = skb->dev;
 
-	if(gmtp_inter_ip_local(iph->daddr)) { /* I am the server itself */
+	if(gmtp_local_ip(iph->daddr)) { /* I am the server itself */
 		if(route->nrelays > 0)
 			/*gmtp_add_server_entry(server_hashtable, gh->flowname,
 					route)*/;
@@ -660,7 +660,7 @@ int gmtp_inter_data_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 
-	if(!gmtp_inter_ip_local(iph->daddr)) /* Data is not to me */
+	if(!gmtp_local_ip(iph->daddr)) /* Data is not to me */
 		return NF_ACCEPT;
 
 	if(unlikely(entry->state == GMTP_INTER_REGISTER_REPLY_RECEIVED)) {
