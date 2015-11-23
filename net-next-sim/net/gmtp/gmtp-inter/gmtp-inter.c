@@ -5,11 +5,8 @@
 #include <linux/skbuff.h>
 #include <linux/ip.h>
 #include <linux/inet.h>
-#include <linux/dirent.h>
 #include <linux/inetdevice.h>
-#include <linux/crypto.h>
 #include <linux/err.h>
-#include <linux/scatterlist.h>
 #include <linux/if.h>
 #include <linux/ioctl.h>
 
@@ -32,116 +29,6 @@ static struct nf_hook_ops nfho_local_in;
 static struct nf_hook_ops nfho_local_out;
 static struct nf_hook_ops nfho_post_routing;
 struct gmtp_inter gmtp_inter;
-
-/* FIXME This fails at NS-3-DCE */
-unsigned char *gmtp_build_md5(unsigned char *buf)
-{
-	struct scatterlist sg;
-	struct crypto_hash *tfm;
-	struct hash_desc desc;
-	unsigned char *output;
-	size_t buf_size = sizeof(buf) - 1;
-	 __u8 md5[21];
-
-	gmtp_print_function();
-
-	output = kmalloc(MD5_LEN * sizeof(unsigned char), GFP_KERNEL);
-	tfm = crypto_alloc_hash("md5", 0, CRYPTO_ALG_ASYNC);
-
-	if(output == NULL || IS_ERR(tfm)) {
-		gmtp_pr_warning("Allocation failed...");
-		return NULL;
-	}
-	desc.tfm = tfm;
-	desc.flags = 0;
-
-	crypto_hash_init(&desc);
-
-	sg_init_one(&sg, buf, buf_size);
-	crypto_hash_update(&desc, &sg, buf_size);
-	crypto_hash_final(&desc, output);
-
-	flowname_strn(md5, output, MD5_LEN);
-	printk("Output md5 = %s\n", md5);
-
-	crypto_free_hash(tfm);
-
-	return output;
-}
-
-unsigned char *gmtp_inter_build_relay_id(void)
-{
-	struct socket *sock = NULL;
-	struct net_device *dev = NULL;
-	struct net *net;
-
-	int i, retval, length = 0;
-	char mac_address[6];
-
-	char buffer[50];
-	u8 *str[30];
-
-	gmtp_print_function();
-
-	retval = sock_create(AF_INET, SOCK_STREAM, 0, &sock);
-	net = sock_net(sock->sk);
-
-	for(i = 2; (dev = dev_get_by_index_rcu(net, i)) != NULL; ++i) {
-		memcpy(&mac_address, dev->dev_addr, 6);
-		length += bytes_added(sprintf((char*)(buffer + length), str));
-	}
-
-	sock_release(sock);
-	return gmtp_build_md5(buffer);
-}
-
-__be32 gmtp_inter_device_ip(struct net_device *dev)
-{
-	struct in_device *in_dev;
-	struct in_ifaddr *if_info;
-
-	if(dev == NULL)
-		return 0;
-
-	in_dev = (struct in_device *)dev->ip_ptr;
-	if_info = in_dev->ifa_list;
-	for(; if_info; if_info = if_info->ifa_next) {
-		/* just return the first entry for now */
-		return if_info->ifa_address;
-	}
-
-	return 0;
-}
-
-bool gmtp_inter_ip_local(__be32 ip)
-{
-	struct socket *sock = NULL;
-	struct net_device *dev = NULL;
-	struct net *net;
-
-	int i, length = 0;
-	char mac_address[6];
-
-	char buffer[50];
-	u8 *str[30];
-
-	bool ret = false;
-
-	sock_create(AF_INET, SOCK_STREAM, 0, &sock);
-	net = sock_net(sock->sk);
-
-	for(i = 2; (dev = dev_get_by_index_rcu(net, i)) != NULL; ++i) {
-		__be32 dev_ip = gmtp_inter_device_ip(dev);
-		if(ip == dev_ip) {
-			ret = true;
-			break;
-		}
-	}
-
-	sock_release(sock);
-	return ret;
-}
-
 
 __be32 get_mcst_v4_addr(void)
 {
@@ -228,7 +115,7 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 		struct gmtp_relay *relay;
 
 		if(gh->type == GMTP_PKT_REQUEST) {
-			if(gmtp_inter_ip_local(iph->saddr)
+			if(gmtp_local_ip(iph->saddr)
 					&& iph->saddr != iph->daddr)
 				return NF_ACCEPT;
 
@@ -246,7 +133,7 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 
 		switch(gh->type) {
 		case GMTP_PKT_REGISTER:
-			if(!gmtp_inter_ip_local(iph->daddr))
+			if(!gmtp_local_ip(iph->daddr))
 				ret = gmtp_inter_register_rcv(skb);
 			break;
 		case GMTP_PKT_REGISTER_REPLY:
@@ -268,7 +155,7 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 		default:
 			relay = gmtp_get_relay(&entry->relays->list,
 					iph->daddr, gh->dport);
-			if(!gmtp_inter_ip_local(iph->daddr) && (relay == NULL))
+			if(!gmtp_local_ip(iph->daddr) && (relay == NULL))
 				return NF_ACCEPT;
 		}
 
@@ -399,7 +286,7 @@ unsigned int hook_func_post_routing(unsigned int hooknum, struct sk_buff *skb,
 			return NF_ACCEPT;
 
 		if(gh->type == GMTP_PKT_DATA) {
-			if(!gmtp_inter_ip_local(iph->daddr) ||
+			if(!gmtp_local_ip(iph->daddr) ||
 			    GMTP_SKB_CB(skb)->jumped) {
 				if(gmtp_inter_has_clients(skb, entry))
 					return NF_ACCEPT;
@@ -414,7 +301,7 @@ unsigned int hook_func_post_routing(unsigned int hooknum, struct sk_buff *skb,
 			ret = gmtp_inter_register_reply_out(skb, entry);
 			break;
 		case GMTP_PKT_DATA:
-			if(gmtp_inter_ip_local(iph->daddr)
+			if(gmtp_local_ip(iph->daddr)
 					|| GMTP_SKB_CB(skb)->jumped) {
 				ret = gmtp_inter_data_out(skb, entry);
 			}
@@ -462,8 +349,6 @@ static void register_hooks(void)
 int init_module()
 {
 	int ret = 0;
-	__u8 relay_id[21];
-	unsigned char *rid;
 
 	gmtp_pr_func();
 	gmtp_print_debug("Starting GMTP-Inter");
@@ -487,16 +372,6 @@ int init_module()
 	gmtp_inter.ucc_rx_tstamp = 0;
 	gmtp_inter.rx_rate_wnd = 100;
 	memset(&gmtp_inter.mcst, 0, 4 * sizeof(unsigned char));
-
-	rid = gmtp_inter_build_relay_id();
-	if(rid == NULL) {
-		gmtp_pr_error("Relay ID build failed. Creating a random id.");
-		get_random_bytes(gmtp_inter.relay_id, GMTP_FLOWNAME_LEN);
-	} else
-		memcpy(gmtp_inter.relay_id, rid, GMTP_FLOWNAME_LEN);
-
-	flowname_strn(relay_id, gmtp_inter.relay_id, MD5_LEN);
-	pr_info("Relay ID = %s\n", relay_id);
 
 	gmtp_inter.hashtable = gmtp_inter_create_hashtable(64);
 	if(gmtp_inter.hashtable == NULL) {

@@ -249,6 +249,7 @@ int main(int argc, char *argv[])
 	cout << "Running GMTP simulation..." << endl;
 
 	RunGtmpInter(server, Seconds(2.0), "off");
+//	RunGtmpInter(relays, Seconds(2.0), "off");
 	RunIp(all, Seconds(2.1), "route");
 
 	RunIp(server, Seconds(2.2), "addr list sim0");

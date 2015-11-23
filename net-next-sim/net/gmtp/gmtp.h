@@ -105,6 +105,8 @@ static inline u32 rtt_ewma(const u32 avg, const u32 newval, const u32 weight)
 #define GMTP_ACK_INTERVAL ((unsigned int)(HZ))
 #define GMTP_ACK_TIMEOUT  (4 * GMTP_ACK_INTERVAL)
 
+#define MD5_LEN GMTP_RELAY_ID_LEN
+
 /* Int to __U12 operations */
 #define TO_U12(x) 	min((U16_MAX >> 4), (x))
 #define SUB_U12(a, b) 	min((U16_MAX >> 4), (a-b))
@@ -133,6 +135,11 @@ static inline u32 gmtp_get_elect_timeout(struct gmtp_sock *gp)
 }
 
 /** proto.c */
+unsigned char *gmtp_build_md5(unsigned char *buf);
+unsigned char *gmtp_inter_build_relay_id(void);
+__be32 gmtp_dev_ip(struct net_device *dev);
+bool gmtp_local_ip(__be32 ip);
+void gmtp_add_relayid(struct sk_buff *skb);
 int gmtp_init_sock(struct sock *sk);
 void gmtp_done(struct sock *sk);
 void gmtp_close(struct sock *sk, long timeout);
@@ -177,6 +184,7 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 
 /** output.c */
 void gmtp_send_ack(struct sock *sk);
+void gmtp_send_route_notify(struct sock *sk, struct sk_buff *rcv_skb);
 void gmtp_send_elect_request(struct sock *sk, unsigned long interval);
 void gmtp_send_elect_response(struct sock *sk, __u8 code);
 void gmtp_send_feedback(struct sock *sk);
@@ -219,6 +227,7 @@ unsigned int gmtp_poll(struct file *file, struct socket *sock, poll_table *wait)
 
 /** GMTP structs and etc **/
 struct gmtp_info {
+	unsigned char		relay_id[GMTP_RELAY_ID_LEN];
 	unsigned char 		relay_enabled:1;
 	int pkt_sent;
 
@@ -258,6 +267,7 @@ static inline void kfree_gmtp_info(struct gmtp_info *gmtp_info)
  */
 struct gmtp_skb_cb {
 	__u8 type :5;
+	__be16 	hdrlen:11;
 	__u8 reset_code,
 		reset_data[3];
 	__u8 elect_code:2;

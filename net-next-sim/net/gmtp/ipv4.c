@@ -1256,10 +1256,11 @@ static unsigned int hook_func_gmtp_out(unsigned int hooknum, struct sk_buff *skb
 				gmtp_pr_info("Changing TTL to %d\n", new_ttl);
 				iph->ttl = new_ttl;
 				ip_send_check(iph);
-			} else
-				pr_info("Keeping default TTL (%d)\n", iph->ttl);
+			} else {
+				pr_info("Auto promoting to relay\n");
+				gh->type = GMTP_PKT_REGISTER;
+			}
 		}
-
 	}
 
 	return NF_ACCEPT;

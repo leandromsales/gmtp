@@ -78,7 +78,7 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 		max_nclients = new_reporter(entry);
 
 		entry->dev_out = skb->dev;
-		entry->my_addr = gmtp_inter_device_ip(skb->dev);
+		entry->my_addr = gmtp_dev_ip(skb->dev);
 		pr_info("My addr: %pI4\n", &entry->my_addr);
 		entry->my_port = gh->sport;
 		code = GMTP_REQNOTIFY_CODE_WAIT;
@@ -171,7 +171,7 @@ int gmtp_inter_register_rcv(struct sk_buff *skb)
 				gh->flowname);
 
 		entry->dev_out = skb->dev;
-		entry->my_addr = gmtp_inter_device_ip(skb->dev);
+		entry->my_addr = gmtp_dev_ip(skb->dev);
 		entry->my_port = gh->sport;
 		relay = gmtp_inter_create_relay(skb, entry, gr->relay_id);
 
@@ -195,7 +195,7 @@ int gmtp_inter_register_local_in(struct sk_buff *skb,
 	if(entry->state != GMTP_INTER_WAITING_REGISTER_REPLY)
 		return NF_DROP;
 
-	entry->my_addr = gmtp_inter_device_ip(skb->dev);
+	entry->my_addr = gmtp_dev_ip(skb->dev);
 	entry->my_port = gh->sport;
 	ether_addr_copy(entry->request_mac_addr, eth->h_source);
 
@@ -400,7 +400,7 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 		entry->dev_in = skb->dev;
 
 		/* Add relay information in REGISTER-REPLY packet) */
-		gmtp_inter_add_relayid(skb);
+		gmtp_add_relayid(skb);
 
 		pr_info("UPDATING Tx Rate...\n");
 		gmtp_inter.worst_rtt = max(gmtp_inter.worst_rtt,

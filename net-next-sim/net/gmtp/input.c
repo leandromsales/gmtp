@@ -294,7 +294,12 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 		__kfree_skb(skb);
 		return 0;
 	}
-	gmtp_send_ack(sk);
+
+	if(gh->type == GMTP_PKT_REGISTER_REPLY) {
+		gmtp_add_relayid(skb);
+		gmtp_send_route_notify(sk, skb);
+	} else
+		gmtp_send_ack(sk);
 
 	if(gp->role == GMTP_ROLE_REPORTER) {
 		if(mcc_rx_init(sk))
