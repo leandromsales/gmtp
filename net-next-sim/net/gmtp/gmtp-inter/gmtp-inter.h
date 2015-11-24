@@ -58,16 +58,16 @@ extern struct gmtp_hashtable* server_hashtable;
  * @hashtable: GMTP-inter relay table
  */
 struct gmtp_inter {
-	unsigned int 		capacity;
-	unsigned int		buffer_len;
+	int 			capacity;
+	int			buffer_len;
 
 	unsigned int 		total_bytes_rx;
 	unsigned int 		total_rx;
-	unsigned int 		ucc_rx;
+	int 			ucc_rx;
 	unsigned int        	ucc_bytes;
 	unsigned long  		ucc_rx_tstamp;
 	unsigned int 		rx_rate_wnd;
-	unsigned int		h_user;
+	int			h_user;
 	unsigned int		worst_rtt;
 
 	unsigned char		mcst[4];

@@ -235,8 +235,8 @@ int main(int argc, char *argv[])
 			Ipv4InterfaceContainer ic = address.Assign(snr3);
 			RunGtmpInter(midc, Seconds(2.3), "off");
 			//		RunApp("gmtp-client", client_r3, Seconds(3.5), "10.1.1.2", 1 << 16);
-			/*if(i%2)*/
-			if(i==4)
+			if(i%2)
+			/*if(i==4)*/
 				RunApp("gmtp-client", midc, Seconds(3.5), "10.1.1.2", 1 << 16);
 			/*else
 				RunApp("gmtp-client", midc, Seconds(4.5), "10.1.1.2", 1 << 16);*/
