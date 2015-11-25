@@ -8,11 +8,11 @@
 #ifndef UCC_H_
 #define UCC_H_
 
-#define GMTP_ALPHA(X) DIV_ROUND_CLOSEST(X * 30, 100) /* X*0.3 */
-#define GMTP_BETA(X)  DIV_ROUND_CLOSEST(X * 60, 100) /* X*0.6 */
+#define GMTP_ALPHA(X) DIV_ROUND_CLOSEST((X) * 30, 100) /* X*0.3 */
+#define GMTP_BETA(X)  DIV_ROUND_CLOSEST((X) * 60, 100) /* X*0.6 */
 #define GMTP_GHAMA(X) (X) /* DIV_ROUND_CLOSEST(X * 100, 100)*/ /* X*1.0 */
-#define GMTP_THETA(X) DIV_ROUND_CLOSEST(X * 2000, 100000) /* X*0.02 */
-#define GMTP_ONE_MINUS_THETA(X) DIV_ROUND_CLOSEST(X * 98000, 100000) /* X*(1-0.02) */
+#define GMTP_THETA(X) DIV_ROUND_CLOSEST((X) * 2000, 100000) /* X*0.02 */
+#define GMTP_ONE_MINUS_THETA(X) DIV_ROUND_CLOSEST((X) * 98000, 100000) /* X*(1-0.02) */
 
 #include "gmtp-inter.h"
 

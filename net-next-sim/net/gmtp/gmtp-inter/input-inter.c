@@ -597,17 +597,12 @@ int gmtp_inter_elect_resp_rcv(struct sk_buff *skb,
 	return NF_DROP;
 }
 
-#define skblen(skb) ((*skb).len) + ETH_HLEN
-
 /**
  * Update GMTP-inter statistics
  */
 static inline void gmtp_update_stats(struct gmtp_inter_entry *info,
 		struct sk_buff *skb, struct gmtp_hdr *gh)
 {
-	gmtp_inter.total_bytes_rx += skblen(skb);
-	gmtp_inter.ucc_bytes += skblen(skb);
-
 	info->total_bytes += skblen(skb);
 	info->recent_bytes += skblen(skb);
 	info->seq = (unsigned int)gh->seq;
@@ -692,8 +687,8 @@ int gmtp_inter_data_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 
 
 out:
-	pr_info("Receiving (to %pI4:%d, seq: %u)\n", &iph->daddr,
-			htons(gh->dport), gh->seq);
+	/*pr_info("Receiving (to %pI4:%d, seq: %u)\n", &iph->daddr,
+			htons(gh->dport), gh->seq);*/
 
 	if(iph->daddr == entry->my_addr)
 		jump_over_gmtp_intra(skb, &entry->clients->list);

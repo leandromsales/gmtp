@@ -468,11 +468,11 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 					GMTP_RTT_WEIGHT);
 
 			/* Avoid super TX reduction */
-			if(new_tx < DIV_ROUND_CLOSEST(gp->tx_media_rate, 8)) {
+			if(new_tx < DIV_ROUND_CLOSEST(gp->tx_media_rate, 4)) {
 				pr_info("Avoiding super TX reduction...\n");
 				pr_info("gh->tx = %u\n", gh->transm_r);
 				pr_info("max_tx: %lu\n", gp->tx_media_rate);
-				new_tx = DIV_ROUND_CLOSEST(gp->tx_media_rate, 8);
+				new_tx = DIV_ROUND_CLOSEST(gp->tx_media_rate, 4);
 			}
 
 			gp->tx_ucc_rate = min((__be32 )gp->tx_max_rate, new_tx);

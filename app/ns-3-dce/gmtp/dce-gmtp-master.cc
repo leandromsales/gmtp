@@ -224,22 +224,24 @@ int main(int argc, char *argv[])
 		uint32_t b_addr = 0xA800000; /* 10.128.0.0 */
 		uint32_t naddr = b_addr;
 		for(int i=0; i < internet.GetN(); ++i, naddr += 0x10000) {
-			Ptr<Node> midc = CreateObject<Node>();
-			NodeContainer subnet_mid(internet.Get(i), midc);
-			//		NodeContainer subnet_r3(core.Get(0), client_r3);
-			stack.Install(midc);
-			dceManager.Install(midc);
-			NetDeviceContainer snr3 = local_csma.Install(subnet_mid);
-			cout << "mid [" << i << "]: " << Ipv4Address(naddr) << endl;
-			address.SetBase(Ipv4Address(naddr), "255.255.255.0");
-			Ipv4InterfaceContainer ic = address.Assign(snr3);
-			RunGtmpInter(midc, Seconds(2.3), "off");
-			//		RunApp("gmtp-client", client_r3, Seconds(3.5), "10.1.1.2", 1 << 16);
-			if(i%2)
-			/*if(i==4)*/
-				RunApp("gmtp-client", midc, Seconds(3.5), "10.1.1.2", 1 << 16);
-			/*else
-				RunApp("gmtp-client", midc, Seconds(4.5), "10.1.1.2", 1 << 16);*/
+			if(i % 2 == 0) {
+				Ptr<Node> midc = CreateObject<Node>();
+				NodeContainer subnet_mid(internet.Get(i), midc);
+				//		NodeContainer subnet_r3(core.Get(0), client_r3);
+				stack.Install(midc);
+				dceManager.Install(midc);
+				NetDeviceContainer snr3 = local_csma.Install(
+						subnet_mid);
+				cout << "mid [" << i << "]: "
+						<< Ipv4Address(naddr) << endl;
+				address.SetBase(Ipv4Address(naddr),
+						"255.255.255.0");
+				Ipv4InterfaceContainer ic = address.Assign(
+						snr3);
+				RunGtmpInter(midc, Seconds(2.3), "off");
+				RunApp("gmtp-client", midc, Seconds(4.5),
+						"10.1.1.2", 1 << 16);
+			}
 		}
 	}
 

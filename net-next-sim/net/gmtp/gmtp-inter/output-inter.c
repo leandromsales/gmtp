@@ -132,8 +132,10 @@ int gmtp_inter_data_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 		entry->state = GMTP_INTER_TRANSMITTING;
 
 	/** TODO Verify close from server... */
-	if(entry->state != GMTP_INTER_TRANSMITTING)
+	if(entry->state != GMTP_INTER_TRANSMITTING) {
+		gmtp_ucc_buffer_dequeue(skb);
 		return NF_DROP;
+	}
 
 	if(gmtp_local_ip(iph->saddr))
 		goto send;
@@ -167,6 +169,8 @@ send:
 			struct ethhdr *eth = eth_hdr(buffered);
 			struct gmtp_hdr *buffgh = gmtp_hdr(buffered);
 
+			gmtp_ucc_buffer_add(buffered);
+
 			buffgh->dport = relay->port;
 			ether_addr_copy(eth->h_dest, relay->mac_addr);
 			buffered->dev = relay->dev;
@@ -194,6 +198,8 @@ send:
 	}
 	ghd->tstamp = jiffies_to_msecs(jiffies);
 
+	gmtp_ucc_buffer_dequeue(skb);
+
 	return NF_ACCEPT;
 }
 
@@ -218,8 +224,10 @@ static int gmtp_inter_close_from_client(struct sk_buff *skb,
 	pr_info("entry->nclients - del: %u\n", entry->nclients);
 
 	gh_reset = gmtp_inter_make_reset_hdr(skb, GMTP_RESET_CODE_CLOSED);
-	if(gh_reset == NULL)
+	if(gh_reset == NULL) {
+		gmtp_ucc_buffer_dequeue(skb);
 		return NF_DROP;
+	}
 
 	/*
 	 * Here, we have no clients.
@@ -301,6 +309,7 @@ int gmtp_inter_close_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 			if(relay->state == GMTP_OPEN) {
 				struct sk_buff *new_skb = skb_copy(skb, gfp_any());
 				struct ethhdr *eth = eth_hdr(new_skb);
+
 				gh->dport = relay->port;
 				ether_addr_copy(eth->h_dest, relay->mac_addr);
 				skb->dev = relay->dev;

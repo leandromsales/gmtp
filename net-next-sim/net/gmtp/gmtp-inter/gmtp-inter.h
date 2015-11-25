@@ -62,6 +62,7 @@ struct gmtp_inter {
 	int			buffer_len;
 
 	unsigned int 		total_bytes_rx;
+
 	unsigned int 		total_rx;
 	int 			ucc_rx;
 	unsigned int        	ucc_bytes;
@@ -81,6 +82,8 @@ struct gmtp_inter {
 
 extern struct gmtp_inter gmtp_inter;
 
+#define skblen(skb) (((*skb).len) + ETH_HLEN)
+
 enum gmtp_inter_direction {
 	GMTP_INTER_FORWARD = 0,
 	GMTP_INTER_BACKWARD,
@@ -91,6 +94,8 @@ enum gmtp_inter_direction {
 __be32 get_mcst_v4_addr(void);
 void gmtp_buffer_add(struct gmtp_inter_entry *info, struct sk_buff *newsk);
 struct sk_buff *gmtp_buffer_dequeue(struct gmtp_inter_entry *info);
+void gmtp_ucc_buffer_add(struct sk_buff *newskb);
+void gmtp_ucc_buffer_dequeue(struct sk_buff *newskb);
 __be32 gmtp_inter_device_ip(struct net_device *dev);
 void gmtp_timer_callback(void);
 bool gmtp_local_ip(__be32 ip);

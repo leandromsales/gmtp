@@ -136,11 +136,10 @@ struct sock *gmtp_check_req(struct sock *sk, struct sk_buff *skb,
 	    gmtp_hdr(skb)->type != GMTP_PKT_DATAACK)
 		goto drop;
 
-	/* Check for invalid Sequence nuber */
+	/* FIXME Check for invalid Sequence nuber */
 	seq = GMTP_SKB_CB(skb)->seq;
 	if(!(seq >= greq->iss && seq <= greq->gss)) {
-		gmtp_print_debug(
-				"Invalid Seq number: "
+		gmtp_print_debug("Invalid Seq number: "
 				"seq=%llu, iss=%llu, gss=%llu",
 				(unsigned long long ) seq,
 				(unsigned long long ) greq->iss,

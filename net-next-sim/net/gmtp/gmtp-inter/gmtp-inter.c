@@ -9,6 +9,7 @@
 #include <linux/err.h>
 #include <linux/if.h>
 #include <linux/ioctl.h>
+#include <linux/rtnetlink.h>
 
 #include <net/sock.h>
 #include <net/sch_generic.h>
@@ -87,6 +88,15 @@ void gmtp_buffer_add(struct gmtp_inter_entry *info, struct sk_buff *newskb)
 	info->buffer_len += newskb->len + ETH_HLEN;
 }
 
+void gmtp_ucc_buffer_add(struct sk_buff *newskb)
+{
+	if(newskb != NULL) {
+		gmtp_inter.buffer_len += skblen(newskb);
+		gmtp_inter.total_bytes_rx += skblen(newskb);
+		gmtp_inter.ucc_bytes += skblen(newskb);
+	}
+}
+
 struct sk_buff *gmtp_buffer_dequeue(struct gmtp_inter_entry *info)
 {
 	struct sk_buff *skb = skb_dequeue(info->buffer);
@@ -96,6 +106,16 @@ struct sk_buff *gmtp_buffer_dequeue(struct gmtp_inter_entry *info)
 	return skb;
 }
 
+void gmtp_ucc_buffer_dequeue(struct sk_buff *newskb)
+{
+	if(newskb != NULL) {
+		gmtp_inter.buffer_len -= skblen(newskb);
+		if(gmtp_inter.buffer_len < 0)
+			gmtp_inter.buffer_len = 0;
+	}
+}
+
+
 unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 		const struct net_device *in, const struct net_device *out,
 		int (*okfn)(struct sk_buff *))
@@ -103,7 +123,41 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 	int ret = NF_ACCEPT;
 	struct iphdr *iph = ip_hdr(skb);
 
-	gmtp_inter.buffer_len += skb->len + ETH_HLEN;
+	gmtp_ucc_buffer_add(skb);
+
+	/*if(skb->dev != NULL) {
+		struct netdev_rx_queue *rx = skb->dev->_rx;
+		pr_info("skb->dev->ingress_queue3: %p\n", rx);
+		if(rx != NULL) {
+			pr_info("in->ingress_queue->qdisc: %p\n", ndq->qdisc);
+			if(ndq->qdisc != NULL) {
+				pr_info("q.qlen: %u\n", ndq->qdisc->q.qlen);
+				pr_info("qstats.qlen: %u\n",
+						ndq->qdisc->qstats.qlen);
+				pr_info("qstats.drops: %u\n",
+						ndq->qdisc->qstats.drops);
+				pr_info("qstats.overlimits: %u\n",
+						ndq->qdisc->qstats.overlimits);
+			}
+		}
+	}*/
+
+	/*int i;
+	for(i = 0; i < NR_CPUS; i++) {
+		struct softnet_data *queue;
+		queue = &per_cpu(softnet_data, i);
+
+		struct sk_buff_head *input = &queue->input_pkt_queue;
+		struct sk_buff_head *process = &queue->process_queue;
+
+		pr_info("input_queue: %u\n", input->qlen);
+		pr_info("process_queue: %u\n", process->qlen);
+		pr_info("processed: %u\n", queue->processed);
+		pr_info("time_squeeze: %u\n", queue->time_squeeze);
+		pr_info("cpu_collision: %u\n", queue->cpu_collision);
+		pr_info("received_rps: %u\n", queue->received_rps);
+		pr_info("dropped: %u\n", queue->dropped);
+	}*/
 
 	if(gmtp_info->relay_enabled == 0)
 		return ret;
@@ -116,20 +170,22 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 
 		if(gh->type == GMTP_PKT_REQUEST) {
 			if(gmtp_local_ip(iph->saddr)
-					&& iph->saddr != iph->daddr)
-				return NF_ACCEPT;
+					&& iph->saddr != iph->daddr) {
+				goto out;
+			}
 
 			if(iph->ttl == 1) {
 				print_packet(skb, true);
 				print_gmtp_packet(iph, gh);
-				return gmtp_inter_request_rcv(skb);
+				ret = gmtp_inter_request_rcv(skb);
+				goto out;
 			}
 		}
 
 		entry = gmtp_inter_lookup_media(gmtp_inter.hashtable,
 				gh->flowname);
 		if(entry == NULL)
-			return NF_ACCEPT;
+			goto out;
 
 		switch(gh->type) {
 		case GMTP_PKT_REGISTER:
@@ -156,7 +212,7 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 			relay = gmtp_get_relay(&entry->relays->list,
 					iph->daddr, gh->dport);
 			if(!gmtp_local_ip(iph->daddr) && (relay == NULL))
-				return NF_ACCEPT;
+				goto out;
 		}
 
 		switch(gh->type) {
@@ -174,6 +230,10 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 
 	}
 
+out:
+	if(ret == NF_DROP)
+		gmtp_ucc_buffer_dequeue(skb);
+
 	return ret;
 }
 
@@ -186,7 +246,7 @@ unsigned int hook_func_local_in(unsigned int hooknum, struct sk_buff *skb,
 	struct iphdr *iph = ip_hdr(skb);
 
 	if(gmtp_info->relay_enabled == 0)
-		return ret;
+		goto in;
 
 	if(iph->protocol == IPPROTO_GMTP) {
 
@@ -195,10 +255,10 @@ unsigned int hook_func_local_in(unsigned int hooknum, struct sk_buff *skb,
 		struct gmtp_inter_entry *entry = gmtp_inter_lookup_media(
 				gmtp_inter.hashtable, gh->flowname);
 		if(entry == NULL)
-			return NF_ACCEPT;
+			goto in;
 
 		if(!gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname))
-			return NF_ACCEPT;
+			goto in;
 
 		switch(gh->type) {
 		case GMTP_PKT_REGISTER:
@@ -209,6 +269,8 @@ unsigned int hook_func_local_in(unsigned int hooknum, struct sk_buff *skb,
 		}
 	}
 
+in:
+	/*gmtp_ucc_buffer_dequeue(skb);*/
 	return ret;
 }
 
@@ -225,9 +287,6 @@ unsigned int hook_func_local_out(unsigned int hooknum, struct sk_buff *skb,
 	if(iph->protocol == IPPROTO_GMTP) {
 
 		struct gmtp_hdr *gh = gmtp_hdr(skb);
-
-		pr_info("LOCAL_OUT: ");
-		print_gmtp_packet(iph, gh);
 
 		struct gmtp_inter_entry *entry = gmtp_inter_lookup_media(
 				gmtp_inter.hashtable, gh->flowname);
@@ -268,12 +327,8 @@ unsigned int hook_func_post_routing(unsigned int hooknum, struct sk_buff *skb,
 	int ret = NF_ACCEPT;
 	struct iphdr *iph = ip_hdr(skb);
 
-	gmtp_inter.buffer_len -= skb->len + ETH_HLEN;
-	if(gmtp_inter.buffer_len < 0)
-		gmtp_inter.buffer_len = 0;
-
 	if(gmtp_info->relay_enabled == 0)
-		return ret;
+		goto out;
 
 	if(iph->protocol == IPPROTO_GMTP) {
 
@@ -289,7 +344,7 @@ unsigned int hook_func_post_routing(unsigned int hooknum, struct sk_buff *skb,
 			if(!gmtp_local_ip(iph->daddr) ||
 			    GMTP_SKB_CB(skb)->jumped) {
 				if(gmtp_inter_has_clients(skb, entry))
-					return NF_ACCEPT;
+					goto out;
 			}
 		}
 
@@ -316,6 +371,7 @@ unsigned int hook_func_post_routing(unsigned int hooknum, struct sk_buff *skb,
 		}
 	}
 
+out:
 	return ret;
 }
 
