@@ -147,8 +147,7 @@ static int do_gmtp_getsockopt(struct sock *sk, int level, int optname,
 		return -EINVAL;
 
 	gp = gmtp_sk(sk);
-	gmtp_print_debug("Role: %d", gp->role);
-	gmtp_print_debug("Getting => optname: %d", optname);
+	gmtp_print_debug("Get optname: %d | optlen: %u", optname, *optlen);
 
 	switch (optname) {
 	case GMTP_SOCKOPT_FLOWNAME:
@@ -173,6 +172,11 @@ static int do_gmtp_getsockopt(struct sock *sk, int level, int optname,
 		break;
 	case GMTP_SOCKOPT_RELAY_ENABLED:
 		val = gmtp_info->relay_enabled;
+		break;
+	case GMTP_SOCKOPT_NDP_RCV:
+		gmtp_pr_debug("GMTP_SOCKOPT_NDP_RCV");
+		gmtp_pr_debug("gp->ndp_count: %u", gp->ndp_count);
+		val = (int) gp->ndp_count;
 		break;
 	default:
 		return -ENOPROTOOPT;

@@ -70,10 +70,12 @@ int main(int argc, char *argv[])
 		if(i % 1000 == 0) {
 			print_stats(i, t1, total, total_data);
 			cout << endl;
+			cout << "Non data packets (ns): " << count_ndp(newSocket) << endl;
 		}
 	}
 
 	print_stats(i, t1, total, total_data);
+	cout << "Non data packets (ns): " << count_ndp(newSocket) << endl;
 
 	const char *outstr = "out";
 

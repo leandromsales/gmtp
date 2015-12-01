@@ -540,6 +540,8 @@ int gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 	gp->rx_rtt = (u32) gh->server_rtt;
 	if(gh->type == GMTP_PKT_DATA)
 		gp->rx_last_orig_tstamp = gmtp_hdr_data(skb)->tstamp;
+	else
+		gp->ndp_count++;
 
 	if(gp->role == GMTP_ROLE_REPORTER) {
 		gmtp_deliver_input_to_mcc(sk, skb);

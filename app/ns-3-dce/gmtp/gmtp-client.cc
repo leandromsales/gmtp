@@ -104,6 +104,8 @@ int main(int argc, char**argv)
 
 	} while(strcmp(buffer, outstr) != 0);
 
+	printf("Non data packets: %d\n", count_ndp(sockfd));
+
 	printf("End of simulation...\n");
 
 	// Jamais remover!!!
