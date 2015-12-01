@@ -47,9 +47,12 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 				gmtp_packet_hdr_variable_len(gcb->type);
 		int err, set_ack = 1;
 
+		gp->ndp_sent++;
+
 		switch (gcb->type) {
 		case GMTP_PKT_DATA:
 			set_ack = 0;
+			gp->ndp_sent--;
 			/* fall through */
 		case GMTP_PKT_DATAACK:
 		case GMTP_PKT_RESET:
@@ -146,6 +149,9 @@ int gmtp_transmit_built_skb(struct sock *sk, struct sk_buff *skb) {
 		const struct inet_connection_sock *icsk = inet_csk(sk);
 		struct inet_sock *inet = inet_sk(sk);
 		int err;
+
+		if(likely(gmtp_hdr(skb)->type != GMTP_PKT_DATA))
+			gmtp_sk(sk)->ndp_sent++;
 
 		err = icsk->icsk_af_ops->queue_xmit(sk, skb, &inet->cork.fl);
 		return net_xmit_eval(err);

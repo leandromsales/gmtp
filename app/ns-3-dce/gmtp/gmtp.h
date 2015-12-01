@@ -41,6 +41,7 @@ enum gmtp_sockopt_codes {
 	GMTP_SOCKOPT_ROLE_RELAY,
 	GMTP_SOCKOPT_RELAY_ENABLED,
 	GMTP_SOCKOPT_NDP_RCV,
+	GMTP_SOCKOPT_NDP_SENT,
 	GMTP_SOCKOPT_UCC_TYPE
 };
 
@@ -146,13 +147,23 @@ static void update_client_stats(int i, int seq, double begin, double rcv,
 
 }
 
-static int count_ndp(int sockfd)
+static int count_ndp_rcv(int sockfd)
 {
 	int ndp = -1;
 	socklen_t ndp_s = sizeof(ndp);
 	getsockopt(sockfd, SOL_GMTP, GMTP_SOCKOPT_NDP_RCV, &ndp, &ndp_s);
 	return ndp;
 }
+
+
+static int count_ndp_sent(int sockfd)
+{
+	int ndp = -1;
+	socklen_t ndp_s = sizeof(ndp);
+	getsockopt(sockfd, SOL_GMTP, GMTP_SOCKOPT_NDP_SENT, &ndp, &ndp_s);
+	return ndp;
+}
+
 
 
 #endif /* GMTP_H_ */

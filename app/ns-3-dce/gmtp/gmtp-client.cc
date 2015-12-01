@@ -29,7 +29,8 @@ int main(int argc, char**argv)
 	char buffer[BUFF_SIZE];
 	srand(time(NULL));
 
-	double tlog = time_ms(tv);
+	double start = time_ms(tv);
+
 	char filename[17];
 	sprintf(filename, "gmtp-%0.0f.log", MY_TIME(time_ms(tv)));
 	FILE *log;
@@ -104,8 +105,12 @@ int main(int argc, char**argv)
 
 	} while(strcmp(buffer, outstr) != 0);
 
-	printf("Non data packets: %d\n", count_ndp(sockfd));
+	printf("Non data packets received: %d\n", count_ndp_rcv(sockfd));
+	printf("Non data packets sent: %d\n", count_ndp_sent(sockfd));
 
+	double end = time_ms(tv);
+	double duration = end - start;
+	printf("Time of execution: %0.2f seconds\n\n",  duration/1000);
 	printf("End of simulation...\n");
 
 	// Jamais remover!!!

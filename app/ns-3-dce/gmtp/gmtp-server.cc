@@ -20,6 +20,7 @@ int main(int argc, char *argv[])
 	struct sockaddr_storage serverStorage;
 	socklen_t addr_size;
 	int media_rate = 300000; // B/s
+	double start = time_ms(tv);
 
 	cout << "Starting GMTP Server..." << endl;
 	welcomeSocket = socket(PF_INET, SOCK_GMTP, IPPROTO_GMTP);
@@ -70,12 +71,12 @@ int main(int argc, char *argv[])
 		if(i % 1000 == 0) {
 			print_stats(i, t1, total, total_data);
 			cout << endl;
-			cout << "Non data packets (ns): " << count_ndp(newSocket) << endl;
 		}
 	}
 
 	print_stats(i, t1, total, total_data);
-	cout << "Non data packets (ns): " << count_ndp(newSocket) << endl;
+	printf("Non data packets received: %d\n", count_ndp_rcv(newSocket));
+	printf("Non data packets sent: %d\n", count_ndp_sent(newSocket));
 
 	const char *outstr = "out";
 
@@ -83,6 +84,11 @@ int main(int argc, char *argv[])
 		printf("Sending out: %s\n", outstr);
 		send(newSocket, outstr, strlen(outstr), 0);
 	}
+
+	double end = time_ms(tv);
+	double duration = end - start;
+	printf("Time of execution: %0.2f seconds\n\n", duration / 1000);
+	printf("End of simulation...\n");
 
 	printf("Closing server...\n");
 	close(newSocket);

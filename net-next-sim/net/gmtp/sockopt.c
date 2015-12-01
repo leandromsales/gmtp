@@ -175,8 +175,11 @@ static int do_gmtp_getsockopt(struct sock *sk, int level, int optname,
 		break;
 	case GMTP_SOCKOPT_NDP_RCV:
 		gmtp_pr_debug("GMTP_SOCKOPT_NDP_RCV");
-		gmtp_pr_debug("gp->ndp_count: %u", gp->ndp_count);
 		val = (int) gp->ndp_count;
+		break;
+	case GMTP_SOCKOPT_NDP_SENT:
+		gmtp_pr_debug("GMTP_SOCKOPT_NDP_SENT");
+		val = (int) gp->ndp_sent;
 		break;
 	default:
 		return -ENOPROTOOPT;

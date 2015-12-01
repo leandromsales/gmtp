@@ -210,6 +210,7 @@ struct gmtp_sock {
 	u32 				rx_last_orig_tstamp;
 
 	/** Tx variables */
+	__be32				ndp_sent;
 	u32 				tx_rtt;
 	u32				tx_avg_rtt;
 	u32	 			tx_dpkts_sent;
