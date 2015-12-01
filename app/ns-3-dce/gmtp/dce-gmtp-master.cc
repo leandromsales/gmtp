@@ -26,6 +26,15 @@ using namespace std;
 //   c1.n				 c2.m
 // //
 
+static struct timeval  tv;
+
+double time_ms(struct timeval &tv)
+{
+	gettimeofday(&tv, NULL);
+	double t2 = (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000; // convert tv_sec & tv_usec to millisecond
+	return t2;
+}
+
 int main(int argc, char *argv[])
 {
 	int nclients = 1;
@@ -49,6 +58,8 @@ int main(int argc, char *argv[])
 	cmd.Parse(argc, argv);
 
 	cout << "Creating nodes..." << endl;
+
+	double start = time_ms(tv);
 
 	/* Server */
 	Ptr<Node> server = CreateObject<Node>();
@@ -224,7 +235,8 @@ int main(int argc, char *argv[])
 		uint32_t b_addr = 0xA800000; /* 10.128.0.0 */
 		uint32_t naddr = b_addr;
 		for(int i=0; i < internet.GetN(); ++i, naddr += 0x10000) {
-			if(i % 2 == 0) {
+			/*if(1) {*/
+			if(i == 1) {
 				Ptr<Node> midc = CreateObject<Node>();
 				NodeContainer subnet_mid(internet.Get(i), midc);
 				//		NodeContainer subnet_r3(core.Get(0), client_r3);
@@ -232,14 +244,13 @@ int main(int argc, char *argv[])
 				dceManager.Install(midc);
 				NetDeviceContainer snr3 = local_csma.Install(
 						subnet_mid);
-				cout << "mid [" << i << "]: "
-						<< Ipv4Address(naddr) << endl;
+				cout << "mid [" << i << "]: " << Ipv4Address(naddr) << endl;
 				address.SetBase(Ipv4Address(naddr),
 						"255.255.255.0");
 				Ipv4InterfaceContainer ic = address.Assign(
 						snr3);
 				RunGtmpInter(midc, Seconds(2.3), "off");
-				RunApp("gmtp-client", midc, Seconds(4.5),
+				RunApp("gmtp-client", midc, Seconds(3.4),
 						"10.1.1.2", 1 << 16);
 			}
 		}
@@ -293,6 +304,10 @@ int main(int argc, char *argv[])
 	Simulator::Destroy();
 
 	cout << "Done." << endl;
+
+	double end = time_ms(tv);
+	double duration = end - start;
+	cout << "Time of simulation (real): " << duration/1000 << " seconds." << endl << endl;
 
 	return 0;
 

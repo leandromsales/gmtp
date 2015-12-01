@@ -1032,8 +1032,10 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	s = (struct gmtp_server_entry*) gmtp_lookup_entry(server_hashtable,
 			gp->flowname);
 
-	if(s == NULL)
+	if(s == NULL) {
+		pr_info("s: %p\n", s);
 		return gmtp_do_sendmsg(sk, msg, len);
+	}
 
 	/* For every socket(P) in server, send the same data */
 	list_for_each_entry(r, &s->relays.relay_list, relay_list) {

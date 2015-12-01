@@ -1,0 +1,32 @@
+#!/bin/bash        
+
+#echo $#
+if [ $# -lt 3 ]; then
+   echo "Error! You must run:"
+   echo "   ./run_simulations <times> <nrelays> <nclients>"
+   echo
+   exit 1
+fi
+
+#count=0
+#for a in $*; do
+#   count=`expr $count + 1`
+#   echo "Argument $count: $a" 
+#done
+
+max=$1;
+nrelays=$2
+nclients=$3
+echo "Starting $max simulations..."
+echo "Command: ./waf --run \"dce-gmtp-master --nrelays=$nrelays --nclients=$nclients\""
+
+i=1
+cd "../../ns-3-dce"
+while [ $i -le $max ]
+do
+    echo "Running $i of $max simulations"
+    ./waf --run "dce-gmtp-master --nrelays=$nrelays --nclients=$nclients"
+    i=`expr $i + 1`
+done
+
+echo

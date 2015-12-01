@@ -79,7 +79,8 @@ int main(int argc, char**argv)
 
 	int i = 0, seq;
 	double rcv=0, rcv_data=0;
-	double t1 = time_ms(tv);
+	double t0 = time_ms(tv);
+//	double ti = time_ms(tv);
 	const char *outstr = "out";
 	do {
 		ssize_t bytes_read;
@@ -91,7 +92,15 @@ int main(int argc, char**argv)
 		rcv_data += bytes_read;
 		printf("Received (%d): %s\n", i, buffer);
 		char *seqstr = strtok(buffer, " ");
-		update_client_stats(i, atoi(seqstr), t1, rcv, rcv_data, hist, log);
+
+//		if(time_ms(tv) - ti >= 500) {  //Log every 500ms
+//			ti = time_ms(tv);
+//			update_client_stats(i, atoi(seqstr), t0, rcv, rcv_data,
+//					hist, log);
+//		}
+
+		update_client_stats(i, atoi(seqstr), t0, rcv, rcv_data, hist,
+				log);
 
 	} while(strcmp(buffer, outstr) != 0);
 

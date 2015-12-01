@@ -186,7 +186,8 @@ void gmtp_v4_err(struct sk_buff *skb, u32 info)
 
 	struct request_sock *req, **prev;
 
-	gmtp_pr_debug("ICMP: Type: %d, Code: %d", type, code);
+	pr_info("ICMP: Type: %d, Code: %d | ", type, code);
+	print_packet(skb, true);
 
 	if(skb->len < offset + sizeof(*gh)) {
 		ICMP_INC_STATS_BH(net, ICMP_MIB_INERRORS);
@@ -242,7 +243,6 @@ void gmtp_v4_err(struct sk_buff *skb, u32 info)
 				/*FIXME gmtp_do_pmtu_discovery(sk, iph, info);*/;
 			goto out;
 		}
-
 		err = icmp_err_convert[code].errno;
 		break;
 	case ICMP_TIME_EXCEEDED:

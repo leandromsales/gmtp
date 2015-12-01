@@ -134,9 +134,14 @@ static void update_client_stats(int i, int seq, double begin, double rcv,
 		loss = (hist[index][SEQ] - hist[prev][SEQ]) - 1;
 	}
 
-	//index, seq, loss, elapsed, bytes_rcv, rx_rate, inst_rx_rate
-	fprintf(log, "%d\t%d\t%d\t%0.2f\t%0.2f\t%0.2f\t%0.2f\r\n", i, seq, loss, elapsed, rcv,
-			rcv*1000 / total_time, rcv_sample*1000 / instant);
+	double rx = rcv*1000 / total_time;
+	double inst_rx = rcv_sample*1000 / instant;
+
+	if(inst_rx >= 1)
+		//index, seq, loss, elapsed, bytes_rcv, rx_rate, inst_rx_rate
+		fprintf(log, "%d\t%d\t%d\t%0.2f\t%0.2f\t%0.2f\t%0.2f\r\n", i, seq, loss, elapsed, rcv, rx, inst_rx);
+	else
+		fprintf(log, "%d\t%d\t%d\t%0.2f\t%0.2f\t%0.2f\t\r\n", i, seq, loss, elapsed, rcv, rx);
 
 }
 

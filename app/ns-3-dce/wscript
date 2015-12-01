@@ -403,7 +403,7 @@ def build_dce_examples(module, bld):
                        target='bin/dce-gmtp-master',
                        source=['example/dce-gmtp-master.cc'])
                        
-    module.add_example(needed = ['core', 'internet', 'dce', 'csma', 'mpi'],
+    module.add_example(needed = ['core', 'internet', 'dce', 'csma', 'point-to-point', 'mpi'],
                        target='bin/dce-gmtp-mpi',
                        source=['example/dce-gmtp-mpi.cc'])
                        

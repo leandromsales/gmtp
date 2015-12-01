@@ -1,15 +1,29 @@
+/* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
+/*
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
 #include "ns3/internet-module.h"
+#include "ns3/csma-module.h"
+#include "ns3/point-to-point-module.h"
 #include "ns3/applications-module.h"
 #include "ns3/dce-module.h"
-#include "ns3/mpi-module.h"
-#include "ns3/csma-module.h"
-
-#include "dce-gmtp.h"
+#include "ns3/mpi-interface.h"
 
 using namespace ns3;
-using namespace std;
 
 // Run Hint :  $ mpirun -np 2 dce-gmtp-mpi
 
@@ -26,356 +40,76 @@ int main(int argc, char *argv[])
 	// Check for valid distributed parameters.
 	// Must have 2 and only 2 Logical Processors (LPs)
 
-	cout << "systemId: " << systemId << ", systemCount: " << systemCount << endl;
-
 	if(systemCount != 2) {
-		std::cout << "This simulation requires 2 and only 2 logical processors." << std::endl;
+		std::cout
+				<< "This simulation requires 2 and only 2 logical processors."
+				<< std::endl;
 		return 1;
 	} else {
-		std::cout << "Simulation running with 2 logical processors." << std::endl;
+		std::cout << "Running simulation with 2 logical processors."
+				<< std::endl;
 	}
-
-	//-------------------------------------------------
-
-	int nclients = 1;
-	int ncores = 1;
-	int nrelays = 1;
-	bool verbose = false;
-	std::string core_rate = "100Mbps";
-	std::string local_rate = "10Mbps";
-	srand(time(NULL));
-
-	std::string delay = "1ms";
-	bool middleman = false;
 
 	//-------------------------------------------------
 
 	CommandLine cmd;
-	cmd.AddValue("nclients", "Number of clients in each router", nclients);
-	cmd.AddValue("ncores",	"Number of cores in network (except server core)", ncores);
-	cmd.AddValue("nrelays", "Number of relays for each core", nrelays);
-	cmd.AddValue("delay", "Channel delay. Default value is 1ms", delay);
-	cmd.AddValue("verbose", "Print routing details", verbose);
-	cmd.AddValue("middleman", "Middleman intercepting requests", middleman);
 	cmd.Parse(argc, argv);
 
-	//-------------------------------------------------
+	NodeContainer nodes;
+	Ptr<Node> node1 = CreateObject<Node>(0); // <------ for MPI, it goes to run in core_1 (process 1)
+	Ptr<Node> node2 = CreateObject<Node>(1); // <------ for MPI,                   "   _2          2
+	nodes.Add(node1);
+	nodes.Add(node2);
 
-	cout << "Creating nodes..." << endl;
+	InternetStackHelper stack;
+	stack.Install(nodes);
 
-	/* Server */
-	Ptr<Node> server = CreateObject<Node>(0);
-	Ptr<Node> rserver = CreateObject<Node>(0);
-	NodeContainer subnet_server(rserver, server);
+	/*CsmaHelper channel;
+	channel.SetChannelAttribute("DataRate", StringValue("100Mbps"));
+	channel.SetChannelAttribute("Delay", StringValue("1ms"));*/
 
-	NodeContainer internet;
-	internet.Create(1);
+	PointToPointHelper channel;
+	channel.SetDeviceAttribute("DataRate", StringValue("100Mbps"));
+	channel.SetChannelAttribute("Delay", StringValue("1ms"));
 
-	NodeContainer net_server(internet.Get(0), rserver);
+	NetDeviceContainer devices;
+	devices = channel.Install(nodes);
 
-	/* Internet Core */
-	NodeContainer core;
-	core.Create(ncores);
-	internet.Add(core);
-	cout << "The Internet core has " << internet.GetN() << " nodes." << endl;
+	Ipv4AddressHelper address;
+	address.SetBase("10.1.1.0", "255.255.255.252");
+	Ipv4InterfaceContainer interfaces = address.Assign(devices);
 
-	NodeContainer relays;
-	vector<NodeContainer> vrelays(ncores);
-	for(int i = 0; i < ncores; ++i) {
-		vrelays[i].Create(nrelays);
-		for(int j = 0; j < nrelays; ++j)
-			relays.Add(vrelays[i].Get(j));
-		vrelays[i].Add(core.Get(i));
-	}
-	cout << "The simulation has " << relays.GetN() << " relays." << endl;
-
-	NodeContainer clients;
-	vector<NodeContainer> vclients(relays.GetN());
-	for(int i = 0; i < relays.GetN(); ++i) {
-		vclients[i].Create(nclients);
-		for(int j = 0; j < nclients; ++j)
-			clients.Add(vclients[i].Get(j));
-		vclients[i].Add(relays.Get(i));
-	}
-
-	cout << "The simulation has " << clients.GetN() << " clients." << endl;
-
-	NodeContainer all(subnet_server, internet, relays, clients);
-	cout << "The simulation has " << all.GetN() << " modes (total).\n" << endl;
-
-	cout << "Core routers: ";
-	for(int i=0; i < internet.GetN(); ++i)
-		cout << "files-" << internet.Get(i)->GetId() << ", ";
-	cout << endl << "Relays: ";
-	for(int i=0; i<relays.GetN(); ++i)
-		cout << "files-" << relays.Get(i)->GetId() << ", ";
-	cout << endl << "Clients: ";
-	for(int i=0; i<clients.GetN(); ++i)
-		cout << "files-" << clients.Get(i)->GetId() << ", ";
-	cout << endl;
-
-	//-------------------------------------------------
+	// setup ip routes
+	Ipv4GlobalRoutingHelper::PopulateRoutingTables();
 
 	DceManagerHelper dceManager;
-	dceManager.SetTaskManagerAttribute("FiberManagerType",
-			StringValue("UcontextFiberManager"));
-	dceManager.SetNetworkStack("ns3::LinuxSocketFdFactory", "Library",
-			StringValue("liblinux.so"));
-
-	LinuxStackHelper stack;
-	stack.Install(all);
-	dceManager.Install(all);
-
-	CsmaHelper core_csma;
-	core_csma.SetChannelAttribute("DataRate", StringValue(core_rate));
-	core_csma.SetChannelAttribute("Delay", StringValue(delay));
-
-	CsmaHelper local_csma;
-	local_csma.SetChannelAttribute("DataRate", StringValue(local_rate));
-	local_csma.SetChannelAttribute("Delay", StringValue(delay));
-
-	NetDeviceContainer dci = core_csma.Install(internet);
-	NetDeviceContainer dcs = core_csma.Install(net_server);
-	NetDeviceContainer dcss = core_csma.Install(subnet_server);
-
-	vector<NetDeviceContainer> dcr(ncores);
-	for(int i = 0; i < ncores; i++) {
-		dcr[i] = core_csma.Install(vrelays[i]);
-	}
-
-	vector<NetDeviceContainer> dcc(relays.GetN());
-	for(int i = 0; i < relays.GetN(); ++i) {
-		dcc[i] = local_csma.Install(vclients[i]);
-	}
-
-	//-------------------------------------------------
-
-	cout << "Create networks and assign IPv4 Addresses.\n" << endl;
-	Ipv4AddressHelper address;
-
-	address.SetBase("10.0.0.0", "255.0.0.0");
-	Ipv4InterfaceContainer iw = address.Assign(dci);
-
-	address.SetBase("10.1.0.0", "255.255.0.0");
-	Ipv4InterfaceContainer is = address.Assign(dcs);
-	address.SetBase("10.1.1.0", "255.255.255.0");
-	Ipv4InterfaceContainer iss = address.Assign(dcss);
-
-
-	/*
-	 * To calculate the decimal address from a dotted string, perform the following calculation.
-	 * (first octet * 256³) + (second octet * 256²) + (third octet * 256) + (fourth octet)
-	 *
-	 * 10.2.0.0 = 0x0A020000
-	 */
-	uint32_t base_addr = 0xA020000;
-	uint32_t netaddr = base_addr;
-	vector<Ipv4InterfaceContainer> irelays(ncores);
-	for(int i = 0; i < ncores; i++, netaddr += 0x10000) {
-		address.SetBase(Ipv4Address(netaddr), "255.255.0.0");
-		irelays[i] = address.Assign(dcr[i]);
-	}
-
-	//Setting clients addr separated...
-	netaddr = base_addr;
-	for(int i = 0; i < ncores; ++i, netaddr += 0x10000) {
-		uint32_t laddr = netaddr + 0x100;
-		vector<Ipv4InterfaceContainer> iclients(relays.GetN());
-		for(int j = 0; j < relays.GetN(); ++j, laddr += 0x100) {
-			address.SetBase(Ipv4Address(laddr), "255.255.255.0");
-			iclients[j] = address.Assign(dcc[j]);
-
-			Ipv4InterfaceContainer::Iterator itc;
-			for(itc = iclients[j].Begin(); itc != iclients[j].End(); ++itc) {
-				std::pair<Ptr<Ipv4>, uint32_t> cpair = *itc;
-			}
-		}
-	}
-
-	//-------------------------------------------------
-
-	// Just printing IPs
-	cout << "Server (files-0): " << iss.GetAddress(1, 0) << endl;
-	cout << "Relay  (files-1): " << iss.GetAddress(0, 0) << ", lan(" << is.GetAddress(1, 0) << ")" << endl;
-	cout << "Router (files-2): wan(" << iw.GetAddress(0, 0) << "), lan(" << is.GetAddress(0, 0) << ")" << endl << endl;
-
-	if(verbose) {
-		int i = 0;
-		Ipv4InterfaceContainer::Iterator it;
-		for(it = iw.Begin(); it != iw.End(); ++i, ++it) {
-			std::pair<Ptr<Ipv4>, uint32_t> pair = *it;
-			cout << "Core (files-" << i+2 << "): ";
-			for(int j = 0; j < pair.first->GetNInterfaces(); ++j) {
-				StringValue data_rate;
-				pair.first->GetNetDevice(j)->GetChannel()->GetAttribute("DataRate", data_rate);
-				cout << pair.first->GetAddress(j, 0).GetLocal();
-				//			cout << " ("<< data_rate.Get() << ")";
-				cout << ", ";
-			}
-			cout << endl;
-			int k = i - 1;
-			if(k < 0) {
-				cout << endl;
-				continue;
-			}
-
-			Ipv4InterfaceContainer::Iterator itr;
-			for(itr = irelays[k].Begin(); itr != irelays[k].End(); ++itr) {
-				cout << "\t=> Router: ";
-				std::pair<Ptr<Ipv4>, uint32_t> rpair = *itr;
-				for(int m = 0; m < rpair.first->GetNInterfaces(); ++m) {
-					StringValue data_rate;
-					rpair.first->GetNetDevice(m)->GetChannel()->GetAttribute(
-							"DataRate", data_rate);
-					cout << rpair.first->GetAddress(m, 0).GetLocal();
-					//				cout << " (" << data_rate.Get() << ")";
-					cout << ", ";
-				}
-				cout << endl;
-				cout << "------------" << endl;
-			}
-			cout << "------------" << endl;
-		}
-	}
-
-	//-------------------------------------------------
-
-	if(middleman) {
-		uint32_t b_addr = 0xA800000; /* 10.128.0.0 */
-		uint32_t naddr = b_addr;
-		for(int i=0; i < internet.GetN(); ++i, naddr += 0x10000) {
-			Ptr<Node> midc = CreateObject<Node>();
-			NodeContainer subnet_mid(internet.Get(i), midc);
-			//		NodeContainer subnet_r3(core.Get(0), client_r3);
-			stack.Install(midc);
-			dceManager.Install(midc);
-			NetDeviceContainer snr3 = local_csma.Install(subnet_mid);
-			cout << "mid [" << i << "]: " << Ipv4Address(naddr) << endl;
-			address.SetBase(Ipv4Address(naddr), "255.255.255.0");
-			Ipv4InterfaceContainer ic = address.Assign(snr3);
-			RunGtmpInter(midc, Seconds(2.3), "off");
-			//		RunApp("gmtp-client", client_r3, Seconds(3.5), "10.1.1.2", 1 << 16);
-			/*if(i%2)*/
-			if(i==4)
-				RunApp("gmtp-client", midc, Seconds(3.5), "10.1.1.2", 1 << 16);
-			/*else
-					RunApp("gmtp-client", midc, Seconds(4.5), "10.1.1.2", 1 << 16);*/
-		}
-	}
-
-	//-------------------------------------------------
-	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
-	LinuxStackHelper::PopulateRoutingTables ();
-
-	//-------------------------------------------------
-
-	cout << "Running GMTP simulation..." << endl;
+	dceManager.Install(nodes);
 
 	DceApplicationHelper dce;
 	ApplicationContainer apps;
-	dce.SetStackSize (1 << 16);
 
-	if(1 == systemId) {
-		cout << "Disabling GMTP-Inter at server..." << endl;
-		dce.SetBinary ("gmtp-inter");
-		dce.ResetArguments ();
-		dce.ParseArguments("off");
-		apps = dce.Install (server);
-		apps.Start (Seconds (2.0));
-//		RunGtmpInter(server, Seconds(2.0), "off");
-
-		RunIp(all, Seconds(2.1), "route");
-		RunIp(server, Seconds(2.2), "addr list sim0");
-		RunIp(clients, Seconds(2.2), "addr list sim0");
-		RunIp(rserver, Seconds(2.2), "addr list sim0");
-		RunIp(rserver, Seconds(2.2), "addr list sim1");
-
-		for(int i=0; i<clients.GetN(); ++i) {
-			cout << "Disabling GMTP-Inter at client " << i << "..." << endl;
-			dce.SetBinary("gmtp-inter");
-			dce.ResetArguments();
-			dce.ParseArguments("off");
-			apps = dce.Install (clients.Get(i));
-			apps.Start (Seconds (2.5));
-		}
-//		RunGtmpInter(clients, Seconds(2.3), "off");
-
-		cout << "Starting GMTP server..." << endl;
-		dce.SetStackSize (1 << 31);
-		dce.SetBinary("udp-server");
-		dce.ResetArguments();
-		apps = dce.Install(server);
-		apps.Start(Seconds(3.0));
-//		RunApp("gmtp-server", server, Seconds(3.0), 1 << 31);
-	}
-	/*RunAppMulti("gmtp-client", clients, 4.0, "10.1.1.2", 1 << 16, 3);*/
+	dce.SetStackSize(1 << 20);
 
 	if(0 == systemId) {
-		cout << "Starting GMTP client..." << endl;
-		dce.SetBinary("udp-client");
-		dce.SetStackSize(1 << 16);
+		dce.SetBinary("udp-server");
 		dce.ResetArguments();
-		dce.ParseArguments("10.1.1.2");
-		apps = dce.Install(clients.Get(0));
-		apps.Start(Seconds(3.5));
+		apps = dce.Install(node1);
+		apps.Start(Seconds(4.0));
 	}
 
-//	if(0 == systemId) {
-//		int i, j;
-//		double t = 3.5 + (double)(rand()%1000)/10000;
-//		double step = 0.2;
-//		cout << "Starting clients at " << t << " secs" << endl;
-//		for(i = 0; i < clients.GetN(); i+=2, t += step) {
-//			cout << "i(0): " << i << endl;
-//			cout << clients.Get(i) << endl;
-////			apps = process.Install(clients.Get(i));
-////			apps.Start(ns3::Seconds(t));
-//		}
-//	}
-//
-//	if(1 == systemId) {
-//		int i, j;
-//		double t = 3.6 + (double)(rand()%1000)/10000;
-//		double step = 0.2;
-//		cout << "Starting clients at " << t << " secs" << endl;
-//		for(i = 1; i < clients.GetN(); i+=2, t += step) {
-//			cout << "i(1): " << i << endl;
-//			cout << clients.Get(i) << endl;
-////			apps = process.Install(clients.Get(i));
-////			apps.Start(ns3::Seconds(t));
-//		}
-//	}
+	if(1 == systemId) {
+		dce.SetBinary("udp-client");
+		dce.ResetArguments();
+		dce.AddArgument("10.1.1.1");
+		apps = dce.Install(node2);
+		apps.Start(Seconds(4.5));
+	}
 
-	//-------------------------------------------------
+	channel.EnablePcapAll("dce-gmtp-mpi");
 
-//	if(0 == systemId) {
-//		dce.SetBinary("gmtp-server");
-//		dce.ResetArguments();
-//		apps = dce.Install(server);
-//		apps.Start(Seconds(4.0));
-//	}
-//
-//	if(1 == systemId) {
-//		dce.SetBinary("gmtp-client");
-//		dce.ResetArguments();
-//		dce.AddArgument("10.1.1.1");
-//		apps = dce.Install(node2);
-//		apps.Start(Seconds(4.5));
-//	}
-
-	//-------------------------------------------------
-	local_csma.EnablePcapAll("dce-gmtp-master");
-	core_csma.EnablePcapAll("dce-gmtp-master");
-
-	AsciiTraceHelper ascii;
-	local_csma.EnableAsciiAll(ascii.CreateFileStream("dce-gmtp-master.tr"));
-	core_csma.EnableAsciiAll(ascii.CreateFileStream("dce-gmtp-master.tr"));
-
-	Simulator::Stop (Seconds (12000.0));
+	Simulator::Stop(Seconds(1050.0));
 	Simulator::Run();
 	Simulator::Destroy();
-
-	cout << "Done." << endl;
 
 	//-------------------------------------------------
 
