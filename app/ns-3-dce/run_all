@@ -4,7 +4,7 @@ pre=0
 
 if [ $# -gt 1 ]; then
    echo "Error! You must run:"
-   echo "   ./run_all <pre>"
+   echo "   ./run_all <pre> (0, 1, 2)"
    exit 1
 elif [ $# -eq 1 ]; then
     pre=1
@@ -18,7 +18,12 @@ if [ $pre=1 ]; then
     ./run_simulation 10 3 1 pre-4
     ./run_simulation 10 3 10 pre-5
     ./run_simulation 10 3 20 pre-6
-    
+
+elif [ $pre=2 ]; then # Aux, to make a projection
+    ./run_simulation 10 2 1 aux-1
+    ./run_simulation 10 2 10 aux-2
+    ./run_simulation 10 2 20 aux-3
+
 else
     ./run_simulation 16 1 1 sim-1
     ./run_simulation 18 1 10 sim-2
