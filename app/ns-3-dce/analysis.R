@@ -95,8 +95,8 @@ getnumber <- function(populacao, media, erro, dp) {
   return (ceiling(n));
 }
 
-getn <- function(pop, err) {
-  return (getnumber(length(pop), mean(pop), err, sd(pop)));
+getn <- function(pop, err, rep) {
+  return (getnumber(length(pop)/rep, mean(pop), err, sd(pop)));
 }
 
 ## ============== START ===========
@@ -104,7 +104,8 @@ print("======= Starting ========")
 main_label <- "GMTP"
 err <- 0.05;
 
-clients_logs <- Sys.glob("~/gmtp/app/ns-3-dce/results/gmtp/client-*.log")
+pre <- TRUE
+clients_logs <- Sys.glob("~/gmtp/app/ns-3-dce/results/pre-2/client-*.log")
 clients_len <- length(clients_logs)
 clients <- table_from_files(clients_logs, "idx")
 
@@ -168,11 +169,13 @@ c_ndp <- ceiling(ndp_clients$mean[nrow(ndp_clients)] + 2 * sum(elapsed_gmtp$mean
 s_ndp <- ceiling(ndp_server$mean[nrow(ndp_server)])
 ndp <- c_ndp + s_ndp
 
-getn(lg*100, err)
-getn(rg, err)
-getn(irg, err)
-getn(ndpc, err)
-getn(ndps, err)
+if(pre) {
+  print (getn(lg*100, err, 10))
+  print (getn(rg, err, 10))
+  print (getn(irg, err, 10))
+  print( getn(ndpc, err, 10))
+  print( getn(ndps, err, 10))
+}
 
 
 
