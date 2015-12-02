@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
 		printf("Adding multicast group...OK.\n");
 
 	printf("Waiting data...\r\n\r\n");
-	print_log_header(log);
+	print_client_log_header(log);
 
 	/* Read from the socket. */
 	int i = 0, seq;
@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 		rcv_data += bytes_read;
 
 		char *seqstr = strtok(buffer, " ");
-		update_client_stats(i, atoi(seqstr), t1, rcv, rcv_data, hist, log);
+		update_client_stats(i, atoi(seqstr), t1, rcv, rcv_data, hist, 0, log);
 
 	} while(strcmp(buffer, outstr) != 0);
 

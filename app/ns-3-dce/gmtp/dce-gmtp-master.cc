@@ -272,7 +272,9 @@ int main(int argc, char *argv[])
 
 	RunGtmpInter(clients, Seconds(2.3), "off");
 
-	RunApp("gmtp-server", server, Seconds(3.0), 1 << 31);
+	double ts = 2.5 + (double)(rand()%1000)/10000;
+	cout << "Starting server at " << ts << " secs" << endl;
+	RunApp("gmtp-server", server, Seconds(ts), 1 << 31);
 	/*RunAppMulti("gmtp-client", clients, 4.0, "10.1.1.2", 1 << 16, 3);*/
 
 	ns3::DceApplicationHelper process;

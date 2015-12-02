@@ -29,7 +29,7 @@ plot_graph <- function(colunm, mainlabel, datalabel, extra=0){
   lines(colunm)
   if(extra) {
     lines(lowess(colunm), col="yellow", lwd=3)
-    abline(lm(colunm~gmtp$idx), col="green", lwd=3)
+    abline(lm(colunm~clients$idx), col="green", lwd=3)
   }
 }
 
@@ -42,14 +42,14 @@ report <- function(col) {
 }
 
 get_seq <- function(col, len){
-  myseq <- seq(from = col, to = (len), by = 6)
+  myseq <- seq(from = col, to = (len), by = 7)
   return(myseq)
 }
 
-sub_table <- function(table, col, key){
+sub_table <- function(table, col, key, by){
   sprintf("col: %d, ncol: %d", col, ncol(table))
-  print (get_seq(col, ncol(table)));
-  new_table <- table[c(1, get_seq(col, ncol(table)))]
+  print (seq(col, ncol(table), by));
+  new_table <- table[c(1, seq(col, ncol(table), by))]
    data_cols <- c(2, ncol(new_table))
    m <- data.frame(idx=new_table[,1], mean=NA)
    n <- new_table[,1];
@@ -102,24 +102,31 @@ getn <- function(pop, err) {
 ## ============== START ===========
 print("======= Starting ========")
 main_label <- "GMTP"
-gmtp_logs <- Sys.glob("~/gmtp/app/ns-3-dce/results/gmtp/gmtp-*.log")
-gmtp_len <- length(gmtp_logs)
-
-gmtp <- table_from_files(gmtp_logs, "idx")
 err <- 0.05;
 
-seq_gmtp <- sub_table(gmtp, 2, "idx")
-loss_gmtp <- sub_table(gmtp, 3, "idx")
-elapsed_gmtp <- sub_table(gmtp, 4, "idx")
-rate_gmtp <- sub_table(gmtp, 6, "idx")
-inst_rate_gmtp <- sub_table(gmtp, 7, "idx")
+clients_logs <- Sys.glob("~/gmtp/app/ns-3-dce/results/gmtp/client-*.log")
+clients_len <- length(clients_logs)
+clients <- table_from_files(clients_logs, "idx")
+
+seq_gmtp <- sub_table(clients, 2, "idx", 7)
+loss_gmtp <- sub_table(clients, 3, "idx", 7)
+elapsed_gmtp <- sub_table(clients, 4, "idx", 7)
+rate_gmtp <- sub_table(clients, 6, "idx", 7)
+inst_rate_gmtp <- sub_table(clients, 7, "idx", 7)
 inst_rate_gmtp <- na.omit(inst_rate_gmtp)
+ndp_clients <- sub_table(clients, 8, "idx", 7)
+
+server_logs <- Sys.glob("~/gmtp/app/ns-3-dce/results/gmtp/server-*.log")
+server_len <- length(server_logs)
+server <- table_from_files(server_logs, "idx")
+
+ndp_server <- sub_table(server, 2, "idx", 1)
 
 ## ============== LOSSES ===========
 report(seq_gmtp$mean)
 plot(seq_gmtp$mean, type="n", main="GMTP - Número de Sequencia", xlab="Pacotes Recebidos", ylab="Número de Sequencia")
 lines(seq_gmtp$mean, lwd=3)
-lines(gmtp$idx, col="red", lwd=2)
+lines(clients$idx, col="red", lwd=2)
 
 report(loss_gmtp$mean)
 n <- 0
@@ -139,7 +146,7 @@ report(elapsed_gmtp$mean)
 plot(elapsed_gmtp$mean, type="n", main="GMTP - Intervalo entre dois pacotes", xlab="Pacotes Recebidos", ylab="Intervalo entre dois pacotes (ms)")
 points(elapsed_gmtp$mean)
 lines(lowess(elapsed_gmtp$mean), col="yellow", lwd=3)
-abline(lm(elapsed_gmtp$mean~gmtp$idx), col="green", lwd=3)
+abline(lm(elapsed_gmtp$mean~clients$idx), col="green", lwd=3)
 
 ## ============== RX RATE ===========
 rate_gmtp$mean[nrow(rate_gmtp)]
@@ -152,6 +159,20 @@ plot_graph(inst_rate_gmtp$mean, "GMTP - Taxa de Recepção", "Taxa de Recepção
 irg <- get_mean_table(inst_rate_gmtp)
 report(irg)
 
+ndpc <-last_line(ndp_clients);
+report(ndpc)
+ndps <-last_line(ndp_server);
+report(ndps)
+
+c_ndp <- ceiling(ndp_clients$mean[nrow(ndp_clients)] + 2 * sum(elapsed_gmtp$mean)/1000)
+s_ndp <- ceiling(ndp_server$mean[nrow(ndp_server)])
+ndp <- c_ndp + s_ndp
+
 getn(lg*100, err)
 getn(rg, err)
 getn(irg, err)
+getn(ndpc, err)
+getn(ndps, err)
+
+
+

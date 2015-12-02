@@ -18,8 +18,6 @@
 
 #include "gmtp.h"
 
-#define MY_TIME(time) (time - (double)1262300000000 + (double)(rand()%1000000))
-
 int main(int argc, char**argv)
 {
 	struct sockaddr_in addr, cl_addr;
@@ -29,10 +27,8 @@ int main(int argc, char**argv)
 	char buffer[BUFF_SIZE];
 	srand(time(NULL));
 
-	double start = time_ms(tv);
-
 	char filename[17];
-	sprintf(filename, "gmtp-%0.0f.log", MY_TIME(time_ms(tv)));
+	sprintf(filename, "client-%0.0f.log", MY_TIME(time_ms(tv)));
 	FILE *log;
 	log = fopen (filename,"w");
 	if (log == NULL) {
@@ -76,12 +72,12 @@ int main(int argc, char**argv)
 	}
 
 	printf("Connected to the server...\r\n\r\n");
-	print_log_header(log);
+	print_client_log_header(log);
+	double start = time_ms(tv);
 
-	int i = 0, seq;
+	int i = 0, seq, ndp = 0;
 	double rcv=0, rcv_data=0;
 	double t0 = time_ms(tv);
-//	double ti = time_ms(tv);
 	const char *outstr = "out";
 	do {
 		ssize_t bytes_read;
@@ -94,14 +90,8 @@ int main(int argc, char**argv)
 		printf("Received (%d): %s\n", i, buffer);
 		char *seqstr = strtok(buffer, " ");
 
-//		if(time_ms(tv) - ti >= 500) {  //Log every 500ms
-//			ti = time_ms(tv);
-//			update_client_stats(i, atoi(seqstr), t0, rcv, rcv_data,
-//					hist, log);
-//		}
-
-		update_client_stats(i, atoi(seqstr), t0, rcv, rcv_data, hist,
-				log);
+		ndp = count_ndp_rcv(sockfd) + count_ndp_sent(sockfd);
+		update_client_stats(i, atoi(seqstr), t0, rcv, rcv_data, hist, ndp, log);
 
 	} while(strcmp(buffer, outstr) != 0);
 

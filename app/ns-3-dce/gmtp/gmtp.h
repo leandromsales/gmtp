@@ -18,6 +18,7 @@
 #define GMTP_SAMPLE 100
 
 #define NumStr(Number) static_cast<ostringstream*>( &(ostringstream() << Number) )->str().c_str()
+#define MY_TIME(time) (time - (double)1262300000000 + (double)(rand()%1000000))
 
 static struct timeval  tv;
 
@@ -96,8 +97,7 @@ static void print_stats(int i, double t1, double total, double total_data)
 	std::cout << "TX: " << (total*1000)/elapsed << " B/s" << std::endl;
 }
 
-
-#define print_log_header(log) fprintf(log, "idx\tseq\tloss\telapsed\tbytes_rcv\trx_rate\tinst_rx_rate\r\n\r\n");
+#define print_client_log_header(log) fprintf(log, "idx\tseq\tloss\telapsed\tbytes_rcv\trx_rate\tinst_rx_rate\tndp\r\n\r\n");
 
 enum {
 	TOTAL_BYTES,
@@ -113,7 +113,7 @@ enum {
  * @rcv_data data bytes received
  */
 static void update_client_stats(int i, int seq, double begin, double rcv,
-		double rcv_data, double hist[][4], FILE *log)
+		double rcv_data, double hist[][4], int ndp, FILE *log)
 {
 	double now = time_ms(tv);
 	double total_time = now - begin;
@@ -141,10 +141,20 @@ static void update_client_stats(int i, int seq, double begin, double rcv,
 
 	if(inst_rx >= 1)
 		//index, seq, loss, elapsed, bytes_rcv, rx_rate, inst_rx_rate
-		fprintf(log, "%d\t%d\t%d\t%0.2f\t%0.2f\t%0.2f\t%0.2f\r\n", i, seq, loss, elapsed, rcv, rx, inst_rx);
+		fprintf(log, "%d\t%d\t%d\t%0.2f\t%0.2f\t%0.2f\t%0.2f\t%d\r\n", i, seq, loss, elapsed, rcv, rx, inst_rx, ndp);
 	else
-		fprintf(log, "%d\t%d\t%d\t%0.2f\t%0.2f\t%0.2f\t\r\n", i, seq, loss, elapsed, rcv, rx);
+		fprintf(log, "%d\t%d\t%d\t%0.2f\t%0.2f\t%0.2f\t\t%d\r\n", i, seq, loss, elapsed, rcv, rx, ndp);
 
+}
+
+#define print_server_log_header(log) fprintf(log, "idx\tndp\r\n\r\n");
+
+/**
+ * @i Sequence number
+ */
+static void update_server_stats(int i, int ndp, FILE *log)
+{
+	fprintf(log, "%d\t%d\r\n", i, ndp);
 }
 
 static int count_ndp_rcv(int sockfd)
