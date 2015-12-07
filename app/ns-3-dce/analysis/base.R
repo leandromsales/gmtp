@@ -1,6 +1,6 @@
 ## ========================= FUNCTIONS ========================
 
-source("master.R");
+source("~/gmtp/app/ns-3-dce/analysis/master.R");
 
 ## ============== START ===========
 print("======= Starting ========")

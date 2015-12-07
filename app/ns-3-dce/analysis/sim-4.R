@@ -1,6 +1,6 @@
 ## ========================= FUNCTIONS ========================
 
-source("master.R");
+source("~/gmtp/app/ns-3-dce/analysis/master.R");
 
 ## ============== START ===========
 print("======= Starting ========")
@@ -30,8 +30,8 @@ ndp_server04 <- sub_table(server04, 2, "idx", 1)
 ## ============== LOSSES ===========
 report(seq_gmtp04$mean)
 plot(seq_gmtp04$mean, type="n", main="GMTP - Número de Sequencia", xlab="Pacotes Recebidos", ylab="Número de Sequencia")
-lines(seq_gmtp04$mean, lwd=3)
-lines(clients04$idx, col="red", lwd=2)
+lines(seq_gmtp04$mean)
+lines(clients04$idx, col="red")
 
 report(loss_gmtp04$mean)
 n <- 0
@@ -50,8 +50,8 @@ lg04 <- tot_loss04
 report(elapsed_gmtp04$mean)
 plot(elapsed_gmtp04$mean, type="n", main="GMTP - Intervalo entre dois pacotes", xlab="Pacotes Recebidos", ylab="Intervalo entre dois pacotes (ms)")
 points(elapsed_gmtp04$mean)
-lines(lowess(elapsed_gmtp04$mean), col="yellow", lwd=3)
-abline(lm(elapsed_gmtp04$mean~clients04$idx), col="green", lwd=3)
+lines(lowess(elapsed_gmtp04$mean), col="yellow")
+abline(lm(elapsed_gmtp04$mean~clients04$idx), col="green")
 
 ## ============== RX RATE ===========
 rate_gmtp04$mean[nrow(rate_gmtp04)]
