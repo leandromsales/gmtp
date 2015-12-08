@@ -55,6 +55,9 @@ points(elapsed_gmtp$mean)
 lines(lowess(elapsed_gmtp$mean), col="yellow", lwd=3)
 abline(lm(elapsed_gmtp$mean~clients$idx), col="green", lwd=3)
 
+## ============== CONTINUIDADE ===========
+contin <- continuidade(elapsed_gmtp, 7, "mean", loss_rate)
+
 ## ============== RX RATE ===========
 rate_gmtp$mean[nrow(rate_gmtp)]
 

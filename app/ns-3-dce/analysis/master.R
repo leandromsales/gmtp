@@ -1,4 +1,27 @@
 ## ========================= FUNCTIONS ========================
+
+## ============= Tamanho amostral ============
+
+# Corrigir (não pegar a média por tempo, mas a média consolidada por nó);
+# Fazer um vetor de médias. Verificar como foi feito em Loss.
+
+getz <- function(erro) {
+  z <- (1-(erro/2)) * 2
+  return (z)
+}
+
+getnumber <- function(populacao, media, erro, dp) {
+  z <- getz(erro)
+  ni <- ((z^2) * (dp^2)) / (erro^2)
+  n <- (populacao * ni) / (populacao + ni - 1)
+  return (ceiling(n));
+}
+
+getn <- function(pop, err, rep) {
+  return (getnumber(length(pop)/rep, mean(pop), err, sd(pop)));
+}
+
+## ================ Geral ===============================
 table_from_file <- function(filename) {
   return (read.table(toString(filename), header=T, sep='\t'))
 }
@@ -47,8 +70,8 @@ get_seq <- function(col, len){
 }
 
 sub_table <- function(table, col, key, by){
-  sprintf("col: %d, ncol: %d", col, ncol(table))
-  print (seq(col, ncol(table), by));
+  #sprintf("col: %d, ncol: %d", col, ncol(table))
+  #print (seq(col, ncol(table), by));
   new_table <- table[c(1, seq(col, ncol(table), by))]
    data_cols <- c(2, ncol(new_table))
    m <- data.frame(idx=new_table[,1], mean=NA)
@@ -78,26 +101,67 @@ last_line <- function(table) {
   return (new_table);
 }
 
-## ============= Tamanho amostral ============
-
-# Corrigir (não pegar a média por tempo, mas a média consolidada por nó);
-# Fazer um vetor de médias. Verificar como foi feito em Loss.
-
-getz <- function(erro) {
-  z <- (1-(erro/2)) * 2
-  return (z)
+## =================== AUX ======================
+poisson <- function(x, y, n) {
+  mx <- mean(x)
+  my <- mean(y)
+  r <- n * (log(my*100)/mx) 
+  return (exp(r/100) - 1);  # e^n
 }
 
-getnumber <- function(populacao, media, erro, dp) {
-  z <- getz(erro)
-  ni <- ((z^2) * (dp^2)) / (erro^2)
-  n <- (populacao * ni) / (populacao + ni - 1)
-  return (ceiling(n));
+project <- function(x, y, n, max=0) {
+  ajuste <- lm(formula = y~log(x))
+  #summary(ajuste)
+  #anova(ajuste)
+  #confint(ajuste)
+  if(max>0) {
+    plot(range(c(0, 31)), range(c(0, max)))
+    #abline(x, exp(y))
+    abline(lm(y~x))
+    points(y~x)
+  } 
+  #predict(ajuste,x0,interval="confidence")
+  ret <- predict(ajuste, data.frame(x=n), interval="prediction")
+  return (ret)
+}
+## ================= Loss ==========================
+print_seq_graph <- function(seq, idx) {
+  plot(seq, type="n", main="GMTP - Número de Sequencia", xlab="Pacotes Recebidos", ylab="Número de Sequencia")
+  lines(seq)
+  lines(idx, col="red")
 }
 
-getn <- function(pop, err, rep) {
-  return (getnumber(length(pop)/rep, mean(pop), err, sd(pop)));
+losses <- function(loss_table, seq) {
+  n <- 0
+  losses <- c()
+  for(i in 2:ncol(loss_table)-1) {
+    loss <- sum(loss_table[i]) / seq[nrow(seq), i]
+    losses[n] <- loss
+    n <- n + 1
+  }
+  return (losses)
 }
+
+loss_rate <- function(losses) {
+  return (mean(losses)*100)
+}
+
+## ============== Continuidade =====================
+
+print_elapsed <- function(elapsed, idx) {
+  plot(elapsed, type="n", main="GMTP - Intervalo entre dois pacotes", xlab="Pacotes Recebidos", ylab="Intervalo entre dois pacotes (ms)")
+  points(elapsed)
+  lines(lowess(elapsed), col="yellow")
+  abline(lm(elapsed~idx), col="green")
+}
+
+continuidade <- function(tabela, media, coluna, loss) {
+  late <- subset(x = tabela, subset = mean > media, select = coluna)
+  contin <- 100 - (nrow(late)*100/nrow(tabela)) - loss
+  return (contin)
+}
+
+## ======================== Simulation =======================
 
 main_label <- "GMTP"
 err <- 0.05;

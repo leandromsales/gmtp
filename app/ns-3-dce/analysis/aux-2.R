@@ -29,29 +29,16 @@ ndp_server_aux02 <- sub_table(server_aux02, 2, "idx", 1)
 
 ## ============== LOSSES ===========
 report(seq_gmtp_aux02$mean)
-plot(seq_gmtp_aux02$mean, type="n", main="GMTP - Número de Sequencia", xlab="Pacotes Recebidos", ylab="Número de Sequencia")
-lines(seq_gmtp_aux02$mean)
-lines(clients_aux02$idx, col="red")
+print_seq_graph(seq_gmtp_aux02$mean, clients_aux02$idx)
 
-report(loss_gmtp_aux02$mean)
-n <- 0
-tot_loss_aux02 <- c()
-for(i in 2:ncol(loss_gmtp_aux02)-1) {
-  loss <- sum(loss_gmtp_aux02[i]) / seq_gmtp_aux02[nrow(seq_gmtp_aux02), i]
-  tot_loss_aux02[n] <- loss
-  n <- n + 1
-}
+tot_loss_aux02 <- losses(loss_gmtp_aux02, seq_gmtp_aux02)
 report(tot_loss_aux02)
-loss_rate_aux02 <- mean(tot_loss_aux02)*100
-lg_aux02 <- tot_loss_aux02
-#lg <- get_mean_table(loss_gmtp);
-#report(lg)
+loss_rate_aux02 <- loss_rate(tot_loss_aux02)
 
+## ============== CONTINUIDADE ===========
 report(elapsed_gmtp_aux02$mean)
-plot(elapsed_gmtp_aux02$mean, type="n", main="GMTP - Intervalo entre dois pacotes", xlab="Pacotes Recebidos", ylab="Intervalo entre dois pacotes (ms)")
-points(elapsed_gmtp_aux02$mean)
-lines(lowess(elapsed_gmtp_aux02$mean), col="yellow")
-abline(lm(elapsed_gmtp_aux02$mean~clients_aux02$idx), col="green")
+print_elapsed(elapsed_gmtp_aux02$mean, clients_aux02$idx)
+contin_aux02 <- continuidade(elapsed_gmtp_aux02, 7, "mean", loss_rate_aux02)
 
 ## ============== RX RATE ===========
 rate_gmtp_aux02$mean[nrow(rate_gmtp_aux02)]

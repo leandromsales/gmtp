@@ -23,6 +23,9 @@ r <- c(1, 1, 1, 3, 3, 3, 30, 30, 30)
 cli <- c(1, 10, 20, 3, 30, 60, 30, 300, 600)
 rx <- c(mean(rg01), mean(rg02), mean(rg03), mean(rg04), mean(rg05), mean(rg06), rg07[1], rg08[1], rg09[1])
 l <- c(loss_rate01, loss_rate02, loss_rate03, loss_rate04, loss_rate05, loss_rate06, loss_rate07[1], loss_rate08[1], loss_rate09[1])
-ci <- c(0, 0, 0, 0, 0, 0, 0, 0, 0)
+ci <- c(contin01, contin02, contin03, contin04, contin05, contin06, contin07[1], contin08[1], contin09[1])
 ctrl <- c(0, 0, 0, 0, 0, 0, 0, 0, 0)
 gmtp <- data.frame(t=t, relays=r, clients=cli, rate=rx, loss=l, contin=ci, control=ctrl)
+
+
+source("~/gmtp/app/ns-3-dce/analysis/graphics.R");
