@@ -80,9 +80,9 @@ points(gmtp$t, gmtp$loss, col=colors[5], lwd=4, lty=1)
 lines(gmtp$t[1:3], gmtp$loss[1:3], col=colors[1], lwd=3, lty=1)
 lines(gmtp$t[4:6], gmtp$loss[4:6], col=colors[1], lwd=3, lty=1)
 lines(gmtp$t[7:9], gmtp$loss[7:9], col=colors[1], lwd=3, lty=1)
-text(x=2, y=5, labels=rep[1])
-text(x=5, y=5, labels=rep[2])
-text(x=8, y=5, labels=rep[3])
+text(x=2, y=4, labels=rep[1])
+text(x=5, y=4, labels=rep[2])
+text(x=8, y=4, labels=rep[3])
 mtext("Tratamentos", side = 3, line = 3)
 
 ##################### Continuidade ########################
@@ -100,4 +100,28 @@ lines(gmtp$t[7:9], gmtp$contin[7:9], col=colors[1], lwd=3, lty=1)
 text(x=2, y=20, labels=rep[1])
 text(x=5, y=20, labels=rep[2])
 text(x=8, y=20, labels=rep[3])
+mtext("Tratamentos", side = 3, line = 3)
+
+
+##################### NDP ########################
+mainlabel <- "GMTP - Pacotes de controle"
+datalabel <- "Quantidade de pacotes de controle"
+
+rangex <- range(c(1, 9.5), na.rm=T)
+rangey <- range(0, max(gmtp$control)+1000, na.rm=T)
+kb <- c("KB")
+
+plot(rangex, rangey, type="n", xlab=xlabel, ylab=datalabel, xaxt = "n")
+axis(1, side=1, at=c(1:9), labels=gmtp$clients, cex.axis=1)
+axis(3, at=c(1:9), cex.axis=1)
+#axis(4, at=gmtp$control, labels=round(gmtp$control_len, 2), las=2, cex.axis=0.7, tck=-.01)
+points(gmtp$t, gmtp$control, col=colors[5], lwd=4, lty=1)
+text(x=gmtp$t+0.22, y=gmtp$control-1300, labels=ceiling(gmtp$control))
+text(x=gmtp$t+0.64, y=gmtp$control-1300, labels=kb[1])
+lines(gmtp$t[1:3], gmtp$control[1:3], col=colors[1], lwd=3, lty=1)
+lines(gmtp$t[4:6], gmtp$control[4:6], col=colors[1], lwd=3, lty=1)
+lines(gmtp$t[7:9], gmtp$control[7:9], col=colors[1], lwd=3, lty=1)
+text(x=2, y=10, labels=rep[1])
+text(x=5, y=10, labels=rep[2])
+text(x=8, y=10, labels=rep[3])
 mtext("Tratamentos", side = 3, line = 3)

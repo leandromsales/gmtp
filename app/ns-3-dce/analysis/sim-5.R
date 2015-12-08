@@ -50,12 +50,14 @@ plot_graph(inst_rate_gmtp05$mean, "GMTP - Taxa de Recepção", "Taxa de Recepç�
 irg05 <- get_mean_table(inst_rate_gmtp05)
 report(irg05)
 
-ndpc05 <-last_line(ndp_clients05);
-report(ndpc05)
-ndps05 <-last_line(ndp_server05);
-report(ndps05)
+##================ NDP =====================
+#ndp05 <- ndp(ndp_clients05, ndp_server05, elapsed_gmtp05$mean)
+#ndp_len05 <- ndp_len(ndp05)
 
-c_ndp05 <- ceiling(ndp_clients05$mean[nrow(ndp_clients05)] + 2 * sum(elapsed_gmtp05$mean)/1000)
-s_ndp05 <- ceiling(ndp_server05$mean[nrow(ndp_server05)])
-ndp05 <- c_ndp05 + s_ndp05
+# Error on logs... making projection
+x <- c(1, 2)
+y <- c(ndp02, ndp_aux02)
+ndp05v <- project(x, y, 3)
+ndp05 <- ndp05v[1]
+ndp_len05 <- ndp_len(ndp05)
 

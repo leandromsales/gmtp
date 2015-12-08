@@ -51,13 +51,8 @@ plot_graph(inst_rate_gmtp01$mean, "GMTP - Taxa de Recepção", "Taxa de Recepç�
 irg01 <- get_mean_table(inst_rate_gmtp01)
 report(irg01)
 
-ndpc01 <-last_line(ndp_clients01);
-report(ndpc01)
-ndps01 <-last_line(ndp_server01);
-report(ndps01)
-
-c_ndp01 <- ceiling(ndp_clients01$mean[nrow(ndp_clients01)] + 2 * sum(elapsed_gmtp01$mean)/1000)
-s_ndp01 <- ceiling(ndp_server01$mean[nrow(ndp_server01)])
-ndp01 <- c_ndp01 + s_ndp01
+##================ NDP =====================
+ndp01 <- ndp(ndp_clients01, ndp_server01, elapsed_gmtp01$mean)
+ndp_len01 <- ndp_len(ndp01)
 
 

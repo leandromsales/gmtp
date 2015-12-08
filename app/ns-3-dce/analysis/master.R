@@ -161,6 +161,23 @@ continuidade <- function(tabela, media, coluna, loss) {
   return (contin)
 }
 
+##======================== NDP ===================
+
+ndp <- function(ndp_clients, ndp_server, elapsed_sum) {
+  ndpc <- last_line(ndp_clients)
+  ndps <- last_line(ndp_server)
+  n <- length(ndps);
+  
+  ret <- sum(ndpc)/n
+  ret <- ret + 2*sum(elapsed_sum)/1000
+  ret <- ret + mean(ndps)
+  return (ceiling(ret));
+}
+
+ndp_len <- function(ndp) {
+  return (ndp * (36+36)/1000)
+}
+
 ## ======================== Simulation =======================
 
 main_label <- "GMTP"

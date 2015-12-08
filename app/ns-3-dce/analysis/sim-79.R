@@ -65,4 +65,20 @@ contin07 <- project(x, yic7, 30)
 contin08 <- project(x, yic8, 30)
 contin09 <- project(x, yic9, 30)
 
+#################### NDP ######################
+x <- c(1, 2, 3)
+yndp7 <- c(ndp01, ndp_aux01, ndp04)
+yndp8 <- c(ndp02, ndp_aux02, ndp05)
+yndp9 <- c(ndp03, ndp_aux03, ndp06)
+
+ndp07 <- project(x, yndp7, 30)
+ndp08 <- project(x, yndp8, 30)
+ndp09 <- project(x, yndp9, 30)
+
+ndp_len07 <- ndp_len(ndp07[1])
+ndp_len08 <- ndp_len(ndp08[1])
+ndp_len09 <- ndp_len(ndp09[1])
+
+
+
 
