@@ -37,13 +37,19 @@ int main(int argc, char *argv[])
 	struct sockaddr_in localSock;
 	struct ip_mreq group;
 	int sd;
-
 	char buffer[BUFF_SIZE];
+
+	FILE *log;
+	log = fopen ("exemplo.log","w");
+	if (log == NULL) {
+		printf("Error while creating file\n");
+		exit(1);
+	}
 
 	// Col 0: total bytes
 	// Col 1: data bytes
 	// Col 2: tstamp
-	double hist[GMTP_SAMPLE][3];
+	double hist[GMTP_SAMPLE][4];
 
 	if(argc < 2) {
 		printf("usage: client < interface0 >\n");
@@ -101,7 +107,7 @@ int main(int argc, char *argv[])
 		printf("Adding multicast group...OK.\n");
 
 	printf("Waiting data...\r\n\r\n");
-	print_log_header();
+	print_client_log_header(log);
 
 	/* Read from the socket. */
 	int i = 0, seq;
@@ -119,13 +125,14 @@ int main(int argc, char *argv[])
 		rcv_data += bytes_read;
 
 		char *seqstr = strtok(buffer, " ");
-		update_client_stats(i, atoi(seqstr), t1, rcv, rcv_data, hist);
+		update_client_stats(i, atoi(seqstr), t1, rcv, rcv_data, hist, 0, log);
 
 	} while(strcmp(buffer, outstr) != 0);
 
 	printf("End of simulation...\n");
 
 	sleep(3);
+	fclose(log);
 
 	return 0;
 }

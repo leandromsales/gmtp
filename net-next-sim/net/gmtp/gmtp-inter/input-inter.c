@@ -78,7 +78,7 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 		max_nclients = new_reporter(entry);
 
 		entry->dev_out = skb->dev;
-		entry->my_addr = gmtp_inter_device_ip(skb->dev);
+		entry->my_addr = gmtp_dev_ip(skb->dev);
 		pr_info("My addr: %pI4\n", &entry->my_addr);
 		entry->my_port = gh->sport;
 		code = GMTP_REQNOTIFY_CODE_WAIT;
@@ -125,20 +125,18 @@ int gmtp_inter_register_rcv(struct sk_buff *skb)
 		relay = gmtp_get_relay(&entry->relays->list, iph->saddr,
 				gh->sport);
 
-		if(relay == NULL) {
-			if(gh->server_rtt == 0)
-				relay = gmtp_inter_create_relay(skb, entry,
-						gr->relay_id);
-			else
-				return NF_ACCEPT;
-		}
+		if(relay == NULL && gh->server_rtt != 0)
+			return NF_ACCEPT;
 
 		switch(entry->state) {
 		case GMTP_INTER_WAITING_REGISTER_REPLY:
 			gmtp_pr_info("Waiting RegisterReply...");
+			ret = NF_ACCEPT;
 			goto out;
 		case GMTP_INTER_REGISTER_REPLY_RECEIVED:
 		case GMTP_INTER_TRANSMITTING:
+			if(relay == NULL)
+				relay = gmtp_inter_create_relay(skb, entry, gr->relay_id);
 			gmtp_pr_info("Media found. Sending RegisterReply.");
 			break;
 		case GMTP_INTER_CLOSE_RECEIVED:
@@ -173,7 +171,7 @@ int gmtp_inter_register_rcv(struct sk_buff *skb)
 				gh->flowname);
 
 		entry->dev_out = skb->dev;
-		entry->my_addr = gmtp_inter_device_ip(skb->dev);
+		entry->my_addr = gmtp_dev_ip(skb->dev);
 		entry->my_port = gh->sport;
 		relay = gmtp_inter_create_relay(skb, entry, gr->relay_id);
 
@@ -197,7 +195,7 @@ int gmtp_inter_register_local_in(struct sk_buff *skb,
 	if(entry->state != GMTP_INTER_WAITING_REGISTER_REPLY)
 		return NF_DROP;
 
-	entry->my_addr = gmtp_inter_device_ip(skb->dev);
+	entry->my_addr = gmtp_dev_ip(skb->dev);
 	entry->my_port = gh->sport;
 	ether_addr_copy(entry->request_mac_addr, eth->h_source);
 
@@ -240,9 +238,9 @@ static int gmtp_inter_transmitting_register_reply_rcv(struct sk_buff *skb,
 
 	/* TODO write my ucc tx_rate here... */
 
-	gmtp_inter_add_relayid(skb);
+	gmtp_add_relayid(skb);
 
-	if(!gmtp_inter_ip_local(iph->daddr))
+	if(!gmtp_local_ip(iph->daddr))
 		return NF_ACCEPT;
 
 	gh_route_n = gmtp_inter_make_route_hdr(skb);
@@ -402,7 +400,7 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 		entry->dev_in = skb->dev;
 
 		/* Add relay information in REGISTER-REPLY packet) */
-		gmtp_inter_add_relayid(skb);
+		gmtp_add_relayid(skb);
 
 		pr_info("UPDATING Tx Rate...\n");
 		gmtp_inter.worst_rtt = max(gmtp_inter.worst_rtt,
@@ -475,12 +473,12 @@ int gmtp_inter_ack_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 		}
 	}
 
-	if(!gmtp_inter_ip_local(iph->daddr)) {
+	if(!gmtp_local_ip(iph->daddr)) {
 		if(reporter == NULL && relay == NULL)
 			return NF_ACCEPT;
 	}
 
-	if(gmtp_inter_ip_local(iph->daddr)) {
+	if(gmtp_local_ip(iph->daddr)) {
 		if(entry->route_pending) {
 			entry->route_pending = false;
 			return NF_ACCEPT;
@@ -513,7 +511,7 @@ int gmtp_inter_route_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	ether_addr_copy(relay->mac_addr, eth->h_source);
 	relay->dev = skb->dev;
 
-	if(gmtp_inter_ip_local(iph->daddr)) { /* I am the server itself */
+	if(gmtp_local_ip(iph->daddr)) { /* I am the server itself */
 		if(route->nrelays > 0)
 			/*gmtp_add_server_entry(server_hashtable, gh->flowname,
 					route)*/;
@@ -599,17 +597,12 @@ int gmtp_inter_elect_resp_rcv(struct sk_buff *skb,
 	return NF_DROP;
 }
 
-#define skblen(skb) ((*skb).len) + ETH_HLEN
-
 /**
  * Update GMTP-inter statistics
  */
 static inline void gmtp_update_stats(struct gmtp_inter_entry *info,
 		struct sk_buff *skb, struct gmtp_hdr *gh)
 {
-	gmtp_inter.total_bytes_rx += skblen(skb);
-	gmtp_inter.ucc_bytes += skblen(skb);
-
 	info->total_bytes += skblen(skb);
 	info->recent_bytes += skblen(skb);
 	info->seq = (unsigned int)gh->seq;
@@ -641,6 +634,11 @@ static inline void gmtp_update_stats(struct gmtp_inter_entry *info,
 }
 
 
+static inline void print_drop(struct sk_buff *skb, __be32 daddr, __be32 seq, char *info)
+{
+	pr_info("Dropping pkt (%s - to %pI4, seq=%u, data=%s)\n",
+					info, &daddr, seq, gmtp_data(skb));
+}
 
 /**
  * P = p.flowname
@@ -657,7 +655,7 @@ int gmtp_inter_data_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 
-	if(!gmtp_inter_ip_local(iph->daddr)) /* Data is not to me */
+	if(!gmtp_local_ip(iph->daddr)) /* Data is not to me */
 		return NF_ACCEPT;
 
 	if(unlikely(entry->state == GMTP_INTER_REGISTER_REPLY_RECEIVED)) {
@@ -670,17 +668,28 @@ int gmtp_inter_data_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 		return NF_ACCEPT;
 	}
 
-	if(entry->buffer->qlen >= entry->buffer_max) {
-		pr_info("GMTP-Inter: dropping pkt (to %pI4, seq=%u, data=%s)\n",
-				&iph->daddr, gh->seq, gmtp_data(skb));
+	/*if(entry->buffer->qlen >= entry->buffer_max) {
+		print_drop(skb, iph->daddr, gh->seq, "buffer overflow");
 		goto out;
-		/* Dont add it to buffer (equivalent to drop) */
-	}
 
-	if((gh->seq > entry->seq) && entry->state == GMTP_INTER_TRANSMITTING)
+		/*return NF_DROP;*/
+		/* Dont add it to buffer (equivalent to drop) */
+	/*}*/ /*else if(gh->seq < entry->seq) {
+		print_drop(skb, iph->daddr, gh->seq, "incorrect seq number");
+		return NF_DROP;
+		goto out;
+	}*/
+
+	/*if((gh->seq > entry->seq) && entry->state == GMTP_INTER_TRANSMITTING) {
 		gmtp_buffer_add(entry, skb);
+	}*/
+
+
 
 out:
+	/*pr_info("Receiving (to %pI4:%d, seq: %u)\n", &iph->daddr,
+			htons(gh->dport), gh->seq);*/
+
 	if(iph->daddr == entry->my_addr)
 		jump_over_gmtp_intra(skb, &entry->clients->list);
 	else

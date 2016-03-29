@@ -18,6 +18,7 @@
 #define GMTP_SAMPLE 100
 
 #define NumStr(Number) static_cast<ostringstream*>( &(ostringstream() << Number) )->str().c_str()
+#define MY_TIME(time) (time - (double)1262300000000 + (double)(rand()%1000000))
 
 static struct timeval  tv;
 
@@ -40,13 +41,19 @@ enum gmtp_sockopt_codes {
 	GMTP_SOCKOPT_PULL,
 	GMTP_SOCKOPT_ROLE_RELAY,
 	GMTP_SOCKOPT_RELAY_ENABLED,
+	GMTP_SOCKOPT_NDP_RCV,
+	GMTP_SOCKOPT_NDP_SENT,
 	GMTP_SOCKOPT_UCC_TYPE
 };
 
 void set_gmtp_inter(int actived)
 {
 	int ok = 1;
+
+	std::cout << GMTP_SOCKOPT_ROLE_RELAY << ", " << GMTP_SOCKOPT_RELAY_ENABLED << std::endl;
+
 	int rsock = socket(PF_INET, SOCK_GMTP, IPPROTO_GMTP);
+
 	setsockopt(rsock, SOL_GMTP, GMTP_SOCKOPT_ROLE_RELAY, &ok, sizeof(int));
 	setsockopt(rsock, SOL_GMTP, GMTP_SOCKOPT_RELAY_ENABLED, &actived,
 			sizeof(int));
@@ -90,13 +97,13 @@ static void print_stats(int i, double t1, double total, double total_data)
 	std::cout << "TX: " << (total*1000)/elapsed << " B/s" << std::endl;
 }
 
-
-#define print_log_header() fprintf(stderr, "idx\tseq\telapsed\tbytes_rcv\trx_rate\tinst_rx_rate\r\n\r\n");
+#define print_client_log_header(log) fprintf(log, "idx\tseq\tloss\telapsed\tbytes_rcv\trx_rate\tinst_rx_rate\tndp\r\n\r\n");
 
 enum {
 	TOTAL_BYTES,
 	DATA_BYTES,
-	TSTAMP
+	TSTAMP,
+	SEQ
 };
 
 /**
@@ -106,7 +113,7 @@ enum {
  * @rcv_data data bytes received
  */
 static void update_client_stats(int i, int seq, double begin, double rcv,
-		double rcv_data, double hist[][3])
+		double rcv_data, double hist[][4], int ndp, FILE *log)
 {
 	double now = time_ms(tv);
 	double total_time = now - begin;
@@ -114,22 +121,59 @@ static void update_client_stats(int i, int seq, double begin, double rcv,
 	int next = (index == (GMTP_SAMPLE-1)) ? 0 : (index + 1);
 	int prev = (index == 0) ? (GMTP_SAMPLE-1) : (index - 1);
 	double elapsed = 0;
+	int loss = 0;
 
 	hist[index][TOTAL_BYTES] = rcv;
 	hist[index][DATA_BYTES] = rcv_data;
 	hist[index][TSTAMP] = now;
+	hist[index][SEQ] = seq;
 
 	double rcv_sample = hist[index][TOTAL_BYTES] - hist[next][TOTAL_BYTES];
 	double rcv_data_sample = hist[index][DATA_BYTES] - hist[next][DATA_BYTES];
 	double instant = hist[index][TSTAMP] - hist[next][TSTAMP];
-	if(i > 1)
+	if(i > 1) {
 		elapsed = hist[index][TSTAMP] - hist[prev][TSTAMP];
+		loss = (hist[index][SEQ] - hist[prev][SEQ]) - 1;
+	}
 
-	//index, seq, elapsed, bytes_rcv, rx_rate, inst_rx_rate
-	fprintf(stderr, "%d\t%d\t%0.2f\t%0.2f\t%0.2f\t%0.2f\r\n", i, seq, elapsed, rcv,
-			rcv*1000 / total_time, rcv_sample*1000 / instant);
+	double rx = rcv*1000 / total_time;
+	double inst_rx = rcv_sample*1000 / instant;
+
+	if(inst_rx >= 1)
+		//index, seq, loss, elapsed, bytes_rcv, rx_rate, inst_rx_rate
+		fprintf(log, "%d\t%d\t%d\t%0.2f\t%0.2f\t%0.2f\t%0.2f\t%d\r\n", i, seq, loss, elapsed, rcv, rx, inst_rx, ndp);
+	else
+		fprintf(log, "%d\t%d\t%d\t%0.2f\t%0.2f\t%0.2f\t\t%d\r\n", i, seq, loss, elapsed, rcv, rx, ndp);
 
 }
+
+#define print_server_log_header(log) fprintf(log, "idx\tndp\r\n\r\n");
+
+/**
+ * @i Sequence number
+ */
+static void update_server_stats(int i, int ndp, FILE *log)
+{
+	fprintf(log, "%d\t%d\r\n", i, ndp);
+}
+
+static int count_ndp_rcv(int sockfd)
+{
+	int ndp = -1;
+	socklen_t ndp_s = sizeof(ndp);
+	getsockopt(sockfd, SOL_GMTP, GMTP_SOCKOPT_NDP_RCV, &ndp, &ndp_s);
+	return ndp;
+}
+
+
+static int count_ndp_sent(int sockfd)
+{
+	int ndp = -1;
+	socklen_t ndp_s = sizeof(ndp);
+	getsockopt(sockfd, SOL_GMTP, GMTP_SOCKOPT_NDP_SENT, &ndp, &ndp_s);
+	return ndp;
+}
+
 
 
 #endif /* GMTP_H_ */

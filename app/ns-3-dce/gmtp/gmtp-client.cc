@@ -3,7 +3,6 @@
 #include "sys/types.h"    
 #include "sys/socket.h"
 #include <sys/time.h>
-#include "string.h"    
 #include "netinet/in.h"    
 #include "netdb.h"  
 #include <netinet/in.h>
@@ -13,11 +12,11 @@
 #include <ctime>
 #include <cstdio>
 #include <cstring>
+#include <cstdlib>
 #include <string>
 #include <sys/ioctl.h>
 
 #include "gmtp.h"
-
 
 int main(int argc, char**argv)
 {
@@ -26,17 +25,29 @@ int main(int argc, char**argv)
 	struct hostent * server;
 	char * serverAddr;
 	char buffer[BUFF_SIZE];
+	srand(time(NULL));
+
+	char filename[17];
+	sprintf(filename, "client-%0.0f.log", MY_TIME(time_ms(tv)));
+	FILE *log;
+	log = fopen (filename,"w");
+	if (log == NULL) {
+		printf("Error while creating file\n");
+		exit(1);
+	}
+	//symlink(filename, "gmtp.log");
 
 	// Col 0: total bytes
 	// Col 1: data bytes
 	// Col 2: tstamp
-	double hist[GMTP_SAMPLE][3];
+	double hist[GMTP_SAMPLE][4];
 
 	if(argc < 2) {
 		printf("usage: client < ip address >\n");
 		exit(1);
 	}
 	printf("Starting GMTP Client...\n");
+	printf("Logfile: %s\n", filename);
 	memset(&hist, 0, sizeof(hist));
 
 	serverAddr = argv[1];
@@ -61,11 +72,12 @@ int main(int argc, char**argv)
 	}
 
 	printf("Connected to the server...\r\n\r\n");
-	print_log_header();
+	print_client_log_header(log);
+	double start = time_ms(tv);
 
-	int i = 0, seq;
+	int i = 0, seq, ndp = 0;
 	double rcv=0, rcv_data=0;
-	double t1 = time_ms(tv);
+	double t0 = time_ms(tv);
 	const char *outstr = "out";
 	do {
 		ssize_t bytes_read;
@@ -75,12 +87,20 @@ int main(int argc, char**argv)
 		++i;
 		rcv += bytes_read + 36 + 20;
 		rcv_data += bytes_read;
-
+		printf("Received (%d): %s\n", i, buffer);
 		char *seqstr = strtok(buffer, " ");
-		update_client_stats(i, atoi(seqstr), t1, rcv, rcv_data, hist);
+
+		ndp = count_ndp_rcv(sockfd) + count_ndp_sent(sockfd);
+		update_client_stats(i, atoi(seqstr), t0, rcv, rcv_data, hist, ndp, log);
 
 	} while(strcmp(buffer, outstr) != 0);
 
+	printf("Non data packets received: %d\n", count_ndp_rcv(sockfd));
+	printf("Non data packets sent: %d\n", count_ndp_sent(sockfd));
+
+	double end = time_ms(tv);
+	double duration = end - start;
+	printf("Time of execution: %0.2f seconds\n\n",  duration/1000);
 	printf("End of simulation...\n");
 
 	// Jamais remover!!!
@@ -91,6 +111,7 @@ int main(int argc, char**argv)
 	//     toda vez que ocorrer esse bug é porque o nó cliente não existe mais
 	//	21/08/15 - 4:00 AM
 	sleep(3);
+	fclose(log);
 
 	return 0;
 }

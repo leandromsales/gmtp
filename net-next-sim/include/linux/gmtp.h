@@ -125,7 +125,7 @@ static inline struct gmtp_request_sock *gmtp_rsk(const struct request_sock *req)
  * struct gmtp_sock - GMTP socket state
  *
  * @flowname: name of the dataflow
- * @flowname: id of my relay (for clients)
+ * @relay_id: id of my relay (for clients)
  * @iss: initial sequence number sent
  * @isr: initial sequence number received
  * @gss: greatest sequence number sent
@@ -210,6 +210,7 @@ struct gmtp_sock {
 	u32 				rx_last_orig_tstamp;
 
 	/** Tx variables */
+	__be32				ndp_sent;
 	u32 				tx_rtt;
 	u32				tx_avg_rtt;
 	u32	 			tx_dpkts_sent;

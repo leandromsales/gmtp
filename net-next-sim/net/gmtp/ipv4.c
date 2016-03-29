@@ -186,7 +186,8 @@ void gmtp_v4_err(struct sk_buff *skb, u32 info)
 
 	struct request_sock *req, **prev;
 
-	gmtp_pr_debug("ICMP: Type: %d, Code: %d", type, code);
+	pr_info("ICMP: Type: %d, Code: %d | ", type, code);
+	print_packet(skb, true);
 
 	if(skb->len < offset + sizeof(*gh)) {
 		ICMP_INC_STATS_BH(net, ICMP_MIB_INERRORS);
@@ -242,7 +243,6 @@ void gmtp_v4_err(struct sk_buff *skb, u32 info)
 				/*FIXME gmtp_do_pmtu_discovery(sk, iph, info);*/;
 			goto out;
 		}
-
 		err = icmp_err_convert[code].errno;
 		break;
 	case ICMP_TIME_EXCEEDED:
@@ -785,7 +785,6 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 		goto discard_it;
 	}
 
-
 	nf_reset(skb);
 
 	return sk_receive_skb(sk, skb, 1);
@@ -1257,10 +1256,11 @@ static unsigned int hook_func_gmtp_out(unsigned int hooknum, struct sk_buff *skb
 				gmtp_pr_info("Changing TTL to %d\n", new_ttl);
 				iph->ttl = new_ttl;
 				ip_send_check(iph);
-			} else
-				pr_info("Keeping default TTL (%d)\n", iph->ttl);
+			} else {
+				pr_info("Auto promoting to relay\n");
+				gh->type = GMTP_PKT_REGISTER;
+			}
 		}
-
 	}
 
 	return NF_ACCEPT;

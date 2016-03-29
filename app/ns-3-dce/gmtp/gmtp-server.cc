@@ -8,6 +8,7 @@
 #include <arpa/inet.h>
 #include <cstdio>
 #include <cstring>
+#include <cstdlib>
 
 #include "gmtp.h"
 
@@ -20,6 +21,15 @@ int main(int argc, char *argv[])
 	struct sockaddr_storage serverStorage;
 	socklen_t addr_size;
 	int media_rate = 300000; // B/s
+
+	char filename[17];
+	sprintf(filename, "server-%0.0f.log", MY_TIME(time_ms(tv)));
+	FILE *log;
+	log = fopen(filename, "w");
+	if(log == NULL) {
+		printf("Error while creating file\n");
+		exit(1);
+	}
 
 	cout << "Starting GMTP Server..." << endl;
 	welcomeSocket = socket(PF_INET, SOCK_GMTP, IPPROTO_GMTP);
@@ -45,9 +55,11 @@ int main(int argc, char *argv[])
 			&addr_size);
 
 	cout << "Connected with client!" << endl;
+	print_server_log_header(log);
 
+	double start = time_ms(tv);
 	double t1  = time_ms(tv);
-	int i;
+	int i, ndp = 0;
 	const char *msg = " Hello, World!";
 	double total_data, total;
 
@@ -71,9 +83,13 @@ int main(int argc, char *argv[])
 			print_stats(i, t1, total, total_data);
 			cout << endl;
 		}
+		ndp = count_ndp_rcv(newSocket) + count_ndp_sent(newSocket);
+		update_server_stats(i, ndp, log);
 	}
 
 	print_stats(i, t1, total, total_data);
+	printf("Non data packets received: %d\n", count_ndp_rcv(newSocket));
+	printf("Non data packets sent: %d\n", count_ndp_sent(newSocket));
 
 	const char *outstr = "out";
 
@@ -81,6 +97,11 @@ int main(int argc, char *argv[])
 		printf("Sending out: %s\n", outstr);
 		send(newSocket, outstr, strlen(outstr), 0);
 	}
+
+	double end = time_ms(tv);
+	double duration = end - start;
+	printf("Time of execution: %0.2f seconds\n\n", duration / 1000);
+	printf("End of simulation...\n");
 
 	printf("Closing server...\n");
 	close(newSocket);

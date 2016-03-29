@@ -31,7 +31,7 @@ int gmtp_inter_register_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 		return NF_DROP;
 
 	/* FIXME Get a valid and unused port */
-	entry->my_addr = gmtp_inter_device_ip(skb->dev);
+	entry->my_addr = gmtp_dev_ip(skb->dev);
 	ether_addr_copy(entry->request_mac_addr, skb->dev->dev_addr);
 
 	gh->sport = entry->my_port;
@@ -55,7 +55,7 @@ int gmtp_inter_register_reply_out(struct sk_buff *skb,
 
 	gmtp_pr_func();
 
-	if(gmtp_inter_ip_local(iph->saddr)) {
+	if(gmtp_local_ip(iph->saddr)) {
 		return gmtp_inter_register_reply_rcv(skb, entry,
 				GMTP_INTER_LOCAL);
 	}
@@ -132,13 +132,15 @@ int gmtp_inter_data_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 		entry->state = GMTP_INTER_TRANSMITTING;
 
 	/** TODO Verify close from server... */
-	if(entry->state != GMTP_INTER_TRANSMITTING)
+	if(entry->state != GMTP_INTER_TRANSMITTING) {
+		gmtp_ucc_buffer_dequeue(skb);
 		return NF_DROP;
+	}
 
-	if(gmtp_inter_ip_local(iph->saddr))
+	if(gmtp_local_ip(iph->saddr))
 		goto send;
 
-	if(entry->buffer->qlen > entry->buffer_min) {
+	/*if(entry->buffer->qlen > entry->buffer_min) {
 		struct sk_buff *buffered = gmtp_buffer_dequeue(entry);
 		if(buffered != NULL) {
 			entry->data_pkt_out++;
@@ -146,22 +148,38 @@ int gmtp_inter_data_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 		}
 	} else {
 		return NF_DROP;
-	}
+	}*/
 
 send:
+	entry->data_pkt_out++;
 	GMTP_SKB_CB(skb)->jumped = 0;
 	list_for_each_entry_safe(relay, temp, &entry->relays->list, list)
 	{
 		if(relay->state == GMTP_OPEN) {
-			struct ethhdr *eth = eth_hdr(skb);
+		/*	struct ethhdr *eth = eth_hdr(skb);
 			gh->dport = relay->port;
 			ether_addr_copy(eth->h_dest, relay->mac_addr);
 			skb->dev = relay->dev;
 
 			pr_info("Sending to %pI4:%d (%u)\n", &relay->addr,
+					htons(relay->port), gh->seq);
+			entry->ucc.congestion_control(skb, entry, relay);*/
+
+			struct sk_buff *buffered = skb_copy(skb, gfp_any());
+			struct ethhdr *eth = eth_hdr(buffered);
+			struct gmtp_hdr *buffgh = gmtp_hdr(buffered);
+
+			gmtp_ucc_buffer_add(buffered);
+
+			buffgh->dport = relay->port;
+			ether_addr_copy(eth->h_dest, relay->mac_addr);
+			buffered->dev = relay->dev;
+
+			pr_info("Sending to %pI4:%d (%u)\n", &relay->addr,
 								htons(relay->port),
-								gh->seq);
-			entry->ucc.congestion_control(skb, entry, relay);
+								buffgh->seq);
+			entry->ucc.congestion_control(buffered, entry, relay);
+
 			/*gmtp_inter_build_and_send_pkt(skb, iph->saddr,
 					relay->addr, gh, GMTP_INTER_FORWARD);*/
 		}
@@ -179,6 +197,8 @@ send:
 		gmtp_inter_mcc_delay(entry, skb, (u64)server_tx);
 	}
 	ghd->tstamp = jiffies_to_msecs(jiffies);
+
+	gmtp_ucc_buffer_dequeue(skb);
 
 	return NF_ACCEPT;
 }
@@ -204,8 +224,10 @@ static int gmtp_inter_close_from_client(struct sk_buff *skb,
 	pr_info("entry->nclients - del: %u\n", entry->nclients);
 
 	gh_reset = gmtp_inter_make_reset_hdr(skb, GMTP_RESET_CODE_CLOSED);
-	if(gh_reset == NULL)
+	if(gh_reset == NULL) {
+		gmtp_ucc_buffer_dequeue(skb);
 		return NF_DROP;
+	}
 
 	/*
 	 * Here, we have no clients.
@@ -287,6 +309,7 @@ int gmtp_inter_close_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 			if(relay->state == GMTP_OPEN) {
 				struct sk_buff *new_skb = skb_copy(skb, gfp_any());
 				struct ethhdr *eth = eth_hdr(new_skb);
+
 				gh->dport = relay->port;
 				ether_addr_copy(eth->h_dest, relay->mac_addr);
 				skb->dev = relay->dev;

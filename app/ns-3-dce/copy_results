@@ -1,3 +1,23 @@
 #!/bin/bash        
-
 NS3DIR="../../net-next-sim/tools/testing/libos/buildtop/source/ns-3-dce/"
+results="results"
+subfolder="gmtp"
+
+if [ $# -gt 0 ]; then
+    subfolder=$1
+fi
+
+mkdir $results/$subfolder
+
+for i in $( ls $NS3DIR | grep "files-" ); do
+    echo Reading i: $i
+    for j in $( ls $NS3DIR/$i | grep ".log" ); do
+        echo "  $j"
+        cp $NS3DIR/$i/$j $results/$subfolder
+        sed -i '$ d' $results/$subfolder/$j
+    done
+done
+
+find $results/$subfolder/ -size "-4k" -exec rm {} \;
+
+echo

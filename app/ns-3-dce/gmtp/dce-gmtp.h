@@ -83,7 +83,7 @@ static void RunApp(std::string appname,
 
 static void RunIp(ns3::Ptr<ns3::Node> node, ns3::Time at, std::string args)
 {
-	RunApp("ip", node, at, args, 1 << 16);
+	ns3::LinuxStackHelper::RunIp(node, at, args);
 }
 
 static void RunIp(ns3::NodeContainer nodes, ns3::Time at, std::string args)

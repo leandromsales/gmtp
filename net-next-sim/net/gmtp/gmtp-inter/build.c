@@ -17,28 +17,6 @@
 
 #include "gmtp-inter.h"
 
-void gmtp_inter_add_relayid(struct sk_buff *skb)
-{
-	struct iphdr *iph = ip_hdr(skb);
-	struct gmtp_hdr *gh = gmtp_hdr(skb);
-	struct gmtp_hdr_register_reply *gh_rply = gmtp_hdr_register_reply(skb);
-	struct gmtp_hdr_relay *relay;
-	int relay_len = sizeof(struct gmtp_hdr_relay);
-
-	gmtp_print_function();
-
-	relay = (struct gmtp_hdr_relay*) skb_put(skb, relay_len);
-	memcpy(relay->relay_id, gmtp_inter.relay_id, GMTP_RELAY_ID_LEN);
-	relay->relay_ip =  gmtp_inter_device_ip(skb->dev);
-	++gh_rply->nrelays;
-
-	gh->hdrlen += relay_len;
-	put_unaligned(htons(skb->len), &(iph->tot_len));
-	ip_send_check(iph);
-
-	print_route_from_skb(skb);
-}
-
 struct gmtp_hdr *gmtp_inter_make_route_hdr(struct sk_buff *skb)
 {
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
@@ -105,7 +83,7 @@ struct gmtp_hdr *gmtp_inter_make_request_notify_hdr(struct sk_buff *skb,
 	gh_rnotify->rn_code = code;
 	gh_rnotify->mcst_addr = entry->channel_addr;
 	gh_rnotify->mcst_port = entry->channel_port;
-	memcpy(gh_rnotify->relay_id, gmtp_inter.relay_id, GMTP_RELAY_ID_LEN);
+	memcpy(gh_rnotify->relay_id, gmtp_info->relay_id, GMTP_RELAY_ID_LEN);
 
 	if(my_reporter != NULL) {
 		gh_rnotify->reporter_addr = my_reporter->addr;
@@ -491,7 +469,7 @@ int gmtp_inter_make_register(struct sk_buff *skb)
 
 	gr = (struct gmtp_hdr_register*)skb_put(skb,
 			sizeof(struct gmtp_hdr_register));
-	memcpy(gr->relay_id, gmtp_inter.relay_id, GMTP_RELAY_ID_LEN);
+	memcpy(gr->relay_id, gmtp_info->relay_id, GMTP_RELAY_ID_LEN);
 
 	iph->ttl = 64;
 	iph->tot_len = htons(skb->len);
@@ -532,7 +510,7 @@ struct sk_buff *gmtp_inter_build_register(struct gmtp_inter_entry *entry)
 	memcpy(gh->flowname, entry->flowname, GMTP_FLOWNAME_LEN);
 
 	gr = (struct gmtp_hdr_register*) gh + sizeof(struct gmtp_hdr);
-	memcpy(gr->relay_id, gmtp_inter.relay_id, GMTP_RELAY_ID_LEN);
+	memcpy(gr->relay_id, gmtp_info->relay_id, GMTP_RELAY_ID_LEN);
 
 	/* Build the IP header. */
 	skb_push(skb, sizeof(struct iphdr));
@@ -594,6 +572,8 @@ struct sk_buff *gmtp_inter_build_ack(struct gmtp_inter_entry *entry)
 	gh->sport = entry->my_port;
 	gh->server_rtt = entry->server_rtt;
 	gh->transm_r = min(gmtp_inter.ucc_rx, entry->rcv_tx_rate);
+	/*gh->transm_r = min(gmtp_inter.ucc_rx, entry->required_tx*3);*/
+	/*gh->transm_r = 100000;*/
 	memcpy(gh->flowname, entry->flowname, GMTP_FLOWNAME_LEN);
 
 	gack = gmtp_hdr_ack(skb);

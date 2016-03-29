@@ -20,7 +20,6 @@
 #include "hash-inter.h"
 
 #define H_USER 	1024
-#define MD5_LEN GMTP_RELAY_ID_LEN
 
 #define CAPACITY_DEFAULT 1250000 /* B/s => 10 Mbps */
 
@@ -28,6 +27,12 @@ extern const char *gmtp_packet_name(const __u8);
 extern const char *gmtp_state_name(const int);
 extern void flowname_str(__u8* str, const __u8* flowname);
 extern void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh);
+extern void print_packet(struct sk_buff *skb, bool in);
+extern unsigned char *gmtp_build_md5(unsigned char *buf);
+extern unsigned char *gmtp_build_relay_id(void);
+extern __be32 gmtp_dev_ip(struct net_device *dev);
+extern bool gmtp_local_ip(__be32 ip);
+extern void gmtp_add_relayid(struct sk_buff *skb);
 extern struct gmtp_hashtable* server_hashtable;
 
 /**
@@ -35,8 +40,6 @@ extern struct gmtp_hashtable* server_hashtable;
  * TODO Make kreporter configurable
  *
  * struct gmtp_inter - GMTP-inter state variables
- *
- * @relay_id: Relay unique id
  *
  * @buffer_len: relay buffer occupation (total)
  * @capacity: channel capacity of transmission (bytes/s)
@@ -55,18 +58,17 @@ extern struct gmtp_hashtable* server_hashtable;
  * @hashtable: GMTP-inter relay table
  */
 struct gmtp_inter {
-	unsigned char		relay_id[GMTP_RELAY_ID_LEN];
-
-	unsigned int 		capacity;
-	unsigned int		buffer_len;
+	int 			capacity;
+	int			buffer_len;
 
 	unsigned int 		total_bytes_rx;
+
 	unsigned int 		total_rx;
-	unsigned int 		ucc_rx;
+	int 			ucc_rx;
 	unsigned int        	ucc_bytes;
 	unsigned long  		ucc_rx_tstamp;
 	unsigned int 		rx_rate_wnd;
-	unsigned int		h_user;
+	int			h_user;
 	unsigned int		worst_rtt;
 
 	unsigned char		mcst[4];
@@ -80,6 +82,8 @@ struct gmtp_inter {
 
 extern struct gmtp_inter gmtp_inter;
 
+#define skblen(skb) (((*skb).len) + ETH_HLEN)
+
 enum gmtp_inter_direction {
 	GMTP_INTER_FORWARD = 0,
 	GMTP_INTER_BACKWARD,
@@ -90,10 +94,11 @@ enum gmtp_inter_direction {
 __be32 get_mcst_v4_addr(void);
 void gmtp_buffer_add(struct gmtp_inter_entry *info, struct sk_buff *newsk);
 struct sk_buff *gmtp_buffer_dequeue(struct gmtp_inter_entry *info);
+void gmtp_ucc_buffer_add(struct sk_buff *newskb);
+void gmtp_ucc_buffer_dequeue(struct sk_buff *newskb);
 __be32 gmtp_inter_device_ip(struct net_device *dev);
-unsigned char *gmtp_build_md5(unsigned char *buf);
 void gmtp_timer_callback(void);
-bool gmtp_inter_ip_local(__be32 ip);
+bool gmtp_local_ip(__be32 ip);
 
 /** input.c */
 int gmtp_inter_register_rcv(struct sk_buff *skb);
@@ -133,7 +138,6 @@ struct sk_buff *gmtp_inter_build_pkt(struct sk_buff *skb_src, __be32 saddr,
 		__be32 daddr, struct gmtp_hdr *gh_ref,
 		enum gmtp_inter_direction direction);
 void gmtp_inter_send_pkt(struct sk_buff *skb);
-void gmtp_inter_add_relayid(struct sk_buff *skb);
 struct gmtp_hdr *gmtp_inter_make_route_hdr(struct sk_buff *skb);
 
 int gmtp_inter_make_register(struct sk_buff *skb);
@@ -204,33 +208,6 @@ static inline void jiffies_to_ktime(const unsigned long jiffies, ktime_t *value)
 	struct timespec ts;
 	jiffies_to_timespec(jiffies, &ts);
 	*value = timespec_to_ktime(ts);
-}
-
-/*
- * Print IP packet basic information
- */
-static inline void print_packet(struct sk_buff *skb, bool in)
-{
-	struct iphdr *iph = ip_hdr(skb);
-	const char *type = in ? "IN" : "OUT";
-	pr_info("%s: Src=%pI4 | Dst=%pI4 | TTL=%u | Proto: %d | Len: %d B\n",
-			type,
-			&iph->saddr, &iph->daddr,
-			iph->ttl,
-			iph->protocol,
-			ntohs(iph->tot_len));
-}
-
-static inline int bytes_added(int sprintf_return)
-{
-	return (sprintf_return > 0) ? sprintf_return : 0;
-}
-
-static inline void flowname_strn(__u8* str, const __u8 *buffer, int length)
-{
-	int i;
-	for(i = 0; i < length; ++i)
-		sprintf(&str[i*2], "%02x", buffer[i]);
 }
 
 #endif /* GMTP_INTER_H_ */

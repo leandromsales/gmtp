@@ -26,14 +26,25 @@ using namespace std;
 //   c1.n				 c2.m
 // //
 
+static struct timeval  tv;
+
+double time_ms(struct timeval &tv)
+{
+	gettimeofday(&tv, NULL);
+	double t2 = (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000; // convert tv_sec & tv_usec to millisecond
+	return t2;
+}
+
 int main(int argc, char *argv[])
 {
 	int nclients = 1;
 	int ncores = 1;
 	int nrelays = 1;
 	bool verbose = false;
-	std::string core_rate = "64Mbps";
+	std::string core_rate = "100Mbps";
 	std::string local_rate = "10Mbps";
+	srand(time(NULL));
+
 	std::string delay = "1ms";
 	bool middleman = false;
 
@@ -47,6 +58,8 @@ int main(int argc, char *argv[])
 	cmd.Parse(argc, argv);
 
 	cout << "Creating nodes..." << endl;
+
+	double start = time_ms(tv);
 
 	/* Server */
 	Ptr<Node> server = CreateObject<Node>();
@@ -119,7 +132,7 @@ int main(int argc, char *argv[])
 
 	NetDeviceContainer dci = core_csma.Install(internet);
 	NetDeviceContainer dcs = core_csma.Install(net_server);
-	NetDeviceContainer dcss = local_csma.Install(subnet_server);
+	NetDeviceContainer dcss = core_csma.Install(subnet_server);
 
 	vector<NetDeviceContainer> dcr(ncores);
 	for(int i = 0; i < ncores; i++) {
@@ -221,31 +234,35 @@ int main(int argc, char *argv[])
 	if(middleman) {
 		uint32_t b_addr = 0xA800000; /* 10.128.0.0 */
 		uint32_t naddr = b_addr;
-		for(int i=0; i< internet.GetN(); ++i, naddr += 0x10000) {
-			Ptr<Node> midc = CreateObject<Node>();
-			NodeContainer subnet_mid(internet.Get(i), midc);
-			//		NodeContainer subnet_r3(core.Get(0), client_r3);
-			stack.Install(midc);
-			dceManager.Install(midc);
-			NetDeviceContainer snr3 = local_csma.Install(subnet_mid);
-			cout << "mid [" << i << "]: " << Ipv4Address(naddr) << endl;
-			address.SetBase(Ipv4Address(naddr), "255.255.255.0");
-			Ipv4InterfaceContainer ic = address.Assign(snr3);
-			RunGtmpInter(midc, Seconds(2.3), "off");
-			//		RunApp("gmtp-client", client_r3, Seconds(3.5), "10.1.1.2", 1 << 31);
-			if(i%2)
-				RunApp("gmtp-client", midc, Seconds(3.5), "10.1.1.2", 1 << 31);
-			else
-				RunApp("gmtp-client", midc, Seconds(4.5), "10.1.1.2", 1 << 31);
+		for(int i=0; i < internet.GetN(); ++i, naddr += 0x10000) {
+			/*if(1) {*/
+			if(i == 1) {
+				Ptr<Node> midc = CreateObject<Node>();
+				NodeContainer subnet_mid(internet.Get(i), midc);
+				//		NodeContainer subnet_r3(core.Get(0), client_r3);
+				stack.Install(midc);
+				dceManager.Install(midc);
+				NetDeviceContainer snr3 = local_csma.Install(
+						subnet_mid);
+				cout << "mid [" << i << "]: " << Ipv4Address(naddr) << endl;
+				address.SetBase(Ipv4Address(naddr),
+						"255.255.255.0");
+				Ipv4InterfaceContainer ic = address.Assign(
+						snr3);
+				RunGtmpInter(midc, Seconds(2.3), "off");
+				RunApp("gmtp-client", midc, Seconds(3.4),
+						"10.1.1.2", 1 << 16);
+			}
 		}
 	}
 
 	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 	LinuxStackHelper::PopulateRoutingTables ();
 
-	cout << "Running GMTP simulation... ";
+	cout << "Running GMTP simulation..." << endl;
 
 	RunGtmpInter(server, Seconds(2.0), "off");
+//	RunGtmpInter(relays, Seconds(2.0), "off");
 	RunIp(all, Seconds(2.1), "route");
 
 	RunIp(server, Seconds(2.2), "addr list sim0");
@@ -255,8 +272,27 @@ int main(int argc, char *argv[])
 
 	RunGtmpInter(clients, Seconds(2.3), "off");
 
-	RunApp("gmtp-server", server, Seconds(3.0), 1 << 31);
-	RunAppMulti("gmtp-client", clients, 4.0, "10.1.1.2", 1 << 16, 3);
+	double ts = 2.5 + (double)(rand()%1000)/10000;
+	cout << "Starting server at " << ts << " secs" << endl;
+	RunApp("gmtp-server", server, Seconds(ts), 1 << 31);
+	/*RunAppMulti("gmtp-client", clients, 4.0, "10.1.1.2", 1 << 16, 3);*/
+
+	ns3::DceApplicationHelper process;
+	ns3::ApplicationContainer apps;
+	process.SetBinary("gmtp-client");
+	process.SetStackSize(1 << 16);
+	process.ResetArguments();
+	process.ParseArguments("10.1.1.2");
+
+	int i, j;
+	double t = 3.5 + (double)(rand()%1000)/10000;
+	double step = 0.2;
+	cout << "Starting clients at " << t << " secs" << endl;
+	//for(i = clients.GetN()-1; i >= 0; --i, t += step) {
+	for(i = 0; i < clients.GetN(); ++i, t += step) {
+		apps = process.Install(clients.Get(i));
+		apps.Start(ns3::Seconds(t));
+	}
 
 	local_csma.EnablePcapAll("dce-gmtp-master");
 	core_csma.EnablePcapAll("dce-gmtp-master");
@@ -270,6 +306,10 @@ int main(int argc, char *argv[])
 	Simulator::Destroy();
 
 	cout << "Done." << endl;
+
+	double end = time_ms(tv);
+	double duration = end - start;
+	cout << "Time of simulation (real): " << duration/1000 << " seconds." << endl << endl;
 
 	return 0;
 

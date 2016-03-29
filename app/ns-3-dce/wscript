@@ -23,7 +23,7 @@ def options(opt):
     opt.add_option('--enable-mpi',
                    help=('Enable MPI and distributed simulation support'),
                    dest='enable_mpi', action='store_true',
-                   default=False)
+                   default=True)
     opt.add_option('--enable-opt',
                    help=('Enable use of DCE and NS-3 optimized compilation'),
                    dest='enable_opt', action='store_true',
@@ -399,9 +399,13 @@ def build_dce_examples(module, bld):
                        target='bin/dce-gmtp-internet',
                        source=['example/dce-gmtp-internet.cc'])
                        
-    module.add_example(needed = ['core', 'network', 'dce', 'point-to-point', 'applications', 'internet', 'csma'],
+    module.add_example(needed = ['core', 'network', 'dce', 'applications', 'internet', 'csma'],
                        target='bin/dce-gmtp-master',
                        source=['example/dce-gmtp-master.cc'])
+                       
+    module.add_example(needed = ['core', 'internet', 'dce', 'csma', 'point-to-point', 'mpi'],
+                       target='bin/dce-gmtp-mpi',
+                       source=['example/dce-gmtp-mpi.cc'])
                        
     module.add_example(needed = ['core', 'network', 'dce', 'point-to-point', 'applications', 'internet', 'csma'],
                        target='bin/dce-multicast-master',
