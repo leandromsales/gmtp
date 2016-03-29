@@ -52,6 +52,7 @@ irg_aux03 <- get_mean_table(inst_rate_gmtp_aux03)
 report(irg_aux03)
 
 ##================ NDP =====================
+ndp_server_aux03 <- ndp_server_aux03 + 1000
 ndp_aux03 <- ndp(ndp_clients_aux03, ndp_server_aux03, elapsed_gmtp_aux03$mean)
 ndp_len_aux03 <- ndp_len(ndp_aux03)
 

@@ -1,3 +1,7 @@
+source("~/gmtp/app/ns-3-dce/analysis/aux-1.R");
+source("~/gmtp/app/ns-3-dce/analysis/aux-2.R");
+source("~/gmtp/app/ns-3-dce/analysis/aux-3.R");
+
 source("~/gmtp/app/ns-3-dce/analysis/sim-1.R");
 source("~/gmtp/app/ns-3-dce/analysis/sim-2.R");
 source("~/gmtp/app/ns-3-dce/analysis/sim-3.R");
@@ -6,6 +10,7 @@ source("~/gmtp/app/ns-3-dce/analysis/sim-5.R");
 source("~/gmtp/app/ns-3-dce/analysis/sim-6.R");
 
 source("~/gmtp/app/ns-3-dce/analysis/sim-79.R");
+source("~/gmtp/app/ns-3-dce/analysis/sim-geant.R");
 
 inst_rate <- data.frame(idx=inst_rate_gmtp01$idx[c(1:m)],
                                  I=inst_rate_gmtp01$mean[c(1:m)],
@@ -16,17 +21,41 @@ inst_rate <- data.frame(idx=inst_rate_gmtp01$idx[c(1:m)],
                                  VI=inst_rate_gmtp06$mean[c(1:m)],
                                  VII=inst_rate_gmtp07,
                                  VIII=inst_rate_gmtp08,
-                                 IX=inst_rate_gmtp09)
+                                 IX=inst_rate_gmtp09,
+                        X=inst_rate_gmtp10,
+                        XI=inst_rate_gmtp11,
+                        XII=inst_rate_gmtp12)
 
-t <- c(1:9)
-r <- c(1, 1, 1, 3, 3, 3, 30, 30, 30)
-cli <- c(1, 10, 20, 3, 30, 60, 30, 300, 600)
-rx <- c(mean(rg01), mean(rg02), mean(rg03), mean(rg04), mean(rg05), mean(rg06), rg07[1], rg08[1], rg09[1])
-l <- c(loss_rate01, loss_rate02, loss_rate03, loss_rate04, loss_rate05, loss_rate06, loss_rate07[1], loss_rate08[1], loss_rate09[1])
-ci <- c(contin01, contin02, contin03, contin04, contin05, contin06, contin07[1], contin08[1], contin09[1])
-ctrl <- c(ndp01, ndp02, ndp03, ndp04, ndp05, ndp06, ndp07[1], ndp08[1], ndp09[1])
-ctrl_len <- c(ndp_len01, ndp_len02, ndp_len03, ndp_len04, ndp_len05, ndp_len06, ndp_len07, ndp_len08, ndp_len09)
-gmtp <- data.frame(t=t, relays=r, clients=cli, rate=rx, loss=l, contin=ci, control=ctrl, control_len=ctrl_len)
+t <- c(1:12)
+r <- c(1, 1, 1, 3, 3, 3, 30, 30, 30, 39, 39, 39)
+cli <- c(1, 10, 20, 3, 30, 60, 30, 300, 600, 500, 1500, 15000)
+
+rx <- c(mean(rg01), mean(rg02), mean(rg03), mean(rg04), mean(rg05), 
+        mean(rg06), rg07[1], rg08[1], rg09[1], rg10[1], rg11[1], rg12[1])
+
+l <- c(loss_rate01, loss_rate02, loss_rate03, loss_rate04, loss_rate05, loss_rate06, 
+       loss_rate07[1], loss_rate08[1], loss_rate09[1], loss_rate10[1], loss_rate11[1], loss_rate12[1])
+
+ci <- c(contin01, contin02, contin03, contin04, contin05, contin06, 
+        contin07[1], contin08[1], contin09[1], contin10[1], contin11[1], contin12[1])
+
+ctrl <- c(ndp01, ndp02, ndp03, ndp04, ndp05, ndp06, 
+          ndp07, ndp08, ndp09, ndp10, ndp11, ndp12)
+
+ctrlcli <- c(ndpc01, ndpc02, ndpc03, 
+             ndpc4[1], ndpc5[1], ndpc6[1], 
+             ndp_clients07[1], ndp_clients08[1], ndp_clients09[1], 
+             ndp_clients10[1], ndp_clients11[1], ndp_clients12[1])
+
+ctrls <- c(ndps01, ndps02, ndps03,
+           ndps4[1], ndps5[1], ndps6[1],
+           ndp_server07[1], ndp_server08[1], ndp_server09[1],
+           ndp_server10[1], ndp_server11[1], ndp_server12[1])
+
+ctrl_len <- c(ndp_len01, ndp_len02, ndp_len03, ndp_len04, ndp_len05, ndp_len06, 
+              ndp_len07, ndp_len08, ndp_len09,  ndp_len10, ndp_len11, ndp_len12)
+
+gmtp <- data.frame(t=t, relays=r, clients=cli, rate=rx, loss=l, contin=ci, control=ctrl, control_cli=ctrlcli, control_s=ctrls, control_len=ctrl_len)
 
 
-source("~/gmtp/app/ns-3-dce/analysis/graphics.R");
+source("~/gmtp/app/ns-3-dce/analysis/graphics.R")

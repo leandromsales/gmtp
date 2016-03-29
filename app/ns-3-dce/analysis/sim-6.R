@@ -56,9 +56,18 @@ report(irg06)
 #ndp_len06 <- ndp_len(ndp06)
 
 # Error on logs... making projection
-x <- c(1, 2)
-y <- c(ndp03, ndp_aux03)
-ndp06v <- project(x, y, 3)
-ndp06 <- ndp06v[1]
+xserver <- c(1, 2)
+
+yndp_clients6 <- c(ndp_clientn(ndp_clients03, ndp_server03, elapsed_gmtp03$mean), 
+                   ndp_clientn(ndp_clients_aux03, ndp_server_aux03, elapsed_gmtp_aux03$mean))
+
+xclients6 <- c(20, 40)
+ndpc6 <- project(xclients6, yndp_clients6, 60)
+
+yserver6 <- c(ndp_servern(ndp_server03), ndp_servern(ndp_server_aux03))
+ndps6 <- project(xserver, yserver6, 3)
+
+ndp06 <- ndp2(ndpc6[1], ndps6[1])
 ndp_len06 <- ndp_len(ndp06)
+
 

@@ -163,19 +163,37 @@ continuidade <- function(tabela, media, coluna, loss) {
 
 ##======================== NDP ===================
 
-ndp <- function(ndp_clients, ndp_server, elapsed_sum) {
+ndp_clientn <- function(ndp_clients, ndp_server, elapsed_sum) {
   ndpc <- last_line(ndp_clients)
   ndps <- last_line(ndp_server)
   n <- length(ndps);
   
   ret <- sum(ndpc)/n
   ret <- ret + 2*sum(elapsed_sum)/1000
-  ret <- ret + mean(ndps)
   return (ceiling(ret));
+}
+
+ndp_servern <- function(ndp_server) {
+  ndps <- last_line(ndp_server)
+  return (ceiling(mean(ndps)))
+}
+
+ndp2 <- function(ndpc, ndps) {
+  return (ceiling(ndpc + ndps));
+}
+
+ndp <- function(ndp_clients, ndp_server, elapsed_sum) {
+  ndpc <- ndp_clientn(ndp_clients, ndp_server, elapsed_sum)
+  ndps <- ndp_servern(ndp_server)
+  return (ndp2(ndpc, ndps));
 }
 
 ndp_len <- function(ndp) {
   return (ndp * (36+36)/1000)
+}
+
+ndp_quantile <- function(len) {
+  return (len * 1000/(36+36))
 }
 
 ## ======================== Simulation =======================
