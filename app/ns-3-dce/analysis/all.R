@@ -57,5 +57,20 @@ ctrl_len <- c(ndp_len01, ndp_len02, ndp_len03, ndp_len04, ndp_len05, ndp_len06,
 
 gmtp <- data.frame(t=t, relays=r, clients=cli, rate=rx, loss=l, contin=ci, control=ctrl, control_cli=ctrlcli, control_s=ctrls, control_len=ctrl_len)
 
+# ========= Confidence interval ===========
+rx_lc <- c(norm.interval(rg01)[1], norm.interval(rg02)[1], norm.interval(rg03)[1], norm.interval(rg04)[1], norm.interval(rg05)[1], norm.interval(rg06)[1],
+           rg07_lconf[1], rg08_lconf[1],rg09_lconf[1], rg10_lconf[1], rg11_lconf[1],rg12_lconf[1])
+
+rx_hc <- c(norm.interval(rg01)[2], norm.interval(rg02)[2], norm.interval(rg03)[2], norm.interval(rg04)[2], norm.interval(rg05)[2], norm.interval(rg06)[2],
+           rg07_hconf[1], rg08_hconf[1], rg09_hconf[1], rg10_hconf[1], rg11_hconf[1], rg12_hconf[1])
+
+loss_lc <- c(norm.interval(tot_loss01)[1], norm.interval(tot_loss02)[1], norm.interval(tot_loss03)[1], norm.interval(tot_loss04)[1], norm.interval(tot_loss05)[1], norm.interval(tot_loss06)[1],
+             loss07_lconf[1], loss08_lconf[1], loss09_lconf[1], loss10_lconf[1], loss11_lconf[1],loss12_lconf[1])
+loss_lc <- loss_lc * 100
+
+loss_hc <- c(norm.interval(tot_loss01)[2], norm.interval(tot_loss02)[2], norm.interval(tot_loss03)[2], norm.interval(tot_loss04)[2], norm.interval(tot_loss05)[2], norm.interval(tot_loss06)[2],
+             loss07_hconf[1], loss08_hconf[1], loss09_hconf[1], loss10_hconf[1], loss11_hconf[1], loss12_hconf[1])
+loss_hc <- loss_hc * 100
+
 
 source("~/gmtp/app/ns-3-dce/analysis/graphics.R")

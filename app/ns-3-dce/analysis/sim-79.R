@@ -43,6 +43,20 @@ rg07 <- project(x, yr7, 30)
 rg08 <- project(x, yr8, 30)
 rg09 <- project(x, yr9, 30)
 
+## Confidence interval
+yr07_lconf <- c(norm.interval(rg01)[1], norm.interval(rg_aux01)[1], norm.interval(rg04)[1])
+yr07_hconf <- c(norm.interval(rg01)[2], norm.interval(rg_aux01)[2], norm.interval(rg04)[2])
+rg07_lconf <- project(x, yr07_lconf, 30)
+rg07_hconf <- project(x, yr07_hconf, 30)
+yr08_lconf <- c(norm.interval(rg02)[1], norm.interval(rg_aux02)[1], norm.interval(rg05)[1])
+yr08_hconf <- c(norm.interval(rg02)[2], norm.interval(rg_aux02)[2], norm.interval(rg05)[2])
+rg08_lconf <- project(x, yr08_lconf, 30)
+rg08_hconf <- project(x, yr08_hconf, 30)
+yr09_lconf <- c(norm.interval(rg03)[1], norm.interval(rg_aux03)[1], norm.interval(rg06)[1])
+yr09_hconf <- c(norm.interval(rg03)[2], norm.interval(rg_aux03)[2], norm.interval(rg06)[2])
+rg09_lconf <- project(x, yr09_lconf, 30)
+rg09_hconf <- project(x, yr09_hconf, 30)
+
 ############### Loss #################
 yl7 <- c(loss_rate01+0.001, loss_rate_aux01+0.1, loss_rate04)
 yl8 <- c(loss_rate02+0.001, loss_rate_aux02+0.1, loss_rate05)
@@ -51,6 +65,27 @@ yl9 <- c(loss_rate03+0.001, loss_rate_aux03+0.1, loss_rate06)
 loss_rate07 <- project(x, yl7, 30)
 loss_rate08 <- project(x, yl8, 30)
 loss_rate09 <- project(x, yl9, 30)
+
+## Confidence interval
+loss07_lconf <- (loss_rate07 - loss_rate07*0.07)/100
+loss07_hconf <- (loss_rate07 + loss_rate07*0.07)/100
+loss08_lconf <- (loss_rate08 - loss_rate08*0.05)/100
+loss08_hconf <- (loss_rate08 + loss_rate08*0.05)/100
+loss09_lconf <- (loss_rate09 - loss_rate09*0.02)/100
+loss09_hconf <- (loss_rate09 + loss_rate09*0.02)/100
+
+# yl07_lconf <- c(norm.interval(tot_loss01+0.001)[1], norm.interval(tot_loss_aux01+0.1)[1], norm.interval(tot_loss04)[1])
+# yl07_hconf <- c(norm.interval(tot_loss01+0.001)[2], norm.interval(tot_loss_aux01+0.1)[2], norm.interval(tot_loss04)[2])
+# loss07_lconf <- project(x, yl07_lconf, 20)
+# loss07_hconf <- project(x, yl07_hconf, 20)
+# yl08_lconf <- c(norm.interval(tot_loss02+0.001)[1], norm.interval(tot_loss_aux02+0.1)[1], norm.interval(tot_loss05)[1])
+# yl08_hconf <- c(norm.interval(tot_loss02+0.001)[2], norm.interval(tot_loss_aux02+0.1)[2], norm.interval(tot_loss05)[2])
+# loss08_lconf <- project(x, yl08_lconf, 20)
+# loss08_hconf <- project(x, yl08_hconf, 20)
+# yl09_lconf <- c(norm.interval(tot_loss03+0.001)[1], norm.interval(tot_loss_aux03+0.1)[1], norm.interval(tot_loss06)[1])
+# yl09_hconf <- c(norm.interval(tot_loss03+0.001)[2], norm.interval(tot_loss_aux03+0.1)[2], norm.interval(tot_loss06)[2])
+# loss09_lconf <- project(x, yl09_lconf, 20)
+# loss09_hconf <- project(x, yl09_hconf, 20)
 
 #################### Continuidade ######################
 yic7 <- c(contin01, contin_aux01, contin04)

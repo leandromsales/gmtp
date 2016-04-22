@@ -196,9 +196,19 @@ ndp_quantile <- function(len) {
   return (len * 1000/(36+36))
 }
 
+norm.interval = function(data, variance = var(data), conf.level = 0.95) {
+  z = qnorm((1 - conf.level)/2, lower.tail = FALSE) 
+  xbar = mean(data)
+  sdx = sqrt(variance/length(data))
+  c(xbar - z * sdx, xbar + z * sdx)
+}
+
+
 ## ======================== Simulation =======================
 
 main_label <- "GMTP"
 err <- 0.05;
+
+
 
 

@@ -5,7 +5,8 @@ datalabel <- "Taxa de Recepção (B/s)"
 rangex <- range(c(99, m), na.rm=T)
 rangey <- range(c(10000, 260000), na.rm=T)
 
-colors <- c("blue", "green", "red", "orange", "purple","brown")
+colors <- c("blue", "green", "red", "orange", "purple", "brown", "yellow")
+desccolors <- c("blue", "yellow")
 desc <- c("Tratamento 1\t\t", "Tratamento 2", "Tratamento 3", 
           "Tratamento 4\t\t", "Tratamento 5", "Tratamento 6", 
           "Tratamento 7\t\t", "Tratamento 8", "Tratamento 9",
@@ -64,27 +65,41 @@ legend("bottomleft", legend = desc[c(10:12)], col = colors, lwd = 3, lty=c(1, 2,
 ##################### RX Rate ########################
 xlabel <- "Número de nós clientes"
 rangex <- range(c(1, 12), na.rm=T)
-rangey <- range(c(10000, 260000), na.rm=T)
+rangey <- range(c(70000, 260000), na.rm=T)
+#rangey <- range(c(230000, 260000), na.rm=T)
 axis_at <- c(1:12)
 plot(rangex, rangey, type="n", xlab=xlabel, ylab=datalabel, xaxt="n")
 axis(1, side=1, at=axis_at, labels=gmtp$clients, cex.axis=1)
 axis(3, at=axis_at, cex.axis=1)
 points(gmtp$t, gmtp$rate, col=colors[5], lwd=4, lty=1)
+
+lines(gmtp$t[1:3], rx_lc[1:3], col=colors[7], lwd=3, lty=1)
+lines(gmtp$t[1:3], rx_hc[1:3], col=colors[7], lwd=3, lty=1)
 lines(gmtp$t[1:3], gmtp$rate[1:3], col=colors[1], lwd=3, lty=1)
+
+lines(gmtp$t[4:6], rx_lc[4:6], col=colors[7], lwd=3, lty=1)
+lines(gmtp$t[4:6], rx_hc[4:6], col=colors[7], lwd=3, lty=1)
 lines(gmtp$t[4:6], gmtp$rate[4:6], col=colors[1], lwd=3, lty=1)
+
+lines(gmtp$t[7:9], rx_lc[7:9], col=colors[7], lwd=3, lty=1)
+lines(gmtp$t[7:9], rx_hc[7:9], col=colors[7], lwd=3, lty=1)
 lines(gmtp$t[7:9], gmtp$rate[7:9], col=colors[1], lwd=3, lty=1)
+
+lines(gmtp$t[10:12], rx_lc[10:12], col=colors[7], lwd=3, lty=1)
+lines(gmtp$t[10:12], rx_hc[10:12], col=colors[7], lwd=3, lty=1)
 lines(gmtp$t[10:12], gmtp$rate[10:12], col=colors[1], lwd=3, lty=1)
-text(x=2, y=50000, labels=rep[1])
-text(x=5, y=50000, labels=rep[2])
-text(x=8, y=50000, labels=rep[3])
-text(x=11, y=50000, labels=rep[4])
+
+text(x=2, y=150000, labels=rep[1])
+text(x=5, y=150000, labels=rep[2])
+text(x=8, y=150000, labels=rep[3])
+text(x=11, y=145000, labels=rep[4])
 mtext("Tratamentos", side = 3, line = 3)
 
 abline(v = 3.5, lty=3)
 abline(v = 6.5, lty=3)
 abline(v = 9.5, lty=3)
-desc <- c("GMTP-Linux\t\t\t\t\t\t", "GMTP (SALES, 2014)\t\t\t\t\t\t")
-legend("bottomleft", legend = desc[1], col = colors, lwd = 3, lty=c(1), cex = 1)
+desc <- c("GMTP-Linux\t\t\t\t\t\t", "Intervalo de confiança\t\t\t\t\t\t")
+legend("bottomleft", legend = desc, col = desccolors, lwd = 3, lty=c(1), cex = 1)
 
 
 ##################### Loss Rate ########################
@@ -96,10 +111,23 @@ plot(rangex, rangey, type="n", xlab=xlabel, ylab=datalabel, xaxt = "n")
 axis(1, side=1, at=axis_at, labels=gmtp$clients, cex.axis=1)
 axis(3, at=axis_at, cex.axis=1)
 points(gmtp$t, gmtp$loss, col=colors[5], lwd=4, lty=1)
+
+lines(gmtp$t[1:3], loss_lc[1:3], col=colors[7], lwd=3, lty=1)
+lines(gmtp$t[1:3], loss_hc[1:3], col=colors[7], lwd=3, lty=1)
 lines(gmtp$t[1:3], gmtp$loss[1:3], col=colors[1], lwd=3, lty=1)
+
+lines(gmtp$t[4:6], loss_lc[4:6], col=colors[7], lwd=3, lty=1)
+lines(gmtp$t[4:6], loss_hc[4:6], col=colors[7], lwd=3, lty=1)
 lines(gmtp$t[4:6], gmtp$loss[4:6], col=colors[1], lwd=3, lty=1)
+
+lines(gmtp$t[7:9], loss_lc[7:9], col=colors[7], lwd=3, lty=1)
+lines(gmtp$t[7:9], loss_hc[7:9], col=colors[7], lwd=3, lty=1)
 lines(gmtp$t[7:9], gmtp$loss[7:9], col=colors[1], lwd=3, lty=1)
+
+lines(gmtp$t[10:12], loss_lc[10:12], col=colors[7], lwd=3, lty=1)
+lines(gmtp$t[10:12], loss_hc[10:12], col=colors[7], lwd=3, lty=1)
 lines(gmtp$t[10:12], gmtp$loss[10:12], col=colors[1], lwd=3, lty=1)
+
 text(x=2, y=4, labels=rep[1])
 text(x=5, y=4, labels=rep[2])
 text(x=8, y=4, labels=rep[3])
@@ -108,7 +136,7 @@ mtext("Tratamentos", side = 3, line = 3)
 abline(v = 3.5, lty=3)
 abline(v = 6.5, lty=3)
 abline(v = 9.5, lty=3)
-legend("topleft", legend = desc[1], col = colors, lwd = 3, lty=c(1), cex = 1)
+legend("topleft", legend = desc, col = desccolors, lwd = 3, lty=c(1), cex = 1)
 
 
 ##################### Continuidade ########################
@@ -136,9 +164,9 @@ points(gmtp$t[10:12], gmtp_orig_contin, col=colors[4], lwd=4, lty=1)
 abline(v = 3.5, lty=3)
 abline(v = 6.5, lty=3)
 abline(v = 9.5, lty=3)
+
+desc <- c("GMTP-Linux\t\t\t\t\t\t", "GMTP (SALES, 2014)\t\t\t\t\t\t")
 legend("bottomleft", legend = desc, col = colors[1:2], lwd = 3, lty=c(1, 1), cex = 1)
-
-
 
 ##################### NDP ########################
 mainlabel <- "GMTP - Pacotes de controle"
