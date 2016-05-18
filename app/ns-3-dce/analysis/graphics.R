@@ -318,14 +318,21 @@ names <- c("1 (1)", "10 (2)", "20 (3)",
            "30 (7)", "300 (8)", "600 (9)", 
            "500 (10)", "1500 (11)", "15000 (12)")
 data <- rbind(gmtp$control_s, gmtp$control_cli)
-barplot(as.matrix(data), ylim = rangey, main=mainlabel,xlab=xlabel, ylab=datalabel, col = barcolors, names.arg=names)
-text(x=1.9, y=45000, labels=rep[1])
-text(x=5.3, y=45000, labels=rep[2])
-text(x=9, y=45000, labels=rep[3])
-text(x=12.6, y=44500, labels=rep[4])
-step <- 1.2
-text(x=(0.5 + (gmtp$t-1)*step), y=gmtp$control+2000, labels=round(gmtp$control/1024, digits = 2))
-text(x=(1 + (gmtp$t-1)*step), y=gmtp$control+2000, labels=mb[1])
+midbar <- barplot(as.matrix(data), ylim = rangey, main=mainlabel,xlab=xlabel, ylab=datalabel, col = barcolors, names.arg=names)
+
+text(x=1.9, y=47000, labels=rep[1])
+text(x=5.3, y=47000, labels=rep[2])
+text(x=9, y=47000, labels=rep[3])
+text(x=12.6, y=46500, labels=rep[4])
+
+points(midbar, gmtp$control+2000, cex=2, pch= "_")
+points(midbar, gmtp$control-2000, cex=2, pch= "_")
+segments(midbar, gmtp$control-2000, midbar, gmtp$control+2000, lwd=2, lty=1)
+
+extra_axis <- seq(0, 71000, 9680)
+axis(4, at=extra_axis, labels=paste(round(ndp_len_mb(extra_axis)), mb[1]))
+text(midbar, y=gmtp$control+4000, labels=paste(round(ndp_len_mb(gmtp$control), digits = 2), mb[1]))
+
 abline(v = 3.7, lty=3)
 abline(v = 7.3, lty=3)
 abline(v = 10.9, lty=3)
@@ -344,18 +351,32 @@ names <- c("1 (1)", "10 (2)", "20 (3)",
            "30 (7)", "300 (8)", "600 (9)", 
            "500 (10)", "1500 (11)", "15000 (12)")
 data <- rbind(gmtp$control_s/gmtp$clients, gmtp$control_cli/gmtp$clients)
-barplot(as.matrix(data), ylim = rangey, main=mainlabel,xlab=xlabel, ylab=datalabel, col = barcolors, names.arg=names)
+midbar <- barplot(as.matrix(data), ylim = rangey, main=mainlabel,xlab=xlabel, ylab=datalabel, col = barcolors, names.arg=names)
+
 text(x=1.9, y=5700, labels=rep[1])
 text(x=5.3, y=5700, labels=rep[2])
 text(x=9, y=5700, labels=rep[3])
 text(x=12.6, y=5700, labels=rep[4])
-step <- 1.2
-text(x=(0.47 + (gmtp$t-1)*step), y=(gmtp$control/gmtp$clients)+200, labels=round((gmtp$control/gmtp$clients), digits = 0))
-text(x=(1 + (gmtp$t-1)*step), y=(gmtp$control/gmtp$clients)+200, labels=kb[1])
+
+ic_low <- (gmtp$control/gmtp$clients)-200
+for(i in length(ic_low)) {
+  if(ic_low[i] < 0){
+    ic_low[i] <- 0
+  }
+}
+
+points(midbar, (gmtp$control/gmtp$clients)+200, cex=2, pch= "_")
+points(midbar, ic_low, cex=2, pch= "_")
+segments(midbar, ic_low, midbar, (gmtp$control/gmtp$clients)+200, lwd=2, lty=1)
+
+extra_axis2 <- seq(0, max(gmtp$control/gmtp$clients)+2000, 1000)
+axis(4, at=extra_axis2, labels=paste(round(ndp_len_kb(extra_axis2)), kb[1]))
+text(midbar, y=(gmtp$control/gmtp$clients)+400, labels=paste(round(ndp_len_kb(gmtp$control/gmtp$clients), digits=2), kb[1]))
+
 abline(v = 3.7, lty=3)
 abline(v = 7.3, lty=3)
 abline(v = 10.9, lty=3)
 desc <- c("Pacotes de controle inter-redes\t", "Pacotes de controle local\t")
 legend("topleft", legend = desc, fill = barcolors)
 
-
+###########################################

@@ -189,7 +189,15 @@ ndp <- function(ndp_clients, ndp_server, elapsed_sum) {
 }
 
 ndp_len <- function(ndp) {
-  return (ndp * (36+36)/1000)
+  return (ndp * (36+36))
+}
+
+ndp_len_kb <- function(ndp) {
+  return (ndp_len(ndp)/1024)
+}
+
+ndp_len_mb <- function(ndp) {
+  return (ndp_len_kb(ndp)/1024)
 }
 
 ndp_quantile <- function(len) {
