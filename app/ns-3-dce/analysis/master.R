@@ -203,6 +203,12 @@ norm.interval = function(data, variance = var(data), conf.level = 0.95) {
   c(xbar - z * sdx, xbar + z * sdx)
 }
 
+poisson.interval <- function(data, k, conf.level = 0.95) {
+  z = qnorm((1 - conf.level)/2, lower.tail = FALSE) 
+  lambda = mean(data)
+  meanx = sqrt(lambda/k)
+  c(lambda - z * meanx, lambda + z * meanx) / k
+}
 
 ## ======================== Simulation =======================
 

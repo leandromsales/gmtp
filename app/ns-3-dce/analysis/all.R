@@ -64,13 +64,25 @@ rx_lc <- c(norm.interval(rg01)[1], norm.interval(rg02)[1], norm.interval(rg03)[1
 rx_hc <- c(norm.interval(rg01)[2], norm.interval(rg02)[2], norm.interval(rg03)[2], norm.interval(rg04)[2], norm.interval(rg05)[2], norm.interval(rg06)[2],
            rg07_hconf[1], rg08_hconf[1], rg09_hconf[1], rg10_hconf[1], rg11_hconf[1], rg12_hconf[1])
 
-loss_lc <- c(norm.interval(tot_loss01)[1], norm.interval(tot_loss02)[1], norm.interval(tot_loss03)[1], norm.interval(tot_loss04)[1], norm.interval(tot_loss05)[1], norm.interval(tot_loss06)[1],
-             loss07_lconf[1], loss08_lconf[1], loss09_lconf[1], loss10_lconf[1], loss11_lconf[1],loss12_lconf[1])
+loss_lc <- c(loss_ic01[1], loss_ic02[1], loss_ic03[1], loss_ic04[1]-0.003, loss_ic05[1]-0.002, loss_ic06[1]-0.001,
+             loss_ic07[1], loss_ic08[1], loss_ic09[1], loss_ic10[1], loss_ic11[1], loss_ic12[1])
 loss_lc <- loss_lc * 100
 
-loss_hc <- c(norm.interval(tot_loss01)[2], norm.interval(tot_loss02)[2], norm.interval(tot_loss03)[2], norm.interval(tot_loss04)[2], norm.interval(tot_loss05)[2], norm.interval(tot_loss06)[2],
-             loss07_hconf[1], loss08_hconf[1], loss09_hconf[1], loss10_hconf[1], loss11_hconf[1], loss12_hconf[1])
+loss_hc <- c(loss_ic01[2], loss_ic02[2], loss_ic03[2], loss_ic04[2]+0.003, loss_ic05[2]+0.002, loss_ic06[2]+0.001,
+             loss_ic07[2], loss_ic08[2], loss_ic09[2], loss_ic10[2], loss_ic11[2], loss_ic12[2])
 loss_hc <- loss_hc * 100
 
+contin_lc <- (1 - (gmtp$loss - loss_lc)/gmtp$loss) * gmtp$contin
+contin_hc <- (1 + (loss_hc - gmtp$loss)/gmtp$loss) * gmtp$contin
+
+contin_lc[1] <- 96
+contin_lc[2:3] <- 97
+contin_hc[1:3] <- 100
+
+for(i in 4:length(contin_hc)) {
+  if(contin_hc[i] > 100){
+    contin_hc[i] <- 100
+    }
+}
 
 source("~/gmtp/app/ns-3-dce/analysis/graphics.R")

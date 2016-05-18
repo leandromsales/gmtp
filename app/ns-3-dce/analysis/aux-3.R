@@ -34,6 +34,7 @@ print_seq_graph(seq_gmtp_aux03$mean, clients_aux03$idx)
 tot_loss_aux03 <- losses(loss_gmtp_aux03, seq_gmtp_aux03)
 report(tot_loss_aux03)
 loss_rate_aux03 <- loss_rate(tot_loss_aux03)
+loss_ic_aux03 <- poisson.interval(nrow(clients_aux03)*tot_loss_aux03, nrow(clients_aux03))
 
 ## ============== CONTINUIDADE ===========
 report(elapsed_gmtp_aux03$mean)

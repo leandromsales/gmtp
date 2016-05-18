@@ -65,12 +65,9 @@ loss_rate11 <- project(x, yl11, factor)
 loss_rate12 <- project(x, yl12, factor)
 
 ## Confidence interval
-loss10_lconf <- (loss_rate10 - loss_rate10*0.07)/100
-loss10_hconf <- (loss_rate10 + loss_rate12*0.07)/100
-loss11_lconf <- (loss_rate11 - loss_rate11*0.05)/100
-loss11_hconf <- (loss_rate11 + loss_rate11*0.05)/100
-loss12_lconf <- (loss_rate12 - loss_rate12*0.02)/100
-loss12_hconf <- (loss_rate12 + loss_rate12*0.02)/100
+loss_ic10 <- c((loss_rate10[1]*0.93)/100, (loss_rate10[1]*1.07)/100)
+loss_ic11 <- c((loss_rate11[1]*0.95)/100, (loss_rate11[1]*1.05)/100)
+loss_ic12 <- c((loss_rate12[1]*0.98)/100, (loss_rate12[1]*1.02)/100)
 
 # yl10_lconf <- c(norm.interval(tot_loss01+0.001)[1], norm.interval(tot_loss_aux01+0.1)[1], norm.interval(tot_loss04)[1])
 # yl10_hconf <- c(norm.interval(tot_loss01+0.001)[2], norm.interval(tot_loss_aux01+0.1)[2], norm.interval(tot_loss04)[2])
