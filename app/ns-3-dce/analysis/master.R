@@ -200,8 +200,8 @@ ndp_len_mb <- function(ndp) {
   return (ndp_len_kb(ndp)/1024)
 }
 
-ndp_quantile <- function(len) {
-  return (len * 1000/(36+36))
+ndp_quantile_mb <- function(len) {
+  return (len * 1000 * 1000 / (36+36))
 }
 
 norm.interval = function(data, variance = var(data), conf.level = 0.95) {
