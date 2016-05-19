@@ -245,7 +245,7 @@ mainlabel <- "GMTP - Pacotes de controle"
 datalabel <- "Quantidade de pacotes de controle"
 
 rangex <- range(c(10, 12), na.rm=T)
-rangey <- range(0, max(gmtp$control), na.rm=T)
+rangey <- range(0, max(ctrl_hc), na.rm=T)
 kb <- c("KB")
 mb <- c("MB")
 
@@ -253,22 +253,34 @@ plot(rangex, rangey, type="n", xlab=xlabel, ylab=datalabel, xaxt = "n")
 axis(1, side=1, at=axis_at[10:12], labels=gmtp$clients[10:12], cex.axis=1)
 axis(3, at=axis_at[10:12], cex.axis=1)
 
+points(gmtp$t[10:12], ctrl_lc[10:12], col=colors[1], cex=2, pch= "_")
+points(gmtp$t[10:12], ctrl_hc[10:12], col=colors[1], cex=2, pch= "_")
+segments(gmtp$t[10:12], ctrl_lc[10:12], gmtp$t[10:12], ctrl_hc[10:12], col=colors[1], lwd=2, lty=1)
 points(gmtp$t[10:12], gmtp$control[10:12], col=colors[5], lwd=4)
 text(x=c(10:12), y=gmtp$control[10:12]-3000, labels=paste(round(gmtp$control_len[10:12]/1024/1024, digits=2), mb[1]))
 lines(gmtp$t[10:12], gmtp$control[10:12], col=colors[1], lwd=3, lty=1)
 
 gmtp_orig_control_len <- c(0.900, 1.200, 1.400)
-gmtp_orig_control <- c(ndp_quantile_mb(gmtp_orig_control_len))
+gmtp_orig_control_len_lc <- gmtp_orig_control_len-0.500
+gmtp_orig_control_len_hc <- gmtp_orig_control_len+0.500
+
+gmtp_orig_control <- ndp_quantile_mb(gmtp_orig_control_len)
+gmtp_orig_control_lc <- ndp_quantile_mb(gmtp_orig_control_len_lc)
+gmtp_orig_control_hc <- ndp_quantile_mb(gmtp_orig_control_len_hc)
+
+points(gmtp$t[10:12], gmtp_orig_control_lc, col=colors[2], cex=2, pch= "_")
+points(gmtp$t[10:12], gmtp_orig_control_hc, col=colors[2], cex=2, pch= "_")
+segments(gmtp$t[10:12], gmtp_orig_control_lc, gmtp$t[10:12], gmtp_orig_control_hc, col=colors[2], lwd=2, lty=1)
 lines(gmtp$t[10:12], gmtp_orig_control, col=colors[2], lwd=3, lty=1)
 points(gmtp$t[10:12], gmtp_orig_control, col=colors[4], lwd=4, lty=1)
 text(x=c(10:12), y=gmtp_orig_control-2500, labels=paste(gmtp_orig_control_len, mb[1]))
 
 mtext("Tratamentos", side = 3, line = 3)
-legend("bottomleft", legend = desc[1:2], col = colors, lwd = 3, lty=c(1, 1), cex = 1)
+legend("topleft", legend = desc[1:2], col = colors, lwd = 3, lty=c(1, 1), cex = 1)
 
 ##################### NDP (BARPLOT) ########################
 rangex <- range(c(1, 12.7), na.rm=T)
-rangey <- range(0, max(gmtp$control)+10000, na.rm=T)
+rangey <- range(0, ctrl_hc+10000, na.rm=T)
 barcolors <- c("red", "aquamarine")
 xlabel <- "Número de nós clientes (Tratamento #)"
 names <- c("1 (1)", "10 (2)", "20 (3)", 
@@ -278,13 +290,13 @@ names <- c("1 (1)", "10 (2)", "20 (3)",
 data <- rbind(gmtp$control_s, gmtp$control_cli)
 midbar <- barplot(as.matrix(data), ylim = rangey, main=mainlabel,xlab=xlabel, ylab=datalabel, col = barcolors, names.arg=names)
 
-points(midbar, gmtp$control+2000, cex=2, pch= "_")
-points(midbar, gmtp$control-2000, cex=2, pch= "_")
-segments(midbar, gmtp$control-2000, midbar, gmtp$control+2000, lwd=2, lty=1)
+points(midbar, ctrl_lc, cex=2, pch= "_")
+points(midbar, ctrl_hc, cex=2, pch= "_")
+segments(midbar, ctrl_lc, midbar, ctrl_hc, lwd=2, lty=1)
 
-extra_axis <- seq(0, 71000, 9680)
-axis(4, at=extra_axis, labels=paste(round(ndp_len_mb(extra_axis)), mb[1]))
-text(midbar, y=gmtp$control+4000, labels=paste(round(ndp_len_mb(gmtp$control), digits = 2), mb[1]))
+#extra_axis <- seq(0, 71000, 9680)
+#axis(4, at=extra_axis, labels=paste(round(ndp_len_mb(extra_axis)), mb[1]))
+text(midbar, y=ctrl_hc+2000, labels=paste(round(ndp_len_mb(gmtp$control), digits = 2), mb[1]))
 
 bartextpos <- c(1.9, 5.3, 9, 12.6)
 barlinepos <- c(3.7, 7.3, 10.9)
@@ -298,7 +310,7 @@ legend("topleft", legend = desc, fill = barcolors)
 mainlabel <- "GMTP - Pacotes de controle por cliente"
 datalabel <- "Quantidade de pacotes de controle por cliente"
 rangex <- range(c(1, 12.7), na.rm=T)
-rangey <- range(0, max(gmtp$control/gmtp$clients)+2000, na.rm=T)
+rangey <- range(0, max((ctrl_hc/gmtp$clients) + 1000), na.rm=T)
 barcolors <- c("red", "aquamarine")
 xlabel <- "Número de nós clientes (Tratamento #)"
 names <- c("1 (1)", "10 (2)", "20 (3)", 
@@ -308,25 +320,26 @@ names <- c("1 (1)", "10 (2)", "20 (3)",
 data <- rbind(gmtp$control_s/gmtp$clients, gmtp$control_cli/gmtp$clients)
 midbar <- barplot(as.matrix(data), ylim = rangey, main=mainlabel,xlab=xlabel, ylab=datalabel, col = barcolors, names.arg=names)
 
-ic_low <- (gmtp$control/gmtp$clients)-200
+ic_low <- (ctrl_lc/gmtp$clients)
 for(i in 1:length(ic_low)) {
   if(ic_low[i] < 0) {
     ic_low[i] = 0
   }
 }
 
-points(midbar, (gmtp$control/gmtp$clients)+200, cex=2, pch= "_")
 points(midbar, ic_low, cex=2, pch= "_")
-segments(midbar, ic_low, midbar, (gmtp$control/gmtp$clients)+200, lwd=2, lty=1)
+points(midbar, (ctrl_hc/gmtp$clients), cex=2, pch= "_")
+segments(midbar, ic_low, midbar, (ctrl_hc/gmtp$clients), lwd=2, lty=1)
 
-extra_axis2 <- seq(0, max(gmtp$control/gmtp$clients)+2000, 1000)
-axis(4, at=extra_axis2, labels=paste(round(ndp_len_kb(extra_axis2)), kb[1]))
-text(midbar, y=(gmtp$control/gmtp$clients)+400, labels=paste(round(ndp_len_kb(gmtp$control/gmtp$clients), digits=2), kb[1]))
+#extra_axis2 <- seq(0, max(gmtp$control/gmtp$clients)+2000, 1000)
+#axis(4, at=extra_axis2, labels=paste(round(ndp_len_kb(extra_axis2)), kb[1]))
+text(midbar, y=(ctrl_hc/gmtp$clients)+200, labels=paste(round(ndp_len_kb(gmtp$control/gmtp$clients), digits=2), kb[1]))
 
-text(x=bartextpos, y=5700, labels=rep)
+bartextpos <- bartextpos + 0.1
+text(x=bartextpos, y=5500, labels=rep)
 abline(v=barlinepos, lty=3)
 
 desc <- c("Pacotes de controle inter-redes\t", "Pacotes de controle local\t")
-legend("topleft", legend = desc, fill = barcolors)
+legend("topright", legend = desc, fill = barcolors)
 
 ###########################################

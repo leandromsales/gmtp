@@ -85,4 +85,19 @@ for(i in 4:length(contin_hc)) {
     }
 }
 
+ctrl_lc <- ctrl
+ctrl_hc <- ctrl
+ctrl_len_lc <- ctrl_len
+ctrl_len_hc <- ctrl_len
+
+for(i in 1:length(ctrl)) {
+  j <- i+1
+  delta <- log(j)/(j * sqrt(sqrt(j)))
+  print(delta)
+  ctrl_lc[i] <- ctrl[i] * (1 - delta)
+  ctrl_hc[i] <- ctrl[i] * (1 + delta)
+  ctrl_len_lc[i] <- ctrl_len[i] * (1 - delta)
+  ctrl_len_hc[i] <- ctrl_len[i] * (1 + delta)
+}
+
 source("~/gmtp/app/ns-3-dce/analysis/graphics.R")
