@@ -1,6 +1,6 @@
-mainlabel <- "GMTP - Taxa de Recepção dos Clientes"
+mainlabel <- "GMTP - Taxa de RecepÃ§Ã£o dos Clientes"
 xlabel <- "Pacotes Recebidos"
-datalabel <- "Taxa de Recepção (B/s)"
+datalabel <- "Taxa de RecepÃ§Ã£o (B/s)"
 
 colors <- c("blue", "green", "red", "orange", "purple", "brown", "yellow")
 desccolors <- c("blue", "yellow")
@@ -113,7 +113,7 @@ legend("bottomleft", legend = desc[c(10:12)], col = colors, lwd = 3, lty=c(1, 2,
 
 
 ##################### RX Rate ########################
-xlabel <- "Número de nós clientes"
+xlabel <- "NÃºmero de nÃ³s clientes"
 rangex <- range(c(1, 12), na.rm=T)
 rangey <- range(c(70000, 260000), na.rm=T)
 #rangey <- range(c(230000, 260000), na.rm=T)
@@ -193,8 +193,8 @@ legend("topleft", legend = desc, col = desccolors, lwd = 3, lty=c(1), cex = 1)
 
 
 ##################### Continuidade ########################
-mainlabel <- "GMTP - Índice de continuidade"
-datalabel <- "Índice de continuidade (%)"
+mainlabel <- "GMTP - Ãndice de continuidade"
+datalabel <- "Ãndice de continuidade (%)"
 
 rangey <- range(c(0, 101), na.rm=T)
 plot(rangex, rangey, type="n", xlab=xlabel, ylab=datalabel, xaxt = "n")
@@ -282,7 +282,7 @@ legend("topleft", legend = desc[1:2], col = colors, lwd = 3, lty=c(1, 1), cex = 
 rangex <- range(c(1, 12.7), na.rm=T)
 rangey <- range(0, ctrl_hc+10000, na.rm=T)
 barcolors <- c("red", "aquamarine")
-xlabel <- "Número de nós clientes (Tratamento #)"
+xlabel <- "NÃºmero de nÃ³s clientes (Tratamento #)"
 names <- c("1 (1)", "10 (2)", "20 (3)", 
            "3 (4)", "30 (5)", "60 (6)", 
            "30 (7)", "300 (8)", "600 (9)", 
@@ -312,7 +312,7 @@ datalabel <- "Quantidade de pacotes de controle por cliente"
 rangex <- range(c(1, 12.7), na.rm=T)
 rangey <- range(0, max((ctrl_hc/gmtp$clients) + 1000), na.rm=T)
 barcolors <- c("red", "aquamarine")
-xlabel <- "Número de nós clientes (Tratamento #)"
+xlabel <- "NÃºmero de nÃ³s clientes (Tratamento #)"
 names <- c("1 (1)", "10 (2)", "20 (3)", 
            "3 (4)", "30 (5)", "60 (6)", 
            "30 (7)", "300 (8)", "600 (9)", 
