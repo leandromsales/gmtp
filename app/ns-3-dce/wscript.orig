@@ -81,8 +81,10 @@ def configure(conf):
         conf.env['NS3_DIR']= os.path.abspath(Options.options.with_ns3)
         if not 'PKG_CONFIG_PATH' in os.environ:
             os.environ['PKG_CONFIG_PATH']= os.path.join(Options.options.with_ns3, 'lib', 'pkgconfig')
+            os.environ['PKG_CONFIG_PATH']+= ":" + os.path.join(Options.options.with_ns3, 'lib64', 'pkgconfig')
         else:
             os.environ['PKG_CONFIG_PATH']+= ":" + os.path.join(Options.options.with_ns3, 'lib', 'pkgconfig')
+            os.environ['PKG_CONFIG_PATH']+= ":" + os.path.join(Options.options.with_ns3, 'lib64', 'pkgconfig')
 
         conf.env.append_value('NS3_EXECUTABLE_PATH', os.path.join(conf.env['NS3_DIR'], 'bin'))
 
@@ -237,7 +239,13 @@ def build_dce_tests(module, bld):
             'test/dce-cradle-test.cc',
             'test/dce-mptcp-test.cc',
             ]
-        
+
+    for dir in os.listdir('test/addons'):
+        if dir.startswith('.') or dir == 'CVS':
+            continue
+        elif dir.endswith(".cc"):
+            tests_source += ["test/addons/" + dir]
+
     module.add_runner_test(needed=['core', 'dce', 'internet', 'applications'],
                            source=tests_source)
 
@@ -427,6 +435,10 @@ def build_dce_kernel_examples(module, bld):
                        target='bin/dce-iperf-mptcp',
                        source=['example/dce-iperf-mptcp.cc'])
 
+    module.add_example(needed = ['core', 'internet', 'network', 'dce', 'point-to-point', 'mobility'],
+                       target='bin/dce-iperf-heterogeneous-multihop',
+                       source=['example/dce-iperf-heterogeneous-multihop.cc'])
+
     module.add_example(needed = ['core', 'network', 'dce', 'point-to-point', 'mobility', 'applications'],
                        target='bin/dce-cradle-mptcp',
                        source=['example/dce-cradle-mptcp.cc'])
@@ -604,6 +616,7 @@ def build(bld):
         'model/dce-time.cc',
         'model/dce-stat.cc',
         'model/dce-syslog.cc',
+        'model/dce-dl.cc',
         'model/dce-global-variables.cc',
         'model/cmsg.cc',
         'model/waiter.cc',
@@ -755,12 +768,12 @@ def build(bld):
     
     bld.program(source='utils/dcemakeversion.c', 
                 name='dcemakeversion',
-                target='dcemakeversion', cflags = [ '-g'], linkflags    = ['-lpthread', '-lrt', '-lm'])
+                target='dcemakeversion', cflags = [ '-g'], linkflags    = ['-lpthread', '-lrt', '-lm', '-ldl'])
 
     bld(source=['dcemakeversion','model/libc-ns3.version' , 'model/libpthread-ns3.version' ,
-                'model/librt-ns3.version', 'model/libm-ns3.version'],
-        target=['model/libc.version','model/libpthread.version','model/librt.version','model/libm.version'],
-        rule='${SRC[0].abspath()} ${SRC[1].abspath()}  ${SRC[2].abspath()}  ${SRC[3].abspath()} ${SRC[4].abspath()}')
+                'model/librt-ns3.version', 'model/libm-ns3.version', 'model/libdl-ns3.version'],
+        target=['model/libc.version','model/libpthread.version','model/librt.version','model/libm.version','model/libdl.version'],
+        rule='${SRC[0].abspath()} ${SRC[1].abspath()}  ${SRC[2].abspath()}  ${SRC[3].abspath()} ${SRC[4].abspath()}  ${SRC[5].abspath()}')
 
     bld.add_group('dce_use_version_files')
 
@@ -798,6 +811,15 @@ def build(bld):
               linkflags=['-nostdlib', '-fno-profile-arcs',
                          '-Wl,--version-script=' + os.path.join('model', 'libm.version'),
                          '-Wl,-soname=libm.so.6'])
+
+    # The very small libdl used to replace the glibc
+    # and forward to the dce_* code
+    bld.shlib(source = ['model/libc.cc', 'model/libc-setup.cc'],
+              target='lib/dl-ns3', cxxflags=['-g', '-fno-profile-arcs', '-fno-test-coverage'],
+              defines=['LIBSETUP=libdl_setup'],
+              linkflags=['-nostdlib', '-fno-profile-arcs',
+                         '-Wl,--version-script=' + os.path.join('model', 'libdl.version'),
+                         '-Wl,-soname=libdl.so.2'])
 
     bld.add_subdirs(['utils'])
     bld.recurse('bindings/python')
