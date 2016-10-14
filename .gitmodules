@@ -1,3 +1,0 @@
-[submodule "linux-next"]
-	path = linux-next
-	url = git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git
