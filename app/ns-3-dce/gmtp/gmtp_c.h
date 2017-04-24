@@ -1,0 +1,178 @@
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <sys/time.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+
+#ifndef GMTP_H_
+#define GMTP_H_
+
+#define SOCK_GMTP     7
+#define IPPROTO_GMTP  254
+#define SOL_GMTP      281
+
+#define SERVER_PORT 2000
+#define BUFF_SIZE (int) 744  /* 544 + 56 = 600 B/pkt */
+#define GMTP_SAMPLE 100
+
+#define NumStr(Number) static_cast<ostringstream*>( &(ostringstream() << Number) )->str().c_str()
+#define MY_TIME(time) (time - (double)1262300000000 + (double)(rand()%1000000))
+
+static struct timeval  tv;
+
+enum gmtp_ucc_type {
+	GMTP_DELAY_UCC = 0,
+	GMTP_MEDIA_ADAPT_UCC,
+
+	GMTP_MAX_UCC_TYPES
+};
+
+/* GMTP socket options */
+enum gmtp_sockopt_codes {
+	GMTP_SOCKOPT_FLOWNAME = 1,
+	GMTP_SOCKOPT_MEDIA_RATE,
+	GMTP_SOCKOPT_MAX_TX_RATE,
+	GMTP_SOCKOPT_UCC_TX_RATE,
+	GMTP_SOCKOPT_GET_CUR_MSS,
+	GMTP_SOCKOPT_SERVER_RTT,
+	GMTP_SOCKOPT_SERVER_TIMEWAIT,
+	GMTP_SOCKOPT_PULL,
+	GMTP_SOCKOPT_ROLE_RELAY,
+	GMTP_SOCKOPT_RELAY_ENABLED,
+	GMTP_SOCKOPT_NDP_RCV,
+	GMTP_SOCKOPT_NDP_SENT,
+	GMTP_SOCKOPT_UCC_TYPE
+};
+
+void set_gmtp_inter(int actived)
+{
+	int ok = 1;
+
+	std::cout << GMTP_SOCKOPT_ROLE_RELAY << ", " << GMTP_SOCKOPT_RELAY_ENABLED << std::endl;
+
+	int rsock = socket(PF_INET, SOCK_GMTP, IPPROTO_GMTP);
+
+	setsockopt(rsock, SOL_GMTP, GMTP_SOCKOPT_ROLE_RELAY, &ok, sizeof(int));
+	setsockopt(rsock, SOL_GMTP, GMTP_SOCKOPT_RELAY_ENABLED, &actived,
+			sizeof(int));
+}
+
+inline void disable_gmtp_inter()
+{
+	set_gmtp_inter(false);
+}
+
+inline void enable_gmtp_inter()
+{
+	set_gmtp_inter(true);
+}
+
+
+double time_ms(struct timeval &tv)
+{
+	gettimeofday(&tv, NULL);
+	double t2 = (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000; // convert tv_sec & tv_usec to millisecond
+	return t2;
+}
+
+static void ms_sleep(double ms)
+{
+	struct timespec slt;
+	slt.tv_nsec = (long)(ms * 1000000.0);
+	slt.tv_sec = 0;
+	nanosleep(&slt, NULL);
+}
+
+static void print_stats(int i, double t1, double total, double total_data)
+{
+	double t2 = time_ms(tv);
+	double elapsed = t2 - t1;
+
+	printf("%d packets sent in %d ms!\n", i, m);
+	printf("%d data bytes sent.\n",total_data);
+	printf("%d bytes sent (data+hdr)\n",total);
+	printf("Data TX: %d B/s\n", total_data*1000/elapsed);
+	printf("TX: %d B/s\n", (total*1000)/elapsed);
+}
+
+#define print_client_log_header(log) fprintf(log, "idx\tseq\tloss\telapsed\tbytes_rcv\trx_rate\tinst_rx_rate\tndp\r\n\r\n");
+
+enum {
+	TOTAL_BYTES,
+	DATA_BYTES,
+	TSTAMP,
+	SEQ
+};
+
+/**
+ * @i Sequence number
+ * @begin
+ * @rcv bytes received
+ * @rcv_data data bytes received
+ */
+static void update_client_stats(int i, int seq, double begin, double rcv,
+		double rcv_data, double hist[][4], int ndp, FILE *log)
+{
+	double now = time_ms(tv);
+	double total_time = now - begin;
+	int index = (i-1) % GMTP_SAMPLE;
+	int next = (index == (GMTP_SAMPLE-1)) ? 0 : (index + 1);
+	int prev = (index == 0) ? (GMTP_SAMPLE-1) : (index - 1);
+	double elapsed = 0;
+	int loss = 0;
+
+	hist[index][TOTAL_BYTES] = rcv;
+	hist[index][DATA_BYTES] = rcv_data;
+	hist[index][TSTAMP] = now;
+	hist[index][SEQ] = seq;
+
+	double rcv_sample = hist[index][TOTAL_BYTES] - hist[next][TOTAL_BYTES];
+	double rcv_data_sample = hist[index][DATA_BYTES] - hist[next][DATA_BYTES];
+	double instant = hist[index][TSTAMP] - hist[next][TSTAMP];
+	if(i > 1) {
+		elapsed = hist[index][TSTAMP] - hist[prev][TSTAMP];
+		loss = (hist[index][SEQ] - hist[prev][SEQ]) - 1;
+	}
+
+	double rx = rcv*1000 / total_time;
+	double inst_rx = rcv_sample*1000 / instant;
+
+	if(inst_rx >= 1)
+		//index, seq, loss, elapsed, bytes_rcv, rx_rate, inst_rx_rate
+		fprintf(log, "%d\t%d\t%d\t%0.2f\t%0.2f\t%0.2f\t%0.2f\t%d\r\n", i, seq, loss, elapsed, rcv, rx, inst_rx, ndp);
+	else
+		fprintf(log, "%d\t%d\t%d\t%0.2f\t%0.2f\t%0.2f\t\t%d\r\n", i, seq, loss, elapsed, rcv, rx, ndp);
+
+}
+
+#define print_server_log_header(log) fprintf(log, "idx\tndp\r\n\r\n");
+
+/**
+ * @i Sequence number
+ */
+static void update_server_stats(int i, int ndp, FILE *log)
+{
+	fprintf(log, "%d\t%d\r\n", i, ndp);
+}
+
+static int count_ndp_rcv(int sockfd)
+{
+	int ndp = -1;
+	socklen_t ndp_s = sizeof(ndp);
+	getsockopt(sockfd, SOL_GMTP, GMTP_SOCKOPT_NDP_RCV, &ndp, &ndp_s);
+	return ndp;
+}
+
+
+static int count_ndp_sent(int sockfd)
+{
+	int ndp = -1;
+	socklen_t ndp_s = sizeof(ndp);
+	getsockopt(sockfd, SOL_GMTP, GMTP_SOCKOPT_NDP_SENT, &ndp, &ndp_s);
+	return ndp;
+}
+
+
+
+#endif /* GMTP_H_ */

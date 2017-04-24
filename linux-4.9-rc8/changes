@@ -1,0 +1,84 @@
+sk = __inet_lookup_skb(&gmtp_inet_hashinfo, skb, 0,
+        gh->sport, gh->dport, NULL);
+
+terceiro parametro eh novo, alterei pra 0, e agora usam 
+um ponteiro pra contador de referencia deve ser algo de alocacao
+
+---
+
+req = inet_reqsk_alloc(&gmtp_request_sock_ops, sk, true);
+
+novo terceiro parametro, um boolean
+
+---
+
+__inet_hash_nolisten
+mudei para 
+inet_ehash_nolisten(newsk, NULL);
+a primeira funcao nao existe mais
+
+---
+
+struct inet_connection_sock_af_ops {
+    struct sock *(*syn_recv_sock)(const struct sock *sk, struct sk_buff *skb,
+                      struct request_sock *req,
+                      struct dst_entry *dst,
+                      struct request_sock *req_unhash,
+                      bool *own_req);
+
+mudou, dois parametros novos q nao faco a minima ideia o q sejam
+
+---
+
+// static unsigned int hook_func_gmtp_out(unsigned int hooknum, struct sk_buff *skb,
+//         const struct net_device *in, const struct net_device *out,
+//         int (*okfn)(struct sk_buff *))
+static unsigned int hook_func_gmtp_out(unsigned int hooknum, struct sk_buff *skb,
+        const struct nf_hook_state *state)
+
+
+varificar como usar nf_hook_state, junta status numa unica estrutura
+
+---
+
+1316     /****
+1317     nfho_gmtp_out.hook = hook_func_gmtp_out;
+1318     nfho_gmtp_out.hooknum = NF_INET_LOCAL_OUT;
+1319     nfho_gmtp_out.pf = PF_INET;
+1320     nfho_gmtp_out.priority = NF_IP_PRI_FIRST;
+1321     nf_register_hook(&nfho_gmtp_out);
+1322     ****/
+
+em ipv4.c foi comentado 
+
+---
+
+foi retirado todo register_hooks, do gmtp/ipv4.c  e gmtp-inter.c
+tah comentado
+
+---
+
+mudado pra __u32 tava __u64 ?
+__u32 secure_gmtp_sequence_number(__be32 saddr, __be32 daddr,
+				 __be16 sport, __be16 dport)
+
+---
+
+I got this if 
+
+delta = DIV_ROUND_CLOSEST(mult, (s64) GMTP_GHAMA(C)); /* 112 net/gmtp/gmtp-inter/ucc.c */
+
+net/built-in.o: In function `gmtp_ucc_equation':
+(.text+0x8c7e4): undefined reference to `__divdi3'
+net/built-in.o: In function `gmtp_ucc_equation':
+(.text+0x8c80d): undefined reference to `__divdi3'
+net/built-in.o: In function `gmtp_ucc_equation':
+(.text+0x8c81e): undefined reference to `__divdi3'
+net/built-in.o: In function `gmtp_ucc_equation':
+(.text+0x8c8a5): undefined reference to `__divdi3'
+net/built-in.o: In function `gmtp_ucc_equation':
+(.text+0x8c8c7): undefined reference to `__divdi3'
+make: *** [vmlinux] Error 1
+
+did delta = 0; only to complile
+

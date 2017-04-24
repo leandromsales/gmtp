@@ -1,0 +1,5 @@
+14-04-2017
+    Segui a inicializacao colocando stubs e ateh 
+    gmtp_init:protocol.c
+        retorna 0, o crash apohs
+
