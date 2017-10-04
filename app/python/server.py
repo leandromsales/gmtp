@@ -37,15 +37,19 @@ out = "sair"
 print "Starting server... at ", address
         
 # Create sockets
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_GMTP, socket.IPPROTO_GMTP)
+#server_socket = socket.socket(socket.AF_INET, socket.SOCK_GMTP, socket.IPPROTO_GMTP)
+server_socket = socket.socket(socket.AF_INET, 7, 254)
 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
 flowname = "1234567812345678";
-server_socket.setsockopt(socket.SOL_GMTP, socket.GMTP_SOCKOPT_FLOWNAME, flowname)
+#server_socket.setsockopt(socket.SOL_GMTP, socket.GMTP_SOCKOPT_FLOWNAME, flowname)
+server_socket.setsockopt(282, 1, flowname)
 
 #tx_rate = "max_gmtp_rate"
 tx_rate = 50000 #bytes/s.  250000 bytes/s == 2 Mbps
-server_socket.setsockopt(socket.SOL_GMTP, socket.GMTP_SOCKOPT_MAX_TX_RATE, tx_rate)
+#server_socket.setsockopt(socket.SOL_GMTP, socket.GMTP_SOCKOPT_MAX_TX_RATE, tx_rate)
+server_socket.setsockopt(282, 3, tx_rate)
+
 
 # Connect sockets
 server_socket.bind(address)
