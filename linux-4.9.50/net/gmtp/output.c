@@ -112,7 +112,7 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
             gh->seq = gcb->seq = gp->gsr;
             gh->transm_r = gp->rx_max_rate;
             fh->orig_tstamp = gcb->orig_tstamp;
-            fh->nclients = gp->myself->nclients;
+            /*fh->nclients = gp->myself->nclients;*/
             break;
         }
         case GMTP_PKT_ELECT_REQUEST: {
@@ -174,8 +174,7 @@ unsigned int gmtp_sync_mss(struct sock *sk, u32 pmtu)
     /* And store cached results */
     icsk->icsk_pmtu_cookie = pmtu;
     gp->mss = cur_mps;
-
-    pr_info("MSS: %u\n", gp->mss);
+    gmtp_pr_info("MSS: %u\n", gp->mss);
 
     return cur_mps;
 }
@@ -448,7 +447,7 @@ int gmtp_connect(struct sock *sk)
     struct gmtp_client_entry *client_entry;
     int err = 0;
 
-    gmtp_print_function();
+    gmtp_pr_func();
 
     sk->sk_err = 0;
     sock_reset_flag(sk, SOCK_DONE);
@@ -459,11 +458,16 @@ int gmtp_connect(struct sock *sk)
     if (unlikely(skb == NULL))
         return -ENOBUFS;
 
+    gmtp_pr_info("skb created");
+
     /* Reserve space for headers. */
     skb_reserve(skb, sk->sk_prot->max_header);
+    gmtp_pr_info("gmtp header reserved");
     GMTP_SKB_CB(skb)->type = GMTP_PKT_REQUEST;
 
-    client_entry = gmtp_lookup_client(client_hashtable, gp->flowname);
+    gmtp_pr_info("client_entry: removed");
+
+    /*client_entry = gmtp_lookup_client(client_hashtable, gp->flowname);
     if(client_entry == NULL)
         err = gmtp_add_client_entry(client_hashtable, gp->flowname,
                 inet->inet_saddr, inet->inet_sport, 0, 0);
@@ -477,27 +481,34 @@ int gmtp_connect(struct sock *sk)
             0, &client_entry->clients->list);
 
     if(gp->myself == NULL)
-        return -ENOBUFS;
+        return -ENOBUFS;*/
 
     /** First transmission: gss <- iss */
     gp->gss = gp->iss;
     gp->req_stamp = jiffies_to_msecs(jiffies);
     gp->ack_rx_tstamp = jiffies_to_msecs(jiffies);
-    gp->myself->ack_rx_tstamp = gp->ack_rx_tstamp;
-    gp->myself->mysock = sk;
 
+    gmtp_pr_info("Remove link to myself");
+    /*
+    gp->myself->ack_rx_tstamp = gp->ack_rx_tstamp;
+    gp->myself->mysock = sk;*/
+
+    gmtp_pr_info("Transmitting packet...");
     gmtp_transmit_skb(sk, gmtp_skb_entail(sk, skb));
 
     icsk->icsk_retransmits = 0;
+    gmtp_pr_info("Before call inet_csk_reset_xmit_timer");
     inet_csk_reset_xmit_timer(sk, ICSK_TIME_RETRANS,
                       icsk->icsk_rto, GMTP_RTO_MAX);
+    gmtp_pr_info("After call inet_csk_reset_xmit_timer");
+    /*gmtp_pr_info("Canceling call inet_csk_reset_xmit_timer...");*/
     return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_connect);
 
 void gmtp_send_ack(struct sock *sk)
 {
-    gmtp_print_function();
+    gmtp_pr_func();
 
     /* If we have been reset, we may not send again. */
     if(sk->sk_state != GMTP_CLOSED) {
@@ -561,11 +572,11 @@ void gmtp_send_elect_response(struct sock *sk, __u8 code)
     GMTP_SKB_CB(skb)->type = GMTP_PKT_ELECT_RESPONSE;
     GMTP_SKB_CB(skb)->elect_code = code;
 
-    if(code == GMTP_ELECT_AUTO) {
+    /*if(code == GMTP_ELECT_AUTO) {
 
         pr_info("Turning a client into a Reporter\n");
 
-        /* We dont need init mcc, because mcc is already started */
+         We dont need init mcc, because mcc is already started
         gp->role = GMTP_ROLE_REPORTER;
         gp->myself->max_nclients =
                 GMTP_REPORTER_DEFAULT_PROPORTION - 1;
@@ -574,7 +585,7 @@ void gmtp_send_elect_response(struct sock *sk, __u8 code)
         INIT_LIST_HEAD(&gp->myself->clients->list);
         mcc_rx_init(sk);
         inet_csk_reset_keepalive_timer(sk, GMTP_ACK_TIMEOUT);
-    }
+    }*/
 
     gmtp_transmit_skb(sk, skb);
 }

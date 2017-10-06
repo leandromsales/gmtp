@@ -37,19 +37,32 @@ static inline __u32 gmtp_v4_init_sequence(const struct sk_buff *skb)
 struct sock* gmtp_v4_build_control_sk(struct sock *sk)
 {
     struct sockaddr_in *local;
+    struct sock *mcast_sk;
     unsigned char *channel = "\xee\xff\xff\xfa"; /* 238.255.255.250 */
 
     gmtp_pr_func();
 
     local = kmalloc(sizeof(struct sockaddr_in), GFP_KERNEL);
+    if(local == NULL)
+    	goto out;
+
+    gmtp_pr_info("local is ok");
     local->sin_family = AF_INET;
     local->sin_port = htons(1900);
     local->sin_addr.s_addr = *(unsigned int *)channel;
+    gmtp_pr_info("before memset");
     memset(&local->sin_zero, 0, sizeof(local->sin_zero));
+    gmtp_pr_info("after memset");
     gmtp_info->ctrl_addr = local;
 
-    return gmtp_multicast_connect(sk, GMTP_SOCK_TYPE_CONTROL_CHANNEL,
+    gmtp_pr_info("getting mcast_sk...");
+    mcast_sk = gmtp_multicast_connect(sk, GMTP_SOCK_TYPE_CONTROL_CHANNEL,
             local->sin_addr.s_addr, local->sin_port);
+
+    return mcast_sk;
+out:
+	gmtp_pr_info("local is null...");
+	return 0;
 }
 
 int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
@@ -64,7 +77,7 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
     int err;
     struct ip_options_rcu *inet_opt;
 
-    gmtp_print_function();
+    gmtp_pr_func();
 
     gp->role = GMTP_ROLE_CLIENT;
 
@@ -142,7 +155,11 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
     if(err != 0)
         goto failure;
 
-    gmtp_info->control_sk = gmtp_v4_build_control_sk(sk);
+    gmtp_pr_info("Not calling gmtp_v4_build_control_sk");
+   /* gmtp_info->control_sk = gmtp_v4_build_control_sk(sk);*/
+
+    if(gmtp_info->control_sk == NULL)
+    	gmtp_pr_info("gmtp_info->control_sk == NULL");
 
 out:
     return err;
@@ -448,6 +465,8 @@ int gmtp_v4_do_rcv(struct sock *sk, struct sk_buff *skb)
 {
     struct gmtp_hdr *gh = gmtp_hdr(skb);
 
+    gmtp_pr_func();
+
     if(sk->sk_state == GMTP_OPEN) { /* Fast path */
         if(gmtp_rcv_established(sk, skb, gh, skb->len))
             goto reset;
@@ -470,14 +489,21 @@ int gmtp_v4_do_rcv(struct sock *sk, struct sk_buff *skb)
 
         struct sock *nsk;
 
-        nsk = gmtp_v4_hnd_req(sk, skb);
-        if(nsk == NULL)
-            goto discard;
+        gmtp_pr_debug("Packet received while listening...");
 
+        nsk = gmtp_v4_hnd_req(sk, skb);
+        if(nsk == NULL) {
+        	gmtp_pr_debug("nsk == NULL");
+            goto discard;
+        }
+
+        gmtp_pr_debug("nsk OK");
         /* TODO Treat it */
         if(nsk != sk) {
+        	gmtp_pr_debug("nsk != sk");
             if(gmtp_child_process(sk, nsk, skb))
                 goto reset;
+            gmtp_pr_debug("not child process");
             return 0;
         }
     }
@@ -940,7 +966,7 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
     struct gmtp_request_sock *greq;
     struct gmtp_skb_cb *gcb = GMTP_SKB_CB(skb);
 
-    gmtp_print_function();
+    gmtp_pr_func();
 
     /* Never answer to GMTP_PKT_REQUESTs send to broadcast or multicast */
     if(skb_rtable(skb)->rt_flags & (RTCF_BROADCAST | RTCF_MULTICAST))
@@ -1098,7 +1124,7 @@ EXPORT_SYMBOL_GPL(gmtp_v4_request_recv_sock);
 
 void gmtp_v4_send_check(struct sock *sk, struct sk_buff *skb)
 {
-    gmtp_print_warning("GMTP has no ckecksum!");
+    gmtp_pr_warning("GMTP has no ckecksum!");
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_send_check);
 
@@ -1125,7 +1151,7 @@ static int gmtp_v4_init_sock(struct sock *sk)
 
     int err = 0;
 
-    gmtp_print_function();
+    gmtp_pr_func();
 
     err = gmtp_init_sock(sk);
     if(err == 0) {

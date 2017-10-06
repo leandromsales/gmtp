@@ -9,12 +9,13 @@ from optparse import Option, OptionParser
 from gmtp import *
 
 default_port = 12345
+default_if = 'enp0s3'
 
 usage = "usage: %prog [options]. Note: -a takes precedence of -i, specify one or other."
 parser = OptionParser(usage=usage, version="%prog 1.0")
 
-parser.add_option("-i", "--iface", dest="iface",
-                  help="The network interface to bind.", metavar="IFACE")
+parser.add_option("-i", "--iface", dest="iface", default='enp0s3',
+                  help="The network interface to bind [default: %default].", metavar="IFACE")
 parser.add_option("-a", "--address", dest="address",
                   help="The network address", metavar="ADDRESS")
 parser.add_option("-p", "--port", dest="port", type="int",

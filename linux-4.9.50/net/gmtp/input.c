@@ -611,8 +611,8 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 	struct gmtp_skb_cb *gcb = GMTP_SKB_CB(skb);
 	int queued = 0;
 
-	gmtp_print_function();
-	gmtp_print_debug("State: %s | Packet: %s", gmtp_state_name(sk->sk_state),
+	gmtp_pr_func();
+	gmtp_pr_debug("State: %s | Packet: %s", gmtp_state_name(sk->sk_state),
 			gmtp_packet_name(gh->type));
 
 	print_gmtp_packet(ip_hdr(skb), gh);

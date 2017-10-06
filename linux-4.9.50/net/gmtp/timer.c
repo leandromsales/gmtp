@@ -15,7 +15,7 @@
 
 static void gmtp_write_err(struct sock *sk)
 {
-	gmtp_print_function();
+	gmtp_pr_func();
 
 	sk->sk_err = sk->sk_err_soft ? : ETIMEDOUT;
 	sk->sk_error_report(sk);
@@ -29,7 +29,7 @@ static int gmtp_write_timeout(struct sock *sk)
 {
 	const struct inet_connection_sock *icsk = inet_csk(sk);
 	int retry_until;
-	gmtp_print_function();
+	gmtp_pr_func();
 
 	if (sk->sk_state == GMTP_REQUESTING) {
 		if (icsk->icsk_retransmits != 0)
@@ -60,7 +60,7 @@ static int gmtp_write_timeout(struct sock *sk)
 static void gmtp_retransmit_timer(struct sock *sk)
 {
 	struct inet_connection_sock *icsk = inet_csk(sk);
-	gmtp_print_function();
+	gmtp_pr_func();
 
 	/*
 	 * More than than 4MSL (8 minutes) has passed, a RESET(aborted) was
@@ -97,7 +97,7 @@ static void gmtp_write_timer(unsigned long data)
 	struct sock *sk = (struct sock *)data;
 	struct inet_connection_sock *icsk = inet_csk(sk);
 	int event = 0;
-	gmtp_print_function();
+	gmtp_pr_func();
 
 	bh_lock_sock(sk);
 	if (sock_owned_by_user(sk)) {
@@ -141,13 +141,13 @@ out:
  */
 static void gmtp_register_reply_timer(struct sock *sk)
 {
+	gmtp_pr_func();
 
 	/* FIXME DCE cu off syn-ack timer from TCP and register_reply_timer
 	 * from us...
 	 */
-/*	inet_csk_reqsk_queue_prune(sk, GMTP_REQ_INTERVAL, GMTP_TIMEOUT_INIT,
+	/*inet_csk_reqsk_queue_prune(sk, GMTP_REQ_INTERVAL, GMTP_TIMEOUT_INIT,
 				   GMTP_RTO_MAX);*/
-	;
 }
 
 static void gmtp_reporter_ackrcv_timer(struct sock *sk)
@@ -226,6 +226,7 @@ static void gmtp_keepalive_timer(unsigned long data)
 	struct sock *sk = (struct sock *)data;
 	struct gmtp_sock *gp = gmtp_sk(sk);
 
+	gmtp_pr_func();
 	print_gmtp_sock(sk);
 
 	bh_lock_sock(sk);
@@ -280,7 +281,7 @@ static void gmtp_delack_timer(unsigned long data)
 {
 	struct sock *sk = (struct sock *)data;
 	struct inet_connection_sock *icsk = inet_csk(sk);
-	gmtp_print_function();
+	gmtp_pr_func();
 
 	bh_lock_sock(sk);
 	if (sock_owned_by_user(sk)) {
@@ -326,6 +327,7 @@ out:
 void gmtp_write_xmit_timer(unsigned long data)
 {
 	struct gmtp_packet_info *pkt_info = (struct gmtp_packet_info*) data;
+	gmtp_pr_func();
 	gmtp_write_xmit(pkt_info->sk, pkt_info->skb);
 	del_timer_sync(&gmtp_sk(pkt_info->sk)->xmit_timer);
 	kfree(pkt_info);

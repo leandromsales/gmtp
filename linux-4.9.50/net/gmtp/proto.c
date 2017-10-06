@@ -545,6 +545,8 @@ void gmtp_close(struct sock *sk, long timeout)
     if(sk->sk_state == GMTP_LISTEN) {
         gmtp_set_state(sk, GMTP_CLOSED);
 
+        gmtp_pr_info("We are listening yet... Calling inet_csk_listen_stop");
+
         /* Special case. */
         inet_csk_listen_stop(sk);
 
@@ -556,6 +558,7 @@ void gmtp_close(struct sock *sk, long timeout)
      * descriptor close, not protocol-sourced closes, because the
      * reader process may not have drained the data yet!
      */
+    gmtp_pr_info("Flushing the recv buffs...");
     while((skb = __skb_dequeue(&sk->sk_receive_queue)) != NULL) {
         data_was_unread += skb->len;
         __kfree_skb(skb);
@@ -568,12 +571,14 @@ void gmtp_close(struct sock *sk, long timeout)
         gmtp_set_state(sk, GMTP_CLOSED);
     } else if(sock_flag(sk, SOCK_LINGER) && !sk->sk_lingertime) {
         /* Check zero linger _after_ checking for unread data. */
+    	gmtp_pr_info("Disconnecting sk...");
         sk->sk_prot->disconnect(sk, 0);
     } else if(sk->sk_state != GMTP_CLOSED) {
         /*
          * May need to wait if there are still packets in the
          * TX queue that are delayed by the CCID.
          */
+    	gmtp_pr_info("Calling gmtp_terminate_connection...");
         gmtp_terminate_connection(sk);
     }
 
@@ -583,10 +588,13 @@ void gmtp_close(struct sock *sk, long timeout)
      * - abortive termination (unread data or zero linger time),
      * - normal termination but queue could not be flushed within time limit
      */
+    gmtp_pr_info("Flushing write queue...");
     __skb_queue_purge(&sk->sk_write_queue);
     sk_stream_wait_close(sk, timeout);
 
 adjudge_to_death:
+	gmtp_pr_info("adjudge_to_death...");
+
     state = sk->sk_state;
     sock_hold(sk);
     sock_orphan(sk);
@@ -594,6 +602,7 @@ adjudge_to_death:
     /*
      * It is the last release_sock in its life. It will remove backlog.
      */
+    gmtp_pr_info("Calling release_sock(sk)...");
     release_sock(sk);
     /*
      * Now socket is owned by kernel and we acquire BH lock
@@ -607,16 +616,19 @@ adjudge_to_death:
 
     /* Have we already been destroyed by a softirq or backlog? */
     if(state != GMTP_CLOSED && sk->sk_state == GMTP_CLOSED) {
-        gmtp_print_debug("we already been destroyed by a "
+        gmtp_pr_debug("we already been destroyed by a "
                 "softirq or backlog");
         goto out;
     }
 
-    if(sk->sk_state == GMTP_CLOSED)
+    if(sk->sk_state == GMTP_CLOSED) {
+    	gmtp_pr_info("Calling inet_csk_destroy_sock(sk)");
         inet_csk_destroy_sock(sk);
+    }
 
     /* Otherwise, socket is reprieved until protocol close. */
 out:
+	gmtp_pr_info("Finally exiting...");
     bh_unlock_sock(sk);
     local_bh_enable();
     sock_put(sk);
@@ -772,6 +784,8 @@ int gmtp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len, int nonblock,
     const struct gmtp_hdr *gh;
     long timeo;
 
+    gmtp_pr_info();
+
     lock_sock(sk);
 
     if(sk->sk_state == GMTP_LISTEN) {
@@ -787,6 +801,8 @@ int gmtp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len, int nonblock,
             goto verify_sock_status;
 
         gh = gmtp_hdr(skb);
+
+        gmtp_pr_debug("packet_type=%s\n", gmtp_packet_name(gh->type));
 
         switch(gh->type) {
         case GMTP_PKT_DATA:
@@ -1095,16 +1111,21 @@ int inet_gmtp_listen(struct socket *sock, int backlog)
      * we can only allow the backlog to be adjusted.
      */
     if (old_state != GMTP_LISTEN) {
-
+        /*
+        * FIXME: here it probably should be sk->sk_prot->listen_start
+        * see tcp_listen_start
+        */
         gs->role = GMTP_ROLE_LISTEN;
 
         err = inet_csk_listen_start(sk, backlog);
-        gmtp_print_debug("inet_csk_listen_start(sk, %d) "
+        gmtp_pr_debug("inet_csk_listen_start(sk, %d) "
                 "returns: %d", backlog, err);
         if (err)
             goto out;
     }
+    sk->sk_max_ack_backlog = backlog;
     err = 0;
+
 out:
     release_sock(sk);
     return err;
@@ -1135,9 +1156,6 @@ static int gmtp_create_inet_hashinfo(void)
 
     gmtp_print_function();
     pr_info("thash_entries: %d\n", thash_entries);
-
-    BUILD_BUG_ON(sizeof(struct gmtp_skb_cb) >
-    FIELD_SIZEOF(struct sk_buff, cb));
 
     rc = -ENOBUFS;
 
@@ -1215,6 +1233,7 @@ static int gmtp_create_inet_hashinfo(void)
         INIT_HLIST_HEAD(&gmtp_inet_hashinfo.bhash[i].chain);
     }
 
+    pr_info("gmtp_init_hashinfo: SUCCESS");
     return 0;
 
 out_free_gmtp_locks:
@@ -1245,16 +1264,19 @@ static int __init gmtp_init(void)
 
     gmtp_print_function();
 
+    BUILD_BUG_ON(sizeof(struct gmtp_skb_cb) >
+    FIELD_SIZEOF(struct sk_buff, cb));
+
     rc = mcc_lib_init();
 
     if(rc)
         goto out;
-
     rc = percpu_counter_init(&gmtp_orphan_count, 0, GFP_KERNEL);
     if(rc) {
         percpu_counter_destroy(&gmtp_orphan_count);
         goto out;
     }
+/*
 
     client_hashtable = gmtp_build_hashtable(ghash_entries,
             gmtp_client_hash_ops);
@@ -1264,7 +1286,6 @@ static int __init gmtp_init(void)
         rc = -ENOBUFS;
         goto out;
     }
-
 
     gmtp_info = kmalloc(sizeof(struct gmtp_info), GFP_KERNEL);
     if(gmtp_info == NULL) {
@@ -1287,12 +1308,10 @@ static int __init gmtp_init(void)
 
     flowname_strn(relay_id, gmtp_info->relay_id, MD5_LEN);
         pr_info("Relay ID = %s\n", relay_id);
+*/
 
     rc = gmtp_create_inet_hashinfo();
-    /**** doing nothing
-    if(rc)
-        goto out;
-    ****/
+
 out:
     return rc;
 }
