@@ -193,3 +193,19 @@ u64 secure_dccpv6_sequence_number(__be32 *saddr, __be32 *daddr,
 EXPORT_SYMBOL(secure_dccpv6_sequence_number);
 #endif
 #endif
+
+/*#if IS_ENABLED(CONFIG_IP_GMTP)*/
+__u32 secure_gmtp_sequence_number(__be32 saddr, __be32 daddr,
+				 __be16 sport, __be16 dport)
+{
+	u64 seq;
+		net_secret_init();
+		seq = siphash_3u32((__force u32)saddr, (__force u32)daddr,
+				   (__force u32)sport << 16 | (__force u32)dport,
+				   &net_secret);
+		seq += ktime_get_real_ns();
+		seq &= (1ull << 48) - 1;
+		return seq;
+}
+EXPORT_SYMBOL(secure_gmtp_sequence_number);
+/*#endif */
