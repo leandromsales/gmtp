@@ -1,16 +1,23 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+/*
+ *  net/gmtp/output.c
+ *
+ *  An implementation of the GMTP protocol
+ *  Wendell Silva Soares <wendell@ic.ufal.br>
+ */
+#include <linux/gmtp.h>
+#include <linux/if_ether.h>
 #include <linux/kernel.h>
 #include <linux/skbuff.h>
 #include <linux/slab.h>
 #include <linux/types.h>
-#include <linux/if_ether.h>
-#include <asm/param.h>
 
 #include <net/inet_sock.h>
-#include <net/tcp.h>
 #include <net/sock.h>
+#include <net/tcp.h>
 
 #include <uapi/linux/gmtp.h>
-#include <linux/gmtp.h>
+
 #include "gmtp.h"
 #include "mcc.h"
 

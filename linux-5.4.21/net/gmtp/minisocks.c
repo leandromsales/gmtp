@@ -1,11 +1,12 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * minisocks.c
+ *  net/gmtp/minisocks.c
  *
- *  Created on: 21/01/2015
- *      Author: wendell
+ *  An implementation of the GMTP protocol
+ *  Wendell Silva Soares <wendell@ic.ufal.br>
  */
-
 #include <linux/gfp.h>
+#include <linux/gmtp.h>
 #include <linux/kernel.h>
 #include <linux/skbuff.h>
 #include <linux/timer.h>
@@ -14,7 +15,6 @@
 #include <net/xfrm.h>
 #include <net/inet_timewait_sock.h>
 
-#include <linux/gmtp.h>
 #include "gmtp.h"
 
 struct inet_timewait_death_row gmtp_death_row = {

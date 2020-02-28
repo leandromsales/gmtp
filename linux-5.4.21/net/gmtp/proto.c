@@ -1,3 +1,10 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+/*
+ *  net/gmtp/proto.c
+ *
+ *  An implementation of the GMTP protocol
+ *  Wendell Silva Soares <wendell@ic.ufal.br>
+ */
 #include <asm/ioctls.h>
 #include <asm-generic/unaligned.h>
 
@@ -242,44 +249,87 @@ void print_gmtp_sock(struct sock *sk)
 }
 EXPORT_SYMBOL_GPL(print_gmtp_sock);
 
-/* FIXME This fails at NS-3-DCE */
+/**
+ * Build a MD5 uuid from data in buf
+ * Requires CONFIG_CRYPTO_MD5 module
+ */
+bool gmtp_build_md5(unsigned char *result, unsigned char* data, size_t len) {
+
+	int ret = 0;
+    struct shash_desc *desc;
+
+    gmtp_pr_func();
+
+    desc = kmalloc(sizeof(*desc), GFP_KERNEL);
+    if(desc == NULL)
+    	return false;
+
+    desc->tfm = crypto_alloc_shash("md5", 0, CRYPTO_ALG_ASYNC);
+    if(desc->tfm == NULL)
+        return false;
+
+    crypto_shash_init(desc);
+    crypto_shash_update(desc, data, len);
+    ret = crypto_shash_final(desc, result);
+    crypto_free_shash(desc->tfm);
+
+    if (ret != 0)
+        return false;
+
+    return true;
+}
+
+/*
 unsigned char *gmtp_build_md5(unsigned char *buf)
 {
-    /****
     struct scatterlist sg;
-    struct crypto_hash *tfm;
-    struct hash_desc desc;
-    unsigned char *output;
+    struct crypto_shash *tfm;
+    struct shash_desc desc;
+    unsigned char *output = NULL;
     size_t buf_size = sizeof(buf) - 1;
      __u8 md5[21];
 
-    gmtp_print_function();
+    gmtp_pr_func();
 
     output = kmalloc(MD5_LEN * sizeof(unsigned char), GFP_KERNEL);
-    tfm = crypto_alloc_hash("md5", 0, CRYPTO_ALG_ASYNC);
+    if(output == NULL)
+    	return 0;
 
+    gmtp_pr_info("After kmaloc output");
+    tfm = crypto_alloc_shash("md5", 0, CRYPTO_ALG_ASYNC);
     if(output == NULL || IS_ERR(tfm)) {
         gmtp_pr_warning("Allocation failed...");
-        return NULL;
+        goto out;
     }
+    gmtp_pr_info("After tfm = crypto_alloc_shash");
     desc.tfm = tfm;
-    desc.flags = 0;
 
-    crypto_hash_init(&desc);
+    gmtp_pr_info("Before crypto_shash_init");
+    crypto_shash_init(&desc);
+    gmtp_pr_info("After crypto_shash_init");
 
+    gmtp_pr_info("Before sg_init_one");
     sg_init_one(&sg, buf, buf_size);
-    crypto_hash_update(&desc, &sg, buf_size);
-    crypto_hash_final(&desc, output);
+    gmtp_pr_info("After sg_init_one");
+
+    gmtp_pr_info("Before crypto_shash_update");
+    crypto_shash_update(&desc, &sg, buf_size);
+    gmtp_pr_info("After crypto_shash_update");
+
+
+    crypto_shash_final(&desc, output);
+
+    if(output == NULL)
+    	goto out;
 
     flowname_strn(md5, output, MD5_LEN);
     printk("Output md5 = %s\n", md5);
 
-    crypto_free_hash(tfm);
-
+out:
+    crypto_free_shash(tfm);
     return output;
-    ****/
-    return NULL;
 }
+*/
 EXPORT_SYMBOL_GPL(gmtp_build_md5);
 
 static inline int bytes_added(int sprintf_return)
@@ -292,25 +342,48 @@ unsigned char *gmtp_build_relay_id(void)
     struct socket *sock = NULL;
     struct net_device *dev = NULL;
     struct net *net;
+    bool success = false;
 
-    int i, retval, length = 0;
-    char mac_address[6];
+    int i, counter, retval, length = 0;
+    /*unsigned char mac_address[6];*/
+    size_t buff_size = MD5_LEN * 10 * sizeof(unsigned char);
+    char buffer[buff_size];
 
-    char buffer[50];
-    u8 *str[30];
+    unsigned char *relay_id;
 
-    gmtp_print_function();
+    gmtp_pr_func();
 
     retval = sock_create(AF_INET, SOCK_STREAM, 0, &sock);
+    if (retval != 0 || sock == NULL)
+    	goto failure;
+
     net = sock_net(sock->sk);
 
-    for(i = 2; (dev = dev_get_by_index_rcu(net, i)) != NULL; ++i) {
-        memcpy(&mac_address, dev->dev_addr, 6);
-        length += bytes_added(sprintf((char*)(buffer + length), str[0]));
+	for (i = 2, counter = 0;
+			(dev = dev_get_by_index_rcu(net, i)) != NULL && counter < 10;
+			++i, ++counter) {
+        /* FIXME Last dev->dev_addr is 00:00:00:00:00:00 (loopback?) */
+        gmtp_pr_info("MAC ADDR %d: %pM", counter, dev->dev_addr);
+        memcpy(&buffer[counter*6], dev->dev_addr, 6);
     }
 
     sock_release(sock);
-    return gmtp_build_md5(buffer);
+
+    /*relay_id = gmtp_build_md5(buffer);*/
+    relay_id = kmalloc(MD5_LEN * sizeof(unsigned char), GFP_KERNEL);
+    if(relay_id == NULL)
+    	goto failure;
+
+    success = gmtp_build_md5(relay_id, buffer, buff_size);
+    if(!success)
+    	goto failure;
+
+    gmtp_pr_info("Relay ID was built!");
+    return relay_id;
+
+failure:
+	gmtp_pr_error("Failure on build Relay ID...");
+	return NULL;
 }
 EXPORT_SYMBOL_GPL(gmtp_build_relay_id);
 
@@ -1264,10 +1337,9 @@ static int __init gmtp_init(void)
     unsigned char *rid;
     __u8 relay_id[21];
 
-    gmtp_print_function();
+    gmtp_pr_func();
 
-    BUILD_BUG_ON(sizeof(struct gmtp_skb_cb) >
-    FIELD_SIZEOF(struct sk_buff, cb));
+    BUILD_BUG_ON(sizeof(struct gmtp_skb_cb) > FIELD_SIZEOF(struct sk_buff, cb));
 
     rc = mcc_lib_init();
 
@@ -1278,19 +1350,19 @@ static int __init gmtp_init(void)
         percpu_counter_destroy(&gmtp_orphan_count);
         goto out;
     }
-/*
 
-    client_hashtable = gmtp_build_hashtable(ghash_entries,
+    /*client_hashtable = gmtp_build_hashtable(ghash_entries,
             gmtp_client_hash_ops);
     server_hashtable = gmtp_build_hashtable(ghash_entries,
             gmtp_server_hash_ops);
     if(client_hashtable == NULL || server_hashtable == NULL) {
         rc = -ENOBUFS;
         goto out;
-    }
+    }*/
 
-    gmtp_info = kmalloc(sizeof(struct gmtp_info), GFP_KERNEL);
+   gmtp_info = kmalloc(sizeof(struct gmtp_info), GFP_KERNEL);
     if(gmtp_info == NULL) {
+    	gmtp_print_error("gmtp_info is NULL!");
         rc = -ENOBUFS;
         goto out;
     }
@@ -1300,17 +1372,22 @@ static int __init gmtp_init(void)
     gmtp_info->control_sk = NULL;
     gmtp_info->ctrl_addr = NULL;
 
-    // rid = gmtp_build_relay_id(); // dando OOPS
-    rid = NULL;
+    /*gmtp_pr_info("Before build relay ID");*/
+    /* FIXME gmtp_build_relay_id does not work! */
+    rid = gmtp_build_relay_id();
+    /*gmtp_pr_info("After build relay ID");*/
+    /* rid = NULL; */
     if(rid == NULL) {
-        gmtp_pr_error("Relay ID build failed. Creating a random id.");
-        get_random_bytes(gmtp_info->relay_id, GMTP_FLOWNAME_LEN);
-    } else
-        memcpy(gmtp_info->relay_id, rid, GMTP_FLOWNAME_LEN);
+        gmtp_pr_error("Build Relay ID failed. Creating a random id.");
+        get_random_bytes(gmtp_info->relay_id, GMTP_RELAY_ID_LEN);
+    } else {
+    	/* FIXME sizeof(rid) is 8, but relay_id is 16 bytes... */
+    	gmtp_pr_info("rid ok (size: %ld)", sizeof(rid));
+        memcpy(gmtp_info->relay_id, rid, sizeof(rid));
+    }
 
-    flowname_strn(relay_id, gmtp_info->relay_id, MD5_LEN);
-        pr_info("Relay ID = %s\n", relay_id);
-*/
+    if (gmtp_info->relay_id != NULL)
+    	gmtp_pr_info("The relay ID was built");
 
     rc = gmtp_create_inet_hashinfo();
 
@@ -1331,9 +1408,14 @@ static void __exit gmtp_exit(void)
     inet_ehash_locks_free(&gmtp_inet_hashinfo);
     kmem_cache_destroy(gmtp_inet_hashinfo.bind_bucket_cachep);
 
-    kfree_gmtp_info(gmtp_info);
-    kfree_gmtp_hashtable(client_hashtable);
-    kfree_gmtp_hashtable(server_hashtable);
+    if(gmtp_info != NULL)
+    	kfree_gmtp_info(gmtp_info);
+
+    if (client_hashtable != NULL)
+    	kfree_gmtp_hashtable(client_hashtable);
+
+    if (server_hashtable != NULL)
+    	kfree_gmtp_hashtable(server_hashtable);
 
     percpu_counter_destroy(&gmtp_orphan_count);
     mcc_lib_exit();

@@ -1,25 +1,23 @@
-/*
- * gmtp.h
- *
- *  Created on: 18/06/2014
- *      Author: Wendell Silva Soares <wendell@compelab.org>
- */
-
+/* SPDX-License-Identifier: GPL-2.0-only */
 #ifndef GMTP_H_
 #define GMTP_H_
+/*
+ *  net/gmtp/gmtp.h
+ *
+ *  An implementation of the GMTP protocol
+ *  Copyright (c) 2015 Wendell Silva Soares <wendell@ic.ufal.br>
+ */
 
-#include <net/inet_timewait_sock.h>
-#include <net/inet_hashtables.h>
-#include <uapi/asm-generic/errno.h>
-#include <uapi/linux/ip.h>
+#include <linux/gmtp.h>
 #include <linux/types.h>
 #include <linux/skbuff.h>
-
+#include <net/inet_timewait_sock.h>
+#include <net/inet_hashtables.h>
 #include <net/tcp.h>
 #include <net/netns/gmtp.h>
-#include <linux/gmtp.h>
+#include <uapi/asm-generic/errno.h>
+#include <uapi/linux/ip.h>
 #include <uapi/linux/gmtp.h>
-
 #include "hash.h"
 
 /** GMTP Debugs */
@@ -105,7 +103,7 @@ static inline u32 rtt_ewma(const u32 avg, const u32 newval, const u32 weight)
 #define GMTP_ACK_INTERVAL ((unsigned int)(HZ))
 #define GMTP_ACK_TIMEOUT  (4 * GMTP_ACK_INTERVAL)
 
-#define MD5_LEN GMTP_RELAY_ID_LEN
+#define MD5_LEN (16)
 
 /* Int to __U12 operations */
 #define TO_U12(x)   min((U16_MAX >> 4), (x))
@@ -135,7 +133,8 @@ static inline u32 gmtp_get_elect_timeout(struct gmtp_sock *gp)
 }
 
 /** proto.c */
-unsigned char *gmtp_build_md5(unsigned char *buf);
+/*unsigned char *gmtp_build_md5(unsigned char *buf);*/
+bool gmtp_build_md5(unsigned char *result, unsigned char* data, size_t len);
 unsigned char *gmtp_inter_build_relay_id(void);
 __be32 gmtp_dev_ip(struct net_device *dev);
 bool gmtp_local_ip(__be32 ip);
@@ -241,6 +240,8 @@ static inline void kfree_gmtp_info(struct gmtp_info *gmtp_info)
         kfree(gmtp_info->control_sk);
     if(gmtp_info->ctrl_addr != NULL)
         kfree(gmtp_info->ctrl_addr);
+    if(gmtp_info->relay_id != NULL)
+    	kfree(gmtp_info->relay_id);
     kfree(gmtp_info);
 }
 

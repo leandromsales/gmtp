@@ -1,9 +1,19 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+/*
+ *  net/gmtp/ipv4.c
+ *
+ *  An implementation of the GMTP protocol
+ *  Wendell Silva Soares <wendell@ic.ufal.br>
+ */
+#include <linux/err.h>
+#include <linux/errno.h>
+#include <linux/gmtp.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/netfilter.h>
-#include <linux/err.h>
-#include <linux/errno.h>
+#include <linux/netfilter_ipv4.h>
 #include <linux/types.h>
+
 #include <net/inet_hashtables.h>
 #include <net/inet_common.h>
 #include <net/inet_connection_sock.h>
@@ -11,16 +21,16 @@
 #include <net/ip.h>
 #include <net/protocol.h>
 #include <net/request_sock.h>
+#include <net/secure_seq.h>
 #include <net/sock.h>
 #include <net/xfrm.h>
-#include <net/secure_seq.h>
-#include <linux/netfilter_ipv4.h>
+
 
 #include <uapi/linux/gmtp.h>
-#include <linux/gmtp.h>
+
 #include "gmtp-inter/gmtp-inter.h"
-#include "gmtp.h"
 #include "hash/hash.h"
+#include "gmtp.h"
 
 static struct nf_hook_ops nfho_gmtp_out;
 
@@ -44,24 +54,23 @@ struct sock* gmtp_v4_build_control_sk(struct sock *sk)
 
     local = kmalloc(sizeof(struct sockaddr_in), GFP_KERNEL);
     if(local == NULL)
-    	goto out;
+    	goto err;
 
-    gmtp_pr_info("local is ok");
     local->sin_family = AF_INET;
     local->sin_port = htons(1900);
     local->sin_addr.s_addr = *(unsigned int *)channel;
-    gmtp_pr_info("before memset");
     memset(&local->sin_zero, 0, sizeof(local->sin_zero));
-    gmtp_pr_info("after memset");
+
     gmtp_info->ctrl_addr = local;
 
-    gmtp_pr_info("getting mcast_sk...");
     mcast_sk = gmtp_multicast_connect(sk, GMTP_SOCK_TYPE_CONTROL_CHANNEL,
             local->sin_addr.s_addr, local->sin_port);
 
+    if(mcast_sk == NULL)
+    	goto err;
+
     return mcast_sk;
-out:
-	gmtp_pr_info("local is null...");
+err:
 	return 0;
 }
 
@@ -155,11 +164,18 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
     if(err != 0)
         goto failure;
 
-    gmtp_pr_info("Not calling gmtp_v4_build_control_sk");
-   /* gmtp_info->control_sk = gmtp_v4_build_control_sk(sk);*/
+    /*gmtp_pr_info("Not calling gmtp_v4_build_control_sk");*/
+    /*gmtp_pr_info("gmtp_info: %p", gmtp_info);*/
 
-    if(gmtp_info->control_sk == NULL)
+    gmtp_info->control_sk = gmtp_v4_build_control_sk(sk);
+
+    if(gmtp_info->control_sk == NULL) {
     	gmtp_pr_info("gmtp_info->control_sk == NULL");
+    	goto failure;
+    }
+
+    gmtp_pr_info("gmtp_info->control_sk is NOT NULL");
+    gmtp_pr_info("gmtp_info->control_sk: %p", gmtp_info->control_sk);
 
 out:
     return err;

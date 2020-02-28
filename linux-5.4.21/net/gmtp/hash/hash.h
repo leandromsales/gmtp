@@ -1,12 +1,12 @@
-/*
- * hash.h
- *
- *  Created on: 07/05/2015
- *      Author: wendell
- */
-
+/* SPDX-License-Identifier: GPL-2.0-only */
 #ifndef HASH_INTRA_H_
 #define HASH_INTRA_H_
+/*
+ *  net/gmtp/hash/hash.h
+ *
+ *  Hash table for the GMTP protocol
+ *  Copyright (c) 2015 Wendell Silva Soares <wendell@ic.ufal.br>
+ */
 
 #define GMTP_HASH_KEY_LEN  16
 

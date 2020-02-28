@@ -1,5 +1,14 @@
-#include <uapi/linux/gmtp.h>
+// SPDX-License-Identifier: GPL-2.0-or-later
+/*
+ *  net/gmtp/minisocks.c
+ *
+ *  Socket Options for the GMTP protocol
+ *  Wendell Silva Soares <wendell@ic.ufal.br>
+ */
 #include <linux/gmtp.h>
+
+#include <uapi/linux/gmtp.h>
+
 #include "gmtp.h"
 
 static int gmtp_setsockopt_flowname(struct gmtp_sock *gp, char __user *optval,
@@ -7,9 +16,21 @@ static int gmtp_setsockopt_flowname(struct gmtp_sock *gp, char __user *optval,
 {
 	gmtp_print_function();
 
+	gmtp_print_debug("optlen A: %u", optlen);
+
 	if(optlen > GMTP_FLOWNAME_LEN)
 		return -ENOBUFS;
 
+	gmtp_print_debug("optlen B: %u", optlen);
+
+	if(optval == NULL) {
+		gmtp_print_debug("optval is NULL!");
+		return -EFAULT;
+	} else {
+		gmtp_print_debug("optval is NOT NULL!");
+	}
+
+	/*gmtp_print_debug("optval: %s", optval);*/
 	memcpy(gp->flowname, optval, optlen);
 	return 0;
 }
@@ -21,7 +42,7 @@ static int do_gmtp_setsockopt(struct sock *sk, int level, int optname,
 	int val, err = 0;
 
 	gmtp_print_function();
-	gmtp_print_debug("Set optname: %d | optlen: %u", optname, optlen);
+	gmtp_print_debug("Set optname: %d | optlen: %u (MAX: %u)", optname, optlen, GMTP_FLOWNAME_LEN);
 
 	if (optlen < (int)sizeof(int))
 		return -EINVAL;

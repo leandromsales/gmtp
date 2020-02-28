@@ -1,13 +1,13 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * timer.c
+ *  net/gmtp/timer.c
  *
- *  Created on: 04/02/2015
- *      Author: wendell
+ *  An implementation of the GMTP protocol
+ *  Wendell Silva Soares <wendell@ic.ufal.br>
  */
-
 #include <linux/gmtp.h>
-#include <linux/skbuff.h>
 #include <linux/export.h>
+#include <linux/skbuff.h>
 
 #include <net/tcp.h>
 

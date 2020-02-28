@@ -1,12 +1,12 @@
-/*
- * mcc.h
- *
- *  Created on: 13/04/2015
- *      Author: wendell
- */
-
+// SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef MCC_H_
 #define MCC_H_
+/*
+ *  net/gmtp/mcc.h
+ *
+ *  Multicast Congestion Control for the GMTP protocol
+ *  Wendell Silva Soares <wendell@ic.ufal.br>
+ */
 
 #include <linux/gmtp.h>
 
