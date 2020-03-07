@@ -11,14 +11,18 @@
 #include <linux/gmtp.h>
 #include <linux/types.h>
 #include <linux/skbuff.h>
+
 #include <net/inet_timewait_sock.h>
 #include <net/inet_hashtables.h>
 #include <net/tcp.h>
 #include <net/netns/gmtp.h>
+
 #include <uapi/asm-generic/errno.h>
 #include <uapi/linux/ip.h>
 #include <uapi/linux/gmtp.h>
+
 #include "hash.h"
+#include "sock_hashtables.h"
 
 /** GMTP Debugs */
 #define GMTP_INFO "[GMTP] %s:%d - "
@@ -112,6 +116,7 @@ static inline u32 rtt_ewma(const u32 avg, const u32 newval, const u32 weight)
 
 extern struct gmtp_info *gmtp_info;
 extern struct inet_hashinfo gmtp_inet_hashinfo;
+extern struct gmtp_listen_hashtable gmtp_lhash;
 extern struct percpu_counter gmtp_orphan_count;
 extern struct gmtp_hashtable *client_hashtable;
 extern struct gmtp_hashtable *server_hashtable;

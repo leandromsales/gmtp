@@ -504,11 +504,9 @@ int gmtp_connect(struct sock *sk)
     gmtp_transmit_skb(sk, gmtp_skb_entail(sk, skb));
 
     icsk->icsk_retransmits = 0;
-    gmtp_pr_info("Before call inet_csk_reset_xmit_timer");
+    gmtp_pr_info("Starting xmit timer...");
     inet_csk_reset_xmit_timer(sk, ICSK_TIME_RETRANS,
                       icsk->icsk_rto, GMTP_RTO_MAX);
-    gmtp_pr_info("After call inet_csk_reset_xmit_timer");
-    /*gmtp_pr_info("Canceling call inet_csk_reset_xmit_timer...");*/
     return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_connect);

@@ -11,6 +11,8 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/types.h>
+#include <linux/memblock.h>
+#include <linux/swap.h>
 #include <linux/dirent.h>
 #include <linux/inetdevice.h>
 #include <linux/crypto.h>
@@ -25,6 +27,7 @@
 #include <linux/gmtp.h>
 #include <linux/poll.h>
 #include "gmtp.h"
+#include "sock_hashtables.h"
 #include "mcc.h"
 
 struct percpu_counter gmtp_orphan_count;
@@ -32,6 +35,9 @@ EXPORT_SYMBOL_GPL(gmtp_orphan_count);
 
 struct inet_hashinfo gmtp_inet_hashinfo;
 EXPORT_SYMBOL_GPL(gmtp_inet_hashinfo);
+
+struct gmtp_listen_hashtable gmtp_lhash;
+EXPORT_SYMBOL_GPL(gmtp_lhash);
 
 struct gmtp_info* gmtp_info;
 EXPORT_SYMBOL_GPL(gmtp_info);
@@ -507,6 +513,8 @@ int gmtp_init_sock(struct sock *sk)
     int ret = 0;
 
     gmtp_pr_func();
+
+    gmtp_pr_info("Family: %u", sk->sk_family);
 
     gmtp_init_xmit_timers(sk);
 
@@ -1118,12 +1126,13 @@ size_t gmtp_media_adapt_cc(struct sock *sk, struct msghdr *msg, size_t len)
 int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 {
     struct gmtp_sock *gp = gmtp_sk(sk);
-    struct gmtp_server_entry *s;
+    struct gmtp_server_entry *s = NULL;
     struct gmtp_relay_entry *r;
     int ret = 0, j = 0;
 
-    s = (struct gmtp_server_entry*) gmtp_lookup_entry(server_hashtable,
-            gp->flowname);
+    if (server_hashtable != NULL)
+		s = (struct gmtp_server_entry*) gmtp_lookup_entry(server_hashtable,
+				gp->flowname);
 
     if(s == NULL) {
         pr_info("s: %p\n", s);
@@ -1169,7 +1178,7 @@ int inet_gmtp_listen(struct socket *sock, int backlog)
     unsigned char old_state;
     int err;
 
-    gmtp_print_function();
+    gmtp_pr_func();
 
     lock_sock(sk);
 
@@ -1180,6 +1189,8 @@ int inet_gmtp_listen(struct socket *sock, int backlog)
     old_state = sk->sk_state;
     if (!((1 << old_state) & (GMTPF_CLOSED | GMTPF_LISTEN)))
         goto out;
+
+    sk->sk_max_ack_backlog = backlog;
 
     /* Really, if the socket is already in listen state
      * we can only allow the backlog to be adjusted.
@@ -1192,12 +1203,14 @@ int inet_gmtp_listen(struct socket *sock, int backlog)
         gs->role = GMTP_ROLE_LISTEN;
 
         err = inet_csk_listen_start(sk, backlog);
-        gmtp_pr_debug("inet_csk_listen_start(sk, %d) "
-                "returns: %d", backlog, err);
+        gmtp_pr_debug("inet_csk_listen_start(sk, %d) -> %d", backlog, err);
         if (err)
             goto out;
+
+        err = gmtp_sk_listen_start(&gmtp_lhash, sk);
+        if (err)
+        	goto out;
     }
-    sk->sk_max_ack_backlog = backlog;
     err = 0;
 
 out:
@@ -1219,8 +1232,7 @@ module_param(thash_entries, int, 0444);
 MODULE_PARM_DESC(thash_entries, "Number of ehash buckets");
 
 /**
- * Unfortunately, we can't use the alloc_large_system_hash method...
- * So, this method is an adaptation from dccp hashinfo initialization
+ * An adaptation from dccp hashinfo initialization
  */
 static int gmtp_create_inet_hashinfo(void)
 {
@@ -1229,16 +1241,26 @@ static int gmtp_create_inet_hashinfo(void)
     int ehash_order, bhash_order, i;
     int rc;
 
-    gmtp_print_function();
-    pr_info("thash_entries: %d\n", thash_entries);
+    gmtp_pr_func();
 
     rc = -ENOBUFS;
 
-    inet_hashinfo_init(&gmtp_inet_hashinfo);
+	inet_hashinfo_init(&gmtp_inet_hashinfo);
+
+	/* See https://patchwork.ozlabs.org/patch/1018304/ */
+	rc = inet_hashinfo2_init_mod(&gmtp_inet_hashinfo);
+	if (rc) {
+		gmtp_pr_info("inet_hashinfo2_init_mod returned: %d", rc);
+		goto out_fail;
+	}
+	rc = -ENOBUFS;
+
     gmtp_inet_hashinfo.bind_bucket_cachep =
             kmem_cache_create("gmtp_bind_bucket",
-                    sizeof(struct inet_bind_bucket), 0,
-                    SLAB_HWCACHE_ALIGN, NULL);
+            		sizeof(struct inet_bind_bucket),
+					0,
+                    SLAB_HWCACHE_ALIGN,
+					NULL);
     if (!gmtp_inet_hashinfo.bind_bucket_cachep)
         goto out_fail;
 
@@ -1267,14 +1289,11 @@ static int gmtp_create_inet_hashinfo(void)
             hash_size--;
         gmtp_inet_hashinfo.ehash_mask = hash_size - 1;
         gmtp_inet_hashinfo.ehash = (struct inet_ehash_bucket *)
-                __get_free_pages(GFP_ATOMIC|__GFP_NOWARN,
-                        ehash_order);
-
+                __get_free_pages(GFP_ATOMIC|__GFP_NOWARN, ehash_order);
     } while (!gmtp_inet_hashinfo.ehash && --ehash_order > 0);
 
     if (!gmtp_inet_hashinfo.ehash) {
-        gmtp_print_error("Failed to allocate GMTP established "
-                "hash table");
+        gmtp_print_error("Failed to allocate GMTP bind hash table");
         goto out_free_bind_bucket_cachep;
     }
 
@@ -1293,9 +1312,7 @@ static int gmtp_create_inet_hashinfo(void)
                 bhash_order > 0)
             continue;
         gmtp_inet_hashinfo.bhash = (struct inet_bind_hashbucket *)
-                __get_free_pages(GFP_ATOMIC|__GFP_NOWARN,
-                        bhash_order);
-
+                __get_free_pages(GFP_ATOMIC|__GFP_NOWARN, bhash_order);
     } while (!gmtp_inet_hashinfo.bhash && --bhash_order >= 0);
 
     if (!gmtp_inet_hashinfo.bhash) {
@@ -1308,7 +1325,6 @@ static int gmtp_create_inet_hashinfo(void)
         INIT_HLIST_HEAD(&gmtp_inet_hashinfo.bhash[i].chain);
     }
 
-    pr_info("gmtp_init_hashinfo: SUCCESS");
     return 0;
 
 out_free_gmtp_locks:
@@ -1330,6 +1346,18 @@ static int ghash_entries = 1024;
 module_param(ghash_entries, int, 0444);
 MODULE_PARM_DESC(ghash_entries, "Number of GMTP hash entries");
 
+
+/**
+ * GMTP own hash structure
+ */
+static int gmtp_create_listen_hashtable(void)
+{
+	int rc = -ENOBUFS;
+	gmtp_pr_func();
+	rc = gmtp_build_listen_hashtable(&gmtp_lhash, INET_LHTABLE_SIZE);
+	return rc;
+}
+
 /*************************************************/
 static int __init gmtp_init(void)
 {
@@ -1342,9 +1370,9 @@ static int __init gmtp_init(void)
     BUILD_BUG_ON(sizeof(struct gmtp_skb_cb) > FIELD_SIZEOF(struct sk_buff, cb));
 
     rc = mcc_lib_init();
-
     if(rc)
         goto out;
+
     rc = percpu_counter_init(&gmtp_orphan_count, 0, GFP_KERNEL);
     if(rc) {
         percpu_counter_destroy(&gmtp_orphan_count);
@@ -1360,23 +1388,20 @@ static int __init gmtp_init(void)
         goto out;
     }*/
 
-   gmtp_info = kmalloc(sizeof(struct gmtp_info), GFP_KERNEL);
-    if(gmtp_info == NULL) {
-    	gmtp_print_error("gmtp_info is NULL!");
-        rc = -ENOBUFS;
-        goto out;
-    }
+	gmtp_info = kmalloc(sizeof(struct gmtp_info), GFP_KERNEL);
+	if (gmtp_info == NULL) {
+		rc = -ENOBUFS;
+		goto out;
+	}
 
     gmtp_info->relay_enabled = 0;
     gmtp_info->pkt_sent = 0;
     gmtp_info->control_sk = NULL;
     gmtp_info->ctrl_addr = NULL;
 
-    /*gmtp_pr_info("Before build relay ID");*/
     /* FIXME gmtp_build_relay_id does not work! */
     rid = gmtp_build_relay_id();
-    /*gmtp_pr_info("After build relay ID");*/
-    /* rid = NULL; */
+
     if(rid == NULL) {
         gmtp_pr_error("Build Relay ID failed. Creating a random id.");
         get_random_bytes(gmtp_info->relay_id, GMTP_RELAY_ID_LEN);
@@ -1387,9 +1412,13 @@ static int __init gmtp_init(void)
     }
 
     if (gmtp_info->relay_id != NULL)
-    	gmtp_pr_info("The relay ID was built");
+    	gmtp_pr_info("GMTP Relay ID was built");
 
     rc = gmtp_create_inet_hashinfo();
+    if(rc)
+    	goto out;
+
+    rc = gmtp_create_listen_hashtable();
 
 out:
     return rc;
@@ -1397,7 +1426,7 @@ out:
 
 static void __exit gmtp_exit(void)
 {
-    gmtp_print_function();
+    gmtp_pr_func();
 
     free_pages((unsigned long)gmtp_inet_hashinfo.bhash,
             get_order(gmtp_inet_hashinfo.bhash_size *

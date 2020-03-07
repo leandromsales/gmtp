@@ -156,7 +156,9 @@ struct sock* gmtp_multicast_connect(struct sock *sk, enum gmtp_sock_type type,
 	rtnl_lock();
 	ret = ip_mc_join_group(newsk, &mreq);
 	rtnl_unlock();
-	pr_info("ip_mc_join_group returned %d\n", ret);
+
+	if (ret != 0)
+		gmtp_pr_error("Error: ip_mc_join_group returned %d\n", ret);
 
 	inet_ehash_nolisten(newsk, NULL);
 
@@ -644,6 +646,8 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 
 	if (sk->sk_state == GMTP_LISTEN)  {
 
+		gmtp_pr_debug("sk->sk_state == GMTP_LISTEN");
+
 		if(gh->type == GMTP_PKT_REQUEST
 				|| gh->type == GMTP_PKT_REGISTER) {
 			if(inet_csk(sk)->icsk_af_ops->conn_request(sk, skb) < 0)
@@ -707,6 +711,7 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 		return 0;
 
 	case GMTP_REQUEST_RECV: /* Request or Register was received. */
+		gmtp_pr_debug("Request/Register received!");
 		queued = gmtp_rcv_request_rcv_state_process(sk, skb, gh, len);
 		break;
 	}

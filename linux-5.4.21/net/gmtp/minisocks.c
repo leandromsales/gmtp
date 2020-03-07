@@ -113,10 +113,13 @@ struct sock *gmtp_check_req(struct sock *sk, struct sk_buff *skb,
 
     gmtp_print_function();
 
-    if (gmtp_hdr(skb)->type == GMTP_PKT_REQUEST) {
+    if (gmtp_hdr(skb)->type == GMTP_PKT_REQUEST ||
+    		gmtp_hdr(skb)->type == GMTP_PKT_REGISTER) {
+
+    	gmtp_pr_debug("Request or Register received!");
 
         if(GMTP_SKB_CB(skb)->seq > greq->gsr) {
-            gmtp_print_debug("Retransmitted REQUEST\n");
+            gmtp_print_debug("Retransmitted REQUEST/REGISTER\n");
             greq->gsr = GMTP_SKB_CB(skb)->seq;
             /*
              * Send another RESPONSE packet
@@ -148,7 +151,8 @@ struct sock *gmtp_check_req(struct sock *sk, struct sk_buff *skb,
         goto drop;
     }
 
-    child = inet_csk(sk)->icsk_af_ops->syn_recv_sock(sk, skb, req, NULL, NULL, NULL);
+	child = inet_csk(sk)->icsk_af_ops->syn_recv_sock(sk, skb, req, NULL, NULL,
+			NULL);
     /****
     struct sock *(*syn_recv_sock)(const struct sock *sk, struct sk_buff *skb,
                       struct request_sock *req,
@@ -183,6 +187,7 @@ EXPORT_SYMBOL_GPL(gmtp_check_req);
  */
 int gmtp_child_process(struct sock *parent, struct sock *child,
                struct sk_buff *skb)
+__releases(child)
 {
     int ret = 0;
     const int state = child->sk_state;
