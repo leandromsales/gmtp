@@ -36,8 +36,8 @@ EXPORT_SYMBOL_GPL(gmtp_orphan_count);
 struct inet_hashinfo gmtp_inet_hashinfo;
 EXPORT_SYMBOL_GPL(gmtp_inet_hashinfo);
 
-struct gmtp_listen_hashtable gmtp_lhash;
-EXPORT_SYMBOL_GPL(gmtp_lhash);
+struct gmtp_sk_hashtable gmtp_sk_hash;
+EXPORT_SYMBOL_GPL(gmtp_sk_hash);
 
 struct gmtp_info* gmtp_info;
 EXPORT_SYMBOL_GPL(gmtp_info);
@@ -453,7 +453,7 @@ void gmtp_add_relayid(struct sk_buff *skb)
     gmtp_print_function();
 
     relay = (struct gmtp_hdr_relay*) skb_put(skb, relay_len);
-    memcpy(relay->relay_id, gmtp_info->relay_id, GMTP_RELAY_ID_LEN);
+    memcpy(relay->relay_id, gmtp_info->relay_id, sizeof(gmtp_info->relay_id));
     relay->relay_ip =  gmtp_dev_ip(skb->dev);
     ++gh_rply->nrelays;
 
@@ -1207,7 +1207,7 @@ int inet_gmtp_listen(struct socket *sock, int backlog)
         if (err)
             goto out;
 
-        err = gmtp_sk_listen_start(&gmtp_lhash, sk);
+        err = gmtp_sk_listen_start(&gmtp_sk_hash, sk);
         if (err)
         	goto out;
     }
@@ -1350,11 +1350,11 @@ MODULE_PARM_DESC(ghash_entries, "Number of GMTP hash entries");
 /**
  * GMTP own hash structure
  */
-static int gmtp_create_listen_hashtable(void)
+static int gmtp_create_sk_hashtable(void)
 {
 	int rc = -ENOBUFS;
 	gmtp_pr_func();
-	rc = gmtp_build_listen_hashtable(&gmtp_lhash, INET_LHTABLE_SIZE);
+	rc = gmtp_build_sk_hashtable(&gmtp_sk_hash);
 	return rc;
 }
 
@@ -1418,7 +1418,7 @@ static int __init gmtp_init(void)
     if(rc)
     	goto out;
 
-    rc = gmtp_create_listen_hashtable();
+    rc = gmtp_create_sk_hashtable();
 
 out:
     return rc;

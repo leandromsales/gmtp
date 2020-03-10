@@ -116,7 +116,7 @@ static inline u32 rtt_ewma(const u32 avg, const u32 newval, const u32 weight)
 
 extern struct gmtp_info *gmtp_info;
 extern struct inet_hashinfo gmtp_inet_hashinfo;
-extern struct gmtp_listen_hashtable gmtp_lhash;
+extern struct gmtp_sk_hashtable gmtp_sk_hash;
 extern struct percpu_counter gmtp_orphan_count;
 extern struct gmtp_hashtable *client_hashtable;
 extern struct gmtp_hashtable *server_hashtable;

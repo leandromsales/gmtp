@@ -49,7 +49,8 @@ total_size = 0
 lastsize1000 = 0
 
 logfilename = "logs/logclient_" +  str(timeit.default_timer())[4:] + ".log" 
-logfile = open(logfilename, 'w')
+logfile = open(logfilename, 'w+')
+
 
 logtable = "seq\ttime\tsize\telapsed\tinst_rate" + \
 "\tsize1000\telapsed1000\trate1000" + \

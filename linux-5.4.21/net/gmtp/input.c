@@ -202,9 +202,10 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 	}
 	gmtp_pr_debug("Packet received: %s", gmtp_packet_name(gh->type));
 
-	client_entry = gmtp_lookup_client(client_hashtable, gh->flowname);
+	gmtp_pr_info("TODO: Call gmtp_lookup_client");
+	/*client_entry = gmtp_lookup_client(client_hashtable, gh->flowname);
 	if(client_entry == NULL)
-		goto out_invalid_packet;
+		goto out_invalid_packet;*/
 
 	/*** FIXME Check sequence numbers  ***/
 
@@ -267,8 +268,9 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 		}
 
 		/* Inserting information in client table */
-		client_entry->channel_addr = gh_rnotify->mcst_addr;
-		client_entry->channel_port = gh_rnotify->mcst_port;
+		gmtp_pr_info("TODO: Insert information in client table");
+		/*client_entry->channel_addr = gh_rnotify->mcst_addr;
+		client_entry->channel_port = gh_rnotify->mcst_port;*/
 
 		gp->channel_sk = gmtp_multicast_connect(sk,
 				GMTP_SOCK_TYPE_DATA_CHANNEL,
@@ -279,6 +281,7 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 	}
 
 	/* Stop the REQUEST timer */
+	gmtp_pr_info("Stopping the REQUEST timer...");
 	inet_csk_clear_xmit_timer(sk, ICSK_TIME_RETRANS);
 	WARN_ON(sk->sk_send_head == NULL);
 	kfree_skb(sk->sk_send_head);
@@ -333,7 +336,8 @@ err:
  	 * We mark this socket as no longer usable, so that the loop in
  	 * gmtp_sendmsg() terminates and the application gets notified.
  	 */
-	gmtp_del_client_entry(client_hashtable, gp->flowname);
+	gmtp_pr_info("TODO: error - call gmtp_del_client_entry");
+	/*gmtp_del_client_entry(client_hashtable, gp->flowname);*/
  	gmtp_set_state(sk, GMTP_CLOSED);
  	sk->sk_err = ECOMM;
  	return 1;
@@ -403,7 +407,8 @@ static int gmtp_rcv_route_notify(struct sock *sk, struct sk_buff *skb,
 	if(route->nrelays <= 0)
 		return 0;
 
-	gmtp_add_server_entry(server_hashtable, sk, skb);
+	gmtp_pr_info("TODO: call gmtp_add_server_entry");
+	/*gmtp_add_server_entry(server_hashtable, sk, skb);*/
 
 	return 0;
 }

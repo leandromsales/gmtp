@@ -110,8 +110,9 @@ struct sock *gmtp_check_req(struct sock *sk, struct sk_buff *skb,
     struct sock *child = NULL;
     struct gmtp_request_sock *greq = gmtp_rsk(req);
     __be32 seq;
+    bool own_req;
 
-    gmtp_print_function();
+    gmtp_pr_func();
 
     if (gmtp_hdr(skb)->type == GMTP_PKT_REQUEST ||
     		gmtp_hdr(skb)->type == GMTP_PKT_REGISTER) {
@@ -151,21 +152,31 @@ struct sock *gmtp_check_req(struct sock *sk, struct sk_buff *skb,
         goto drop;
     }
 
-	child = inet_csk(sk)->icsk_af_ops->syn_recv_sock(sk, skb, req, NULL, NULL,
-			NULL);
+    gmtp_pr_info("Calling inet_csk(sk)->icsk_af_ops->syn_recv_sock");
+	child = inet_csk(sk)->icsk_af_ops->syn_recv_sock(sk, skb, req, NULL,
+			req, &own_req);
     /****
-    struct sock *(*syn_recv_sock)(const struct sock *sk, struct sk_buff *skb,
+    struct sock *(*syn_recv_sock)(const struct sock *sk,
+                      struct sk_buff *skb,
                       struct request_sock *req,
                       struct dst_entry *dst,
                       struct request_sock *req_unhash,
                       bool *own_req);
     ****/
 
-    if (child == NULL)
+    if (child == NULL) {
+    	gmtp_pr_info("child is NULL");
         goto listen_overflow;
+    }
 
-    inet_csk_reqsk_queue_drop(sk, req);
-    inet_csk_reqsk_queue_add(sk, req, child);
+    if (child) {
+    	gmtp_pr_info("child is OK");
+		child = inet_csk_complete_hashdance(sk, child, req, own_req);
+		goto out;
+	}
+
+    /*inet_csk_reqsk_queue_drop(sk, req);
+    inet_csk_reqsk_queue_add(sk, req, child);*/
 out:
     return child;
 listen_overflow:

@@ -145,6 +145,10 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
     if(err != 0)
         goto failure;
 
+    err = gmtp_sk_hash_connect(&gmtp_sk_hash, sk);
+    if(err != 0)
+    	goto failure;
+
     rt = ip_route_newports(fl4, rt, orig_sport, orig_dport,
             inet->inet_sport, inet->inet_dport, sk);
 
@@ -517,8 +521,6 @@ int gmtp_v4_do_rcv(struct sock *sk, struct sk_buff *skb)
 
     gmtp_pr_func();
 
-
-
     if(sk->sk_state == GMTP_OPEN) { /* Fast path*/
         if(gmtp_rcv_established(sk, skb, gh, skb->len))
             goto reset;
@@ -531,14 +533,13 @@ int gmtp_v4_do_rcv(struct sock *sk, struct sk_buff *skb)
      * If P.type == Register
      *     Generate a new socket and switch to that socket.
      *     Set S := new socket for this port pair
-     *        S.state = RESPOND //TODO change to Request-Reply
+     *        S.state = RESPOND //TODO change to GMTP_REQUEST_RECV
      *    A Response packet will be generated in Step 11 *)
      *  Otherwise,
      *        Generate Reset(No Connection) unless P.type == Reset
      *        Drop packet and return
      */
 
-    /* TODO Erase this... This if is unnecessary... /*
     /*if(sk->sk_state == GMTP_LISTEN) {
 
         struct sock *nsk;
@@ -962,13 +963,17 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
             if(!tmp)
                 goto discard_it;
 
-            sk = __inet_lookup(net,
+            sk = gmtp_lookup_established(&gmtp_sk_hash,
+            			iph->saddr, gh->sport,
+            			tmp->addr, tmp->port);
+
+            /*sk = __inet_lookup(net,
                     &gmtp_inet_hashinfo,
                     skb, __gmtp_hdr_len(gh),
                     iph->saddr, gh->sport,
                     tmp->addr, tmp->port,
                     inet_iif(skb), 0, &refcounted);
-
+             */
             /** FIXME Check warnings at receive skb... */
             gmtp_v4_sk_receive_skb(skb_copy(skb, GFP_ATOMIC), sk);
         }
@@ -979,18 +984,51 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
         goto discard_it;
 
     }
-	/* Unicast packet...
-	 * Check if it is a listening socket...
+lookup:
+	/*
+	 * Unicast packet...
 	 */
-    sk = gmtp_lookup_listener(&gmtp_lhash, iph->daddr, gh->dport);
+	sk = gmtp_lookup_established(&gmtp_sk_hash,
+			iph->saddr, gh->sport,
+			iph->daddr, gh->dport);
+    if (sk)
+    	goto receive_it;
 
-    /* TODO Make a list of established gmtp sockets */
-    /*if (sk == NULL)
-    	sk = __inet_lookup_established(dev_net(skb->dev),
-    			&gmtp_inet_hashinfo, iph->saddr, gh->sport,
-				iph->daddr, ntohs(gh->dport),
-				inet_iif(skb), 0);*/
+	sk = gmtp_lookup_listener(&gmtp_sk_hash, iph->daddr, gh->dport);
+	/*if(sk == NULL) {
+		gmtp_pr_info("SK is NULL!");
+		goto discard_it;
+	}
 
+	if (sk->sk_state == GMTP_LISTEN) {
+		struct request_sock *req = inet_reqsk(sk);
+		struct sock *nsk;
+
+		if(req == NULL)
+		{
+
+		}
+		sk = req->rsk_listener;
+		if (unlikely(sk->sk_state != GMTP_LISTEN)) {
+			inet_csk_reqsk_queue_drop_and_put(sk, req);
+			goto lookup;
+		}*/
+		/*sock_hold(sk);
+		nsk = gmtp_check_req(sk, skb, req);
+		if (!nsk) {
+			reqsk_put(req);
+			goto discard_it;
+		}
+		if (nsk == sk) {
+			reqsk_put(req);
+		} else if (gmtp_child_process(sk, nsk, skb)) {
+			gmtp_v4_ctl_send_reset(sk, skb);
+			goto discard_it;
+		} else {
+			sock_put(sk);
+			return 0;
+		}*/
+	/*}*/
 
 receive_it:
 	return gmtp_v4_sk_receive_skb(skb, sk);
@@ -1101,6 +1139,9 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
     memcpy(greq->flowname, gp->flowname, GMTP_FLOWNAME_LEN);
     memcpy(gp->relay_id, gr->relay_id, sizeof(gr->relay_id));
 
+    gmtp_pr_info("sk->sk_state before send_register_reply: %u", sk->sk_state);
+    gmtp_pr_info("ireq->ireq_state before send_register_reply: %u",
+    		ireq->ireq_state);
     if(gmtp_v4_send_register_reply(sk, req))
         goto drop_and_free;
 

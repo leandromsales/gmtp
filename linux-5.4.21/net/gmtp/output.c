@@ -331,6 +331,8 @@ void gmtp_send_route_notify(struct sock *sk,
         struct sk_buff *rcv_skb)
 {
     struct sk_buff *skb = gmtp_make_route_notify(sk, rcv_skb);
+
+    gmtp_pr_func();
     if(skb != NULL)
         return gmtp_transmit_built_skb(sk, skb);
 }
@@ -472,8 +474,7 @@ int gmtp_connect(struct sock *sk)
     gmtp_pr_info("gmtp header reserved");
     GMTP_SKB_CB(skb)->type = GMTP_PKT_REQUEST;
 
-    gmtp_pr_info("client_entry: removed");
-
+    gmtp_pr_info("TODO: Call gmtp_lookup_client");
     /*client_entry = gmtp_lookup_client(client_hashtable, gp->flowname);
     if(client_entry == NULL)
         err = gmtp_add_client_entry(client_hashtable, gp->flowname,
@@ -495,7 +496,7 @@ int gmtp_connect(struct sock *sk)
     gp->req_stamp = jiffies_to_msecs(jiffies);
     gp->ack_rx_tstamp = jiffies_to_msecs(jiffies);
 
-    gmtp_pr_info("Remove link to myself");
+    gmtp_pr_info("TODO: Add link to myself");
     /*
     gp->myself->ack_rx_tstamp = gp->ack_rx_tstamp;
     gp->myself->mysock = sk;*/
@@ -504,7 +505,7 @@ int gmtp_connect(struct sock *sk)
     gmtp_transmit_skb(sk, gmtp_skb_entail(sk, skb));
 
     icsk->icsk_retransmits = 0;
-    gmtp_pr_info("Starting xmit timer...");
+    gmtp_pr_info("Starting xmit_timer...");
     inet_csk_reset_xmit_timer(sk, ICSK_TIME_RETRANS,
                       icsk->icsk_rto, GMTP_RTO_MAX);
     return 0;
