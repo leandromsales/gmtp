@@ -10,6 +10,7 @@
 #include <linux/gmtp.h>
 #include <linux/init.h>
 #include <linux/module.h>
+#include <linux/sched/mm.h>
 #include <linux/netfilter.h>
 #include <linux/netfilter_ipv4.h>
 #include <linux/types.h>
@@ -368,7 +369,6 @@ static int gmtp_v4_send_register_reply(const struct sock *sk,
     gmtp_print_function();
 
     dst = inet_csk_route_req(sk, &fl4, req);
-    pr_info("dst: %p\n", dst);
     if(dst == NULL)
         goto out;
 
@@ -452,10 +452,8 @@ static struct sock *gmtp_v4_hnd_req(struct sock *sk, struct sk_buff *skb)
     struct sock *nsk;
 
     /* Find possible connection requests. */
-    /****
-    struct request_sock *req = inet_csk_search_req(sk, gh->sport,
-            iph->saddr, iph->daddr);
-    ****/
+/*    struct request_sock *req = inet_csk_search_req(sk, gh->sport,
+            iph->saddr, iph->daddr);*/
 
     struct request_sock *req = inet_reqsk(sk);
 
@@ -466,21 +464,37 @@ static struct sock *gmtp_v4_hnd_req(struct sock *sk, struct sk_buff *skb)
     	return NULL;
     }
 
-    sk = req->rsk_listener;
+/*    nsk = req->rsk_listener;
+    if(nsk == NULL) {
+    	gmtp_pr_info("nsk is NULL!");
+    	goto lookup;
+    }
+    else
+    	gmtp_pr_info("nsk is OK!");
+
+    /** This causes kernel panic:
+    if (unlikely(nsk->sk_state != GMTP_LISTEN)) {
+		gmtp_pr_error("nsk->sk_state != GMTP_LISTEN");
+		 inet_csk_reqsk_queue_drop_and_put(nsk, req);
+		goto lookup;
+	}*/
+
     if (unlikely(sk->sk_state != GMTP_LISTEN)) {
     	gmtp_pr_error("sk->sk_state != GMTP_LISTEN");
         inet_csk_reqsk_queue_drop_and_put(sk, req);
         goto lookup;
     }
+    gmtp_pr_info("Calling sock_hold...");
     sock_hold(sk);
-    // refcounted = true;
-    // nsk = dccp_check_req(sk, skb, req);
 
-    if(req != NULL)
-        return gmtp_check_req(sk, skb, req);
+    /*nsk = dccp_check_req(sk, skb, req);*/
+    gmtp_pr_info("Calling gmtp_check_req... KERNEL PANIC HERE!");
+    nsk = gmtp_check_req(sk, skb, req);
 
+    return nsk;
 lookup:
 	gmtp_pr_info("Lookup for established connections");
+	/*
     nsk = inet_lookup_established(sock_net(sk), &gmtp_inet_hashinfo,
             iph->saddr, gh->sport, iph->daddr, gh->dport,
             inet_iif(skb));
@@ -492,7 +506,7 @@ lookup:
         }
         inet_twsk_put(inet_twsk(nsk));
         return NULL;
-    }
+    }*/
 
     return sk;
 }
@@ -503,7 +517,9 @@ int gmtp_v4_do_rcv(struct sock *sk, struct sk_buff *skb)
 
     gmtp_pr_func();
 
-    if(sk->sk_state == GMTP_OPEN) { /* Fast path */
+
+
+    if(sk->sk_state == GMTP_OPEN) { /* Fast path*/
         if(gmtp_rcv_established(sk, skb, gh, skb->len))
             goto reset;
         return 0;
@@ -521,7 +537,9 @@ int gmtp_v4_do_rcv(struct sock *sk, struct sk_buff *skb)
      *        Generate Reset(No Connection) unless P.type == Reset
      *        Drop packet and return
      */
-    if(sk->sk_state == GMTP_LISTEN) {
+
+    /* TODO Erase this... This if is unnecessary... /*
+    /*if(sk->sk_state == GMTP_LISTEN) {
 
         struct sock *nsk;
 
@@ -534,7 +552,6 @@ int gmtp_v4_do_rcv(struct sock *sk, struct sk_buff *skb)
         }
 
         gmtp_pr_debug("nsk OK");
-        /* TODO Treat it */
         if(nsk != sk) {
         	gmtp_pr_debug("nsk != sk");
             if(gmtp_child_process(sk, nsk, skb))
@@ -542,11 +559,10 @@ int gmtp_v4_do_rcv(struct sock *sk, struct sk_buff *skb)
             gmtp_pr_debug("not child process");
             return 0;
         }
-    }
+    }*/
 
     if(gmtp_rcv_state_process(sk, skb, gh, skb->len))
         goto reset;
-
     return 0;
 
 reset:
@@ -871,12 +887,12 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 
     nf_reset_ct(skb);
 
-    /* FIXME Next line causes kernel panic... */
-   /* return sk_receive_skb(sk, skb, 1);*/
-   /* return __sk_receive_skb(sk, skb, 1, dh->dccph_doff * 4, refcounted);*/
-    return __sk_receive_skb(sk, skb, 1, gh->hdrlen, true);
 
-    goto discard_it;
+    /* When refcounted is true, __sk_receive_skb call sock_put, wich
+     * deletes sk and causes kernel panic
+     */
+    return __sk_receive_skb(sk, skb, 1, gh->hdrlen, false);
+
 
 no_gmtp_socket:
 
@@ -902,207 +918,6 @@ ignore_it:
     return 0;
 }
 
-/* from inet_hashtables.c */
-
-static u32 gmtp_inet_ehashfn(const struct net *net, const __be32 laddr,
-			const __u16 lport, const __be32 faddr,
-			const __be16 fport)
-{
-	static u32 inet_ehash_secret __read_mostly;
-
-	gmtp_pr_func();
-
-	net_get_random_once(&inet_ehash_secret, sizeof(inet_ehash_secret));
-
-	return __inet_ehashfn(laddr, lport, faddr, fport,
-			      inet_ehash_secret + net_hash_mix(net));
-}
-
-
-static inline int gmtp_compute_score(struct sock *sk, struct net *net,
-				const unsigned short hnum, const __be32 daddr,
-				const int dif, const int sdif, bool exact_dif)
-{
-	int score = -1;
-
-	gmtp_pr_func();
-
-	if (net_eq(sock_net(sk), net) && sk->sk_num == hnum &&
-			!ipv6_only_sock(sk)) {
-		if (sk->sk_rcv_saddr != daddr)
-			return -1;
-
-		if (!inet_sk_bound_dev_eq(net, sk->sk_bound_dev_if, dif, sdif))
-			return -1;
-
-		score = sk->sk_family == PF_INET ? 2 : 1;
-		if (READ_ONCE(sk->sk_incoming_cpu) == raw_smp_processor_id())
-			score++;
-	}
-	return score;
-}
-
-
-
-/*
- * Get next listener socket follow cur.  If cur is NULL, get first socket
- * starting from bucket given in st->bucket; when st->bucket is zero the
- * very first socket in the hash table is returned.
- */
-/* Adapted from tcp_ipv4.c:
- * static void *listening_get_next(struct seq_file *seq, void *cur)
- * */
-
-static struct sock *gmtp_listening_get_next(struct net *net,
-		struct inet_listen_hashbucket *ilb,
-		void *cur)
-{
-	/*struct tcp_seq_afinfo *afinfo = PDE_DATA(file_inode(seq->file));
-	struct tcp_iter_state *st = seq->private;*/
-	/*struct net *net = seq_file_net(seq);*/
-	/*struct inet_listen_hashbucket *ilb;*/
-	struct hlist_nulls_node *node;
-	struct sock *sk = cur;
-
-	gmtp_pr_func();
-
-	if (!sk) {
-get_head:
-		/*ilb = &gmtp_inet_hashinfo.listening_hash[st->bucket];*/
-		/*spin_lock(&ilb->lock);*/
-		/*sk = sk_nulls_head(&ilb->nulls_head);*/
-		/*sk = sk_head(&ilb->head);*/
-		/*st->offset = 0;*/
-
-		if (sk)
-			gmtp_pr_info("sk: %p", sk);
-		else
-			gmtp_pr_info("sk is NULL...");
-		gmtp_pr_info("Goto get_sk");
-		goto get_sk;
-	}
-	/*ilb = &tcp_hashinfo.listening_hash[st->bucket];*/
-	/*++st->num;
-	++st->offset;*/
-	gmtp_pr_info("sk = sk_nulls_next(sk)");
-	/*sk = sk_nulls_next(sk);*/
-get_sk:
-	gmtp_pr_info("sk_nulls_for_each_from");
-	/*sk_nulls_for_each_from(sk, node) {
-		if (!net_eq(sock_net(sk), net))
-			continue;
-		if (sk->sk_family == PF_INET)
-			return sk;
-	}*/
-	/*spin_unlock(&ilb->lock);*/
-	/*st->offset = 0;
-	if (++st->bucket < INET_LHTABLE_SIZE)
-		goto get_head;*/
-	return NULL;
-}
-
-/* Leia https://patchwork.ozlabs.org/patch/1207779/ */
-static struct sock *gmtp_inet_lhash2_lookup(struct net *net,
-				struct inet_listen_hashbucket *ilb2,
-				struct sk_buff *skb, int doff,
-				const __be32 saddr, __be16 sport,
-				const __be32 daddr, const unsigned short hnum,
-				const int dif, const int sdif)
-{
-	bool exact_dif = inet_exact_dif_match(net, skb);
-	struct inet_connection_sock *icsk;
-	struct sock *sk, *result = NULL;
-	int score, hiscore = 0;
-	u32 phash = 0;
-
-	gmtp_pr_func();
-
-	gmtp_pr_debug("inet_exact_dif_match: %d", exact_dif);
-
-	if (ilb2 != NULL) {
-		gmtp_pr_debug("ilb2->head: %p", &ilb2->head);
-		/*gmtp_pr_debug("ilb2->count: %u", ilb2->count);*/
-		gmtp_pr_debug("ilb2->count: %u", &ilb2->count);
-
-		/*result =  gmtp_listening_get_next(net, ilb2, sk);
-
-		if (result) {
-			gmtp_pr_debug("gmtp_listening_get_next: %p", result);
-		} else {
-			gmtp_pr_debug("Result is NULL!");
-		}*/
-
-		/* Ateh isso trava... nao tem jeito */
-
-		if(ilb2->head.first != NULL) {
-			gmtp_pr_debug("&ilb2->head.first: %p", ilb2->head.first);
-
-			/*result = sk_entry(ilb2->head.first);*/
-
-
-			/* Trava tudo: */
-			/*		if (&ilb2->head.first->pprev == NULL) {
-			 gmtp_pr_debug("&ilb2->head.first->pprev: %p", &ilb2->head.first->pprev);
-			 } else {
-			 gmtp_pr_debug("&ilb2->head.first->pprev is NULL");
-			 }*/
-
-			/*if (&ilb2->head.first->next == NULL) {
-			 gmtp_pr_debug("&ilb2->head.first->next: %p", &ilb2->head.first->next);
-			 } else {
-			 gmtp_pr_debug("&ilb2->head.first->next is NULL");
-			 }*/
-
-		} else {
-			gmtp_pr_debug("ilb2->head.first is NULL");
-		}
-
-	} else {
-		gmtp_pr_debug("ilb2 is NULL");
-	}
-
-/*
-	inet_lhash2_for_each_icsk_rcu(icsk, &ilb2->head) {
-
-		gmtp_pr_info("Inside foreach");
-
-		if(icsk == NULL) {
-			gmtp_pr_info("icsk is NULL!");
-			return result;
-		}
-		sk = (struct sock *)icsk;
-
-		gmtp_pr_info("Calling gmtp_compute_score...");
-		score = gmtp_compute_score(sk, net, hnum, daddr,
-				      dif, sdif, exact_dif);
-
-		gmtp_pr_info("Score: %d", score);
-		if (score > hiscore) {
-			if (sk->sk_reuseport) {
-				gmtp_pr_info("Calling gmtp_inet_ehashfn...");
-				phash = gmtp_inet_ehashfn(net, daddr, hnum,
-						     saddr, sport);
-				gmtp_pr_info("Calling reuseport_select_sock with phash: %u", phash);
-				result = reuseport_select_sock(sk, phash,
-							       skb, doff);
-				if (result) {
-					gmtp_pr_info("Result is OK!");
-					return result;
-				}
-				gmtp_pr_info("Result is NULL!");
-			}
-			result = sk;
-			hiscore = score;
-		}
-	} */
-
-	gmtp_pr_info("End of function...");
-	if(result == NULL)
-		gmtp_pr_info("Returning null...");
-
-	return result;
-}
-
 /* this is called when real data arrives */
 static int gmtp_v4_rcv(struct sk_buff *skb)
 {
@@ -1110,7 +925,7 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
     const struct iphdr *iph;
     struct net *net;
     struct sock *sk;
-	bool refcounted;
+    bool refcounted;
 
     /* Step 1: Check header basics */
     if(gmtp_check_packet(skb)) {
@@ -1163,23 +978,22 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
          */
         goto discard_it;
 
-    } else {
-        /* Unicast packet...
-         * Look up flow ID in table and get corresponding socket
-         */
-    	gmtp_pr_debug("Calling gmtp_lookup_listener");
-    	sk = gmtp_lookup_listener(&gmtp_lhash, iph->daddr, gh->dport);
+    }
+	/* Unicast packet...
+	 * Check if it is a listening socket...
+	 */
+    sk = gmtp_lookup_listener(&gmtp_lhash, iph->daddr, gh->dport);
 
-		if (sk == NULL)
-			gmtp_pr_info("sk is NULL!");
-		else
-			gmtp_pr_info("sk is OK!");
+    /* TODO Make a list of established gmtp sockets */
+    /*if (sk == NULL)
+    	sk = __inet_lookup_established(dev_net(skb->dev),
+    			&gmtp_inet_hashinfo, iph->saddr, gh->sport,
+				iph->daddr, ntohs(gh->dport),
+				inet_iif(skb), 0);*/
 
-		/*goto discard_it;*/
 
 receive_it:
-        return gmtp_v4_sk_receive_skb(skb, sk);
-    }
+	return gmtp_v4_sk_receive_skb(skb, sk);
 
 discard_it:
     kfree_skb(skb);
@@ -1226,69 +1040,71 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
     gmtp_pr_func();
 
     /* Never answer to GMTP_PKT_REQUESTs send to broadcast or multicast */
-    /*if(skb_rtable(skb)->rt_flags & (RTCF_BROADCAST | RTCF_MULTICAST))
-        return 0;*/ /* discard, don't send a reset here */
+    if(skb_rtable(skb)->rt_flags & (RTCF_BROADCAST | RTCF_MULTICAST))
+        goto drop; /* discard, don't send a reset here */
 
 
-    gmtp_pr_debug("Starting relay request...");
+    gmtp_pr_debug("Checking register request...");
     /*
      * TW buckets are converted to open requests without
      * limitations, they conserve resources and peer is
      * evidently real one.
      */
-/*    gcb->reset_code = GMTP_RESET_CODE_TOO_BUSY;
+    gcb->reset_code = GMTP_RESET_CODE_TOO_BUSY;
     if(inet_csk_reqsk_queue_is_full(sk)) {
         pr_info("inet_csk_reqsk_queue_is_full(sk)\n");
         goto drop;
-    }*/
+    }
 
     /**
      * FIXME Update sk->sk_ack_backlog correctly
      */
-   /* sk->sk_ack_backlog = 0;*/
+    sk->sk_ack_backlog = 0;
 
-/*    gmtp_pr_debug("Verifying if sk_acceptq_is_full");
+    gmtp_pr_debug("Verifying if sk_acceptq_is_full");
     if(sk_acceptq_is_full(sk))
-        goto drop;*/
+        goto drop;
 
-/*    gmtp_pr_debug("Checking inet_reqsk_alloc...");
+    gmtp_pr_debug("Checking inet_reqsk_alloc...");
     req = inet_reqsk_alloc(&gmtp_request_sock_ops, sk, true);
     if(req == NULL)
-        goto drop;*/
-/*
+        goto drop;
+
     gmtp_pr_debug("gmtp_reqsk_init...");
     if(gmtp_reqsk_init(req, gmtp_sk(sk), skb))
-        goto drop_and_free;*/
+        goto drop_and_free;
 
-/*    gmtp_pr_debug("security_inet_conn_request...");
+    gmtp_pr_debug("security_inet_conn_request...");
     if(security_inet_conn_request(sk, skb, req))
-        goto drop_and_free;*/
+        goto drop_and_free;
 
-   /* ireq = inet_rsk(req);
+    ireq = inet_rsk(req);
     sk_rcv_saddr_set(req_to_sk(req), ip_hdr(skb)->daddr);
     sk_daddr_set(req_to_sk(req), ip_hdr(skb)->saddr);
     ireq->ireq_family = AF_INET;
-    ireq->ir_iif = sk->sk_bound_dev_if;*/
+    ireq->ir_iif = sk->sk_bound_dev_if;
 
     /*
      * Step 3: Process LISTEN state
      */
- /*   greq = gmtp_rsk(req);
+    gmtp_pr_info("Processing LISTEN state...");
+    greq = gmtp_rsk(req);
     greq->isr = gcb->seq;
     greq->gsr = greq->isr;
     greq->iss = greq->isr;
     greq->gss = greq->iss;
-    greq->tx_ucc_type = gp->tx_ucc_type;*/
-   /* if(memcmp(gh->flowname, gp->flowname, GMTP_FLOWNAME_LEN))
+    greq->tx_ucc_type = gp->tx_ucc_type;
+
+    if(memcmp(gh->flowname, gp->flowname, GMTP_FLOWNAME_LEN))
         goto reset;
 
     memcpy(greq->flowname, gp->flowname, GMTP_FLOWNAME_LEN);
     memcpy(gp->relay_id, gr->relay_id, sizeof(gr->relay_id));
-*/
-   /* if(gmtp_v4_send_register_reply(sk, req))
+
+    if(gmtp_v4_send_register_reply(sk, req))
         goto drop_and_free;
 
-    inet_csk_reqsk_queue_hash_add(sk, req, GMTP_TIMEOUT_INIT);*/
+    inet_csk_reqsk_queue_hash_add(sk, req, GMTP_TIMEOUT_INIT);
 
     return 0;
 
@@ -1539,9 +1355,7 @@ static struct pernet_operations gmtp_v4_ops = {
         .exit = gmtp_v4_exit_net,
 };
 
-// static unsigned int hook_func_gmtp_out(unsigned int hooknum, struct sk_buff *skb,
-//         const struct net_device *in, const struct net_device *out,
-//         int (*okfn)(struct sk_buff *))
+
 static unsigned int hook_func_gmtp_out(void *priv,
 		struct sk_buff *skb, const struct nf_hook_state *state)
 {
@@ -1579,6 +1393,8 @@ static int __init gmtp_v4_init(void)
     while(time_before(jiffies, 50000))
         schedule();
     ****/
+
+    gmtp_pr_func();
 
     inet_hashinfo_init(&gmtp_inet_hashinfo);
 

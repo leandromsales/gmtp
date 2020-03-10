@@ -5,8 +5,8 @@
  *      Author: wendell
  */
 
-#ifndef SOCK_HASHTABLES_H_
-#define SOCK_HASHTABLES_H_
+#ifndef GMTP_HASHTABLES_H_
+#define GMTP_HASHTABLES_H_
 
 #include <linux/list.h>
 
@@ -35,4 +35,4 @@ int gmtp_sk_listen_start(struct gmtp_listen_hashtable *table, struct sock *sk);
 struct sock *gmtp_lookup_listener(struct gmtp_listen_hashtable *table,
 		 const __be32 server_addr, const __be16 server_port);
 
-#endif /* SOCK_HASHTABLES_H_ */
+#endif /* GMTP_HASHTABLES_H_ */

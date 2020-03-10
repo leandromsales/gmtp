@@ -1,3 +1,5 @@
+#include "gmtp_hashtables.h"
+
 /*
  * sock_hashtables.c
  *
@@ -11,7 +13,6 @@
 #include <linux/err.h>
 
 #include "gmtp.h"
-#include "sock_hashtables.h"
 
 int gmtp_build_listen_hashtable(struct gmtp_listen_hashtable *table,
 		size_t max_size)

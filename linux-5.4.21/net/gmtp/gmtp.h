@@ -22,7 +22,7 @@
 #include <uapi/linux/gmtp.h>
 
 #include "hash.h"
-#include "sock_hashtables.h"
+#include "gmtp_hashtables.h"
 
 /** GMTP Debugs */
 #define GMTP_INFO "[GMTP] %s:%d - "

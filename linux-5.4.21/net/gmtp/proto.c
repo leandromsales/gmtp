@@ -27,7 +27,7 @@
 #include <linux/gmtp.h>
 #include <linux/poll.h>
 #include "gmtp.h"
-#include "sock_hashtables.h"
+#include "gmtp_hashtables.h"
 #include "mcc.h"
 
 struct percpu_counter gmtp_orphan_count;
