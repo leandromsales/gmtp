@@ -381,8 +381,10 @@ static int gmtp_v4_send_register_reply(const struct sock *sk,
         const struct inet_request_sock *ireq = inet_rsk(req);
         gmtp_sk(sk)->reply_stamp = jiffies_to_msecs(jiffies);
 
+        rcu_read_lock();
         err = ip_build_and_send_pkt(skb, sk, ireq->ir_loc_addr,
                 ireq->ir_rmt_addr, rcu_dereference(ireq->ireq_opt));
+        rcu_read_unlock();
         err = net_xmit_eval(err);
     }
 
@@ -468,7 +470,7 @@ static struct sock *gmtp_v4_hnd_req(struct sock *sk, struct sk_buff *skb)
     	return NULL;
     }
 
-/*    nsk = req->rsk_listener;
+    nsk = req->rsk_listener;
     if(nsk == NULL) {
     	gmtp_pr_info("nsk is NULL!");
     	goto lookup;
@@ -483,18 +485,14 @@ static struct sock *gmtp_v4_hnd_req(struct sock *sk, struct sk_buff *skb)
 		goto lookup;
 	}*/
 
-    if (unlikely(sk->sk_state != GMTP_LISTEN)) {
-    	gmtp_pr_error("sk->sk_state != GMTP_LISTEN");
-        inet_csk_reqsk_queue_drop_and_put(sk, req);
-        goto lookup;
-    }
     gmtp_pr_info("Calling sock_hold...");
     sock_hold(sk);
 
-    /*nsk = dccp_check_req(sk, skb, req);*/
     gmtp_pr_info("Calling gmtp_check_req... KERNEL PANIC HERE!");
-    nsk = gmtp_check_req(sk, skb, req);
+    /*nsk = gmtp_check_req(sk, skb, req);*/
 
+    if(nsk == NULL)
+    	nsk = sk;
     return nsk;
 lookup:
 	gmtp_pr_info("Lookup for established connections");
@@ -539,29 +537,6 @@ int gmtp_v4_do_rcv(struct sock *sk, struct sk_buff *skb)
      *        Generate Reset(No Connection) unless P.type == Reset
      *        Drop packet and return
      */
-
-    /*if(sk->sk_state == GMTP_LISTEN) {
-
-        struct sock *nsk;
-
-        gmtp_pr_debug("Packet received while listening...");
-
-        nsk = gmtp_v4_hnd_req(sk, skb);
-        if(nsk == NULL) {
-        	gmtp_pr_debug("nsk == NULL");
-            goto discard;
-        }
-
-        gmtp_pr_debug("nsk OK");
-        if(nsk != sk) {
-        	gmtp_pr_debug("nsk != sk");
-            if(gmtp_child_process(sk, nsk, skb))
-                goto reset;
-            gmtp_pr_debug("not child process");
-            return 0;
-        }
-    }*/
-
     if(gmtp_rcv_state_process(sk, skb, gh, skb->len))
         goto reset;
     return 0;
@@ -927,6 +902,7 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
     struct net *net;
     struct sock *sk;
     bool refcounted;
+    int ret;
 
     /* Step 1: Check header basics */
     if(gmtp_check_packet(skb)) {
@@ -991,44 +967,27 @@ lookup:
 	sk = gmtp_lookup_established(&gmtp_sk_hash,
 			iph->saddr, gh->sport,
 			iph->daddr, gh->dport);
-    if (sk)
+
+    if (sk) {
+    	if(sk->sk_state == TCP_NEW_SYN_RECV) {
+    		/* TODO Process Route_Notify (ack-like packet)*/
+    		gmtp_pr_info("State: TCP_NEW_SYN_RECV");
+    		return 0;
+    	}
     	goto receive_it;
+    }
 
 	sk = gmtp_lookup_listener(&gmtp_sk_hash, iph->daddr, gh->dport);
-	/*if(sk == NULL) {
-		gmtp_pr_info("SK is NULL!");
-		goto discard_it;
-	}
+	if(!sk)
+		goto receive_it;
 
 	if (sk->sk_state == GMTP_LISTEN) {
-		struct request_sock *req = inet_reqsk(sk);
-		struct sock *nsk;
+		ret = gmtp_v4_do_rcv(sk, skb);
+		goto put_and_return;
+	}
 
-		if(req == NULL)
-		{
-
-		}
-		sk = req->rsk_listener;
-		if (unlikely(sk->sk_state != GMTP_LISTEN)) {
-			inet_csk_reqsk_queue_drop_and_put(sk, req);
-			goto lookup;
-		}*/
-		/*sock_hold(sk);
-		nsk = gmtp_check_req(sk, skb, req);
-		if (!nsk) {
-			reqsk_put(req);
-			goto discard_it;
-		}
-		if (nsk == sk) {
-			reqsk_put(req);
-		} else if (gmtp_child_process(sk, nsk, skb)) {
-			gmtp_v4_ctl_send_reset(sk, skb);
-			goto discard_it;
-		} else {
-			sock_put(sk);
-			return 0;
-		}*/
-	/*}*/
+put_and_return:
+	return ret;
 
 receive_it:
 	return gmtp_v4_sk_receive_skb(skb, sk);
@@ -1119,6 +1078,9 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
     ireq = inet_rsk(req);
     sk_rcv_saddr_set(req_to_sk(req), ip_hdr(skb)->daddr);
     sk_daddr_set(req_to_sk(req), ip_hdr(skb)->saddr);
+
+    gmtp_pr_info("original new_socket server port: %5d", ntohs(inet_sk(req_to_sk(req))->inet_sport));
+    inet_sk(req_to_sk(req))->inet_sport = gh->dport;
     ireq->ireq_family = AF_INET;
     ireq->ir_iif = sk->sk_bound_dev_if;
 
@@ -1139,26 +1101,30 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
     memcpy(greq->flowname, gp->flowname, GMTP_FLOWNAME_LEN);
     memcpy(gp->relay_id, gr->relay_id, sizeof(gr->relay_id));
 
-    gmtp_pr_info("sk->sk_state before send_register_reply: %u", sk->sk_state);
-    gmtp_pr_info("ireq->ireq_state before send_register_reply: %u",
-    		ireq->ireq_state);
+    gmtp_pr_info("new_socket client port: %5d", ntohs(req_to_sk(req)->sk_dport));
+    gmtp_pr_info("new_socket server port now: %5d", ntohs(inet_sk(req_to_sk(req))->inet_sport));
+
+    gmtp_pr_info("req_to_sk(req)->sk_state: %u", req_to_sk(req)->sk_state);
+    if(gmtp_sk_hash_connect(&gmtp_sk_hash, req_to_sk(req)))
+    	goto drop_and_free;
+
     if(gmtp_v4_send_register_reply(sk, req))
         goto drop_and_free;
 
     inet_csk_reqsk_queue_hash_add(sk, req, GMTP_TIMEOUT_INIT);
-
+    reqsk_put(req);
     return 0;
 
 reset:
-    pr_info("Sending RESET...\n");
+    gmtp_pr_error("Sending RESET (bad flow name)");
     gcb->reset_code = GMTP_RESET_CODE_BAD_FLOWNAME;
     gmtp_v4_ctl_send_reset(sk, skb);
 
 drop_and_free:
-    pr_info("reqsk_free(req)...\n");
+	gmtp_pr_error("reqsk_free(req)...\n");
     reqsk_free(req);
 drop:
-    pr_info("drop...\n");
+	gmtp_pr_error("dropping packet...\n");
     return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_conn_request);

@@ -625,13 +625,12 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 			   struct gmtp_hdr *gh, unsigned int len)
 {
 	struct gmtp_skb_cb *gcb = GMTP_SKB_CB(skb);
+	bool acceptable;
 	int queued = 0;
 
 	gmtp_pr_func();
 	gmtp_pr_debug("State: %s | Packet: %s", gmtp_state_name(sk->sk_state),
 			gmtp_packet_name(gh->type));
-
-	print_gmtp_packet(ip_hdr(skb), gh);
 
 	/*
 	 *  Step 3: Process LISTEN state
@@ -653,11 +652,16 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 
 		gmtp_pr_debug("sk->sk_state == GMTP_LISTEN");
 
-		if(gh->type == GMTP_PKT_REQUEST
-				|| gh->type == GMTP_PKT_REGISTER) {
-			if(inet_csk(sk)->icsk_af_ops->conn_request(sk, skb) < 0)
+		if(gh->type == GMTP_PKT_REQUEST || gh->type == GMTP_PKT_REGISTER) {
+			rcu_read_lock();
+			local_bh_disable();
+			acceptable = inet_csk(sk)->icsk_af_ops->conn_request(sk, skb) >= 0;
+			local_bh_enable();
+			rcu_read_unlock();
+			if (!acceptable)
 				return 1;
-			goto discard;
+			consume_skb(skb);
+			return 0;
 		}
 		if(gh->type == GMTP_PKT_RESET)
 			goto discard;

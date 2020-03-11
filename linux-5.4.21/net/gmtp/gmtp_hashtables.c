@@ -21,11 +21,11 @@ int gmtp_build_sk_hashtable(struct gmtp_sk_hashtable *sk_table)
 	if (sk_table == NULL)
 		goto failure;
 
-	sk_table->hbind = kmalloc(sizeof(struct gmtp_sk_hashitem*), GFP_KERNEL);
+	sk_table->hbind = kmalloc(sizeof(struct gmtp_sk_hashitem), GFP_KERNEL);
 	if (sk_table->hbind == NULL)
 		goto failure;
 
-	sk_table->hlisten = kmalloc(sizeof(struct gmtp_sk_hashitem*), GFP_KERNEL);
+	sk_table->hlisten = kmalloc(sizeof(struct gmtp_sk_hashitem), GFP_KERNEL);
 	if (sk_table->hlisten == NULL)
 		goto failure_listen;
 
@@ -67,7 +67,7 @@ struct gmtp_sk_hashitem * __gmtp_lookup_listener(
 
 	gmtp_pr_func();
 
-	/*gmtp_pr_info("Searching for: %pI4@%-5d", &addr, ntohs(port));*/
+	gmtp_pr_info("Searching for: %pI4@%-5d", &addr, ntohs(port));
 
 	if(sk_table->hlisten == NULL)
 		return NULL;
@@ -80,8 +80,11 @@ struct gmtp_sk_hashitem * __gmtp_lookup_listener(
 			continue;
 
 		inet = inet_sk(pos->sk);
+		gmtp_pr_info("Item: [%pI4@%-5d]",
+						&inet->inet_rcv_saddr, ntohs(inet->inet_sport));
 		if (inet->inet_rcv_saddr == addr && inet->inet_sport == port)
 		{
+			gmtp_pr_info("Found!");
 			return pos;
 		}
 	}
@@ -155,9 +158,9 @@ struct gmtp_sk_hashitem * __gmtp_lookup_established(
 			continue;
 
 		inet = inet_sk(pos->sk);
-		/*gmtp_pr_info("Item: [%pI4@%-5d <=> %pI4@%-5d]",
+		gmtp_pr_info("Item: [%pI4@%-5d <=> %pI4@%-5d]",
 				&inet->inet_rcv_saddr, ntohs(inet->inet_sport),
-				&inet->inet_daddr, ntohs(inet->inet_dport));*/
+				&inet->inet_daddr, ntohs(inet->inet_dport));
 
 		/**
 		 * Lookup for received packets...
@@ -169,6 +172,7 @@ struct gmtp_sk_hashitem * __gmtp_lookup_established(
 		if (inet->inet_rcv_saddr == daddr && inet->inet_sport == dport &&
 				inet->inet_daddr == saddr && inet->inet_dport == sport)
 		{
+			gmtp_pr_info("Found!");
 			return pos;
 		}
 	}

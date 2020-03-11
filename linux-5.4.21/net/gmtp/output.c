@@ -231,7 +231,7 @@ struct sk_buff *gmtp_make_register_reply(struct sock *sk, struct dst_entry *dst,
     struct sk_buff *skb = sock_wmalloc(sk, sk->sk_prot->max_header, 1,
             GFP_ATOMIC);
 
-    gmtp_print_function();
+    gmtp_pr_func();
 
     if (skb == NULL)
         return NULL;

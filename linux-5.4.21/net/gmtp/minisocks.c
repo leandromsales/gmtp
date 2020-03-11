@@ -114,34 +114,41 @@ struct sock *gmtp_check_req(struct sock *sk, struct sk_buff *skb,
 
     gmtp_pr_func();
 
+    if(greq == NULL)
+    	gmtp_pr_info("greq is NULL!");
+
     if (gmtp_hdr(skb)->type == GMTP_PKT_REQUEST ||
     		gmtp_hdr(skb)->type == GMTP_PKT_REGISTER) {
 
     	gmtp_pr_debug("Request or Register received!");
 
         if(GMTP_SKB_CB(skb)->seq > greq->gsr) {
-            gmtp_print_debug("Retransmitted REQUEST/REGISTER\n");
+
+            gmtp_pr_debug("Retransmitted REQUEST/REGISTER");
+            gmtp_pr_debug("seq: %u > gsr: %llu", GMTP_SKB_CB(skb)->seq, greq->gsr);
+
             greq->gsr = GMTP_SKB_CB(skb)->seq;
-            /*
-             * Send another RESPONSE packet
+
+            /* Send another Register-Reply packet
              * To protect against Request floods, increment retrans
              * counter (backoff, monitored by gmtp_response_timer).
              */
-            inet_rtx_syn_ack(sk, req);
+
+            /*inet_rtx_syn_ack(sk, req);*/
          }
         /* Network Duplicate, discard packet */
         return NULL;
     }
-
+/*
     GMTP_SKB_CB(skb)->reset_code = GMTP_RESET_CODE_PACKET_ERROR;
 
     if (gmtp_hdr(skb)->type != GMTP_PKT_ROUTE_NOTIFY &&
         gmtp_hdr(skb)->type != GMTP_PKT_ACK &&
         gmtp_hdr(skb)->type != GMTP_PKT_DATAACK)
-        goto drop;
+        goto drop;*/
 
     /* FIXME Check for invalid Sequence nuber */
-    seq = GMTP_SKB_CB(skb)->seq;
+    /*seq = GMTP_SKB_CB(skb)->seq;
     if(!(seq >= greq->iss && seq <= greq->gss)) {
         gmtp_print_debug("Invalid Seq number: "
                 "seq=%llu, iss=%llu, gss=%llu",
@@ -150,11 +157,11 @@ struct sock *gmtp_check_req(struct sock *sk, struct sk_buff *skb,
                 (unsigned long long ) greq->gss);
         print_gmtp_packet(ip_hdr(skb), gmtp_hdr(skb));
         goto drop;
-    }
+    }*/
 
     gmtp_pr_info("Calling inet_csk(sk)->icsk_af_ops->syn_recv_sock");
-	child = inet_csk(sk)->icsk_af_ops->syn_recv_sock(sk, skb, req, NULL,
-			req, &own_req);
+	/*child = inet_csk(sk)->icsk_af_ops->syn_recv_sock(sk, skb, req, NULL,
+			req, &own_req);*/
     /****
     struct sock *(*syn_recv_sock)(const struct sock *sk,
                       struct sk_buff *skb,
@@ -164,29 +171,29 @@ struct sock *gmtp_check_req(struct sock *sk, struct sk_buff *skb,
                       bool *own_req);
     ****/
 
-    if (child == NULL) {
+   /* if (child == NULL) {
     	gmtp_pr_info("child is NULL");
         goto listen_overflow;
-    }
+    }*/
 
-    if (child) {
+   /* if (child) {
     	gmtp_pr_info("child is OK");
 		child = inet_csk_complete_hashdance(sk, child, req, own_req);
 		goto out;
-	}
+	}*/
 
     /*inet_csk_reqsk_queue_drop(sk, req);
     inet_csk_reqsk_queue_add(sk, req, child);*/
 out:
     return child;
 listen_overflow:
-    gmtp_print_error("listen_overflow!\n");
-    GMTP_SKB_CB(skb)->reset_code = GMTP_RESET_CODE_TOO_BUSY;
+    /*gmtp_print_error("listen_overflow!\n");
+    GMTP_SKB_CB(skb)->reset_code = GMTP_RESET_CODE_TOO_BUSY;*/
 drop:
-    if (gmtp_hdr(skb)->type != GMTP_PKT_RESET)
+    /*if (gmtp_hdr(skb)->type != GMTP_PKT_RESET)
         req->rsk_ops->send_reset(sk, skb);
 
-    inet_csk_reqsk_queue_drop(sk, req);
+    inet_csk_reqsk_queue_drop(sk, req);*/
     goto out;
 }
 EXPORT_SYMBOL_GPL(gmtp_check_req);
