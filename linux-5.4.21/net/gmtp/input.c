@@ -442,7 +442,7 @@ static int gmtp_check_seqno(struct sock *sk, struct sk_buff *skb)
 
 	if(gh->type == GMTP_PKT_DATA && gp->role == GMTP_ROLE_REPORTER) {
 		if(unlikely(gp->rx_state == MCC_RSTATE_NO_DATA)) {
-			pr_info("Setting first seqno to %u \n", gh->seq);
+			gmtp_pr_info("Setting first seqno to %u \n", gh->seq);
 			gp->gsr = gh->seq;
 			gp->isr = gh->seq;
 			gp->iss = gh->seq;
@@ -493,8 +493,8 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 
 			gp->tx_ucc_rate = min((__be32 )gp->tx_max_rate, new_tx);
 
-			pr_info("cong. control tx: %lu B/s, from: %pI4\n", gp->tx_ucc_rate,
-					&ip_hdr(skb)->saddr);
+			gmtp_pr_info("cong. control tx: %lu B/s, from: %pI4\n",
+					gp->tx_ucc_rate, &ip_hdr(skb)->saddr);
 		}
 		goto discard;
 	case GMTP_PKT_ROUTE_NOTIFY:
@@ -547,6 +547,8 @@ int gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 {
 	struct gmtp_sock *gp = gmtp_sk(sk);
 
+	gmtp_pr_func();
+
 	/* Check sequence numbers... */
 	if(gmtp_check_seqno(sk, skb)) {
 		goto discard;
@@ -559,9 +561,10 @@ int gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 	else
 		gp->ndp_count++;
 
-	if(gp->role == GMTP_ROLE_REPORTER) {
+	/* FIXME GMTP FEEDBAK causes server send RESET */
+	/*if(gp->role == GMTP_ROLE_REPORTER) {
 		gmtp_deliver_input_to_mcc(sk, skb);
-	}
+	}*/
 
 	return __gmtp_rcv_established(sk, skb, gh, len);
 discard:

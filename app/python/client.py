@@ -106,8 +106,8 @@ try:
             stdout.write("=>")
             stdout.flush()
     
-        if(i%1000 == 0): #print less msgs...              
-        
+        #if(i%1000 == 0): #print less msgs...              
+        if(True):
             size1000 = total_size - lastsize1000
             lastsize1000 = total_size
             time1000 = timeit.default_timer() - last_time1000

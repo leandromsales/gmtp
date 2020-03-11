@@ -17,7 +17,8 @@ enum gmtp_state {
 	GMTP_CLOSING	     = TCP_CLOSING,
 	GMTP_TIME_WAIT	     = TCP_TIME_WAIT,
 	GMTP_CLOSED	     = TCP_CLOSE,
-	GMTP_DELEGATED	     = TCP_NEW_SYN_RECV,
+	GMTP_NEW_SYN_RECV	 = TCP_NEW_SYN_RECV,
+	GMTP_DELEGATED,
 	GMTP_MAX_STATES
 };
 
@@ -111,6 +112,7 @@ struct gmtp_request_sock {
 	__u64			 gss;
 	__u64			 isr;
 	__u64			 gsr;
+	spinlock_t		 lock;
 	enum gmtp_ucc_type	tx_ucc_type;
 	
 	__u8 flowname[GMTP_FLOWNAME_LEN];

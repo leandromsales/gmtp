@@ -1134,10 +1134,9 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 		s = (struct gmtp_server_entry*) gmtp_lookup_entry(server_hashtable,
 				gp->flowname);
 
-    if(s == NULL) {
-        pr_info("s: %p\n", s);
+    if(!s)
         return gmtp_do_sendmsg(sk, msg, len);
-    }
+
 
     /* For every socket(P) in server, send the same data */
     list_for_each_entry(r, &s->relays.relay_list, relay_list) {
@@ -1158,9 +1157,9 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
             msgcpy = kmalloc(nlen, gfp_any());
             memcpy(msgcpy, msg, nlen);
 
-            pr_info("Sending to %pI4:%d (%u)\n", &inet->inet_daddr,
+            /*pr_info("Sending to %pI4:%d (%u)\n", &inet->inet_daddr,
                     htons(inet->inet_dport),
-                    gmtp_sk(r->sk)->gss);
+                    gmtp_sk(r->sk)->gss);*/
 
             ret = gmtp_do_sendmsg(r->sk, msgcpy, len);
         }

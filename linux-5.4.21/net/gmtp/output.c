@@ -125,8 +125,7 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
         case GMTP_PKT_ELECT_REQUEST: {
             struct gmtp_hdr_elect_request *gh_ereq;
             gh_ereq = gmtp_hdr_elect_request(skb);
-            memcpy(gh_ereq->relay_id, gp->relay_id,
-            GMTP_RELAY_ID_LEN);
+            memcpy(gh_ereq->relay_id, gp->relay_id, GMTP_RELAY_ID_LEN);
             gh_ereq->max_nclients = 0;
             break;
         }

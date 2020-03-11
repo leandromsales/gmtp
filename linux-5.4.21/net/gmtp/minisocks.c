@@ -72,7 +72,7 @@ struct sock *gmtp_create_openreq_child(struct sock *sk,
      */
     struct sock *newsk = inet_csk_clone_lock(sk, req, GFP_ATOMIC);
 
-    gmtp_print_function();
+    gmtp_pr_func();
 
     if (newsk != NULL) {
         struct gmtp_request_sock *dreq = gmtp_rsk(req);
@@ -114,18 +114,21 @@ struct sock *gmtp_check_req(struct sock *sk, struct sk_buff *skb,
 
     gmtp_pr_func();
 
-    if(greq == NULL)
-    	gmtp_pr_info("greq is NULL!");
+	/* TCP/DCCP/GMTP listeners became lockless.
+	 * GMTP stores complex state in its request_sock, so we need
+	 * a protection for them, now this code runs without being protected
+	 * by the parent (listener) lock.
+	 */
+    /* FIXME spin_lock_bh(&greq->lock) causes kernel panic */
+	/*spin_lock_bh(&greq->lock);*/
 
     if (gmtp_hdr(skb)->type == GMTP_PKT_REQUEST ||
     		gmtp_hdr(skb)->type == GMTP_PKT_REGISTER) {
 
-    	gmtp_pr_debug("Request or Register received!");
-
         if(GMTP_SKB_CB(skb)->seq > greq->gsr) {
 
-            gmtp_pr_debug("Retransmitted REQUEST/REGISTER");
-            gmtp_pr_debug("seq: %u > gsr: %llu", GMTP_SKB_CB(skb)->seq, greq->gsr);
+            gmtp_pr_debug("seq: %u > gsr: %llu",
+            		GMTP_SKB_CB(skb)->seq, greq->gsr);
 
             greq->gsr = GMTP_SKB_CB(skb)->seq;
 
@@ -134,21 +137,21 @@ struct sock *gmtp_check_req(struct sock *sk, struct sk_buff *skb,
              * counter (backoff, monitored by gmtp_response_timer).
              */
 
-            /*inet_rtx_syn_ack(sk, req);*/
+            inet_rtx_syn_ack(sk, req);
          }
         /* Network Duplicate, discard packet */
         return NULL;
     }
-/*
+
     GMTP_SKB_CB(skb)->reset_code = GMTP_RESET_CODE_PACKET_ERROR;
 
     if (gmtp_hdr(skb)->type != GMTP_PKT_ROUTE_NOTIFY &&
         gmtp_hdr(skb)->type != GMTP_PKT_ACK &&
         gmtp_hdr(skb)->type != GMTP_PKT_DATAACK)
-        goto drop;*/
+        goto drop;
 
     /* FIXME Check for invalid Sequence nuber */
-    /*seq = GMTP_SKB_CB(skb)->seq;
+    seq = GMTP_SKB_CB(skb)->seq;
     if(!(seq >= greq->iss && seq <= greq->gss)) {
         gmtp_print_debug("Invalid Seq number: "
                 "seq=%llu, iss=%llu, gss=%llu",
@@ -157,44 +160,33 @@ struct sock *gmtp_check_req(struct sock *sk, struct sk_buff *skb,
                 (unsigned long long ) greq->gss);
         print_gmtp_packet(ip_hdr(skb), gmtp_hdr(skb));
         goto drop;
-    }*/
+    }
 
-    gmtp_pr_info("Calling inet_csk(sk)->icsk_af_ops->syn_recv_sock");
-	/*child = inet_csk(sk)->icsk_af_ops->syn_recv_sock(sk, skb, req, NULL,
-			req, &own_req);*/
-    /****
-    struct sock *(*syn_recv_sock)(const struct sock *sk,
-                      struct sk_buff *skb,
-                      struct request_sock *req,
-                      struct dst_entry *dst,
-                      struct request_sock *req_unhash,
-                      bool *own_req);
-    ****/
+	child = inet_csk(sk)->icsk_af_ops->syn_recv_sock(sk, skb, req, NULL, req,
+			&own_req);
 
-   /* if (child == NULL) {
-    	gmtp_pr_info("child is NULL");
-        goto listen_overflow;
-    }*/
-
-   /* if (child) {
-    	gmtp_pr_info("child is OK");
+	if (child) {
+		gmtp_pr_info("child is OK before hashdance");
 		child = inet_csk_complete_hashdance(sk, child, req, own_req);
 		goto out;
-	}*/
+	}
+	gmtp_pr_info("child is NULL before hashdance");
 
-    /*inet_csk_reqsk_queue_drop(sk, req);
-    inet_csk_reqsk_queue_add(sk, req, child);*/
-out:
-    return child;
-listen_overflow:
-    /*gmtp_print_error("listen_overflow!\n");
-    GMTP_SKB_CB(skb)->reset_code = GMTP_RESET_CODE_TOO_BUSY;*/
+    GMTP_SKB_CB(skb)->reset_code = GMTP_RESET_CODE_TOO_BUSY;
 drop:
-    /*if (gmtp_hdr(skb)->type != GMTP_PKT_RESET)
-        req->rsk_ops->send_reset(sk, skb);
+	if (gmtp_hdr(skb)->type != GMTP_PKT_RESET)
+			req->rsk_ops->send_reset(sk, skb);
 
-    inet_csk_reqsk_queue_drop(sk, req);*/
-    goto out;
+    inet_csk_reqsk_queue_drop(sk, req);
+out:
+	/*spin_unlock_bh(&greq->lock);*/
+
+	if(child)
+		gmtp_pr_info("child is OK after all");
+	else
+		gmtp_pr_info("child is NULL after all");
+
+	return child;
 }
 EXPORT_SYMBOL_GPL(gmtp_check_req);
 
@@ -209,6 +201,8 @@ __releases(child)
 {
     int ret = 0;
     const int state = child->sk_state;
+
+    gmtp_pr_func();
 
     if (!sock_owned_by_user(child)) {
         ret = gmtp_rcv_state_process(child, skb, gmtp_hdr(skb),

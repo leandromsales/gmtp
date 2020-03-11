@@ -922,6 +922,8 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
         gmtp_pr_debug("pkt_type: %u", skb->pkt_type);
     }
 
+    print_gmtp_packet(iph, gh);
+
     /**
      * FIXME Change Election algorithm to fully distributed using multicast
      */
@@ -969,9 +971,45 @@ lookup:
 			iph->daddr, gh->dport);
 
     if (sk) {
-    	if(sk->sk_state == TCP_NEW_SYN_RECV) {
-    		/* TODO Process Route_Notify (ack-like packet)*/
-    		gmtp_pr_info("State: TCP_NEW_SYN_RECV");
+    	if(sk->sk_state == GMTP_NEW_SYN_RECV) {
+
+    		struct request_sock *req = inet_reqsk(sk);
+			struct sock *nsk;
+
+			gmtp_pr_info("State: GMTP_NEW_SYN_RECV");
+
+			sk = req->rsk_listener;
+			if(sk)
+				gmtp_pr_info("sk->sk_state: %u", sk->sk_state);
+			else
+				gmtp_pr_info("sk is NULL!");
+
+			if (unlikely(sk->sk_state != GMTP_LISTEN)) {
+				gmtp_pr_info("sk->sk_state != GMTP_LISTEN");
+				inet_csk_reqsk_queue_drop_and_put(sk, req);
+				goto lookup;
+			}
+			sock_hold(sk);
+			/*refcounted = true;*/
+			nsk = gmtp_check_req(sk, skb, req);
+
+			if (!nsk) {
+				gmtp_pr_info("nsk is NULL");
+				reqsk_put(req);
+				goto discard_it;
+			}
+
+			if (nsk == sk) {
+				gmtp_pr_info("nsk == sk");
+				reqsk_put(req);
+			} else if (gmtp_child_process(sk, nsk, skb)) {
+				gmtp_v4_ctl_send_reset(sk, skb);
+				goto discard_it;
+			} else {
+				sock_put(sk);
+				return 0;
+			}
+
     		return 0;
     	}
     	goto receive_it;
@@ -1145,7 +1183,7 @@ struct sock *gmtp_v4_request_recv_sock(const struct sock *sk, struct sk_buff *sk
     struct inet_sock *newinet;
     struct sock *newsk;
 
-    gmtp_print_function();
+    gmtp_pr_func();
 
     // sk->sk_ack_backlog = 0; comenetado por ser read only
 
