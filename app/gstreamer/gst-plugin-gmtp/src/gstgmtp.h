@@ -27,37 +27,32 @@
 /* GMTP socket general options */
 #define GMTP_BACKLOG	5
 #ifndef SOCK_GMTP
-	//#define SOCK_GMTP		6
 	#define SOCK_GMTP		7
-	//#define SOCK_GMTP SOCK_STREAM
 #endif
 
 #ifndef IPPROTO_GMTP
-	//#define IPPROTO_GMTP	33
 	#define IPPROTO_GMTP	254
-	//#define IPPROTO_GMTP	0
 #endif
 
 #ifndef SOL_GMTP
-	//#define SOL_GMTP		269
-	#define SOL_GMTP		281
+	#define SOL_GMTP		300
 #endif
 
 /* gmtp socket specific options */
-#define GMTP_SOCKOPT_PACKET_SIZE        1 /* XXX deprecated, without effect */
-#define GMTP_SOCKOPT_SERVICE            2
-#define GMTP_SOCKOPT_CHANGE_L           3
-#define GMTP_SOCKOPT_CHANGE_R           4
-#define GMTP_SOCKOPT_GET_CUR_MPS        5
+//#define GMTP_SOCKOPT_PACKET_SIZE        1 /* XXX deprecated, without effect */
+//#define GMTP_SOCKOPT_SERVICE            2
+//#define GMTP_SOCKOPT_CHANGE_L           3
+//#define GMTP_SOCKOPT_CHANGE_R           4
+//#define GMTP_SOCKOPT_GET_CUR_MPS        5
 //#define GMTP_SOCKOPT_SERVER_TIMEWAIT    6
-#define GMTP_SOCKOPT_SEND_CSCOV         10
-#define GMTP_SOCKOPT_RECV_CSCOV         11
-#define GMTP_SOCKOPT_AVAILABLE_CCIDS    12
-#define GMTP_SOCKOPT_CCID               13
-#define GMTP_SOCKOPT_TX_CCID            14
-#define GMTP_SOCKOPT_RX_CCID            15
-#define GMTP_SOCKOPT_CCID_RX_INFO       128
-#define GMTP_SOCKOPT_CCID_TX_INFO       192
+//#define GMTP_SOCKOPT_SEND_CSCOV         10
+//#define GMTP_SOCKOPT_RECV_CSCOV         11
+//#define GMTP_SOCKOPT_AVAILABLE_CCIDS    12
+//#define GMTP_SOCKOPT_CCID               13
+//#define GMTP_SOCKOPT_TX_CCID            14
+//#define GMTP_SOCKOPT_RX_CCID            15
+//#define GMTP_SOCKOPT_CCID_RX_INFO       128
+//#define GMTP_SOCKOPT_CCID_TX_INFO       192
 
 /* Default parameters for the gst gmtp element property */
 #define GMTP_DEFAULT_PORT		 5001
@@ -66,18 +61,38 @@
 #define GMTP_DEFAULT_CLOSED		 TRUE
 #define GMTP_DEFAULT_WAIT_CONNECTIONS	 FALSE
 #define GMTP_DEFAULT_HOST		 "127.0.0.1"
-#define GMTP_DEFAULT_CCID		 2
+/*#define GMTP_DEFAULT_CCID		 2*/
 
 #define GMTP_DELTA			 100
 
+/* GMTP socket options */
+/*enum gmtp_sockopt_codes {
+	GMTP_SOCKOPT_FLOWNAME = 1,
+	GMTP_SOCKOPT_MEDIA_RATE,
+	GMTP_SOCKOPT_MAX_TX_RATE,
+	GMTP_SOCKOPT_UCC_TX_RATE,
+	GMTP_SOCKOPT_GET_CUR_MSS,
+	GMTP_SOCKOPT_SERVER_RTT,
+	GMTP_SOCKOPT_SERVER_TIMEWAIT,
+	GMTP_SOCKOPT_PULL,
+	GMTP_SOCKOPT_ROLE_RELAY,
+	GMTP_SOCKOPT_RELAY_ENABLED,
+	GMTP_SOCKOPT_NDP_RCV,
+	GMTP_SOCKOPT_NDP_SENT,
+	GMTP_SOCKOPT_UCC_TYPE
+};*/
 #define GMTP_SOCKOPT_FLOWNAME 1
-#define GMTP_SOCKOPT_MAX_TX_RATE 2
-#define GMTP_SOCKOPT_GET_CUR_MSS 3
-#define GMTP_SOCKOPT_SERVER_RTT 4
-#define GMTP_SOCKOPT_SERVER_TIMEWAIT 5
-#define GMTP_SOCKOPT_PULL 6
-#define GMTP_SOCKOPT_ROLE_RELAY 7
-#define GMTP_SOCKOPT_RELAY_ENABLED 8
+#define GMTP_SOCKOPT_MEDIA_RATE 2
+#define GMTP_SOCKOPT_MAX_TX_RATE 3
+#define GMTP_SOCKOPT_UCC_TX_RATE 4
+#define GMTP_SOCKOPT_GET_CUR_MSS 5
+#define GMTP_SOCKOPT_SERVER_RTT 6
+#define GMTP_SOCKOPT_SERVER_TIMEWAIT 7
+#define GMTP_SOCKOPT_ROLE_RELAY 8
+#define GMTP_SOCKOPT_RELAY_ENABLED 9
+#define GMTP_SOCKOPT_NDP_RCV
+#define GMTP_SOCKOPT_NDP_SENT
+#define GMTP_SOCKOPT_UCC_TYPE
 
 gchar *gst_gmtp_host_to_ip (GstElement * element, const gchar * host);
 
@@ -95,7 +110,7 @@ gboolean gst_gmtp_bind_server_socket (GstElement * element, int server_sock_fd,
 					  struct sockaddr_in server_sin);
 
 gboolean gst_gmtp_listen_server_socket (GstElement * element, int server_sock_fd);
-gboolean gst_gmtp_set_ccid (GstElement * element, int sock_fd, uint8_t ccid);
+//gboolean gst_gmtp_set_ccid (GstElement * element, int sock_fd, uint8_t ccid);
 
 gint gst_gmtp_get_max_packet_size(GstElement * element, int sock);
 

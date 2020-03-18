@@ -42,24 +42,24 @@ print 'Connecting to ', address
 client_socket.connect(address)
 print 'Connected!'
 
-print '\nCaution! Client is printing only each 1.000 messages!\n'
+print '\nCaution! Client is printing only each 100 messages!\n'
 
 i = 0
 total_size = 0
-lastsize1000 = 0
+lastsize100 = 0
 
 logfilename = "logs/logclient_" +  str(timeit.default_timer())[4:] + ".log" 
 logfile = open(logfilename, 'w+')
 
 
 logtable = "seq\ttime\tsize\telapsed\tinst_rate" + \
-"\tsize1000\telapsed1000\trate1000" + \
+"\tsize100\telapsed100\trate100" + \
 "\ttotal_size\ttotal_time\ttotal_rate\r\n\r\n";
 logfile.write(logtable)
 
 start_time = 0
 last_time = 0
-last_time1000 = 0
+last_time100 = 0
 
 print "Receiving... "
 message = ' '
@@ -81,7 +81,7 @@ try:
         if(i == 1):
             start_time = timeit.default_timer()
             last_time = timeit.default_timer()
-            last_time1000 = timeit.default_timer()
+            last_time100 = timeit.default_timer()
      
         total_time = timeit.default_timer() - start_time
         elapsed = timeit.default_timer() - last_time
@@ -96,44 +96,44 @@ try:
         instant_rate = "%.2f" % (size/elapsed)
         total_rate = "%.2f" % (total_size/total_time)
         
-        strsize1000 = " "
-        strtime1000 = " "
-        strrate1000 = " "
+        strsize100 = " "
+        strtime100 = " "
+        strrate100 = " "
     
         nowstr = str(datetime.now().strftime('%H:%M:%S:%f'))
     
-        if(i%25 == 0):
+        if(i%50 == 0):
             stdout.write("=>")
             stdout.flush()
     
         #if(i%1000 == 0): #print less msgs...              
-        if(True):
-            size1000 = total_size - lastsize1000
-            lastsize1000 = total_size
-            time1000 = timeit.default_timer() - last_time1000
-            last_time1000 = timeit.default_timer()
-            rate1000 = size1000/time1000
+        if(i <= 10 or i%100 == 0):
+            size100 = total_size - lastsize100
+            lastsize100 = total_size
+            time100 = timeit.default_timer() - last_time100
+            last_time100 = timeit.default_timer()
+            rate100 = size100/time100
         
-            strsize1000 = str(size1000)
-            strtime1000 = str(time1000)
-            strrate1000 = "%.2f" % (rate1000)
+            strsize100 = str(size100)
+            strtime100 = str(time100)
+            strrate100 = "%.2f" % (rate100)
     
             print "\nMessage", i, "received from server at", nowstr +":\n", message
             print "\tPacket Size: ", size, "bytes / Time elapsed:", elapsed, "s"
-            print "\tSize (last 1000):", strsize1000, "bytes / Time elapsed (last 1000):", strtime1000, "s"
+            print "\tSize (last 100):", strsize100, "bytes / Time elapsed (last 100):", strtime100, "s"
             print "\tTotal received:", total_size, "bytes / Total time:", total_time, "s"
             print "\tRate (instant):", instant_rate, "bytes/s"
-            print "\tRate (last 1000):", strrate1000, "bytes/s"
+            print "\tRate (last 100):", strrate100, "bytes/s"
             print "\tRate (total):  ", total_rate, "bytes/s\n\n"
             print "Receiving... "
     
         logtext = str(i) + "\t" + nowstr + "\t" + \
                 str(size) + "\t" + str(elapsed) + "\t" + instant_rate + \
-                "\t" + strsize1000 + "\t" + strtime1000 + "\t" + strrate1000 + \
+                "\t" + strsize100 + "\t" + strtime100 + "\t" + strrate100 + \
                 "\t" + str(total_size) + "\t" + str(total_time) + \
                 "\t" + total_rate + "\r\n"
     
-        if(i>1000):
+        if(i>100):
             logfile.write(logtext)
         
 except (KeyboardInterrupt):

@@ -801,16 +801,9 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 
         const struct iphdr *iph = ip_hdr(skb);
 
-        gmtp_pr_info("SK is NULL!");
-
         if(gmtp_info->relay_enabled) {
-            /*gmtp_pr_error("Relay enabled (%s)",
-                    gmtp_packet_name(gh->type));*/
-            if(gh->type == GMTP_PKT_DATA) {
-                gmtp_pr_info("Data pkt received...");
-                /*print_gmtp_packet(iph, gh);*/
+            if(gh->type == GMTP_PKT_DATA)
                 goto ignore_it;
-            }
         }
 
         /* TODO Make a reset code for each error here! */
@@ -844,7 +837,6 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
         goto discard_it;
     }
 
-    gmtp_pr_info("SK is Ok!");
     /*
      * Step 2:
      *  ... or S.state == TIMEWAIT,
@@ -916,12 +908,13 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
     GMTP_SKB_CB(skb)->seq = gh->seq;
     GMTP_SKB_CB(skb)->type = gh->type;
 
-    if(unlikely(gh->type != GMTP_PKT_DATA && gh->type != GMTP_PKT_ACK)) {
+    /*if(unlikely(gh->type != GMTP_PKT_DATA && gh->type != GMTP_PKT_ACK)) {
     	gmtp_pr_func();
         print_gmtp_packet(iph, gh);
         gmtp_pr_debug("pkt_type: %u", skb->pkt_type);
-    }
+    }*/
 
+    gmtp_pr_func();
     print_gmtp_packet(iph, gh);
 
     /**
@@ -970,51 +963,44 @@ lookup:
 			iph->saddr, gh->sport,
 			iph->daddr, gh->dport);
 
-    if (sk) {
-    	if(sk->sk_state == GMTP_NEW_SYN_RECV) {
+    if (!sk)
+    	goto lookup_listener;
 
-    		struct request_sock *req = inet_reqsk(sk);
-			struct sock *nsk;
+	if(sk->sk_state == GMTP_NEW_SYN_RECV) {
 
-			gmtp_pr_info("State: GMTP_NEW_SYN_RECV");
+		struct request_sock *req = inet_reqsk(sk);
+		struct sock *nsk;
 
-			sk = req->rsk_listener;
-			if(sk)
-				gmtp_pr_info("sk->sk_state: %u", sk->sk_state);
-			else
-				gmtp_pr_info("sk is NULL!");
+		sk = req->rsk_listener;
 
-			if (unlikely(sk->sk_state != GMTP_LISTEN)) {
-				gmtp_pr_info("sk->sk_state != GMTP_LISTEN");
-				inet_csk_reqsk_queue_drop_and_put(sk, req);
-				goto lookup;
-			}
-			sock_hold(sk);
-			/*refcounted = true;*/
-			nsk = gmtp_check_req(sk, skb, req);
+		if (unlikely(sk->sk_state != GMTP_LISTEN)) {
+			gmtp_pr_info("sk->sk_state != GMTP_LISTEN");
+			inet_csk_reqsk_queue_drop_and_put(sk, req);
+			goto lookup;
+		}
+		sock_hold(sk);
+		/*refcounted = true;*/
+		nsk = gmtp_check_req(sk, skb, req);
 
-			if (!nsk) {
-				gmtp_pr_info("nsk is NULL");
-				reqsk_put(req);
-				goto discard_it;
-			}
+		if (!nsk) {
+			reqsk_put(req);
+			goto discard_it;
+		}
 
-			if (nsk == sk) {
-				gmtp_pr_info("nsk == sk");
-				reqsk_put(req);
-			} else if (gmtp_child_process(sk, nsk, skb)) {
-				gmtp_v4_ctl_send_reset(sk, skb);
-				goto discard_it;
-			} else {
-				sock_put(sk);
-				return 0;
-			}
+		if (nsk == sk) {
+			reqsk_put(req);
+		} else if (gmtp_child_process(sk, nsk, skb)) {
+			gmtp_v4_ctl_send_reset(sk, skb);
+			goto discard_it;
+		} else {
+			sock_put(sk);
+			return 0;
+		}
+		return 0;
+	}
+	goto receive_it;
 
-    		return 0;
-    	}
-    	goto receive_it;
-    }
-
+lookup_listener:
 	sk = gmtp_lookup_listener(&gmtp_sk_hash, iph->daddr, gh->dport);
 	if(!sk)
 		goto receive_it;

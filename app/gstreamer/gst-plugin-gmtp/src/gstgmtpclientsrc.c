@@ -73,7 +73,7 @@ enum
   PROP_HOST,
   PROP_SOCK_FD,
   PROP_CLOSED,
-  PROP_CCID,
+ /* PROP_CCID,*/
   PROP_CAPS
 };
 
@@ -163,9 +163,9 @@ gst_gmtp_client_src_set_property (GObject * object, guint prop_id,
     case PROP_CLOSED:
       src->closed = g_value_get_boolean (value);
       break;
-    case PROP_CCID:
+  /*  case PROP_CCID:
       src->ccid = g_value_get_int (value);
-      break;
+      break;*/
     case PROP_CAPS:
     {
       const GstCaps *new_caps_val = gst_value_get_caps (value);
@@ -214,9 +214,9 @@ gst_gmtp_client_src_get_property (GObject * object, guint prop_id,
     case PROP_CLOSED:
       g_value_set_boolean (value, src->closed);
       break;
-    case PROP_CCID:
+   /* case PROP_CCID:
       g_value_set_int (value, src->ccid);
-      break;
+      break;*/
     case PROP_CAPS:
       gst_value_set_caps (value, src->caps);
       break;
@@ -260,10 +260,10 @@ gst_gmtp_client_src_start (GstBaseSrc * bsrc)
       return FALSE;
     }
 
-    if (!gst_gmtp_set_ccid (GST_ELEMENT (src), src->sock_fd, src->ccid)) {
+   /* if (!gst_gmtp_set_ccid (GST_ELEMENT (src), src->sock_fd, src->ccid)) {
       gst_gmtp_client_src_stop (GST_BASE_SRC (src));
       return FALSE;
-    }
+    }*/
 
     if (!gst_gmtp_connect_to_server (GST_ELEMENT (src), src->server_sin,
             src->sock_fd)) {
@@ -286,7 +286,7 @@ gst_gmtp_client_src_init (GstGMTPClientSrc * this)
   this->host = g_strdup (GMTP_DEFAULT_HOST);
   this->sock_fd = GMTP_DEFAULT_SOCK_FD;
   this->closed = GMTP_DEFAULT_CLOSED;
-  this->ccid = GMTP_DEFAULT_CCID;
+  /*this->ccid = GMTP_DEFAULT_CCID;*/
   this->caps = NULL;
 
   gst_base_src_set_format (GST_BASE_SRC (this), GST_FORMAT_TIME);
@@ -416,10 +416,10 @@ gst_gmtp_client_src_class_init (GstGMTPClientSrcClass * klass)
           "The caps of the source pad", GST_TYPE_CAPS,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-  g_object_class_install_property (gobject_class, PROP_CCID,
+  /*g_object_class_install_property (gobject_class, PROP_CCID,
       g_param_spec_int ("ccid", "CCID",
           "The Congestion Control IDentified to be used", 2, G_MAXINT,
-          GMTP_DEFAULT_CCID, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+          GMTP_DEFAULT_CCID, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));*/
 
   /* signals */
   /**

@@ -82,10 +82,15 @@ struct gmtp_sk_hashitem * __gmtp_lookup_listener(
 		inet = inet_sk(pos->sk);
 		gmtp_pr_info("Item: [%pI4@%-5d]",
 						&inet->inet_rcv_saddr, ntohs(inet->inet_sport));
-		if (inet->inet_rcv_saddr == addr && inet->inet_sport == port)
-		{
-			gmtp_pr_info("Found!");
-			return pos;
+		
+		if(inet->inet_sport == port) {
+			if(inet->inet_rcv_saddr == 0) { /* addr: 0.0.0.0 (using INADDR_ANY causes kernel panic (!?) */
+				gmtp_pr_info("Found (ANY)");
+				return pos;
+			} else if (inet->inet_rcv_saddr == addr) {
+				gmtp_pr_info("Found!");
+				return pos;
+			}
 		}
 	}
 	return NULL;

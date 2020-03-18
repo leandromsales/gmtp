@@ -13,9 +13,18 @@ TBD
 
 	3.1 Test GStreamer
 
-		http://gstreamer.freedesktop.org/data/doc/gstreamer/head/faq/html/chapter-using.html
-		./gst-launch-1.0 -v filesrc location=~/sweetchildomine.mp3 ! decodebin ! alsasink
-		./gst-launch-1.0 -v filesrc location=~/sweetchildomine.mp3 ! mpegaudioparse ! mad ! alsasink
+		https://gstreamer.freedesktop.org/data/doc/gstreamer/head/faq/html/chapter-using.html
+		gst-launch-1.0 filesrc location=~/audiofile.mp3 ! decodebin ! audioconvert ! pulsesink
+		gst-launch-1.0 filesrc location=~/videofile.mp4 ! decodebin ! videoconvert ! xvimagesink
+
+		https://gstreamer.freedesktop.org/documentation/tools/gst-launch.html?gi-language=c#pipeline-examples
+		./gst-launch-1.0 -v filesrc location=~/audiofile.mp3 ! mpegaudioparse ! avdec_mp3 ! audioconvert ! audioresample ! alsasink
+
+		* Only video
+		./gst-launch-1.0 filesrc location=~/videofile.mp4 ! decodebin name=dec ! videoconvert ! autovideosink
+
+		* Video and audio
+		./gst-launch-1.0 filesrc location=~/videofile.mp4 ! decodebin name=dec ! videoconvert ! autovideosink dec. ! audioconvert ! audioresample ! alsasink
 
 	3.2 Compiling gst-plugin-gmtp
 
@@ -25,6 +34,16 @@ TBD
 
 		./gst-launch-1.0 -v filesrc location=~/sweetchildomine.mp3 ! mpegaudioparse ! gmtpserversink port=9011 ccid=2
 		./gst-launch-1.0 -v gmtpclientsrc host=localhost port=9011 ccid=2 ! decodebin ! alsasink
+
+		* Serving mp3 file using GMTP Server
+		gst-launch-1.0 --gst-plugin-path=$HOME/gmtp/app/gstreamer/gst-plugin-gmtp/src -v filesrc location=~/audiofile.mp3 ! mpegaudioparse ! gmtpserversink port=12345
+		
+		* Playing and saving remote mp3 file using GMTP client
+		gst-launch-1.0 --gst-plugin-path=$HOME/gmtp/app/gstreamer/gst-plugin-gmtp/src -v gmtpclientsrc host=localhost port=12345 ! decodebin ! alsasink
+		
+		* Saving (without play) remote mp3 file using GMTP client
+                gst-launch-1.0 --gst-plugin-path=$HOME/gmtp/app/gstreamer/gst-plugin-gmtp/src -v gmtpclientsrc host=localhost port=12345 ! tee name=tp tp. ! queue ! filesink location=~/audio_copy.mp3 tp. ! queue ! decodebin
+
 
 	3.3 Pipeline examples
 		* Play local mp3 and save it to a new file at the same time

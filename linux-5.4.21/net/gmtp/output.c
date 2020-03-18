@@ -692,8 +692,8 @@ void gmtp_send_feedback(struct sock *sk)
 EXPORT_SYMBOL_GPL(gmtp_send_feedback);
 
 /*
- * Send a GMTP_PKT_CLOSE/CLOSEREQ. The caller locks the socket for us.
- * This cannot be allowed to fail queueing a GMTP_PKT_CLOSE/CLOSEREQ frame
+ * Send a GMTP_PKT_CLOSE. The caller locks the socket for us.
+ * This cannot be allowed to fail queueing a GMTP_PKT_CLOSE frame
  * under any circumstances.
  */
 void gmtp_send_close(struct sock *sk, const int active)
@@ -701,7 +701,7 @@ void gmtp_send_close(struct sock *sk, const int active)
     struct sk_buff *skb;
     const gfp_t prio = active ? GFP_KERNEL : GFP_ATOMIC;
 
-    gmtp_print_function();
+    gmtp_pr_func();
 
     skb = alloc_skb(sk->sk_prot->max_header, prio);
     if(skb == NULL)

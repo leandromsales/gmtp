@@ -498,10 +498,20 @@ EXPORT_SYMBOL_GPL(gmtp_set_state);
 
 static void gmtp_finish_passive_close(struct sock *sk)
 {
-    gmtp_print_function();
+    gmtp_pr_func();
     if(sk->sk_state == GMTP_PASSIVE_CLOSE) {
         /* Node (client or server) has received Close packet. */
-        gmtp_send_reset(sk, GMTP_RESET_CODE_CLOSED);
+       /* gmtp_send_reset(sk, GMTP_RESET_CODE_CLOSED);*/
+
+    	/*
+    	 *            (3) Termination
+    	 *   Client                   Server
+    	 *   ------                   ------
+    	 *                        <-- GMTP-Close
+    	 * GMTP-Close -->
+    	 *                        <-- GMTP-Reset
+    	 */
+        gmtp_send_close(sk, 0);
         gmtp_set_state(sk, GMTP_CLOSED);
     }
 }
@@ -533,7 +543,7 @@ int gmtp_init_sock(struct sock *sk)
     gp->req_stamp       = 0;
     gp->ack_rx_tstamp   = 0;
     gp->ack_tx_tstamp   = 0;
-    gp->tx_rtt      = 0;
+    gp->tx_rtt          = 0;
     gp->tx_avg_rtt      = 0;
 
     gp->rx_max_rate     = 0;
@@ -639,7 +649,6 @@ void gmtp_close(struct sock *sk, long timeout)
      * descriptor close, not protocol-sourced closes, because the
      * reader process may not have drained the data yet!
      */
-    gmtp_pr_info("Flushing the recv buffs...");
     while((skb = __skb_dequeue(&sk->sk_receive_queue)) != NULL) {
         data_was_unread += skb->len;
         __kfree_skb(skb);
@@ -652,14 +661,12 @@ void gmtp_close(struct sock *sk, long timeout)
         gmtp_set_state(sk, GMTP_CLOSED);
     } else if(sock_flag(sk, SOCK_LINGER) && !sk->sk_lingertime) {
         /* Check zero linger _after_ checking for unread data. */
-    	gmtp_pr_info("Disconnecting sk...");
         sk->sk_prot->disconnect(sk, 0);
     } else if(sk->sk_state != GMTP_CLOSED) {
         /*
          * May need to wait if there are still packets in the
          * TX queue that are delayed by the CCID.
          */
-    	gmtp_pr_info("Calling gmtp_terminate_connection...");
         gmtp_terminate_connection(sk);
     }
 
@@ -669,13 +676,10 @@ void gmtp_close(struct sock *sk, long timeout)
      * - abortive termination (unread data or zero linger time),
      * - normal termination but queue could not be flushed within time limit
      */
-    gmtp_pr_info("Flushing write queue...");
     __skb_queue_purge(&sk->sk_write_queue);
     sk_stream_wait_close(sk, timeout);
 
 adjudge_to_death:
-	gmtp_pr_info("adjudge_to_death...");
-
     state = sk->sk_state;
     sock_hold(sk);
     sock_orphan(sk);
@@ -683,7 +687,6 @@ adjudge_to_death:
     /*
      * It is the last release_sock in its life. It will remove backlog.
      */
-    gmtp_pr_info("Calling release_sock(sk)...");
     release_sock(sk);
     /*
      * Now socket is owned by kernel and we acquire BH lock
@@ -702,14 +705,11 @@ adjudge_to_death:
         goto out;
     }
 
-    if(sk->sk_state == GMTP_CLOSED) {
-    	gmtp_pr_info("Calling inet_csk_destroy_sock(sk)");
+    if(sk->sk_state == GMTP_CLOSED)
         inet_csk_destroy_sock(sk);
-    }
 
     /* Otherwise, socket is reprieved until protocol close. */
 out:
-	gmtp_pr_info("Finally exiting...");
     bh_unlock_sock(sk);
     local_bh_enable();
     sock_put(sk);
@@ -865,7 +865,7 @@ int gmtp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len, int nonblock,
     const struct gmtp_hdr *gh;
     long timeo;
 
-    gmtp_pr_info();
+    gmtp_pr_func();
 
     lock_sock(sk);
 
@@ -884,13 +884,14 @@ int gmtp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len, int nonblock,
         gh = gmtp_hdr(skb);
 
         gmtp_pr_debug("packet_type=%s\n", gmtp_packet_name(gh->type));
+        print_gmtp_packet(ip_hdr(skb), gh);
 
         switch(gh->type) {
         case GMTP_PKT_DATA:
         case GMTP_PKT_DATAACK:
             goto found_ok_skb;
         case GMTP_PKT_CLOSE:
-            pr_info("CLOSE received!\n");
+        	gmtp_pr_debug("CLOSE received!\n");
             if(!(flags & MSG_PEEK))
                 gmtp_finish_passive_close(sk);
             /* fall through */

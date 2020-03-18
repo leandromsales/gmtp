@@ -35,7 +35,7 @@ static void gmtp_enqueue_skb(struct sock *sk, struct sk_buff *skb)
 
 static void gmtp_fin(struct sock *sk, struct sk_buff *skb)
 {
-	gmtp_print_function();
+	gmtp_pr_func();
 	sk->sk_shutdown = SHUTDOWN_MASK;
 	sock_set_flag(sk, SOCK_DONE);
 	gmtp_enqueue_skb(sk, skb);
@@ -45,7 +45,7 @@ static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
 {
 	int queued = 0;
 
-	gmtp_print_function();
+	gmtp_pr_func();
 
 	switch(sk->sk_state) {
 	/*
@@ -75,9 +75,10 @@ static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
 	case GMTP_OPEN:
 		/* FIXME Close only if gh->flowname == gp->flowname */
 		/* Clear hash table */
+		/* FIXME gmtp_del_client_entry...
 		if(gmtp_role_client(sk))
-			gmtp_del_client_entry(client_hashtable,
-					gmtp_sk(sk)->flowname);
+			/*gmtp_del_client_entry(client_hashtable,
+					gmtp_sk(sk)->flowname);*/
 		/* FIXME: Implement gmtp_del_server_entry() */
 		/*
 		else if(gp->role == GMTP_ROLE_SERVER)
@@ -500,11 +501,9 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 	case GMTP_PKT_ROUTE_NOTIFY:
 		gp->tx_rtt = jiffies_to_msecs(jiffies) - gmtp_sk(sk)->reply_stamp;
 		gp->tx_rtt = gp->tx_rtt > 0? gp->tx_rtt : 1;
-		gp->tx_avg_rtt = rtt_ewma(gp->tx_avg_rtt, gp->tx_rtt,
-		GMTP_RTT_WEIGHT);
+		gp->tx_avg_rtt = rtt_ewma(gp->tx_avg_rtt, gp->tx_rtt, GMTP_RTT_WEIGHT);
 
-		gmtp_pr_debug("RTT: %u ms | RTT_AVG: %u ms", gp->tx_rtt,
-				gp->tx_avg_rtt);
+		gmtp_pr_debug("RTT: %u ms | RTT_AVG: %u ms", gp->tx_rtt, gp->tx_avg_rtt);
 
 		/** TODO Update routes */
 		gmtp_rcv_route_notify(sk, skb, gh);
