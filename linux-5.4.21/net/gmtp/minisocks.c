@@ -166,11 +166,9 @@ struct sock *gmtp_check_req(struct sock *sk, struct sk_buff *skb,
 			&own_req);
 
 	if (child) {
-		gmtp_pr_info("child is OK before hashdance");
 		child = inet_csk_complete_hashdance(sk, child, req, own_req);
 		goto out;
 	}
-	gmtp_pr_info("child is NULL before hashdance");
 
     GMTP_SKB_CB(skb)->reset_code = GMTP_RESET_CODE_TOO_BUSY;
 drop:
@@ -180,11 +178,6 @@ drop:
     inet_csk_reqsk_queue_drop(sk, req);
 out:
 	/*spin_unlock_bh(&greq->lock);*/
-
-	if(child)
-		gmtp_pr_info("child is OK after all");
-	else
-		gmtp_pr_info("child is NULL after all");
 
 	return child;
 }

@@ -4,6 +4,7 @@ import sys
 import socket
 import time
 import timeit
+
 from datetime import datetime
 from optparse import Option, OptionParser
 from gmtp import *
@@ -63,7 +64,7 @@ print "Listening for incoming connections...\n"
 time.sleep(0.5)
 
 server_socket.listen(4)
-server_output, client_addr = server_socket.accept()
+connection, client_addr = server_socket.accept()
 print "[+] Client connected:", client_addr[0], ":", str(client_addr[1])
 
 i = 1
@@ -90,7 +91,7 @@ try:
         size = getPacketSize(text)
         total_size = total_size + size
         
-        server_output.send(text.encode('utf-8'))
+        connection.send(text.encode('utf-8'))
         i = i + 1
         
         if(i%50 == 0):
@@ -119,15 +120,13 @@ try:
             print "\tSend rate (last 100):", rate, "B/s | ", rate_mb, "MB/s"
             print "\tSend rate (total): ", total_rate, "B/s | ", total_rate_mb, "MB/s\n\n"
             print "Sending... "
+            time.sleep(0.100) # 100 ms
         
 except (KeyboardInterrupt, SystemExit):
     print '\nReceived keyboard interrupt, quitting...\n'
 finally:
     print '\nShutting down server...\n'
-    #server_output.send(out.encode('utf-8'))
-    server_output.shutdown(socket.SHUT_RDWR)
-    server_output.close()
-    server_socket.shutdown(socket.SHUT_RDWR)
-    server_socket.close()
+    #connection.send(out.encode('utf-8'))
+    connection.close()
     
 

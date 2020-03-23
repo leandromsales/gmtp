@@ -98,7 +98,11 @@ static void gmtp_write_timer(struct timer_list *t)
 			icsk_retransmit_timer);
 	struct sock *sk = &icsk->icsk_inet.sk;
 	int event = 0;
+
 	gmtp_pr_func();
+
+	if(sk == NULL)
+		return;
 
 	bh_lock_sock(sk);
 	if (sock_owned_by_user(sk)) {
@@ -286,6 +290,9 @@ static void gmtp_delack_timer(struct timer_list *t)
 				from_timer(icsk, t, icsk_delack_timer);
 	struct sock *sk = &icsk->icsk_inet.sk;
 	gmtp_pr_func();
+
+	if(sk == NULL)
+		return;
 
 	bh_lock_sock(sk);
 	if (sock_owned_by_user(sk)) {

@@ -448,6 +448,7 @@ out:
 
 static void gmtp_v4_ctl_send_reset(const struct sock *sk, struct sk_buff *rxskb)
 {
+	gmtp_pr_func();
     gmtp_v4_ctl_send_packet(sk, rxskb, GMTP_PKT_RESET);
 }
 
@@ -457,33 +458,23 @@ static struct sock *gmtp_v4_hnd_req(struct sock *sk, struct sk_buff *skb)
     const struct iphdr *iph = ip_hdr(skb);
     struct sock *nsk;
 
-    /* Find possible connection requests. */
-/*    struct request_sock *req = inet_csk_search_req(sk, gh->sport,
-            iph->saddr, iph->daddr);*/
-
     struct request_sock *req = inet_reqsk(sk);
 
     gmtp_pr_func();
 
-    if (req == NULL) {
-    	gmtp_pr_error("Req is NULL!");
+    if (req == NULL)
     	return NULL;
-    }
 
     nsk = req->rsk_listener;
-    if(nsk == NULL) {
-    	gmtp_pr_info("nsk is NULL!");
+    if(nsk == NULL)
     	goto lookup;
-    }
-    else
-    	gmtp_pr_info("nsk is OK!");
 
-    /** This causes kernel panic:
+    /** This causes kernel panic:*/
     if (unlikely(nsk->sk_state != GMTP_LISTEN)) {
 		gmtp_pr_error("nsk->sk_state != GMTP_LISTEN");
 		 inet_csk_reqsk_queue_drop_and_put(nsk, req);
 		goto lookup;
-	}*/
+	}
 
     gmtp_pr_info("Calling sock_hold...");
     sock_hold(sk);
@@ -495,7 +486,7 @@ static struct sock *gmtp_v4_hnd_req(struct sock *sk, struct sk_buff *skb)
     	nsk = sk;
     return nsk;
 lookup:
-	gmtp_pr_info("Lookup for established connections");
+	gmtp_pr_info("TODO: Lookup for established connections");
 	/*
     nsk = inet_lookup_established(sock_net(sk), &gmtp_inet_hashinfo,
             iph->saddr, gh->sport, iph->daddr, gh->dport,
@@ -700,8 +691,7 @@ static int gmtp_v4_client_rcv_reporter_ack(struct sk_buff *skb,
     c->ack_rx_tstamp = jiffies_to_msecs(jiffies);
     gmtp_sk(c->rsock)->ack_rx_tstamp = c->ack_rx_tstamp;
 
-    pr_info("ACK received from reporter %pI4@%-5d\n", &iph->saddr,
-            ntohs(gh->sport));
+    pr_info("ACK rcv from reporter %pI4@%-5d\n", &iph->saddr, ntohs(gh->sport));
 
     return 0;
 }
@@ -742,8 +732,7 @@ static int gmtp_v4_reporter_rcv_ack(struct sk_buff *skb)
     }
     c->ack_rx_tstamp = jiffies_to_msecs(jiffies);
 
-    pr_info("ACK received from client %pI4@%-5d\n", &iph->saddr,
-            ntohs(gh->sport));
+    pr_info("ACK rcv from client %pI4@%-5d\n", &iph->saddr, ntohs(gh->sport));
 
     gmtp_v4_ctl_send_packet(0, skb, GMTP_PKT_ACK);
 
@@ -880,7 +869,6 @@ no_gmtp_socket:
 
 discard_it:
     kfree_skb(skb);
-    return 0;
 
 ignore_it:
     return 0;
@@ -893,7 +881,7 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
     const struct iphdr *iph;
     struct net *net;
     struct sock *sk;
-    bool refcounted;
+    bool refcounted = false;
     int ret;
 
     /* Step 1: Check header basics */
@@ -956,6 +944,19 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 
     }
 lookup:
+
+	/*if (gh->type == GMTP_PKT_RESET) {
+		gmtp_pr_info("RESET RECEIVED!");
+		goto discard_it;
+	}*/
+
+	/* FIXME Calling inet_lookup functions causes kernel panic
+	 * GMTP is using its own list to avoid inet lookup
+	 */
+	/*sk = __inet_lookup(net, &gmtp_inet_hashinfo, skb, __gmtp_hdr_len(gh),
+			iph->saddr, gh->sport, iph->daddr, gh->dport, inet_iif(skb), 0,
+			&refcounted);*/
+
 	/*
 	 * Unicast packet...
 	 */
@@ -966,6 +967,9 @@ lookup:
     if (!sk)
     	goto lookup_listener;
 
+    gmtp_pr_debug("Socket addr: %p", sk);
+    print_gmtp_sock(sk);
+
 	if(sk->sk_state == GMTP_NEW_SYN_RECV) {
 
 		struct request_sock *req = inet_reqsk(sk);
@@ -974,29 +978,33 @@ lookup:
 		sk = req->rsk_listener;
 
 		if (unlikely(sk->sk_state != GMTP_LISTEN)) {
-			gmtp_pr_info("sk->sk_state != GMTP_LISTEN");
+			gmtp_pr_info("req->rsk_listener->sk_state != GMTP_LISTEN");
+			gmtp_pr_debug("req->rsk_listener addr: %p", sk);
+			print_gmtp_sock(sk);
 			inet_csk_reqsk_queue_drop_and_put(sk, req);
-			goto lookup;
+
+			/* FIXME Endless loop when send close and receive close back */
+			goto lookup_listener;
 		}
 		sock_hold(sk);
-		/*refcounted = true;*/
+		refcounted = true;
+
 		nsk = gmtp_check_req(sk, skb, req);
 
 		if (!nsk) {
 			reqsk_put(req);
-			goto discard_it;
+			goto discard_and_relse;
 		}
 
 		if (nsk == sk) {
 			reqsk_put(req);
 		} else if (gmtp_child_process(sk, nsk, skb)) {
 			gmtp_v4_ctl_send_reset(sk, skb);
-			goto discard_it;
+			goto discard_and_relse;;
 		} else {
 			sock_put(sk);
 			return 0;
 		}
-		return 0;
 	}
 	goto receive_it;
 
@@ -1005,6 +1013,7 @@ lookup_listener:
 	if(!sk)
 		goto receive_it;
 
+	print_gmtp_sock(sk);
 	if (sk->sk_state == GMTP_LISTEN) {
 		ret = gmtp_v4_do_rcv(sk, skb);
 		goto put_and_return;
@@ -1019,6 +1028,11 @@ receive_it:
 discard_it:
     kfree_skb(skb);
     return 0;
+
+discard_and_relse:
+	if (refcounted)
+		sock_put(sk);
+	goto discard_it;
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_rcv);
 
@@ -1065,37 +1079,30 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
         goto drop; /* discard, don't send a reset here */
 
 
-    gmtp_pr_debug("Checking register request...");
     /*
      * TW buckets are converted to open requests without
      * limitations, they conserve resources and peer is
      * evidently real one.
      */
     gcb->reset_code = GMTP_RESET_CODE_TOO_BUSY;
-    if(inet_csk_reqsk_queue_is_full(sk)) {
-        pr_info("inet_csk_reqsk_queue_is_full(sk)\n");
+    if(inet_csk_reqsk_queue_is_full(sk))
         goto drop;
-    }
 
     /**
      * FIXME Update sk->sk_ack_backlog correctly
      */
     sk->sk_ack_backlog = 0;
 
-    gmtp_pr_debug("Verifying if sk_acceptq_is_full");
     if(sk_acceptq_is_full(sk))
         goto drop;
 
-    gmtp_pr_debug("Checking inet_reqsk_alloc...");
     req = inet_reqsk_alloc(&gmtp_request_sock_ops, sk, true);
     if(req == NULL)
         goto drop;
 
-    gmtp_pr_debug("gmtp_reqsk_init...");
     if(gmtp_reqsk_init(req, gmtp_sk(sk), skb))
         goto drop_and_free;
 
-    gmtp_pr_debug("security_inet_conn_request...");
     if(security_inet_conn_request(sk, skb, req))
         goto drop_and_free;
 
@@ -1103,7 +1110,6 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
     sk_rcv_saddr_set(req_to_sk(req), ip_hdr(skb)->daddr);
     sk_daddr_set(req_to_sk(req), ip_hdr(skb)->saddr);
 
-    gmtp_pr_info("original new_socket server port: %5d", ntohs(inet_sk(req_to_sk(req))->inet_sport));
     inet_sk(req_to_sk(req))->inet_sport = gh->dport;
     ireq->ireq_family = AF_INET;
     ireq->ir_iif = sk->sk_bound_dev_if;
@@ -1125,10 +1131,6 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
     memcpy(greq->flowname, gp->flowname, GMTP_FLOWNAME_LEN);
     memcpy(gp->relay_id, gr->relay_id, sizeof(gr->relay_id));
 
-    gmtp_pr_info("new_socket client port: %5d", ntohs(req_to_sk(req)->sk_dport));
-    gmtp_pr_info("new_socket server port now: %5d", ntohs(inet_sk(req_to_sk(req))->inet_sport));
-
-    gmtp_pr_info("req_to_sk(req)->sk_state: %u", req_to_sk(req)->sk_state);
     if(gmtp_sk_hash_connect(&gmtp_sk_hash, req_to_sk(req)))
     	goto drop_and_free;
 
@@ -1140,15 +1142,12 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
     return 0;
 
 reset:
-    gmtp_pr_error("Sending RESET (bad flow name)");
     gcb->reset_code = GMTP_RESET_CODE_BAD_FLOWNAME;
     gmtp_v4_ctl_send_reset(sk, skb);
 
 drop_and_free:
-	gmtp_pr_error("reqsk_free(req)...\n");
     reqsk_free(req);
 drop:
-	gmtp_pr_error("dropping packet...\n");
     return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_conn_request);
@@ -1159,10 +1158,9 @@ EXPORT_SYMBOL_GPL(gmtp_v4_conn_request);
  *
  * This is the equivalent of TCP's tcp_v4_syn_recv_sock
  */
-struct sock *gmtp_v4_request_recv_sock(const struct sock *sk, struct sk_buff *skb,
-        struct request_sock *req, struct dst_entry *dst,
-                      struct request_sock *req_unhash,
-                      bool *own_req)
+struct sock *gmtp_v4_request_recv_sock(const struct sock *sk,
+		struct sk_buff *skb, struct request_sock *req, struct dst_entry *dst,
+                      struct request_sock *req_unhash, bool *own_req)
 
 {
     struct inet_request_sock *ireq;
@@ -1171,12 +1169,8 @@ struct sock *gmtp_v4_request_recv_sock(const struct sock *sk, struct sk_buff *sk
 
     gmtp_pr_func();
 
-    // sk->sk_ack_backlog = 0; comenetado por ser read only
-
-    if(sk_acceptq_is_full(sk)) {
-        pr_info("sk_acceptq_is_full(sk)\n");
+    if(sk_acceptq_is_full(sk))
         goto exit_overflow;
-    }
 
     newsk = gmtp_create_openreq_child(sk, req, skb);
     if(newsk == NULL)
@@ -1184,14 +1178,13 @@ struct sock *gmtp_v4_request_recv_sock(const struct sock *sk, struct sk_buff *sk
 
     newinet = inet_sk(newsk);
     ireq = inet_rsk(req);
-    newinet->inet_daddr = ireq->ir_rmt_addr;
-    newinet->inet_rcv_saddr = ireq->ir_loc_addr;
+    sk_daddr_set(newsk, ireq->ir_rmt_addr);
+    sk_rcv_saddr_set(newsk, ireq->ir_loc_addr);
     newinet->inet_saddr = ireq->ir_loc_addr;
-    newinet->inet_opt = ireq->ireq_opt;
-    ireq->ireq_opt = NULL;
+    RCU_INIT_POINTER(newinet->inet_opt, rcu_dereference(ireq->ireq_opt));
     newinet->mc_index = inet_iif(skb);
     newinet->mc_ttl = ip_hdr(skb)->ttl;
-    newinet->inet_id = jiffies;
+    newinet->inet_id = prandom_u32();
 
     if(dst == NULL  &&
             (dst = inet_csk_route_child_sock(sk, newsk, req)) == NULL)
@@ -1203,9 +1196,16 @@ struct sock *gmtp_v4_request_recv_sock(const struct sock *sk, struct sk_buff *sk
 
     if(__inet_inherit_port(sk, newsk) < 0)
         goto put_and_exit;
-    inet_ehash_nolisten(newsk, NULL);
 
-    return newsk;
+    /** TODO Add newsk and remove oldsk into GMTP hash table) */
+    gmtp_pr_info("New sk: %p", newsk);
+    gmtp_pr_info("old sk: %p", req_to_sk(req_unhash));
+	*own_req = inet_ehash_nolisten(newsk, req_to_sk(req_unhash));
+	if (*own_req)
+		ireq->ireq_opt = NULL;
+	else
+		newinet->inet_opt = NULL;
+	return newsk;
 
 exit_overflow:
     __NET_INC_STATS(sock_net(sk), LINUX_MIB_LISTENOVERFLOWS);
@@ -1484,6 +1484,7 @@ MODULE_ALIAS_NET_PF_PROTO_TYPE(PF_INET, 0, SOCK_GMTP);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Joilnen Leite <joilnen@gmail.com>");
 MODULE_AUTHOR("Mário André Menezes <mariomenezescosta@gmail.com>");
-MODULE_AUTHOR("Wendell Silva Soares <wss@ic.ufal.br>");
+MODULE_AUTHOR("Wendell Silva Soares <wendell@ic.ufal.br>");
+MODULE_AUTHOR("Leandro Melo de Sales <leandro@ic.ufal.br>");
 MODULE_DESCRIPTION("GMTP - Global Media Transmission Protocol");
 

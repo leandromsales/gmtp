@@ -58,11 +58,12 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 
         switch (gcb->type) {
         case GMTP_PKT_DATA:
-            set_ack = 0;
+        case GMTP_PKT_DATAACK:
             gp->ndp_sent--;
             /* fall through */
-        case GMTP_PKT_DATAACK:
         case GMTP_PKT_RESET:
+        case GMTP_PKT_CLOSE:
+        	set_ack = 0;
             break;
         case GMTP_PKT_REQUEST:
             set_ack = 0;
@@ -197,7 +198,6 @@ void gmtp_write_space(struct sock *sk)
     /* Should agree with poll, otherwise some programs break */
     if (sock_writeable(sk))
         sk_wake_async(sk, SOCK_WAKE_SPACE, POLL_OUT);
-
     rcu_read_unlock();
 }
 
@@ -500,11 +500,9 @@ int gmtp_connect(struct sock *sk)
     gp->myself->ack_rx_tstamp = gp->ack_rx_tstamp;
     gp->myself->mysock = sk;*/
 
-    gmtp_pr_info("Transmitting packet...");
     gmtp_transmit_skb(sk, gmtp_skb_entail(sk, skb));
 
     icsk->icsk_retransmits = 0;
-    gmtp_pr_info("Starting xmit_timer...");
     inet_csk_reset_xmit_timer(sk, ICSK_TIME_RETRANS,
                       icsk->icsk_rto, GMTP_RTO_MAX);
     return 0;
@@ -704,8 +702,8 @@ void gmtp_send_close(struct sock *sk, const int active)
     gmtp_pr_func();
 
     skb = alloc_skb(sk->sk_prot->max_header, prio);
-    if(skb == NULL)
-        return;
+    if(unlikely(skb == NULL))
+    	return;
 
     /* Reserve space for headers and prepare control bits. */
     skb_reserve(skb, sk->sk_prot->max_header);
@@ -714,11 +712,14 @@ void gmtp_send_close(struct sock *sk, const int active)
     if(active) {
         skb = gmtp_skb_entail(sk, skb);
         /*
-         * TODO Verify if we need Retransmission timer
-         * for active-close...
-         */
-        /*inet_csk_reset_xmit_timer(sk, ICSK_TIME_RETRANS,
-                GMTP_TIMEOUT_INIT, GMTP_RTO_MAX);*/
+		 * Retransmission timer for active-close.
+		 * GMTO RFC will require to retransmit the Close until the
+		 * CLOSING/CLOSEREQ state can be left?
+		 * Sugestion: The initial timeout is 2 RTTs.
+		 * FIXME: Active timer for active-close.
+		 */
+        inet_csk_reset_xmit_timer(sk, ICSK_TIME_RETRANS,
+                GMTP_TIMEOUT_INIT, GMTP_RTO_MAX);
     }
     gmtp_transmit_skb(sk, skb);
 }

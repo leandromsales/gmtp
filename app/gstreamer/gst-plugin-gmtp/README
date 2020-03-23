@@ -38,7 +38,7 @@ TBD
 		* Serving mp3 file using GMTP Server
 		gst-launch-1.0 --gst-plugin-path=$HOME/gmtp/app/gstreamer/gst-plugin-gmtp/src -v filesrc location=~/audiofile.mp3 ! mpegaudioparse ! gmtpserversink port=12345
 		
-		* Playing and saving remote mp3 file using GMTP client
+		* Playing remote mp3 file using GMTP client
 		gst-launch-1.0 --gst-plugin-path=$HOME/gmtp/app/gstreamer/gst-plugin-gmtp/src -v gmtpclientsrc host=localhost port=12345 ! decodebin ! alsasink
 		
 		* Saving (without play) remote mp3 file using GMTP client

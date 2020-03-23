@@ -103,7 +103,7 @@ const char *gmtp_state_name(const int state)
     [GMTP_CLOSING]      = "CLOSING",
     [GMTP_TIME_WAIT]    = "TIME_WAIT",
     [GMTP_CLOSED]       = "CLOSED",
-    [GMTP_DELEGATED]    = "DELEGATED",
+    [GMTP_NEW_SYN_RECV]    = "NEW_SYN_RECV",
     };
 
     if (state >= GMTP_PKT_INVALID)
@@ -284,6 +284,7 @@ bool gmtp_build_md5(unsigned char *result, unsigned char* data, size_t len) {
 
     return true;
 }
+EXPORT_SYMBOL_GPL(gmtp_build_md5);
 
 /*
 unsigned char *gmtp_build_md5(unsigned char *buf)
@@ -335,8 +336,8 @@ out:
     crypto_free_shash(tfm);
     return output;
 }
-*/
 EXPORT_SYMBOL_GPL(gmtp_build_md5);
+*/
 
 static inline int bytes_added(int sprintf_return)
 {
@@ -384,11 +385,9 @@ unsigned char *gmtp_build_relay_id(void)
     if(!success)
     	goto failure;
 
-    gmtp_pr_info("Relay ID was built!");
     return relay_id;
 
 failure:
-	gmtp_pr_error("Failure on build Relay ID...");
 	return NULL;
 }
 EXPORT_SYMBOL_GPL(gmtp_build_relay_id);
@@ -469,6 +468,7 @@ void gmtp_set_state(struct sock *sk, const int state)
 {
     const int oldstate = sk->sk_state;
 
+    gmtp_pr_debug("Socket addr: %p", sk);
     print_gmtp_sock(sk);
     gmtp_pr_info("(%s --> %s)", gmtp_state_name(oldstate),
                 gmtp_state_name(state));
@@ -500,19 +500,26 @@ static void gmtp_finish_passive_close(struct sock *sk)
 {
     gmtp_pr_func();
     if(sk->sk_state == GMTP_PASSIVE_CLOSE) {
-        /* Node (client or server) has received Close packet. */
-       /* gmtp_send_reset(sk, GMTP_RESET_CODE_CLOSED);*/
+       /* Node (client or server) has received Close packet. */
 
     	/*
-    	 *            (3) Termination
-    	 *   Client                   Server
-    	 *   ------                   ------
-    	 *                        <-- GMTP-Close
-    	 * GMTP-Close -->
-    	 *                        <-- GMTP-Reset
+    	 *                    (3) Termination
+    	 *
+    	 *   Client State                             Server State
+    	 *
+    	 *       OPEN                                     OPEN
+    	 * 1.             <--        Close         <--   CLOSEREQ
+    	 * 2.   CLOSING   -->        Close         -->
+    	 * 3.             <--        Reset         <--   CLOSED (LISTEN)
+    	 * 4.   TIMEWAIT
+    	 * 5.   CLOSED
+    	 *
+    	 * @param sk - struct sock
+    	 * @param active:
+    	 *      0: send close and finish | 1: send close until receive reset
     	 */
-        gmtp_send_close(sk, 0);
-        gmtp_set_state(sk, GMTP_CLOSED);
+        gmtp_send_close(sk, 1);
+        gmtp_set_state(sk, GMTP_CLOSING);
     }
 }
 
@@ -599,7 +606,7 @@ static void gmtp_terminate_connection(struct sock *sk)
 {
     u8 next_state = GMTP_CLOSED;
 
-    gmtp_print_function();
+    gmtp_pr_func();
 
     switch (sk->sk_state) {
     case GMTP_PASSIVE_CLOSE:
@@ -607,9 +614,8 @@ static void gmtp_terminate_connection(struct sock *sk)
         break;
     case GMTP_OPEN:
         gmtp_send_close(sk, 1);
-
         if (gmtp_sk(sk)->role == GMTP_ROLE_SERVER &&
-            !gmtp_sk(sk)->server_timewait)
+        		!gmtp_sk(sk)->server_timewait)
             next_state = GMTP_ACTIVE_CLOSEREQ;
         else
             next_state = GMTP_CLOSING;
@@ -621,7 +627,6 @@ static void gmtp_terminate_connection(struct sock *sk)
 
 void gmtp_close(struct sock *sk, long timeout)
 {
-    /*struct gmtp_sock *gp = gmtp_sk(sk);*/
     struct sk_buff *skb;
     u32 data_was_unread = 0;
     int state;
@@ -654,6 +659,7 @@ void gmtp_close(struct sock *sk, long timeout)
         __kfree_skb(skb);
     }
 
+    gmtp_pr_info("Data was unread: %u bytes", data_was_unread);
     if(data_was_unread) {
         /* Unread data was tossed, send an appropriate Reset Code */
         gmtp_pr_warning("ABORT with %u bytes unread", data_was_unread);
@@ -892,6 +898,8 @@ int gmtp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len, int nonblock,
             goto found_ok_skb;
         case GMTP_PKT_CLOSE:
         	gmtp_pr_debug("CLOSE received!\n");
+        	print_gmtp_sock(sk);
+			gmtp_pr_info("(%s)", gmtp_state_name(sk->sk_state));
             if(!(flags & MSG_PEEK))
                 gmtp_finish_passive_close(sk);
             /* fall through */
@@ -1038,7 +1046,9 @@ int gmtp_do_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
     if(!timer_pending(&gp->xmit_timer)) {
         gmtp_write_xmit(sk, skb);
         /* FIXME Commented for linux-5.4.21 */
-    }/* else {
+    }
+
+    /* else {
         struct timer_list *sendmsg_timer = kmalloc(
                 sizeof(struct timer_list), GFP_KERNEL);
         struct gmtp_sendmsg_data *sd = kmalloc(sizeof(struct gmtp_sendmsg_data),
@@ -1138,7 +1148,6 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
     if(!s)
         return gmtp_do_sendmsg(sk, msg, len);
 
-
     /* For every socket(P) in server, send the same data */
     list_for_each_entry(r, &s->relays.relay_list, relay_list) {
 
@@ -1221,7 +1230,7 @@ EXPORT_SYMBOL_GPL(inet_gmtp_listen);
 
 void gmtp_shutdown(struct sock *sk, int how)
 {
-    gmtp_print_function();
+    gmtp_pr_func();
     gmtp_print_debug("called shutdown(%x)", how);
 }
 EXPORT_SYMBOL_GPL(gmtp_shutdown);
@@ -1249,10 +1258,9 @@ static int gmtp_create_inet_hashinfo(void)
 
 	/* See https://patchwork.ozlabs.org/patch/1018304/ */
 	rc = inet_hashinfo2_init_mod(&gmtp_inet_hashinfo);
-	if (rc) {
-		gmtp_pr_info("inet_hashinfo2_init_mod returned: %d", rc);
+	gmtp_pr_info("inet_hashinfo2_init_mod returned: %d", rc);
+	if (rc)
 		goto out_fail;
-	}
 	rc = -ENOBUFS;
 
     gmtp_inet_hashinfo.bind_bucket_cachep =
@@ -1456,6 +1464,7 @@ module_exit(gmtp_exit);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Joilnen Leite <joilnen@gmail.com>");
 MODULE_AUTHOR("Mário André Menezes <mariomenezescosta@gmail.com>");
-MODULE_AUTHOR("Wendell Silva Soares <wss@ic.ufal.br>");
+MODULE_AUTHOR("Wendell Silva Soares <wendell@ic.ufal.br>");
+MODULE_AUTHOR("Leandro Melo de Sales <leandro@ic.ufal.br>");
 MODULE_DESCRIPTION("GMTP - Global Media Transmission Protocol");
 
