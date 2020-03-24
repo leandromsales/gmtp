@@ -473,8 +473,7 @@ void gmtp_set_state(struct sock *sk, const int state)
     gmtp_pr_info("(%s --> %s)", gmtp_state_name(oldstate),
                 gmtp_state_name(state));
 
-    if(state == oldstate)
-        gmtp_print_warning("new state == old state!");
+    WARN_ON(state == oldstate);
 
     switch(state) {
     case GMTP_CLOSED:
@@ -1180,6 +1179,21 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 }
 EXPORT_SYMBOL_GPL(gmtp_sendmsg);
 
+int static inline gmtp_csk_listen_start(struct sock *sk, int backlog)
+{
+	int err = 0;
+
+	err = inet_csk_listen_start(sk, backlog);
+	gmtp_pr_debug("inet_csk_listen_start(sk, %d) -> %d", backlog, err);
+	if (err)
+		goto out;
+
+	err = gmtp_sk_hash_listener(&gmtp_sk_hash, sk);
+
+out:
+	return err;
+}
+
 int inet_gmtp_listen(struct socket *sock, int backlog)
 {
     struct sock *sk = sock->sk;
@@ -1211,12 +1225,7 @@ int inet_gmtp_listen(struct socket *sock, int backlog)
         */
         gs->role = GMTP_ROLE_LISTEN;
 
-        err = inet_csk_listen_start(sk, backlog);
-        gmtp_pr_debug("inet_csk_listen_start(sk, %d) -> %d", backlog, err);
-        if (err)
-            goto out;
-
-        err = gmtp_sk_listen_start(&gmtp_sk_hash, sk);
+        err = gmtp_csk_listen_start(sk, backlog);
         if (err)
         	goto out;
     }

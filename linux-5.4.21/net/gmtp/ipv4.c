@@ -1152,6 +1152,13 @@ drop:
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_conn_request);
 
+
+bool static inline gmtp_ehash_nolisten(struct sock *sk, struct sock *osk)
+{
+	gmtp_sk_ehash_insert(&gmtp_sk_hash, sk, osk);
+	return inet_ehash_nolisten(sk, osk);
+}
+
 /*
  * The three way handshake has completed - we got a valid ACK or DATAACK -
  * now create the new socket.
@@ -1200,7 +1207,7 @@ struct sock *gmtp_v4_request_recv_sock(const struct sock *sk,
     /** TODO Add newsk and remove oldsk into GMTP hash table) */
     gmtp_pr_info("New sk: %p", newsk);
     gmtp_pr_info("old sk: %p", req_to_sk(req_unhash));
-	*own_req = inet_ehash_nolisten(newsk, req_to_sk(req_unhash));
+	*own_req = gmtp_ehash_nolisten(newsk, req_to_sk(req_unhash));
 	if (*own_req)
 		ireq->ireq_opt = NULL;
 	else

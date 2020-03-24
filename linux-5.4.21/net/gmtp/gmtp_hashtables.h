@@ -30,7 +30,7 @@ struct gmtp_sk_hashtable {
 
 int gmtp_build_sk_hashtable(struct gmtp_sk_hashtable *sk_table);
 
-int gmtp_sk_listen_start(struct gmtp_sk_hashtable *sk_table, struct sock *sk);
+int gmtp_sk_hash_listener(struct gmtp_sk_hashtable *sk_table, struct sock *sk);
 
 struct sock *gmtp_lookup_listener(struct gmtp_sk_hashtable *sk_table,
 		 const __be32 addr, const __be16 port);
@@ -40,5 +40,8 @@ int gmtp_sk_hash_connect(struct gmtp_sk_hashtable *sk_table, struct sock *sk);
 struct sock *gmtp_lookup_established(struct gmtp_sk_hashtable *sk_table,
 		 const __be32 saddr, const __be16 sport,
 		 const __be32 daddr, const __be16 dport);
+
+void gmtp_sk_ehash_insert(struct gmtp_sk_hashtable *sk_table,
+		struct sock *sk, struct sock *osk);
 
 #endif /* GMTP_HASHTABLES_H_ */
