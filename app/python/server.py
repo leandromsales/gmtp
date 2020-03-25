@@ -82,7 +82,7 @@ try:
     while i <= npkt:
         
         #time.sleep(0.001); # App controls Tx    0,001 ~ 100.000 bytes/s
-        
+       
         if(i == 1):
             start_time = timeit.default_timer()
             last_time = timeit.default_timer()
@@ -91,7 +91,13 @@ try:
         size = getPacketSize(text)
         total_size = total_size + size
         
-        connection.send(text.encode('utf-8'))
+	try:
+            connection.send(text.encode('utf-8'))
+        except socket.error:
+	    #connection.close()
+            print "[+] Connection with client ", client_addr[0], ":", str(client_addr[1]), "closed."
+            break
+
         i = i + 1
         
         if(i%50 == 0):

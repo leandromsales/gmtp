@@ -45,8 +45,6 @@ EXPORT_SYMBOL_GPL(gmtp_build_sk_hashtable);
 int __gmtp_add_listen_item(struct gmtp_sk_hashtable *sk_table,
 		struct gmtp_sk_hashitem *item)
 {
-	gmtp_pr_func();
-
 	if (sk_table->hlisten == NULL)
 		return -ENOKEY;
 
@@ -64,10 +62,6 @@ struct gmtp_sk_hashitem * __gmtp_lookup_listener(
 	struct gmtp_sk_hashitem *pos;
 	struct inet_sock *inet;
 
-	gmtp_pr_func();
-
-	gmtp_pr_info("Searching for: %pI4@%-5d", &addr, ntohs(port));
-
 	if(sk_table->hlisten == NULL)
 		return NULL;
 
@@ -79,17 +73,14 @@ struct gmtp_sk_hashitem * __gmtp_lookup_listener(
 			continue;
 
 		inet = inet_sk(pos->sk);
-		gmtp_pr_info("Item: [%pI4@%-5d]",
-						&inet->inet_rcv_saddr, ntohs(inet->inet_sport));
 		
-		if(inet->inet_sport == port) {
-			if(inet->inet_rcv_saddr == 0) { /* addr: 0.0.0.0 (using INADDR_ANY causes kernel panic (!?) */
-				gmtp_pr_info("Found (ANY)");
+		if(inet->inet_sport == port)
+		{
+			if(inet->inet_rcv_saddr == 0) /* addr: 0.0.0.0 (using INADDR_ANY causes kernel panic (!?) */
 				return pos;
-			} else if (inet->inet_rcv_saddr == addr) {
-				gmtp_pr_info("Found!");
+
+			if (inet->inet_rcv_saddr == addr)
 				return pos;
-			}
 		}
 	}
 	return NULL;
@@ -99,8 +90,6 @@ int gmtp_sk_hash_listener(struct gmtp_sk_hashtable *sk_table, struct sock *sk)
 {
 	struct gmtp_sk_hashitem *new_item;
 	struct inet_sock *inet = inet_sk(sk);
-
-	gmtp_pr_func();
 
 	new_item = __gmtp_lookup_listener(sk_table,
 			inet->inet_rcv_saddr, inet->inet_sport);
@@ -128,8 +117,6 @@ struct sock *gmtp_lookup_listener(struct gmtp_sk_hashtable *sk_table,
 {
 	struct gmtp_sk_hashitem *result;
 
-	gmtp_pr_func();
-
 	result = __gmtp_lookup_listener(sk_table, addr, port);
 	if(result)
 		return result->sk;
@@ -145,8 +132,6 @@ struct gmtp_sk_hashitem * __gmtp_lookup_established(
 {
 	struct gmtp_sk_hashitem *pos;
 	struct inet_sock *inet;
-
-	gmtp_pr_func();
 
 	if(sk_table->hbind == NULL)
 		return NULL;
@@ -179,8 +164,6 @@ struct gmtp_sk_hashitem * __gmtp_lookup_established(
 int __gmtp_add_established_item(struct gmtp_sk_hashtable *sk_table,
 		struct gmtp_sk_hashitem *item)
 {
-	gmtp_pr_func();
-
 	if (sk_table->hbind == NULL)
 		return -ENOKEY;
 
@@ -196,15 +179,13 @@ int gmtp_sk_hash_connect(struct gmtp_sk_hashtable *sk_table, struct sock *sk)
 	struct gmtp_sk_hashitem *new_item;
 	struct inet_sock *inet = inet_sk(sk);
 
-	gmtp_pr_func();
-
 	new_item = kmalloc(sizeof(struct gmtp_sk_hashitem), GFP_ATOMIC);
 
 	if (new_item == NULL)
 		return -ENOMEM;
 
 	new_item->sk = sk;
-	gmtp_pr_info("Adding to GMTP_BHASH: [%pI4@%-5d <=> %pI4@%-5d]",
+	gmtp_pr_info("Adding to GMTP_EHASH: [%pI4@%-5d <=> %pI4@%-5d]",
 					&inet->inet_rcv_saddr, ntohs(inet->inet_sport),
 					&inet->inet_daddr, ntohs(inet->inet_dport));
 	return __gmtp_add_established_item(sk_table, new_item);
@@ -220,8 +201,6 @@ struct sock *gmtp_lookup_established(struct gmtp_sk_hashtable *sk_table,
 {
 	struct gmtp_sk_hashitem *result;
 
-	gmtp_pr_func();
-
 	result = __gmtp_lookup_established(sk_table, saddr, sport, daddr, dport);
 	if(result)
 		return result->sk;
@@ -234,8 +213,6 @@ EXPORT_SYMBOL_GPL(gmtp_lookup_established);
 int __gmtp_del_sk_ehash(struct gmtp_sk_hashtable *sk_table, struct sock *sk)
 {
 	struct gmtp_sk_hashitem *pos, *tmp;
-
-	gmtp_pr_func();
 
 	if(sk_table->hbind == NULL)
 		return -ENOENT;
@@ -265,8 +242,6 @@ int __gmtp_del_sk_ehash(struct gmtp_sk_hashtable *sk_table, struct sock *sk)
 void gmtp_sk_ehash_insert(struct gmtp_sk_hashtable *sk_table,
 		struct sock *sk, struct sock *osk)
 {
-	gmtp_pr_func();
-
 	if(osk)
 		__gmtp_del_sk_ehash(sk_table, osk);
 

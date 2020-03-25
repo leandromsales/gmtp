@@ -26,30 +26,37 @@ TBD
 		* Video and audio
 		./gst-launch-1.0 filesrc location=~/videofile.mp4 ! decodebin name=dec ! videoconvert ! autovideosink dec. ! audioconvert ! audioresample ! alsasink
 
+		* TCP Server
+		gst-launch-1.0 -v filesrc location=~/audiofile.mp3 ! mpegaudioparse ! tcpserversink host=0.0.0.0 port=12345
+		
+		*TCP Client play audio
+		gst-launch-1.0 -v tcpclientsrc host=192.168.121.91 port=12345 ! decodebin ! audioconvert ! pulsesink
+		
+
 	3.2 Compiling gst-plugin-gmtp
 
 		export PKG_CONFIG_PATH=/home/wendell/gst-bin/lib/pkgconfig
 		export LD_LIBRARY_PATH=/home/wendell/gst-bin/lib
 		./autogen.sh && ./configure --prefix=/home/wendell/gst-bin && make
 
-		./gst-launch-1.0 -v filesrc location=~/sweetchildomine.mp3 ! mpegaudioparse ! gmtpserversink port=9011 ccid=2
-		./gst-launch-1.0 -v gmtpclientsrc host=localhost port=9011 ccid=2 ! decodebin ! alsasink
+		./gst-launch-1.0 -v filesrc location=~/sweetchildomine.mp3 ! mpegaudioparse ! gmtpserversink port=9011
+		./gst-launch-1.0 -v gmtpclientsrc host=localhost port=9011 ! decodebin ! audioconvert ! pulsesink
 
+	3.3 Testing gst-plugin-gmtp
 		* Serving mp3 file using GMTP Server
 		gst-launch-1.0 --gst-plugin-path=$HOME/gmtp/app/gstreamer/gst-plugin-gmtp/src -v filesrc location=~/audiofile.mp3 ! mpegaudioparse ! gmtpserversink port=12345
 		
 		* Playing remote mp3 file using GMTP client
-		gst-launch-1.0 --gst-plugin-path=$HOME/gmtp/app/gstreamer/gst-plugin-gmtp/src -v gmtpclientsrc host=localhost port=12345 ! decodebin ! alsasink
+		gst-launch-1.0 --gst-plugin-path=$HOME/gmtp/app/gstreamer/gst-plugin-gmtp/src -v gmtpclientsrc host=localhost port=12345 ! decodebin ! audioconvert ! pulsesink
 		
 		* Saving (without play) remote mp3 file using GMTP client
                 gst-launch-1.0 --gst-plugin-path=$HOME/gmtp/app/gstreamer/gst-plugin-gmtp/src -v gmtpclientsrc host=localhost port=12345 ! tee name=tp tp. ! queue ! filesink location=~/audio_copy.mp3 tp. ! queue ! decodebin
 
-
-	3.3 Pipeline examples
+	3.4 Pipeline examples
 		* Play local mp3 and save it to a new file at the same time
-		gst-launch-1.0 -v filesrc location=~/sweetchildomine.mp3 ! tee name=tp tp. ! queue ! filesink location=/tmp/scom2.mp3 tp. ! queue ! decodebin ! alsasink
+		gst-launch-1.0 -v filesrc location=~/sweetchildomine.mp3 ! tee name=tp tp. ! queue ! filesink location=/tmp/scom2.mp3 tp. ! queue ! decodebin ! audioconvert ! pulsesink
 		* Play remote mp3 and save it to a new file at the same time
-		gst-launch-1.0 -v gmtpclientsrc host=192.168.25.58 port=12345 ! tee name=tp tp. ! queue ! filesink location=/tmp/scom3.mp3 tp. ! queue ! decodebin ! alsasink
+		gst-launch-1.0 -v gmtpclientsrc host=192.168.25.58 port=12345 ! tee name=tp tp. ! queue ! filesink location=/tmp/scom3.mp3 tp. ! queue ! decodebin ! audioconvert ! pulsesink
 
 4. Porting to GStreamer 1.0
 ---------------------------

@@ -468,24 +468,31 @@ void gmtp_set_state(struct sock *sk, const int state)
 {
     const int oldstate = sk->sk_state;
 
-    gmtp_pr_debug("Socket addr: %p", sk);
     print_gmtp_sock(sk);
     gmtp_pr_info("(%s --> %s)", gmtp_state_name(oldstate),
                 gmtp_state_name(state));
 
     WARN_ON(state == oldstate);
 
-    switch(state) {
-    case GMTP_CLOSED:
+    if (state == GMTP_CLOSED)
+    {
         /* TODO Implement protocol stats
         if(oldstate == GMTP_OPEN || oldstate == GMTP_CLOSING)
             DCCP_INC_STATS(DCCP_MIB_ESTABRESETS); */
+
+    	/*switch(oldstate)
+    	{
+    	case LISTEN:
+    		 unhash listen
+    		break;
+    	default:
+    		 unhash established
+    	}*/
 
         sk->sk_prot->unhash(sk);
         if(inet_csk(sk)->icsk_bind_hash != NULL
                 && !(sk->sk_userlocks & SOCK_BINDPORT_LOCK))
             inet_put_port(sk);
-        /* fall through */
     }
 
     /* Change state AFTER socket is unhashed to avoid closed
@@ -638,15 +645,11 @@ void gmtp_close(struct sock *sk, long timeout)
 
     gmtp_pr_func();
 
-    pr_info("state: %s, timeout: %ld\n", gmtp_state_name(sk->sk_state), timeout);
-
     lock_sock(sk);
 
     sk->sk_shutdown = SHUTDOWN_MASK;
     if(sk->sk_state == GMTP_LISTEN) {
         gmtp_set_state(sk, GMTP_CLOSED);
-
-        gmtp_pr_info("We are listening yet... Calling inet_csk_listen_stop");
 
         /* Special case. */
         inet_csk_listen_stop(sk);
@@ -710,11 +713,8 @@ adjudge_to_death:
     percpu_counter_inc(sk->sk_prot->orphan_count);
 
     /* Have we already been destroyed by a softirq or backlog? */
-    if(state != GMTP_CLOSED && sk->sk_state == GMTP_CLOSED) {
-        gmtp_pr_debug("we already been destroyed by a "
-                "softirq or backlog");
+    if(state != GMTP_CLOSED && sk->sk_state == GMTP_CLOSED)
         goto out;
-    }
 
     if(sk->sk_state == GMTP_CLOSED)
         inet_csk_destroy_sock(sk);
@@ -883,8 +883,6 @@ int gmtp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len, int nonblock,
     const struct gmtp_hdr *gh;
     long timeo;
 
-    gmtp_pr_func();
-
     lock_sock(sk);
 
     if(sk->sk_state == GMTP_LISTEN) {
@@ -901,15 +899,11 @@ int gmtp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len, int nonblock,
 
         gh = gmtp_hdr(skb);
 
-        gmtp_pr_debug("packet_type=%s\n", gmtp_packet_name(gh->type));
-        print_gmtp_packet(ip_hdr(skb), gh);
-
         switch(gh->type) {
         case GMTP_PKT_DATA:
         case GMTP_PKT_DATAACK:
             goto found_ok_skb;
         case GMTP_PKT_CLOSE:
-        	gmtp_pr_debug("CLOSE received!\n");
         	print_gmtp_sock(sk);
 			gmtp_pr_info("(%s)", gmtp_state_name(sk->sk_state));
             if(!(flags & MSG_PEEK))

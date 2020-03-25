@@ -446,7 +446,6 @@ static int gmtp_check_seqno(struct sock *sk, struct sk_buff *skb)
 
 	if(gh->type == GMTP_PKT_DATA && gp->role == GMTP_ROLE_REPORTER) {
 		if(unlikely(gp->rx_state == MCC_RSTATE_NO_DATA)) {
-			gmtp_pr_info("Setting first seqno to %u \n", gh->seq);
 			gp->gsr = gh->seq;
 			gp->isr = gh->seq;
 			gp->iss = gh->seq;
@@ -466,8 +465,6 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 		const struct gmtp_hdr *gh, const unsigned int len)
 {
 	struct gmtp_sock *gp = gmtp_sk(sk);
-
-	gmtp_pr_func();
 
 	switch (gh->type) {
 	case GMTP_PKT_DATAACK:
@@ -550,8 +547,6 @@ int gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 			 const struct gmtp_hdr *gh, const unsigned int len)
 {
 	struct gmtp_sock *gp = gmtp_sk(sk);
-
-	gmtp_pr_func();
 
 	/* Check sequence numbers... */
 	if(gmtp_check_seqno(sk, skb)) {
@@ -657,8 +652,6 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 
 	if (sk->sk_state == GMTP_LISTEN)  {
 
-		gmtp_pr_debug("sk->sk_state == GMTP_LISTEN");
-
 		if(gh->type == GMTP_PKT_REQUEST || gh->type == GMTP_PKT_REGISTER) {
 			rcu_read_lock();
 			local_bh_disable();
@@ -727,7 +720,6 @@ int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 		return 0;
 
 	case GMTP_REQUEST_RECV: /* Request or Register was received. */
-		gmtp_pr_debug("Request/Register received!");
 		queued = gmtp_rcv_request_rcv_state_process(sk, skb, gh, len);
 		break;
 	}

@@ -508,8 +508,6 @@ int gmtp_v4_do_rcv(struct sock *sk, struct sk_buff *skb)
 {
     struct gmtp_hdr *gh = gmtp_hdr(skb);
 
-    gmtp_pr_func();
-
     if(sk->sk_state == GMTP_OPEN) { /* Fast path*/
         if(gmtp_rcv_established(sk, skb, gh, skb->len))
             goto reset;
@@ -784,8 +782,6 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 {
     const struct gmtp_hdr *gh = gmtp_hdr(skb);
 
-    gmtp_pr_func();
-
     if(sk == NULL) {
 
         const struct iphdr *iph = ip_hdr(skb);
@@ -896,14 +892,10 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
     GMTP_SKB_CB(skb)->seq = gh->seq;
     GMTP_SKB_CB(skb)->type = gh->type;
 
-    /*if(unlikely(gh->type != GMTP_PKT_DATA && gh->type != GMTP_PKT_ACK)) {
+    if(unlikely(gh->type != GMTP_PKT_DATA && gh->type != GMTP_PKT_ACK)) {
     	gmtp_pr_func();
         print_gmtp_packet(iph, gh);
-        gmtp_pr_debug("pkt_type: %u", skb->pkt_type);
-    }*/
-
-    gmtp_pr_func();
-    print_gmtp_packet(iph, gh);
+    }
 
     /**
      * FIXME Change Election algorithm to fully distributed using multicast
@@ -945,11 +937,6 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
     }
 lookup:
 
-	/*if (gh->type == GMTP_PKT_RESET) {
-		gmtp_pr_info("RESET RECEIVED!");
-		goto discard_it;
-	}*/
-
 	/* FIXME Calling inet_lookup functions causes kernel panic
 	 * GMTP is using its own list to avoid inet lookup
 	 */
@@ -967,9 +954,6 @@ lookup:
     if (!sk)
     	goto lookup_listener;
 
-    gmtp_pr_debug("Socket addr: %p", sk);
-    print_gmtp_sock(sk);
-
 	if(sk->sk_state == GMTP_NEW_SYN_RECV) {
 
 		struct request_sock *req = inet_reqsk(sk);
@@ -978,12 +962,9 @@ lookup:
 		sk = req->rsk_listener;
 
 		if (unlikely(sk->sk_state != GMTP_LISTEN)) {
-			gmtp_pr_info("req->rsk_listener->sk_state != GMTP_LISTEN");
-			gmtp_pr_debug("req->rsk_listener addr: %p", sk);
 			print_gmtp_sock(sk);
 			inet_csk_reqsk_queue_drop_and_put(sk, req);
 
-			/* FIXME Endless loop when send close and receive close back */
 			goto lookup_listener;
 		}
 		sock_hold(sk);
