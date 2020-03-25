@@ -70,9 +70,11 @@ static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
 	case GMTP_REQUESTING:
 	case GMTP_ACTIVE_CLOSEREQ:
 		gmtp_pr_info("Receiving close response from client!");
-		/*gmtp_send_reset(sk, GMTP_RESET_CODE_CLOSED);*/
-		/*gmtp_done(sk);*/
+		gmtp_pr_info("Sending reset via sk: %p", sk);
+		gmtp_send_reset(sk, GMTP_RESET_CODE_CLOSED);
+		gmtp_done(sk);
 		break;
+	/* TODO Create and care about PARTOPEN state */
 	case GMTP_OPEN:
 		/* FIXME Close only if gh->flowname == gp->flowname */
 		/* Clear hash table */
@@ -464,6 +466,8 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 		const struct gmtp_hdr *gh, const unsigned int len)
 {
 	struct gmtp_sock *gp = gmtp_sk(sk);
+
+	gmtp_pr_func();
 
 	switch (gh->type) {
 	case GMTP_PKT_DATAACK:

@@ -18,6 +18,7 @@
 #include <linux/crypto.h>
 #include <linux/err.h>
 #include <linux/scatterlist.h>
+#include <linux/poll.h>
 
 #include <net/inet_hashtables.h>
 #include <net/sock.h>
@@ -25,7 +26,6 @@
 
 #include <uapi/linux/gmtp.h>
 #include <linux/gmtp.h>
-#include <linux/poll.h>
 #include "gmtp.h"
 #include "gmtp_hashtables.h"
 #include "mcc.h"
@@ -579,25 +579,31 @@ EXPORT_SYMBOL_GPL(gmtp_init_sock);
 
 void gmtp_destroy_sock(struct sock *sk)
 {
+    struct gmtp_sock *gp = gmtp_sk(sk);
+
     gmtp_pr_func();
 
-    if(gmtp_sk(sk)->role == GMTP_ROLE_CLIENT && gmtp_sk(sk)->myself != NULL) {
-        if(gmtp_sk(sk)->myself->rsock != NULL)
-            inet_csk_clear_xmit_timers(gmtp_sk(sk)->myself->rsock);
+    switch(gp->role)
+    {
+    	case GMTP_ROLE_REPORTER:
+    		 mcc_rx_exit(sk);
+    		 /* fall through */
+		case GMTP_ROLE_CLIENT:
+			if (gp->myself != NULL)
+				if (gp->myself->rsock != NULL)
+					inet_csk_clear_xmit_timers(gp->myself->rsock);
+			break;
     }
 
-    if(gmtp_sk(sk)->role == GMTP_ROLE_REPORTER)
-        mcc_rx_exit(sk);
+	__skb_queue_purge(&sk->sk_write_queue);
+	if (sk->sk_send_head != NULL) {
+		kfree_skb(sk->sk_send_head);
+		sk->sk_send_head = NULL;
+	}
 
-    if (sk->sk_send_head != NULL) {
-        kfree_skb(sk->sk_send_head);
-        sk->sk_send_head = NULL;
-    }
-
-    /* Clean up a referenced GMTP bind bucket. */
-    if (inet_csk(sk)->icsk_bind_hash != NULL)
-        inet_put_port(sk);
-
+	/* Clean up a referenced GMTP bind bucket. */
+	if (inet_csk(sk)->icsk_bind_hash != NULL)
+		inet_put_port(sk);
 }
 EXPORT_SYMBOL_GPL(gmtp_destroy_sock);
 
@@ -779,9 +785,16 @@ int gmtp_disconnect(struct sock *sk, int flags)
 }
 EXPORT_SYMBOL_GPL(gmtp_disconnect);
 
-unsigned int gmtp_poll(struct file *file, struct socket *sock, poll_table *wait)
+/*
+ *	Wait for a GMTP event.
+ *
+ *	Note that we don't need to lock the socket, as the upper poll layers
+ *	take care of normal races (between the test and the event) and we don't
+ *	go look at any of the socket buffers directly.
+ */
+__poll_t gmtp_poll(struct file *file, struct socket *sock, poll_table *wait)
 {
-    unsigned int mask;
+	__poll_t mask;
     struct sock *sk = sock->sk;
 
     sock_poll_wait(file, sock, wait);
@@ -795,21 +808,21 @@ unsigned int gmtp_poll(struct file *file, struct socket *sock, poll_table *wait)
 
     mask = 0;
     if(sk->sk_err)
-        mask = POLLERR;
+        mask = EPOLLERR;
 
     if(sk->sk_shutdown == SHUTDOWN_MASK || sk->sk_state == GMTP_CLOSED)
-        mask |= POLLHUP;
+        mask |= EPOLLHUP;
     if(sk->sk_shutdown & RCV_SHUTDOWN)
-        mask |= POLLIN | POLLRDNORM | POLLRDHUP;
+        mask |= EPOLLIN | EPOLLRDNORM | EPOLLRDHUP;
 
     /* Connected? */
     if((1 << sk->sk_state) & ~(GMTPF_REQUESTING | GMTPF_REQUEST_RECV)) {
         if(atomic_read(&sk->sk_rmem_alloc) > 0)
-            mask |= POLLIN | POLLRDNORM;
+            mask |= EPOLLIN | EPOLLRDNORM;
 
         if(!(sk->sk_shutdown & SEND_SHUTDOWN)) {
             if(sk_stream_is_writeable(sk)) {
-                mask |= POLLOUT | POLLWRNORM;
+                mask |= EPOLLOUT | EPOLLWRNORM;
             } else { /* send SIGIO later */
                 set_bit(SOCKWQ_ASYNC_NOSPACE,
                         &sk->sk_socket->flags);
@@ -820,7 +833,7 @@ unsigned int gmtp_poll(struct file *file, struct socket *sock, poll_table *wait)
                  * IO signal will be lost.
                  */
                 if(sk_stream_is_writeable(sk))
-                    mask |= POLLOUT | POLLWRNORM;
+                    mask |= EPOLLOUT | EPOLLWRNORM;
             }
         }
     }

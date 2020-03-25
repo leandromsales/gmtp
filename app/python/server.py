@@ -104,6 +104,9 @@ try:
             total_time = timeit.default_timer() - start_time
             elapsed = timeit.default_timer() - last_time
             size100 = total_size - last_size
+
+            if(elapsed == 0 or total_time == 0): #avoid division by zero...
+                 continue
             
             rate = "%.2f" % (size100/elapsed)
             total_rate = "%.2f" % (total_size/total_time)

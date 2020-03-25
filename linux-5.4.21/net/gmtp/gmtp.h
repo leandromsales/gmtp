@@ -149,6 +149,7 @@ void gmtp_done(struct sock *sk);
 void gmtp_close(struct sock *sk, long timeout);
 int gmtp_connect(struct sock *sk);
 int gmtp_disconnect(struct sock *sk, int flags);
+__poll_t gmtp_poll(struct file *file, struct socket *sock, poll_table *wait);
 int gmtp_ioctl(struct sock *sk, int cmd, unsigned long arg);
 int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t size);
 int gmtp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len, int nonblock,
@@ -226,7 +227,6 @@ struct sock *gmtp_check_req(struct sock *sk, struct sk_buff *skb,
                 struct request_sock *req);
 void gmtp_reqsk_send_ack(const struct sock *sk, struct sk_buff *skb,
              struct request_sock *rsk);
-unsigned int gmtp_poll(struct file *file, struct socket *sock, poll_table *wait);
 
 
 /** GMTP structs and etc **/

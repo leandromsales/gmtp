@@ -87,7 +87,7 @@ try:
         elapsed = timeit.default_timer() - last_time
         last_time = timeit.default_timer()
     
-        if(elapsed == 0): #avoid division by zero...
+        if(elapsed == 0 or total_time == 0): #avoid division by zero...
             continue
     
         size = getPacketSize(message)
@@ -112,7 +112,10 @@ try:
             lastsize100 = total_size
             time100 = timeit.default_timer() - last_time100
             last_time100 = timeit.default_timer()
-            rate100 = size100/time100
+
+            rate100 = 0
+            if time100 != 0:
+                rate100 = size100/time100
         
             strsize100 = str(size100)
             strtime100 = str(time100)

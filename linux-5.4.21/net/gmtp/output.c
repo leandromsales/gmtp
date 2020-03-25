@@ -94,11 +94,9 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
         gh->server_rtt = gp->role == GMTP_ROLE_SERVER ?
                 TO_U12(gp->tx_avg_rtt) : TO_U12(gp->rx_rtt);
 
-        memcpy(gh->flowname, gp->flowname, GMTP_FLOWNAME_LEN);
+        memcpy(gh->flowname, gp->flowname, sizeof(gp->flowname));
 
         gh->transm_r = (__be32) gp->tx_media_rate;
-        if (gcb->type == GMTP_PKT_RESET)
-            gmtp_hdr_reset(skb)->reset_code = gcb->reset_code;
 
         gcb->seq = ++gp->gss;
         if (set_ack) {
@@ -114,6 +112,11 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
             gh_data->tstamp = jiffies_to_msecs(jiffies);
             /*pr_info("Server RTT: %u ms\n", gh->server_rtt);*/
             break;
+        }
+        case GMTP_PKT_RESET: {
+        	gmtp_hdr_reset(skb)->reset_code = gcb->reset_code;
+        	gmtp_pr_info("Sending reset via sk: %p", sk);
+        	break;
         }
         case GMTP_PKT_FEEDBACK: {
             struct gmtp_hdr_feedback *fh = gmtp_hdr_feedback(skb);
@@ -189,16 +192,17 @@ EXPORT_SYMBOL_GPL(gmtp_sync_mss);
 
 void gmtp_write_space(struct sock *sk)
 {
-    struct socket_wq *wq;
+	struct socket_wq *wq;
 
-    rcu_read_lock();
-    wq = rcu_dereference(sk->sk_wq);
-    if (wq_has_sleeper(&wq->wait))
-        wake_up_interruptible(&wq->wait);
-    /* Should agree with poll, otherwise some programs break */
-    if (sock_writeable(sk))
-        sk_wake_async(sk, SOCK_WAKE_SPACE, POLL_OUT);
-    rcu_read_unlock();
+	rcu_read_lock();
+	wq = rcu_dereference(sk->sk_wq);
+	if (skwq_has_sleeper(wq))
+		wake_up_interruptible(&wq->wait);
+	/* Should agree with poll, otherwise some programs break */
+	if (sock_writeable(sk))
+		sk_wake_async(sk, SOCK_WAKE_SPACE, POLL_OUT);
+
+	rcu_read_unlock();
 }
 
 /**
@@ -423,9 +427,12 @@ EXPORT_SYMBOL_GPL(gmtp_ctl_make_reset);
 int gmtp_send_reset(struct sock *sk, enum gmtp_reset_codes code)
 {
     struct sk_buff *skb;
-    int err = inet_csk(sk)->icsk_af_ops->rebuild_header(sk);
+    int err = 0;
 
     gmtp_print_function();
+
+    /* FIXME Verify if we realy need rebuild_header */
+    /*err = inet_csk(sk)->icsk_af_ops->rebuild_header(sk);*/
 
     if (err != 0)
         return err;
