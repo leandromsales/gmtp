@@ -118,14 +118,18 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
         	gmtp_pr_info("Sending reset via sk: %p", sk);
         	break;
         }
-        case GMTP_PKT_FEEDBACK: {
-            struct gmtp_hdr_feedback *fh = gmtp_hdr_feedback(skb);
+        /* TODO Merge ACK and Feedback */
+        case GMTP_PKT_FEEDBACK:
+			/* FIXME Set number of clients:
+			 * fh->nclients = gp->myself->nclients;
+			 */
+            gmtp_hdr_feedback(skb)->nclients = 0;
+            /* fall through */
+        case GMTP_PKT_ACK:
             gh->seq = gcb->seq = gp->gsr;
             gh->transm_r = gp->rx_max_rate;
-            fh->orig_tstamp = gcb->orig_tstamp;
-            /*fh->nclients = gp->myself->nclients;*/
+            gmtp_hdr_ack(skb)->orig_tstamp = gcb->orig_tstamp; /* same of feedback */
             break;
-        }
         case GMTP_PKT_ELECT_REQUEST: {
             struct gmtp_hdr_elect_request *gh_ereq;
             gh_ereq = gmtp_hdr_elect_request(skb);
@@ -681,14 +685,21 @@ EXPORT_SYMBOL_GPL(gmtp_ctl_make_ack);
 
 void gmtp_send_feedback(struct sock *sk)
 {
-    if(sk->sk_state != GMTP_CLOSED) {
+	struct gmtp_sock *gp = gmtp_sk(sk);
+
+    if(sk->sk_state == GMTP_OPEN) {
 
         struct sk_buff *skb = alloc_skb(sk->sk_prot->max_header,
         GFP_ATOMIC);
 
         /* Reserve space for headers */
         skb_reserve(skb, sk->sk_prot->max_header);
-        GMTP_SKB_CB(skb)->type = GMTP_PKT_FEEDBACK;
+
+        if(gp->role == GMTP_ROLE_REPORTER)
+        	GMTP_SKB_CB(skb)->type = GMTP_PKT_FEEDBACK;
+        else if (gp->role == GMTP_ROLE_CLIENT_RELAY)
+        	GMTP_SKB_CB(skb)->type = GMTP_PKT_ACK;
+
         GMTP_SKB_CB(skb)->orig_tstamp = gmtp_sk(sk)->rx_last_orig_tstamp;
 
         gmtp_transmit_skb(sk, skb);

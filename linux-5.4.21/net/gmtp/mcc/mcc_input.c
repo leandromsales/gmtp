@@ -95,8 +95,16 @@ static void mcc_rx_send_feedback(struct sock *sk,
 		gp->rx_avg_rtt = GMTP_SANE_RTT_MIN;
 
 	p = mcc_invert_loss_event_rate(gp->rx_pinv);
+
 	if(p > 0) {
 		u32 new_rate = mcc_calc_x(gp->rx_s, gp->rx_avg_rtt, p);
+
+		mcc_pr_debug(
+					"REPORT: RTT=%u us (sample=%u us), s=%u, "
+					"p=%u, X_calc=%u B/s, X_recv=%u B/s",
+					gp->rx_avg_rtt, sample, gp->rx_s, p, gp->rx_max_rate,
+					gp->rx_x_recv);
+
 		/*
 		 * Change only if the value is valid!
 		 */
@@ -110,18 +118,8 @@ static void mcc_rx_send_feedback(struct sock *sk,
 		gp->rx_max_rate = ~0U;
 	}
 
-	if(likely(gp->role == GMTP_ROLE_REPORTER)) {
-
-		if(p > 0)
-			mcc_pr_debug("Loss: %u", p);
-
-		mcc_pr_debug("REPORT: RTT=%u us (sample=%u us), s=%u, "
-			       "p=%u, X_calc=%u B/s, X_recv=%u B/s",
-			       gp->rx_avg_rtt, sample,
-			       gp->rx_s, p,
-			       gp->rx_max_rate,
-			       gp->rx_x_recv);
-
+	if(likely(gp->role == GMTP_ROLE_REPORTER ||
+			gp->role == GMTP_ROLE_CLIENT_RELAY)) {
 		gmtp_send_feedback(sk);
 	}
 }

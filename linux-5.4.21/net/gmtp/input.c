@@ -205,8 +205,8 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 	gmtp_pr_debug("Packet received: %s", gmtp_packet_name(gh->type));
 
 	gmtp_pr_info("TODO: Call gmtp_lookup_client");
-	/*client_entry = gmtp_lookup_client(client_hashtable, gh->flowname);
-	if(client_entry == NULL)
+	/*client_entry = gmtp_lookup_client(client_hashtable, gh->flowname);*/
+	/*if(client_entry == NULL)
 		goto out_invalid_packet;*/
 
 	/*** FIXME Check sequence numbers  ***/
@@ -229,8 +229,7 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 			pr_info("Reporter: %pI4@%-5d\n",
 					&gh_rnotify->reporter_addr,
 					ntohs(gh_rnotify->reporter_port));
-			memcpy(gp->relay_id, gh_rnotify->relay_id,
-					GMTP_RELAY_ID_LEN);
+			memcpy(gp->relay_id, gh_rnotify->relay_id, GMTP_RELAY_ID_LEN);
 
 			gp->myself->max_nclients = gh_rnotify->max_nclients;
 			if(gp->myself->max_nclients > 0) {
@@ -250,7 +249,7 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 			goto out_invalid_packet;
 		}
 
-		if(gp->role != GMTP_ROLE_REPORTER) {
+		if(gp->role == GMTP_ROLE_CLIENT) {
 			gp->myself->reporter = gmtp_create_client(
 					gh_rnotify->reporter_addr,
 					gh_rnotify->reporter_port, 1);
@@ -311,19 +310,20 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 		return 0;
 	}
 
-	if(gh->type == GMTP_PKT_REGISTER_REPLY) {
+	if(gh->type == GMTP_PKT_REGISTER_REPLY)
+	{
 		gmtp_add_relayid(skb);
 		gmtp_send_route_notify(sk, skb);
-		gp->role = GMTP_ROLE_REPORTER;
+		gp->role = GMTP_ROLE_CLIENT_RELAY;
 	} else
 		gmtp_send_ack(sk);
 
-	if(gp->role == GMTP_ROLE_REPORTER) {
+	if(gp->role == GMTP_ROLE_REPORTER || gp->role == GMTP_ROLE_CLIENT_RELAY)
+	{
 		if(mcc_rx_init(sk))
 			goto err;
 		inet_csk_reset_keepalive_timer(sk, GMTP_ACK_TIMEOUT);
 	}
-
 
 	return -1;
 
@@ -442,13 +442,17 @@ static int gmtp_check_seqno(struct sock *sk, struct sk_buff *skb)
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct gmtp_sock *gp = gmtp_sk(sk);
 
-	if(gh->type == GMTP_PKT_DATA && gp->role == GMTP_ROLE_REPORTER) {
+	if(gh->type != GMTP_PKT_DATA)
+		goto out;
+
+	if(gp->role == GMTP_ROLE_REPORTER || gp->role == GMTP_ROLE_CLIENT_RELAY)
+	{
 		if(unlikely(gp->rx_state == MCC_RSTATE_NO_DATA)) {
 			gp->gsr = gh->seq;
 			gp->isr = gh->seq;
 			gp->iss = gh->seq;
 			gp->gss = gh->seq;
-			return 0;
+			/*return 0;*/
 		} /*else if(gh->seq < gp->gsr) {
 			pr_info("Seqno error => Received: %u. GSR: %u.\n",
 					gh->seq, gp->gsr);
@@ -456,6 +460,7 @@ static int gmtp_check_seqno(struct sock *sk, struct sk_buff *skb)
 		}*/
 	}
 
+out:
 	return 0;
 }
 
@@ -492,10 +497,12 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 				new_tx = DIV_ROUND_CLOSEST(gp->tx_media_rate, 4);
 			}
 
-			gp->tx_ucc_rate = min((__be32 )gp->tx_max_rate, new_tx);
+			if((__be32 )gp->tx_max_rate > new_tx)
+				gmtp_pr_debug("TX: %lu B/s | CC TX: %lu B/s from %pI4@%-5d\n",
+							gp->tx_max_rate, gp->tx_ucc_rate,
+							&ip_hdr(skb)->saddr, ntohs(gh->sport));
 
-			gmtp_pr_info("cong. control tx: %lu B/s, from: %pI4\n",
-					gp->tx_ucc_rate, &ip_hdr(skb)->saddr);
+			gp->tx_ucc_rate = min((__be32 )gp->tx_max_rate, new_tx);
 		}
 		goto discard;
 	case GMTP_PKT_ROUTE_NOTIFY:
@@ -558,10 +565,8 @@ int gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 	else
 		gp->ndp_count++;
 
-	/* FIXME GMTP FEEDBAK causes server send RESET */
-	/*if(gp->role == GMTP_ROLE_REPORTER) {
+	if(gp->role == GMTP_ROLE_REPORTER || gp->role == GMTP_ROLE_CLIENT_RELAY)
 		gmtp_deliver_input_to_mcc(sk, skb);
-	}*/
 
 	return __gmtp_rcv_established(sk, skb, gh, len);
 discard:

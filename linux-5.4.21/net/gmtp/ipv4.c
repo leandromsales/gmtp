@@ -1407,12 +1407,6 @@ static int __init gmtp_v4_init(void)
 {
     int err = 0;
 
-    /****
-    pr_info("GMTP: LAST %s err value %d\n", __FUNCTION__, err);
-    while(time_before(jiffies, 50000))
-        schedule();
-    ****/
-
     gmtp_pr_func();
 
     inet_hashinfo_init(&gmtp_inet_hashinfo);

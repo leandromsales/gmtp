@@ -589,6 +589,7 @@ void gmtp_destroy_sock(struct sock *sk)
     switch(gp->role)
     {
     	case GMTP_ROLE_REPORTER:
+    	case GMTP_ROLE_CLIENT_RELAY:
     		 mcc_rx_exit(sk);
     		 /* fall through */
 		case GMTP_ROLE_CLIENT:

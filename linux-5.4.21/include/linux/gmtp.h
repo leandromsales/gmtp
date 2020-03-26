@@ -35,13 +35,19 @@ enum {
 };
 
 
+/**
+ * CLIENT_RELAY is a client auto-promoted to RELAY
+ * It has to send congestion control feedback using GMTP_MCC,
+ * like a REPORTER, but using ACK packets.
+ */
 enum gmtp_role {
 	GMTP_ROLE_UNDEFINED,
 	GMTP_ROLE_LISTEN,
 	GMTP_ROLE_CLIENT,
 	GMTP_ROLE_REPORTER,
 	GMTP_ROLE_SERVER,
-	GMTP_ROLE_RELAY
+	GMTP_ROLE_RELAY,
+	GMTP_ROLE_CLIENT_RELAY
 };
 
 enum gmtp_sock_type {
