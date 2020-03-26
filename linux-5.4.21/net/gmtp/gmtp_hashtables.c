@@ -125,6 +125,7 @@ struct sock *gmtp_lookup_listener(struct gmtp_sk_hashtable *sk_table,
 }
 EXPORT_SYMBOL_GPL(gmtp_lookup_listener);
 
+
 struct gmtp_sk_hashitem * __gmtp_lookup_established(
 		struct gmtp_sk_hashtable *sk_table,
 		 const __be32 saddr, const __be16 sport,
@@ -209,15 +210,20 @@ struct sock *gmtp_lookup_established(struct gmtp_sk_hashtable *sk_table,
 }
 EXPORT_SYMBOL_GPL(gmtp_lookup_established);
 
-
-int __gmtp_del_sk_ehash(struct gmtp_sk_hashtable *sk_table, struct sock *sk)
+/**
+ * @sk_table: hashtable
+ * @item_head: pointer to itens
+ * @sk: Sock struct
+ */
+int __gmtp_del_sk_hash(struct gmtp_sk_hashtable *sk_table,
+		struct gmtp_sk_hashitem* item_head, struct sock *sk)
 {
 	struct gmtp_sk_hashitem *pos, *tmp;
 
-	if(sk_table->hbind == NULL)
+	if(item_head == NULL)
 		return -ENOENT;
 
-	list_for_each_entry_safe(pos, tmp, &sk_table->hbind->list, list)
+	list_for_each_entry_safe(pos, tmp, &item_head->list, list)
 	{
 		if(pos == NULL)
 			continue;
@@ -236,6 +242,24 @@ int __gmtp_del_sk_ehash(struct gmtp_sk_hashtable *sk_table, struct sock *sk)
 	return -ENOENT;
 }
 
+/*
+ * Removing non-listening sockets
+ */
+int gmtp_del_sk_ehash(struct gmtp_sk_hashtable *sk_table, struct sock *sk)
+{
+	return __gmtp_del_sk_hash(sk_table, sk_table->hbind, sk);
+}
+EXPORT_SYMBOL_GPL(gmtp_del_sk_ehash);
+
+/*
+ * Removing listening sockets
+ */
+int gmtp_del_sk_lhash(struct gmtp_sk_hashtable *sk_table, struct sock *sk)
+{
+	return __gmtp_del_sk_hash(sk_table, sk_table->hlisten, sk);
+}
+EXPORT_SYMBOL_GPL(gmtp_del_sk_lhash);
+
 /**
  * Insert sk into established hash table, removing osk (if osk is not null)
  */
@@ -243,7 +267,7 @@ void gmtp_sk_ehash_insert(struct gmtp_sk_hashtable *sk_table,
 		struct sock *sk, struct sock *osk)
 {
 	if(osk)
-		__gmtp_del_sk_ehash(sk_table, osk);
+		gmtp_del_sk_ehash(sk_table, osk);
 
 	if(sk)
 		gmtp_sk_hash_connect(sk_table, sk);

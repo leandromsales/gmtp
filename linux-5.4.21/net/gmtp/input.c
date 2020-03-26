@@ -69,8 +69,6 @@ static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
 		/* fall through */
 	case GMTP_REQUESTING:
 	case GMTP_ACTIVE_CLOSEREQ:
-		gmtp_pr_info("Receiving close response from client!");
-		gmtp_pr_info("Sending reset via sk: %p", sk);
 		gmtp_send_reset(sk, GMTP_RESET_CODE_CLOSED);
 		gmtp_done(sk);
 		break;

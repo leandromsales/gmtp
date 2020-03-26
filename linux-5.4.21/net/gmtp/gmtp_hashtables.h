@@ -35,6 +35,8 @@ int gmtp_sk_hash_listener(struct gmtp_sk_hashtable *sk_table, struct sock *sk);
 struct sock *gmtp_lookup_listener(struct gmtp_sk_hashtable *sk_table,
 		 const __be32 addr, const __be16 port);
 
+int gmtp_del_sk_lhash(struct gmtp_sk_hashtable *sk_table, struct sock *sk);
+
 int gmtp_sk_hash_connect(struct gmtp_sk_hashtable *sk_table, struct sock *sk);
 
 struct sock *gmtp_lookup_established(struct gmtp_sk_hashtable *sk_table,
@@ -43,5 +45,7 @@ struct sock *gmtp_lookup_established(struct gmtp_sk_hashtable *sk_table,
 
 void gmtp_sk_ehash_insert(struct gmtp_sk_hashtable *sk_table,
 		struct sock *sk, struct sock *osk);
+
+int gmtp_del_sk_ehash(struct gmtp_sk_hashtable *sk_table, struct sock *sk);
 
 #endif /* GMTP_HASHTABLES_H_ */

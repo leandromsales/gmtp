@@ -480,14 +480,10 @@ void gmtp_set_state(struct sock *sk, const int state)
         if(oldstate == GMTP_OPEN || oldstate == GMTP_CLOSING)
             DCCP_INC_STATS(DCCP_MIB_ESTABRESETS); */
 
-    	/*switch(oldstate)
-    	{
-    	case LISTEN:
-    		 unhash listen
-    		break;
-    	default:
-    		 unhash established
-    	}*/
+    	if (oldstate == GMTP_LISTEN)
+    		gmtp_del_sk_lhash(&gmtp_sk_hash, sk);
+    	else
+    		gmtp_del_sk_ehash(&gmtp_sk_hash, sk);
 
         sk->sk_prot->unhash(sk);
         if(inet_csk(sk)->icsk_bind_hash != NULL
