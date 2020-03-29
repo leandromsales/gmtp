@@ -200,7 +200,6 @@ void mcc_rx_packet_recv(struct sock *sk, struct sk_buff *skb)
 
 	if(is_data_packet) {
 		const u32 payload = skb->len - gmtp_hdr(skb)->hdrlen;
-		struct gmtp_hdr_data *dh = gmtp_hdr_data(skb);
 
 		/*
 		 * Update moving-average of s and the sum of received payload bytes

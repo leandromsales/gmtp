@@ -25,7 +25,7 @@ EXPORT_SYMBOL_GPL(gmtp_death_row);
 
 void gmtp_time_wait(struct sock *sk, int state, int timeo)
 {
-    struct inet_timewait_sock *tw = NULL;
+   /* struct inet_timewait_sock *tw = NULL;*/
 
     gmtp_print_function();
 

@@ -178,7 +178,7 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
             }
 
             if(iph->ttl == 1) {
-                print_packet(skb, true);
+                print_ipv4_packet(skb, true);
                 print_gmtp_packet(iph, gh);
                 ret = gmtp_inter_request_rcv(skb);
                 goto out;
@@ -409,12 +409,11 @@ static void register_hooks(void)
     ****/
 }
 
-int init_module()
+static int __init gmtp_inter_init(void)
 {
     int ret = 0;
 
     gmtp_pr_func();
-    gmtp_print_debug("Starting GMTP-Inter");
 
     if(gmtp_info == NULL) {
         gmtp_print_error("gmtp_info is NULL...");
@@ -449,7 +448,7 @@ int init_module()
     gmtp_inter.worst_rtt = GMTP_MIN_RTT_MS;
 
     pr_info("Configuring GMTP-UCC timer...\n");
-    setup_timer(&gmtp_inter.gmtp_ucc_timer, gmtp_ucc_equation_callback, 0);
+    timer_setup(&gmtp_inter.gmtp_ucc_timer, gmtp_ucc_equation_callback, 0);
     mod_timer(&gmtp_inter.gmtp_ucc_timer, jiffies + 1);
 
     register_hooks();
@@ -467,10 +466,9 @@ static void unregister_hooks(void)
     ****/
 }
 
-void cleanup_module()
+static void __exit gmtp_inter_exit(void)
 {
     gmtp_pr_func();
-    gmtp_print_debug("Finishing GMTP-inter");
 
     gmtp_info->relay_enabled = 0;
     kfree_gmtp_inter_hashtable(gmtp_inter.hashtable);
@@ -479,10 +477,11 @@ void cleanup_module()
     del_timer(&gmtp_inter.gmtp_ucc_timer);
 }
 
-module_init(init_module);
-module_exit(cleanup_module);
+module_init(gmtp_inter_init);
+module_exit(gmtp_inter_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Mário André Menezes <mariomenezescosta@gmail.com>");
 MODULE_AUTHOR("Wendell Silva Soares <wss@ic.ufal.br>");
+MODULE_AUTHOR("Leandro Melo de Sales <leandro@ic.ufal.br>");
 MODULE_DESCRIPTION("GMTP - Global Media Transmission Protocol");

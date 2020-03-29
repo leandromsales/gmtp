@@ -17,14 +17,13 @@
 
 extern struct gmtp_inter gmtp_inter;
 
-void gmtp_ucc_equation_callback(unsigned long data)
+void gmtp_ucc_equation_callback(struct timer_list *t)
 {
 	/*unsigned int next = min(gmtp_inter.worst_rtt, gmtp_inter.h_user);
 	if(next <= 0)
 		next = GMTP_DEFAULT_RTT;*/
 
 	unsigned int next = GMTP_DEFAULT_RTT;
-	gmtp_pr_func();
 	gmtp_ucc_equation(GMTP_UCC_NONE);
 	mod_timer(&gmtp_inter.gmtp_ucc_timer, jiffies + msecs_to_jiffies(next));
 }
@@ -44,10 +43,15 @@ static inline unsigned long gmtp_ucc_interval(unsigned int rtt)
 	return (jiffies + msecs_to_jiffies(interval));
 }
 
-void gmtp_inter_ack_timer_callback(unsigned long data)
+void gmtp_inter_ack_timer_callback(struct timer_list *t)
 {
-	struct gmtp_inter_entry *entry = (struct gmtp_inter_entry*) data;
+	struct gmtp_inter_entry *entry;
 	struct sk_buff *skb;
+
+	entry = from_timer(entry, t, ack_timer);
+
+	if(!entry)
+		return;
 
 //	gmtp_ucc_equation(GMTP_UCC_NONE);
 	gmtp_ucc_equation(GMTP_UCC_ALL);
@@ -58,10 +62,17 @@ void gmtp_inter_ack_timer_callback(unsigned long data)
 	mod_timer(&entry->ack_timer, gmtp_ucc_interval(gmtp_inter.worst_rtt));
 }
 
-void gmtp_inter_register_timer_callback(unsigned long data)
+void gmtp_inter_register_timer_callback(struct timer_list *t)
 {
-	struct gmtp_inter_entry *entry = (struct gmtp_inter_entry*) data;
-	struct sk_buff *skb = gmtp_inter_build_register(entry);
+	struct gmtp_inter_entry *entry;
+	struct sk_buff *skb;
+
+	entry = from_timer(entry, t, ack_timer);
+
+	if(!entry)
+		return;
+
+	skb = gmtp_inter_build_register(entry);
 
 	if(skb != NULL)
 		gmtp_inter_send_pkt(skb);
@@ -194,15 +205,17 @@ struct gmtp_delay_cc_data {
 	struct sk_buff *skb;
 	struct gmtp_inter_entry *entry;
 	struct gmtp_relay *relay;
-	struct timer_list *delay_cc_timer;
+	struct timer_list delay_cc_timer;
 };
 
-void gmtp_inter_xmit_timer(unsigned long data)
+void gmtp_inter_xmit_timer(struct timer_list *t)
 {
-	struct gmtp_delay_cc_data *cc_data = (struct gmtp_delay_cc_data *) data;
+	struct gmtp_delay_cc_data *cc_data;
+
+	cc_data = from_timer(cc_data, t, delay_cc_timer);
+
 	gmtp_inter_delay_cc(cc_data->skb, cc_data->entry, cc_data->relay);
-	del_timer(cc_data->delay_cc_timer);
-	kfree(cc_data->delay_cc_timer);
+	del_timer(&cc_data->delay_cc_timer);
 }
 
 void gmtp_inter_delay_cc(struct sk_buff *skb, struct gmtp_inter_entry *entry,
@@ -255,12 +268,11 @@ wait:
 		cc_data->skb = skb;
 		cc_data->entry = entry;
 		cc_data->relay = relay;
-		cc_data->delay_cc_timer = kmalloc(sizeof(struct timer_list),
-				GFP_KERNEL);
 
-		setup_timer(cc_data->delay_cc_timer, gmtp_inter_xmit_timer,
-				(unsigned long) cc_data);
-		mod_timer(cc_data->delay_cc_timer, jiffies + delay2);
+		/*setup_timer(cc_data->delay_cc_timer, gmtp_inter_xmit_timer,
+				(unsigned long) cc_data);*/
+		timer_setup(&cc_data->delay_cc_timer, gmtp_inter_xmit_timer, 0);
+		mod_timer(&cc_data->delay_cc_timer, jiffies + delay2);
 
 		schedule_timeout(delay2);
 		return;
@@ -278,8 +290,9 @@ void gmtp_inter_media_adapt_cc(struct sk_buff *skb, struct gmtp_inter_entry *ent
 {
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	char label[90];
 
-	unsigned int len, hdrlen, datalen, datalen20, datalen40, datalen80;
+	unsigned int hdrlen, datalen, datalen20, datalen40, datalen80;
 	unsigned int rate, new_datalen;
 	unsigned int rx_rate = entry->current_rx <= 0 ?
 			(unsigned int) entry->transm_r : entry->current_rx;
@@ -301,8 +314,6 @@ void gmtp_inter_media_adapt_cc(struct sk_buff *skb, struct gmtp_inter_entry *ent
 	datalen80 = DIV_ROUND_CLOSEST(800 * skb->len, 1000) - hdrlen;
 
 	new_datalen = DIV_ROUND_CLOSEST(skb->len * 1000, rate) - hdrlen;
-
-	char label[90];
 
 	if(new_datalen >= datalen80)
 		new_datalen = datalen80;

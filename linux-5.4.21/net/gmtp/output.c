@@ -334,14 +334,15 @@ struct sk_buff *gmtp_make_route_notify(struct sock *sk,
     return skb;
 }
 
-void gmtp_send_route_notify(struct sock *sk,
-        struct sk_buff *rcv_skb)
+void gmtp_send_route_notify(struct sock *sk, struct sk_buff *rcv_skb)
 {
-    struct sk_buff *skb = gmtp_make_route_notify(sk, rcv_skb);
+    struct sk_buff *skb;
 
     gmtp_pr_func();
+
+    skb = gmtp_make_route_notify(sk, rcv_skb);
     if(skb != NULL)
-        return gmtp_transmit_built_skb(sk, skb);
+        gmtp_transmit_built_skb(sk, skb);
 }
 EXPORT_SYMBOL_GPL(gmtp_send_route_notify);
 
@@ -459,11 +460,11 @@ int gmtp_send_reset(struct sock *sk, enum gmtp_reset_codes code)
 int gmtp_connect(struct sock *sk)
 {
     struct sk_buff *skb;
-    struct gmtp_sock *gp = gmtp_sk(sk);
     struct dst_entry *dst = __sk_dst_get(sk);
-    struct inet_sock *inet = inet_sk(sk);
     struct inet_connection_sock *icsk = inet_csk(sk);
-    struct gmtp_client_entry *client_entry;
+    struct gmtp_sock *gp = gmtp_sk(sk);
+    /*struct inet_sock *inet = inet_sk(sk);*/
+    /*struct gmtp_client_entry *client_entry;*/
     int err = 0;
 
     gmtp_pr_func();
@@ -511,12 +512,13 @@ int gmtp_connect(struct sock *sk)
     gp->myself->ack_rx_tstamp = gp->ack_rx_tstamp;
     gp->myself->mysock = sk;*/
 
-    gmtp_transmit_skb(sk, gmtp_skb_entail(sk, skb));
+    err = gmtp_transmit_skb(sk, gmtp_skb_entail(sk, skb));
 
     icsk->icsk_retransmits = 0;
     inet_csk_reset_xmit_timer(sk, ICSK_TIME_RETRANS,
                       icsk->icsk_rto, GMTP_RTO_MAX);
-    return 0;
+
+    return err;
 }
 EXPORT_SYMBOL_GPL(gmtp_connect);
 
@@ -574,7 +576,7 @@ EXPORT_SYMBOL_GPL(gmtp_send_elect_request);
 void gmtp_send_elect_response(struct sock *sk, __u8 code)
 {
     struct sk_buff *skb = alloc_skb(sk->sk_prot->max_header, GFP_ATOMIC);
-    struct gmtp_sock *gp = gmtp_sk(sk);
+    /*struct gmtp_sock *gp = gmtp_sk(sk);*/
 
     gmtp_pr_func();
 
@@ -731,10 +733,8 @@ void gmtp_send_close(struct sock *sk, const int active)
         skb = gmtp_skb_entail(sk, skb);
         /*
 		 * Retransmission timer for active-close.
-		 * GMTO RFC will require to retransmit the Close until the
+		 * GMTP RFC will require to retransmit the Close until the
 		 * CLOSING/CLOSEREQ state can be left?
-		 * Sugestion: The initial timeout is 2 RTTs.
-		 * FIXME: Active timer for active-close.
 		 */
         inet_csk_reset_xmit_timer(sk, ICSK_TIME_RETRANS,
                 GMTP_TIMEOUT_INIT, GMTP_RTO_MAX);
@@ -938,10 +938,10 @@ wait:
         pkt_info->sk = sk;
         pkt_info->skb = skb;
 
-        /* FIXME Comment because: Compilation error in linux-5.4.21 */
-        /*setup_timer(&gp->xmit_timer, gmtp_write_xmit_timer,
-                (unsigned long ) pkt_info);
-        mod_timer(&gp->xmit_timer, jiffies + delay2);*/
+       /* setup_timer(&gp->xmit_timer, gmtp_write_xmit_timer,
+                        (unsigned long ) pkt_info);*//*
+       */ timer_setup(&gp->xmit_timer, gmtp_write_xmit_timer, 0);
+        mod_timer(&gp->xmit_timer, jiffies + delay2);
 
         /* Never use gmtp_wait_for_delay(sk, delay2); in NS-3/dce*/
         /* FIXME Send using a queue and send window for linux 5.4.21... */

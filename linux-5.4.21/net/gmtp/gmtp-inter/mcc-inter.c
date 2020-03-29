@@ -49,18 +49,24 @@ void gmtp_inter_mcc_delay(struct gmtp_inter_entry *info, struct sk_buff *skb,
  *   Change from 4 RTTs to GMTP_ACK_INTERVAL
  *
  */
-void mcc_timer_callback(unsigned long data)
+void mcc_timer_callback(struct timer_list *t)
 {
-	struct gmtp_inter_entry *info = (struct gmtp_inter_entry*) data;
+	struct gmtp_inter_entry *info;
 	struct gmtp_client *reporter, *temp;
-	unsigned int new_tx = info->required_tx;
+	unsigned int new_tx;
+
+	info = from_timer(info, t, mcc_timer);
+
+	if(!info)
+		return;
+
+	new_tx = info->required_tx;
 
 	if(info->nclients <= 0)
 		goto out;
 
 	if(likely(info->nfeedbacks > 0))
-		new_tx = DIV_ROUND_CLOSEST(info->sum_feedbacks,
-				info->nfeedbacks);
+		new_tx = DIV_ROUND_CLOSEST(info->sum_feedbacks, info->nfeedbacks);
 	else
 		new_tx = info->required_tx / 2;
 
@@ -75,8 +81,8 @@ void mcc_timer_callback(unsigned long data)
 	/* FIXME Colocar isso em outro timer? */
 	list_for_each_entry_safe(reporter, temp, &info->clients->list, list)
 	{
-		unsigned int now = jiffies_to_msecs(jiffies);
-		int interval = (int)(now - reporter->ack_rx_tstamp);
+		/*unsigned int now = jiffies_to_msecs(jiffies);*/
+		/*int interval = (int)(now - reporter->ack_rx_tstamp);*/
 
 		/** Deleting non-reporters */
 		if(unlikely(reporter->max_nclients <= 0)) {

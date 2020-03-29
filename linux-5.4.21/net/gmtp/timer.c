@@ -193,8 +193,6 @@ out:
 /** TODO implement method to disconnect dead relays */
 static void gmtp_server_ackrcv_timer(struct sock *sk)
 {
-	struct gmtp_sock *gp = gmtp_sk(sk);
-
 	gmtp_pr_func();
 
 	inet_csk_reset_keepalive_timer(sk, GMTP_ACK_TIMEOUT);
@@ -250,11 +248,10 @@ static void gmtp_keepalive_timer(struct timer_list *t)
 	}
 
 	if(sk->sk_state == GMTP_OPEN) {
-		switch(gp->role) {
-		case GMTP_ROLE_REPORTER:
+		if(gp->role == GMTP_ROLE_REPORTER) {
 			gmtp_reporter_ackrcv_timer(sk);
 			goto out;
-		case GMTP_ROLE_SERVER:
+		} else if(gp->role == GMTP_ROLE_SERVER) {
 			gmtp_server_ackrcv_timer(sk);
 		}
 	}
@@ -335,21 +332,25 @@ out:
 	sock_put(sk);
 }
 
-void gmtp_write_xmit_timer(unsigned long data)
+void gmtp_write_xmit_timer(struct timer_list *t)
 {
-	struct gmtp_packet_info *pkt_info = (struct gmtp_packet_info*) data;
+	/*struct gmtp_packet_info *pkt_info;*/
+
 	gmtp_pr_func();
-	gmtp_write_xmit(pkt_info->sk, pkt_info->skb);
+
+	/*pkt_info = from_timer(pkt_info, t, xmit_timer);*/
+	/*if(!pkt_info)
+		return;*/
+
+	/*gmtp_write_xmit(pkt_info->sk, pkt_info->skb);
 	del_timer_sync(&gmtp_sk(pkt_info->sk)->xmit_timer);
-	kfree(pkt_info);
+	kfree(pkt_info);*/
 }
 EXPORT_SYMBOL_GPL(gmtp_write_xmit_timer);
 
 void gmtp_init_xmit_timers(struct sock *sk)
 {
-	struct gmtp_sock *gp = gmtp_sk(sk);
 	gmtp_pr_func();
-
 	inet_csk_init_xmit_timers(sk, &gmtp_write_timer, &gmtp_delack_timer,
 				&gmtp_keepalive_timer);
 }

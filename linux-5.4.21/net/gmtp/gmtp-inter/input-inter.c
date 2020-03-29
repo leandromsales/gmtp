@@ -112,12 +112,11 @@ int gmtp_inter_register_rcv(struct sk_buff *skb)
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct gmtp_hdr_register *gr = gmtp_hdr_register(skb);
-	struct ethhdr *eth = eth_hdr(skb);
 	struct gmtp_inter_entry *entry;
 	struct gmtp_relay *relay;
 
 	gmtp_pr_func();
-	print_packet(skb, true);
+	print_ipv4_packet(skb, true);
 	print_gmtp_packet(iph, gh);
 
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
@@ -231,7 +230,6 @@ struct gmtp_client *jump_over_gmtp_intra(struct sk_buff *skb,
 static int gmtp_inter_transmitting_register_reply_rcv(struct sk_buff *skb,
 		struct gmtp_inter_entry *entry)
 {
-	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct iphdr *iph = ip_hdr(skb);
 	struct ethhdr *eth = eth_hdr(skb);
 	struct gmtp_hdr *gh_route_n;
@@ -375,11 +373,11 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 	struct ethhdr *eth = eth_hdr(skb);
 	struct gmtp_hdr *gh_route_n;
 
-	__u8 code = GMTP_REQNOTIFY_CODE_OK;
+	/*__u8 code = GMTP_REQNOTIFY_CODE_OK;*/
 
 	gmtp_print_function();
 
-	print_packet(skb, true);
+	print_ipv4_packet(skb, true);
 	print_gmtp_packet(iph, gh);
 
 	if(entry->state == GMTP_INTER_REGISTER_REPLY_RECEIVED)
@@ -587,7 +585,7 @@ int gmtp_inter_elect_resp_rcv(struct sk_buff *skb,
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 
-	print_packet(skb, true);
+	print_ipv4_packet(skb, true);
 	print_gmtp_packet(iph, gh);
 
 	gmtp_list_add_client(++entry->nclients, iph->saddr,
@@ -670,7 +668,7 @@ int gmtp_inter_data_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 
 	/*if(entry->buffer->qlen >= entry->buffer_max) {
 		print_drop(skb, iph->daddr, gh->seq, "buffer overflow");
-		goto out;
+		goto out;*/
 
 		/*return NF_DROP;*/
 		/* Dont add it to buffer (equivalent to drop) */
@@ -708,7 +706,7 @@ int gmtp_inter_close_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry,
 
 	gmtp_pr_func();
 
-	print_packet(skb, in);
+	print_ipv4_packet(skb, in);
 	print_gmtp_packet(iph, gh);
 	gmtp_pr_info("State: %u", entry->state);
 

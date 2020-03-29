@@ -247,6 +247,8 @@ struct gmtp_sock {
 struct gmtp_packet_info {
 	struct sock			*sk;
 	struct sk_buff			*skb;
+	/* TODO Find better solution to send packets CC */
+	/*struct timer_list		xmit_timer;*/
 };
 
 static inline struct gmtp_sock *gmtp_sk(const struct sock *sk)
@@ -261,8 +263,9 @@ static inline const char *gmtp_role_name(const struct sock *sk)
 	case GMTP_ROLE_LISTEN:	  return "listen";
 	case GMTP_ROLE_SERVER:	  return "server";
 	case GMTP_ROLE_CLIENT:	  return "client";
-	case GMTP_ROLE_REPORTER:  return "client (reporter)";
+	case GMTP_ROLE_REPORTER:  return "reporter";
 	case GMTP_ROLE_RELAY:	  return "relay";
+	case GMTP_ROLE_CLIENT_RELAY:	  return "client (relay)";
 	}
 	return NULL;
 }

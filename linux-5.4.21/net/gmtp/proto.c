@@ -135,7 +135,7 @@ EXPORT_SYMBOL_GPL(flowname_strn);
 /*
  * Print IP packet basic information
  */
-void print_packet(struct sk_buff *skb, bool in)
+void print_ipv4_packet(struct sk_buff *skb, bool in)
 {
     struct iphdr *iph = ip_hdr(skb);
     const char *type = in ? "IN" : "OUT";
@@ -146,6 +146,7 @@ void print_packet(struct sk_buff *skb, bool in)
             iph->protocol,
             ntohs(iph->tot_len));
 }
+EXPORT_SYMBOL_GPL(print_ipv4_packet);
 
 /*
  * Print GMTP packet basic information
@@ -1059,7 +1060,7 @@ int gmtp_do_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
         sd->sk = sk;
         sd->skb = skb;
         sd->sendmsg_timer = sendmsg_timer;
-        setup_timer(sd->sendmsg_timer, gmtp_sendmsg_callback,
+        timer_setup(sd->sendmsg_timer, gmtp_sendmsg_callback,
                 (unsigned long ) sd);
         mod_timer(sd->sendmsg_timer, jiffies + 1);
     }

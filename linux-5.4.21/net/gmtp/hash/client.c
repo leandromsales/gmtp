@@ -64,6 +64,7 @@ struct gmtp_client* gmtp_get_first_client(struct list_head *head)
 	}
 	return NULL;
 }
+EXPORT_SYMBOL_GPL(gmtp_get_first_client);
 
 struct gmtp_client* gmtp_get_client(struct list_head *head,
 		__be32 addr, __be16 port)
@@ -115,6 +116,7 @@ int gmtp_delete_clients(struct list_head *list, __be32 addr, __be16 port)
 
 	return ret;
 }
+EXPORT_SYMBOL_GPL(gmtp_delete_clients);
 
 void print_gmtp_client(struct gmtp_client *c)
 {

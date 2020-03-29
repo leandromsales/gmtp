@@ -34,7 +34,7 @@ static inline int new_reporter(struct gmtp_inter_entry *entry)
 void gmtp_inter_mcc_delay(struct gmtp_inter_entry *info, struct sk_buff *skb,
 		unsigned int server_tx);
 
-void mcc_timer_callback(unsigned long data);
+void mcc_timer_callback(struct timer_list *t);
 
 
 #endif /* MCC_INTER_H_ */

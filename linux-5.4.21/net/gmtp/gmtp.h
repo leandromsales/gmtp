@@ -161,6 +161,7 @@ int inet_gmtp_listen(struct socket *sock, int backlog);
 const char *gmtp_packet_name(const __u8);
 const char *gmtp_state_name(const int);
 void flowname_str(__u8* str, const __u8 *flowname);
+void print_ipv4_packet(struct sk_buff *skb, bool in);
 void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh);
 void print_gmtp_data(struct sk_buff *skb, char* label);
 void print_gmtp_hdr_relay(const struct gmtp_hdr_relay *relay);
@@ -207,7 +208,7 @@ struct sk_buff *gmtp_make_delegate(struct sock *sk, struct sk_buff *rcv_skb,
 struct sk_buff *gmtp_ctl_make_reset(struct sock *sk,
         struct sk_buff *rcv_skb);
 /** output.c - Packet Output and Timers  */
-void gmtp_write_xmit_timer(unsigned long data);
+void gmtp_write_xmit_timer(struct timer_list *t);
 void gmtp_write_space(struct sock *sk);
 int gmtp_retransmit_skb(struct sock *sk);
 struct sk_buff *gmtp_ctl_make_elect_response(struct sock *sk,

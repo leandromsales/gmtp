@@ -112,7 +112,8 @@ void __gmtp_inter_build_info(struct gmtp_inter_entry *info)
 	/*gmtp_set_buffer_limits(info, 40);*/
 	gmtp_set_buffer_limits(info, 40);
 
-	setup_timer(&info->mcc_timer, mcc_timer_callback, (unsigned long) info);
+	/*setup_timer(&info->mcc_timer, mcc_timer_callback, (unsigned long) info);*/
+	timer_setup(&info->mcc_timer, mcc_timer_callback, 0);
 }
 
 void gmtp_inter_build_info(struct gmtp_inter_entry *info, unsigned int bmin)
@@ -162,11 +163,13 @@ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
 	new_entry->state = GMTP_INTER_WAITING_REGISTER_REPLY;
 	new_entry->next = hashtable->table[hashval];
 	hashtable->table[hashval] = new_entry;
-	setup_timer(&new_entry->ack_timer, gmtp_inter_ack_timer_callback,
-			(unsigned long ) new_entry);
-	setup_timer(&new_entry->register_timer,
-			gmtp_inter_register_timer_callback,
-			(unsigned long ) new_entry);
+	/*setup_timer(&new_entry->ack_timer, gmtp_inter_ack_timer_callback,
+			(unsigned long ) new_entry);*/
+	timer_setup(&new_entry->ack_timer, gmtp_inter_ack_timer_callback, 0);
+	/*setup_timer(&new_entry->register_timer, gmtp_inter_register_timer_callback,
+			(unsigned long ) new_entry);*/
+	timer_setup(&new_entry->register_timer, gmtp_inter_register_timer_callback,
+				0);
 
 	return 0;
 }

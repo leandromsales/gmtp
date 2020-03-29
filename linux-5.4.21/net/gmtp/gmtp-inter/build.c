@@ -23,7 +23,6 @@ struct gmtp_hdr *gmtp_inter_make_route_hdr(struct sk_buff *skb)
 	__u8 *transport_header;
 
 	struct gmtp_hdr *gh_cpy;
-	struct gmtp_hdr_route *gh_rn;
 	struct gmtp_hdr_register_reply *gh_reply = gmtp_hdr_register_reply(skb);
 
 	int gmtp_hdr_len = sizeof(struct gmtp_hdr) +

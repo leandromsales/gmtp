@@ -69,7 +69,6 @@ void gmtp_del_client_list(struct gmtp_client_entry *entry)
 void gmtp_del_client_hash_entry(struct gmtp_hashtable *table, const __u8 *key)
 {
 	struct gmtp_client_entry *entry;
-	int hashval;
 
 	gmtp_print_function();
 

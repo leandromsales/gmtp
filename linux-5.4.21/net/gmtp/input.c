@@ -76,9 +76,9 @@ static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
 	case GMTP_OPEN:
 		/* FIXME Close only if gh->flowname == gp->flowname */
 		/* Clear hash table */
-		/* FIXME gmtp_del_client_entry...
-		if(gmtp_role_client(sk))
-			/*gmtp_del_client_entry(client_hashtable,
+		/* FIXME gmtp_del_client_entry... */
+		/*if(gmtp_role_client(sk))
+			gmtp_del_client_entry(client_hashtable,
 					gmtp_sk(sk)->flowname);*/
 		/* FIXME: Implement gmtp_del_server_entry() */
 		/*
@@ -194,7 +194,7 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 {
 	struct gmtp_sock *gp = gmtp_sk(sk);
 	const struct inet_connection_sock *icsk = inet_csk(sk);
-	struct gmtp_client_entry *client_entry;
+	/*struct gmtp_client_entry *client_entry;*/
 
 	gmtp_pr_func();
 
@@ -264,8 +264,7 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 				goto err;
 
 			gmtp_set_state(gp->myself->rsock, GMTP_REQUESTING);
-			gmtp_send_elect_request(gp->myself->rsock,
-					GMTP_REQ_INTERVAL);
+			gmtp_send_elect_request(gp->myself->rsock, GMTP_REQ_INTERVAL);
 		}
 
 		/* Inserting information in client table */
@@ -624,7 +623,6 @@ static int gmtp_rcv_request_rcv_state_process(struct sock *sk,
 	}
 	return queued;
 }
-EXPORT_SYMBOL_GPL(gmtp_rcv_request_rcv_state_process);
 
 int gmtp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 			   struct gmtp_hdr *gh, unsigned int len)

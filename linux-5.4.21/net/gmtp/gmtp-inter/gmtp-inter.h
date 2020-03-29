@@ -27,7 +27,7 @@ extern const char *gmtp_packet_name(const __u8);
 extern const char *gmtp_state_name(const int);
 extern void flowname_str(__u8* str, const __u8* flowname);
 extern void print_gmtp_packet(const struct iphdr *iph, const struct gmtp_hdr *gh);
-extern void print_packet(struct sk_buff *skb, bool in);
+extern void print_ipv4_packet(struct sk_buff *skb, bool in);
 extern bool gmtp_build_md5(unsigned char *result, unsigned char* data, size_t len);
 extern unsigned char *gmtp_build_relay_id(void);
 extern __be32 gmtp_dev_ip(struct net_device *dev);

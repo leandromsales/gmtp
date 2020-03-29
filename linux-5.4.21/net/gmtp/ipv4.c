@@ -224,12 +224,10 @@ static int gmtp_v4_err(struct sk_buff *skb, u32 info)
     int err;
     struct net *net = dev_net(skb->dev);
 
-    struct request_sock *req, **prev;
-
     gmtp_pr_func();
 
-    /* FIXME Kernel panic when receive ICMP type 3 code 2 (Protocol Unreachable) */
-
+    /* FIXME Kernel panic when receive
+     * ICMP type 3 code 2 (Protocol Unreachable) */
     gmtp_pr_info("ICMP: Type: %d, Code: %d | ", type, code);
     /*** print_packet(skb, true); ***/
 
@@ -238,7 +236,7 @@ static int gmtp_v4_err(struct sk_buff *skb, u32 info)
         return 0;
     }
 
-    gmtp_pr_debug("calling inet_lookup...");
+    gmtp_pr_debug("Calling inet_lookup...");
     sk = inet_lookup(net, &gmtp_inet_hashinfo,
             skb, 0,
             iph->daddr, gh->dport,
@@ -363,7 +361,7 @@ static struct dst_entry* gmtp_v4_route_skb(struct net *net, struct sock *sk,
 }
 
 static int gmtp_v4_send_register_reply(const struct sock *sk,
-        struct request_sock *req)
+		struct request_sock *req)
 {
     int err = -1;
     struct sk_buff *skb;
@@ -393,7 +391,8 @@ out:
     return err;
 }
 
-static void gmtp_v4_ctl_send_packet(struct sock *sk, struct sk_buff *rxskb, __u8 type)
+static void gmtp_v4_ctl_send_packet(struct sock *sk, struct sk_buff *rxskb,
+		__u8 type)
 {
     int err;
     const struct iphdr *rxiph;
@@ -454,10 +453,7 @@ static void gmtp_v4_ctl_send_reset(const struct sock *sk, struct sk_buff *rxskb)
 
 static struct sock *gmtp_v4_hnd_req(struct sock *sk, struct sk_buff *skb)
 {
-    const struct gmtp_hdr *gh = gmtp_hdr(skb);
-    const struct iphdr *iph = ip_hdr(skb);
     struct sock *nsk;
-
     struct request_sock *req = inet_reqsk(sk);
 
     gmtp_pr_func();
@@ -487,6 +483,10 @@ static struct sock *gmtp_v4_hnd_req(struct sock *sk, struct sk_buff *skb)
     return nsk;
 lookup:
 	gmtp_pr_info("TODO: Lookup for established connections");
+
+	/* const struct iphdr *iph = ip_hdr(skb);*/
+	/*const struct gmtp_hdr *gh = gmtp_hdr(skb);*/
+
 	/*
     nsk = inet_lookup_established(sock_net(sk), &gmtp_inet_hashinfo,
             iph->saddr, gh->sport, iph->daddr, gh->dport,
@@ -532,7 +532,6 @@ int gmtp_v4_do_rcv(struct sock *sk, struct sk_buff *skb)
 
 reset:
     gmtp_v4_ctl_send_reset(sk, skb);
-discard:
     kfree_skb(skb);
     return 0;
 
@@ -875,10 +874,9 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 {
     const struct gmtp_hdr *gh;
     const struct iphdr *iph;
-    struct net *net;
     struct sock *sk;
     bool refcounted = false;
-    int ret;
+    int ret = 0;
 
     /* Step 1: Check header basics */
     if(gmtp_check_packet(skb)) {
@@ -935,7 +933,6 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
         goto discard_it;
 
     }
-lookup:
 
 	/* FIXME Calling inet_lookup functions causes kernel panic
 	 * GMTP is using its own list to avoid inet lookup
@@ -951,7 +948,7 @@ lookup:
 			iph->saddr, gh->sport,
 			iph->daddr, gh->dport);
 
-    if (!sk)
+	if (sk == NULL)
     	goto lookup_listener;
 
 	if(sk->sk_state == GMTP_NEW_SYN_RECV) {
@@ -1147,8 +1144,9 @@ bool static inline gmtp_ehash_nolisten(struct sock *sk, struct sock *osk)
  * This is the equivalent of TCP's tcp_v4_syn_recv_sock
  */
 struct sock *gmtp_v4_request_recv_sock(const struct sock *sk,
-		struct sk_buff *skb, struct request_sock *req, struct dst_entry *dst,
-                      struct request_sock *req_unhash, bool *own_req)
+		struct sk_buff *skb,
+		struct request_sock *req, struct dst_entry *dst,
+		struct request_sock *req_unhash, bool *own_req)
 
 {
     struct inet_request_sock *ireq;
@@ -1359,7 +1357,7 @@ static int __net_init gmtp_v4_init_net(struct net *net)
     if(gmtp_inet_hashinfo.bhash == NULL)
         return -ESOCKTNOSUPPORT;
 
-	return inet_ctl_sock_create(&net->gmtp.v4_ctl_sk, PF_INET, SOCK_GMTP,
+    return inet_ctl_sock_create(&net->gmtp.v4_ctl_sk, PF_INET, SOCK_GMTP,
 			IPPROTO_GMTP, net);
 }
 
@@ -1383,7 +1381,7 @@ static unsigned int hook_func_gmtp_out(void *priv,
     if(iph->protocol == IPPROTO_GMTP) {
 
         struct gmtp_hdr *gh = gmtp_hdr(skb);
-        int new_ttl = 1;
+       /* int new_ttl = 1;*/
 
         switch(gh->type) {
         case GMTP_PKT_REQUEST:

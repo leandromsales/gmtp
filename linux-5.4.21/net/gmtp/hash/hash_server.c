@@ -28,7 +28,6 @@ const struct gmtp_hash_ops gmtp_relay_hash_ops = {
 static void gmtp_print_server_entry(struct gmtp_server_entry *entry)
 {
 	struct gmtp_relay_entry *relay;
-	int i;
 
 	pr_info("Server entry: \n");
 	pr_info("\t%u relays on hash table\n", entry->relay_hashtable->len);
@@ -193,7 +192,6 @@ int gmtp_add_route(struct gmtp_server_entry* entry, struct sock *sk,
 int gmtp_add_server_entry(struct gmtp_hashtable *table, struct sock *sk,
 		struct sk_buff *skb)
 {
-	struct gmtp_hdr_route *route = gmtp_hdr_route(skb);
 	struct gmtp_sock *gp = gmtp_sk(sk);
 	struct gmtp_server_entry *entry;
 

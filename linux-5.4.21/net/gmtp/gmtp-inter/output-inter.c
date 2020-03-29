@@ -40,7 +40,7 @@ int gmtp_inter_register_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	iph->ttl = 64;
 	ip_send_check(iph);
 
-	print_packet(skb, false);
+	print_ipv4_packet(skb, false);
 	print_gmtp_packet(iph, gh);
 
 	return NF_ACCEPT;
@@ -60,7 +60,7 @@ int gmtp_inter_register_reply_out(struct sk_buff *skb,
 				GMTP_INTER_LOCAL);
 	}
 
-	print_packet(skb, false);
+	print_ipv4_packet(skb, false);
 	print_gmtp_packet(iph, gh);
 
 	return NF_ACCEPT;
@@ -290,7 +290,7 @@ int gmtp_inter_close_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	struct gmtp_relay *relay, *temp;
 
 	gmtp_pr_func();
-	print_packet(skb, false);
+	print_ipv4_packet(skb, false);
 	print_gmtp_packet(iph, gh);
 	gmtp_pr_info("State: %u", entry->state);
 
