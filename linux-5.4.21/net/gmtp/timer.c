@@ -258,14 +258,18 @@ static void gmtp_keepalive_timer(struct timer_list *t)
 
 	if(gp->type == GMTP_SOCK_TYPE_REPORTER) {
 		unsigned int timeout = 0;
+
 		switch(sk->sk_state) {
 		case GMTP_REQUESTING:
+			if (gp->myself == NULL) {
+				gmtp_pr_error("Reporter myself is NULL");
+				break;
+			}
 			timeout = jiffies_to_msecs(jiffies) - gp->req_stamp;
 			if(likely(timeout <= GMTP_TIMEOUT_INIT))
 				gmtp_send_elect_request(sk, GMTP_REQ_INTERVAL);
 			else
-				gmtp_send_elect_response(gp->myself->mysock,
-						GMTP_ELECT_AUTO);
+				gmtp_send_elect_response(gp->myself->mysock, GMTP_ELECT_AUTO);
 			break;
 		case GMTP_OPEN:
 			gmtp_client_sendack_timer(sk);

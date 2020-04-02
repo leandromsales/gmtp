@@ -115,15 +115,11 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
         }
         case GMTP_PKT_RESET: {
         	gmtp_hdr_reset(skb)->reset_code = gcb->reset_code;
-        	gmtp_pr_info("Sending reset via sk: %p", sk);
         	break;
         }
         /* TODO Merge ACK and Feedback */
         case GMTP_PKT_FEEDBACK:
-			/* FIXME Set number of clients:
-			 * fh->nclients = gp->myself->nclients;
-			 */
-            gmtp_hdr_feedback(skb)->nclients = 0;
+            gmtp_hdr_feedback(skb)->nclients = gp->myself->nclients;;
             /* fall through */
         case GMTP_PKT_ACK:
             gh->seq = gcb->seq = gp->gsr;
@@ -463,8 +459,8 @@ int gmtp_connect(struct sock *sk)
     struct dst_entry *dst = __sk_dst_get(sk);
     struct inet_connection_sock *icsk = inet_csk(sk);
     struct gmtp_sock *gp = gmtp_sk(sk);
-    /*struct inet_sock *inet = inet_sk(sk);*/
-    /*struct gmtp_client_entry *client_entry;*/
+    struct inet_sock *inet = inet_sk(sk);
+    struct gmtp_client_entry *client_entry;
     int err = 0;
 
     gmtp_pr_func();
@@ -478,39 +474,32 @@ int gmtp_connect(struct sock *sk)
     if (unlikely(skb == NULL))
         return -ENOBUFS;
 
-    gmtp_pr_info("skb created");
-
     /* Reserve space for headers. */
     skb_reserve(skb, sk->sk_prot->max_header);
-    gmtp_pr_info("gmtp header reserved");
     GMTP_SKB_CB(skb)->type = GMTP_PKT_REQUEST;
 
-    gmtp_pr_info("TODO: Call gmtp_lookup_client");
-    /*client_entry = gmtp_lookup_client(client_hashtable, gp->flowname);
+    gmtp_pr_info("Calling gmtp_lookup_client");
+    client_entry = gmtp_lookup_client(&client_hashtable, gp->flowname);
     if(client_entry == NULL)
-        err = gmtp_add_client_entry(client_hashtable, gp->flowname,
+        client_entry = gmtp_add_client_entry(&client_hashtable, gp->flowname,
                 inet->inet_saddr, inet->inet_sport, 0, 0);
 
-    client_entry = gmtp_lookup_client(client_hashtable, gp->flowname);
-    if(err != 0 || client_entry == NULL) {
+    if(client_entry == NULL)
         return -ENOBUFS;
-    }
 
     gp->myself = gmtp_list_add_client(0, inet->inet_saddr, inet->inet_sport,
             0, &client_entry->clients->list);
 
     if(gp->myself == NULL)
-        return -ENOBUFS;*/
+        return -ENOBUFS;
 
     /** First transmission: gss <- iss */
     gp->gss = gp->iss;
     gp->req_stamp = jiffies_to_msecs(jiffies);
     gp->ack_rx_tstamp = jiffies_to_msecs(jiffies);
 
-    gmtp_pr_info("TODO: Add link to myself");
-    /*
     gp->myself->ack_rx_tstamp = gp->ack_rx_tstamp;
-    gp->myself->mysock = sk;*/
+    gp->myself->mysock = sk;
 
     err = gmtp_transmit_skb(sk, gmtp_skb_entail(sk, skb));
 
@@ -529,15 +518,14 @@ void gmtp_send_ack(struct sock *sk)
     /* If we have been reset, we may not send again. */
     if(sk->sk_state != GMTP_CLOSED) {
 
-        struct sk_buff *skb = alloc_skb(sk->sk_prot->max_header,
-        GFP_ATOMIC);
+        struct sk_buff *skb = alloc_skb(sk->sk_prot->max_header, GFP_ATOMIC);
 
         /* FIXME How to define the ackcode in this case? */
         if(skb == NULL) {
             inet_csk_schedule_ack(sk);
             inet_csk(sk)->icsk_ack.ato = TCP_ATO_MIN;
             inet_csk_reset_xmit_timer(sk, ICSK_TIME_DACK,
-                    TCP_DELACK_MAX, GMTP_RTO_MAX);
+            		TCP_DELACK_MAX, GMTP_RTO_MAX);
             return;
         }
 
@@ -576,7 +564,7 @@ EXPORT_SYMBOL_GPL(gmtp_send_elect_request);
 void gmtp_send_elect_response(struct sock *sk, __u8 code)
 {
     struct sk_buff *skb = alloc_skb(sk->sk_prot->max_header, GFP_ATOMIC);
-    /*struct gmtp_sock *gp = gmtp_sk(sk);*/
+    struct gmtp_sock *gp = gmtp_sk(sk);
 
     gmtp_pr_func();
 
@@ -588,20 +576,18 @@ void gmtp_send_elect_response(struct sock *sk, __u8 code)
     GMTP_SKB_CB(skb)->type = GMTP_PKT_ELECT_RESPONSE;
     GMTP_SKB_CB(skb)->elect_code = code;
 
-    /*if(code == GMTP_ELECT_AUTO) {
+    if(code == GMTP_ELECT_AUTO) {
 
         pr_info("Turning a client into a Reporter\n");
 
-         We dont need init mcc, because mcc is already started
+        /* We dont need init mcc, because mcc is already started */
         gp->role = GMTP_ROLE_REPORTER;
-        gp->myself->max_nclients =
-                GMTP_REPORTER_DEFAULT_PROPORTION - 1;
-        gp->myself->clients = kmalloc(sizeof(struct gmtp_client),
-        GFP_ATOMIC);
+        gp->myself->max_nclients = GMTP_REPORTER_DEFAULT_PROPORTION - 1;
+        gp->myself->clients = kmalloc(sizeof(struct gmtp_client), GFP_ATOMIC);
         INIT_LIST_HEAD(&gp->myself->clients->list);
         mcc_rx_init(sk);
         inet_csk_reset_keepalive_timer(sk, GMTP_ACK_TIMEOUT);
-    }*/
+    }
 
     gmtp_transmit_skb(sk, skb);
 }
@@ -691,8 +677,7 @@ void gmtp_send_feedback(struct sock *sk)
 
     if(sk->sk_state == GMTP_OPEN) {
 
-        struct sk_buff *skb = alloc_skb(sk->sk_prot->max_header,
-        GFP_ATOMIC);
+        struct sk_buff *skb = alloc_skb(sk->sk_prot->max_header, GFP_ATOMIC);
 
         /* Reserve space for headers */
         skb_reserve(skb, sk->sk_prot->max_header);

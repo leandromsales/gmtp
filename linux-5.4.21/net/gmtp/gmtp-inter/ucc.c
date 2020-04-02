@@ -49,12 +49,11 @@ void gmtp_inter_ack_timer_callback(struct timer_list *t)
 	struct sk_buff *skb;
 
 	entry = from_timer(entry, t, ack_timer);
-
 	if(!entry)
 		return;
 
-//	gmtp_ucc_equation(GMTP_UCC_NONE);
-	gmtp_ucc_equation(GMTP_UCC_ALL);
+	gmtp_ucc_equation(GMTP_UCC_NONE);
+	/*gmtp_ucc_equation(GMTP_UCC_ALL);*/
 	skb = gmtp_inter_build_ack(entry);
 	if(skb != NULL)
 		gmtp_inter_send_pkt(skb);
@@ -67,6 +66,8 @@ void gmtp_inter_register_timer_callback(struct timer_list *t)
 	struct gmtp_inter_entry *entry;
 	struct sk_buff *skb;
 
+	gmtp_pr_func();
+
 	entry = from_timer(entry, t, ack_timer);
 
 	if(!entry)
@@ -74,8 +75,10 @@ void gmtp_inter_register_timer_callback(struct timer_list *t)
 
 	skb = gmtp_inter_build_register(entry);
 
-	if(skb != NULL)
+	if(skb != NULL) {
+		print_gmtp_packet(ip_hdr(skb), gmtp_hdr(skb));
 		gmtp_inter_send_pkt(skb);
+	}
 	mod_timer(&entry->register_timer, jiffies + HZ);
 }
 

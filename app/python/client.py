@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import sys
+import os
 import socket
 import time
 import timeit
@@ -48,8 +49,12 @@ i = 0
 total_size = 0
 lastsize100 = 0
 
-logfilename = "logs/logclient_" +  str(timeit.default_timer())[4:] + ".log" 
-logfile = open(logfilename, 'w+')
+directory = "logs/"
+if not os.path.exists(directory):
+    os.makedirs(directory)
+
+logfname = directory + "logclient_" + str(timeit.default_timer())[4:] + ".log" 
+logfile = open(logfname, 'w+')
 
 
 logtable = "seq\ttime\tsize\telapsed\tinst_rate" + \

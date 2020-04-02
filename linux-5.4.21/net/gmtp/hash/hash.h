@@ -64,8 +64,8 @@ struct gmtp_hashtable {
 };
 
 /** hash.c */
-struct gmtp_hashtable *gmtp_build_hashtable(unsigned int size,
-		struct gmtp_hash_ops hash_ops);
+int gmtp_build_hashtable(struct gmtp_hashtable *htable,
+		unsigned int size, struct gmtp_hash_ops hash_ops);
 unsigned int gmtp_hashval(struct gmtp_hashtable *table, const __u8 *key);
 struct gmtp_hash_entry *gmtp_lookup_entry(struct gmtp_hashtable *table,
 		const __u8 *key);
@@ -91,7 +91,7 @@ struct gmtp_client_entry {
 };
 
 
-int gmtp_add_client_entry(struct gmtp_hashtable *table,
+struct gmtp_client_entry *gmtp_add_client_entry(struct gmtp_hashtable *table,
 		const __u8 *flowname, __be32 local_addr, __be16 local_port,
 		__be32 channel_addr, __be16 channel_port);
 struct gmtp_client_entry *gmtp_lookup_client(struct gmtp_hashtable *table,

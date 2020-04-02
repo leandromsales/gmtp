@@ -550,7 +550,7 @@ static int gmtp_check_packet(struct sk_buff *skb)
     if(skb->pkt_type != PACKET_HOST && gh->type != GMTP_PKT_DATA
             && gh->type != GMTP_PKT_CLOSE
             && gh->type != GMTP_PKT_RESET) {
-        gmtp_pr_warning("invalid packet destiny\n");
+        gmtp_pr_warning("Invalid packet destiny\n");
         return 1;
     }
 
@@ -595,7 +595,7 @@ static int gmtp_v4_reporter_rcv_elect_request(struct sk_buff *skb)
 
     gmtp_pr_func();
 
-    media_entry = gmtp_lookup_client(client_hashtable, gh->flowname);
+    media_entry = gmtp_lookup_client(&client_hashtable, gh->flowname);
     if(media_entry == NULL) {
         pr_info("Media entry == NULL\n");
         return 1;
@@ -634,7 +634,7 @@ static int gmtp_v4_client_rcv_elect_response(struct sk_buff *skb)
 
     gmtp_pr_func();
 
-    media_entry = gmtp_lookup_client(client_hashtable, gh->flowname);
+    media_entry = gmtp_lookup_client(&client_hashtable, gh->flowname);
     if(media_entry == NULL) {
         pr_info("Media entry == NULL\n");
         return 1;
@@ -703,7 +703,7 @@ static int gmtp_v4_reporter_rcv_ack(struct sk_buff *skb)
 
     gmtp_pr_func();
 
-    media_entry = gmtp_lookup_client(client_hashtable, gh->flowname);
+    media_entry = gmtp_lookup_client(&client_hashtable, gh->flowname);
     if(media_entry == NULL) {
         pr_info("Media entry == NULL\n");
         return 1;
@@ -901,8 +901,11 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
     if(skb->pkt_type == PACKET_MULTICAST) {
 
         struct gmtp_client *tmp;
-        struct gmtp_client_entry *media_entry = gmtp_lookup_client(
-                client_hashtable, gh->flowname);
+        struct gmtp_client_entry *media_entry;
+
+        /*print_gmtp_packet(iph, gh);*/
+
+        media_entry = gmtp_lookup_client(&client_hashtable, gh->flowname);
 
         if(media_entry == NULL)
             goto discard_it;
@@ -912,17 +915,13 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
             if(!tmp)
                 goto discard_it;
 
-            sk = gmtp_lookup_established(&gmtp_sk_hash,
-            			iph->saddr, gh->sport,
-            			tmp->addr, tmp->port);
-
-            /*sk = __inet_lookup(net,
+            sk = __inet_lookup(dev_net(skb_dst(skb)->dev),
                     &gmtp_inet_hashinfo,
                     skb, __gmtp_hdr_len(gh),
                     iph->saddr, gh->sport,
                     tmp->addr, tmp->port,
                     inet_iif(skb), 0, &refcounted);
-             */
+
             /** FIXME Check warnings at receive skb... */
             gmtp_v4_sk_receive_skb(skb_copy(skb, GFP_ATOMIC), sk);
         }
@@ -1183,9 +1182,6 @@ struct sock *gmtp_v4_request_recv_sock(const struct sock *sk,
     if(__inet_inherit_port(sk, newsk) < 0)
         goto put_and_exit;
 
-    /** TODO Add newsk and remove oldsk into GMTP hash table) */
-    gmtp_pr_info("New sk: %p", newsk);
-    gmtp_pr_info("old sk: %p", req_to_sk(req_unhash));
 	*own_req = gmtp_ehash_nolisten(newsk, req_to_sk(req_unhash));
 	if (*own_req)
 		ireq->ireq_opt = NULL;
@@ -1381,17 +1377,16 @@ static unsigned int hook_func_gmtp_out(void *priv,
     if(iph->protocol == IPPROTO_GMTP) {
 
         struct gmtp_hdr *gh = gmtp_hdr(skb);
-       /* int new_ttl = 1;*/
+        int new_ttl = 1;
 
         switch(gh->type) {
         case GMTP_PKT_REQUEST:
-        	/* FIXME Uncomment after testing client/server */
-            /*if(GMTP_SKB_CB(skb)->retransmits <= 3) {
-            	gmtp_pr_debug("Changing TTL to %d\n", new_ttl);
+            if(GMTP_SKB_CB(skb)->retransmits <= 3) {
+            	pr_debug("Changing GMTP-REQUEST TTL to %d\n", new_ttl);
                 iph->ttl = new_ttl;
                 ip_send_check(iph);
-            } else */{
-                gmtp_pr_debug("Auto promoting the client to a relay\n");
+            } else {
+                pr_debug("Auto promoting the GMTP-Client to a GMTP-Relay\n");
                 gh->type = GMTP_PKT_REGISTER;
             }
         }
@@ -1445,10 +1440,9 @@ out:
 
 static void __exit gmtp_v4_exit(void)
 {
+	gmtp_pr_func();
 
-    gmtp_print_function();
-
-    /* nf_unregister_hook(&nfho_gmtp_out); */
+    nf_unregister_net_hook(&init_net, &nfho_gmtp_out);
     unregister_pernet_subsys(&gmtp_v4_ops);
     inet_unregister_protosw(&gmtp_protosw);
     inet_del_protocol(&gmtp_protocol, IPPROTO_GMTP);

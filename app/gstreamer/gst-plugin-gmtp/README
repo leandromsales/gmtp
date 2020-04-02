@@ -47,10 +47,10 @@ TBD
 		gst-launch-1.0 --gst-plugin-path=$HOME/gmtp/app/gstreamer/gst-plugin-gmtp/src -v filesrc location=~/audiofile.mp3 ! mpegaudioparse ! gmtpserversink port=12345
 		
 		* Playing remote mp3 file using GMTP client
-		gst-launch-1.0 --gst-plugin-path=$HOME/gmtp/app/gstreamer/gst-plugin-gmtp/src -v gmtpclientsrc host=localhost port=12345 ! decodebin ! audioconvert ! pulsesink
+		gst-launch-1.0 --gst-plugin-path=$HOME/gmtp/app/gstreamer/gst-plugin-gmtp/src -v gmtpclientsrc host=10.10.0.101 port=12345 ! decodebin ! audioconvert ! pulsesink
 		
 		* Saving (without play) remote mp3 file using GMTP client
-                gst-launch-1.0 --gst-plugin-path=$HOME/gmtp/app/gstreamer/gst-plugin-gmtp/src -v gmtpclientsrc host=localhost port=12345 ! tee name=tp tp. ! queue ! filesink location=~/audio_copy.mp3 tp. ! queue ! decodebin
+                gst-launch-1.0 --gst-plugin-path=$HOME/gmtp/app/gstreamer/gst-plugin-gmtp/src -v gmtpclientsrc host=10.10.0.101 port=12345 ! tee name=tp tp. ! queue ! filesink location=~/audio_copy.mp3 tp. ! queue ! decodebin
 
 	3.4 Pipeline examples
 		* Play local mp3 and save it to a new file at the same time

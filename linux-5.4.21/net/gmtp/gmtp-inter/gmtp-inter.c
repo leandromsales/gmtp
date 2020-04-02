@@ -25,12 +25,10 @@
 #include "mcc-inter.h"
 #include "ucc.h"
 
-/****
 static struct nf_hook_ops nfho_pre_routing;
 static struct nf_hook_ops nfho_local_in;
 static struct nf_hook_ops nfho_local_out;
 static struct nf_hook_ops nfho_post_routing;
-****/
 
 struct gmtp_inter gmtp_inter;
 
@@ -119,9 +117,8 @@ void gmtp_ucc_buffer_dequeue(struct sk_buff *newskb)
 }
 
 
-unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
-        const struct net_device *in, const struct net_device *out,
-        int (*okfn)(struct sk_buff *))
+unsigned int hook_func_pre_routing(void *priv,
+		struct sk_buff *skb, const struct nf_hook_state *state)
 {
     int ret = NF_ACCEPT;
     struct iphdr *iph = ip_hdr(skb);
@@ -185,8 +182,7 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
             }
         }
 
-        entry = gmtp_inter_lookup_media(gmtp_inter.hashtable,
-                gh->flowname);
+        entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
         if(entry == NULL)
             goto out;
 
@@ -212,8 +208,7 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
             ret = gmtp_inter_delegate_rcv(skb, entry);
             break;
         default:
-            relay = gmtp_get_relay(&entry->relays->list,
-                    iph->daddr, gh->dport);
+            relay = gmtp_get_relay(&entry->relays->list, iph->daddr, gh->dport);
             if(!gmtp_local_ip(iph->daddr) && (relay == NULL))
                 goto out;
         }
@@ -241,9 +236,8 @@ out:
 }
 
 
-unsigned int hook_func_local_in(unsigned int hooknum, struct sk_buff *skb,
-        const struct net_device *in, const struct net_device *out,
-        int (*okfn)(struct sk_buff *))
+unsigned int hook_func_local_in(void *priv,
+		struct sk_buff *skb, const struct nf_hook_state *state)
 {
     int ret = NF_ACCEPT;
     struct iphdr *iph = ip_hdr(skb);
@@ -277,9 +271,8 @@ in:
     return ret;
 }
 
-unsigned int hook_func_local_out(unsigned int hooknum, struct sk_buff *skb,
-        const struct net_device *in, const struct net_device *out,
-        int (*okfn)(struct sk_buff *))
+unsigned int hook_func_local_out(void *priv,
+		struct sk_buff *skb, const struct nf_hook_state *state)
 {
     int ret = NF_ACCEPT;
     struct iphdr *iph = ip_hdr(skb);
@@ -312,9 +305,9 @@ static int gmtp_inter_has_clients(struct sk_buff *skb,
 {
     struct iphdr *iph = ip_hdr(skb);
     struct gmtp_hdr *gh = gmtp_hdr(skb);
+    struct gmtp_relay *relay;
 
-    struct gmtp_relay *relay = gmtp_get_relay(&entry->relays->list,
-            iph->daddr, gh->dport);
+    relay = gmtp_get_relay(&entry->relays->list, iph->daddr, gh->dport);
     // struct gmtp_reporter *reporter = gmtp_get_client(&entry->clients->list,
     //         iph->daddr, gh->dport);
     struct gmtp_client *reporter = gmtp_get_client(&entry->clients->list,
@@ -322,12 +315,12 @@ static int gmtp_inter_has_clients(struct sk_buff *skb,
 
     if(relay == NULL && reporter == NULL)
         return 1;
+
     return 0;
 }
 
-unsigned int hook_func_post_routing(unsigned int hooknum, struct sk_buff *skb,
-        const struct net_device *in, const struct net_device *out,
-        int (*okfn)(struct sk_buff *))
+unsigned int hook_func_post_routing(void *priv, struct sk_buff *skb,
+		const struct nf_hook_state *state)
 {
     int ret = NF_ACCEPT;
     struct iphdr *iph = ip_hdr(skb);
@@ -346,8 +339,7 @@ unsigned int hook_func_post_routing(unsigned int hooknum, struct sk_buff *skb,
             return NF_ACCEPT;
 
         if(gh->type == GMTP_PKT_DATA) {
-            if(!gmtp_local_ip(iph->daddr) ||
-                GMTP_SKB_CB(skb)->jumped) {
+            if(!gmtp_local_ip(iph->daddr) || GMTP_SKB_CB(skb)->jumped) {
                 if(gmtp_inter_has_clients(skb, entry))
                     goto out;
             }
@@ -361,8 +353,7 @@ unsigned int hook_func_post_routing(unsigned int hooknum, struct sk_buff *skb,
             ret = gmtp_inter_register_reply_out(skb, entry);
             break;
         case GMTP_PKT_DATA:
-            if(gmtp_local_ip(iph->daddr)
-                    || GMTP_SKB_CB(skb)->jumped) {
+            if(gmtp_local_ip(iph->daddr) || GMTP_SKB_CB(skb)->jumped) {
                 ret = gmtp_inter_data_out(skb, entry);
             }
             break;
@@ -382,31 +373,29 @@ out:
 
 static void register_hooks(void)
 {
-    /****
     nfho_pre_routing.hook = hook_func_pre_routing;
     nfho_pre_routing.hooknum = NF_INET_PRE_ROUTING;
     nfho_pre_routing.pf = PF_INET;
     nfho_pre_routing.priority = NF_IP_PRI_FIRST;
-    nf_register_hook(&nfho_pre_routing);
+    nf_register_net_hook(&init_net, &nfho_pre_routing);
 
     nfho_local_in.hook = hook_func_local_in;
     nfho_local_in.hooknum = NF_INET_LOCAL_IN;
     nfho_local_in.pf = PF_INET;
     nfho_local_in.priority = NF_IP_PRI_FIRST;
-    nf_register_hook(&nfho_local_in);
+    nf_register_net_hook(&init_net, &nfho_local_in);
 
     nfho_local_out.hook = hook_func_local_out;
     nfho_local_out.hooknum = NF_INET_LOCAL_OUT;
     nfho_local_out.pf = PF_INET;
     nfho_local_out.priority = NF_IP_PRI_FIRST;
-    nf_register_hook(&nfho_local_out);
+    nf_register_net_hook(&init_net, &nfho_local_out);
 
     nfho_post_routing.hook = hook_func_post_routing;
     nfho_post_routing.hooknum = NF_INET_POST_ROUTING;
     nfho_post_routing.pf = PF_INET;
     nfho_post_routing.priority = NF_IP_PRI_FIRST;
-    nf_register_hook(&nfho_post_routing);
-    ****/
+    nf_register_net_hook(&init_net, &nfho_post_routing);
 }
 
 static int __init gmtp_inter_init(void)
@@ -459,11 +448,10 @@ out:
 
 static void unregister_hooks(void)
 {
-    /****
-    nf_unregister_hook(&nfho_pre_routing);
-    nf_unregister_hook(&nfho_local_in);
-    nf_unregister_hook(&nfho_post_routing);
-    ****/
+	nf_unregister_net_hook(&init_net, &nfho_post_routing);
+	nf_unregister_net_hook(&init_net, &nfho_local_out);
+	nf_unregister_net_hook(&init_net, &nfho_local_in);
+	nf_unregister_net_hook(&init_net, &nfho_pre_routing);
 }
 
 static void __exit gmtp_inter_exit(void)

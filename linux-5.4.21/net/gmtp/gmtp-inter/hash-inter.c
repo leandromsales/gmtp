@@ -160,6 +160,8 @@ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
 	new_entry->media_port = media_port;
 	new_entry->channel_addr = channel_addr;
 	new_entry->channel_port = channel_port;
+
+	gmtp_pr_info("GMTP-INTER State: GMTP_INTER_WAITING_REGISTER_REPLY");
 	new_entry->state = GMTP_INTER_WAITING_REGISTER_REPLY;
 	new_entry->next = hashtable->table[hashval];
 	hashtable->table[hashval] = new_entry;
@@ -168,8 +170,8 @@ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
 	timer_setup(&new_entry->ack_timer, gmtp_inter_ack_timer_callback, 0);
 	/*setup_timer(&new_entry->register_timer, gmtp_inter_register_timer_callback,
 			(unsigned long ) new_entry);*/
-	timer_setup(&new_entry->register_timer, gmtp_inter_register_timer_callback,
-				0);
+	/*timer_setup(&new_entry->register_timer, gmtp_inter_register_timer_callback,
+				0);*/
 
 	return 0;
 }

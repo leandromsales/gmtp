@@ -76,14 +76,11 @@ static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
 	case GMTP_OPEN:
 		/* FIXME Close only if gh->flowname == gp->flowname */
 		/* Clear hash table */
-		/* FIXME gmtp_del_client_entry... */
-		/*if(gmtp_role_client(sk))
-			gmtp_del_client_entry(client_hashtable,
-					gmtp_sk(sk)->flowname);*/
+		if(gmtp_role_client(sk))
+			gmtp_del_client_entry(&client_hashtable, gmtp_sk(sk)->flowname);
 		/* FIXME: Implement gmtp_del_server_entry() */
-		/*
-		else if(gp->role == GMTP_ROLE_SERVER)
-			gmtp_print_error("FIXME: Implement gmtp_del_server_entry()");*/
+		else if(gmtp_sk(sk)->role == GMTP_ROLE_SERVER)
+			gmtp_print_error("FIXME: Implement gmtp_del_server_entry()");
 
 		/* Give waiting application a chance to read pending data */
 		queued = 1;
@@ -150,8 +147,11 @@ struct sock* gmtp_multicast_connect(struct sock *sk, enum gmtp_sock_type type,
 
 	mreq.imr_multiaddr.s_addr = addr;
 	mreq.imr_address.s_addr = htonl(INADDR_ANY);
-	/* NS-3 sim0 interface is 7 */
-	mreq.imr_ifindex = 7;
+	/* NS-3 sim0 interface is 7
+	 * Virsh/qemu eth1 interface is 3
+	 * TODO: Find the correct interface
+	 */
+	mreq.imr_ifindex = 3;
 
 	gmtp_pr_debug("Joining the multicast group in %pI4@%-5d",
 			&addr, ntohs(port));
@@ -194,7 +194,7 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 {
 	struct gmtp_sock *gp = gmtp_sk(sk);
 	const struct inet_connection_sock *icsk = inet_csk(sk);
-	/*struct gmtp_client_entry *client_entry;*/
+	struct gmtp_client_entry *client_entry;
 
 	gmtp_pr_func();
 
@@ -204,10 +204,9 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 	}
 	gmtp_pr_debug("Packet received: %s", gmtp_packet_name(gh->type));
 
-	gmtp_pr_info("TODO: Call gmtp_lookup_client");
-	/*client_entry = gmtp_lookup_client(client_hashtable, gh->flowname);*/
-	/*if(client_entry == NULL)
-		goto out_invalid_packet;*/
+	client_entry = gmtp_lookup_client(&client_hashtable, gh->flowname);
+	if(client_entry == NULL)
+		goto out_invalid_packet;
 
 	/*** FIXME Check sequence numbers  ***/
 
@@ -229,7 +228,11 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 			pr_info("Reporter: %pI4@%-5d\n",
 					&gh_rnotify->reporter_addr,
 					ntohs(gh_rnotify->reporter_port));
-			memcpy(gp->relay_id, gh_rnotify->relay_id, GMTP_RELAY_ID_LEN);
+			memcpy(gp->relay_id, gh_rnotify->relay_id,
+					sizeof(gh_rnotify->relay_id));
+
+			if(gp->myself == NULL)
+				goto out_null_hash;
 
 			gp->myself->max_nclients = gh_rnotify->max_nclients;
 			if(gp->myself->max_nclients > 0) {
@@ -249,6 +252,11 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 			goto out_invalid_packet;
 		}
 
+		if(gp->myself == NULL) {
+			gmtp_pr_error("GMTP 'myself' is NULL!");
+			goto out_null_hash;
+		}
+
 		if(gp->role == GMTP_ROLE_CLIENT) {
 			gp->myself->reporter = gmtp_create_client(
 					gh_rnotify->reporter_addr,
@@ -259,26 +267,24 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 					gh_rnotify->reporter_addr,
 					gh_rnotify->reporter_port);
 
-			if(gp->myself->rsock == NULL
-					|| gp->myself->reporter == NULL)
+			if(gp->myself->rsock == NULL || gp->myself->reporter == NULL)
 				goto err;
-
 			gmtp_set_state(gp->myself->rsock, GMTP_REQUESTING);
 			gmtp_send_elect_request(gp->myself->rsock, GMTP_REQ_INTERVAL);
 		}
 
 		/* Inserting information in client table */
-		gmtp_pr_info("TODO: Insert information in client table");
-		/*client_entry->channel_addr = gh_rnotify->mcst_addr;
-		client_entry->channel_port = gh_rnotify->mcst_port;*/
+		gmtp_pr_info("Inserting information in client table");
+		client_entry->channel_addr = gh_rnotify->mcst_addr;
+		client_entry->channel_port = gh_rnotify->mcst_port;
 
-		gp->channel_sk = gmtp_multicast_connect(sk,
-				GMTP_SOCK_TYPE_DATA_CHANNEL,
+		gp->channel_sk = gmtp_multicast_connect(sk, GMTP_SOCK_TYPE_DATA_CHANNEL,
 				gh_rnotify->mcst_addr, gh_rnotify->mcst_port);
 		if(gp->channel_sk == NULL)
 			goto err;
-
 	}
+
+out_null_hash:
 
 	/* Stop the REQUEST timer */
 	gmtp_pr_info("Stopping the REQUEST timer...");
@@ -337,8 +343,7 @@ err:
  	 * We mark this socket as no longer usable, so that the loop in
  	 * gmtp_sendmsg() terminates and the application gets notified.
  	 */
-	gmtp_pr_info("TODO: error - call gmtp_del_client_entry");
-	/*gmtp_del_client_entry(client_hashtable, gp->flowname);*/
+	gmtp_del_client_entry(&client_hashtable, gp->flowname);
  	gmtp_set_state(sk, GMTP_CLOSED);
  	sk->sk_err = ECOMM;
  	return 1;
@@ -408,8 +413,7 @@ static int gmtp_rcv_route_notify(struct sock *sk, struct sk_buff *skb,
 	if(route->nrelays <= 0)
 		return 0;
 
-	gmtp_pr_info("TODO: call gmtp_add_server_entry");
-	/*gmtp_add_server_entry(server_hashtable, sk, skb);*/
+	gmtp_add_server_entry(&server_hashtable, sk, skb);
 
 	return 0;
 }
@@ -423,7 +427,7 @@ static int gmtp_rcv_delegate_reply(struct sock *sk, struct sk_buff *skb,
 
 	print_gmtp_hdr_relay(&dh->relay);
 
-	s = (struct gmtp_server_entry*) gmtp_lookup_entry(server_hashtable,
+	s = (struct gmtp_server_entry*) gmtp_lookup_entry(&server_hashtable,
 				gh->flowname);
 	if(s != NULL) {
 		r = (struct gmtp_relay_entry*) gmtp_lookup_entry(s->relay_hashtable,
@@ -490,16 +494,17 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 
 			/* Avoid super TX reduction */
 			if(new_tx < DIV_ROUND_CLOSEST(gp->tx_media_rate, 4)) {
+				/*print_gmtp_packet(ip_hdr(skb), gmtp_hdr(skb));
 				pr_info("Avoiding super TX reduction...\n");
 				pr_info("gh->tx = %u\n", gh->transm_r);
-				pr_info("max_tx: %lu\n", gp->tx_media_rate);
+				pr_info("max_tx: %lu\n", gp->tx_media_rate);*/
 				new_tx = DIV_ROUND_CLOSEST(gp->tx_media_rate, 4);
 			}
 
-			if((__be32 )gp->tx_max_rate > new_tx)
+			/*if((__be32 )gp->tx_max_rate > new_tx)
 				gmtp_pr_debug("TX: %lu B/s | CC TX: %lu B/s from %pI4@%-5d\n",
 							gp->tx_max_rate, gp->tx_ucc_rate,
-							&ip_hdr(skb)->saddr, ntohs(gh->sport));
+							&ip_hdr(skb)->saddr, ntohs(gh->sport));*/
 
 			gp->tx_ucc_rate = min((__be32 )gp->tx_max_rate, new_tx);
 		}

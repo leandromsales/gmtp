@@ -22,27 +22,31 @@ This guide intended to help the user to reproduce an environment and test the fe
 
 ## Environment ##
 
-It was used as a base to run a linux environment, using protocol GMTP, a Dell Vostro 5470 notebook, core i5 4200u processor, 4GB of RAM, running Ubuntu 15.04 64bit kernel version 3.19.0-22-generic. A virtual machine was created using VirtualBox version 4.3.28 r100309 with extension pack installed, 512MB of RAM, virtual disk with 30gb and running Ubuntu Server 14.04.2LTS 64bit only with the base system installed.
+It was used as a base to run a linux environment, using protocol GMTP, a Dell Inspiron 7460 notebook, Intel(R) Core(TM) i7-7500U CPU @ 2.70GHz processor, 16GB of RAM, running Ubuntu 19.10 64bit kernel version 5.3.0-42-generic. The virtual machines were created using Vagrant version 2.2.3, with libvirt provider version 5.4.0 and QEMU API version 5.4.0 (hypersvisor QEMU 4.0.0). Each VM has 512MB of RAM, virtual disk with 30gb and running Ubuntu Server 19.10 64bit, using the "generic/ubuntu1910" vagrant vmbox.
 
-### Install dependencies ###
+### Install dependencies (Host) ###
 
-For the environment used in the tests, you need to install git to get the source GMTP project, besides the packages make, gcc, libncurses5-dev and lilo(if you prefer instead GRUBs).
+For the environment used in the tests, you need to install git to get the source GMTP project, besides the packages for run virtual machines and build the linux kernel.
 
-    # apt-get install git make gcc libncurses5-dev lilo
+    $ sudo apt install qemu qemu-kvm libvirt-daemon-system libvirt-clients ebtables dnsmasq-base
+    $ sudo apt install libxslt-dev libxml2-dev libvirt-dev zlib1g-dev ruby-dev
+    $ sudo apt install git make gcc build-essential flex bison linux-source libtinfo-dev libncurses-dev libelf-dev
+    $ sudo apt install kernel-package
 
+ALl dependencies required by guest machines are defined in the Vagrantfile.
 
 ## Getting GMTP source ##
 
 Using git to get gmtp source:
 
-    $ git clone https://github.com/compelab/gmtp.git -b master
+    $ git clone https://github.com/compelab/gmtp.git -b linux-5.4.21 --single-branch gmtp
 
     
-## Compile Kernel with GMTP code ##
+## Compile Kernel with GMTP code (host) ##
 
-Already in gmtp folder, for example ~/gmtp, enter on kernel source directory:
+Already in gmtp folder, for example $HOME/gmtp, enter on kernel source directory:
 
-    $ cd linux-4.0.3
+    $ cd linux-5.4.21
 
 Copy config_minimal to .config file:
     
@@ -54,65 +58,60 @@ Run menuconfig to load .config for compile the kernel:
     
 Select save and confirm the .config name and exit.
 
-Note: In some cases you will need to disable the initial option "Initial RAM filesystem and RAM disk", because it can cause kernel panic. To make this change do it:
-
-Select General setup option and press return, now make sure that the option "Initial RAM filesystem and RAM disk" is deselected(use space bar to slect or not).
-
-Select save and confirm the .config name, exit and exit again.
-
-
 Now, it's time to compile the kernel itself:
 
-    $ make -j 4
+    $ sudo make -j 4
 
 Generate kernel modules:
 
-    $ make modules
+    $ sudo make modules
+
+## Install Kernel with GMTP code (guest)
+
+The gmtp folder at host must be shared with guest.
+
+In guest, already in shared gmtp folder, for example $HOME/gmtp, enter on kernel source directory:
+
+    $ cd linux-5.4.21
 
 Install modules:
 
-    # make modules_install
+    $ sudo make modules_install
     
 Install the new kernel:
 
-    # make install
+    $ sudo make install
     
-If you prefer to use Lilo,follow these steps:
+Shutdown the guest system:
 
-Generate lilo config file:
+    $ sudo shutdown now
 
-    # liloconfig
+## Building GMTP modules for clients and servers (guest) ##
+
+After enter in guest machines, enter on gmtp project folder, for example:
+
+    $ cd $HOME/gmtp
     
-Edit lilo.conf:
-
-    # vim /etc/lilo.conf
+Now navegate to linux-5.4.21/net/gmtp:
     
-and if there is no entry for the new kernel, please add:
-
-image = /boot/vmlinuz-4.0.3
-    label = "linux-4.0.3"
-    root = /dev/sda1
-
-Run lilo:
-    
-    # lilo
-    
-
-- Compile and load GMTP modules
-
-Enter on gmtp project folder, for example:
-
-    $ cd ~/gmtp
-    
-Now navegate to linux-4.0.3/net/gmtp:
-    
-    $ cd linux-4.0.3/net/gmtp
+    $ cd linux-5.4.21/net/gmtp
 
 Compile the code and load gmtp modules:
 
-    $ make && sudo make install
+    $ make
+    $ sudo make install
 
 The Makefile is configured to load gmtp and gmtp_ipv4 modules.
+
+## Building GMTP modules for routers/relays (guest) ##
+
+After enter in guest machines, enter on gmtp project folder, for example:
+
+    $ cd $HOME/gmtp
+
+Now navegate to linux-5.4.21/net/gmtp:
+
+    $ cd linux-5.4.21/net/gmtp
 
 Enter on gmtp-inter folder:
     
@@ -120,11 +119,12 @@ Enter on gmtp-inter folder:
     
 Compile the code and load the modules:
 
-    $ make && sudo make install
+    $ make
+    $ sudo make install
 
 The Makefile is configured to load gmtp and gmtp_inter module.
 
-Note that the gmtp_inter module will only be installed if the gmtp and gmtp_ipv4 modules are previously installed. 
+Note that the gmtp_inter module will only be installed if the gmtp module are previously installed. 
 
 
 ## Running gmtp python examples ##
@@ -135,15 +135,15 @@ Navigate to app folder:
 
 Run server and client apps:
 
-    $ ./server.py -i eth0 -a 10.0.2.15 -p 12345
+    $ ./server.py -i eth1 -p 12345 
     
-    $ ./client.py -i eth0 -a 10.0.2.15 -p 12345
+    $ ./client.py -i -a 10.0.1.101 -p 12345
     
 Note that you can specify the network interface, ip address and port. Use -h for more info.
 
 Monitoring information through the log file, for example:
 
-    $ /var/log/syslog
+    $ /var/log/kern.log
 
 
 Contributing:

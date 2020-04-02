@@ -12,39 +12,37 @@
 #include "../gmtp.h"
 #include "hash.h"
 
-struct gmtp_hashtable *gmtp_build_hashtable(unsigned int size,
-		struct gmtp_hash_ops hash_ops)
+int gmtp_build_hashtable(struct gmtp_hashtable *htable,
+		unsigned int size, struct gmtp_hash_ops hash_ops)
 {
 	int i;
-	struct gmtp_hashtable *new_table;
 
 	gmtp_print_function();
 	gmtp_print_debug("Size of gmtp_hashtable: %d", size);
 
 	if(size < 1)
-		return NULL;
+		return -ENOBUFS;
 
-	new_table = kmalloc(sizeof(struct gmtp_hashtable), GFP_KERNEL);
-	if(new_table == NULL)
-		return NULL;
+	if(htable == NULL)
+		return -ENOBUFS;
 
-	new_table->entry = kmalloc(sizeof(void*) * size, GFP_KERNEL);
+	htable->entry = kmalloc(sizeof(void*) * size, GFP_KERNEL);
 
-	if(new_table->entry == NULL)
+	if(htable->entry == NULL)
 		return NULL;
 
 	for(i = 0; i < size; ++i)
-		new_table->entry[i] = NULL;
+		htable->entry[i] = NULL;
 
-	new_table->size = size;
-	new_table->len = 0;
-	new_table->hash_ops = hash_ops;
-	new_table->hashval = hash_ops.hashval;
-	new_table->add_entry = hash_ops.add_entry;
-	new_table->del_entry = hash_ops.del_entry;
-	new_table->destroy = hash_ops.destroy;
+	htable->size = size;
+	htable->len = 0;
+	htable->hash_ops = hash_ops;
+	htable->hashval = hash_ops.hashval;
+	htable->add_entry = hash_ops.add_entry;
+	htable->del_entry = hash_ops.del_entry;
+	htable->destroy = hash_ops.destroy;
 
-	return new_table;
+	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_build_hashtable);
 
@@ -132,7 +130,6 @@ void destroy_gmtp_hashtable(struct gmtp_hashtable *table)
 	}
 
 	kfree(table->entry);
-	kfree(table);
 }
 
 

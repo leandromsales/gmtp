@@ -13,9 +13,6 @@
 #include "../gmtp.h"
 #include "hash.h"
 
-struct gmtp_hashtable* server_hashtable;
-EXPORT_SYMBOL_GPL(server_hashtable);
-
 void gmtp_del_relay_hash_entry(struct gmtp_hashtable *table, const __u8 *key);
 
 const struct gmtp_hash_ops gmtp_relay_hash_ops = {
@@ -194,6 +191,7 @@ int gmtp_add_server_entry(struct gmtp_hashtable *table, struct sock *sk,
 {
 	struct gmtp_sock *gp = gmtp_sk(sk);
 	struct gmtp_server_entry *entry;
+	int rc;
 
 	gmtp_pr_func();
 
@@ -203,14 +201,18 @@ int gmtp_add_server_entry(struct gmtp_hashtable *table, struct sock *sk,
 		pr_info("New server entry\n");
 		entry = kmalloc(sizeof(struct gmtp_server_entry), GFP_KERNEL);
 		if(entry == NULL)
-			return 1;
+			return -ENOBUFS;
 
 		entry->nrelays = 0;
 		entry->first_sk = sk;
 		INIT_LIST_HEAD(&entry->relays.relay_list);
 		memcpy(entry->entry.key, gp->flowname, GMTP_HASH_KEY_LEN);
-		entry->relay_hashtable = gmtp_build_hashtable(U8_MAX,
+		entry->relay_hashtable = kmalloc(sizeof(struct gmtp_hashtable),
+				GFP_KERNEL);
+		rc = gmtp_build_hashtable(entry->relay_hashtable, U8_MAX,
 				gmtp_relay_hash_ops);
+		if(rc)
+			goto out;
 	}
 
 	gmtp_print_server_entry(entry);
@@ -218,7 +220,10 @@ int gmtp_add_server_entry(struct gmtp_hashtable *table, struct sock *sk,
 	if(gmtp_add_route(entry, sk, skb))
 		return 1;
 
-	return table->add_entry(table, (struct gmtp_hash_entry*)entry);
+	rc = table->add_entry(table, (struct gmtp_hash_entry*)entry);
+
+out:
+	return rc;
 }
 EXPORT_SYMBOL_GPL(gmtp_add_server_entry);
 

@@ -17,6 +17,8 @@ void gmtp_inter_mcc_delay(struct gmtp_inter_entry *info, struct sk_buff *skb,
 	unsigned int len = skb->len + ETH_HLEN;
 	unsigned long now = jiffies_to_msecs(jiffies);
 
+	/*gmtp_pr_info("Server TX: %u", server_tx);
+	gmtp_pr_info("Required TX: %u", info->required_tx);*/
 	if(info->required_tx <= 0 || info->required_tx >= server_tx)
 		return;
 
@@ -25,6 +27,8 @@ void gmtp_inter_mcc_delay(struct gmtp_inter_entry *info, struct sk_buff *skb,
 	server_delay2 = server_delay - elapsed;
 	req_delay = (long) DIV_ROUND_CLOSEST(HZ * len, info->required_tx);
 	final_delay = req_delay - server_delay2;
+/*
+	*/gmtp_pr_info("Final delay: %l", final_delay);
 
 	/* if delay2 <= 0, pass way... */
 	if(final_delay > 0)

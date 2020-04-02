@@ -21,7 +21,7 @@
 
 #define H_USER 	1024
 
-#define CAPACITY_DEFAULT 1250000 /* B/s => 10 Mbps */
+#define CAPACITY_DEFAULT 125000000 /* B/s => 10 Mbps */
 
 extern const char *gmtp_packet_name(const __u8);
 extern const char *gmtp_state_name(const int);
@@ -33,7 +33,7 @@ extern unsigned char *gmtp_build_relay_id(void);
 extern __be32 gmtp_dev_ip(struct net_device *dev);
 extern bool gmtp_local_ip(__be32 ip);
 extern void gmtp_add_relayid(struct sk_buff *skb);
-extern struct gmtp_hashtable* server_hashtable;
+extern struct gmtp_hashtable server_hashtable;
 
 /**
  * TODO Negotiate buffer size with server

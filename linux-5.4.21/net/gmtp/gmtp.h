@@ -118,8 +118,8 @@ extern struct gmtp_info *gmtp_info;
 extern struct inet_hashinfo gmtp_inet_hashinfo;
 extern struct gmtp_sk_hashtable gmtp_sk_hash;
 extern struct percpu_counter gmtp_orphan_count;
-extern struct gmtp_hashtable *client_hashtable;
-extern struct gmtp_hashtable *server_hashtable;
+extern struct gmtp_hashtable client_hashtable;
+extern struct gmtp_hashtable server_hashtable;
 
 void gmtp_init_xmit_timers(struct sock *sk);
 static inline void gmtp_clear_xmit_timers(struct sock *sk)

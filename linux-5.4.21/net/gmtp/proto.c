@@ -42,6 +42,12 @@ EXPORT_SYMBOL_GPL(gmtp_sk_hash);
 struct gmtp_info* gmtp_info;
 EXPORT_SYMBOL_GPL(gmtp_info);
 
+struct gmtp_hashtable client_hashtable;
+EXPORT_SYMBOL_GPL(client_hashtable);
+
+struct gmtp_hashtable server_hashtable;
+EXPORT_SYMBOL_GPL(server_hashtable);
+
 const char *gmtp_packet_name(const __u8 type)
 {
     static const char *const gmtp_packet_names[] = {
@@ -201,7 +207,7 @@ void print_route_from_skb(struct sk_buff *skb)
     struct gmtp_hdr_route *route = gmtp_hdr_route(skb);
     struct gmtp_hdr_relay *relay_list = gmtp_hdr_relay(skb);
 
-    pr_info("On packet -> Path to %pI4: \n", &(ip_hdr(skb)->saddr));
+    pr_info("GMTP_ROUTE_NOTIFY -> Path to %pI4: \n", &(ip_hdr(skb)->saddr));
     if(route->nrelays <= 0) {
         pr_info("\tEmpty route.\n");
         return;
@@ -216,7 +222,7 @@ void print_route_from_list(struct gmtp_relay_entry *relay_list)
 {
     struct gmtp_relay_entry *relay;
 
-    pr_info("On list -> Path to %pI4: \n", &relay_list->relay.relay_ip);
+    pr_info("GMTP_ROUTE -> Path to %pI4: \n", &relay_list->relay.relay_ip);
     if(relay_list->nrelays <= 0) {
         pr_info("\tEmpty route.\n");
         return;
@@ -1145,9 +1151,9 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
     struct gmtp_relay_entry *r;
     int ret = 0, j = 0;
 
-    if (server_hashtable != NULL)
-		s = (struct gmtp_server_entry*) gmtp_lookup_entry(server_hashtable,
-				gp->flowname);
+    /*if (server_hashtable != NULL)
+		s = (struct gmtp_server_entry*) gmtp_lookup_entry(&server_hashtable,
+				gp->flowname);*/
 
     if(!s)
         return gmtp_do_sendmsg(sk, msg, len);
@@ -1401,14 +1407,15 @@ static int __init gmtp_init(void)
         goto out;
     }
 
-    /*client_hashtable = gmtp_build_hashtable(ghash_entries,
-            gmtp_client_hash_ops);
-    server_hashtable = gmtp_build_hashtable(ghash_entries,
-            gmtp_server_hash_ops);
-    if(client_hashtable == NULL || server_hashtable == NULL) {
-        rc = -ENOBUFS;
+    rc = gmtp_build_hashtable(&client_hashtable, ghash_entries,
+    		gmtp_client_hash_ops);
+    if(rc)
+    	goto out;
+
+    rc = gmtp_build_hashtable(&server_hashtable, ghash_entries,
+    		gmtp_server_hash_ops);
+    if(rc)
         goto out;
-    }*/
 
 	gmtp_info = kmalloc(sizeof(struct gmtp_info), GFP_KERNEL);
 	if (gmtp_info == NULL) {
@@ -1462,11 +1469,8 @@ static void __exit gmtp_exit(void)
     if(gmtp_info != NULL)
     	kfree_gmtp_info(gmtp_info);
 
-    if (client_hashtable != NULL)
-    	kfree_gmtp_hashtable(client_hashtable);
-
-    if (server_hashtable != NULL)
-    	kfree_gmtp_hashtable(server_hashtable);
+    kfree_gmtp_hashtable(&client_hashtable);
+    kfree_gmtp_hashtable(&server_hashtable);
 
     percpu_counter_destroy(&gmtp_orphan_count);
     mcc_lib_exit();

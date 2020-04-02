@@ -63,6 +63,8 @@ struct gmtp_hdr *gmtp_inter_make_request_notify_hdr(struct sk_buff *skb,
 	int gmtp_hdr_len = sizeof(struct gmtp_hdr)
 			+ sizeof(struct gmtp_hdr_reqnotify);
 
+	gmtp_pr_func();
+
 	transport_header = kmalloc(gmtp_hdr_len, gfp_any());
 	memset(transport_header, 0, gmtp_hdr_len);
 
@@ -195,6 +197,8 @@ int gmtp_inter_make_delegate_reply(struct sk_buff *skb, struct gmtp_relay *relay
 	unsigned int skb_len = skb->len;
 	int gmtp_hdr_len = sizeof(struct gmtp_hdr)
 			+ sizeof(struct gmtp_hdr_delegate);
+
+	gmtp_pr_func();
 
 	/* Delete ACK specific header */
 	skb_trim(skb, (skb_len - gmtp_packet_hdr_variable_len(gh->type)));
@@ -460,6 +464,8 @@ int gmtp_inter_make_register(struct sk_buff *skb)
 	int gmtp_hdr_len = sizeof(struct gmtp_hdr)
 			+ sizeof(struct gmtp_hdr_register);
 
+	gmtp_pr_func();
+
 	/* Delete ACK specific header */
 	skb_trim(skb, (skb_len - gmtp_packet_hdr_variable_len(gh->type)));
 
@@ -490,6 +496,8 @@ struct sk_buff *gmtp_inter_build_register(struct gmtp_inter_entry *entry)
 	int total_len, ip_len = 0;
 	int gmtp_hdr_len = sizeof(struct gmtp_hdr)
 					+ sizeof(struct gmtp_hdr_register);
+
+	gmtp_pr_func();
 
 	ip_len = gmtp_hdr_len + sizeof(struct iphdr);
 	total_len = ip_len + LL_RESERVED_SPACE(dev_entry);

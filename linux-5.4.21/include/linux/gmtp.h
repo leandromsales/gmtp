@@ -273,7 +273,8 @@ static inline const char *gmtp_role_name(const struct sock *sk)
 static inline int gmtp_role_client(const struct sock *sk)
 {
 	return (gmtp_sk(sk)->role == GMTP_ROLE_CLIENT ||
-		gmtp_sk(sk)->role == GMTP_ROLE_REPORTER);
+		gmtp_sk(sk)->role == GMTP_ROLE_REPORTER ||
+		gmtp_sk(sk)->role == GMTP_ROLE_CLIENT_RELAY);
 }
 
 static inline struct gmtp_hdr *gmtp_hdr(const struct sk_buff *skb)

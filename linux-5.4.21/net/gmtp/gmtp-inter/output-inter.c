@@ -23,6 +23,8 @@ int gmtp_inter_register_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct gmtp_client* cl;
 
+	gmtp_pr_func();
+
 	cl = gmtp_get_client(&entry->clients->list, iph->saddr, gh->sport);
 	if(cl == NULL)
 		return NF_ACCEPT;
@@ -72,6 +74,8 @@ int gmtp_inter_ack_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_relay *relay;
+
+	gmtp_pr_func();
 
 	pr_info("Out: Ack from %pI4\n", &iph->saddr);
 
@@ -159,11 +163,11 @@ send:
 		/*	struct ethhdr *eth = eth_hdr(skb);
 			gh->dport = relay->port;
 			ether_addr_copy(eth->h_dest, relay->mac_addr);
-			skb->dev = relay->dev;
+			skb->dev = relay->dev; */
 
-			pr_info("Sending to %pI4:%d (%u)\n", &relay->addr,
-					htons(relay->port), gh->seq);
-			entry->ucc.congestion_control(skb, entry, relay);*/
+			/*pr_info("Sending to %pI4:%d (%u)\n", &relay->addr,
+					htons(relay->port), gh->seq);*/
+			/*entry->ucc.congestion_control(skb, entry, relay);*/
 
 			struct sk_buff *buffered = skb_copy(skb, gfp_any());
 			struct ethhdr *eth = eth_hdr(buffered);
@@ -175,9 +179,8 @@ send:
 			ether_addr_copy(eth->h_dest, relay->mac_addr);
 			buffered->dev = relay->dev;
 
-			pr_info("Sending to %pI4:%d (%u)\n", &relay->addr,
-								htons(relay->port),
-								buffgh->seq);
+			/*pr_info("Sending to %pI4:%d (%u)\n", &relay->addr,
+								htons(relay->port), buffgh->seq);*/
 			entry->ucc.congestion_control(buffered, entry, relay);
 
 			/*gmtp_inter_build_and_send_pkt(skb, iph->saddr,
@@ -194,6 +197,7 @@ send:
 	if(entry->nclients > 0) {
 		server_tx = entry->current_rx <= 0 ?
 				(unsigned int)gh->transm_r : entry->current_rx;
+
 		gmtp_inter_mcc_delay(entry, skb, (u64)server_tx);
 	}
 	ghd->tstamp = jiffies_to_msecs(jiffies);
@@ -325,8 +329,7 @@ int gmtp_inter_close_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 		iph->daddr = entry->channel_addr;
 		ip_send_check(iph);
 
-		server_hashtable->hash_ops.del_entry(server_hashtable,
-				gh->flowname);
+		server_hashtable.hash_ops.del_entry(&server_hashtable, gh->flowname);
 		gmtp_inter_del_entry(gmtp_inter.hashtable, gh->flowname);
 
 		return NF_ACCEPT;
