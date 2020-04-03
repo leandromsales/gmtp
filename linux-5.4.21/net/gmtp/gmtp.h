@@ -97,7 +97,7 @@ static inline u32 rtt_ewma(const u32 avg, const u32 newval, const u32 weight)
  *  - retransmitting Client-Requests
  *  - retransmitting Close/CloseReq when closing
  */
-#define GMTP_TIMEOUT_INIT ((unsigned int)(3 * HZ))
+#define GMTP_TIMEOUT_INIT (TCP_SYNQ_INTERVAL)
 #define GMTP_RTO_MAX ((unsigned int)(64 * HZ))
 #define GMTP_TIMEWAIT_LEN (60 * HZ)
 #define GMTP_REQ_INTERVAL (TCP_SYNQ_INTERVAL)

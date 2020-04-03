@@ -34,8 +34,7 @@ static int gmtp_write_timeout(struct sock *sk)
 	if (sk->sk_state == GMTP_REQUESTING) {
 		if (icsk->icsk_retransmits != 0)
 			dst_negative_advice(sk);
-		retry_until = icsk->icsk_syn_retries ?
-			    : GMTP_SYN_RETRIES;
+		retry_until = icsk->icsk_syn_retries ? : GMTP_SYN_RETRIES;
 
 	} else {
 		if (icsk->icsk_retransmits >= TCP_RETR1) {
@@ -60,6 +59,7 @@ static int gmtp_write_timeout(struct sock *sk)
 static void gmtp_retransmit_timer(struct sock *sk)
 {
 	struct inet_connection_sock *icsk = inet_csk(sk);
+
 	gmtp_pr_func();
 
 	/*
@@ -77,8 +77,7 @@ static void gmtp_retransmit_timer(struct sock *sk)
 		if (--icsk->icsk_retransmits == 0)
 			icsk->icsk_retransmits = 1;
 		inet_csk_reset_xmit_timer(sk, ICSK_TIME_RETRANS,
-					  min(icsk->icsk_rto,
-					      TCP_RESOURCE_PROBE_INTERVAL),
+					  min(icsk->icsk_rto, TCP_RESOURCE_PROBE_INTERVAL),
 					  GMTP_RTO_MAX);
 		return;
 	}
@@ -106,33 +105,25 @@ static void gmtp_write_timer(struct timer_list *t)
 
 	bh_lock_sock(sk);
 	if (sock_owned_by_user(sk)) {
-		pr_info("sock_owned_by_user(sk)\n");
 
 		/* Try again later */
-		sk_reset_timer(sk, &icsk->icsk_retransmit_timer,
-			       jiffies + (HZ / 20));
+		sk_reset_timer(sk, &icsk->icsk_retransmit_timer, jiffies + (HZ / 20));
 		goto out;
 	}
 
 	if (sk->sk_state == GMTP_CLOSED || !icsk->icsk_pending)
 		goto out;
 
-	pr_info("icsk->icsk_timeout: %lu ms\n", icsk->icsk_timeout);
-
 	if (time_after(icsk->icsk_timeout, jiffies)) {
-		sk_reset_timer(sk, &icsk->icsk_retransmit_timer,
-			       icsk->icsk_timeout);
-		pr_info("time_after\n");
+		sk_reset_timer(sk, &icsk->icsk_retransmit_timer, icsk->icsk_timeout);
 		goto out;
 	}
 
-	pr_info("event...\n");
 	event = icsk->icsk_pending;
 	icsk->icsk_pending = 0;
 
 	switch (event) {
         case ICSK_TIME_RETRANS:
-            pr_info("ICSK_TIME_RETRANS\n");
             gmtp_retransmit_timer(sk);
             break;
 	}
