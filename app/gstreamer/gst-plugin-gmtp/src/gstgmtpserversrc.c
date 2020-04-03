@@ -68,7 +68,7 @@ enum
   PROP_PORT,
   PROP_CLIENT_SOCK_FD,
   PROP_CLOSED,
-  PROP_CCID,
+ /* PROP_CCID,*/
   PROP_CAPS
 };
 
@@ -150,9 +150,9 @@ gst_gmtp_server_src_set_property (GObject * object, guint prop_id,
     case PROP_CLOSED:
       src->closed = g_value_get_boolean (value);
       break;
-    case PROP_CCID:
+    /*case PROP_CCID:
       src->ccid = g_value_get_int (value);
-      break;
+      break;*/
     case PROP_CAPS:
     {
       const GstCaps *new_caps_val = gst_value_get_caps (value);
@@ -202,9 +202,9 @@ gst_gmtp_server_src_get_property (GObject * object, guint prop_id,
     case PROP_CAPS:
       gst_value_set_caps (value, src->caps);
       break;
-    case PROP_CCID:
+    /*case PROP_CCID:
       g_value_set_int (value, src->ccid);
-      break;
+      break;*/
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -245,9 +245,9 @@ gst_gmtp_server_src_start (GstBaseSrc * bsrc)
       return FALSE;
     }
 
-    if (!gst_gmtp_set_ccid (GST_ELEMENT (src), src->sock_fd, src->ccid)) {
+   /* if (!gst_gmtp_set_ccid (GST_ELEMENT (src), src->sock_fd, src->ccid)) {
       return FALSE;
-    }
+    }*/
 
     if (!gst_gmtp_listen_server_socket (GST_ELEMENT (src), src->sock_fd)) {
       return FALSE;
@@ -275,7 +275,7 @@ gst_gmtp_server_src_init (GstGMTPServerSrc * this)
   this->sock_fd = GMTP_DEFAULT_SOCK_FD;
   this->client_sock_fd = GMTP_DEFAULT_CLIENT_SOCK_FD;
   this->closed = GMTP_DEFAULT_CLOSED;
-  this->ccid = GMTP_DEFAULT_CCID;
+ /* this->ccid = GMTP_DEFAULT_CCID;*/
   this->caps = GMTP_DEFAULT_CAPS;
 
 /*  gst_base_this_set_format (GST_BASE_SRC (this), GST_FORMAT_TIME);
@@ -408,10 +408,10 @@ gst_gmtp_server_src_class_init (GstGMTPServerSrcClass * klass)
           "Close client socket at the end of stream", GMTP_DEFAULT_CLOSED,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-  g_object_class_install_property (gobject_class, PROP_CCID,
+ /* g_object_class_install_property (gobject_class, PROP_CCID,
       g_param_spec_int ("ccid", "CCID",
           "The Congestion Control IDentified to be used", 2, G_MAXINT,
-          GMTP_DEFAULT_CCID, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+          GMTP_DEFAULT_CCID, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));*/
 
   g_object_class_install_property (gobject_class, PROP_CAPS,
       g_param_spec_boxed ("caps", "Caps",

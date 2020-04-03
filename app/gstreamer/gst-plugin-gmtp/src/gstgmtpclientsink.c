@@ -65,7 +65,7 @@ enum
   PROP_PORT,
   PROP_HOST,
   PROP_SOCK_FD,
-  PROP_CCID,
+/*  PROP_CCID,*/
   PROP_CLOSE_FD
 };
 
@@ -128,9 +128,9 @@ gst_gmtp_client_sink_set_property (GObject * object, guint prop_id,
     case PROP_CLOSE_FD:
       sink->closed = g_value_get_boolean (value);
       break;
-    case PROP_CCID:
+   /* case PROP_CCID:
       sink->ccid = g_value_get_int (value);
-      break;
+      break;*/
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -159,9 +159,9 @@ gst_gmtp_client_sink_get_property (GObject * object, guint prop_id,
     case PROP_CLOSE_FD:
       g_value_set_boolean (value, sink->closed);
       break;
-    case PROP_CCID:
+   /* case PROP_CCID:
       g_value_set_int (value, sink->ccid);
-      break;
+      break;*/
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -211,11 +211,11 @@ gst_gmtp_client_sink_start (GstBaseSink * bsink)
     if ((sink->sock_fd = gst_gmtp_create_new_socket (GST_ELEMENT (sink))) < 0) {
       return FALSE;
     }
-
+/*
     if (!gst_gmtp_set_ccid (GST_ELEMENT (sink), sink->sock_fd, sink->ccid)) {
       gst_gmtp_client_sink_stop (GST_BASE_SINK (sink));
       return FALSE;
-    }
+    }*/
 
     if (!gst_gmtp_connect_to_server (GST_ELEMENT (sink), sink->server_sin,
             sink->sock_fd)) {
@@ -241,7 +241,7 @@ gst_gmtp_client_sink_init (GstGMTPClientSink * this)
   this->host = g_strdup (GMTP_DEFAULT_HOST);
   this->sock_fd = GMTP_DEFAULT_SOCK_FD;
   this->closed = GMTP_DEFAULT_CLOSED;
-  this->ccid = GMTP_DEFAULT_CCID;
+ /* this->ccid = GMTP_DEFAULT_CCID;*/
 }
 
 static gboolean
@@ -335,10 +335,10 @@ gst_gmtp_client_sink_class_init (GstGMTPClientSinkClass * klass)
           "Close socket at end of stream",
           GMTP_DEFAULT_CLOSED, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-  g_object_class_install_property (gobject_class, PROP_CCID,
+ /* g_object_class_install_property (gobject_class, PROP_CCID,
       g_param_spec_int ("ccid", "CCID",
           "The Congestion Control IDentified to be used", 2, G_MAXINT,
-          GMTP_DEFAULT_CCID, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+          GMTP_DEFAULT_CCID, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));*/
 
   /* signals */
   /**

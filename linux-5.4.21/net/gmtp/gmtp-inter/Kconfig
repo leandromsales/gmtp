@@ -1,0 +1,9 @@
+menu "GMTP-Inter Configuration"
+
+config GMTP_INTER
+	bool "Activate GMTP-Inter"
+    default y if (GMTP = y)
+	---help---
+	  Enable GMTP-Inter.
+endmenu
+
