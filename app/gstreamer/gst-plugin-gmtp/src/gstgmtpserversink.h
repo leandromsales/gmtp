@@ -71,7 +71,7 @@ struct _GstGMTPServerSink
 
   /* properties */
   int client_sock_fd;
-  uint8_t ccid;
+ /* uint8_t ccid;*/
   gboolean wait_connections;
   gboolean closed;
 };

@@ -186,7 +186,8 @@ void gmtp_v4_err(struct sk_buff *skb, u32 info)
 
 	struct request_sock *req, **prev;
 
-	gmtp_pr_debug("ICMP: Type: %d, Code: %d", type, code);
+	pr_info("ICMP: Type: %d, Code: %d | ", type, code);
+	print_packet(skb, true);
 
 	if(skb->len < offset + sizeof(*gh)) {
 		ICMP_INC_STATS_BH(net, ICMP_MIB_INERRORS);
@@ -242,7 +243,6 @@ void gmtp_v4_err(struct sk_buff *skb, u32 info)
 				/*FIXME gmtp_do_pmtu_discovery(sk, iph, info);*/;
 			goto out;
 		}
-
 		err = icmp_err_convert[code].errno;
 		break;
 	case ICMP_TIME_EXCEEDED:
@@ -785,7 +785,6 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 		goto discard_it;
 	}
 
-
 	nf_reset(skb);
 
 	return sk_receive_skb(sk, skb, 1);
@@ -933,8 +932,15 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
 	 * evidently real one.
 	 */
 	gcb->reset_code = GMTP_RESET_CODE_TOO_BUSY;
-	if(inet_csk_reqsk_queue_is_full(sk))
+	if(inet_csk_reqsk_queue_is_full(sk)) {
+		pr_info("inet_csk_reqsk_queue_is_full(sk)\n");
 		goto drop;
+	}
+
+	/**
+	 * FIXME Update sk->sk_ack_backlog correctly
+	 */
+	sk->sk_ack_backlog = 0;
 
 	/*
 	 * Accept backlog is full. If we have already queued enough
@@ -942,8 +948,13 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
 	 * clogging syn queue with openreqs with exponentially increasing
 	 * timeout.
 	 */
-	if(sk_acceptq_is_full(sk) && inet_csk_reqsk_queue_young(sk) > 1)
+	if(sk_acceptq_is_full(sk) && inet_csk_reqsk_queue_young(sk) > 1) {
+		pr_info("Accept backlog is full!\n");
+		pr_info("%u > %u? %u\n", sk->sk_ack_backlog,
+				sk->sk_max_ack_backlog, sk_acceptq_is_full(sk));
+		pr_info("inet_csk_reqsk_queue_young(sk) > 1: %u\n", inet_csk_reqsk_queue_young(sk) > 1);
 		goto drop;
+	}
 
 	req = inet_reqsk_alloc(&gmtp_request_sock_ops, sk);
 	if(req == NULL)
@@ -984,12 +995,15 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
 	return 0;
 
 reset:
+	pr_info("Sending RESET...\n");
 	gcb->reset_code = GMTP_RESET_CODE_BAD_FLOWNAME;
 	gmtp_v4_ctl_send_reset(sk, skb);
 
 drop_and_free:
+	pr_info("reqsk_free(req)...\n");
 	reqsk_free(req);
 drop:
+	pr_info("drop...\n");
 	return 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_conn_request);
@@ -1242,10 +1256,11 @@ static unsigned int hook_func_gmtp_out(unsigned int hooknum, struct sk_buff *skb
 				gmtp_pr_info("Changing TTL to %d\n", new_ttl);
 				iph->ttl = new_ttl;
 				ip_send_check(iph);
-			} else
-				pr_info("Keeping default TTL (%d)\n", iph->ttl);
+			} else {
+				pr_info("Auto promoting to relay\n");
+				gh->type = GMTP_PKT_REGISTER;
+			}
 		}
-
 	}
 
 	return NF_ACCEPT;

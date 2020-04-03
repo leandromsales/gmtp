@@ -13,7 +13,7 @@ ETH_HDR_LEN = 14
 
 socket.SOCK_GMTP = 7
 socket.IPPROTO_GMTP = 254
-socket.SOL_GMTP = 281
+socket.SOL_GMTP = 300
 
 socket.GMTP_SOCKOPT_FLOWNAME = 1
 socket.GMTP_SOCKOPT_MAX_TX_RATE = 2

@@ -174,10 +174,12 @@ gst_gmtp_create_new_socket (GstElement * element)
   if ((sock_fd = socket (AF_INET, SOCK_GMTP, IPPROTO_GMTP)) < 0) {
     GST_ELEMENT_ERROR (element, RESOURCE, OPEN_READ, (NULL), GST_ERROR_SYSTEM);
   }
-  setsockopt(sock_fd, SOL_GMTP, GMTP_SOCKOPT_FLOWNAME, "1234567812345678", 16);
-  unsigned int tx = 33000;
+
+  /* FIXME Temporary: setsockopt and getsockopt causes kernel panic */
+ /* setsockopt(sock_fd, SOL_GMTP, GMTP_SOCKOPT_FLOWNAME, "1234567812345678", 16);
+  unsigned int tx = 33000;*/
   socklen_t sizelen = (socklen_t) sizeof(unsigned int);
-  setsockopt(sock_fd, SOL_GMTP, GMTP_SOCKOPT_MAX_TX_RATE, &tx, sizelen);
+  /*setsockopt(sock_fd, SOL_GMTP, GMTP_SOCKOPT_MAX_TX_RATE, &tx, sizelen);*/
   GST_INFO ("SOCKET GMTP CRIADO");
 
   return sock_fd;
@@ -434,26 +436,27 @@ gst_gmtp_make_address_reusable (GstElement * element, int sock_fd)
   }
   return TRUE;
 }
-
 /*
+
+
  * Set GMTP congestion control.
  * @param element - the element
  * @param sock_fd - the socket
  * @param ccid - the ccid number
  * @return TRUE if the operation was successful, FALSE otherwise.
- */
+
 gboolean
 gst_gmtp_set_ccid (GstElement * element, int sock_fd, uint8_t ccid)
 {
   return TRUE;
-  uint8_t ccids[4];             /* for getting the available CCIDs, should be large enough */
+  uint8_t ccids[4];              for getting the available CCIDs, should be large enough
   socklen_t len = sizeof (ccids);
   int i, ret;
   gboolean ccid_supported = FALSE;
 
-  /*
+
    * Determine which CCIDs are available on the host
-   */
+
 #ifndef G_OS_WIN32
   ret = getsockopt (sock_fd, SOL_GMTP, GMTP_SOCKOPT_AVAILABLE_CCIDS, &ccids,
       &len);
@@ -491,11 +494,11 @@ gst_gmtp_set_ccid (GstElement * element, int sock_fd, uint8_t ccid)
 }
 
 #if 0
-/*
+
  * Get the current ccid of TX or RX half-connection. tx_or_rx parameter must be
  * GMTP_SOCKOPT_TX_CCID or GMTP_SOCKOPT_RX_CCID.
  * @return ccid or -1 on error or tx_or_rx not the correct option
- */
+
 static uint8_t
 gst_gmtp_get_ccid (GstElement * element, int sock_fd, int tx_or_rx)
 {
@@ -524,6 +527,7 @@ gst_gmtp_get_ccid (GstElement * element, int sock_fd, int tx_or_rx)
   return ccid;
 }
 #endif
+*/
 
 /*
  * Get the socket MTU.
@@ -531,10 +535,12 @@ gst_gmtp_get_ccid (GstElement * element, int sock_fd, int tx_or_rx)
  * @param sock - the socket
  * @return the MTU if the operation was successful, -1 otherwise.
  */
+
+/* FIXME Temporary getsockopt and setsockopt in GMTP causes kernel panic */
 gint
 gst_gmtp_get_max_packet_size (GstElement * element, int sockfd)
 {
-  unsigned int mss = 1024;
+  unsigned int mss = 1024;/*
   socklen_t sizelen = (socklen_t) sizeof(unsigned int);
 #ifndef G_OS_WIN32
   if (getsockopt (sockfd, SOL_GMTP, GMTP_SOCKOPT_GET_CUR_MSS, &mss, &sizelen) < 0) {
@@ -543,7 +549,7 @@ gst_gmtp_get_max_packet_size (GstElement * element, int sockfd)
 #endif
     GST_ELEMENT_ERROR (element, RESOURCE, SETTINGS, (NULL),
         ("Could not get current MTU %d: %s. Returning default value %d", errno, g_strerror (errno), mss));
-  }
+  }*/
   return mss;
 }
 

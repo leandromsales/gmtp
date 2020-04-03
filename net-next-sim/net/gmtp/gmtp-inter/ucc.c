@@ -49,7 +49,8 @@ void gmtp_inter_ack_timer_callback(unsigned long data)
 	struct gmtp_inter_entry *entry = (struct gmtp_inter_entry*) data;
 	struct sk_buff *skb;
 
-	gmtp_ucc_equation(GMTP_UCC_NONE);
+//	gmtp_ucc_equation(GMTP_UCC_NONE);
+	gmtp_ucc_equation(GMTP_UCC_ALL);
 	skb = gmtp_inter_build_ack(entry);
 	if(skb != NULL)
 		gmtp_inter_send_pkt(skb);
@@ -75,20 +76,23 @@ void gmtp_inter_register_timer_callback(unsigned long data)
  */
 void gmtp_ucc_equation(enum gmtp_ucc_log_level log_level)
 {
-	int up, delta;
-	unsigned int r = 0, H, h;
+	int r = 0, H, h;
+	s64 up, mult, delta;
 
-	unsigned int r_prev = gmtp_inter.ucc_rx;
-	unsigned int C = gmtp_inter.capacity;
-	unsigned int q = gmtp_inter.buffer_len;
-   	unsigned int y = gmtp_inter.total_rx;
-   	unsigned int rcv_bytes = gmtp_inter.ucc_bytes;
+	int r_prev = gmtp_inter.ucc_rx;
+	int C = gmtp_inter.capacity;
+	s64 q = gmtp_inter.buffer_len * 1000;
+   	int y = gmtp_inter.total_rx;
+   	int rcv_bytes = gmtp_inter.ucc_bytes;
+
+   	s64 alpha_cy, beta_qh;
 
 	unsigned long current_time = ktime_to_ms(ktime_get_real());
 	unsigned long elapsed = current_time - gmtp_inter.ucc_rx_tstamp;
 
 	if(elapsed != 0)
 		y = DIV_ROUND_CLOSEST(gmtp_inter.ucc_bytes * MSEC_PER_SEC, elapsed);
+		/*y = DIV_ROUND_CLOSEST(gmtp_inter.ucc_bytes, elapsed);*/ /* B/ms */
 
 	/* FIXME Sane RTT before using it (in server and relays) */
 	h = gmtp_inter.worst_rtt;
@@ -97,16 +101,26 @@ void gmtp_ucc_equation(enum gmtp_ucc_log_level log_level)
 		h = GMTP_DEFAULT_RTT;
 	}
 	H = min(h, gmtp_inter.h_user);
-	up = DIV_ROUND_CLOSEST(H, h) * (GMTP_ALPHA(GMTP_GHAMA(C)-y) - GMTP_BETA(q / h));
-	delta = DIV_ROUND_CLOSEST( ((int)(r_prev) * up), GMTP_GHAMA(C));
+
+	alpha_cy = (s64) GMTP_ALPHA(GMTP_GHAMA(C)-y);
+	beta_qh = (s64) GMTP_BETA(q / h);
+	up = DIV_ROUND_CLOSEST(H, h) * (alpha_cy - beta_qh);
+	/*up = DIV_ROUND_CLOSEST(H, h) * (GMTP_ALPHA(GMTP_GHAMA(C)-y) - GMTP_BETA(q / h));*/
+	/*delta = DIV_ROUND_CLOSEST(r_prev * up, GMTP_GHAMA(C));*/
+
+	mult = up * (s64)r_prev; /* s64 */
+	delta = DIV_ROUND_CLOSEST(mult, (s64) GMTP_GHAMA(C));
+
+	/*delta = (r_prev * up) / GMTP_GHAMA(C);*/
 
 	/**
 	 * r = r_prev * (1 + up/GHAMA(C)) =>
-	 * r = r_prev + r_pc
-	 * rev * up/GHAMA(C) =>
+	 * r = r_prev + [(r_prev * up) / GMTP_GHAMA(C)] =>
 	 * r = r_prev + delta
 	 */
-	r = (int)(r_prev) + delta;
+	r = r_prev + (int) delta;
+	r = max(r, 1000);
+	r = min(r, GMTP_GHAMA(C));
 	gmtp_inter.ucc_rx = r;
 
 	/* Reset GMTP-UCC variables */
@@ -119,43 +133,35 @@ void gmtp_ucc_equation(enum gmtp_ucc_log_level log_level)
 		if(log_level > GMTP_UCC_OUTPUT) {
 			pr_info("------------------------------------------\n");
 			gmtp_pr_debug("r_prev: %d B/s", r_prev);
-			gmtp_pr_debug("Received: %u B\n", rcv_bytes);
-			gmtp_pr_debug("h_user: %u ms", gmtp_inter.h_user);
-			gmtp_pr_debug("h0: %u ms", h);
-			gmtp_pr_debug("H: %u ms", H);
-			gmtp_pr_debug("C: %u B/s", C);
-			gmtp_pr_debug("y(t): %u B/s", y);
-			gmtp_pr_debug("q(t): %u B", q);
-			gmtp_pr_debug("H/h0: %u\n", DIV_ROUND_CLOSEST(H, h));
+			gmtp_pr_debug("Received: %d B\n", rcv_bytes);
+			gmtp_pr_debug("h_user: %d ms", gmtp_inter.h_user);
+			gmtp_pr_debug("h0: %d ms", h);
+			gmtp_pr_debug("H: %d ms", H);
+			gmtp_pr_debug("C: %d B/s", C);
+			gmtp_pr_debug("y(t): %d B/s", y);
+			gmtp_pr_debug("buffer(t): %u B", gmtp_inter.buffer_len);
+			gmtp_pr_debug("q(t): %lld B", q);
+			gmtp_pr_debug("H/h0: %d\n", DIV_ROUND_CLOSEST(H, h));
 
 			if(log_level > GMTP_UCC_DEBUG) {
-				gmtp_pr_debug("GHAMA(C): %u", GMTP_GHAMA(C));
-				gmtp_pr_debug("ALPHA(GHAMA(C)-y): %u",
-						GMTP_ALPHA(GMTP_GHAMA(C)-y));
-				gmtp_pr_debug("q/h: %u", q / h);
-				gmtp_pr_debug("BETA(q/h): %u", GMTP_BETA(q/h));
-				gmtp_pr_debug("ALPHA(GHAMA(C)-y) - BETA(q/h):");
-				gmtp_pr_debug("%u - %u: %d",
-						GMTP_ALPHA(GMTP_GHAMA(C)-y),
-						GMTP_BETA(q/h),
-						(GMTP_ALPHA(GMTP_GHAMA(C)-y) -
-								GMTP_BETA(q/h)));
-				gmtp_pr_debug("up = ((H / h) * [ALPHA(GHAMA(C)-y) "
-						"- BETA(q / h)])");
-				gmtp_pr_debug("up = %u * [%u - %u]", H / h,
-						GMTP_ALPHA(GMTP_GHAMA(C)-y),
-						GMTP_BETA(q / h));
-				gmtp_pr_debug("up = %d\n", up);
-				gmtp_pr_debug("delta = ((r_prev * up)/GHAMA(C))");
-				gmtp_pr_debug("delta = (%d * %u)/%u",
-						(int )(r_prev), up,
+				gmtp_pr_debug("GHAMA(C): %d", GMTP_GHAMA(C));
+				gmtp_pr_debug("GHAMA(C)-y: %d", GMTP_GHAMA(C)-y);
+				gmtp_pr_debug("ALPHA(GHAMA(C)-y): %lld", alpha_cy);
+				gmtp_pr_debug("up = ((H / h) * [ALPHA(GHAMA(C)-y) " "- BETA(q / h)])");
+				gmtp_pr_debug("up = %d * [%lld - %lld]", H / h,
+						alpha_cy, beta_qh);
+				gmtp_pr_debug("up = %lld\n", up);
+				gmtp_pr_debug("delta = (r_prev * up)/GHAMA(C)");
+				gmtp_pr_debug("delta = (%d * %lld)/%d", r_prev,
+						up, GMTP_GHAMA(C));
+				gmtp_pr_debug("delta = %lld/%d", mult,
 						GMTP_GHAMA(C));
 
 			}
 
-			gmtp_pr_debug("delta = %d", delta);
+			gmtp_pr_debug("delta = %lld", delta);
 			gmtp_pr_debug("new_r = (int)(r_prev) + delta");
-			gmtp_pr_debug("new_r = %d + %d\n", r_prev, delta);
+			gmtp_pr_debug("new_r = %d + %lld\n", r_prev, delta);
 		}
 		gmtp_pr_debug("new_r = %d B/s", r);
 
@@ -242,7 +248,8 @@ wait:
 	else
 		relay->tx_byte_budget = INT_MIN;
 
-	if(delay2 > 0) {
+	/* Subcaminhos GMTP-UCC... */
+	 if(delay2 > 0) {
 		struct gmtp_delay_cc_data *cc_data;
 		cc_data = kmalloc(sizeof(struct gmtp_delay_cc_data), GFP_KERNEL);
 		cc_data->skb = skb;
@@ -262,6 +269,7 @@ wait:
 send:
 	gmtp_inter_build_and_send_pkt(skb, iph->saddr, relay->addr, gh,
 			GMTP_INTER_FORWARD);
+	gmtp_ucc_buffer_dequeue(skb);
 
 }
 

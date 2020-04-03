@@ -161,6 +161,10 @@ static void gmtp_reporter_ackrcv_timer(struct sock *sk)
 		return;
 
 	pr_info("Reporter has %u clients\n", gp->myself->nclients);
+
+	if(gp->myself->nclients == 0)
+		goto out;
+
 	list_for_each_entry_safe(client, temp, &gp->myself->clients->list, list)
 	{
 		unsigned int now = jiffies_to_msecs(jiffies);
@@ -176,6 +180,8 @@ static void gmtp_reporter_ackrcv_timer(struct sock *sk)
 			gp->myself->nclients--;
 		}
 	}
+
+out:
 	inet_csk_reset_keepalive_timer(sk, GMTP_ACK_TIMEOUT);
 }
 

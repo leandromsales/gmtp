@@ -47,9 +47,12 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
 				gmtp_packet_hdr_variable_len(gcb->type);
 		int err, set_ack = 1;
 
+		gp->ndp_sent++;
+
 		switch (gcb->type) {
 		case GMTP_PKT_DATA:
 			set_ack = 0;
+			gp->ndp_sent--;
 			/* fall through */
 		case GMTP_PKT_DATAACK:
 		case GMTP_PKT_RESET:
@@ -146,6 +149,9 @@ int gmtp_transmit_built_skb(struct sock *sk, struct sk_buff *skb) {
 		const struct inet_connection_sock *icsk = inet_csk(sk);
 		struct inet_sock *inet = inet_sk(sk);
 		int err;
+
+		if(likely(gmtp_hdr(skb)->type != GMTP_PKT_DATA))
+			gmtp_sk(sk)->ndp_sent++;
 
 		err = icsk->icsk_af_ops->queue_xmit(sk, skb, &inet->cork.fl);
 		return net_xmit_eval(err);
@@ -257,7 +263,6 @@ struct sk_buff *gmtp_make_register_reply(struct sock *sk, struct dst_entry *dst,
 }
 EXPORT_SYMBOL_GPL(gmtp_make_register_reply);
 
-
 struct sk_buff *gmtp_make_register_reply_open(struct sock *sk,
 		struct sk_buff *rcv_skb)
 {
@@ -290,6 +295,40 @@ struct sk_buff *gmtp_make_register_reply_open(struct sock *sk,
 	return skb;
 }
 EXPORT_SYMBOL_GPL(gmtp_make_register_reply_open);
+
+
+struct sk_buff *gmtp_make_route_notify(struct sock *sk,
+		struct sk_buff *rcv_skb)
+{
+	struct sk_buff *skb;
+	struct gmtp_hdr *rxgh = gmtp_hdr(rcv_skb), *gh;
+
+	gmtp_print_function();
+
+	skb = alloc_skb(sk->sk_prot->max_header, GFP_ATOMIC);
+	if(skb == NULL)
+		return NULL;
+
+	skb_reserve(skb, sk->sk_prot->max_header);
+
+	gh = gmtp_zeroed_hdr(skb, rxgh->hdrlen);
+
+	memcpy(gh, rxgh, rxgh->hdrlen);
+	gh->type = GMTP_PKT_ROUTE_NOTIFY;
+	swap(gh->sport, gh->dport);
+	gh->relay = 0;
+
+	return skb;
+}
+
+void gmtp_send_route_notify(struct sock *sk,
+		struct sk_buff *rcv_skb)
+{
+	struct sk_buff *skb = gmtp_make_route_notify(sk, rcv_skb);
+	if(skb != NULL)
+		return gmtp_transmit_built_skb(sk, skb);
+}
+EXPORT_SYMBOL_GPL(gmtp_send_route_notify);
 
 struct sk_buff *gmtp_make_delegate(struct sock *sk, struct sk_buff *rcv_skb,
 		__u8 *rid)

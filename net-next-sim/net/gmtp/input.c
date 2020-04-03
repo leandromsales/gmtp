@@ -294,7 +294,13 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 		__kfree_skb(skb);
 		return 0;
 	}
-	gmtp_send_ack(sk);
+
+	if(gh->type == GMTP_PKT_REGISTER_REPLY) {
+		gmtp_add_relayid(skb);
+		gmtp_send_route_notify(sk, skb);
+		gp->role = GMTP_ROLE_REPORTER;
+	} else
+		gmtp_send_ack(sk);
 
 	if(gp->role == GMTP_ROLE_REPORTER) {
 		if(mcc_rx_init(sk))
@@ -418,7 +424,7 @@ static int gmtp_check_seqno(struct sock *sk, struct sk_buff *skb)
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
 	struct gmtp_sock *gp = gmtp_sk(sk);
 
-	if(gh->type == GMTP_PKT_DATA) {
+	if(gh->type == GMTP_PKT_DATA && gp->role == GMTP_ROLE_REPORTER) {
 		if(unlikely(gp->rx_state == MCC_RSTATE_NO_DATA)) {
 			pr_info("Setting first seqno to %u \n", gh->seq);
 			gp->gsr = gh->seq;
@@ -426,11 +432,11 @@ static int gmtp_check_seqno(struct sock *sk, struct sk_buff *skb)
 			gp->iss = gh->seq;
 			gp->gss = gh->seq;
 			return 0;
-		} else if(gh->seq < gp->gsr) {
+		} /*else if(gh->seq < gp->gsr) {
 			pr_info("Seqno error => Received: %u. GSR: %u.\n",
 					gh->seq, gp->gsr);
 			return 1;
-		}
+		}*/
 	}
 
 	return 0;
@@ -447,15 +453,31 @@ static int __gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 		gmtp_enqueue_skb(sk, skb);
 		return 0;
 	case GMTP_PKT_ACK:
+	case GMTP_PKT_FEEDBACK:
 		if(gp->role == GMTP_ROLE_SERVER) {
-			struct gmtp_hdr_ack *gack = gmtp_hdr_ack(skb);
-			gp->tx_rtt = jiffies_to_msecs(jiffies) - gack->orig_tstamp;
+			__be32 otstamp;
+			__be32 new_tx = gh->transm_r;
+
+			if(gh->type == GMTP_PKT_ACK)
+				otstamp = gmtp_hdr_ack(skb)->orig_tstamp;
+			else
+				otstamp = gmtp_hdr_feedback(skb)->orig_tstamp;
+
+			gp->tx_rtt = jiffies_to_msecs(jiffies) - otstamp;
 			gp->tx_avg_rtt = rtt_ewma(gp->tx_avg_rtt, gp->tx_rtt,
 					GMTP_RTT_WEIGHT);
-			gp->tx_ucc_rate = min((__be32 )gp->tx_max_rate,
-					gh->transm_r);
 
-			pr_info("ucc tx: %lu B/s, from: %pI4\n", gp->tx_ucc_rate,
+			/* Avoid super TX reduction */
+			if(new_tx < DIV_ROUND_CLOSEST(gp->tx_media_rate, 4)) {
+				pr_info("Avoiding super TX reduction...\n");
+				pr_info("gh->tx = %u\n", gh->transm_r);
+				pr_info("max_tx: %lu\n", gp->tx_media_rate);
+				new_tx = DIV_ROUND_CLOSEST(gp->tx_media_rate, 4);
+			}
+
+			gp->tx_ucc_rate = min((__be32 )gp->tx_max_rate, new_tx);
+
+			pr_info("cong. control tx: %lu B/s, from: %pI4\n", gp->tx_ucc_rate,
 					&ip_hdr(skb)->saddr);
 		}
 		goto discard;
@@ -510,16 +532,20 @@ int gmtp_rcv_established(struct sock *sk, struct sk_buff *skb,
 	struct gmtp_sock *gp = gmtp_sk(sk);
 
 	/* Check sequence numbers... */
-	if(gmtp_check_seqno(sk, skb))
+	if(gmtp_check_seqno(sk, skb)) {
 		goto discard;
+	}
 
 	gp->gsr = gh->seq;
 	gp->rx_rtt = (u32) gh->server_rtt;
-	if(gh->type == GMTP_PKT_DATA)
+	if(likely(gh->type == GMTP_PKT_DATA))
 		gp->rx_last_orig_tstamp = gmtp_hdr_data(skb)->tstamp;
+	else
+		gp->ndp_count++;
 
-	if(gp->role == GMTP_ROLE_REPORTER)
+	if(gp->role == GMTP_ROLE_REPORTER) {
 		gmtp_deliver_input_to_mcc(sk, skb);
+	}
 
 	return __gmtp_rcv_established(sk, skb, gh, len);
 discard:

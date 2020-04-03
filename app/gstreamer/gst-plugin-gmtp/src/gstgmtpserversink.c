@@ -66,7 +66,7 @@ enum
   PROP_0,
   PROP_PORT,
   PROP_CLIENT_SOCK_FD,
-  PROP_CCID,
+ /* PROP_CCID,*/
   PROP_CLOSED,
   PROP_WAIT_CONNECTIONS
 };
@@ -195,7 +195,7 @@ gst_gmtp_server_sink_init (GstGMTPServerSink * this)
   this->sock_fd = GMTP_DEFAULT_SOCK_FD;
   this->client_sock_fd = GMTP_DEFAULT_CLIENT_SOCK_FD;
   this->closed = GMTP_DEFAULT_CLOSED;
-  this->ccid = GMTP_DEFAULT_CCID;
+  /*this->ccid = GMTP_DEFAULT_CCID;*/
   this->wait_connections = GMTP_DEFAULT_WAIT_CONNECTIONS;
   this->clients = NULL;
 }
@@ -234,9 +234,9 @@ gst_gmtp_server_sink_start (GstBaseSink * bsink)
     return FALSE;
   }
 
-  if (!gst_gmtp_set_ccid (GST_ELEMENT (sink), sink->sock_fd, sink->ccid)) {
+ /* if (!gst_gmtp_set_ccid (GST_ELEMENT (sink), sink->sock_fd, sink->ccid)) {
     return FALSE;
-  }
+  }*/
 
   if (!gst_gmtp_listen_server_socket (GST_ELEMENT (sink), sink->sock_fd)) {
     return FALSE;
@@ -353,8 +353,8 @@ gst_gmtp_server_sink_set_property (GObject * object, guint prop_id,
     case PROP_WAIT_CONNECTIONS:
       sink->wait_connections = g_value_get_boolean (value);
       break;
-    case PROP_CCID:
-      sink->ccid = g_value_get_int (value);
+    /*case PROP_CCID:
+      sink->ccid = g_value_get_int (value);*/
       break;
     default:
       break;
@@ -380,9 +380,9 @@ gst_gmtp_server_sink_get_property (GObject * object, guint prop_id,
     case PROP_WAIT_CONNECTIONS:
       g_value_set_boolean (value, sink->wait_connections);
       break;
-    case PROP_CCID:
+    /*case PROP_CCID:
       g_value_set_int (value, sink->ccid);
-      break;
+      break;*/
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -458,10 +458,10 @@ gst_gmtp_server_sink_class_init (GstGMTPServerSinkClass * klass)
           "Close the client sockets at end of stream",
           GMTP_DEFAULT_CLOSED, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-  g_object_class_install_property (gobject_class, PROP_CCID,
+  /*g_object_class_install_property (gobject_class, PROP_CCID,
       g_param_spec_int ("ccid", "CCID",
           "The Congestion Control IDentified to be used", 2, G_MAXINT,
-          GMTP_DEFAULT_CCID, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+          GMTP_DEFAULT_CCID, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));*/
 
   g_object_class_install_property (gobject_class, PROP_WAIT_CONNECTIONS,
       g_param_spec_boolean ("wait-connections", "Wait connections",

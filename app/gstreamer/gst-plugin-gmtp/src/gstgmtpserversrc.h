@@ -55,7 +55,7 @@ struct _GstGMTPServerSrc
   gboolean closed;
 
   GstCaps *caps;
-  uint8_t ccid;
+  /*uint8_t ccid;*/
 
   /* single client */
   int client_sock_fd;

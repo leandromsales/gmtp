@@ -12,8 +12,7 @@ import subprocess
 import Logs
 from waflib.Errors import WafError
 
-
-def options(opt): 
+def options(opt):
     opt.tool_options('compiler_cc') 
     ns3waf.options(opt)
     opt.add_option('--enable-kernel-stack',
@@ -82,8 +81,10 @@ def configure(conf):
         conf.env['NS3_DIR']= os.path.abspath(Options.options.with_ns3)
         if not 'PKG_CONFIG_PATH' in os.environ:
             os.environ['PKG_CONFIG_PATH']= os.path.join(Options.options.with_ns3, 'lib', 'pkgconfig')
+            os.environ['PKG_CONFIG_PATH']+= ":" + os.path.join(Options.options.with_ns3, 'lib64', 'pkgconfig')
         else:
             os.environ['PKG_CONFIG_PATH']+= ":" + os.path.join(Options.options.with_ns3, 'lib', 'pkgconfig')
+            os.environ['PKG_CONFIG_PATH']+= ":" + os.path.join(Options.options.with_ns3, 'lib64', 'pkgconfig')
 
         conf.env.append_value('NS3_EXECUTABLE_PATH', os.path.join(conf.env['NS3_DIR'], 'bin'))
 
@@ -238,7 +239,13 @@ def build_dce_tests(module, bld):
             'test/dce-cradle-test.cc',
             'test/dce-mptcp-test.cc',
             ]
-        
+
+    for dir in os.listdir('test/addons'):
+        if dir.startswith('.') or dir == 'CVS':
+            continue
+        elif dir.endswith(".cc"):
+            tests_source += ["test/addons/" + dir]
+
     module.add_runner_test(needed=['core', 'dce', 'internet', 'applications'],
                            source=tests_source)
 
@@ -308,11 +315,10 @@ def build_dce_examples(module, bld):
                     ['freebsd-iproute', []],
                     ['gmtp-inter', []],
                     ['gmtp-server', []],
-                    ['gmtp-server-multi', []],
-                    ['gmtp-server-select', []],
                     ['gmtp-client', []],
-                    ['gmtp-client-select', []],
-#                   ['little-cout', []],
+                    ['udp-mcst-server', []],
+                    ['udp-mcst-client', []],
+#                    ['little-cout', []],
                     ]
 
     if bld.env['SCTP_TOOLS_FOUND']:
@@ -325,7 +331,6 @@ def build_dce_examples(module, bld):
         module.add_example(**dce_kw(target = 'bin_dce/' + name, 
                                     source = ['example/' + name + '.cc'],
                                     lib = lib))
-        
         bld.install_files('${PREFIX}/bin_dce', 'bin_dce/' + name , chmod=0755 )        
 
     module.add_example(needed = ['core', 'internet', 'dce'], 
@@ -375,11 +380,10 @@ def build_dce_examples(module, bld):
     module.add_example(needed = ['core', 'internet', 'dce', 'point-to-point', 'netanim', 'csma', 'fd-net-device'], 
                        target='bin/dce-iperf-emulation',
                        source=['example/dce-iperf-emulation.cc', 'example/ccnx/misc-tools.cc'])
-                       
+### GMTP ###                       
     module.add_example(needed = ['core', 'network', 'internet', 'dce', 'point-to-point', 'csma', 'applications'],
                        target='bin/linear-udp-perf',
                        source=['example/linear-udp-perf.cc'])
-                       
     module.add_example(needed = ['core', 'network', 'dce', 'point-to-point', 'applications', 'internet', 'csma'],
                        target='bin/dce-gmtp-simple',
                        source=['example/dce-gmtp-simple.cc'])
@@ -399,6 +403,18 @@ def build_dce_examples(module, bld):
     module.add_example(needed = ['core', 'network', 'dce', 'point-to-point', 'applications', 'internet', 'csma'],
                        target='bin/dce-gmtp-internet',
                        source=['example/dce-gmtp-internet.cc'])
+                       
+    module.add_example(needed = ['core', 'network', 'dce', 'applications', 'internet', 'csma'],
+                       target='bin/dce-gmtp-master',
+                       source=['example/dce-gmtp-master.cc'])
+                       
+    module.add_example(needed = ['core', 'internet', 'dce', 'csma', 'point-to-point', 'mpi'],
+                       target='bin/dce-gmtp-mpi',
+                       source=['example/dce-gmtp-mpi.cc'])
+                       
+    module.add_example(needed = ['core', 'network', 'dce', 'point-to-point', 'applications', 'internet', 'csma'],
+                       target='bin/dce-multicast-master',
+                       source=['example/dce-multicast-master.cc'])
 
     if bld.env['LIB_ASPECT_PATH']:
         module.add_example(needed = ['core', 'network', 'internet', 'dce', 'point-to-point', 'csma', 'applications'],
@@ -418,7 +434,6 @@ def build_dce_examples(module, bld):
 #                       source=['example/dce-cout-bug.cc'])
                                                                 
 def build_dce_kernel_examples(module, bld):
-
     module.add_example(needed = ['core', 'internet', 'dce', 'point-to-point'], 
                        target='bin/dce-udp-perf',
                        source=['example/dce-udp-perf.cc'])
@@ -443,6 +458,7 @@ def build_dce_kernel_examples(module, bld):
                        target='bin/dce-ccnd-linear-multiple',
                        source=['example/ccnx/dce-ccnd-linear-multiple.cc', 'example/ccnx/misc-tools.cc'])
                        
+
     module.add_example(needed = ['core', 'network', 'dce', 'point-to-point'], 
                        target='bin/dce-xfrm',
                        source=['example/dce-xfrm.cc'])
@@ -454,6 +470,10 @@ def build_dce_kernel_examples(module, bld):
     module.add_example(needed = ['core', 'network', 'dce', 'point-to-point', 'mobility'],
                        target='bin/dce-iperf-mptcp',
                        source=['example/dce-iperf-mptcp.cc'])
+
+    module.add_example(needed = ['core', 'internet', 'network', 'dce', 'point-to-point', 'mobility'],
+                       target='bin/dce-iperf-heterogeneous-multihop',
+                       source=['example/dce-iperf-heterogeneous-multihop.cc'])
 
     module.add_example(needed = ['core', 'network', 'dce', 'point-to-point', 'mobility', 'applications'],
                        target='bin/dce-cradle-mptcp',
@@ -632,6 +652,7 @@ def build(bld):
         'model/dce-time.cc',
         'model/dce-stat.cc',
         'model/dce-syslog.cc',
+        'model/dce-dl.cc',
         'model/dce-global-variables.cc',
         'model/cmsg.cc',
         'model/waiter.cc',
@@ -783,12 +804,12 @@ def build(bld):
     
     bld.program(source='utils/dcemakeversion.c', 
                 name='dcemakeversion',
-                target='dcemakeversion', cflags = [ '-g'], linkflags    = ['-lpthread', '-lrt', '-lm'])
+                target='dcemakeversion', cflags = [ '-g'], linkflags    = ['-lpthread', '-lrt', '-lm', '-ldl'])
 
     bld(source=['dcemakeversion','model/libc-ns3.version' , 'model/libpthread-ns3.version' ,
-                'model/librt-ns3.version', 'model/libm-ns3.version'],
-        target=['model/libc.version','model/libpthread.version','model/librt.version','model/libm.version'],
-        rule='${SRC[0].abspath()} ${SRC[1].abspath()}  ${SRC[2].abspath()}  ${SRC[3].abspath()} ${SRC[4].abspath()}')
+                'model/librt-ns3.version', 'model/libm-ns3.version', 'model/libdl-ns3.version'],
+        target=['model/libc.version','model/libpthread.version','model/librt.version','model/libm.version','model/libdl.version'],
+        rule='${SRC[0].abspath()} ${SRC[1].abspath()}  ${SRC[2].abspath()}  ${SRC[3].abspath()} ${SRC[4].abspath()}  ${SRC[5].abspath()}')
 
     bld.add_group('dce_use_version_files')
 
@@ -826,6 +847,15 @@ def build(bld):
               linkflags=['-nostdlib', '-fno-profile-arcs',
                          '-Wl,--version-script=' + os.path.join('model', 'libm.version'),
                          '-Wl,-soname=libm.so.6'])
+
+    # The very small libdl used to replace the glibc
+    # and forward to the dce_* code
+    bld.shlib(source = ['model/libc.cc', 'model/libc-setup.cc'],
+              target='lib/dl-ns3', cxxflags=['-g', '-fno-profile-arcs', '-fno-test-coverage'],
+              defines=['LIBSETUP=libdl_setup'],
+              linkflags=['-nostdlib', '-fno-profile-arcs',
+                         '-Wl,--version-script=' + os.path.join('model', 'libdl.version'),
+                         '-Wl,-soname=libdl.so.2'])
 
     bld.add_subdirs(['utils'])
     bld.recurse('bindings/python')

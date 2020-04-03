@@ -1,0 +1,390 @@
+diff --git a/app/python/client.R b/app/python/client.R
+deleted file mode 100644
+index 6db182bbb..000000000
+--- a/app/python/client.R
++++ /dev/null
+@@ -1,33 +0,0 @@
+-library("outliers") #Para remover dados discrepantes
+-#elapsed <- rm.outlier(x=elapsed) #Example
+-
+-client <- read.table("logclient.log", header=T, sep='\t') # Carrega o arquivo
+-ratelabel <- "Rx Rate (bytes/s)"
+-
+-print("==================== Size of Packets ======================")
+-size <- client[3]
+-
+-print("==================== Last 1000 RX Rate ======================")
+-rate1000 <- subset(client, rate1000>0)
+-rate1000 <- rate1000[8]
+-rate1000 <- rm.outlier(x=rate1000)
+-
+-summary(rate1000)
+-var(rate1000[,1]) # Variância
+-sd(rate1000[,1])  # Desvio padrão
+-sd(rate1000[,1])/mean(rate1000[,1]) # coef. de  variacao
+-hist(rate1000[,1], nclass=40, main="Rx rate of groups of 1000 packets", xlab=ratelabel)
+-barplot(rate1000[,1], main="Rx rate of group of 1000 packets", xlab="Time", ylab=ratelabel)
+-
+-print("==================== Total RX Rate ======================")
+-rate <- client[11]
+-rate <- rm.outlier(x=rate)
+-
+-summary(rate)
+-subset(table(rate[,1]), table(rate[,1]) == max(table(rate[,1]))) # Moda
+-var(rate[,1]) # Variância
+-sd(rate[,1])  # Desvio padrão
+-sd(rate[,1])/mean(rate[,1]) # coef. de  variacao
+-hist(rate[,1], nclass=40, main="Total Rx rate", xlab=ratelabel)
+-barplot(rate[,1], main="Total Rx rate", xlab="Time", ylab=ratelabel)
+-
+diff --git a/app/python/client_audio.py b/app/python/client_audio.py
+deleted file mode 100755
+index 9f230cbc5..000000000
+--- a/app/python/client_audio.py
++++ /dev/null
+@@ -1,57 +0,0 @@
+-#!/usr/bin/python
+-import socket
+-import pyaudio
+-import wave
+-import sys
+-
+-from gmtp import *
+-
+-#record
+-CHUNK = 1024
+-FORMAT = pyaudio.paInt16
+-CHANNELS = 1
+-RATE = 44100
+-RECORD_SECONDS = 40
+-
+-default_ip = get_ip_address('eth0')
+-default_port = 12345
+-default_address = (default_ip, default_port)
+-
+-if(len(sys.argv) > 2):
+-    address = (sys.argv[1], int(sys.argv[2]))
+-elif(len(sys.argv) > 1):
+-    address = (sys.argv[1], default_port)
+-else:
+-    address = default_address
+-
+-s = socket.socket(socket.AF_INET, socket.SOCK_GMTP, socket.IPPROTO_GMTP)
+-print(s)
+-print(address)
+-
+-s.connect(address)
+-
+-p = pyaudio.PyAudio()
+-
+-stream = p.open(format=FORMAT,
+-                channels=CHANNELS,
+-                rate=RATE,
+-                input=True,
+-                frames_per_buffer=CHUNK)
+-
+-print("*recording")
+-
+-frames = []
+-
+-for i in range(0, int(RATE/CHUNK*RECORD_SECONDS)):
+- data  = stream.read(CHUNK)
+- frames.append(data)
+- s.sendall(data)
+-
+-print("*done recording")
+-
+-stream.stop_stream()
+-stream.close()
+-p.terminate()
+-s.close()
+-
+-print("*closed")
+diff --git a/app/python/clients.sh b/app/python/clients.sh
+deleted file mode 100755
+index af0645b2a..000000000
+--- a/app/python/clients.sh
++++ /dev/null
+@@ -1,15 +0,0 @@
+-
+-
+-i=1
+-max=5
+-echo "Starting $max clients..."
+-echo "Command: ./client.py 192.168.0.2"
+-
+-while [ $i -le $max ]
+-do
+-     echo "Running $iº client"
+-    ./client.py 192.168.0.2 >> /dev/null &
+-    i=`expr $i + 1`
+-done
+-
+-echo "Clients are running..."
+diff --git a/app/python/gmtp.py b/app/python/gmtp.py
+index 858f5a14e..616112abc 100755
+--- a/app/python/gmtp.py
++++ b/app/python/gmtp.py
+@@ -13,7 +13,7 @@ ETH_HDR_LEN = 14
+ 
+ socket.SOCK_GMTP = 7
+ socket.IPPROTO_GMTP = 254
+-socket.SOL_GMTP = 281
++socket.SOL_GMTP = 282
+ 
+ socket.GMTP_SOCKOPT_FLOWNAME = 1
+ socket.GMTP_SOCKOPT_MAX_TX_RATE = 2
+diff --git a/app/python/server.py b/app/python/server.py
+index 70c69e2bb..6fb1386fb 100755
+--- a/app/python/server.py
++++ b/app/python/server.py
+@@ -9,12 +9,13 @@ from optparse import Option, OptionParser
+ from gmtp import *
+ 
+ default_port = 12345
++default_if = 'enp0s3'
+ 
+ usage = "usage: %prog [options]. Note: -a takes precedence of -i, specify one or other."
+ parser = OptionParser(usage=usage, version="%prog 1.0")
+ 
+-parser.add_option("-i", "--iface", dest="iface",
+-                  help="The network interface to bind.", metavar="IFACE")
++parser.add_option("-i", "--iface", dest="iface", default='enp0s3',
++                  help="The network interface to bind [default: %default].", metavar="IFACE")
+ parser.add_option("-a", "--address", dest="address",
+                   help="The network address", metavar="ADDRESS")
+ parser.add_option("-p", "--port", dest="port", type="int",
+@@ -37,15 +38,19 @@ out = "sair"
+ print "Starting server... at ", address
+         
+ # Create sockets
+-server_socket = socket.socket(socket.AF_INET, socket.SOCK_GMTP, socket.IPPROTO_GMTP)
++#server_socket = socket.socket(socket.AF_INET, socket.SOCK_GMTP, socket.IPPROTO_GMTP)
++server_socket = socket.socket(socket.AF_INET, 7, 254)
+ server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+ 
+ flowname = "1234567812345678";
+-server_socket.setsockopt(socket.SOL_GMTP, socket.GMTP_SOCKOPT_FLOWNAME, flowname)
++#server_socket.setsockopt(socket.SOL_GMTP, socket.GMTP_SOCKOPT_FLOWNAME, flowname)
++server_socket.setsockopt(282, 1, flowname)
+ 
+ #tx_rate = "max_gmtp_rate"
+ tx_rate = 50000 #bytes/s.  250000 bytes/s == 2 Mbps
+-server_socket.setsockopt(socket.SOL_GMTP, socket.GMTP_SOCKOPT_MAX_TX_RATE, tx_rate)
++#server_socket.setsockopt(socket.SOL_GMTP, socket.GMTP_SOCKOPT_MAX_TX_RATE, tx_rate)
++server_socket.setsockopt(282, 3, tx_rate)
++
+ 
+ # Connect sockets
+ server_socket.bind(address)
+diff --git a/app/python/server_audio.py b/app/python/server_audio.py
+deleted file mode 100755
+index 4fc5fcef0..000000000
+--- a/app/python/server_audio.py
++++ /dev/null
+@@ -1,67 +0,0 @@
+-#!/usr/bin/python
+-# Echo server program
+-import socket
+-import pyaudio
+-import wave
+-import time
+-import sys
+-
+-from gmtp import *
+-
+-CHUNK = 1024
+-FORMAT = pyaudio.paInt16
+-CHANNELS = 1
+-RATE = 44100
+-RECORD_SECONDS = 4
+-WAVE_OUTPUT_FILENAME = "output.wav"
+-WIDTH = 2
+-frames = []
+-
+-p = pyaudio.PyAudio()
+-stream = p.open(format=p.get_format_from_width(WIDTH),
+-                channels=CHANNELS,
+-                rate=RATE,
+-                output=True,
+-                frames_per_buffer=CHUNK)
+-
+-
+-ip = get_ip_address('eth0')
+-default_port = 12345
+-default_address = (ip, default_port)
+-
+-if(len(sys.argv) > 1):
+-    address = (ip, int(sys.argv[1]))
+-else:
+-    address = default_address
+-
+-print("Starting server... at ", str(address))
+-
+-# Create sockets
+-s = socket.socket(socket.AF_INET, socket.SOCK_GMTP, socket.IPPROTO_GMTP)
+-print(s)
+-
+-s.bind(address)
+-s.listen(1)
+-conn, addr = s.accept()
+-print 'Connected by', addr
+-data = conn.recv(1024)
+-
+-i=1
+-while data != '':
+-    stream.write(data)
+-    data = conn.recv(1024)
+-    i=i+1
+-    print i
+-    frames.append(data)
+-
+-wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
+-wf.setnchannels(CHANNELS)
+-wf.setsampwidth(p.get_sample_size(FORMAT))
+-wf.setframerate(RATE)
+-wf.writeframes(b''.join(frames))
+-wf.close()
+-
+-stream.stop_stream()
+-stream.close()
+-p.terminate()
+-conn.close()
+diff --git a/app/python/server_multithreading.py b/app/python/server_multithreading.py
+deleted file mode 100755
+index 35176440a..000000000
+--- a/app/python/server_multithreading.py
++++ /dev/null
+@@ -1,132 +0,0 @@
+-#!/usr/bin/python
+-
+-import sys
+-import socket
+-import time
+-import timeit
+-from datetime import datetime
+-import threading
+-
+-from gmtp import *
+-
+-ip = get_ip_address('eth0')
+-default_port = 12345
+-default_address = (ip, default_port)
+-
+-msg = "Welcome to the jungle!"
+-out = "sair"
+-
+-if(len(sys.argv) > 1):
+-    address = (ip, int(sys.argv[1]))
+-else:
+-    address = default_address
+-
+-print "Starting server... at ", address
+-
+-class ClientThread(threading.Thread):
+-
+-    def __init__(self, address, socket, text):
+-        threading.Thread.__init__(self)
+-        self.i = 0
+-        self.ip = address[0]
+-        self.port = address[1]
+-        self.socket = socket
+-        self.text = text
+-        
+-        self.total_size = 0
+-        self.last_size = 0;
+-        
+-        self.total_time = 0
+-        self.start_time = 0
+-        self.last_time = 0
+-        
+-        print "[+] New thread started for", self.ip, ":", str(self.port)
+-
+-    def run(self):
+-        print "Sending text: '" + self.text + "' at " +  str(tx_rate) + " bytes/s\n"
+-        print "Sending... "
+-        
+-        while True: 
+-            
+-        #time.sleep(0.00175); # App controls Tx    0,001 ~ 100.000 bytes/s
+-                  
+-            if(self.text != out):
+-                self.i = self.i + 1
+-                if(self.i == 1):
+-                    self.start_time = timeit.default_timer()
+-                    self.last_time = timeit.default_timer()
+-                
+-                text = self.text + " (" + str(self.i) + ")"
+-                size = getPacketSize(text)
+-                self.total_size = self.total_size + size
+-                
+-                self.socket.send(text.encode('utf-8'))
+-                
+-                if(self.i%25 == 0):
+-                    sys.stdout.write("=>")
+-                    sys.stdout.flush()
+-                
+-                if(self.i%1000 == 0):
+-                    nowstr = str(datetime.now().strftime('%H:%M:%S:%f'))
+-                    
+-                    self.total_time = timeit.default_timer() - self.start_time
+-                    elapsed = timeit.default_timer() - self.last_time
+-                    size1000 = self.total_size - self.last_size
+-                    
+-                    rate = "%.2f" % (size1000/elapsed)
+-                    total_rate = "%.2f" % (self.total_size/self.total_time)
+-                    
+-                    self.last_time = timeit.default_timer()
+-                    self.last_size = self.total_size
+-                    
+-                    print "\nMessage", self.i, "sent to client at", nowstr +":\n", text
+-                    print "\tPacket Size: ", size, "bytes"
+-                    print "\tSize of last 1000:", size1000, "bytes / Time elapsed: ", elapsed, "s"
+-                    print "\tTotal sent:", self.total_size, "bytes / Total time:", self.total_time, "s"
+-                    print "\tSend rate (last 1000):", rate, "bytes/s"
+-                    print "\tSend rate (total): ", total_rate, "bytes/s\n\n"
+-                    print "Sending... "
+-        
+-            else:
+-                self.socket.send(self.text.encode('utf-8'))
+-                self.socket.close()
+-                break
+-
+-        print "Client disconnected..."
+-        
+-# Create sockets
+-server_socket = socket.socket(socket.AF_INET, socket.SOCK_GMTP, socket.IPPROTO_GMTP)
+-server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+-
+-flowname = getHash(address)
+-server_socket.setsockopt(socket.SOL_GMTP, socket.GMTP_SOCKOPT_FLOWNAME, flowname)
+-
+-tx_rate = 50000 #bytes/s.  250000 bytes/s == 2 Mbps
+-server_socket.setsockopt(socket.SOL_GMTP, socket.GMTP_SOCKOPT_MAX_TX_RATE, tx_rate)
+-
+-# Connect sockets
+-server_socket.bind(address)
+-threads = []
+-print "Listening for incoming connections...\n"
+-time.sleep(0.5)
+-
+-def join_threads(list):
+-    for t in list:
+-        t.join()
+-
+-try:
+-    while True:
+-        server_socket.listen(20)
+-        client_input, client_addr = server_socket.accept()
+-        newthread = ClientThread(client_addr, client_input, msg)
+-        newthread.start()
+-        threads.append(newthread)
+-except (KeyboardInterrupt, SystemExit):
+-    print '\nReceived keyboard interrupt, quitting threads...\n'
+-    for t in threads:
+-        t.text = out
+-    join_threads(threads)
+-    server_socket.close()
+-    sys.exit()
+-    
+-

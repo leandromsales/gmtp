@@ -55,7 +55,7 @@ struct _GstGMTPClientSrc {
   gboolean closed;
 
   GstCaps *caps;
-  uint8_t ccid;
+ /* uint8_t ccid;*/
 };
 
 struct _GstGMTPClientSrcClass {

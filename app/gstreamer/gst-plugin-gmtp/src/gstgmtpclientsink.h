@@ -64,7 +64,7 @@ struct _GstGMTPClientSink
   int pksize;
 
   GstCaps *caps;
-  uint8_t ccid;
+ /* uint8_t ccid;*/
 };
 
 struct _GstGMTPClientSinkClass

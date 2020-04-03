@@ -5,13 +5,11 @@
 #include <linux/skbuff.h>
 #include <linux/ip.h>
 #include <linux/inet.h>
-#include <linux/dirent.h>
 #include <linux/inetdevice.h>
-#include <linux/crypto.h>
 #include <linux/err.h>
-#include <linux/scatterlist.h>
 #include <linux/if.h>
 #include <linux/ioctl.h>
+#include <linux/rtnetlink.h>
 
 #include <net/sock.h>
 #include <net/sch_generic.h>
@@ -32,116 +30,6 @@ static struct nf_hook_ops nfho_local_in;
 static struct nf_hook_ops nfho_local_out;
 static struct nf_hook_ops nfho_post_routing;
 struct gmtp_inter gmtp_inter;
-
-/* FIXME This fails at NS-3-DCE */
-unsigned char *gmtp_build_md5(unsigned char *buf)
-{
-	struct scatterlist sg;
-	struct crypto_hash *tfm;
-	struct hash_desc desc;
-	unsigned char *output;
-	size_t buf_size = sizeof(buf) - 1;
-	 __u8 md5[21];
-
-	gmtp_print_function();
-
-	output = kmalloc(MD5_LEN * sizeof(unsigned char), GFP_KERNEL);
-	tfm = crypto_alloc_hash("md5", 0, CRYPTO_ALG_ASYNC);
-
-	if(output == NULL || IS_ERR(tfm)) {
-		gmtp_pr_warning("Allocation failed...");
-		return NULL;
-	}
-	desc.tfm = tfm;
-	desc.flags = 0;
-
-	crypto_hash_init(&desc);
-
-	sg_init_one(&sg, buf, buf_size);
-	crypto_hash_update(&desc, &sg, buf_size);
-	crypto_hash_final(&desc, output);
-
-	flowname_strn(md5, output, MD5_LEN);
-	printk("Output md5 = %s\n", md5);
-
-	crypto_free_hash(tfm);
-
-	return output;
-}
-
-unsigned char *gmtp_inter_build_relay_id(void)
-{
-	struct socket *sock = NULL;
-	struct net_device *dev = NULL;
-	struct net *net;
-
-	int i, retval, length = 0;
-	char mac_address[6];
-
-	char buffer[50];
-	u8 *str[30];
-
-	gmtp_print_function();
-
-	retval = sock_create(AF_INET, SOCK_STREAM, 0, &sock);
-	net = sock_net(sock->sk);
-
-	for(i = 2; (dev = dev_get_by_index_rcu(net, i)) != NULL; ++i) {
-		memcpy(&mac_address, dev->dev_addr, 6);
-		length += bytes_added(sprintf((char*)(buffer + length), str));
-	}
-
-	sock_release(sock);
-	return gmtp_build_md5(buffer);
-}
-
-__be32 gmtp_inter_device_ip(struct net_device *dev)
-{
-	struct in_device *in_dev;
-	struct in_ifaddr *if_info;
-
-	if(dev == NULL)
-		return 0;
-
-	in_dev = (struct in_device *)dev->ip_ptr;
-	if_info = in_dev->ifa_list;
-	for(; if_info; if_info = if_info->ifa_next) {
-		/* just return the first entry for now */
-		return if_info->ifa_address;
-	}
-
-	return 0;
-}
-
-bool gmtp_inter_ip_local(__be32 ip)
-{
-	struct socket *sock = NULL;
-	struct net_device *dev = NULL;
-	struct net *net;
-
-	int i, length = 0;
-	char mac_address[6];
-
-	char buffer[50];
-	u8 *str[30];
-
-	bool ret = false;
-
-	sock_create(AF_INET, SOCK_STREAM, 0, &sock);
-	net = sock_net(sock->sk);
-
-	for(i = 2; (dev = dev_get_by_index_rcu(net, i)) != NULL; ++i) {
-		__be32 dev_ip = gmtp_inter_device_ip(dev);
-		if(ip == dev_ip) {
-			ret = true;
-			break;
-		}
-	}
-
-	sock_release(sock);
-	return ret;
-}
-
 
 __be32 get_mcst_v4_addr(void)
 {
@@ -194,11 +82,19 @@ __be32 get_mcst_v4_addr(void)
 }
 EXPORT_SYMBOL_GPL(get_mcst_v4_addr);
 
-void gmtp_buffer_add(struct gmtp_inter_entry *info, struct sk_buff *newsk)
+void gmtp_buffer_add(struct gmtp_inter_entry *info, struct sk_buff *newskb)
 {
-	skb_queue_tail(info->buffer, skb_copy(newsk, GFP_ATOMIC));
-	info->buffer_len += newsk->len + ETH_HLEN;
-	gmtp_inter.buffer_len += newsk->len + ETH_HLEN;
+	skb_queue_tail(info->buffer, skb_copy(newskb, GFP_ATOMIC));
+	info->buffer_len += newskb->len + ETH_HLEN;
+}
+
+void gmtp_ucc_buffer_add(struct sk_buff *newskb)
+{
+	if(newskb != NULL) {
+		gmtp_inter.buffer_len += skblen(newskb);
+		gmtp_inter.total_bytes_rx += skblen(newskb);
+		gmtp_inter.ucc_bytes += skblen(newskb);
+	}
 }
 
 struct sk_buff *gmtp_buffer_dequeue(struct gmtp_inter_entry *info)
@@ -206,10 +102,19 @@ struct sk_buff *gmtp_buffer_dequeue(struct gmtp_inter_entry *info)
 	struct sk_buff *skb = skb_dequeue(info->buffer);
 	if(skb != NULL) {
 		info->buffer_len -= (skb->len + ETH_HLEN);
-		gmtp_inter.buffer_len -= (skb->len + ETH_HLEN);
 	}
 	return skb;
 }
+
+void gmtp_ucc_buffer_dequeue(struct sk_buff *newskb)
+{
+	if(newskb != NULL) {
+		gmtp_inter.buffer_len -= skblen(newskb);
+		if(gmtp_inter.buffer_len < 0)
+			gmtp_inter.buffer_len = 0;
+	}
+}
+
 
 unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 		const struct net_device *in, const struct net_device *out,
@@ -217,6 +122,42 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 {
 	int ret = NF_ACCEPT;
 	struct iphdr *iph = ip_hdr(skb);
+
+	gmtp_ucc_buffer_add(skb);
+
+	/*if(skb->dev != NULL) {
+		struct netdev_rx_queue *rx = skb->dev->_rx;
+		pr_info("skb->dev->ingress_queue3: %p\n", rx);
+		if(rx != NULL) {
+			pr_info("in->ingress_queue->qdisc: %p\n", ndq->qdisc);
+			if(ndq->qdisc != NULL) {
+				pr_info("q.qlen: %u\n", ndq->qdisc->q.qlen);
+				pr_info("qstats.qlen: %u\n",
+						ndq->qdisc->qstats.qlen);
+				pr_info("qstats.drops: %u\n",
+						ndq->qdisc->qstats.drops);
+				pr_info("qstats.overlimits: %u\n",
+						ndq->qdisc->qstats.overlimits);
+			}
+		}
+	}*/
+
+	/*int i;
+	for(i = 0; i < NR_CPUS; i++) {
+		struct softnet_data *queue;
+		queue = &per_cpu(softnet_data, i);
+
+		struct sk_buff_head *input = &queue->input_pkt_queue;
+		struct sk_buff_head *process = &queue->process_queue;
+
+		pr_info("input_queue: %u\n", input->qlen);
+		pr_info("process_queue: %u\n", process->qlen);
+		pr_info("processed: %u\n", queue->processed);
+		pr_info("time_squeeze: %u\n", queue->time_squeeze);
+		pr_info("cpu_collision: %u\n", queue->cpu_collision);
+		pr_info("received_rps: %u\n", queue->received_rps);
+		pr_info("dropped: %u\n", queue->dropped);
+	}*/
 
 	if(gmtp_info->relay_enabled == 0)
 		return ret;
@@ -228,25 +169,27 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 		struct gmtp_relay *relay;
 
 		if(gh->type == GMTP_PKT_REQUEST) {
-			if(gmtp_inter_ip_local(iph->saddr)
-					&& iph->saddr != iph->daddr)
-				return NF_ACCEPT;
+			if(gmtp_local_ip(iph->saddr)
+					&& iph->saddr != iph->daddr) {
+				goto out;
+			}
 
 			if(iph->ttl == 1) {
 				print_packet(skb, true);
 				print_gmtp_packet(iph, gh);
-				return gmtp_inter_request_rcv(skb);
+				ret = gmtp_inter_request_rcv(skb);
+				goto out;
 			}
 		}
 
 		entry = gmtp_inter_lookup_media(gmtp_inter.hashtable,
 				gh->flowname);
 		if(entry == NULL)
-			return NF_ACCEPT;
+			goto out;
 
 		switch(gh->type) {
 		case GMTP_PKT_REGISTER:
-			if(!gmtp_inter_ip_local(iph->daddr))
+			if(!gmtp_local_ip(iph->daddr))
 				ret = gmtp_inter_register_rcv(skb);
 			break;
 		case GMTP_PKT_REGISTER_REPLY:
@@ -268,8 +211,8 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 		default:
 			relay = gmtp_get_relay(&entry->relays->list,
 					iph->daddr, gh->dport);
-			if(!gmtp_inter_ip_local(iph->daddr) && (relay == NULL))
-				return NF_ACCEPT;
+			if(!gmtp_local_ip(iph->daddr) && (relay == NULL))
+				goto out;
 		}
 
 		switch(gh->type) {
@@ -287,6 +230,10 @@ unsigned int hook_func_pre_routing(unsigned int hooknum, struct sk_buff *skb,
 
 	}
 
+out:
+	if(ret == NF_DROP)
+		gmtp_ucc_buffer_dequeue(skb);
+
 	return ret;
 }
 
@@ -299,18 +246,19 @@ unsigned int hook_func_local_in(unsigned int hooknum, struct sk_buff *skb,
 	struct iphdr *iph = ip_hdr(skb);
 
 	if(gmtp_info->relay_enabled == 0)
-		return ret;
+		goto in;
 
 	if(iph->protocol == IPPROTO_GMTP) {
 
 		struct gmtp_hdr *gh = gmtp_hdr(skb);
+
 		struct gmtp_inter_entry *entry = gmtp_inter_lookup_media(
 				gmtp_inter.hashtable, gh->flowname);
 		if(entry == NULL)
-			return NF_ACCEPT;
+			goto in;
 
 		if(!gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname))
-			return NF_ACCEPT;
+			goto in;
 
 		switch(gh->type) {
 		case GMTP_PKT_REGISTER:
@@ -321,6 +269,8 @@ unsigned int hook_func_local_in(unsigned int hooknum, struct sk_buff *skb,
 		}
 	}
 
+in:
+	/*gmtp_ucc_buffer_dequeue(skb);*/
 	return ret;
 }
 
@@ -337,6 +287,7 @@ unsigned int hook_func_local_out(unsigned int hooknum, struct sk_buff *skb,
 	if(iph->protocol == IPPROTO_GMTP) {
 
 		struct gmtp_hdr *gh = gmtp_hdr(skb);
+
 		struct gmtp_inter_entry *entry = gmtp_inter_lookup_media(
 				gmtp_inter.hashtable, gh->flowname);
 		if(entry == NULL)
@@ -377,7 +328,7 @@ unsigned int hook_func_post_routing(unsigned int hooknum, struct sk_buff *skb,
 	struct iphdr *iph = ip_hdr(skb);
 
 	if(gmtp_info->relay_enabled == 0)
-		return ret;
+		goto out;
 
 	if(iph->protocol == IPPROTO_GMTP) {
 
@@ -390,10 +341,10 @@ unsigned int hook_func_post_routing(unsigned int hooknum, struct sk_buff *skb,
 			return NF_ACCEPT;
 
 		if(gh->type == GMTP_PKT_DATA) {
-			if(!gmtp_inter_ip_local(iph->daddr) ||
+			if(!gmtp_local_ip(iph->daddr) ||
 			    GMTP_SKB_CB(skb)->jumped) {
 				if(gmtp_inter_has_clients(skb, entry))
-					return NF_ACCEPT;
+					goto out;
 			}
 		}
 
@@ -405,7 +356,7 @@ unsigned int hook_func_post_routing(unsigned int hooknum, struct sk_buff *skb,
 			ret = gmtp_inter_register_reply_out(skb, entry);
 			break;
 		case GMTP_PKT_DATA:
-			if(gmtp_inter_ip_local(iph->daddr)
+			if(gmtp_local_ip(iph->daddr)
 					|| GMTP_SKB_CB(skb)->jumped) {
 				ret = gmtp_inter_data_out(skb, entry);
 			}
@@ -420,6 +371,7 @@ unsigned int hook_func_post_routing(unsigned int hooknum, struct sk_buff *skb,
 		}
 	}
 
+out:
 	return ret;
 }
 
@@ -453,8 +405,6 @@ static void register_hooks(void)
 int init_module()
 {
 	int ret = 0;
-	__u8 relay_id[21];
-	unsigned char *rid;
 
 	gmtp_pr_func();
 	gmtp_print_debug("Starting GMTP-Inter");
@@ -479,16 +429,6 @@ int init_module()
 	gmtp_inter.rx_rate_wnd = 100;
 	memset(&gmtp_inter.mcst, 0, 4 * sizeof(unsigned char));
 
-	rid = gmtp_inter_build_relay_id();
-	if(rid == NULL) {
-		gmtp_pr_error("Relay ID build failed. Creating a random id.");
-		get_random_bytes(gmtp_inter.relay_id, GMTP_FLOWNAME_LEN);
-	} else
-		memcpy(gmtp_inter.relay_id, rid, GMTP_FLOWNAME_LEN);
-
-	flowname_strn(relay_id, gmtp_inter.relay_id, MD5_LEN);
-	pr_info("Relay ID = %s\n", relay_id);
-
 	gmtp_inter.hashtable = gmtp_inter_create_hashtable(64);
 	if(gmtp_inter.hashtable == NULL) {
 		gmtp_print_error("Cannot create hashtable...");
@@ -498,7 +438,7 @@ int init_module()
 
 	gmtp_info->relay_enabled = 1; /* Enabling gmtp-inter */
 
-	gmtp_inter.h_user = UINT_MAX; /* TODO Make it user defined */
+	gmtp_inter.h_user = INT_MAX; /* TODO Make it user defined */
 	gmtp_inter.worst_rtt = GMTP_MIN_RTT_MS;
 
 	pr_info("Configuring GMTP-UCC timer...\n");

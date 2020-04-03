@@ -1,9 +1,14 @@
 #include <asm/ioctls.h>
+#include <asm-generic/unaligned.h>
 
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/types.h>
-#include <linux/kthread.h>
+#include <linux/dirent.h>
+#include <linux/inetdevice.h>
+#include <linux/crypto.h>
+#include <linux/err.h>
+#include <linux/scatterlist.h>
 
 #include <net/inet_hashtables.h>
 #include <net/sock.h>
@@ -105,6 +110,29 @@ void flowname_str(__u8* str, const __u8 *flowname)
 		sprintf(&str[i*2], "%02x", flowname[i]);
 }
 EXPORT_SYMBOL_GPL(flowname_str);
+
+void flowname_strn(__u8* str, const __u8 *buffer, int length)
+{
+	int i;
+	for(i = 0; i < length; ++i)
+		sprintf(&str[i*2], "%02x", buffer[i]);
+}
+EXPORT_SYMBOL_GPL(flowname_strn);
+
+/*
+ * Print IP packet basic information
+ */
+void print_packet(struct sk_buff *skb, bool in)
+{
+	struct iphdr *iph = ip_hdr(skb);
+	const char *type = in ? "IN" : "OUT";
+	pr_info("%s: Src=%pI4 | Dst=%pI4 | TTL=%u | Proto: %d | Len: %d B\n",
+			type,
+			&iph->saddr, &iph->daddr,
+			iph->ttl,
+			iph->protocol,
+			ntohs(iph->tot_len));
+}
 
 /*
  * Print GMTP packet basic information
@@ -213,6 +241,147 @@ void print_gmtp_sock(struct sock *sk)
 			ntohs(sk->sk_dport), gmtp_state_name(sk->sk_state));
 }
 EXPORT_SYMBOL_GPL(print_gmtp_sock);
+
+/* FIXME This fails at NS-3-DCE */
+unsigned char *gmtp_build_md5(unsigned char *buf)
+{
+	struct scatterlist sg;
+	struct crypto_hash *tfm;
+	struct hash_desc desc;
+	unsigned char *output;
+	size_t buf_size = sizeof(buf) - 1;
+	 __u8 md5[21];
+
+	gmtp_print_function();
+
+	output = kmalloc(MD5_LEN * sizeof(unsigned char), GFP_KERNEL);
+	tfm = crypto_alloc_hash("md5", 0, CRYPTO_ALG_ASYNC);
+
+	if(output == NULL || IS_ERR(tfm)) {
+		gmtp_pr_warning("Allocation failed...");
+		return NULL;
+	}
+	desc.tfm = tfm;
+	desc.flags = 0;
+
+	crypto_hash_init(&desc);
+
+	sg_init_one(&sg, buf, buf_size);
+	crypto_hash_update(&desc, &sg, buf_size);
+	crypto_hash_final(&desc, output);
+
+	flowname_strn(md5, output, MD5_LEN);
+	printk("Output md5 = %s\n", md5);
+
+	crypto_free_hash(tfm);
+
+	return output;
+}
+EXPORT_SYMBOL_GPL(gmtp_build_md5);
+
+static inline int bytes_added(int sprintf_return)
+{
+	return (sprintf_return > 0) ? sprintf_return : 0;
+}
+
+unsigned char *gmtp_build_relay_id(void)
+{
+	struct socket *sock = NULL;
+	struct net_device *dev = NULL;
+	struct net *net;
+
+	int i, retval, length = 0;
+	char mac_address[6];
+
+	char buffer[50];
+	u8 *str[30];
+
+	gmtp_print_function();
+
+	retval = sock_create(AF_INET, SOCK_STREAM, 0, &sock);
+	net = sock_net(sock->sk);
+
+	for(i = 2; (dev = dev_get_by_index_rcu(net, i)) != NULL; ++i) {
+		memcpy(&mac_address, dev->dev_addr, 6);
+		length += bytes_added(sprintf((char*)(buffer + length), str));
+	}
+
+	sock_release(sock);
+	return gmtp_build_md5(buffer);
+}
+EXPORT_SYMBOL_GPL(gmtp_build_relay_id);
+
+__be32 gmtp_dev_ip(struct net_device *dev)
+{
+	struct in_device *in_dev;
+	struct in_ifaddr *if_info;
+
+	if(dev == NULL)
+		return 0;
+
+	in_dev = (struct in_device *)dev->ip_ptr;
+	if_info = in_dev->ifa_list;
+	for(; if_info; if_info = if_info->ifa_next) {
+		/* just return the first entry for now */
+		return if_info->ifa_address;
+	}
+
+	return 0;
+}
+EXPORT_SYMBOL_GPL(gmtp_dev_ip);
+
+bool gmtp_local_ip(__be32 ip)
+{
+	struct socket *sock = NULL;
+	struct net_device *dev = NULL;
+	struct net *net;
+
+	int i, length = 0;
+	char mac_address[6];
+
+	char buffer[50];
+	u8 *str[30];
+
+	bool ret = false;
+
+	sock_create(AF_INET, SOCK_STREAM, 0, &sock);
+	net = sock_net(sock->sk);
+
+	for(i = 2; (dev = dev_get_by_index_rcu(net, i)) != NULL; ++i) {
+		__be32 dev_ip = gmtp_dev_ip(dev);
+		if(ip == dev_ip) {
+			ret = true;
+			break;
+		}
+	}
+
+	sock_release(sock);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(gmtp_local_ip);
+
+void gmtp_add_relayid(struct sk_buff *skb)
+{
+	struct iphdr *iph = ip_hdr(skb);
+	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct gmtp_hdr_register_reply *gh_rply = gmtp_hdr_register_reply(skb);
+	struct gmtp_hdr_relay *relay;
+	int relay_len = sizeof(struct gmtp_hdr_relay);
+
+	gmtp_print_function();
+
+	relay = (struct gmtp_hdr_relay*) skb_put(skb, relay_len);
+	memcpy(relay->relay_id, gmtp_info->relay_id, GMTP_RELAY_ID_LEN);
+	relay->relay_ip =  gmtp_dev_ip(skb->dev);
+	++gh_rply->nrelays;
+
+	gh->hdrlen += relay_len;
+	put_unaligned(htons(skb->len), &(iph->tot_len));
+	ip_send_check(iph);
+
+	print_route_from_skb(skb);
+}
+EXPORT_SYMBOL_GPL(gmtp_add_relayid);
 
 void gmtp_set_state(struct sock *sk, const int state)
 {
@@ -863,8 +1032,10 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	s = (struct gmtp_server_entry*) gmtp_lookup_entry(server_hashtable,
 			gp->flowname);
 
-	if(s == NULL)
+	if(s == NULL) {
+		pr_info("s: %p\n", s);
 		return gmtp_do_sendmsg(sk, msg, len);
+	}
 
 	/* For every socket(P) in server, send the same data */
 	list_for_each_entry(r, &s->relays.relay_list, relay_list) {
@@ -891,7 +1062,6 @@ int gmtp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 
 			ret = gmtp_do_sendmsg(r->sk, msgcpy, len);
 		}
-
 	}
 
 	kfree(msg);
@@ -1067,6 +1237,9 @@ MODULE_PARM_DESC(ghash_entries, "Number of GMTP hash entries");
 static int __init gmtp_init(void)
 {
 	int rc = 0;
+	unsigned char *rid;
+	__u8 relay_id[21];
+
 	gmtp_print_function();
 
 	rc = mcc_lib_init();
@@ -1097,6 +1270,16 @@ static int __init gmtp_init(void)
 	gmtp_info->pkt_sent = 0;
 	gmtp_info->control_sk = NULL;
 	gmtp_info->ctrl_addr = NULL;
+
+	rid = gmtp_build_relay_id();
+	if(rid == NULL) {
+		gmtp_pr_error("Relay ID build failed. Creating a random id.");
+		get_random_bytes(gmtp_info->relay_id, GMTP_FLOWNAME_LEN);
+	} else
+		memcpy(gmtp_info->relay_id, rid, GMTP_FLOWNAME_LEN);
+
+	flowname_strn(relay_id, gmtp_info->relay_id, MD5_LEN);
+		pr_info("Relay ID = %s\n", relay_id);
 
 	rc = gmtp_create_inet_hashinfo();
 	if(rc)

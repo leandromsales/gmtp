@@ -8,32 +8,11 @@
 #include <arpa/inet.h>
 #include <cstdio>
 #include <cstring>
+#include <cstdlib>
 
 #include "gmtp.h"
 
-struct timeval  tv;
-
 using namespace std;
-
-inline void ms_sleep(double ms)
-{
-	struct timespec slt;
-	slt.tv_nsec = (long)(ms * 1000000.0);
-	slt.tv_sec = 0;
-	nanosleep(&slt, NULL);
-}
-
-inline void print_stats(int i, double t1, double total, double total_data)
-{
-	double t2 = time_ms(tv);
-	double elapsed = t2 - t1;
-
-	cout << i << " packets sent in " << elapsed << " ms!" << endl;
-	cout << total_data << " data bytes sent."<< endl;
-	cout << total << " bytes sent (data+hdr)" << endl;
-	cout << "Data TX: " << total_data*1000/elapsed << " B/s" << endl;
-	cout << "TX: " << (total*1000)/elapsed << " B/s" << endl;
-}
 
 int main(int argc, char *argv[])
 {
@@ -42,17 +21,22 @@ int main(int argc, char *argv[])
 	struct sockaddr_storage serverStorage;
 	socklen_t addr_size;
 	int media_rate = 300000; // B/s
-	int ucc_type = GMTP_DELAY_UCC;
-//	int ucc_type = GMTP_MEDIA_ADAPT_UCC;
+
+	char filename[17];
+	sprintf(filename, "server-%0.0f.log", MY_TIME(time_ms(tv)));
+	FILE *log;
+	log = fopen(filename, "w");
+	if(log == NULL) {
+		printf("Error while creating file\n");
+		exit(1);
+	}
 
 	cout << "Starting GMTP Server..." << endl;
 	welcomeSocket = socket(PF_INET, SOCK_GMTP, IPPROTO_GMTP);
 	setsockopt(welcomeSocket, SOL_GMTP, GMTP_SOCKOPT_FLOWNAME, "1234567812345678", 16);
-//	welcomeSocket = socket(AF_INET, SOCK_STREAM, 0);
 
 	cout << "Limiting tx_rate to " << media_rate << " B/s" << endl;
 	setsockopt(welcomeSocket, SOL_GMTP, GMTP_SOCKOPT_MEDIA_RATE, &media_rate, sizeof(media_rate));
-	setsockopt(welcomeSocket, SOL_GMTP, GMTP_SOCKOPT_UCC_TYPE, &ucc_type, sizeof(ucc_type));
 
 	serverAddr.sin_family = AF_INET;
 	serverAddr.sin_port = htons(SERVER_PORT);
@@ -61,7 +45,7 @@ int main(int argc, char *argv[])
 
 	bind(welcomeSocket, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
 
-	if(listen(welcomeSocket, 5) == 0)
+	if(listen(welcomeSocket, 50) == 0)
 		cout << "Listening\n";
 	else
 		cout << "Error\n";
@@ -71,18 +55,20 @@ int main(int argc, char *argv[])
 			&addr_size);
 
 	cout << "Connected with client!" << endl;
+	print_server_log_header(log);
 
+	double start = time_ms(tv);
 	double t1  = time_ms(tv);
-	int i;
-	const char *msg = "Hello, World! ";
+	int i, ndp = 0;
+	const char *msg = " Hello, World!";
 	double total_data, total;
 
 	cout << "Sending data...\n" << endl;
 	for(i = 0; i < 10000; ++i) {
 		const char *numstr = NumStr(i+1); //Do not delete this.
 		char *buffer = new char[BUFF_SIZE];
-		strcpy(buffer, msg);
-		strcat(buffer, numstr);
+		strcpy(buffer, numstr);
+		strcat(buffer, msg);
 		int pkt_size = BUFF_SIZE + 36 + 20;
 
 		//Control TX rate
@@ -93,28 +79,33 @@ int main(int argc, char *argv[])
 		total += pkt_size;
 		total_data += BUFF_SIZE;
 		delete buffer;
-		//delete [] numstr;
 		if(i % 1000 == 0) {
 			print_stats(i, t1, total, total_data);
 			cout << endl;
 		}
+		ndp = count_ndp_rcv(newSocket) + count_ndp_sent(newSocket);
+		update_server_stats(i, ndp, log);
 	}
 
 	print_stats(i, t1, total, total_data);
+	printf("Non data packets received: %d\n", count_ndp_rcv(newSocket));
+	printf("Non data packets sent: %d\n", count_ndp_sent(newSocket));
 
 	const char *outstr = "out";
-	// Send 'out' 5 times for now... gmtp-inter bug...
-	for(i = 0; i < 6; ++i) {
+
+	for(i = 0; i < 6; ++i) { // Send 'out' 5 times for now... gmtp-inter bug...
 		printf("Sending out: %s\n", outstr);
 		send(newSocket, outstr, strlen(outstr), 0);
 	}
 
+	double end = time_ms(tv);
+	double duration = end - start;
+	printf("Time of execution: %0.2f seconds\n\n", duration / 1000);
+	printf("End of simulation...\n");
+
 	printf("Closing server...\n");
 	close(newSocket);
 	close(welcomeSocket);
-
-//	delete [] outstr;
-//	delete [] msg;
 
 	printf("Server closed!\n\n");
 
