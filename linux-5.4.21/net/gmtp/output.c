@@ -124,7 +124,9 @@ static int gmtp_transmit_skb(struct sock *sk, struct sk_buff *skb) {
         case GMTP_PKT_ACK:
             gh->seq = gcb->seq = gp->gsr;
             gh->transm_r = gp->rx_max_rate;
-            gmtp_hdr_ack(skb)->orig_tstamp = gcb->orig_tstamp; /* same of feedback */
+
+            /* same of feedback */
+            gmtp_hdr_ack(skb)->orig_tstamp = gcb->orig_tstamp;
             break;
         case GMTP_PKT_ELECT_REQUEST: {
             struct gmtp_hdr_elect_request *gh_ereq;
@@ -868,6 +870,7 @@ static long get_rate_gap(struct gmtp_sock *gp, int acum)
     return coef_adj;
 }
 
+/* FIXME Send using a queue and send window for linux 5.4.21... */
 void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
 {
     struct gmtp_sock *gp = gmtp_sk(sk);
@@ -886,8 +889,8 @@ void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
     if(tx_rate == UINT_MAX || gp->tx_ucc_type != GMTP_DELAY_UCC)
         goto send;
 
-    /*pr_info("[%d] Tx rate: %lu bytes/s\n", gp->tx_dpkts_sent, gp->tx_total_rate);
-    pr_info("[-] Tx rate (sample): %lu bytes/s\n", gp->tx_sample_rate);*/
+    /*pr_info("[%d] Tx rate: %lu B/s\n", gp->tx_dpkts_sent, gp->tx_total_rate);
+    pr_info("[-] Tx rate (sample): %lu B/s\n", gp->tx_sample_rate);*/
 
     elapsed = jiffies - gp->tx_last_stamp; /* time elapsed since last sent */
 
@@ -917,21 +920,11 @@ wait:
     else
         gp->tx_byte_budget = INT_MIN;
 
+    /* Never use gmtp_wait_for_delay(sk, delay2); in NS-3/DCE */
     if(delay2 > 0) {
-        struct gmtp_packet_info *pkt_info;
-        pkt_info = kmalloc(sizeof(struct gmtp_packet_info), GFP_KERNEL);
-        pkt_info->sk = sk;
-        pkt_info->skb = skb;
-
-       /* setup_timer(&gp->xmit_timer, gmtp_write_xmit_timer,
-                        (unsigned long ) pkt_info);*//*
-       */ timer_setup(&gp->xmit_timer, gmtp_write_xmit_timer, 0);
-        mod_timer(&gp->xmit_timer, jiffies + delay2);
-
-        /* Never use gmtp_wait_for_delay(sk, delay2); in NS-3/dce*/
-        /* FIXME Send using a queue and send window for linux 5.4.21... */
-        schedule_timeout(delay2);
-        return;
+    	gmtp_pr_debug("delay: %ld, dl_budget: %ld, delay2: %ld",
+    	        		delay, delay_budget, delay2);
+    	gmtp_wait_for_delay(sk, delay2);
     }
 
 send:

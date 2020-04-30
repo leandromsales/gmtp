@@ -110,7 +110,6 @@ out:
 	if(likely(info->state != GMTP_INTER_CLOSE_RECEIVED
 					&& info->state != GMTP_INTER_CLOSED))
 		mod_timer(&info->mcc_timer,
-				gmtp_mcc_interval(info->server_rtt
-							+ info->clients_rtt));
+				gmtp_mcc_interval(info->server_rtt + info->clients_rtt));
 }
 

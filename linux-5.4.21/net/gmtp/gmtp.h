@@ -208,7 +208,6 @@ struct sk_buff *gmtp_make_delegate(struct sock *sk, struct sk_buff *rcv_skb,
 struct sk_buff *gmtp_ctl_make_reset(struct sock *sk,
         struct sk_buff *rcv_skb);
 /** output.c - Packet Output and Timers  */
-void gmtp_write_xmit_timer(struct timer_list *t);
 void gmtp_write_space(struct sock *sk);
 int gmtp_retransmit_skb(struct sock *sk);
 struct sk_buff *gmtp_ctl_make_elect_response(struct sock *sk,

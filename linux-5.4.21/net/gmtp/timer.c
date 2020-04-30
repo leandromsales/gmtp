@@ -29,6 +29,7 @@ static int gmtp_write_timeout(struct sock *sk)
 {
 	const struct inet_connection_sock *icsk = inet_csk(sk);
 	int retry_until;
+
 	gmtp_pr_func();
 
 	if (sk->sk_state == GMTP_REQUESTING) {
@@ -132,20 +133,6 @@ out:
 	sock_put(sk);
 }
 
-/*
- *	Timer for listening sockets
- */
-static void gmtp_register_reply_timer(struct sock *sk)
-{
-	gmtp_pr_func();
-
-	/* FIXME DCE cu off syn-ack timer from TCP and register_reply_timer
-	 * from us...
-	 */
-	/*inet_csk_reqsk_queue_prune(sk, GMTP_REQ_INTERVAL, GMTP_TIMEOUT_INIT,
-				   GMTP_RTO_MAX);*/
-}
-
 static void gmtp_reporter_ackrcv_timer(struct sock *sk)
 {
 	struct gmtp_sock *gp = gmtp_sk(sk);
@@ -166,8 +153,7 @@ static void gmtp_reporter_ackrcv_timer(struct sock *sk)
 		unsigned int now = jiffies_to_msecs(jiffies);
 		int interval = (int) (now - client->ack_rx_tstamp);
 
-		pr_info("Client found: %pI4@%-5d\n", &client->addr,
-				ntohs(client->port));
+		pr_info("Client: %pI4@%-5d\n", &client->addr, ntohs(client->port));
 
 		if(unlikely(interval > jiffies_to_msecs(GMTP_ACK_TIMEOUT))) {
 			pr_info("Deleting client.\n");
@@ -234,7 +220,7 @@ static void gmtp_keepalive_timer(struct timer_list *t)
 	}
 
 	if (sk->sk_state == GMTP_LISTEN) {
-		gmtp_register_reply_timer(sk);
+		pr_err("Hmm... keepalive on a LISTEN ???\n");
 		goto out;
 	}
 
@@ -326,22 +312,6 @@ out:
 	bh_unlock_sock(sk);
 	sock_put(sk);
 }
-
-void gmtp_write_xmit_timer(struct timer_list *t)
-{
-	/*struct gmtp_packet_info *pkt_info;*/
-
-	gmtp_pr_func();
-
-	/*pkt_info = from_timer(pkt_info, t, xmit_timer);*/
-	/*if(!pkt_info)
-		return;*/
-
-	/*gmtp_write_xmit(pkt_info->sk, pkt_info->skb);
-	del_timer_sync(&gmtp_sk(pkt_info->sk)->xmit_timer);
-	kfree(pkt_info);*/
-}
-EXPORT_SYMBOL_GPL(gmtp_write_xmit_timer);
 
 void gmtp_init_xmit_timers(struct sock *sk)
 {

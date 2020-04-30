@@ -196,6 +196,7 @@ struct gmtp_inter_entry *gmtp_inter_del_entry(
 	struct gmtp_inter_entry *previous_entry;
 	struct gmtp_inter_entry *current_entry;
 	int hashval;
+	int ret_mcc, ret_ack, timers_stopped;
 
 	gmtp_print_function();
 
@@ -226,11 +227,14 @@ struct gmtp_inter_entry *gmtp_inter_del_entry(
 
 	gmtp_inter_del_clients(current_entry);
 	skb_queue_purge(current_entry->buffer);
-	del_timer_sync(&current_entry->mcc_timer);
-	del_timer_sync(&current_entry->ack_timer);
-	kfree(current_entry);
+	ret_mcc = del_timer_sync(&current_entry->mcc_timer);
+	ret_ack = del_timer_sync(&current_entry->ack_timer);
+	timers_stopped = ret_mcc && ret_ack;
+	if(timers_stopped) {
+		gmtp_print_debug("Media entry removed successfully!");
+		kfree(current_entry);
+	}
 
-	gmtp_print_debug("Media entry removed successfully!");
 	return hashtable->table[hashval];
 }
 

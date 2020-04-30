@@ -270,15 +270,15 @@ static void gmtp_inter_send_reply_to_relay(struct sk_buff *skb,
 		gh_reply = gmtp_inter_make_register_reply_hdr(copy, entry,
 				gh->sport, relay->port);
 		if(gh_reply != NULL)
-			gmtp_inter_build_and_send_pkt(skb, iph->saddr,
-					relay->addr, gh_reply,
-					GMTP_INTER_FORWARD);
+			gmtp_inter_build_and_send_pkt(skb, iph->saddr, relay->addr,
+					gh_reply, GMTP_INTER_FORWARD);
 	}
 }
 static void gmtp_inter_send_reply_to_relays(struct sk_buff *skb,
 		struct gmtp_inter_entry *entry)
 {
 	struct gmtp_relay *relay, *tempr;
+	gmtp_pr_func();
 
 	list_for_each_entry_safe(relay, tempr, &entry->relays->list, list)
 	{
@@ -310,9 +310,8 @@ static void gmtp_inter_send_reqnotify_to_client(struct sk_buff *skb,
 				gh->sport, client->port, cur_reporter,
 				client->max_nclients, code);
 		if(gh_req_n != NULL)
-			gmtp_inter_build_and_send_pkt(skb, iph->saddr,
-					client->addr, gh_req_n,
-					GMTP_INTER_FORWARD);
+			gmtp_inter_build_and_send_pkt(skb, iph->saddr, client->addr,
+					gh_req_n, GMTP_INTER_FORWARD);
 	}
 }
 
@@ -405,7 +404,7 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 		gmtp_inter.worst_rtt = max(gmtp_inter.worst_rtt,
 				(unsigned int ) gh->server_rtt);
 
-		pr_info("Server RTT: %u ms\n", (unsigned int ) gh->server_rtt);
+		pr_info("Server RTT: %u ms\n", (unsigned int) gh->server_rtt);
 		pr_info("Worst RTT: %u ms\n", gmtp_inter.worst_rtt);
 
 		if(gmtp_inter.ucc_rx < gh->transm_r)
@@ -418,10 +417,10 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 
 		gh_route_n = gmtp_inter_make_route_hdr(skb);
 		if(gh_route_n != NULL)
-			gmtp_inter_build_and_send_pkt(skb, iph->daddr,
-					iph->saddr, gh_route_n, direction);
+			gmtp_inter_build_and_send_pkt(skb, iph->daddr, iph->saddr,
+					gh_route_n, direction);
 		mod_timer(&entry->ack_timer,
-				jiffies + msecs_to_jiffies(2*GMTP_DEFAULT_RTT));
+				jiffies + msecs_to_jiffies(2 * GMTP_DEFAULT_RTT));
 
 		/** FIXME This causes congestion... ! Why? */
 		/*mod_timer(&entry->register_timer, jiffies + HZ);*/
@@ -433,16 +432,10 @@ int gmtp_inter_register_reply_rcv(struct sk_buff *skb,
 
 	entry->state = GMTP_INTER_REGISTER_REPLY_RECEIVED;
 
-	if(entry->nrelays==0) {
-		pr_info("No relays registered.\n");
-		goto send_to_clients;
-	}
+	if(entry->nrelays > 0)
+		gmtp_inter_send_reply_to_relays(skb, entry);
 
-	gmtp_inter_send_reply_to_relays(skb, entry);
-
-send_to_clients:
 	ret = gmtp_inter_send_reqnotify_to_clients(skb,	entry);
-
 	return ret;
 }
 
@@ -514,9 +507,8 @@ int gmtp_inter_route_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	relay->dev = skb->dev;
 
 	if(gmtp_local_ip(iph->daddr)) { /* I am the server itself */
-		if(route->nrelays > 0)
-			/*gmtp_add_server_entry(&server_hashtable, gh->flowname,
-					route)*/;
+		/*if(route->nrelays > 0)
+			gmtp_add_server_entry(&server_hashtable, gh->flowname, route);*/
 		pr_info("ROUTE_RCV: entry->route_pending = %d\n", entry->route_pending);
 		if(entry->route_pending) {
 			entry->route_pending = false;
@@ -643,7 +635,8 @@ static inline void gmtp_update_stats(struct gmtp_inter_entry *info,
 }
 
 
-static inline void print_drop(struct sk_buff *skb, __be32 daddr, __be32 seq, char *info)
+static inline void print_drop(struct sk_buff *skb, __be32 daddr, __be32 seq,
+		char *info)
 {
 	pr_info("Dropping pkt (%s - to %pI4, seq=%u, data=%s)\n",
 					info, &daddr, seq, gmtp_data(skb));
@@ -729,10 +722,8 @@ int gmtp_inter_close_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry,
 		return NF_ACCEPT;
 	}
 
-	if(iph->saddr != entry->server_addr
-			|| entry->state == GMTP_INTER_CLOSED)
+	if(iph->saddr != entry->server_addr || entry->state == GMTP_INTER_CLOSED)
 		return NF_ACCEPT;
-
 
 	if(entry->state == GMTP_INTER_TRANSMITTING) {
 		struct gmtp_hdr *gh_reset;
@@ -746,9 +737,8 @@ int gmtp_inter_close_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry,
 		gh_reset = gmtp_inter_make_reset_hdr(skb, GMTP_RESET_CODE_CLOSED);
 
 		if(gh_reset != NULL) {
-			gmtp_inter_build_and_send_pkt(skb, iph->daddr,
-					iph->saddr, gh_reset,
-					GMTP_INTER_BACKWARD);
+			gmtp_inter_build_and_send_pkt(skb, iph->daddr, iph->saddr,
+					gh_reset, GMTP_INTER_BACKWARD);
 
 			jump_over_gmtp_intra(skb, &entry->clients->list);
 			gmtp_buffer_add(entry, skb);

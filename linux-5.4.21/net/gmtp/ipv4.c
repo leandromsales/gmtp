@@ -226,8 +226,6 @@ static int gmtp_v4_err(struct sk_buff *skb, u32 info)
 
     gmtp_pr_func();
 
-    /* FIXME Kernel panic when receive
-     * ICMP type 3 code 2 (Protocol Unreachable) */
     gmtp_pr_info("ICMP: Type: %d, Code: %d | ", type, code);
     /*** print_packet(skb, true); ***/
 
@@ -264,9 +262,6 @@ static int gmtp_v4_err(struct sk_buff *skb, u32 info)
     if(sk->sk_state == GMTP_CLOSED)
         goto out;
 
-    gmtp_pr_debug("Getting gp");
-    gp = gmtp_sk(sk);
-    seq = gh->seq;
     if((1 << sk->sk_state) & ~(GMTPF_REQUESTING | GMTPF_LISTEN)) {
         __NET_INC_STATS(net, LINUX_MIB_OUTOFWINDOWICMPS);
         goto out;
@@ -401,6 +396,7 @@ static void gmtp_v4_ctl_send_packet(struct sock *sk, struct sk_buff *rxskb,
     struct net *net = dev_net(skb_dst(rxskb)->dev);
     struct sock *ctl_sk = net->gmtp.v4_ctl_sk;
 
+    gmtp_pr_func();
     gmtp_pr_debug("%s (%u)", gmtp_packet_name(type), type);
 
     if(skb_rtable(rxskb)->rt_type != RTN_LOCAL)
@@ -432,8 +428,7 @@ static void gmtp_v4_ctl_send_packet(struct sock *sk, struct sk_buff *rxskb,
     skb_dst_set(skb, dst_clone(dst));
 
     bh_lock_sock(ctl_sk);
-    err = ip_build_and_send_pkt(skb, ctl_sk, rxiph->daddr, rxiph->saddr,
-            NULL);
+    err = ip_build_and_send_pkt(skb, ctl_sk, rxiph->daddr, rxiph->saddr, NULL);
     bh_unlock_sock(ctl_sk);
 
     if(net_xmit_eval(err) == 0) {
@@ -654,7 +649,8 @@ static int gmtp_v4_client_rcv_elect_response(struct sk_buff *skb)
     }
 
     gmtp_set_state(client->rsock, GMTP_OPEN);
-    gmtp_send_ack(client->rsock);
+    /*gmtp_send_ack(client->rsock);*/
+    gmtp_v4_ctl_send_packet(client->rsock, skb, GMTP_PKT_ACK);
 
     return 0;
 }
@@ -693,7 +689,7 @@ static int gmtp_v4_client_rcv_reporter_ack(struct sk_buff *skb,
     return 0;
 }
 
-static int gmtp_v4_reporter_rcv_ack(struct sk_buff *skb)
+static int gmtp_v4_rcv_ack(struct sk_buff *skb)
 {
     const struct iphdr *iph = ip_hdr(skb);
     const struct gmtp_hdr *gh = gmtp_hdr(skb);
@@ -702,6 +698,8 @@ static int gmtp_v4_reporter_rcv_ack(struct sk_buff *skb)
     struct gmtp_client *c;
 
     gmtp_pr_func();
+
+    print_gmtp_packet(iph, gh);
 
     media_entry = gmtp_lookup_client(&client_hashtable, gh->flowname);
     if(media_entry == NULL) {
@@ -717,9 +715,8 @@ static int gmtp_v4_reporter_rcv_ack(struct sk_buff *skb)
     }
 
     /* If i'm a client, check ack from reporter */
-    if(r->max_nclients <= 0) {
+    if(r->max_nclients <= 0)
         return gmtp_v4_client_rcv_reporter_ack(skb, r);
-    }
 
     c = gmtp_get_client(&r->clients->list, iph->saddr, gh->sport);
     if(c == NULL) {
@@ -801,8 +798,7 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
                 goto no_gmtp_socket;
             break;
         case GMTP_PKT_ACK:
-            if(gmtp_v4_reporter_rcv_ack(skb)) {
-                print_gmtp_packet(iph, gh);
+            if(gmtp_v4_rcv_ack(skb)) {
                 goto no_gmtp_socket;
             }
             break;

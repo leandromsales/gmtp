@@ -248,7 +248,7 @@ struct gmtp_packet_info {
 	struct sock			*sk;
 	struct sk_buff			*skb;
 	/* TODO Find better solution to send packets CC */
-	/*struct timer_list		xmit_timer;*/
+	struct timer_list		xmit_timer;
 };
 
 static inline struct gmtp_sock *gmtp_sk(const struct sock *sk)

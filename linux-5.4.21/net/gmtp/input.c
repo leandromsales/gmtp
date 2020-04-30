@@ -116,8 +116,6 @@ struct sock* gmtp_sock_connect(struct sock *sk, enum gmtp_sock_type type,
 	gmtp_sk(newsk)->ack_rx_tstamp = jiffies_to_msecs(jiffies);
 	gmtp_sk(newsk)->ack_tx_tstamp = 0;
 
-	pr_info("myself: %p == %p\n", gmtp_sk(newsk), gmtp_sk(sk));
-
 	bh_unlock_sock(newsk);
 	gmtp_init_xmit_timers(newsk);
 
@@ -269,7 +267,6 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 
 			if(gp->myself->rsock == NULL || gp->myself->reporter == NULL)
 				goto err;
-			gmtp_set_state(gp->myself->rsock, GMTP_REQUESTING);
 			gmtp_send_elect_request(gp->myself->rsock, GMTP_REQ_INTERVAL);
 		}
 

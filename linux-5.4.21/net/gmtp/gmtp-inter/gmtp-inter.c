@@ -306,12 +306,10 @@ static int gmtp_inter_has_clients(struct sk_buff *skb,
     struct iphdr *iph = ip_hdr(skb);
     struct gmtp_hdr *gh = gmtp_hdr(skb);
     struct gmtp_relay *relay;
+    struct gmtp_client *reporter;
 
     relay = gmtp_get_relay(&entry->relays->list, iph->daddr, gh->dport);
-    // struct gmtp_reporter *reporter = gmtp_get_client(&entry->clients->list,
-    //         iph->daddr, gh->dport);
-    struct gmtp_client *reporter = gmtp_get_client(&entry->clients->list,
-             iph->daddr, gh->dport);
+    reporter = gmtp_get_client(&entry->clients->list, iph->daddr, gh->dport);
 
     if(relay == NULL && reporter == NULL)
         return 1;

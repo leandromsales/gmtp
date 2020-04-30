@@ -129,7 +129,8 @@ try:
             print "\tSend rate (last 100):", rate, "B/s | ", rate_mb, "MB/s"
             print "\tSend rate (total): ", total_rate, "B/s | ", total_rate_mb, "MB/s\n\n"
             print "Sending... "
-            time.sleep(0.100) # 100 ms
+            # Evita inundar cliente logo no inicio
+            time.sleep(0.100)
         
 except (KeyboardInterrupt, SystemExit):
     print '\nReceived keyboard interrupt, quitting...\n'
