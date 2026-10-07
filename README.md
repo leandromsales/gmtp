@@ -44,42 +44,35 @@ Using git to get gmtp source:
     
 ## Compile Kernel with GMTP code (host) ##
 
-Already in gmtp folder, for example $HOME/gmtp, enter on kernel source directory:
+The host kernel is `linux/host/linux-net-next-latest` (netdev `net-next`, Linux 7.3.0-rc5). GMTP is built into that kernel (`CONFIG_GMTP`, on by default with `INET`). It is not a library kernel.
 
-    $ cd linux-5.4.21
+DCE and NUSE use `liblinux.so` from `linux/ns3/linux-net-next-nuse-latest` (`make library ARCH=lib`). That tree also contains the ported `net/gmtp`. The previous out-of-tree module recipe remains in `linux/host/old/linux-5.4.21`.
 
-Copy config_minimal to .config file:
-    
-    $ cp config_minimal .config
+From the gmtp/ directory, enter the host kernel:
 
-Run menuconfig to load .config for compile the kernel:
+    $ cd linux/host/linux-net-next-latest
 
+Configure the kernel and leave `CONFIG_GMTP` enabled:
+
+    $ make defconfig
     $ make menuconfig
-    
-Select save and confirm the .config name and exit.
 
-Now, it's time to compile the kernel itself:
+Compile it:
 
     $ sudo make -j 4
-
-Generate kernel modules:
-
     $ sudo make modules
 
 ## Install Kernel with GMTP code (guest)
 
 The gmtp folder at host must be shared with guest.
 
-In guest, already in shared gmtp folder, for example $HOME/gmtp, enter on kernel source directory:
+In the guest, from the shared gmtp/ directory, enter the kernel source directory:
 
-    $ cd linux-5.4.21
+    $ cd linux/host/linux-net-next-latest
 
-Install modules:
+Install modules and the kernel:
 
     $ sudo make modules_install
-    
-Install the new kernel:
-
     $ sudo make install
     
 Shutdown the guest system:
@@ -88,50 +81,15 @@ Shutdown the guest system:
 
 ## Building GMTP modules for clients and servers (guest) ##
 
-After enter in guest machines, enter on gmtp project folder, for example:
+GMTP for the current host kernel is built with the kernel itself (`CONFIG_GMTP` and `CONFIG_GMTP_INTER` in `linux/host/linux-net-next-latest`). There is no separate `insmod` step for that tree.
 
-    $ cd $HOME/gmtp
-    
-Now navegate to linux-5.4.21/net/gmtp:
-    
-    $ cd linux-5.4.21/net/gmtp
-
-Compile the code and load gmtp modules:
-
-    $ make
-    $ sudo make install
-
-The Makefile is configured to load gmtp and gmtp_ipv4 modules.
-
-## Building GMTP modules for routers/relays (guest) ##
-
-After enter in guest machines, enter on gmtp project folder, for example:
-
-    $ cd $HOME/gmtp
-
-Now navegate to linux-5.4.21/net/gmtp:
-
-    $ cd linux-5.4.21/net/gmtp
-
-Enter on gmtp-inter folder:
-    
-    $ cd gmtp-inter
-    
-Compile the code and load the modules:
-
-    $ make
-    $ sudo make install
-
-The Makefile is configured to load gmtp and gmtp_inter module.
-
-Note that the gmtp_inter module will only be installed if the gmtp module are previously installed. 
-
+The previous loadable-module recipe is `linux/host/old/linux-5.4.21/net/gmtp` (`make` and `sudo make install` there, and `gmtp-inter/` on relays).
 
 ## Running gmtp python examples ##
 
 Navigate to app folder:
 
-    $ cd ~/gmtp/app/python
+    $ cd app/python
 
 Run server and client apps:
 

@@ -1,5 +1,5 @@
 # Ignored files
-
+**/.DS_Store
 app/python/results
 
 # Output files
@@ -33,7 +33,7 @@ app/python/results/*
 *.save
 
 # Linux Kernel Docs
-linux-*/Documentation/*
+linux/linux-*/Documentation/*
 
 # Latex
 *.aux
@@ -45,7 +45,7 @@ linux-*/Documentation/*
 *.ps
 *.toc
 *~
-*.lof 
+*.lof
 *.glo
 *.gls
 *.ilg
@@ -55,3 +55,12 @@ linux-*/Documentation/*
 *.brf
 *.idx
 
+# External tools (upstream checkouts). Keep the agent instructions.
+tools/*
+!tools/AGENTS.md
+
+# Git clones under linux/. Do not commit these trees.
+linux/host/linux-net-next-latest/
+linux/ns3/linux-net-next-nuse-latest/
+linux/ns3/linux-net-next-nuse-latest/tools/testing/libos/buildtop/source/ns-3-dce/
+linux/ns3/old/linux-net-nuse-tazaki-latest/

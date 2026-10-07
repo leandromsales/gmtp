@@ -1,16 +1,16 @@
-source("~/gmtp/app/ns-3-dce/analysis/aux-1.R");
-source("~/gmtp/app/ns-3-dce/analysis/aux-2.R");
-source("~/gmtp/app/ns-3-dce/analysis/aux-3.R");
+source("aux-1.R");
+source("aux-2.R");
+source("aux-3.R");
 
-source("~/gmtp/app/ns-3-dce/analysis/sim-1.R");
-source("~/gmtp/app/ns-3-dce/analysis/sim-2.R");
-source("~/gmtp/app/ns-3-dce/analysis/sim-3.R");
-source("~/gmtp/app/ns-3-dce/analysis/sim-4.R");
-source("~/gmtp/app/ns-3-dce/analysis/sim-5.R");
-source("~/gmtp/app/ns-3-dce/analysis/sim-6.R");
+source("sim-1.R");
+source("sim-2.R");
+source("sim-3.R");
+source("sim-4.R");
+source("sim-5.R");
+source("sim-6.R");
 
-source("~/gmtp/app/ns-3-dce/analysis/sim-79.R");
-source("~/gmtp/app/ns-3-dce/analysis/sim-geant.R");
+source("sim-79.R");
+source("sim-geant.R");
 
 inst_rate <- data.frame(idx=inst_rate_gmtp01$idx[c(1:m)],
                                  I=inst_rate_gmtp01$mean[c(1:m)],
@@ -100,4 +100,4 @@ for(i in 1:length(ctrl)) {
   ctrl_len_hc[i] <- ctrl_len[i] * (1 + delta)
 }
 
-source("~/gmtp/app/ns-3-dce/analysis/graphics.R")
+source("graphics.R")

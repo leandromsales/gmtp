@@ -1,11 +1,11 @@
 ## ========================= FUNCTIONS ========================
 
-source("~/gmtp/app/ns-3-dce/analysis/master.R");
+source("master.R");
 
 ## ============== START ===========
 print("======= Starting ========")
 
-log_dir06 <- "~/gmtp/app/ns-3-dce/results/sim-6"
+log_dir06 <- "../results/sim-6"
 client_files06 <- paste(log_dir06, "/client-*.log", sep = "")
 server_files06 <- paste(log_dir06, "/server-*.log", sep = "")
 
