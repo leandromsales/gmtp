@@ -182,7 +182,7 @@ gst_gmtp_client_src_set_property (GObject * object, guint prop_id,
       src->caps = new_caps;
       if (old_caps)
         gst_caps_unref (old_caps);
-      if (new_caps != NULL)
+      if (new_caps != NULL && gst_caps_is_fixed (new_caps))
         gst_pad_set_caps (GST_BASE_SRC (src)->srcpad, new_caps);
       break;
     }
@@ -352,7 +352,7 @@ gst_gmtp_client_src_setcaps (GstBaseSrc * bsrc, GstCaps * caps)
   GstGMTPClientSrc *src;
   src = GST_GMTP_CLIENT_SRC (bsrc);
   GST_INFO("CHAMOUT SET CAPS DE CLIENT SRC");
-  if ((caps != NULL) && (!gst_caps_is_equal (caps, GST_CAPS_ANY))) {
+  if (caps != NULL && gst_caps_is_fixed (caps)) {
     if (!gst_pad_set_caps(bsrc->srcpad, caps)) {
        GST_ELEMENT_ERROR (src, CORE, NEGOTIATION, (NULL),
           ("Error setting caps."));
