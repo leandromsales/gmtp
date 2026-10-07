@@ -1,6 +1,9 @@
-#!/bin/bash        
+#!/bin/bash
 
-appdir="/home/wendell/gmtp/app/ns-3-dce/"
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+repo_root=$(CDPATH= cd -- "$script_dir/../.." && pwd)
+appdir="$script_dir"
+dce_dir="$repo_root/ns-3-dce"
 
 #echo $#
 if [ $# -lt 4 ]; then
@@ -24,7 +27,7 @@ echo "Starting $max simulations..."
 echo "Command: ./waf --run \"dce-gmtp-master --nrelays=$nrelays --nclients=$nclients\""
 
 i=1
-cd "../../ns-3-dce"
+cd "$dce_dir"
 while [ $i -le $max ]
 do
     echo "Running $i of $max simulations"
@@ -35,7 +38,7 @@ done
 cd "$appdir"
 ./copy_results $dest
 
-cd "../../ns-3-dce"
+cd "$dce_dir"
 rm -rf files-* *.pcap *.tr
 cd "$appdir"
 echo

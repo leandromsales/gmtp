@@ -1,4 +1,4 @@
-#source("~/gmtp/app/ns-3-dce/analysis/sim-1012.R");
+#source("sim-1012.R");
 
 x <- c(1, 2, 3)
 

@@ -1,3 +1,5 @@
+This tree is archived. It used to live at the repository root as `net-next-sim` (Linux 4.1.0-rc4 with `arch/lib` and `net/gmtp`). The library kernel is `linux/ns3/linux-net-next-nuse-latest`. The host kernel is `linux/host/linux-net-next-latest`. The commands below are the historical build for this archived tree.
+
 A library operating system version of Linux kernel
 ==================================================
 
