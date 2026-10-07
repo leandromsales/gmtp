@@ -10,6 +10,7 @@ GSTPB_REQUIRED=1.0.0
 
 AC_CONFIG_SRCDIR([src/gstgmtp.c])
 AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_MACRO_DIR([m4])
 
 dnl required version of automake
 AM_INIT_AUTOMAKE([1.10])

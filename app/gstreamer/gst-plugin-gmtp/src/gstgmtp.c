@@ -133,8 +133,16 @@ gst_gmtp_read_buffer (GstElement * this, int sockfd, GstBuffer ** buf)
   }
 
   GstMapInfo map;
+  gsize map_size;
+
   *buf = gst_buffer_new_and_alloc ((int) readsize);
-  gst_buffer_map (*buf, &map, GST_MAP_READ);
+  if (!gst_buffer_map (*buf, &map, GST_MAP_WRITE)) {
+    GST_ELEMENT_ERROR (this, RESOURCE, READ, (NULL),
+        ("failed to map buffer for writing"));
+    gst_buffer_unref (*buf);
+    *buf = NULL;
+    return GST_FLOW_ERROR;
+  }
 #ifndef G_OS_WIN32
   bytes_read = recv (sockfd, (char *) map.data, (int) map.size, 0);
 #else
@@ -143,14 +151,18 @@ gst_gmtp_read_buffer (GstElement * this, int sockfd, GstBuffer ** buf)
       NULL, 0);
 
 #endif
+  map_size = map.size;
+  gst_buffer_unmap (*buf, &map);
 
-  if (bytes_read != map.size) {
+  if (bytes_read != (gssize) map_size) {
     GST_DEBUG_OBJECT (this, "Error while reading data");
+    gst_buffer_unref (*buf);
+    *buf = NULL;
     return GST_FLOW_ERROR;
   }
 
   GST_LOG_OBJECT (this, "bytes read %" G_GSSIZE_FORMAT, bytes_read);
-  GST_LOG_OBJECT (this, "returning buffer of size %" G_GSIZE_FORMAT, map.size);
+  GST_LOG_OBJECT (this, "returning buffer of size %" G_GSIZE_FORMAT, map_size);
 
   return GST_FLOW_OK;
 }
@@ -177,9 +189,9 @@ gst_gmtp_create_new_socket (GstElement * element)
 
   /* FIXME Temporary: setsockopt and getsockopt causes kernel panic */
  /* setsockopt(sock_fd, SOL_GMTP, GMTP_SOCKOPT_FLOWNAME, "1234567812345678", 16);
-  unsigned int tx = 33000;*/
+  unsigned int tx = 33000;
   socklen_t sizelen = (socklen_t) sizeof(unsigned int);
-  /*setsockopt(sock_fd, SOL_GMTP, GMTP_SOCKOPT_MAX_TX_RATE, &tx, sizelen);*/
+  setsockopt(sock_fd, SOL_GMTP, GMTP_SOCKOPT_MAX_TX_RATE, &tx, sizelen);*/
   GST_INFO ("SOCKET GMTP CRIADO");
 
   return sock_fd;
@@ -254,7 +266,7 @@ gst_gmtp_server_wait_connections (GstElement * element, int server_sock_fd)
   socklen_t client_address_len;
 
   memset (&client_address, 0, sizeof (client_address));
-  client_address_len = 0;
+  client_address_len = sizeof (client_address);
 
   if ((client_sock_fd =
           accept (server_sock_fd, (struct sockaddr *) &client_address,
@@ -401,20 +413,28 @@ gst_gmtp_send_buffer (GstElement * this, GstBuffer * buffer, int client_sock_fd,
     int packet_size)
 {
   GstMapInfo map;
+  GstFlowReturn ret;
   gint size = 0;
   guint8 *data;
 
-  gst_buffer_map (buffer, &map, GST_MAP_READ);
+  if (!gst_buffer_map (buffer, &map, GST_MAP_READ)) {
+    GST_ELEMENT_ERROR (this, RESOURCE, READ, (NULL),
+        ("failed to map buffer for reading"));
+    return GST_FLOW_ERROR;
+  }
   size = map.size;
   data = map.data;
 
   GST_LOG_OBJECT (this, "writing %d bytes", size);
 
   if (packet_size < 0) {
+    gst_buffer_unmap (buffer, &map);
     return GST_FLOW_ERROR;
   }
 
-  return gst_gmtp_socket_write (this, client_sock_fd, data, size, packet_size);
+  ret = gst_gmtp_socket_write (this, client_sock_fd, data, size, packet_size);
+  gst_buffer_unmap (buffer, &map);
+  return ret;
 }
 
 /*
