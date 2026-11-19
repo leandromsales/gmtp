@@ -25,13 +25,20 @@ struct gmtp_hdr *gmtp_inter_make_route_hdr(struct sk_buff *skb)
 	struct gmtp_hdr *gh_cpy;
 	struct gmtp_hdr_register_reply *gh_reply = gmtp_hdr_register_reply(skb);
 
-	int gmtp_hdr_len = sizeof(struct gmtp_hdr) +
-			sizeof(struct gmtp_hdr_route) +
-			(gh_reply->nrelays * sizeof(struct gmtp_hdr_relay));
+	unsigned int nrelays = gh_reply->nrelays;
+	int gmtp_hdr_len;
 
 	gmtp_pr_func();
 
+	if (nrelays > GMTP_MAX_RELAY_NUM)
+		return NULL;
+	gmtp_hdr_len = sizeof(struct gmtp_hdr) +
+			sizeof(struct gmtp_hdr_route) +
+			(nrelays * sizeof(struct gmtp_hdr_relay));
+
 	transport_header = kmalloc(gmtp_hdr_len, gfp_any());
+	if (!transport_header)
+		return NULL;
 	memset(transport_header, 0, gmtp_hdr_len);
 
 	gh_cpy = (struct gmtp_hdr *) transport_header;

@@ -4,7 +4,7 @@ config GMTP_INTER
 	bool "Activate GMTP-Inter"
 	depends on GMTP
 	default y
-	---help---
+	help
 	  Enable GMTP-Inter.
 endmenu
 

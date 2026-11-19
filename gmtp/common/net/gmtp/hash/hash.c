@@ -110,6 +110,28 @@ int gmtp_add_entry(struct gmtp_hashtable *table, struct gmtp_hash_entry *entry)
 	return 0;
 }
 
+struct gmtp_hash_entry *gmtp_remove_entry(struct gmtp_hashtable *table,
+		const __u8 *key)
+{
+	struct gmtp_hash_entry **pp, *entry;
+	unsigned int hashval;
+
+	hashval = table->hashval(table, key);
+	if (hashval < 0)
+		return NULL;
+
+	for (pp = &table->entry[hashval]; (entry = *pp) != NULL; pp = &entry->next) {
+		if (memcmp(key, entry->key, GMTP_HASH_KEY_LEN) == 0) {
+			*pp = entry->next;
+			entry->next = NULL;
+			if (table->len > 0)
+				table->len--;
+			return entry;
+		}
+	}
+	return NULL;
+}
+
 void destroy_gmtp_hashtable(struct gmtp_hashtable *table)
 {
 	int i;

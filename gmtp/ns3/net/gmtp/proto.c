@@ -26,6 +26,7 @@
 
 #include <uapi/linux/gmtp.h>
 #include <linux/gmtp.h>
+#include <crypto/hash.h>
 #include "gmtp.h"
 #include "gmtp_hashtables.h"
 #include "mcc.h"
@@ -213,7 +214,18 @@ void print_route_from_skb(struct sk_buff *skb)
         return;
     }
 
-    for(i = route->nrelays - 1; i >= 0; --i)
+    i = route->nrelays;
+    if (i > GMTP_MAX_RELAY_NUM)
+        i = GMTP_MAX_RELAY_NUM;
+    {
+        int room = (int)(skb_tail_pointer(skb) - (unsigned char *)relay_list)
+                   / (int)sizeof(*relay_list);
+        if (room < 0)
+            room = 0;
+        if (i > room)
+            i = room;
+    }
+    for(i = i - 1; i >= 0; --i)
         print_gmtp_hdr_relay(&relay_list[i]);
 }
 EXPORT_SYMBOL_GPL(print_route_from_skb);
@@ -458,6 +470,16 @@ void gmtp_add_relayid(struct sk_buff *skb)
 
     gmtp_print_function();
 
+    if (gh_rply->nrelays >= GMTP_MAX_RELAY_NUM)
+        return;
+    if (skb_tailroom(skb) < relay_len) {
+        if (pskb_expand_head(skb, 0, relay_len - skb_tailroom(skb), GFP_ATOMIC))
+            return;
+        iph = ip_hdr(skb);
+        gh = gmtp_hdr(skb);
+        gh_rply = gmtp_hdr_register_reply(skb);
+    }
+
     relay = (struct gmtp_hdr_relay*) skb_put(skb, relay_len);
     memcpy(relay->relay_id, gmtp_info->relay_id, sizeof(gmtp_info->relay_id));
     relay->relay_ip =  gmtp_dev_ip(skb->dev);
@@ -606,6 +628,7 @@ void gmtp_destroy_sock(struct sock *sk)
 			break;
     }
 
+	sk_stop_timer(sk, &gp->xmit_timer);
 	__skb_queue_purge(&sk->sk_write_queue);
 	if (sk->sk_send_head != NULL) {
 		kfree_skb(sk->sk_send_head);
@@ -988,23 +1011,6 @@ out:
 
 EXPORT_SYMBOL_GPL(gmtp_recvmsg);
 
-struct gmtp_sendmsg_data {
-    struct sock *sk;
-    struct sk_buff *skb;
-    struct timer_list *sendmsg_timer;
-};
-
-static void gmtp_sendmsg_callback(unsigned long data)
-{
-    struct gmtp_sendmsg_data *sd = (struct gmtp_sendmsg_data*) data;
-    if(!timer_pending(&gmtp_sk(sd->sk)->xmit_timer)) {
-        gmtp_write_xmit(sd->sk, sd->skb);
-        del_timer(sd->sendmsg_timer);
-        kfree(sd->sendmsg_timer);
-    } else
-        mod_timer(sd->sendmsg_timer, jiffies + 1);
-}
-
 int gmtp_do_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 {
     struct gmtp_sock *gp = gmtp_sk(sk);
@@ -1043,34 +1049,12 @@ int gmtp_do_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
     if (rc != 0)
         goto out_discard;
 
-    /** FIXME Enqueue packets when time is pending... */
-
-    /**
-     * Use a timer to rate-based congestion control protocols.
-     * The timer will expire when congestion control permits to release
-     * further packets into the network.
-     *
-     * Here, a while(timer_pending(...)) does not work for ns-3/dce
-     * So, we use a timer...
+    /*
+     * Queue the skb and let UCC drain it. gmtp_write_xmit keeps the packet
+     * on sk_write_queue when xmit_timer is pacing the flow, so sendmsg
+     * never drops or leaks the skb while the timer is pending.
      */
-    if(!timer_pending(&gp->xmit_timer)) {
-        gmtp_write_xmit(sk, skb);
-        /* FIXME Commented for linux-5.4.21 */
-    }
-
-    /* else {
-        struct timer_list *sendmsg_timer = kmalloc(
-                sizeof(struct timer_list), GFP_KERNEL);
-        struct gmtp_sendmsg_data *sd = kmalloc(sizeof(struct gmtp_sendmsg_data),
-                GFP_KERNEL);
-        sd->sk = sk;
-        sd->skb = skb;
-        sd->sendmsg_timer = sendmsg_timer;
-        timer_setup(sd->sendmsg_timer, gmtp_sendmsg_callback,
-                (unsigned long ) sd);
-        mod_timer(sd->sendmsg_timer, jiffies + 1);
-    }
-*/
+    gmtp_write_xmit(sk, skb);
 out_release:
     release_sock(sk);
     return rc ? : len;
@@ -1395,7 +1379,7 @@ static int __init gmtp_init(void)
 
     gmtp_pr_func();
 
-    BUILD_BUG_ON(sizeof(struct gmtp_skb_cb) > FIELD_SIZEOF(struct sk_buff, cb));
+    BUILD_BUG_ON(sizeof(struct gmtp_skb_cb) > sizeof(((struct sk_buff *)0)->cb));
 
     rc = mcc_lib_init();
     if(rc)
@@ -1437,11 +1421,10 @@ static int __init gmtp_init(void)
     } else {
     	/* FIXME sizeof(rid) is 8, but relay_id is 16 bytes... */
     	gmtp_pr_info("rid ok (size: %ld)", sizeof(rid));
-        memcpy(gmtp_info->relay_id, rid, sizeof(rid));
+        memcpy(gmtp_info->relay_id, rid, GMTP_RELAY_ID_LEN);
     }
 
-    if (gmtp_info->relay_id != NULL)
-    	gmtp_pr_info("GMTP Relay ID was built");
+    gmtp_pr_info("GMTP Relay ID was built");
 
     rc = gmtp_create_inet_hashinfo();
     if(rc)

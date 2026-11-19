@@ -70,6 +70,8 @@ unsigned int gmtp_hashval(struct gmtp_hashtable *table, const __u8 *key);
 struct gmtp_hash_entry *gmtp_lookup_entry(struct gmtp_hashtable *table,
 		const __u8 *key);
 int gmtp_add_entry(struct gmtp_hashtable *table, struct gmtp_hash_entry *entry);
+struct gmtp_hash_entry *gmtp_remove_entry(struct gmtp_hashtable *table,
+		const __u8 *key);
 void destroy_gmtp_hashtable(struct gmtp_hashtable *table);
 void kfree_gmtp_hashtable(struct gmtp_hashtable *table);
 
@@ -142,6 +144,7 @@ struct gmtp_server_entry {
 
 int gmtp_add_server_entry(struct gmtp_hashtable *table, struct sock *sk,
 		struct sk_buff *skb);
+void gmtp_del_server_entry(struct gmtp_hashtable *table, const __u8 *key);
 
 
 

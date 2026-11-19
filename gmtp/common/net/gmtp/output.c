@@ -868,75 +868,63 @@ static long get_rate_gap(struct gmtp_sock *gp, int acum)
     return coef_adj;
 }
 
-void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
+void gmtp_flush_write_queue(struct sock *sk)
 {
     struct gmtp_sock *gp = gmtp_sk(sk);
     unsigned long elapsed = 0;
     long delay = 0, delay2 = 0, delay_budget = 0;
     unsigned long tx_rate = min(gp->tx_max_rate, gp->tx_ucc_rate);
+    static const int scale = 1;
+    struct sk_buff *skb;
     int len;
 
-    /** TODO Continue tests with different scales... */
-    static const int scale = 1;
-    /*static const int scale = HZ/100;*/
+    while ((skb = skb_peek(&sk->sk_write_queue)) != NULL) {
+        if (tx_rate == UINT_MAX || gp->tx_ucc_type != GMTP_DELAY_UCC)
+            goto send;
 
-    if(unlikely(skb == NULL))
-        return;
+        elapsed = jiffies - gp->tx_last_stamp;
+        len = packet_len(skb);
+        delay = 0;
+        delay2 = 0;
+        delay_budget = 0;
 
-    if(tx_rate == UINT_MAX || gp->tx_ucc_type != GMTP_DELAY_UCC)
-        goto send;
+        if (gp->tx_byte_budget >= mult_frac(len, 3, 4)) {
+            goto send;
+        } else if (gp->tx_byte_budget != INT_MIN) {
+            delay_budget = scale;
+            goto wait;
+        }
 
-    /*pr_info("[%d] Tx rate: %lu bytes/s\n", gp->tx_dpkts_sent, gp->tx_total_rate);
-    pr_info("[-] Tx rate (sample): %lu bytes/s\n", gp->tx_sample_rate);*/
-
-    elapsed = jiffies - gp->tx_last_stamp; /* time elapsed since last sent */
-
-    len = packet_len(skb);
-    if(gp->tx_byte_budget >= mult_frac(len, 3, 4)) {
-        goto send;
-    } else if(gp->tx_byte_budget != INT_MIN) {
-        delay_budget = scale;
-        goto wait;
-    }
-
-    delay = DIV_ROUND_CLOSEST((HZ * len), tx_rate);
-    delay2 = delay - elapsed;
-
-    if(delay2 > 0)
-        delay2 += mult_frac(delay2, get_rate_gap(gp, 1), 100);
+        delay = DIV_ROUND_CLOSEST((HZ * len), tx_rate);
+        delay2 = delay - elapsed;
+        if (delay2 > 0)
+            delay2 += mult_frac(delay2, get_rate_gap(gp, 1), 100);
 
 wait:
-    delay2 += delay_budget;
+        delay2 += delay_budget;
 
-    /*
-     * TODO More tests with byte_budgets...
-     */
-    if(delay <= 0)
-        gp->tx_byte_budget = mult_frac(scale, tx_rate, HZ) -
-            mult_frac(gp->tx_byte_budget, (int) get_rate_gap(gp, 0), 100);
-    else
-        gp->tx_byte_budget = INT_MIN;
+        if (delay <= 0)
+            gp->tx_byte_budget = mult_frac(scale, tx_rate, HZ) -
+                mult_frac(gp->tx_byte_budget, (int)get_rate_gap(gp, 0), 100);
+        else
+            gp->tx_byte_budget = INT_MIN;
 
-    if(delay2 > 0) {
-        struct gmtp_packet_info *pkt_info;
-        pkt_info = kmalloc(sizeof(struct gmtp_packet_info), GFP_KERNEL);
-        pkt_info->sk = sk;
-        pkt_info->skb = skb;
-
-       /* setup_timer(&gp->xmit_timer, gmtp_write_xmit_timer,
-                        (unsigned long ) pkt_info);*//*
-       */ timer_setup(&gp->xmit_timer, gmtp_write_xmit_timer, 0);
-        mod_timer(&gp->xmit_timer, jiffies + delay2);
-
-        /* Never use gmtp_wait_for_delay(sk, delay2); in NS-3/dce*/
-        /* FIXME Send using a queue and send window for linux 5.4.21... */
-        schedule_timeout(delay2);
-        return;
-    }
-
+        if (delay2 > 0) {
+            sk_reset_timer(sk, &gp->xmit_timer, jiffies + delay2);
+            return;
+        }
 send:
-    gmtp_xmit_packet(sk, skb);
-
+        skb_unlink(skb, &sk->sk_write_queue);
+        gmtp_xmit_packet(sk, skb);
+    }
 }
+
+void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb)
+{
+    if (skb)
+        skb_queue_tail(&sk->sk_write_queue, skb);
+    gmtp_flush_write_queue(sk);
+}
+
 EXPORT_SYMBOL_GPL(gmtp_write_xmit);
 

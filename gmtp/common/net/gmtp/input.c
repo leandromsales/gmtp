@@ -10,6 +10,7 @@
 #include <linux/igmp.h>
 #include <linux/kernel.h>
 #include <linux/net.h>
+#include <linux/netdevice.h>
 #include <linux/security.h>
 #include <linux/skbuff.h>
 #include <linux/slab.h>
@@ -27,7 +28,11 @@
 
 static void gmtp_enqueue_skb(struct sock *sk, struct sk_buff *skb)
 {
-	__skb_pull(skb, gmtp_hdr(skb)->hdrlen);
+	unsigned int hlen = gmtp_hdr(skb)->hdrlen;
+
+	if (hlen > skb->len)
+		hlen = skb->len;
+	__skb_pull(skb, hlen);
 	__skb_queue_tail(&sk->sk_receive_queue, skb);
 	skb_set_owner_r(skb, sk);
 	sk->sk_data_ready(sk);
@@ -78,9 +83,8 @@ static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
 		/* Clear hash table */
 		if(gmtp_role_client(sk))
 			gmtp_del_client_entry(&client_hashtable, gmtp_sk(sk)->flowname);
-		/* FIXME: Implement gmtp_del_server_entry() */
 		else if(gmtp_sk(sk)->role == GMTP_ROLE_SERVER)
-			gmtp_print_error("FIXME: Implement gmtp_del_server_entry()");
+			gmtp_del_server_entry(&server_hashtable, gmtp_sk(sk)->flowname);
 
 		/* Give waiting application a chance to read pending data */
 		queued = 1;
@@ -147,11 +151,18 @@ struct sock* gmtp_multicast_connect(struct sock *sk, enum gmtp_sock_type type,
 
 	mreq.imr_multiaddr.s_addr = addr;
 	mreq.imr_address.s_addr = htonl(INADDR_ANY);
-	/* NS-3 sim0 interface is 7
-	 * Virsh/qemu eth1 interface is 3
-	 * TODO: Find the correct interface
-	 */
-	mreq.imr_ifindex = 3;
+	if (newsk->sk_bound_dev_if) {
+		mreq.imr_ifindex = newsk->sk_bound_dev_if;
+	} else {
+		struct net *net = sock_net(newsk);
+		struct net_device *dev = dev_get_by_name(net, "sim0");
+
+		if (!dev)
+			dev = dev_get_by_name(net, "eth1");
+		mreq.imr_ifindex = dev ? dev->ifindex : 0;
+		if (dev)
+			dev_put(dev);
+	}
 
 	gmtp_pr_debug("Joining the multicast group in %pI4@%-5d",
 			&addr, ntohs(port));
@@ -162,7 +173,7 @@ struct sock* gmtp_multicast_connect(struct sock *sk, enum gmtp_sock_type type,
 	if (ret != 0)
 		gmtp_pr_error("Error: ip_mc_join_group returned %d\n", ret);
 
-	inet_ehash_nolisten(newsk, NULL);
+	inet_ehash_nolisten(newsk, NULL, NULL);
 
 	gmtp_sk(newsk)->type = type;
 
@@ -736,3 +747,67 @@ discard:
 
 }
 EXPORT_SYMBOL_GPL(gmtp_rcv_state_process);
+
+/**
+ * gmtp_check_packet - drop malformed packets before any header accessor
+ * beyond the fixed prefix. gh->hdrlen is a byte length (see output.c).
+ * Returns 0 if the packet is acceptable, 1 if it must be discarded.
+ */
+int gmtp_check_packet(struct sk_buff *skb)
+{
+	const struct gmtp_hdr *gh;
+	unsigned int min_len, hdrlen, extra = 0;
+
+	if (!pskb_may_pull(skb, sizeof(struct gmtp_hdr))) {
+		gmtp_pr_warning("pskb_may_pull failed\n");
+		return 1;
+	}
+
+	gh = gmtp_hdr(skb);
+
+	if (skb->pkt_type != PACKET_HOST && gh->type != GMTP_PKT_DATA
+			&& gh->type != GMTP_PKT_CLOSE
+			&& gh->type != GMTP_PKT_RESET) {
+		gmtp_pr_warning("Invalid packet destiny\n");
+		return 1;
+	}
+
+	if (gh->type >= GMTP_PKT_INVALID) {
+		gmtp_pr_warning("invalid packet type\n");
+		return 1;
+	}
+
+	min_len = __gmtp_hdr_len(gh);
+	hdrlen = gh->hdrlen;
+	if (hdrlen < min_len || hdrlen > skb->len) {
+		gmtp_pr_warning("P.hdrlen(%u) invalid (min %u, skb %u)\n",
+				hdrlen, min_len, skb->len);
+		return 1;
+	}
+
+	if (!pskb_may_pull(skb, hdrlen)) {
+		gmtp_pr_warning("pskb_may_pull(%u) failed\n", hdrlen);
+		return 1;
+	}
+	gh = gmtp_hdr(skb);
+
+	if (gh->type == GMTP_PKT_REGISTER_REPLY ||
+	    gh->type == GMTP_PKT_ROUTE_NOTIFY) {
+		unsigned int nrelays = gmtp_hdr_register_reply(skb)->nrelays;
+
+		if (nrelays > GMTP_MAX_RELAY_NUM) {
+			gmtp_pr_warning("nrelays(%u) too large\n", nrelays);
+			return 1;
+		}
+		extra = nrelays * sizeof(struct gmtp_hdr_relay);
+		if (hdrlen < min_len + extra) {
+			gmtp_pr_warning("P.hdrlen(%u) too small for nrelays(%u)\n",
+					hdrlen, nrelays);
+			return 1;
+		}
+	}
+
+	skb->csum = skb_checksum(skb, 0, skb->len, 0);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(gmtp_check_packet);
