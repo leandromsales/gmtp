@@ -1,5 +1,10 @@
 # GMTP patches
 
+The live kernel trees are reconstructed by `linux/checkout-trees.sh`
+from the pinned SHAs and the files under `linux/patches/`. The diffs
+in *this* directory are a historical archive only.
+
+
 Unified diffs that introduce GMTP into a Linux tree, adjust the user-space examples for the 4.9.50 port, and synchronize that protocol code with the ns-3 Direct Code Execution (DCE) kernel library.
 
 Apply a patch from the `gmtp/` repository root, and dry-run first:

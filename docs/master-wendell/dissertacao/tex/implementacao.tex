@@ -1,0 +1,769 @@
+\chapter{Implementação do Global Media Transmission Protocol (GMTP)}
+\label{cap:aplicabilidade}
+
+Neste capítulo, apresentam-se pontos importantes relacionados à implementação e configuração do GMTP no núcleo do Linux, bem como um registro de quais funções do GMTP foram implementadas tal como especificadas e quais foram adaptadas para o correto funcionamento do protocolo no Linux e nas aplicações estudadas.
+
+Antes de entrar em detalhes em alguns aspectos importantes, a seguir, apresenta-se um resumo das adições e adaptações ao GMTP que foram propostas e implementadas no contexto deste trabalho:
+
+\begin{enumerate}
+\item Mudanças na organização do cabeçalho fixo (Seção \ref{sec:impl-new-header});
+\item Adição de novos tipos de pacote (Seção \ref{sec:impl_tipos});
+\item Especificação da organização dos cabeçalhos variáveis (Seção \ref{sec:impl_tipos});
+\item Definição da estrutura das tabelas dos clientes (Seção \ref{sec:tabelas-intra});
+\item Definição da estrutura das tabelas dos servidores (Seção \ref{sec:tabelas-intra});
+\item Alterações na estrutura da tabela de repasse (Seção \ref{sec:tabelas-inter});
+\item Especificação de códigos para o pacote do tipo \pac{RequestNotify} (Seção \ref{sec:req-clientes});
+\item Definição do mecanismo de \textit{keep-alive} dos clientes através dos relatores (Seção \ref{sec:relatores});
+\item Alteração no mecanismo de \textit{keep-alive} dos repassadores (Seção \ref{sec:renovacao});
+\item Alteração no mecanismo do GMTP-UCC (Seção \ref{sec:transm-unicast});
+\item Adição de um novo mecanismo de ampliação de parcerias entre os roteadores, baseado na iniciativa do servidor (Seção \ref{sec:formacao-parcerias});
+\item Alteração dos mecanismos de finalização de conexão (Seção \ref{sec:encerramento})
+\end{enumerate}
+
+Além disso, outras adições e adaptações foram identificadas no contexto do GMTP, as quais estão descritas na Seção \ref{sec:futuros}.
+
+% 
+% 
+%      INET
+% 
+%
+\section{Protocolos de Rede no Sistema Operacional Linux}
+\label{sec:inet}
+
+Nesta seção, discute-se como organiza-se a infraestrutura de rede na arquitetura do núcleo do Linux, com ênfase na camada de transporte, realizando-se ponderações com relação à implantação do GMTP no referido núcleo.
+
+No núcleo do Linux, não realiza-se qualquer tarefa relacionada às camadas acima da camada de transporte.
+As funções típicas das camadas de sessão, apresentação e de aplicação devem ser implementadas por aplicações do espaço do usuário.
+Essencialmente, é tarefa da pilha de rede do núcleo do Linux a passagem de pacotes da camada de \textit{enlace} para a camada de rede (geralmente IPv4 ou IPv6) e então para os protocolos da camada de transporte, caso o pacote seja destinado ao sistema final local, ou de volta à camada de \textit{enlace}, caso o pacote precise ser encaminhado a outro sistema final.
+Pacotes gerados localmente passam da camada de transporte para a camada de rede e então para a camada de \textit{enlace}, transmitindo-os através do dispositivo de rede~\cite{rosen2013linux}.
+
+Para cada pacote de rede, seja ele enviado ou recebido, realiza-se uma busca no subsistema de roteamento.
+O resultado dessa busca determina se o pacote será encaminhado ou se deverá ser tratado localmente.
+Além da busca no subsistema de roteamento, outros fatores podem determinar a rota de um pacote na pilha de rede do Linux, como por exemplo, o valor do campo \campo{TTL} do cabeçalho dos pacotes IPv4 ou \textit{callbacks} do Netfilter. 
+O Netfilter~\cite{netfilter.org} é um subsistema do núcleo do Linux que permite o registro de funções de \textit{callback} a fim de interceptar e manipular os pacotes de rede.  
+Conforme ilustra-se na Figura \ref{fig:netfilter-hooks}, o Netfilter oferece várias opções para filtragem de pacotes, tradução de endereços de rede e de portas. 
+Estas funções geralmente são aplicadas ao tráfego na forma de regras de filtragem e de modificação, sendo invocadas para cada pacote que atravessa o respectivo \textit{hook}\footnote{Em programação de computadores, o termo \textit{hooking} (enganchar) cobre uma série de técnicas utilizadas para modificar ou melhorar o comportamento de um sistema operacional, aplicações ou outros componentes de software através da interceptação de chamadas de funções, mensagens ou eventos passados entre componentes de software. Fonte: https://pt.wikipedia.org/wiki/Hooking.} dentro da pilha de rede, fornecendo as funcionalidades necessárias para modificar pacotes, direcioná-los através de uma rede, bem como proibi-los de alcançar determinados nós da rede.
+
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width=\columnwidth]{imgs/netfilter-hooks.pdf}
+	\vspace{-1cm}
+	\caption[Linux Netfilter: Caminhos possíveis no processamento de pacotes]{Caminhos possíveis no processamento de pacotes e locais onde os \textit{hooks} podem ser configurados.}
+	 \label{fig:netfilter-hooks} 
+\end{figure}
+
+\subsection{Sockets}
+\label{sec:sockets}
+
+No Linux, utiliza-se uma API compatível com as especificações de \textit{socket} BSD e POSIX como interface entre as aplicações do espaço de usuário e o seu subsistema de redes.
+Conforme o paradigma do Unix onde \aspas{tudo é um arquivo}, todo \textit{socket} é associado a um arquivo. A utilização de uma API padrão de \textit{sockets} facilita a portabilidade de aplicações.
+Por exemplo, as opções de configuração do GMTP podem ser acessadas e modificadas de forma uniforme em qualquer sistema que siga a API padrão de \textit{sockets}, através de opções de \textit{socket}, utilizando-se a função \textit{setsockopt}. 
+A lista completa de todas as opções de \textit{socket} do GMTP encontra-se no Anexo \ref{ap:sockopt}.
+
+No núcleo do Linux, há duas estruturas que representam um \textit{socket}: a primeira é \lstinline|struct socket|, que provê um interface para o espaço de usuário. A segunda é \lstinline|struct sock|, que provê uma interface para a camada de rede.
+
+Além das variáveis relacionadas ao estado da conexão, na estrutura \lstinline|struct socket| armazena-se um apontador para a estrutura \lstinline|struct proto_ops|, que consiste basicamente de \textit{callbacks} para o \textit{socket}, como \lstinline|connect()|, \lstinline|listen()|, \lstinline|sendmsg()|, \lstinline|recvmsg()| e outros. 
+Esses \textit{callbacks} são interfaces para as aplicações do espaço de usuário.
+Cada protocolo da camada de transporte define uma estrutura \lstinline|proto_ops| de acordo com seus requisitos. Por exemplo, no TCP, sua estrutura \lstinline|proto_ops|  inclui um \textit{callback} para a função \lstinline|listen()| e outro para a função \lstinline|accept()|. Já no UDP, que não funciona no modelo orientado a conexão, os \textit{callbacks} para as funções \lstinline|listen()| e \lstinline|accept()| são apenas métodos que retornam um código de erro indicando que o protocolo não suporta a operação~\cite{rosen2013linux}. 
+O detalhamento dos principais campos da estrutura \lstinline|struct socket| encontra-se no Anexo \ref{anex:socket}.
+
+A estrutura \lstinline|struct sock| é a representação de \textit{sockets} na camada de transporte. 
+É nessa estrutura onde se armazena a fila de recepção e envio de pacotes, por exemplo.
+Além dos campos definidos pelo Linux, cada protocolo da camada de transporte estende essa estrutura para armazenar as variáveis de estado que lhe são necessárias.
+O detalhamento dos principais campos da estrutura \lstinline|struct sock| encontra-se no Anexo \ref{anex:sock}.
+
+Uma aplicação no espaço de usuário cria um \textit{socket} através da chamada de sistema \textit{socket}:
+
+\lstinline|sockfd = socket(int socket_family, int socket_type, int protocol);|
+
+O argumento $socket\_family$ pode ser, por exemplo, \lstinline|AF_INET| para IPv4 ou \lstinline|AF_INET6| para IPv6; $socket\_type$ pode ser \lstinline|SOCK_STREAM| para TCP ou \lstinline|SOCK_DGRAM| para UDP; e $protocol$, que pode ser 0 para TCP ou UDP, ou um número de protocolo válido conforme definido pela \textit{Internet Assigned Numbers Authority} (IANA)\footnote{Todos os códigos de protocolos constam no documento \textit{Protocol Numbers}, disponível em \url{http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml}.}.
+
+\subsection{Registro de novos protocolos}
+
+Apenas os protocolos UDP, ICMP e TCP são tão importantes para o funcionamento do subsistema de redes do Linux que são compilados estaticamente no núcleo do sistema operacional. 
+Por outro lado, existe uma segunda categoria de protocolos de transporte que podem ser adicionados ou removidos do núcleo de Linux de forma dinâmica. Os protocolos desse segundo grupo são implementados através de \textit{Linux Kernel Modules} (LKM). Nesse grupo, encontram-se os protocolos IGMP, SCTP, DCCP e outros.
+%Há ainda outros protocolos de transporte que disponíveis através de \textit{patches} porque ainda não estão integrados ao núcleo do Linux~\cite{Benvenuti:2005:ULN:1162208}.
+
+Os protocolos da camada de transporte baseados no IPv4 são definidos através da estrutura \lstinline|net_protocol|, que consiste dos seguintes campos:
+\begin{itemize}
+\item \textit{int (*handler)(struct sk\_buff *skb)}: Função invocada toda vez que chegar um pacote do protocolo em questão.
+\item \textit{void (*err\_handler)(struct sk\_buff *skb, u32 info)}: Função invocada pelo ICMP para informar ao protocolo de transporte a respeito de alguma mensagem de erro.
+\item \textit{int no\_policy}: Este campo é consultado em alguns pontos da pilha de rede e é utilizado para isentar protocolos da checagem do IPsec, caso seu valor seja igual a 1.
+\end{itemize}
+
+Registram-se novos protocolos de transporte através da função \lstinline|inet_add_protocol|, e removem-se os protocolos através da função \lstinline|inet_del_protocol|. 
+Todas as estruturas \lstinline|net_protocol| registradas no núcleo são inseridas em uma tabela chamada \lstinline|inet_protos|, que é implementada como um \textit{array} comum de 256 posições, sendo cada posição equivalente a um protocolo registrado~\cite{Benvenuti:2005:ULN:1162208}.
+
+Ao receber um pacote da rede, a função \lstinline|ip_local_deliver_finish| procura o protocolo de transporte correto para efetuar a chamada da função \lstinline|handler| correspondente ao pacote recebido. 
+A função lê o valor do campo \campo{Protocolo}, no cabeçalho IP, e acessa a tabela de protocolos registrados, lendo o \textit{array} na exata posição correspondente ao valor do referido campo.
+Se a tabela não contiver um protocolo válido para esse número, significa que o pacote recebido pertence a um protocolo de transporte que não foi registrado no \textit{kernel}. Nesse caso, o pacote é descartado e uma mensagem de erro ICMP é enviada de volta ao remetente~\cite{Benvenuti:2005:ULN:1162208}.
+
+\section{Novo cabeçalho e tipos de pacotes}
+\label{sec:impl_header}
+
+Tanto a ordem quanto o tamanho de cada campo da porção fixa do cabeçalho GMTP foram definidos criteriosamente para:
+\begin{itemize}
+	\item Permitir manutenção (adição, atualização e remoção) das funcionalidades existentes;
+	\item Flexibilizar o uso do protocolo por diferentes tipos de aplicação multimídia e;
+	\item Otimizar a leitura e escrita dos campos de cada pacote, buscando-se reduzir o atraso nodal.
+\end{itemize}
+
+No entanto, ao estudar a organização do cabeçalho do GMTP a fim de implementá-lo no núcleo do Linux, percebeu-se a necessidade de mudanças na organização dos campos. Além disso, na especificação original do GMTP não constam as definições de organização da porção variável do cabeçalho do GMTP para cada tipo de pacote. No contexto deste trabalho, propõem-se mudanças na organização da parte fixa do cabeçalho do GMTP, bem como uma organização para a porção variável do cabeçalho para cada tipo de pacote do GMTP.
+
+\subsection{Novo cabeçalho fixo do GMTP}
+\label{sec:impl-new-header}
+
+Após as mudanças na organização da parte fixa do cabeçalho do GMTP, este passa a ser organizado conforme ilustra-se na Figura \ref{fig:gmtp-new-fixed-header}.
+
+\begin{figure}[b!ht]
+\centering
+	\includegraphics[scale=.45]{imgs/new-gmtp-fixed-header.pdf}
+	\caption{Nova organização da porção fixa do cabeçalho de pacotes GMTP.}
+\label{fig:gmtp-new-fixed-header}
+\end{figure}
+
+Definiu-se a nova organização da parte fixa do cabeçalho do GMTP da seguinte forma: \ut{2}{bits} para a \textit{Versão do Protocolo}, \ut{5}{bits} para o \textit{Tipo de Pacote}, \ut{11}{bits} para o \textit{Tamanho do Cabeçalho}, \ut{12}{bits} para o \textit{RTT no Servidor}, \ut{1}{bit} para o campo P (\textit{Pull}), \ut{1}{bit} para o campo R (\textit{Relay}), \ut{16}{bits} para o \textit{Número da Porta de Origem}, \ut{16}{bits} para o \textit{Número da Porta de Destino}, \ut{32}{bits} para os \textit{Números de Sequência}, \ut{32}{bits} para a \textit{Taxa Proposta de Transmissão} e \ut{128}{bits} para o \textit{Nome do Fluxo de Dados}.
+
+As mudanças em relação à organização original foram as seguintes:
+reduziu-se o tamanho do campo \textit{Versão do Protocolo} de \ut{3}{bits} para \ut{2}{bits}, disponibilizando \ut{1}{bit}. Os \ut{3}{bits} reservados para uso futuro mais o bit que foi retirado do campo \textit{Versão do Protocolo} totalizam 4 bits, que foram alocados para o campo \textit{RTT no Servidor}, que antes tinha \ut{8}{bits} e agora tem \ut{12}{bits}.
+Originalmente, o campo \textit{RTT no Servidor} com seu espaço de \ut{8}{bits} permitia informar um RTT de no máximo \ut{255}{ms}, que poderia restringir o funcionamento das aplicações em cenários de rede com atrasos acima desse valor, o que é possível na Internet.
+Com a mudança no cabeçalho fixo do GMTP, o campo \textit{RTT no Servidor} passa a dispor de \ut{12}{bits}, tornando-se possível registrar um RTT de até \ut{4095}{ms}.
+
+Essas mudanças têm como objetivo melhorar a precisão da medição do RTT que é amplamente utilizado nos algoritmos de controle de congestionamento do GMTP. 
+Em um cenário de rede onde há congestionamento de rede, o valor do RTT tende a aumentar. Por essa razão, tanto o GMTP-UCC quanto o GMTP-MCC utilizam o valor do RTT como um dos parâmetros indicativos de congestionamento na rede.
+Em uma transmissão ao vivo, caso houvesse um congestionamento e o valor do RTT superasse os \ut{255}{ms}, não seria possível informar o novo valor utilizando o campo de \ut{8}{bits}, prejudicando o desempenho dos algoritmos de controle de congestionamento.
+
+Estudou-se três estratégias para superar essa limitação:
+\begin{enumerate} 
+	\item Escalar o valor do campo \campo{RTT no Servidor} de forma que cada unidade corresponda a um período de tempo maior que \ut{1}{ms}. Por exemplo, pode-se considerar que cada unidade do campo \campo{RTT no Servidor} corresponde a \ut{4}{ms}. Assim, se em determinado momento o valor do RTT for de \ut{400}{ms}, o valor armazenado no campo \campo{RTT no Servidor} será igual a \ut{100}.
+	Não utilizou-se essa estratégia porque isso diminuiria a precisão da informação relativa ao RTT, afetando o desempenho dos algoritmos de controle de congestionamento.
+	
+	%An	8-bit floating point value with 4 bits for the unsigned exponent and 4 bits for the unsigned mantissa (to represent RTTs from 1 millisecond to 64 seconds with an error of ca. 6%) should be used for the representation.
+	\item Utilizar a técnica de ponto flutuante. No protocolo TFMCC, utiliza-se um campo de \ut{8}{bits} em ponto flutuante para representar o RTT máximo de uma transmissão, sendo \ut{4}{bits} para o expoente e \ut{4}{bits} para a mantissa. Assim, representam-se RTTs no valor de \ut{1}{ms} a \ut{64}{s}, com um erro de cerca de 6\%~\cite{widmer2006tcp}.
+	Não utilizou-se essa estratégia porque isso diminuiria a precisão da informação relativa ao RTT e aumentaria a carga de processamento dos nós que leem ou escrevem a informação no campo \campo{RTT no Servidor}. Esses dois fatores causariam uma redução no desempenho dos algoritmos de controle de congestionamento.
+	
+	\item Aumentar a quantidade de bits do campo \campo{RTT no Servidor}, reorganizando o cabeçalho fixo do GMTP.
+	\label{op:3}
+	Vale salientar que o cabeçalho do RCP (Seção~\ref{sec:gmtp-ucc}) dispõe de \ut{16}{bits} para armazenar o valor do RTT~\cite{dukkipati2007rate}. O RCP é o algoritmo de controle de congestionamento que serve de referência para o GMTP-UCC.
+	Através dessa opção, haveria um aumento do valor máximo do RTT sem perda de precisão e sem aumentar a carga de processamento dos nós que lidam com o referido campo. No entanto, é necessário evitar que o aumento do tamanho do campo acarretasse no aumento do tamanho do cabeçalho fixo do GMTP.
+\end{enumerate}
+
+Das opções elencadas acima, escolheu-se a Opção \ref{op:3}.
+O tamanho do campo \campo{RTT no Servidor} mudou de \ut{8}{bits} para \ut{12}{bits}, tornando-se possível registrar RTT de até \ut{4095}{ms}, que é um valor satisfatório para utilização nos algoritmos de controle de congestionamento do GMTP. 
+Para conseguir ampliar o tamanho do campo \campo{RTT no Servidor} e ao mesmo tempo evitar o aumento do tamanho do cabeçalho fixo do GMTP, reduziu-se o tamanho do campo \textit{Versão do Protocolo} de \ut{3}{bits} para \ut{2}{bits}, e suprimiram-se os \ut{3}{bits} reservados para uso futuro.
+A ampliação do campo \campo{RTT no Servidor} permitiu o aumento do valor máximo do RTT sem perda de precisão e sem aumento da carga de processamento dos nós que lidam com o referido campo.
+
+\subsection{Tipos de pacotes e cabeçalhos variáveis}
+\label{sec:impl_tipos}
+
+Na especificação original do GMTP não constam as definições de organização da porção variável do cabeçalho do GMTP para cada tipo de pacote.
+Nesta seção, propõe-se uma organização para a porção variável do cabeçalho para cada tipo de pacote do GMTP.
+
+\begin{itemize}		
+	\item \pac{GMTP-RequestNotify}: \ut{2}{bits} para o código do \pac{GMTP-RequestNotify}, \ut{32}{bits} para o endereço IP do canal \textit{multicast} de dados, \ut{16}{bits} para a porta de recepção do canal \textit{multicast} de dados, \ut{128}{bits} para o número de identificação único do repassador que interceptou a requisição do cliente, \ut{32}{bits} para o endereço IP do relator responsável pelo cliente, \ut{16}{bits} para a porta relator do cliente e \ut{8}{bits} para o número de clientes que estarão registrados no relator (campo \campo{max\_nclients}), caso o cliente em questão seja um relator. Logo, o tamanho total da parte variável de um pacote do tipo \pac{GMTP-RequestNotify} é de \ut{234}{bits}.
+	
+	O referido pacote serve para que um repassador notifique um cliente que um fluxo de dados está prestes a ser transmitido ou já está sendo transmitido em um determinado canal de repasse \textit{multicast}.
+	Assim, é necessário que o referido pacote contenha um código que informe o estado da conexão, o endereço e porta do canal \textit{multicast}, o identificador do próprio repassador, e os dados referentes ao nó relator vinculado ao cliente. Caso o cliente seja um relator, é necessário informar o número máximo de clientes que lhe serão vinculados.
+	
+	\item \pac{GMTP-Register}: \ut{128}{bits} para o número de identificação único do repassador que enviou a mensagem de registro. 
+	
+	O referido pacote serve para que um repassador registre sua participação no servidor para funcionar como distribuidor de um fluxo de dados. Logo, é necessário que o repassador informe seu identificado único ao servidor, que servirá como chave de uma tabela \textit{hash} que o servidor utiliza para armazenar informações sobre os repassadores registrados.
+	
+	\item \pac{GMTP-Register-Reply}: \ut{2}{bits} para o tipo de controle de congestionamento \textit{unicast}, \ut{8}{bits} para a quantidade de repassadores que adicionou seu próprio identificador no pacote, e até 69   identificadores de repassadores, sendo cada identificador composto de \ut{160}{bits} (chave MD5 + endereço IP), num total de \ut{11040}{bits} ou \ut{1380}{Bytes}. Logo, o tamanho da parte variável de um pacote do tipo 
+	\pac{GMTP-Register-Reply} varia entre \ut{10}{bits} e \ut{11050}{bits}.
+	
+	O referido pacote serve para que o servidor responda sobre o pedido de registro de participação enviado por um repassador. Além disso, transporta o identificador de todos os repassadores entre o servidor e o cliente.
+	Logo, é necessário que o servidor informe o tipo de controle de congestionamento (se os roteadores devem ou não utilizar algoritmos de adaptação de fluxo para reduzir a taxa de transmissão). Além disso, os repassadores incrementam o valor do campo que armazena a quantidade de repassadores registrados no pacote e adicionam seu próprio identificador ao final do referido pacote.
+	
+	\item \pac{GMTP-Route-Notify}: idêntico à parte variável dos pacotes do tipo \pac{GMTP-Register-Reply}.
+	
+	O referido pacote serve para informar a rota (rota) entre um repassador e  servidor. O repassador envia esse tipo de pacote ao servidor, após receber o pacote do tipo \pac{GMTP-Register-Reply}.
+	Assim, a sua parte variável é idêntica à parte variável do pacote do tipo \pac{GMTP-Register-Reply}.
+	
+	\item \pac{GMTP-Data}: \ut{32}{bits} para a marca de tempo do emissor.
+	
+	O referido pacote serve para transportar os dados da mídia transmitida. com o intuito de calcular o RTT entre o servidor e os repassadores, é necessário armazenar no referido pacote a marca de tempo do momento em que o pacote foi enviado.
+	
+	\item \pac{GMTP-Ack}: \ut{32}{bits} para a marca de tempo do pacote que está sendo confirmado.
+	
+	O referido pacote serve para confirmação de recebimento e controle de congestionamento, a depender do contexto. 
+	Quando utilizado para controle de congestionamento, é necessário armazenar a marca de tempo que estava gravada no último pacote de dados recebido. Assim, quando o servidor receber o pacote do tipo \pac{GMTP-Ack}, calculará o RTT subtraindo a marca de tempo de quando recebeu o ACK pela marca de tempo gravada no ACK (que corresponde à marca de tempo do pacote de dados que originou o ACK).
+	
+	\item \pac{GMTP-DataAck}: \ut{32}{bits} para a marca de tempo do emissor e \ut{32}{bits} para a marca de tempo do pacote que está sendo confirmado, totalizando \ut{64}{bits}. 
+	
+	O referido pacote é uma combinação dos pacotes \pac{GMTP-Data} e \pac{GMTP-Ack} (\textit{PiggyBack}).
+	
+	\item \pac{GMTP-Elect-Request}: \ut{128}{bits} para o número de identificação único do repassador de origem do cliente e \ut{8}{bits} para o número de clientes que estarão registrados no futuro relator.
+	
+	O referido pacote serve para que o repassador envie para um cliente uma solicitação para que este atue como relator. Logo, é necessário um campo para que o repassador seja identificado (através do seu identificador único), e um campo informando quantos clientes podem ser vinculados ao novo relator, caso este aceite o novo papel.
+	
+	\item \pac{GMTP-Elect-Response}: \ut{2}{bits} para a resposta do cliente, que aceita ou não a responsabilidade de ser um relator.
+	
+	O referido pacote serve para que o cliente envie ao repassador a confirmação de que aceita ou não atuar como relator. Logo, é necessário um campo que contenha um código para a resposta ao repassador.
+	
+	\item \pac{GMTP-Reset:} \ut{8}{bits} para o código da mensagem de \textit{RESET} e \ut{24}{bits} para os dados adicionais da mensagem, totalizando \ut{32}{bits}.
+	
+	O referido pacote serve para determinar, incondicionalmente, a finalização de uma conexão. Assim, são necessários campos para que o emissor justifique apropriadamente o fim da conexão ao receptor.
+	
+\end{itemize}
+
+Nem todos os tipos de pacote necessitam da porção variável do cabeçalho GMTP. Os pacotes dos tipos \pac{GMTP-Request}, \pac{GMTP-Response}, \pac{GMTP-RelayQuery}, \pac{GMTP-RelayQuery-Reply}, \pac{GMTP-MediaDesc}, \pac{GMTP-DataPull-Request}, \pac{GMTP-DataPull-Response} e \pac{GMTP-Close} não necessitam da porção variável.
+
+Visando a execução de ações definidas no protocolo GMTP, além de ações não previstas no proposta inicial do protocolo, propõe-se a adição de novos tipos de pacote além dos tipos já definidos originalmente no GMTP.
+Os tipos adicionais são definidos a partir do número 18, conforme se segue:
+
+\begin{enumerate}
+	\setcounter{enumi}{+17}
+	\item \pac{GMTP-Feedback}: o relator envia seu relatório de acordo com o GMTP-MCC. Sua parte flexível é organizada sendo \ut{32}{bits} para a marca de tempo do último pacote \pac{GMTP-Data} recebido e \ut{8}{bits} para o número de clientes que estão ativos e registrados no relator, conforme explicado na Seção \ref{sec:relatores}, totalizando \ut{40}{bits}.
+	
+	Assim como nos pacotes do tipo \pac{GMTP-Ack}, é necessário armazenar a marca de tempo que estava gravada no último pacote de dados recebido para que o repassador calcule o RTT da rede local apropriadamente. 
+	Pode-se considerar que um pacote do tipo \pac{GMTP-Feedback} é um pacote \pac{GMTP-Ack} estendido, com a informação adicional sobre o número de clientes vinculados ao relator e ativos.
+	
+	\item \pac{GMTP-Delegate}: o servidor delega a um repassador a responsabilidade de repassar um determinado fluxo de dados a outro repassador parceiro. Sua parte flexível é organizada sendo \ut{128}{bits} para o número de identificação único do repassador que está sendo delegado ao destinatário, \ut{32}{bits} para o endereço IP do repassador delegado e \ut{16}{bits} para a porta do repassador delegado, totalizando \ut{176}{bits}.
+	
+	Para que o repassador destinatário saiba quem será o seu novo parceiro (repassador delegado), o referido pacote precisa carregar as informações sobre a identificação única do repassador delegado, bem como seu endereço IP e porta de conexão.
+	
+	\item \pac{GMTP-Delegate-Reply}: o repassador envia ao servidor a confirmação do pacote \pac{GMTP-Delegate} recebido. Não foi necessário definir parte flexível para este tipo de pacote.
+	
+	\item \pac{Reservado:} a partir do identificador 21 até o 31, tratam-se de valores reservados para uso futuro e os pacotes com esses valores devem ser descartados pelos nós que o processam. 
+\end{enumerate}
+
+% 
+% 
+%      GMTP-Intra
+% 
+%
+\section{Implementação dos Módulos do GMTP}
+
+Implementaram-se os módulos do através de \textit{Linux Kernel Modules} (LKM). Assim, é possível carregar os módulos do GMTP no \textit{kernel}, descarregar parte do GMTP e futuramente estender o GMTP desenvolvendo novos LKMs. 
+
+%The proposed protocol GMTP is not operating at the TCP/IP layer, it is operating at transport and network layer. However, when I look at figure 4 and the GMTP-inter functionality then most of it belongs actually in the transport layer. Congestion control is a transport layer functionality, the same for data transmission (UDP and TCP provide this functionality also on transport layer). P2P and CDN management is also functionality that goes beyond pure host-based addressing (as major network layer task), but is the only functionality that might be placed there directly on top of IP (similar to IPsec that also establishes connections on network layer). Furthermore, all of the sketched GMTP-inter functionality should operate on top of multicast/ unicast as this is functionality realized by IP. Currently it looks like GMTP functionality is placed below and above IP, which is probably not intended by the authors as figure 10 shows all GMTP functionality.
+
+\subsection{Consideração sobre a arquitetura \textit{cross-layer} do GMTP no Linux}
+Ao longo da pesquisa sobre o GMTP, questionou-se se o GMTP é um protocolo \textit{cross-layer}~\cite{1561928}.
+Argumentou-se que parte das funcionalidade do GMTP-Inter, que deveria estar na camada de rede,  pertencem à camada de transporte. De fato, funcionalidades do GMTP-Inter como controle de congestionamento e transmissão de dados utilizando \textit{unicast}/\textit{multicast} IP são típicas da camada de transporte, considerando estritamente a organização de protocolos em camadas TCP/IP.
+
+No entanto, existem funções do módulo GMTP-Inter que interferem na rota dos pacotes de controle ou de mídia, modificando os endereços IP e MAC de origem ou de destino, quando necessário. Ao alterar o endereço de destino de um pacote, o GMTP-Inter precisa encaminhar o pacote para a \textit{interface} de rede correta, a fim de transmiti-lo ao nó de destino. Essa não é uma tarefa dos protocolos da camada de transporte.
+Isso pode ocorrer antes ou depois dos pacotes serem roteados, conforme discute-se na Seção \ref{sec:inter}.  
+Essas funções visam oferecer a configuração dinâmica de canais \textit{multicast}
+e o redirecionamento de fluxos \textit{unicast}, viabilizando o gerenciamento de parcerias entre os roteadores.
+Na prática, esta configuração dinâmica de quando se deve utilizar \textit{multicast} e/ou \textit{unicast} é um dos itens que diferencia o GMTP de outros protocolos existentes.
+
+Nesse contexto, o GMTP ultrapassa os limites de atuação de protocolos da camada de transporte ao acessar diretamente as camadas inferiores para modificar o endereço IP ou MAC de origem ou destino dos pacotes com o intuito de melhorar o desempenho em uma transmissão de datagramas através da rede. 
+O GMTP-Inter acessa a camada de rede sem a utilização de \textit{sockets} ou funções disponíveis para os protocolos de transporte do Linux.
+Esse enfraquecimento das restrições e responsabilidades exclusivas de cada camada da pilha TCP/IP é típica de protocolos \textit{cross-layer}.
+Portanto, o GMTP deve ser considerado um protocolo \textit{cross-layer} atuando nas camadas de transporte e de rede da pilha TCP/IP.
+
+\subsection{GMTP-Intra}
+\label{sec:intra}
+
+O GMTP-Intra compreende a instância do GMTP em execução no sistema operacional do cliente ou do servidor, acessível através de uma API de \textit{socket} GMTP. 
+Implementou-se o módulo GMTP-Intra através de dois \textit{Linux Kernel Modules} (LKM) distintos, denominados \textit{gmtp.ko} e \textit{gmtp\_ipv4.ko}.
+No primeiro módulo, encontram-se as funções e variáveis de estado relativas ao GMTP que são independentes da versão do \textit{Internet Protocol} (IPv4 ou IPv6). O segundo módulo diz respeito às funções e variáveis de estado relativas ao GMTP que são dependentes do IPv4. No contexto deste trabalho, o LKM do GMTP específico para o IPv6 não foi desenvolvido.
+
+Uma vez que os módulos do GMTP estejam habilitados no sistema, o desenvolvedor de aplicações deve abrir um \textit{socket} do tipo GMTP utilizando qualquer linguagem de programação que forneça uma API compatível com as especificações de \textit{socket} BSD e POSIX.
+
+%TODO Implementar...
+O GMTP automaticamente gera o identificador do fluxo de dados (identificador da mídia) a partir do IP e porta fornecidos no momento da criação do \textit{socket}, conforme descrito na Seção \ref{sec:fluxo-basico}. Opcionalmente, o identificador da mídia pode ser definido pelo desenvolvedor da aplicação através do uso da função \textit{setsockopt}.
+A lista completa de todas as opções de \textit{socket} do GMTP encontra-se no Apêndice \ref{ap:sockopt}.
+
+\subsubsection{Tabelas do GMTP-Intra}
+\label{sec:tabelas-intra}
+No módulo GMTP-Intra, utilizam-se algumas tabelas \textit{hash} para diferentes propósitos, armazenando-se informações úteis para clientes e servidores GMTP.
+
+A fim de armazenar informações sobre os clientes GMTP em determinado sistema final, implementou-se uma tabela \textit{hash} cuja chave é o identificador do fluxo de mídia $F$. 
+Cada entrada dessa tabela de clientes contém, além da chave $F$, o endereço IP e porta do canal \textit{multicast} para recepção dos dados e a lista de todos os clientes que solicitaram o fluxo de mídia $F$ no sistema final.
+
+No GMTP-Intra, há outra tabela \textit{hash}, desta vez para os servidores, cuja chave também é o identificador do fluxo de mídia $F$.
+Além da chave $F$, a tabela do servidor contém a lista de rotas $W$ do servidor aos repassadores, a quantidade de repassadores registrados e uma tabela \textit{hash} que armazena informações de cada repassador registrado.
+Na tabela \textit{hash} de repassadores, utiliza-se o identificador único do repassador $r$ como chave.
+Além de sua chave, a tabela de repassadores contém um ponteiro para a rota $W_r$ do servidor até r, o endereço IP e um ponteiro para o \textit{socket} de $r$.
+Através do registro da lista de rotas e da tabela de repassadores, permite-se que o servidor utilize essas informações para instruir os nós repassadores a realizarem parcerias, a fim de distribuir um fluxo de dados $F$.
+
+% 
+% 
+%      GMTP-Inter
+% 
+%
+\subsection{GMTP-Inter}
+\label{sec:inter}
+
+O GMTP-Inter tem como responsabilidade constituir as redes de favores P2P compostas por roteadores.
+Trata-se do módulo em execução nos roteadores, que cooperam entre si a fim de constituírem as redes de
+favores, com base no interesse comum de um determinado conteúdo. 
+Através do GMTP-Inter, os roteadores aceitam conexões originadas por seus clientes, bem como instruções dos servidores para formar parcerias com outros roteadores a fim de disseminar um determinado conteúdo~\cite{sales2014gmtp}. 
+
+Nesse contexto, implementou-se o GMTP-Inter como um roteador baseado em \textit{software}. A vantagem é que não foi necessário nenhum suporte especial do \textit{hardware}, visto que utilizou-se a infraestrutura disponível no núcleo do Linux~\cite{dukkipati2007rate}.
+Desta forma, torna-se possível integrar o GMTP-Inter em uma distribuição Linux direcionada a roteadores como, por exemplo, o OpenWrt\footnote{OpenWrt é uma distribuição do GNU/Linux, personalizável, direcionada a sistemas embarcados (geralmente roteadores \textit{wireless}). Mais informações em \url{https://openwrt.org/}.}.
+Na Figura \ref{fig:tela-gmtp-inter}, ilustra-se uma sugestão para o \textit{layout} da tela da ferramenta de administração da distribuição Linux OpenWRT com suporte ao GMTP.
+
+\begin{figure}[ht]
+	\begin{center}
+	\includegraphics[natwidth=664,natheight=340,scale=.5]{imgs/tela-gmtp-inter.png}
+	\end{center}
+	\vspace{-.5cm}
+	\caption[Tela da ferramenta de administração da distribuição Linux OpenWRT com suporte ao GMTP]{Tela da ferramenta de administração da distribuição Linux OpenWRT com suporte ao GMTP. Nessa tela, permite-se que o administrador do roteador configure parâmetros do módulo GMTP-Inter.}
+	\fonte{\citeonline{sales2014gmtp}}
+	\label{fig:tela-gmtp-inter}
+\end{figure}
+
+%TODO Referência a SDN...
+A operação de um roteador pode ser dividia em duas partes: o plano de dados e o plano de controle. 
+No plano de dados, o pacotes recebidos são processados e encaminhados ao seu destino. 
+As tarefas dessa parte incluem verificar o \textit{checksum} do cabeçalho IP, extrair o endereço de destino do cabeçalho IP, encontrar seu próximo salto na tabela de roteamento, decrementar o \textit{time-to-live} do pacote, atualizar o \textit{checksum} e encaminhar o pacote pela interface de rede correta.
+No plano de controle, realizam-se tarefas menos frequentes, como a atualização das tabelas de roteamento~\cite{dukkipati2007rate}.
+
+Um roteador habilitado com o GMTP-Inter precisa oferecer a mesma taxa de transmissão para todos os fluxos transmitidos através deste roteador. Essa taxa é calculada através da Equação \ref{eq:rcp2} e gravada no cabeçalho GMTP dos pacotes, conforme descrito na Seção \ref{sec:gmtp-ucc}.
+Para calcular a taxa, o roteador precisa manter uma estimativa média do RTT, utilizando a informação sobre o RTT disponível no cabeçalho do GMTP.
+Estatísticas, como o tráfego total recebido e o RTT médio são calculadas durante cada intervalo de controle e utilizados para calcular a taxa de transmissão.
+
+As funcionalidades do GMTP-Inter são, resumidamente:
+
+\begin{enumerate}
+\item Plano de dados (processamento por pacote):
+	\begin{itemize}
+	\item identificar os pacotes GMTP recebidos;
+	\item atualizar estatísticas sobre o tráfego recebido e enviado;
+	\item escrever a taxa de transmissão ao encaminhar um pacote;
+	\item encaminhar os pacotes recebidos aos seus destinos.
+	\end{itemize}
+\item Plano de controle (processamento periódico):
+	\begin{itemize}
+	\item calcular a taxa de transmissão, conforme Equação \ref{eq:rcp2};
+	\item atualizar o RTT médio, conforme descrito na Seção \ref{sec:gmtp-ucc};
+	\item enviar pacotes de \textit{keep-alive} aos servidores ou repassadores parceiros, conforme descrito na Seção \ref{sec:renovacao}.
+	\end{itemize}
+\end{enumerate}
+
+Implementou-se o GMTP-Inter em um sistema Linux padrão, através de um \textit{Linux Kernel Module} (LKM), denominado \textit{gmtp\_inter.ko}. Desta forma, é possível ativar ou desativar o GMTP-Inter em um roteador baseado em \textit{software}, apenas inserindo ou removendo o LKM.
+
+As opções de configuração do GMTP-Inter podem ser acessadas e modificadas através de opções de \textit{socket}, utilizando-se a função \textit{setsockopt}.
+Para tanto, deve-se instanciar um \textit{socket} GMTP comum e configurar a opção de \textit{socket} \lstinline|GMTP_SOCKOPT_ROLE_RELAY| com o valor 1. A partir desse momento, o \textit{socket} GMTP torna-se um exclusivo para configuração do GMTP-Inter na máquina local, sendo vedada a utilização de tal \textit{socket} para envio e recebimento de dados.
+
+O plano de controle do GMTP-Inter diz respeito aos \textit{timers} que controlam as funções relacionadas ao controle de congestionamento e mecanismos de \textit{keep-alive} e manutenção de parcerias.
+
+Para a implementação do plano de dados, utilizou-se a ferramenta do Linux denominada \emph{Netfilter}, a qual permite desenvolver operações personalizadas para cada pacote em processamento no \textit{kernel}.
+As operações do plano de dados do GMTP-Inter são efetuadas através dos \textit{hooks} do Netfilter.
+Apenas os pacotes GMTP são manipulados pelo GMTP-Inter.
+Nele, registram-se as funções de ingresso de pacotes através do \textit{hook}  \lstinline|NF_INET_PRE_ROUTING| e as funções de egresso através do \textit{hook} \lstinline|NF_INET_POST_ROUTING|, conforme ilustra-se na Figura~\ref{fig:gmtp-inter}.
+
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width=\columnwidth]{imgs/netfilter-hooks-inter.pdf}
+		\vspace{-1cm}
+	\caption{GMTP-Inter: Locais onde os \textit{hooks} do Netfilter foram configurados.}
+	 \label{fig:gmtp-inter} 
+\end{figure}
+
+\subsubsection{Tabelas do GMTP-Inter}
+\label{sec:tabelas-inter}
+
+Cada repassador mantém uma tabela chamada \textit{Tabela de Recepção de Fluxos de Dados}, conforme ilustra-se na Figura \ref{fig:tabela-repasse-vazia}.
+Além das informações definidas na especificação original do GMTP, os repassadores precisam armazenar informações a respeito do estado da transmissão do fluxo de dados.
+
+Dentre as informações, as mais relevantes são:
+\begin{itemize}	
+	\item \textit{Estado da transmissão}: define o estado atual da transmissão, que pode ser: aguardando o \pac{GMTP-Register-Reply} do servidor, recebendo o \pac{GMTP-Register-Reply}, transmitindo a mídia, encerrando transmissão, e transmissão encerrada.
+	\item \textit{Endereço do repassador}: endereço IP pelo qual o repassador recebe os pacotes do servidor.
+	\item \textit{Porta do repassador}: porta pela qual o repassador recebe os pacotes do servidor. 
+	\item \textit{Taxa de transmissão}: taxa nominal de transmissão do servidor
+	\item \textit{Taxa de recepção}: taxa real de recepção de dados oriundos do servidor, medida periodicamente.
+	\item \textit{Timer do GMTP-MCC}: \textit{timer} para efetuar as operações do GMTP-MCC, conforme descrito na Seção \ref{sec:gmtp-mcc-impl}.
+	\item \textit{Número de \textit{feedbacks}}: número de pacotes \pac{GMTP-Feedback} recebidos. Esse contador é zerado a cada intervalo de tempo, visando implementar os mecanismos descritos na Seção \ref{sec:gmtp-mcc-impl}.
+	\item \textit{Somatório dos valores de \textit{feedback}}: somatório das taxas de transmissão informadas nos pacotes \pac{GMTP-Feedback} recebidos. Esse somatório é zerado a cada intervalo de tempo, visando implementar os mecanismos descritos na Seção \ref{sec:gmtp-mcc-impl}.
+	\item \textit{Lista de relatores}: lista dos relatores registrados no repassador para receber o fluxo de dados $F$.
+	\item \textit{Número de relatores}: número de relatores registrados no repassador.
+	\item \textit{Número de clientes}: número de clientes registrados no repassador que estão recebendo o fluxo de dados $F$. Atualizado periodicamente conforme relatório dos relatores.
+	\item \textit{Buffer de recepção}: por se tratar de um roteador baseado em \textit{software}, o módulo GMTP-Inter isola o \textit{buffer} de recepção de cada fluxo de dados $F$.
+	\item \textit{Timer do GMTP-UCC}: \textit{timer} para envio da taxa de transmissão ideal calculada via GMTP-UCC.
+	\item \textit{Timer de Renovação de Registro}: \textit{timer} para efetuar a renovação do registro de participação no servidor.
+	\item \textit{Lista de repassadores \aspas{clientes}}: lista dos repassadores parceiros registrados para receber o fluxo de mídia.
+	Cada entrada da lista contém o endereço IP, porta, endereço MAC, estado da conexão com o parceiro e a taxa de transmissão que o parceiro solicita (tornando possível a definição de sub-rotas do GMTP-UCC).
+	\item \textit{Número de repassadores \aspas{clientes}}: número de repassadores parceiros registrados para receber o fluxo de mídia.
+\end{itemize}
+
+\section{Funcionamento do Global Media Transmission Protocol}
+
+O fluxo básico de comunicação do GMTP ocorre quando um cliente deseja reproduzir um conteúdo multimídia. A seguir, descreve-se detalhadamente o funcionamento prático do GMTP, conforme implementação no núcleo do Linux.
+
+\subsection{Requisição da mídia ao vivo pelos clientes}
+\label{sec:req-clientes}
+ 
+Os clientes GMTP sempre se conectam ao servidor através do seu endereço IP (\textit{unicast}) e porta. 
+Para tanto, instancia-se um \textit{socket} cliente GMTP como se fosse um \textit{socket} \textit{unicast}.
+Após o estabelecimento da conexão, um cliente GMTP pode ler os dados enviados pelo servidor utilizando as funções comuns de leitura de dados via \textit{socket}.
+A aplicação cliente reproduz o conteúdo multimídia ao usuário final à medida que recebe os pacotes de dados contendo partes da mídia, gerada por um ou mais servidores. 
+
+Conforme ilustra-e na Figura \ref{fig:req-local}, ao requisitar um fluxo de mídia $F$, o GMTP-Intra consultará a tabela de clientes para verificar se algum cliente local requisitou com sucesso a mídia.
+Caso alguma aplicação cliente do mesmo sistema final já requisitou o mesmo fluxo de mídia $F$, o GMTP-Intra não enviará um novo pacote \pac{GMTP-Request}, mas aproveitará a primeira requisição para servir ao novo cliente. 
+Caso contrário, o GMTP-Intra enviará um pacote do tipo \pac{GMTP-Request} endereçado ao servidor, configurando o campo \campo{Nome da mídia} do cabeçalho do GMTP com o valor de $F$ e configurando o campo \emph{TTL} do cabeçalho IP com o valor 1. 
+Em ambos os casos, o GMTP-Intra registrará os dados do cliente em sua tabela de clientes, utilizando a chave $F$.
+
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width=\columnwidth]{imgs/req-localhost.pdf}
+	\vspace{-1cm}
+	\caption{Fluxograma do processo de requisição de mídia pela aplicação no nó local.}
+	\label{fig:req-local} 
+\end{figure}
+
+Caso não haja nenhum nó repassador na rota entre o cliente e o servidor, o cliente se \aspas{autopromove} a repassador. 
+Conforme ilustra-se na Figura \ref{fig:req-autopromocao}, o cliente GMTP deve fazer três tentativas de conexão utilizando um pacote do tipo \pac{GMTP-Request}, endereçado ao servidor e com TTL=1.
+Caso as tentativas falhem, assume-se que o roteador do cliente não está habilitado com o GMTP e o cliente envia ao servidor pacote do tipo \pac{GMTP-Register}, com o TTL padrão do sistema operacional.
+É importante salientar que nesse caso o cliente não assume todas as responsabilidades de um repassador, como por exemplo, repasse do fluxo de mídia a outros repassadores ou a clientes através do canal \textit{multicast}. 
+Caso o servidor aceite a conexão, enviará um pacote do tipo \emph{GMTP-Register-Reply} de volta ao cliente. O servidor sabe se a requisição partiu de um cliente que se autopromoveu porque o campo \campo{R} do cabeçalho GMTP é igual a zero.
+Quando um cliente se conecta diretamente ao servidor, sem intermédio de um repassador, recebe os pacotes de mídia que são diretamente endereçados pelo servidor, através do seu IP e porta de requisição.
+
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width=\columnwidth]{imgs/req-autopromocao.pdf}
+	\vspace{-1cm}
+	\caption{Procedimento para autopromoção de cliente para repassador.}
+	\label{fig:req-autopromocao} 
+\end{figure}
+
+O repassador de origem do cliente deve interceptar pacotes \pac{GMTP-Request} com TTL=1 para fins de conexão. 
+Caso o repassador ainda não esteja recebendo a mídia $F$ solicitada pelo cliente, ele deve registrar $F$ em sua tabela de repasse e encaminhar um pacote do tipo \pac{GMTP-Register} ao servidor.
+Nesse caso, o pacote \pac{GMTP-Register} contém o valor 1 (um) no campo \campo{R} do cabeçalho GMTP e o identificador único do repassador que está se registrando na parte variável de seu cabeçalho, conforme descrito na Seção \ref{sec:impl_tipos}.
+
+O repassador, ao receber a requisição do cliente, envia um pacote do tipo \pac{GMTP-RequestNotify} como resposta à requisição. O conteúdo do campo \campo{Código} da parte variável do cabeçalho do pacote \pac{GMTP-RequestNotify} pode conter os seguintes valores: 
+
+\begin{enumerate}
+\setcounter{enumi}{-1}
+\item \emph{OK:} o repassador envia o pacote \pac{GMTP-RequestNotify} com este valor apenas após o pleno estabelecimento da conexão com o servidor. Ao receber o pacote com este valor, o cliente deve considerar que a conexão está aberta e deve responder com um pacote do tipo \pac{GMTP-Ack}. O cliente então deve aceitar os pacotes endereçados ao endereço \textit{multicast} informado no pacote recebido. Após receber o pacote \pac{GMTP-Ack}, o repassador passa a encaminhar os dados de mídia provenientes do servidor ao endereço \textit{multicast} correspondente. 
+\item \emph{WAIT:} o repassador envia o pacote \pac{GMTP-RequestNotify} com este valor apenas enquanto aguarda a resposta do servidor ao seu pedido de conexão. Apenas os clientes que requisitaram a mídia antes do registro de participação do repassador é que recebem o pacote com o valor \emph{WAIT}. Ao receber o pacote com este valor, o cliente deve apenas aguardar o recebimento do pacote \pac{GMTP-RequestNotify} com o valor do campo \campo{Código} igual a \emph{OK}.
+\item \emph{ERROR:} indica um erro no formato da requisição do cliente ou a recusa do servidor em atender à requisição. Ao receber este pacote, o cliente pode tentar requisitar a mídia novamente, até o limite de 3 tentativas.
+\end{enumerate}
+
+Após o estabelecimento da conexão com o repassador, o cliente então deve aceitar os pacotes de dados enviados ao endereço \textit{multicast} informado no pacote \pac{GMTP-RequestNotify} recebido. Para tanto, localiza-se o \textit{socket} GMTP correspondente ao pacote recebido e o envia à aplicação.
+
+\subsection{Relatores}
+\label{sec:relatores}
+
+Conforme descrito na Seção \ref{sec:gmtp-mcc}, o primeiro nó relator será o cliente que iniciar a primeira conexão para obter o fluxo de dados $F$, e os seguintes relatores serão os próximos clientes que se conectarem para receber o fluxo de dados, seguindo uma relação que por padrão é de 1 relator para cada 6 clientes.
+
+Conforme ilustra-se na Figura \ref{fig:req-relatores-1}, ao enviar o pacote \pac{GMTP-RequestNotify} ao cliente, o repassador sinaliza que o cliente em processo de conexão deverá se comportar como um relator. Tal sinalização se dá através dos campos \campo{Endereço IP do Relator}, \campo{Porta do Relator} e \textit{Número máximo de clientes conectados} (doravante denominado \campo{max\_nclients}).
+Ao receber um pacote \pac{GMTP-RequestNotify}, o cliente deve se comportar como relator apenas se os campos \campo{Endereço IP do Relator} e \campo{Porta do Relator} forem idênticos aos seus próprios endereço IP e porta, e no campo \campo{max\_nclients} constar um valor maior que zero.
+O número máximo de clientes conectados a um relator é informado através do campo \campo{max\_nclients}, de \ut{8}{bits}, variando de de 0 a 255. 
+
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width=\columnwidth]{imgs/req-relatores-1.pdf}
+	\vspace{-2cm}
+	\caption{Eleição do primeiro nó relator.}
+	\label{fig:req-relatores-1} 
+\end{figure}
+
+A regra é que se a proporção de clientes por relator for de $K:1$, o número máximo de clientes registrados em um relator deve ser $K-1$. 
+Por exemplo, se a proporção de clientes por relator for de $6:1$, o número máximo de clientes conectados por relator será de $5$ clientes e o valor que deve constar no campo \campo{max\_nclients} é 5.
+
+O nó relator, ao enviar seu relatório ao repassador, deve informar: (1) a marca de tempo do último pacote de dados recebido, (2) quantos clientes estão conectados ao relator e (3) a taxa de transmissão proposta, através do campo \campo{Taxa de transmissão} do cabeçalho fixo do GMTP.
+Os relatórios dos relatores também servem como mecanismos de \textit{keep-alive} para os seus repassadores. 
+
+\subsubsection{Relação entre clientes e relatores}
+
+Conforme ilustra-se na Figura \ref{fig:req-relatores-2}, os clientes devem se conectar ao relator indicado nos respectivos campos do pacote \pac{GMTP-RequestNotify} recebido.
+Isso ocorre através do envio de um pacote do tipo \pac{GMTP-Elect-Request} ao relator, onde o campo \campo{Relay (R)} do cabeçalho fixo do GMTP deve ser igual a 0, indicando que o referido pacote foi enviado por um cliente na rede local. O campo \campo{Identificação do Repassador} do cabeçalho da requisição \pac{GMTP-Elect-Request} deve ser preenchido com o identificador do repassador do cliente, para que o relator, ao receber a requisição, confirme que o cliente está vinculado ao mesmo repassador do relator.
+O relator deve responder à requisição com um pacote do tipo \pac{GMTP-Elect-Response}, configurando o campo \campo{Código} com o valor 0, caso aceite a conexão, ou com o valor 1, caso a rejeite.
+O relator deve rejeitar a requisição caso já tenha atingido o seu número máximo de clientes registrados.
+
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width=\columnwidth]{imgs/req-relatores-2.pdf}
+	\vspace{-1.5cm}
+	\caption{Conexão entre clientes e relatores.}
+	\label{fig:req-relatores-2} 
+\end{figure}
+
+Um vez registrado no relator, o cliente deve enviar periodicamente um pacote do tipo \pac{GMTP-Ack} ao relator, como forma de confirmação de presença, o chamado \emph{keep-alive}. No GMTP, o intervalo de tempo padrão para envio do \emph{keep-alive} é de \ut{1}{s}.
+O relator então deve enviar um \pac{GMTP-Ack} como resposta ao cliente. 
+Caso o relator não receba o \emph{keep-alive} de um cliente no intervalo de \ut{4}{s} (\textit{timeout}), deve considerar que o cliente está inativo, e desfazer a conexão com o cliente.
+Assim, quando um cliente comum sair da rede, ele não precisa enviar nenhum tipo de notificação ao seu relator, visto que o relator realiza um procedimento de \textit{timeout}.
+De forma semelhante, caso o cliente, após envio do \pac{GMTP-Ack} ao relator, não receba a confirmação de recebimento em \ut{4}{s}, deve se autopromover a relator, enviando um pacote do tipo \pac{GMTP-Elect-Response} ao seu repassador. 
+
+Esse procedimento de registro dos clientes nos relatores se faz necessário porque o repassador precisa ter conhecimento da quantidade de clientes que está recebendo a mídia. Caso um repassador não esteja cooperando com nenhum outro repassador na rede e nenhum de seus clientes esteja mais recebendo a mídia, o repassador pode finalizar a conexão com o servidor.
+Para tanto, o repassador deve armazenar na sua tabela de repasse uma estrutura contendo a listagem de todos os relatores da rede local. O número máximo de relatores em uma rede local é de 255. A estrutura deve conter o endereço IP, porta e número de clientes conectados ao relator. Dessa forma, o repassador tem conhecimento da quantidade de clientes ativos, sem ter que armazenar informação sobre o estado de todos os clientes na rede local. No pior caso, o repassador terá que armazenar informação de 255 relatores, independentemente da proporção de relatores por clientes.
+
+O relator, ao enviar o relatório periódico ao repassador, além da taxa de transmissão ideal, deve também informar a quantidade de clientes ativos e registrados nele, através do campo \campo{Número de Clientes} do pacote \pac{GMTP-Feedback}.
+
+\subsubsection{Implementação do GMTP-MCC}
+\label{sec:gmtp-mcc-impl}
+
+No GMTP-MCC, o próprio relator, baseado no relatório de perdas, calcula a taxa de transmissão adequada utilizando a Equação \ref{eq:trfc} e envia o relatório ao receptor. 
+Para envio dos relatórios, utilizam-se pacotes do tipo \pac{GMTP-Feedback}. 
+Os relatórios são enviados a cada evento de perda ou, caso não haja perdas, a cada RTT.
+Cabe ao repassador, após receber os relatórios dos relatores, definir a nova taxa de transmissão, através da média aritmética de todas os valores de taxas de transmissão recebidas no intervalo de 4 RTTs.
+
+Se o repassador não receber nenhum relatório no intervalo de 4 RTTs, deve reduzir a taxa de transmissão pela metade, até o limite de $\frac{1}{8}$ da taxa de transmissão requerida pelo servidor.
+No protocolo TFMCC, define-se que se o emissor não receber nenhum relatório do CLR (\textit{current limiting receiver}, figura análoga ao relator GMTP, no TFMCC) por pelo menos 10 RTTs, deve assumir que o CLR está inativo ou saiu do grupo \textit{multicast}~\cite{widmer2006tcp}. 
+Nos testes realizados com repassadores e clientes GMTP, observou-se que a utilização de um \textit{timeout} de 12 RTTs apresenta resultados melhores que a utilização de um \textit{timeout} de 10 RTTs. Portanto, no GMTP-MCC definiu-se que se o repassador não receber nenhum relatório de determinado relator por pelo menos 12 RTTs, o repassador deve assumir que o relator não está mais ativo e deve selecionar um novo relator através do mecanismo de eleição de relatores descrito a seguir.
+
+\subsubsection{Eleição de novos relatores}
+\label{sec:eleicao}
+
+Um nó relator pode sinalizar explicitamente sua desistência de participação de forma semelhante a um nó cliente, com a diferença que ele precisa continuar enviando os relatórios até que o repassador lhe envie um pacote do tipo \emph{GMTP-Reset}, confirmando que outro relator foi escolhido pelo repassador.
+Para tanto, o pacote \emph{GMTP-Close} oriundo do relator que está saindo deve ter a lista dos clientes que lhe foram designados, pois o repassador não armazena a lista de clientes de cada relator. 
+
+Na especificação original do GMTP, preconiza-se que o nó relator em processo de desconexão deve continuar enviando pacotes do tipo \pac{GMTP-Feedback} para o nó repassador, até que um novo relator seja eleito. Consequentemente, o nó relator também deve manter a conexão com os seus clientes designados até a eleição e um novo relator. 
+
+Ainda de acordo com a especificação original, quando o nó repassador receber o pacote do tipo \pac{GMTP-Close}, este deve verificar se o referido nó cliente é um nó relator. Em caso afirmativo, o repassador deve transmitir para um dos clientes que também recebe o referido fluxo de dados $F$ (se houver), um pacote do tipo \pac{GMTP-Elect-Request} e aguardar por um \pac{GMTP-Elect-Response}. Este procedimento deve ocorrer com garantia de entrega.
+
+No contexto deste trabalho, implementou-se parcialmente o procedimento de eleição de um novo relator. 
+Não implementou-se o procedimento de eleição de um novo relator quando este sai da rede. 
+No entanto, implementou-se o mecanismo que possibilita que um cliente se autopromova a relator após determinado período, caso seu relator saia da rede. 
+
+% % % % % % % % % % % % % % % % % % % % % % % % % %
+\subsection{Registro de participação no servidor}
+\label{sec:registro-impl}
+
+Ao receber um pacote do tipo \pac{GMTP-Request} referente a um fluxo de mídia $F$ pela primeira vez, o repassador deve registrar $F$ em sua tabela de repasse e encaminhar um pacote do tipo \pac{GMTP-Register} ao servidor. 
+Na parte variável do cabeçalho do pacote \pac{GMTP-Register} deve constar o identificador único do repassador.
+
+Ao receber o pacote \pac{GMTP-Register}, o servidor deve abrir um \textit{socket} de conexão com o repassador, assim como no TCP.
+O servidor então compara se o valor do campo \campo{Nome do fluxo} que consta no pacote recebido é idêntico ao identificador do fluxo $F$ referente à mídia disponível no servidor. Caso seja diferente, o servidor rejeita a conexão, enviando um pacote do tipo \pac{GMTP-Reset} ao repassador. 
+
+Uma vez aceita a conexão, o servidor responde ao repassador com um pacote do tipo \pac{GMTP-Register-Reply}. Ao enviar o referido pacote, o servidor registra a marca de tempo no instante do envio afim de, posteriormente, calcular o valor do RTT. 
+Conforme descrito na Seção \ref{sec:redesfavores}, o uso do pacote do tipo \pac{GMTP-Register-Reply} permite a descoberta de uma rota entre o servidor e o repassador.
+Isto porque todos os demais nós repassadores existentes na rota entre o servidor e o repassador, e que já estejam recebendo a mídia $F$, devem adicionar seu identificador no pacote \pac{GMTP-Register-Reply}, antes de roteá-lo para o próximo salto da rota em direção ao nó repassador.
+
+Quando o pacote \pac{GMTP-Register-Reply} alcança o nó repassador, este envia a lista ordenada de repassadores entre ele e o servidor de volta ao nó servidor, utilizando um pacote do tipo \pac{GMTP-Route-Notify}, conforme ilustra-se na Figura \ref{subfig:registro-2}.
+Ao mesmo tempo, o repassador também notifica aos clientes que aguardavam o início da conexão com o servidor, enviando um pacote do tipo \pac{GMTP-RequestNotify} a cada cliente que requisitou a mídia. 
+Neste caso, o conteúdo do campo \campo{Código} da parte variável do cabeçalho do pacote \pac{GMTP-RequestNotify} deve conter o valor $OK (0)$, indicando sucesso na requisição ao servidor.
+
+Ao receber o pacote \pac{GMTP-Route-Notify}, o servidor armazena a rota $W$, isto é, a lista de repassadores entre repassador requisitante e o servidor, em uma tabela \textit{hash}. 
+O servidor armazena uma tabela \textit{hash} para cada fluxo de mídia que transmite, e a chave da tabela é identificador único do repassador.
+Cada entrada da tabela armazena a rota $W$, o endereço IP e o \textit{socket} correspondentes ao repassador.
+
+Esse procedimento de três vias confirma o registro de participação do repassador no servidor. Após a realização do registro, o servidor passa a enviar os dados multimídia ao repassador, utilizando seu IP e porta. O servidor não se conecta diretamente aos clientes, a não ser que este tenha se autopromovido a repassador.
+
+Um repassador pode interceptar o registro de participação de outros repassadores durante seu trajeto até o servidor, conforme ilustra-se na Figura \ref{subfig:parceria-2}. 
+Neste caso, o pacote \pac{GMTP-Register} não alcançará o servidor. Em momento oportuno, o servidor será notificado sobre o novo repassador que solicitou o registro de participação, conforme descrito na Seção \ref{sec:renovacao}.
+%TODO Pensar na solução do problema: e se o roteador do meio da rota morrer?
+
+\subsubsection{Renovação do registro de participação}
+\label{sec:renovacao}
+
+No GMTP, um nó repassador deve periodicamente sinalizar sua participação na rede de favores através de um método \textit{keep-alive}, comumente utilizado em outros protocolos de rede consolidados, como o TCP~\cite{sales2014gmtp}. Nesse aspecto, o GMTP segue, guardadas as devidas restrições e especificidades, a RFC 1122, \textit{Requirements for Internet Hosts - Communication Layers}~\cite{RFC1122}.
+
+O procedimento de renovação do registro de participação visa principalmente atualizar a tabela de rotas do servidor, a fim possibilitar a ampliação do número de parcerias entre os nós repassadores e melhorar a qualidade de transmissão para os clientes. 
+
+Para sinalizar a sua participação na rede de favores, o repassador deve enviar periodicamente um pacote do tipo \pac{GMTP-Register} ao servidor. Este, por sua vez, responderá à requisição com um pacote do tipo \pac{GMTP-Register-Reply} e, por fim, o repassador responderá com um pacote do tipo \pac{GMTP-Route-Notify}. 
+O servidor difere um registro de participação de uma renovação porque no registro, o campo \campo{Taxa proposta de transmissão} do cabeçalho do GMTP tem valor igual a $4294967295$, que corresponde ao valor máximo que o campo de \ut{32}{bits} pode assumir. No ato da renovação, o valor do campo difere do valor máximo.
+
+O procedimento de renovação da participação difere do procedimento de registro de participação em um aspecto fundamental: um repassador não pode interceptar a renovação de participação de outros repassadores durante seu trajeto até o servidor.
+Desta forma, o servidor passa a conhecer os repassadores que estejam sendo servidos por repassadores parceiros e cujos registros de participação foram interceptados. 
+Caso um novo repassador entre na rede, o servidor tomará conhecimento ao receber pacotes \pac{GMTP-Route-Notify} de outros repassadores, que o novo repassador poderá ser utilizado na formação de novas parcerias, conforme discutido na Seção \ref{sec:formacao-parcerias}.
+Caso um dos repassadores saia da rede, o servidor tomará conhecimento (a) ao deixar de receber a renovação de participação do repassador ou (b) ao receber o pacote \pac{GMTP-Route-Notify} contendo a rota atualizado.
+
+Por padrão, adotou-se o intervalo de \ut{1}{s} para cada renovação do registro. 
+O intervalo entre os registros de participação não precisa e nem pode ser muito pequeno, porque isso causaria um consumo desnecessário de largura de banda. 
+Utilizando o valor padrão de \ut{1}{s}, o procedimento de renovação de participação gera um consumo adicional de pelo menos\footnote{O tamanho dos pacotes \pac{GMTP-Register-Reply} e \pac{GMTP-Route-Notify} varia conforme a quantidade de repassadores na rota.} 246 Bytes por segundo por repassador.
+Além disso, quando o servidor recebe o pacote \pac{GMTP-Route-Notify}, ele deve atualizar a sua tabela de rotas para analisar a rota atualizada e identificar a possibilidade de novas parcerias.
+Se o intervalo de renovação do registro de participação for muito pequeno, o servidor poderá ser sobrecarregado, calculando rotas e parcerias desnecessariamente.
+Esse aspecto do GMTP pode ser revisto e aprimorado, tanto no que se refere ao intervalo ideal para a renovação do registro de participação, quanto aos algoritmos de cálculo e rotas e parcerias.
+
+% % % % % % % % % % % % % % % % % % % % % % % % % %
+\subsection{Transmissão de dados}
+
+Após o estabelecimento de conexão, os servidor envia dados aos repassadores em modo \textit{unicast} a fim de distribuir os pacotes de dados do tipo \pac{GMTP-Data}. 
+De forma similar, os nós repassadores utilizam o mesmo tipo de pacote para enviar os dados para os nós clientes, porém em modo \textit{multicast}.
+
+Na implementação atual do GMTP, não é possível o envio de pacotes maiores que o MTU (\textit{Maximum Transmission Unit}). Para evitar o eventuais erros na aplicação, no GMTP implementou-se a descoberta de PMTU (\textit{Path Maximum Transmission Unit})~\cite{RFC1191}. 
+Assim, o desenvolvedor da aplicação servidora poderá consultar o tamanho máximo do pacote de dados permitido, evitando possíveis falhas no envio dos dados.
+
+\subsubsection{\textit{Buffers} dos repassadores}
+
+Conforme ilustra-se na Figura \ref{fig:buffer}, para cada fluxo de dados, um repassador GMTP gerencia um \textit{buffer} de entrada e um ou mais \textit{buffers} de saída. Utiliza-se o somatório dos espaços ocupados por cada \textit{buffer} de entrada para obter o termo $q(\hat{t})$ da Equação \ref{eq:rcp2}, utilizada no GMTP-UCC.
+
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width=\columnwidth]{imgs/buffer-repass.pdf}
+	\caption{\textit{Buffers} de um repassador GMTP.}
+	\label{fig:buffer} 
+\end{figure}
+
+Para cada fluxo de dados, um repassador GMTP gerencia pelo menos um \textit{buffer} de saída referente ao canal \textit{multicast} para os clientes locais. Se o repassador tiver parceria com outros repassadores, gerenciará um \textit{buffer} de saída para cada repassador parceiro.
+Cada \textit{buffer} de saída, seja \textit{unicast} ou \textit{multicast}, possui seu próprio temporizador para gerenciamento independente da taxa de transmissão.
+
+%Falta falar sobre:
+%\begin{itemize}
+%\item Mapa de buffer
+%\item \pac{GMTP-DataPull-Request} e \pac{GMTP-DataPull-Response}
+%\item Descarte de pacotes
+%\end{itemize}
+
+\subsubsection{Transmissão \textit{unicast}}
+ \label{sec:transm-unicast}
+
+%TODO Enaltecer
+Por se tratar de um protocolo para envio de mídia ao vivo, o servidor do GMTP envia o mesmo pacote de dados a todos os repassadores, através de um \textit{pool} de conexões, no modo \textit{unicast}. O servidor envia os dados para cada repassador de acordo com a taxa de transmissão definida através do GMTP-UCC.
+
+A especificação original do GMTP-UCC preconiza que, assim como no RCP, o procedimento de cálculo e envio da nova taxa de transmissão ao servidor deve ocorrer, no máximo, a cada RTT.
+Na prática, isso implicaria que o procedimento de renovação do registro de participação fosse realizado a cada RTT, o que seria inviável, conforme discutido na Seção \ref{sec:renovacao}.
+
+No contexto deste trabalho, implementou-se o mecanismo de envio envio da nova taxa de transmissão ao servidor a cada RTT, porém utilizando apenas um pacote do tipo \pac{GMTP-Ack}, evitando assim o consumo desnecessário de largura de banda. 
+
+No caso dos clientes que se autopromoveram à condição de repassadores, não é adequada a utilização do GMTP-UCC para controle de congestionamento \textit{unicast}, visto que o referido algoritmo foi projetado para utilização em roteadores.
+Nesses casos, o controle de congestionamento é feito através de uma versão do GMTP-MCC adaptada para fins de controle de congestionamento \textit{unicast}. As principais diferenças entre a versão padrão e a adptada do GMTP-MCC são:
+\begin{itemize}
+	\item Não há eleição de relatores. Todos os clientes autopromovidos a repassador enviam relatórios ao servidor, como se fossem relatores.
+	\item O servidor deve aceitar os pacotes do tipo \pac{GMTP-Feedback} para fins de controle de congestionamento. Nesse caso, o servidor deve ignorar o campo de \ut{8}{bits} referente ao número de clientes que estão ativos e registrados em um relator, porque esse campo não é utilizável no contexto do controle de congestionamento \textit{unicast}.
+	\item Opcionalmente, os clientes autopromovidos podem enviar pacotes do tipo \pac{GMTP-Ack} para fins de controle de congestionamento. Isto é possível porque o tipo de pacote \pac{GMTP-Feedback} nada mais é que um pacote \pac{GMTP-Ack} estendido para uso dos relatores no GMTP-MCC.
+\end{itemize}
+
+%TODO Se der tempo, adaptar aquele diagrama.
+
+%TODO Explicar muito bem essa parte, porque o RCP é a chave do negócio... 
+%Falta: Explicar como funciona de fato esse controle de congestionamento...
+% O ack precisa ser 'interceptado', senão o algorimto não funciona...
+% Explicar porque não dá pra escrever cada GMTP-Data, por exemplo...
+
+%O controle de congestionamento \textit{unicast}, através do GMTP-UCC, é realizado conforme descrito nas Seções \ref{sec:gmtp-ucc} e \ref{sec:inter}.
+
+\subsubsection{Transmissão \textit{multicast}}
+ \label{sec:transm-multicast}
+
+No Linux, todas as informações sobre a conexão do cliente são armazenadas em uma tabela \textit{hash}. 
+Ao receber um pacote de rede, o protocolo de transporte faz uma busca pelo \textit{socket} correspondente ao pacote, através da tabela \textit{hash} supracitada. Essa busca é necessária porque o protocolo precisa das informações contantes do \textit{socket} a fim de tratar o pacote recebido apropriadamente. 
+Caso o protocolo de transporte não encontre o \textit{socket}, o pacote é descartado.
+Dentre os parâmetros necessários para buscar o \textit{socket}, estão os endereços IP e portas do remetente e do receptor do pacote.
+
+%Enaltecer, pois é claramente uma forma diferente de se fazer em comparação com outros protocolos
+Conforme descreve-se na Seção \ref{sec:req-clientes}, os clientes GMTP sempre se conectam ao servidor através do seu endereço IP (\textit{unicast}) e porta. Assim, registra-se o \textit{socket} do cliente GMTP no \textit{kernel} como se fosse um \textit{socket} \textit{unicast} comum.
+Ao receber um pacote de dados referente ao fluxo de dados $F$, o cliente GMTP precisa localizar o \textit{socket} correspondente ao pacote, a fim de tratá-lo apropriadamente. 
+Geralmente, o pacote de dados será destinado ao endereço do canal \textit{multicast} definido pelo repassador. Nesses casos, o GMTP não pode realizar a busca pelo \textit{socket} correspondente utilizando a forma tradicional, porque para o Linux, o cliente GMTP está conectado ao servidor de forma \textit{unicast}. 
+Mesmo que o pacote recebido seja destinado ao endereço \textit{unicast} do cliente (porque este se autopromoveu a repassador, por exemplo), o GMTP não pode realizar a busca pelo \textit{socket} de forma semelhante ao TCP, pois o GMTP-Intra compartilha a mesma conexão para todos os clientes locais que estejam recebendo determinada mídia, conforme descrito na Seção \ref{sec:req-clientes}.
+
+Conforme ilustra-se na Figura \ref{fig:rcv_data}, ao receber um pacote de dados, o cliente GMTP faz a busca na tabela de clientes do GMTP-Intra utilizando o identificador da mídia $F$ como chave. Caso não se localize uma entrada na tabela e o referido pacote seja do tipo \textit{multicast}, o pacote será descartado. 
+Conforme descrito na Seção \ref{sec:tabelas-intra}, cada entrada da tabela contém o endereço IP e porta do canal \textit{multicast}, além da lista dos clientes daquele \textit{host} que requisitaram a mídia $F$. 
+Assim, o GMTP pode realizar a busca pelo \textit{socket} do cliente que requisitou a mídia $F$ utilizando como parâmetro os endereço IP e porta \textit{unicast} do cliente, mesmo que o pacote recebido seja do tipo \textit{multicast}. 
+Se no mesmo \textit{host} mais de um cliente solicitou a mídia $F$, o GMTP faz a busca pelo \textit{socket} correspondente para cada solicitante.
+Após obter o \textit{socket} correspondente, o GMTP pode enviar o pacote de dados às aplicações. 
+
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width=\columnwidth]{imgs/rcv_data.pdf}
+	\vspace{-1cm}
+	\caption{Fluxograma do processo de recepção de mídia em um nó cliente GMTP.}
+	\label{fig:rcv_data} 
+\end{figure}
+
+Esse procedimento para recepção de dados adotado no GMTP foi concebido de forma a favorecer o compartilhamento da conexão local e a implementação do \textit{multicast} transparente à aplicação.
+
+Através do GMTP-MCC, realiza-se o controle de congestionamento \textit{multicast}, conforme descrito nas Seções \ref{sec:gmtp-mcc} e \ref{sec:gmtp-mcc-impl}.
+
+% % % % % % % % % % % % % % % % % % % % % % % % % %
+\subsection{Formação da Rede de Favores}
+\label{sec:formacao-parcerias}
+
+No GMTP, um nó repassador pode formar parceiras com outros repassadores basicamente de três formas: (a) no ato do registro de participação, quando um repassador pode interceptar o registro de participação de outros repassadores durante seu trajeto até o servidor; (b) através de requisição explícita do repassador para o servidor, que indica as parceiras; e (c) através da participação ativa do servidor, que indica a parceria aos repassadores, mesmo sem ser solicitado a fazê-lo.
+
+Nesse contexto, deve-se levar em conta os avanços de novas arquiteturas de rede, como as ICNs,
+baseadas em um modelo de serviço do tipo \textit{pull} e no provimento de \textit{cache} dos dados mais acessados nos roteadores.
+Desta forma, o papel do repassador GMTP, assim como nos roteadores das ICNs, supera as funções de um roteador de datagramas encontrado na Internet atual. Portanto, deve-se considerar um cenário onde os roteadores serão projetados com maior poder de processamento, visando a sua atuação em redes ICN e participação ativa na distribuição de conteúdo.
+
+Conforme discutido na Seção \ref{sec:registro-impl}, um repassador pode interceptar um datagrama referente ao registro de participação de outros repassadores durante seu trajeto até o servidor. 
+Conforme ilustra-se na Figura \ref{subfig:parceria-2}, através desse mecanismo evita-se o envio de mais de um fluxo de dados através da mesma rota e pertencente à mesma mídia ao vivo. Consequentemente, evita-se o consumo desnecessário de recursos de rede.
+O repassador que já está recebendo a mídia, ao interceptar o registro do seu futuro parceiro, impede que múltiplas requisições alcancem o servidor, evitando (a) o consumo excessivo de recursos computacionais do servidor e (b) a duplicação de fluxos de dados na rota.
+Caso a requisição alcançasse o servidor, o repassador receberia dois fluxos de dados idênticos: um destinado a si próprio e outro destinado ao novo repassador. 
+Com a interceptação, o repassador continua recebendo apenas um fluxo de dados, o qual repassa ao novo parceiro. No contexto deste trabalho, não limitou-se a quantidade de interceptações que um repassador pode realizar.
+
+%TODO Eu acho que vc deveria amenizar o q vc fala nesse parágrafo, ou até mesmo tirar esse parágrafo, uma vez que o que estamos assumindo aqui são redes ICN. Esse parágrafo pode ser uma grande zona de ataque da banca, acho melhor evitar, mas a decisão final é sua. Eu sendo você, mudaria a fala desse parágrafo para enautecer as vantagens em se fazer isso e esquecer se o roteador tem poder computacional ou não... até sdn também precisa de um poder computacional maior... então acho q aqui nao deveria ser o ponto de duvidar até que ponto esse procedimento é por ou não, mas sim falar sobre ICN etc para enaltecer que o que estamos considerando aqui não é nenhuma maluquisse, que faz sentido e que é possível com o advento de novos equipamentos de rede mais eficientes em termos de processamento e memória
+
+%Vale salientar que embora vantajoso no que se refere ao consumo de recursos da rede, o ato de interceptar uma requisição gera custos computacionais adicionais ao repassador, o que pode aumentar o atraso de processamento nodal e impactar negativamente na qualidade de serviço oferecida às aplicações.
+%Por exemplo, a cada interceptação o repassador precisa guardar informações chave do nó parceiro.
+%Logo, é necessário investigar o impacto que a interceptação de requisições pode ocasionar ao repassador.
+%Deve-se conhecer até que ponto a interceptação é vantajosa, isto é, deve-se pesquisar uma forma de calcular o número sub-ótimo de parceiros para cada repassador.
+%
+
+%TODO Eu acho que vc deveria exemplificar aqui como seria isso, principalmente apresentando alguma ilustração, com base na taxa de transmissão (eu coloquei uma figura disso na minha apresentação da tese)
+Outra forma prevista na especificação original do GMTP para formalização de parceiras é através de requisição explícita do repassador para o servidor. Esse mecanismo de ampliação de parcerias propõe que o repassador tome a iniciativa de procurar novas parcerias, consultando o servidor através de um pacote do tipo \pac{GMTP-RelayQuery}.
+Nesse contexto, o nó repassador pode enviar periodicamente um pacote do tipo \pac{GMTP-RelayQuery} para o nó servidor a fim de descobrir melhores parceiros e aumentar o número de parcerias. Em seguida, o nó servidor constrói uma lista de nós parceiros e envia como resposta ao nó repassador. 
+%No contexto deste trabalho, esse procedimento de requisição explícita de parcerias do repassador para o servidor não foi implementado ficando como atividade para trabalhos futuros.
+No entanto, propôs-se um mecanismo um pouco diferente dessa proposta prevista no GMTP. Neste caso, o servidor ativamente indica uma nova parceria a um repassador, sem que tenha sido solicitado a fazê-lo. 
+Assim, apesar da não implementação do recurso \pac{GMTP-RelayQuery}, novas parcerias podem ser formadas periodicamente, a partir de sugestões do servidor, através do novo recurso \pac{GMTP-Delegate}.
+
+Nesse contexto, outra forma de realizar novas parcerias entre os repassadores é através da intervenção ativa do servidor.
+Conforme ilustra-se na Figura \ref{fig:delegate}, o servidor pode identificar a possibilidade de novas parcerias após atualizar a sua tabela de rotas ao receber uma renovação de participação. 
+Ao constatar uma potencial nova parceria, o servidor deve enviar um pacote do tipo \pac{GMTP-Delegate} para informar a um repassador que este deve formalizar parceria com outro repassador.
+Ao receber o referido pacote, o repassador deve armazenar os dados do novo parceiro e aguardar que este envie a sua renovação de registro. Ao receber a renovação de registro, o repassador encaminha um pacote do tipo \pac{GMTP-Delegate-Reply} ao servidor, indicando que formalizou a parceria e que assumiu o repasse dos pacotes de dados. 
+
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width=\columnwidth]{imgs/delegate.pdf}
+	\vspace{-1cm}
+	\caption{Funcionamento do \pac{GMTP-Delegate}.}
+	\label{fig:delegate} 
+\end{figure}
+
+Ao receber o pacote \pac{GMTP-Delegate-Reply}, o servidor interrompe a transmissão de dados ao repassador que foi delegado, mantendo o envio de dados apenas ao repassador que recebeu o \pac{GMTP-Delegate}. O servidor deve considerar que o repassador não aceitou o pedido de delegação, caso não receba a resposta do repassador após três tentativas.
+No contexto deste trabalho, não limitou-se a quantidade de parcerias que um repassador pode realizar através do mecanismo de delegação da transmissão.
+%Cabe ressaltar que é necessário investigar o impacto que a delegação da transmissão pode ocasionar ao repassador, pesquisando-se uma forma de calcular o número sub-ótimo de parceiros para cada repassador. Caso contrário, o servidor poderia sobrecarregar um repassador, delegando a ele um número excessivo de nós parceiros.
+
+É importante salientar que o procedimento de delegação descrito acima é transparente aos repassadores delegados. Nem o repassador delegado nem os clientes tomam conhecimento de que pararam de receber os dados diretamente do servidor para receber os dados de outro repassador.
+
+Em uma transmissão ao vivo pode haver milhares de nós requisitando a mídia a um servidor e, portanto, ao interceptar uma requisição ou formar parcerias, os repassadores contribuem para a redução do consumo de recursos computacionais do servidor e da rede.
+Ao delegar a transmissão, o servidor reduz sua sobrecarga de processamento e a quantidade de dados que precisa transmitir na rede.
+
+% % % % % % % % % % % % % % % % % % % % % % % % % %
+\subsection{Encerramento da transmissão}
+\label{sec:encerramento}
+
+No GMTP, o procedimento de desconexão de um nó varia de acordo com o papel exercido. 
+
+\subsubsection{Clientes e relatores}
+Na especificação original do GMTP, preconiza-se que para sinalizar uma desconexão, um nó cliente transmite um pacote do tipo \pac{GMTP-Close} pelo canal de controle, contendo o identificador do fluxo que deseja se desconectar. 
+Ao receber este tipo de pacote, o nó repassador transmite ao nó cliente um pacote do tipo \pac{GMTP-Reset}, sinalizando que está ciente do fechamento da conexão. 
+Nesse ínterim, os nós desalocam recursos relacionados à respectiva conexão.
+
+Porém, no contexto deste trabalho, não foi possível implementar o procedimento de desconexão através do canal de controle, devido a uma limitação temporária relacionada à criação de \textit{socket} de controle no repassador. Trata-se de uma dificuldade técnica que não foi possível superar até a data de publicação deste trabalho.
+Como clientes GMTP sempre se conectam ao servidor através do seu endereço IP (\textit{unicast}) e porta, criando-se um \textit{socket unicast}, no contexto deste trabalho, adotou-se provisoriamente o procedimento de desconexão a seguir.
+
+Para se desconectar, o nó cliente envia um pacote do tipo \pac{GMTP-Close} através do \textit{socket unicast}, ou seja, endereçado ao servidor. 
+O repassador de origem do cliente intercepta o pacote e procede conforme definido na especificação original do GMTP: transmite ao nó cliente um pacote do tipo \pac{GMTP-Reset}, sinalizando que está ciente do fechamento da conexão.
+
+O processo de desconexão de um nó cliente que se autopromoveu a repassador é semelhante ao procedimento de desconexão de um nó cliente: envia-se um pacote do tipo \pac{GMTP-Close} endereçado ao servidor, que responde um pacote do tipo \pac{GMTP-Reset}, encerrando a conexão.
+
+Seguem abaixo algumas vantagens de não utilizar o canal de controle para finalizar a conexão dos clientes GMTP:
+\begin{itemize}
+	\item Ao utilizar o canal de conexão padrão para enviar a mensagem de saída da rede, a forma do cliente sair da rede se assemelha à forma padrão de protocolos conhecidos, como o TCP e o DCCP.
+	\item Torna-se desnecessário adaptar a forma de sair da rede para os clientes que se autopromoveram a repassador. Os clientes que se autopromoveram a repassador não podem utilizar o canal de controle para sair da rede.
+\end{itemize}
+
+Por outro lado, seguem abaixo algumas desvantagens de não utilizar o canal de controle para finalizar a conexão dos clientes GMTP:
+\begin{itemize}
+	\item Atualmente, quando um cliente encerra a conexão, o seu relator GMTP não toma conhecimento do ocorrido. Para que o relator tome conhecimento da saída do cliente, sem utilização do canal de controle, há duas soluções possíveis: (i) ou o cliente deve enviar o pacote \pac{GMTP-Close} também ao relator, ou o relator deve aguardar um período de \textit{timeout} sem receber \textit{acks} do cliente para então considerar que o cliente está inativo. 
+	Caso o o canal de controle fosse utilizado para finalizar a conexão do cliente, o seu relator automaticamente seria notificado da saída através do canal de controle.
+\end{itemize}
+
+Futuramente, pretende-se avaliar a possibilidade de implementar esta função da forma como definida na especificação original do GMTP, analisando as vantagens e desvantagens.
+
+O processo de desconexão de um nó relator é semelhante ao procedimento de desconexão de um nó cliente, exceto que deve-se realizar um procedimento para eleger um novo nó relator quando um nó com tal responsabilidade solicitar desconexão. Na Seção \ref{sec:eleicao}, descreve-se o procedimento de eleição de novos nós relatores adotado.
+
+\subsubsection{Repassadores}
+Um nó repassador realiza o procedimento de desconexão quando não há mais clientes recebendo o fluxo de dados $F$ ou quando o servidor explicitamente encerra a conexão.
+Para sinalizar o encerramento de sua de participação da rede, o repassador deve enviar ao servidor um pacote do tipo \pac{GMTP-Close}. 
+Ao receber um pacote do tipo \pac{GMTP-Close} oriundo de um repassador, o servidor deve finalizar o procedimento de desconexão enviando um pacote do tipo \pac{GMTP-Reset}.
+
+No GMTP, define-se o chamado \emph{período de carência de novas parcerias}, um parâmetro que determina o tempo em que um nó repassador, em processo de desconexão, continuará repassando o fluxo de dados $F$ para seus parceiros repassadores.
+No contexto deste trabalho, definiu-se o \emph{período de carência de novas parcerias} como \textbf{indeterminado}. Na prática, isto significa que mesmo quando determinado repassador não tem mais nenhum cliente recebendo um fluxo $F$, ele continua a repassar os dados a outros repassadores parceiros até que (i) não haja mais repassadores parceiros recebendo o fluxo ou (ii) o servidor explicitamente encerre a conexão.
+
+%TODO Essas discussões tem que ser enaltecidas
+O mecanismo descrito a seguir não foi implementado, mas propõe-se que seja levado em consideração para implementação futura.
+Opcionalmente, um repassador pode continuar registrado ao servidor mesmo sem que haja clientes ou repassadores parceiros recebendo um fluxo de mídia. Para isto, basta que o repassador pare de enviar pacotes do tipo \pac{GMTP-Ack} ao servidor, mas continue enviando a renovação do registro de participação.
+Ao parar de receber \emph{acks}, o servidor marcará o repassador como \textit{inativo}, porém \textit{disponível}. Neste caso, o servidor interrompe o envio de dados ao repassador, mas não finaliza a conexão, visto que o repassador continuará renovando o seu registro de participação.
+Desta forma, o repassador continuará disponível para participar da rede de favores. Quando formalizar uma nova parceria, o repassador voltará a enviar os \emph{acks} periódicos e o servidor voltará a considerá-lo \textit{ativo}, enviando novamente o fluxo de mídia.
+
+%TODO Essas discussões tem que ser enaltecidas, 
+%pois sempre dão novos insights e pontos para serem discutidos com mais detalhe em um futuro avanço do gmtp. Essas coisas são reais contribuições do seu trabalho. Você tem que separar e bolar uma forma de organizar isso para explicar depois, inclusive na apresentação
+\subsubsection{Servidores}
+Ao final da transmissão, o servidor deve enviar aos repassadores um pacote do tipo \pac{GMTP-Close}.
+Cada repassador, ao receber o pacote \pac{GMTP-Close}, deve responder ao servidor com um pacote do tipo \pac{GMTP-Reset}. 
+
+Para sinalizar aos seus clientes e repassadores parceiros que o servidor encerrou a transmissão, o repassador deve inserir o pacote \pac{GMTP-Close} recebido no \textit{buffer} de dados, para ser enviado logo após o último pacote de dados.
+A utilização de um canal \textit{multicast} para o envio do pacote \pac{GMTP-Close} aos lcientes locais é importante porque assim evita-se que o repassador tenha que manter o registro de todos os clientes conectados na rede local. Ao enviar a notificação por \textit{multicast}, todos os clientes receberão a notificação.
+
+A especificação original do GMTP não deixa explícito o canal pelo qual o repassador deve enviar o pacote \pac{GMTP-Close} aos clientes, embora deixe implícito que deve-se utilizar o \textit{Canal de Controle} para o envio desse tipo de pacote.
+Porém, utilizar um  canal paralelo ao de dados para transmitir o pacote de encerramento de conexão, aumentaria de forma desnecessária a complexidade de implementação da chamada \textit{close} do \textit{socket} GMTP. 
+Se o repassador utilizasse o \textit{Canal de Controle} para enviar o pacote \pac{GMTP-Close}, o cliente, ao receber o \textit{close}, teria que manter seu \textit{socket} aberto por um período de \textit{timeout} para que houvesse tempo hábil de receber os últimos pacotes de dados que ainda estavam no \textit{buffer} do repassador.
+Como o repassador adiciona o pacote \pac{GMTP-Close} na mesma fila dos pacotes de dados, o cliente GMTP tem a garantia de que ao receber o pacote \pac{GMTP-Close} não há mais dados a serem recebidos. Com essa garantia, o cliente pode imediatamente desalocar recursos relacionados à respectiva conexão.

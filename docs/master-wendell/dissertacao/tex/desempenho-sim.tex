@@ -1,0 +1,417 @@
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+
+\section{Simulações em maior escala}
+\label{sec:simulaoes-ns3}
+
+As simulações do GMTP via NS-3 tiveram como objetivo avaliar o desempenho da implementação do GMTP no núcleo do Linux em cenários com uma quantidade maior de nós clientes. Nessas simulações, considerou-se o impacto que as adaptações e propostas no Capítulo \ref{cap:aplicabilidade} pudessem ter no desempenho do GMTP, comparando-se, quando possível, os resultados obtidos com os resultados disponíveis em \cite{sales2014gmtp}.
+
+Para realizar a comparação entre as implementações do GMTP nos sistemas supracitados, definiu-se a modalidade experimental em um ambiente de simulação de rede. 
+%Nesse ambiente de simulação, acoplou-se a implementação do GMTP no \textit{kernel} do Linux ao simulador de redes NS-3. 
+Através da definição de uma topologia de rede, das variáveis independentes e dos fatores, mediram-se e analisaram-se as principais métricas (variáveis dependentes) que determinam a satisfação do usuário ao assistir a um evento através de um sistema de distribuição de mídias ao vivo.
+Para isto, realizou-se um estudo detalhado do comportamento do GMTP, observando-o em diferentes configurações de rede, a fim de determinar suas vantagens, limites e os impactos que seus recursos podem gerar tanto sobre os nós quanto sobre a rede.
+
+\subsection{Metodologia}
+\label{subsec:metodologia-ns3}
+
+Visando avaliar os resultados dos experimentos, definiu-se a metodologia utilizada nas simulações através da definição de uma topologia de rede, as variáveis dependentes e independentes, população e amostras, tratamentos, instrumentações e o tipo de mídia a ser transmitido. Nesta seção, discute-se cada um desses aspectos.
+
+\subsubsection{Topologia da rede}
+
+Primeiramente, definiram-se as topologias de rede, como ilustra-se na Figura \ref{fig:topos}.
+Em seguida, conforme ilustra-se na Figura \ref{subfig:topo01}, utilizou-se a Topologia A para simular o desempenho do GMTP em um cenário desfavorável, definindo-se configurações dos nós de tal modo que a cooperação entre os repassadores fosse limitada.
+Conforme discute-se na Seção \ref{sec:formacao-parcerias}, no contexto deste trabalho, não implementou-se a busca por mais parceiros através do \pac{GMTP-RelayQuery}.
+Nesse contexto, a Topologia A é desfavorável à formação de parcerias entre roteadores, visto que em tal topologia não há possibilidade de interseção das rotas do servidor até os repassadores.
+Definiu-se tal topologia visando avaliar o desempenho do GMTP no início de sua implantação, quando poucos roteadores darão suporte ao protocolo.
+
+\begin{figure}[!htb]
+	\centering
+	\subfloat[Topologia A, onde apenas o roteador local tem o GMTP ativado.\label{subfig:topo01}] {
+		\includegraphics[scale=.9]{imgs/topologia-01.pdf}
+	}
+	\hfill
+	\subfloat[Topologia B, versão adaptada do \textit{backbone} da rede utilizada em \cite{sales2014gmtp}. \label{subfig:topo02}] {
+		\includegraphics[scale=.4]{imgs/rede-geant-adapt.pdf}
+	}
+	\hfill
+	\caption{Topologias utilizadas na simulações em maior escala.}
+	\label{fig:topos}
+\end{figure}
+
+%\begin{figure}[b!ht]
+%	\begin{center}
+%		\includegraphics[scale=.49]{imgs/rede-geant.pdf}
+%	\end{center}
+%	\vspace{-0.8cm}
+%	\caption{Versão adaptada do \textit{backbone} da rede GÉANT, com larguras de banda modificadas para ser utilizada no experimento.}
+%	\label{fig:rede-geant}
+%\end{figure}
+
+Em seguida, conforme ilustra-se na Figura \ref{subfig:topo02}, utilizou-se a Topologia B para simular o desempenho do GMTP em uma rede semelhante à rede simulada em \cite{sales2014gmtp}, ou seja, uma versão adaptada da atual rede GÉANT\footnote{Rede GÉANT é a rede de pesquisa e educação pan-europeia, que interliga as Redes Nacionais de Pesquisa e Educação da Europa (NRENs). Para mais informações, acesse: http://www.geant.net.}, composta por 27 roteadores.
+Na Topologia B, é possível a formação de parceiras entre roteadores, através de (a) interceptações de requisições dos repassadores, ou (b) através do novo mecanismo \pac{GMTP-Delegate}, onde o servidor explicitamente indica uma nova parceria a um repassador, sem que tenha sido solicitado a fazê-lo, com base nas intercessões das rotas dos repassadores.
+
+Com relação à conectividade dos nós clientes à rede, simularam-se redes locais através das quais os nós clientes requisitaram um fluxo multimídia de teste. Para isto, foram geradas $27$ sub-grafos aleatórios de um grafo completo, com $12$ vértices, representando os roteadores da rede local.
+%Por fim, os nós clientes foram distribuídos nas redes locais de forma igualitária, um para cada roteador até distribuir todos os clientes nas redes locais.
+
+\subsubsection{Variáveis independentes}
+
+Na Tabela~\ref{tb:variaveis-independentes}, apresentam-se as variáveis independentes utilizadas no experimento, com base na topologia da rede apresentada anteriormente.
+
+\begin{table}[b!ht]
+  \centering
+  \caption{Variáveis independentes utilizadas no experimento.}
+  \renewcommand{\arraystretch}{1}% Spread rows out...
+  \begin{tabular}{>{}m{2.8in} >{}m{1in}}
+    \toprule
+    \textbf{Parâmetros} & \textbf{Valores} \\
+    \midrule
+%    Número total de roteadores & 4 \\
+%    Número de nós roteadores (\textit{backbone}) & 2 \\
+%    Número de nós roteadores nas LANs & 1 \\
+    Largura de banda entre LANs & \ut{10}{Mbps} \\
+    Atraso de propagação das redes locais & \ut{1}{ms} \\
+    Tempo de simulação de cada ensaio & \ut{900}{s} \\
+    Tamanho do \textit{buffer} (roteadores) & 100 pacotes \\
+    Tamanho máximo do pacote de dados & \ut{1500}{Bytes}\\
+    \bottomrule
+  \end{tabular}
+  \label{tb:variaveis-independentes}
+\end{table}
+
+\subsubsection{Variáveis dependentes}
+\label{sec:metricas}
+
+As principais métricas para medir um sistema de distribuição de mídias ao vivo podem ser
+organizadas em duas categorias, apresentadas a seguir.
+
+\begin{enumerate}
+\item \textbf{Qualidade de serviço à aplicação:} 
+	avaliam-se a taxa de recepção da mídia (RX); a taxa de perdas de pacotes (LX) e o índice de continuidade (IC), sendo:
+	\begin{enumerate}
+	\item \textit{Taxa de recepção da mídia (RX)}: 
+		calculada pela divisão da quantidade total de dados de mídia recebidos pela duração total da transmissão multimídia. Calcula-se a taxa de recepção instantânea dividindo-se a quantidade de dados recebidos em determinado instante pela duração desse instante.
+		Em um cenário ideal, a taxa de recepção dos clientes seria igual à taxa de transmissão do servidor.
+	\item \textit{Taxa de perdas de pacotes (LX)}:
+		calculada pela divisão da quantidade total de dados de mídia recebidos pelo cliente pela quantidade total de dados de mídia enviados pelo servidor.
+		Em um cenário ideal, o total de dados recebidos pelos clientes seria igual ao total de dados transmitidos pelo servidor.
+	\item \textit{Índice de Continuidade (IC)}:
+		calculada pela divisão entre o número de pacotes de dados da mídia entregues ao nó cliente
+		antes do momento de reproduzi-los e o número total de pacotes de dados transmitidos.
+		Assim, contabiliza-se o tempo em que os nós clientes não conseguiram sequer receber pacotes de dados da mídia.
+		Em um cenário ideal, todos os dados de mídia seriam entregues aos clientes antes do momento de reproduzi-los.
+	\end{enumerate}
+\item \textbf{Sobrecarga de controle:}
+	avalia-se a quantidade de pacotes de controle (PC) transmitidos por um protocolo durante o tempo de simulação (contagem dos pacotes que não	transportam dados da mídia).
+\end{enumerate}
+
+Na Tabela~\ref{tb:variaveis-dependentes}, apresentam-se as variáveis dependentes, definidas com base nas métricas supracitadas.
+
+\begin{table}[b!ht]
+  \centering
+  \caption{Variáveis dependentes consideradas no experimento.}
+  \renewcommand{\arraystretch}{1}% Spread rows out...
+  \begin{tabular}{>{}m{4.1in} >{}m{1.0in}}
+    \toprule
+    \textbf{Variáveis dependentes} & \textbf{Símbolo} \\
+    \midrule
+    Taxa de recepção da mídia & RX \\
+    Taxa de perdas de pacotes & LX \\
+    Índice de continuidade (\%) & IC \\
+    Número de pacotes de controle & PC \\
+    \bottomrule
+  \end{tabular}
+  \label{tb:variaveis-dependentes}
+\end{table}
+
+\subsubsection{População e amostras}
+
+Constituiu-se a população por dados coletados durante a execução dos ensaios de acordo
+com às variáveis dependentes apresentadas na Tabela~\ref{tb:variaveis-dependentes}, com amostras coletadas a cada pacote recebido. Em cada ensaio, o nó servidor enviou 10000 pacotes.
+O valor final de cada variável dependente em cada ensaio foi determinado pela média aritmética das respectivas amostras.
+
+\subsubsection{Tratamentos}
+
+Na Tabela~\ref{tb:tratamentos}, apresentam-se os tratamentos considerados no experimento. Nessas simulações, utilizou-se apenas o protocolo GMTP.
+%Nesse contexto, executaram-se $3963$ ensaios distribuídos em $18$ tratamentos, $1321$ ensaios para cada sistema estudado. 
+Na coluna $n_t$, apresenta-se a quantidade de repetições de cada tratamento. 
+
+\begin{table}[b!ht]
+  \centering
+  \caption{Tratamentos executados no experimento.}
+  \renewcommand{\arraystretch}{1}% Spread rows out...
+  \begin{tabular}{cccc}
+    \toprule
+    \textbf{Trat. \#} & \textbf{Número de repassadores} & \textbf{Número de clientes} & $\boldsymbol{n_t}$\\
+    \midrule
+    1  & \multirow{3}{*} {1} & 1 & 16 \\
+    2  &  & 10 & 18 \\
+    3  &  & 20 & 34 \\ \hline
+    4 & \multirow{3}{*} {3} & 3 & 18 \\
+    5 &  & 30 & 25 \\
+    6 &  & 60 & 50 \\ \hline
+    7 & \multirow{3}{*} {30} & 30 & 54 \\ %Definido assim: n7 = n1 + n4 + 20
+    8 &  & 300 & 63 \\   % n8 = n2 + n5 + 20 + 10
+    9 &  & 600 & 104 \\ \hline % n9 = n3 + n6 + 20 + 10 
+    % A partir daqui tem que calcular tudo...
+    13 & \multirow{3}{*} {39} & 500 & 58 \\
+    14 &  & 1.500 & 61 \\  
+    15 &  & 15.000 & 56 \\
+    \bottomrule
+  \end{tabular}
+ %  \\ \scriptsize
+ %    $^1$ Resultado obtido através de projeção, conforme detalhado na Seção ZZZ.  
+  \label{tb:tratamentos}
+\end{table}
+
+Com relação a execução de cada tratamento, executaram-se $10$ ensaios iniciais, obtendo-se assim $10$ amostras para cada variável dependente. Em seguida, calculou-se a média dessas amostras e, para realizar medições com \ut{95}{\%} de nível de confiança, calculou-se a quantidade total de ensaios ($n_t$) de cada tratamento a fim de atingir este nível de confiança.
+Para isto, calculou-se a quantidade de ensaios necessários para obter \ut{95}{\%} de nível de confiança com base na média (das amostras iniciais) $\mu$ de cada variável dependente. 
+
+Sendo assim, a quantidade total de ensaios de cada tratamento foi determinado por 
+$n_t = max(n_{RX}, n_{LX}, n_{IC}, n_{PC}) + 1$. Por exemplo, se para determinada variável dependente obteve-se $\{12, 18, \textbf{23}, 20\}$, assumiu-se $n_t = 24$. Ou seja, repetiu-se $24$ vezes o mesmo tratamento.
+No Apêndice \ref{ap:ensaios}, apresentam-se mais detalhes sobre o cálculo de $n_t$.
+
+Por fim, para a execução de cada ensaio para todos os tratamentos, independente do sistema a ser executado, determinou-se o seguinte:
+
+\begin{enumerate}
+  \item Configurou-se todos os clientes para enviar a requisição da mídia ao servidor. 
+  
+  \item Assegurou-se que os nós clientes fossem submetidos as mesmas capacidades de transmissão, independente do sistema avaliado. 
+
+  \item Todos os nós clientes requisitaram a mídia durante o primeiro terço da transmissão. Dessa forma, garantiu-se que os sistemas foram submetidos às mesmas condições iniciais de conexão.
+  
+  \item Todos os nós clientes se conectaram ao servidor por intermédio de um repassador. 
+  Assegurou-se que nenhum cliente se autopromovesse a repassador, conforme mecanismo descrito na Seção \ref{sec:req-clientes}.
+  
+ %  \item Todos os nós repassadores na borda da rede se conectaram ao mesmo número de clientes.
+\end{enumerate}
+
+\subsubsection{Instrumentação}
+
+Com relação à instrumentação, utilizou-se simulador de redes NS-3~\cite{henderson2008network} integrado com o \textit{Direct Code Execution (DCE) Cradle}~\cite{Tazaki:2013:DCS:2512734.2512755}, um arcabouço que possibilita a integração entre a pilha de protocolos do núcleo do Linux com o NS-3. 
+Através do uso do \textit{DCE Cradle} integrado ao NS-3, é possível criar simulações de rede que utilizam a implementação real, sem modificações, de protocolos de rede do Linux, facilitando a crianção de experimentos reproduzíveis. \citeonline{6766093} demonstraram que as simulações realizadas através do DCE/NS-3 apresentam resultados semelhantes aos esperados em um cenário real.
+
+\subsubsection{Formato da mídia}
+
+Na Tabela \ref{tb:midia-props}, apresentam-se as propriedades da mídia utilizada no experimento.
+
+\begin{table}[b!ht]
+  \centering
+  \caption{Propriedades da mídia transmitida.}
+  \renewcommand{\arraystretch}{1}% Spread rows out...
+  \begin{tabular}{>{}m{2.3in} >{}m{1.8in}}
+    \toprule
+    \textbf{Propriedades} & \textbf{Valores} \\
+    \midrule
+    Mídia sintetizada & \textit{Áudio} \\
+    Taxa de transmissão da mídia & \ut{2}{Mbps} \\
+    Tamanho médio de cada pacote de dados & \ut{744}{B} \\
+    Quantidade total de dados transmitidos & \ut{7.440.000}{B} (10.000 pacotes) \\
+    \bottomrule
+  \end{tabular}
+  \label{tb:midia-props}
+\end{table}
+
+Com base na metodologia apresentada nesta seção, coletaram-se as amostras para as variáveis dependentes e realizou-se uma análise dos dados.
+
+%################### RESULTADOS #############################3
+
+\subsection{Resultados e Discussões}
+\label{subsec:resultados-ns3}
+
+Nesta seção, apresentam-se os resultados das simulações realizadas. 
+A discussão foi organizada de acordo com as métricas apresentadas na Seção \ref{sec:metricas}: \textit{Taxa de recepção da mídia (Total e Instantânea)}, \textit{Taxa de perdas de pacotes}, \textit{Índice de Continuidade} e \textit{Sobrecarga de controle}.
+
+\subsubsection{Taxa de recepção da mídia}
+\label{subsec:rx}
+
+A métrica \textit{taxa de recepção da mídia} é importante, pois mapeia o desempenho do sistema durante todo o ensaio, a partir do instante em que os nós clientes começam a receber o primeiro pacote de dados. Através da taxa e recepção total percebe-se o desempenho total da rede durante a transmissão. De forma semelhante, através da taxa de recepção instantânea, tem-se o conhecimento do desempenho da rede em determinado instante, além da variação de desempenho da rede durante a transmissão.
+
+Na Figura \ref{fig:rx-rate}, apresentam-se as \textit{taxas de recepção totais} medidas em cada tratamento. 
+Observa-se que o valor da taxa de recepção total não depende necessariamente do números de clientes requisitando a mídia, mas da quantidade de repassadores recebendo a mídia diretamente do servidor.
+
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width=\columnwidth]{results/rx.pdf}
+	\caption{Resultado dos tratamentos (1-12) para a métrica \textit{taxa de recepção}.}
+	\label{fig:rx-rate}
+\end{figure}
+
+Nos tratamentos 1, 2 e 3, onde havia apenas um repassador conectado ao servidor, a taxa de recepção total permaneceu muito próxima à taxa de envio máxima fornecida pelo servidor (\ut{250.000}{B/s}). 
+Esse resultado é compatível com os resultados obtidos na Seção \ref{subsec:resultados-vm}. 
+Nestes tratamentos, se estabeleceu uma conexão \textit{unicast} entre o repassador e o servidor, e uma conexão \textit{multicast} entre o repassador e os clientes. Assim, a variação do número de clientes conectados ao repassador não acarretou mudanças significativas na taxa de recepção dos clientes GMTP.
+
+Nos tratamentos 4, 5 e 6 haviam três repassadores recebendo a mídia diretamente do servidor, enquanto nos tratamentos 7, 8 e 9 haviam trinta repassadores recebendo a mídia diretamente do servidor.
+Devido à ausência da função do \pac{GMTP-RelayQuery}, na topologia dos tratamentos, não houve cooperação entre os repassadores.
+Em cada repassador havia o mesmo número de clientes conectados em modo \textit{multicast}. 
+Nesses tratamentos, houve uma redução da taxa de recepção dos clientes quando comparada com a taxa obtida nos tratamentos 1, 2 e 3. Essa redução ocorreu porque, para cada registro de participação, o servidor gerou um fluxo de dados independente, o que ocasionou o aumento da carga de processamento do servidor e o crescimento na fila de pacotes do roteador. 
+Esses dois fatores tendem a aumentar o RTT entre o servidor e os repassadores, o que impacta o controle de congestionamento \textit{unicast} do GMTP, que reduziu a taxa de transmissão de dados do servidor para evitar o congestionamento da rede.
+Nos tratamentos 7, 8 e 9, a redução da taxa de recepção foi ainda maior, não somente pela limitação de envio de dados imposta ao servidor pelo controle de congestionamento, como também pela perda de pacotes ocasionada pelo congestionamento gerado por trinta fluxos de dados. 
+Na Seção \ref{subsec:loss}, discute-se sobre as perdas de pacotes detectadas durante as simulações.
+Esses resultados estão dentro do que se esperava em um cenário onde não há cooperação entre os repassadores e um alto número de repassadores recebendo a mídia diretamente do servidor.
+
+Já nos tratamentos 10, 11 e 12, onde utilizou-se a Topologia B, ilustrada na Figura \ref{subfig:topo02}, a taxa de recepção foi melhor que a taxa observada nos tratamentos 7, 8 e 9 que, embora tenham menos repassadores registrados na rede, dificultava a cooperação entre os nós, devido à sua topologia.
+Observa-se que numa topologia mais semelhante a topologias de redes reais, como por exemplo a Internet, a cooperação entre os repassadores incrementa o desempenho das transmissões de mídia ao vivo através do GMTP.
+Esses resultados estão dentro do que se esperava em um cenário onde há possibilidade de cooperação entre os repassadores, reduzindo o número de repassadores recebendo a mídia diretamente do servidor.
+
+Na Figura \ref{fig:inst-rx}, apresenta-se a evolução da \textit{taxa de recepção instantânea}, a cada pacote recebido. 
+Assim como na taxa de recepção total, observa-se que o valor da taxa de recepção instantânea não depende necessariamente do números de clientes requisitando a mídia, mas da quantidade de repassadores que recebem a mídia \textit{diretamente} do servidor, em vez de recebê-la de um repassador parceiro. 
+% mais uma vez: eu entendi o que vc quis dizer aqui, pois quanto mais gente pedindo mais uso da rede pelos repassadores, mas uma coisa que vc deveria completar aqui é passar a seguinte ideia: poderia ser bem pior se não estivesse usando o GMTP, pois nesses casos teriam mais clientes pedindo fluxos independente da mesma mídia, o que iria aumentar sobremaneira o congestionamento da rede se comparado ao caso onde se utiliza apenas os repassadores.
+Nos tratamentos onde há menos repassadores recebendo a mídia diretamente do servidor, a taxa de recepção instantânea é maior e mais estável ao longo da transmissão, enquanto nos tratamentos onde há mais repassadores recebendo a mídia diretamente do servidor, a taxa de recepção tende a diminuir, com maior variação.
+Nesse contexto, a formação de parcerias entre repassadores favorece a melhora da \textit{taxa de recepção}, pois as parcerias evitam que esses repassadores recebam a mídia diretamente do servidor, mas a recebam de repassadores parceiros. Isso contribui para a redução do consumo de recursos computacionais do servidor e da rede. 
+Mesmo nos tratamentos cuja topologia era desfavorável à formação de parcerias, a utilização do GMTP favoreceu o desempenho da transmissão multimídia. Caso as aplicações estivessem usando outro protocolo, diferente do GMTP, cada cliente solicitaria o conteúdo multimídia de forma independente, gerando fluxos independentes da mesma mídia. Isso aumentaria sobremaneira o congestionamento da rede se comparado ao GMTP, onde se utilizam os repassadores.
+
+\begin{figure}[!htb]
+\centering
+\subfloat[Taxa de recepção instantânea dos Tratamentos 1, 2 e 3 (Topologia A).\label{subfig:inst-rx-123}] {
+\includegraphics[scale=0.35]{results/inst_rx_123.pdf}
+}
+\hfill
+\subfloat[Taxa de recepção instantânea dos Tratamentos 4, 5 e 6 (Topologia A). \label{subfig:inst-rx-456}] {
+\includegraphics[scale=0.35]{results/inst_rx_456.pdf}
+}
+\hfill
+\subfloat[Taxa de recepção instantânea dos Tratamentos 7, 8 e 9 (Topologia A).\label{subfig:inst-rx-789}] {
+\includegraphics[scale=0.35]{results/inst_rx_789.pdf}
+}
+\caption[Taxa de recepção instantânea - Topologia A]{Taxa de recepção instantânea agrupada por número de clientes e repassadores envolvidos na simulação - Topologia A.}
+\label{fig:inst-rx}
+\end{figure}
+
+Conforme ilustra-se na Figura \ref{subfig:inst-rx-123}, nos tratamentos 1, 2 e 3, onde havia apenas um repassador recebendo a mídia diretamente do servidor, a taxa de recepção instantânea permaneceu durante todo a simulação muito próxima à taxa de envio máxima fornecida pelo servidor.
+Esse resultado é compatível com os resultados obtidos na Seção \ref{subsec:resultados-vm}. 
+Conforme discute-se na Seção \ref{subsec:loss}, nesses tratamentos não houve perda de pacotes, o que contribui para a manutenção da taxa de transmissão pelo controle de congestionamento \textit{multicast} do GMTP.
+Nesses tratamentos, as variações na taxa de recepção instantânea se mostraram pequenas em relação aos demais tratamentos, ocasionadas por eventuais variações do RTT durante a transmissão.
+
+Conforme ilustra-se nas Figuras \ref{subfig:inst-rx-456} e \ref{subfig:inst-rx-789}, nos tratamentos  4 ao 9, onde vários repassadores estavam recebendo a mídia diretamente do servidor, em modo \textit{unicast}, houve uma redução da taxa de recepção instantânea dos clientes quando comparada com a taxa obtida nos tratamentos 1 a 3, durante toda a transmissão. 
+A redução da taxa de recepção instantânea ocorre pelos mesmos motivos da redução da taxa de recepção total:  múltiplos fluxos de dados partindo do servidor, aumento da carga de processamento do servidor, e o crescimento na fila de pacotes dos roteadores. Esses fatores influenciam o crescimento do RTT, o que leva o algoritmo de controle de congestionamento a reduzir da taxa de transmissão.
+Esses resultados estão dentro do que se esperava em um cenário onde não há cooperação entre os repassadores e um alto número de repassadores recebendo a mídia diretamente do servidor. 
+
+Conforme ilustra-se na Figura \ref{fig:inst-rx-geant}, observa-se que nos tratamentos 10, 11 e 12, onde utilizou-se a Topologia B, favorável à formação de parcerias entre os repassadores, a taxa de recepção instantânea foi melhor e mais estável que a taxa observada nos tratamentos 7, 8, 9.
+Mais uma vez, esses resultados estão dentro do que se esperava em um cenário onde há possibilidade de cooperação entre os repassadores, reduzindo o número de repassadores recebendo a mídia diretamente do servidor. 
+
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[scale=0.35]{results/inst_rx_geant.pdf}
+	\caption{Taxa de recepção instantânea dos Tratamentos 10, 11 e 12 (Topologia B)}
+	\label{fig:inst-rx-geant}
+\end{figure}
+
+Além do menor valor, a taxa de recepção instantânea sofreu maior variação da taxa ao logo do tempo nos tratamentos 4 ao 12.
+Nesses tratamentos há uma maior incidência de perdas de pacotes, conforme relata-se na Seção \ref{subsec:loss}. Os eventos de perdas de pacotes fazem com que o algoritmo de controle de congestionamento \textit{multicast} do GMTP reduza a taxa de envio entre repassadores e clientes, resultando em crescimento na fila de pacotes do repassador. Como consequência, o algoritmo de controle de congestionamento \textit{unicast} do GMTP reduz a taxa de envio do servidor. 
+A redução da taxa de envio ocasiona o esvaziamento dos \textit{buffers} dos roteadores e a redução da perda de pacotes. Com isso, os algoritmos de controle de congestionamento tendem a aumentar a taxa de envio do servidor para os repassadores, e dos repassadores para os clientes. 
+Essa alternância entre aumento e redução da taxa de envio é mais frequente quanto mais fluxos de dados estiverem trafegando na rede e ocasiona o crescimento da variação da taxa de recepção nos clientes.
+Salienta-se que a variação da taxa instantânea de recepção é ainda maior nos tratamentos 4 ao 9, onde não há cooperação entre os roteadores, e menor nos tratamentos 10 ao 12, onde há cooperação entre os repassadores.
+
+\subsubsection{Taxa de perdas de pacotes}
+\label{subsec:loss}
+
+Diversos algoritmos de controle de congestionamento utilizam a \textit{taxa de perdas de pacotes} para inferir sobre as condições da rede e realizar o controle de congestionamento de forma eficiente. O próprio GMTP-MCC utiliza esta métrica para calcular a taxa de transmissão ideal entre os repassadores e os seus clientes.
+
+Na Figura \ref{fig:loss}, apresentam-se as taxas de perdas de pacotes medidas em cada tratamento. 
+Observa-se que nos tratamentos onde há poucos repassadores recebendo a mídia diretamente do servidor, a taxa de perdas é menor que nos tratamentos onde há vários repassadores recebendo a mídia diretamente do servidor.
+
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width=\columnwidth]{results/loss.pdf}
+	\caption{Resultado dos tratamentos (1-12) para a métrica \textit{taxa de perda de pacotes}.}
+	\label{fig:loss}
+\end{figure}
+
+Observam-se taxas de perdas maiores nos tratamentos 7, 8 e 9, que correspondem a um maior número de repassadores recebendo a mídia diretamente do servidor. Deve-se ressaltar que nos tratamentos 4 ao 9, os repassadores não cooperam entre si.
+Já nos tratamentos 10 ao 12, a taxa de perdas é muito inferior às taxas dos tratamentos 7 ao 9, mesmo esses últimos tendo menos clientes requisitando a mídia. Isso ocorre devido aos benefícios da cooperação entre os repassadores que existe nos tratamentos 10 ao 12.
+Os eventos de perdas de pacotes implicam na redução da taxa de envio do servidor através dos algoritmos de controle de congestionamento. Portanto, esses resultados são compatíveis com os observados na Seção \ref{subsec:rx}, onde observa-se uma menor taxa de recepção de dados para os tratamentos onde a taxa de recepção é menor e mais variável.
+
+Observa-se também que, ao contrário do que se espera nos protocolos de transporte tradicionais, o aumento da razão entre número de clientes por repassador ocasionou uma redução na taxa de perdas de pacotes. 
+Em sistemas de transmissão de conteúdo multimídia ao vivo, onde potencialmente milhares de usuários podem requisitar o conteúdo, uma preocupação é o crescimento acentuado do consumo de recursos computacionais e de rede. Utilizando-se os protocolos de transporte tradicionais, observa-se que o desempenho tende a degradar à medida que se aumenta o número de clientes interessados pela mesma mídia~\cite{sales2014gmtp}.
+No entanto, observa-se que no GMTP, o desempenho da transmissão multimídia ao vivo não tende a degradar à medida que se aumenta o número de clientes interessados pela mesma mídia. 
+No GMTP, o principal fator que pode ocasionar a degradação da transmissão multimídia é a quantidade de repassadores que estão recebendo a mídia diretamente do servidor, sem formação de parcerias. O número de usuários que requisitam a mesma mídia não é fator determinante para influenciar a qualidade da transmissão de mídia ao vivo no GMTP.
+Logo, em um cenário onde a maior parte dos roteadores executem o GMTP, torna-se possível transmitir o conteúdo multimídia ao vivo de alta resolução com qualidade, de forma praticamente independente do número de usuários requisitantes de tal conteúdo.
+
+Nesse contexto, observa-se que nos tratamentos com maior proporção de clientes por repassador, obteve-se um índice menor de perda de pacotes que nos tratamentos com menos clientes por repassador.
+Isso ocorre devido ao modo de funcionamento do algoritmo de controle de congestionamento \textit{multicast} do GMTP. 
+No GMTP-MCC, quanto mais clientes estiverem conectados aos repassadores, mais nós relatores estarão atuando na rede. O número maior de nós relatores permite que o repassador receba um número maior de relatórios periódicos sobre o estado da transmissão, resultando em informações mais precisas sobre o estado da transmissão, o que ocasiona uma resposta mais apropriada a eventos de congestionamento de rede e, consequentemente, redução no índice de perdas de pacotes.
+
+\subsubsection{Índice de Continuidade}
+
+A métrica \textit{índice de continuidade} é importante, pois mapeia o desempenho do sistema durante todo o ensaio, a partir do instante em que os nós clientes começam a receber o primeiro pacote de dados.
+
+Na Figura \ref{fig:contin}, apresentam-se os índices de continuidade medidos em cada tratamento. 
+Observa-se que nos tratamentos onde há poucos repassadores recebendo a mídia diretamente do servidor, o índice de continuidade é maior que nos tratamentos onde há vários repassadores recebendo a mídia diretamente do servidor.
+
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width=\columnwidth]{results/ic.pdf}
+	\caption{Resultado dos tratamentos (1-12) para a métrica \textit{índice de continuidade}.}
+	\label{fig:contin}
+\end{figure}
+
+O índice de continuidade está diretamente ligado à taxa de perdas de pacotes e à variação da taxa de recepção instantânea dos clientes. Contabiliza-se o tempo em que os nós clientes não conseguiram sequer receber pacotes de dados da mídia, o que ocorre quando há perdas de pacotes ou quando o intervalo de chegada entre dois pacotes consecutivos é maior que o normal.
+
+Portanto, os resultados obtidos são compatíveis com os observados na Seção \ref{subsec:loss}. 
+Nos tratamentos onde houve as maiores taxas de recepção e os menores índices de perda, o índice de continuidade foi de 100\%, enquanto nos demais tratamentos, o índice de continuidade reduziu com a redução da taxa de recepção e o aumento do índice de perdas.
+
+Conforme observa-se na Figura \ref{fig:contin}, o índice de continuidade observado nos tratamentos 10, 11 e 12 da simulação é um pouco inferior ao índice de continuidade observado nos resultados de simulação apresentados em \cite{sales2014gmtp}.  
+Esse resultado já era esperado, considerando alguns fatores como: 
+\begin{enumerate}
+	\item O arcabouço de simulação utilizado em \cite{sales2014gmtp} considera a perda de pacotes como variável independente, onde definiu-se que uma função de probabilidade para modelar a perda de pacotes nos roteadores. 
+	Neste trabalho, os eventos de perda de pacotes são simulados pelo arcabouço de simulação, sem intervenção do usuário, conforme o tráfego de rede e a capacidade dos canais de transmissão.
+	%\item A versão do GMTP implementada em simulador abstraia e simplificava diversos fatores relacionados à transmissão de dados. A versão do GMTP para Linux, utilizada neste trabalho, é uma implementação funcional de um protocolo de rede do Linux, com todas as complexidades que lhe são inerentes.
+	\item O mecanismo de \textit{busca por mais parceiros}, onde nó repassador pode enviar periodicamente um pacote do tipo \pac{GMTP-RelayQuery} para o nó servidor a fim de descobrir melhores parceiros e aumentar o número de parcerias, foi implementado na versão do GMTP-Omnet++~\cite{sales2014gmtp}, mas não foi implementado no contexto deste trabalho.
+	Assim, a diferença de desempenho pode ser uma consequência da ausência dessa função no GMTP-Linux.
+\end{enumerate}
+
+\subsubsection{Sobrecarga de controle}
+
+Diferentemente das métricas anteriores, que são relacionadas à qualidade de serviço oferecida à aplicação, a sobrecarga de controle é uma relação de proporção entre a quantidade de pacotes de controle (sem dados de aplicação) e a quantidade de dados da aplicação que precisam ser transmitidos.
+Para obter o valor correspondente, mede-se a quantidade de pacotes de controle transmitido e contabiliza-se a quantidade de dados de controle transmitidos através da rede, com base no tamanho do cabeçalho de cada tipo de pacote.
+
+Em geral, os pacotes de controle que o GMTP transmite se dividem em dois tipos: locais e inter-redes.
+Os pacotes de controle locais circulam na rede local do repassador de origem, e não atingem o servidor.
+Já os pacotes de controle inter-redes são pacotes de controle que os repassadores trocam entre si ou com o servidor.
+
+Neste contexto, na Figura \ref{fig:controle}, apresentam-se os resultados relativos à quantidade de dados de controle medidos em cada tratamento. 
+Observa-se que nos tratamentos onde há poucos nós na rede, a quantidade total de dados de controle é menor que nos tratamentos onde há vários nós. 
+
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width=\columnwidth]{results/controle.pdf}
+	\caption{Resultado dos tratamentos (1-12) para a métrica \textit{sobrecarga de controle}.}
+	\label{fig:controle}
+\end{figure}
+
+Entre os pacotes de controle locais estão os pacotes do 3WH (\textit{three way handshake}) entre cliente e repassador, os pacotes do controle de congestionamento \textit{multicast}, e os pacotes do mecanismo de \textit{keep alive} entre clientes e relatores. 
+Observa-se que a quantidade de pacotes de controle locais é proporcional ao número de clientes por repassador.
+Esse resultado já era esperado, visto que quanto mais clientes estiverem conectados a um repassador, mais vezes ocorrerá o 3WH, mais relatores estarão na rede, enviando relatórios periódicos aos repassadores, e mais pacotes de \textit{keep-alive} serão trocados entre clientes e relatores.
+
+Conforme discute-se na Seção \ref{subsec:loss}, o aumento no número de pacotes de controle locais não necessariamente é prejudicial ao desempenho do GMTP. Nos tratamentos 4 ao 9, o aumento na quantidade de pacotes de controle acompanhou uma redução da taxa de perdas de pacotes.
+Nesses tratamentos, o aumento da quantidade de relatórios sobre o estado da transmissão, resultou em informações mais precisas sobre o estado da transmissão para o repassador, que agiu apropriadamente para reduzir o índice de perdas de pacotes.
+
+Entre os pacotes de controle inter-redes, estão pacotes do registro e da renovação do registro de participação entre repassadores e servidor, os relacionados ao estabelecimento de parcerias entre repassadores e pacotes do controle de congestionamento \textit{unicast}.
+Nesse contexto, deve-se considerar que os pacotes do tipo \pac{GMTP-Register-Reply} aumentam de tamanho gradativamente, conforme seguem seu caminho do servidor até o repassador.
+Além disso, no processo de registro de participação, alguns pacotes transmitidos podem ser interceptados por nós repassadores, reduzindo-se antecipadamente a quantidade de tráfego de controle.
+Nesse contexto, observa-se que a quantidade de pacotes de controle inter-redes é proporcional ao número de repassadores na rede. Esse resultado já era esperado, visto que quanto mais repassadores estiverem na rede, mais pacotes de controle de congestionamento e de renovação de registro serão trocados entre repassadores e servidor.
+
+Observa-se ainda que a quantidade de pacotes de controle inter-redes não cresce na mesma proporção do número de repassadores na rede. Esse resultado era esperado, porque:
+\begin{itemize}
+	\item nos tratamentos onde não há parcerias entre os roteadores, observou-se a diminuição da taxa de recepção e do índice de continuidade. A redução dos valores observados para essas métricas sugere que, nesses tratamentos, houve aumento do valor do RTT. De fato, a análise dos arquivos de registro do GMTP confirma o aumento do valor do RTT.
+	Salienta-se que no GMTP, define-se que o pacote de controle (\pac{GMTP-Ack}) deverá ser enviado ao servidor a cada intervalo de RTT. Logo, o crescimento do valor do RTT ocasiona a redução da quantidade de pacotes de controle inter-redes trafegados. 
+	
+	\item nos tratamentos onde há parcerias entre os roteadores (Tratamentos 10 ao 12), nem todos os pacotes de controle inter-redes alcançam o servidor, pois muitos desses pacotes trafegam apenas entre dois repassadores parceiros.
+	No contexto deste trabalho, a medição da quantidade de pacotes de controle inter-redes foi realizada apenas no nó servidor. Assim, não se fez a contagem dos pacotes de controle que trafegam apenas entre dois repassadores parceiros, sem alcançar o servidor.
+\end{itemize}
+
+Observa-se também que a quantidade de pacotes de controle locais foi superior à quantidade de pacotes de controle inter-redes porque, nas simulações, a quantidade de nós clientes foi maior ou igual à quantidade de repassadores. Salienta-se que, como a maior parte dos pacotes do GMTP de controle é local, não observa-se a degradação da transmissão como consequência da geração de pacotes de controle.
+
+Na Figura \ref{fig:controle-comp}, apresentam-se os resultados relacionados à quantidade total de dados de controle medidos em cada tratamento, em comparação com o GMTP-Omnet++~\cite{sales2014gmtp}.
+
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[scale=0.35]{results/controle-comp.pdf}
+	\caption{Detalhe sobre o resultado dos tratamentos (10-12) para a métrica \textit{sobrecarga de controle}.}
+	\label{fig:controle-comp}
+\end{figure}
+
+Observa-se que a quantidade de dados de controle do GMTP-Linux apresenta maior variação em relação ao número de nós clientes que o GMTP-Omnet++.
+Em geral, a versão do GMTP-Linux gera mais pacotes de controle que a versão do GMTP-Omnet++.
+Esse resultado já era esperado, considerando que definiu-se e implementou-se o mecanismo de \textit{keep-alive} na rede local. Como consequência, o GMTP-Linux gera pacotes adicionais de controle que são trocados na rede local, entre os clientes e os relatores.
+
+ 

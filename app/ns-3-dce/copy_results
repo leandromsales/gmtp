@@ -1,5 +1,7 @@
 #!/bin/bash        
-NS3DIR="../../net-next-sim/tools/testing/libos/buildtop/source/ns-3-dce/"
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+repo_root=$(CDPATH= cd -- "$script_dir/../.." && pwd)
+NS3DIR="$repo_root/linux/ns3/linux-net-next-nuse-latest/tools/testing/libos/buildtop/source/ns-3-dce"
 results="results"
 subfolder="gmtp"
 

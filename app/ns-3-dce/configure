@@ -1,20 +1,22 @@
 #!/bin/bash        
 
-NS3DIR="../../net-next-sim/tools/testing/libos/buildtop/source/ns-3-dce/"
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+repo_root=$(CDPATH= cd -- "$script_dir/../.." && pwd)
+NS3DIR="$repo_root/linux/ns3/linux-net-next-nuse-latest/tools/testing/libos/buildtop/source/ns-3-dce"
 old="wscript.orig"
 
 test="./test/"
 
 for i in $( ls gmtp ); do
     echo Creating link to: $i
-    ln -s ../../../../../../../../app/ns-3-dce/gmtp/$i $NS3DIR/example/
+    ln -s "$script_dir/gmtp/$i" "$NS3DIR/example/"
 done
 
 ls -l $NS3DIR/example/ | grep gmtp
 
 echo Configuring wscript with GMTP...
 cp $NS3DIR/wscript $NS3DIR/$old  #if $old already exists, cp wont copy
-ln -sf ../../../../../../../app/ns-3-dce/wscript $NS3DIR/
+ln -sf "$script_dir/wscript" "$NS3DIR/wscript"
 ls -l $NS3DIR/ | grep wscript
 
 echo

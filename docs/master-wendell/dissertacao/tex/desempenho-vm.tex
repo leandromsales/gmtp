@@ -1,0 +1,132 @@
+\section{Experimentos em máquinas virtuais}
+\label{sec:experimentos-vm}
+
+Durante a implementação, realizaram-se alguns experimentos utilizando máquinas virtuais com o objetivo de avaliar a corretude da implementação proposta e sua consonância com a especificação original do GMTP.
+
+\subsection{Metodologia}
+\label{subsec:metodologia-vm}
+
+%TODO Pode ser que na defesa vc seja questionado sobre essa decisão, prepare uma resposta.
+Visando avaliar os resultados dos experimentos, definiu-se que a métrica a ser estudada seria a taxa de recepção total percebida nos clientes, medida em \textit{bytes/segundo} (B/s).
+A \textbf{taxa de recepção} é a razão entre a quantidade total de dados recebidos, medida em \textit{bytes}, pelo tempo total do experimento, medido em \textit{segundos}.
+
+Escolheu-se a métrica taxa de recepção porque esta métrica reflete tanto o desempenho do protocolo como o estado da rede.
+Por exemplo, conforme discute-se nas Seções \ref{sec:gmtp-ucc} e \ref{sec:gmtp-mcc}, os algoritmos de controle de congestionamento do GMTP reduzem a taxa de transmissão caso haja aumento do valor do RTT, do tamanho da fila de repasse ou caso haja perdas de pacotes. 
+Logo, a redução da taxa de recepção pode indicar um desempenho do protocolo abaixo do esperado na topologia definida no experimento.
+
+%TODO Vc pode ser perguntado porque não avaliou contra outros mais modernos, tais como o DCCP e o SCTP; ou ainda, contra outros menos tradicionais que já consideram ICN. Organize uma resposta pra isso e qq coisa vamos discutir
+Os tipos de nós utilizados no experimento foram definidos da seguinte forma:
+\begin{enumerate}
+\item \textbf{Servidor}: aplicação executada em uma máquina \textit{servidor de mídia} capaz de transmitir dados através de um dos seguintes protocolos de transporte: TCP, UDP e GMTP. Os dados foram transmitidos a uma taxa máxima de \ut{50.000}{B/s}.
+\item \textbf{Clientes}: aplicação executada em uma máquina cliente capaz de receber dados através de um dos seguintes protocolos de transporte: TCP, UDP e GMTP. Cada cliente registra a sua taxa de recepção de dados em arquivos de registro (\textit{log}).
+\item \textbf{Roteador}: máquina virtual que realiza o papel de roteador, permitindo a interconexão entre a sub-rede do servidor e a sub-rede dos clientes. 
+A máquina funciona como um roteador comum quando o módulo GMTP-Inter está desativado. Quando ativa-se o módulo GMTP-Inter, a máquina passa a funcionar como um repassador GMTP.
+\end{enumerate}
+
+No experimento, quatro máquinas virtuais foram utilizadas para realizar a simulação, cada uma com seu papel definido: 
+
+\begin{itemize}
+\item Em uma máquina, hospedou-se o servidor, sendo alocada em determinada sub-rede.
+\item Em outras duas máquinas hospedaram-se os clientes. Estas máquinas estavam alocadas em uma sub-rede diferente da sub-rede do servidor.
+\item Outra máquina realizou o papel de roteador. A comunicação entre as máquinas do servidor e as máquinas dos clientes ocorreu através da máquina roteadora. 
+\end{itemize}
+
+Todas as máquinas virtuais estavam hospedadas na mesma máquina real. 
+Logo, todas as transmissões de dados foram locais, sem interferências externas. Todos os clientes requisitaram o mesmo fluxo de dados.
+Em cada experimento, os clientes receberam 6500 pacotes de dados.
+ 
+Com relação a execução de cada experimento, executaram-se $10$ ensaios iniciais de cada sistema estudado, obtendo-se assim $10$ amostras para a variável estudada. Em seguida, calculou-se a média dessas amostras e, para realizar comparações com \ut{95}{\%} de nível de confiança, calculou-se a quantidade mínima de ensaios ($n_t$) de cada experimento a fim de atingir este nível de confiança. 
+Definiu-se a quantidade de ensaios como $n_t + 1$.
+No Apêndice \ref{ap:ensaios}, apresentam-se mais detalhes sobre o cálculo de $n_t$.
+Por fim, cada experimento foi repetido 10 vezes ($n_t=9$) e os dados foram agregados utilizando-se a média aritmética dos resultados obtidos. 
+
+Conforme ilustra-se na Figura~\ref{fig:topos-vm}, organizou-se três topologias básicas, com base no ambiente descrito acima, executando-se experimentos para cada uma das topologias definidas.
+
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.4]{imgs/topos.png}
+\caption{Topologias disponíveis para os experimentos.}
+\label{fig:topos-vm}
+\end{figure}
+
+Os experimentos realizados foram os seguintes:
+\begin{enumerate}
+\item \textbf{Experimento A}: realizado utilizando a topologia ilustrada na Figura~\ref{fig:topos-vm}a. Apenas um Cliente GMTP requisitando o fluxo de dados do Servidor GMTP.
+\item \textbf{Experimento B-TCP}: realizado utilizando a topologia ilustrada na Figura~\ref{fig:topos-vm}b.
+Dez Clientes TCP, sendo cinco em cada máquina cliente, requisitando o fluxo de dados do Servidor TCP.
+\item \textbf{Experimento B-UDP}: realizado utilizando a topologia ilustrada na Figura~\ref{fig:topos-vm}b.
+Dez Clientes UDP, sendo cinco em cada máquina cliente, requisitando o fluxo de dados do Servidor UDP.
+\item \textbf{Experimento B-GMTP}: realizado utilizando a topologia ilustrada na Figura~\ref{fig:topos-vm}b.
+Dez Clientes GMTP, sendo cinco em cada máquina cliente, requisitando o fluxo de dados do Servidor GMTP.
+\item \textbf{Experimento C}: realizado utilizando a topologia ilustrada na Figura~\ref{fig:topos-vm}c.
+Dez Clientes GMTP, sendo cinco em cada máquina cliente, requisitando o fluxo de dados Servidor. Neste experimento, habilitou-se o módulo GMTP-Inter no roteador.
+\end{enumerate}
+
+Como os experimentos tinham como objetivo avaliar o funcionamento básico do GMTP em cenários simples, optou-se pela comparação com o TCP e o UDP. 
+A comparação com o UDP, que não provê garantia de entrega ou controle de congestionamento, serviu como base para a avaliação do funcionamento básico do GMTP em um cenários desfavorável, sem a participação do módulo GMTP-Inter.
+Esperava-se que o desempenho do GMTP em um cenário desfavorável fosse, pelo menos, semelhante ao desempenho do UDP. 
+Caso o desempenho das aplicações GMTP fosse inferior ao observado nas aplicações que utilizaram o UDP ou o TCP, haveria a possibilidade de erro de implementação no GMTP.
+
+\subsection{Resultados}
+\label{subsec:resultados-vm}
+
+Primeiramente, realizaram-se experimentos com o TCP e UDP visando determinar uma referência para o GMTP. 
+Em seguida, analisou-se o desempenho do GMTP em comparação com os demais protocolos.
+Na Tabela \ref{tb:resultados-vm}, apresenta-se um resumo do resultado dos experimentos.
+
+\begin{table}[!htbp]
+\centering
+\caption{Taxa de recepção medida nos experimentos (\textit{B/s})}
+\label{tb:resultados-vm}
+\begin{tabular}[width=\columnwidth]{|c|c|c|c|c|}
+\hline \textbf{Simulação} 	   	  & \textbf{Mínima} & \textbf{Média} & \textbf{Máxima} & \textbf{Coef. de Variação}  \\  
+\hline Experimento A  		  	  &  47.600		&  47.770	 &  47.920  	&  	0.0012		\\ 
+\hline Experimento B-TCP 		  &  27.520		&  28.550	 &  29.050 		&  	0.0146		\\ 
+\hline Experimento B-UDP		  &  37.710		&  38.140	 &  40.010		&  	0.0136		\\
+\hline Experimento B-GMTP  		  &  38.110		&  39.530 	 &  41.180		&  	0.0146		\\
+\hline Experimento C			  &  45.240		&  47.580 	 &  48.120 		&  	0.0091		\\ 
+\hline 
+\end{tabular} 
+\end{table}
+
+Na Figura \ref{fig:results-vm}, ilustra-se a evolução da métrica \textit{taxa de recepção} ao longo da transmissão multimídia nos experimentos realizados.
+
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.35]{imgs/results.pdf}
+\caption{Evolução da taxa de recepção em relação ao tempo.\label{fig:results-vm}}
+\end{figure}
+
+Conforme ilustra-se na Figura \ref{fig:results-vm}, no Experimento A, a taxa de recepção de dados permaneceu muito próxima à taxa de envio de \ut{50.000}{B/s} fornecida pelo servidor. Conclui-se que em interações simples cliente-servidor em um sistema operacional real, o GMTP apresenta desempenho satisfatório.
+
+Nos experimentos B (B-TCP, B-UDP e B-GMTP), a taxa de recepção de dados dos clientes foi sempre inferior à taxa de envio fornecida pelo servidor. 
+Esse resultado já era esperado, considerando alguns fatores como: 
+\begin{itemize}
+\item a sobrecarga de processamento no servidor, que precisa tratar múltiplas requisições de diversos clientes e;
+\item a sobrecarga na rede, devido à quantidade de fluxos de dados trafegando.
+\end{itemize}
+
+Nesses experimentos, para cada requisição, o servidor gerou um fluxo de dados independente, o que ocasionou o crescimento na fila de pacotes do roteador e o aumento do atraso na recepção dos pacotes percebido pelos clientes. 
+
+Nesse caso, o comportamento do GMTP, similar ao UDP, era previsível, uma vez que nessa rodada dos experimentos os principais recursos do GMTP-Inter não foram habilitados.
+Observa-se que sem os recursos do GMTP-Inter, o desempenho do GMTP equipara-se ao desempenho do UDP. 
+Outro aspecto importante observado nesse resultado é que mesmo com o uso de algoritmos de controle de congestionamento no GMTP, este obteve um desempenho similar ao do UDP.
+Isto significa que o algoritmo de controle de congestionamento do GMTP não adiciona sobrecarga significativa durante uma transmissão em cenários sem congestionamento na rede.
+
+Conforme ilustra-se na Figura \ref{fig:results-vm}, no experimento onde GMTP-Inter estava habilitado, observa-se que os clientes apresentaram taxas mínimas e máximas de recepção próximas à taxa de transmissão fornecida pelo servidor. De fato, no Experimento C, a taxa de recepção de dados dos Clientes GMTP se manteve próxima à taxa obtida no Experimento A, mesmo havendo vários clientes requisitando o fluxo de dados. 
+
+%Acho que está ok falar isso, mas pode ser que a banca reclame dizendo que vc deveria ter habilitado multicast com UDP também para deixar a comparação justa. Eu acho até que havia te falado para fazer a comparação dessa forma, mas vc parece q n conseguiu usar multicast com udp, num foi?
+Já no cenário em que se utilizou o GMTP-Inter, constataram-se melhorias em relação à utilização do UDP, pois o GMTP provê o suporte transparente ao uso de \textit{multicast} por parte da aplicação, compartilhando-se os pacotes de dados entre múltiplos sistemas interessados por um mesmo conteúdo, o que reduz o consumo de recursos de rede e melhora a qualidade de serviço oferecida às aplicações.
+Através do GMTP-Inter, os clientes não recebem os pacotes de dados diretamente dos servidores, mas sim de roteadores já envolvidos na transmissão da mídia, evitando-se múltiplas conexões ao servidor. 
+Dentre os benefícios dessa abordagem, estão:
+\begin{itemize}
+\item Como o servidor recebe apenas uma requisição ao servidor, evita-se o consumo excessivo de recursos computacionais do servidor.
+\item O servidor envia apenas um fluxo de dados ao roteador, o que evita o crescimento desnecessário da fila de pacotes do roteador. 
+\item O roteador transmite os dados recebidos aos clientes utilizando \textit{multicast}, de forma transparente à aplicação.
+\item Ao reduzir o consumo de recursos de rede, ocorre melhora na qualidade de serviço oferecida às aplicações.
+\end{itemize}
+
+%Acho que vc poderia explicar melhor isso, considerando a premissa de que se o UDP n faz controle de congestiomaneto nem nada (é o mais básica possível) e o GMTP tem um comportamento similar em um cenário simples, é razoável concluir que o GMTP não apresenta nenhuma discrepância em comparação a implementação de um protocolo mais simples possível (UDP).
+Através destes experimentos, foi possível avaliar o funcionamento básico do GMTP em cenários simples, comparando-se com outros dois protocolos de transporte (TCP e UDP). 
+Considerando que o UDP é um protocolo de transporte simples, que não provê garantia de entrega ou controle de congestionamento, utilizou-se o desempenho do UDP como base para a avaliação do funcionamento básico do GMTP. 
+Constatou-se que o desempenho do GMTP em um cenário simples foi, no pior caso, semelhante ao desempenho do UDP. 

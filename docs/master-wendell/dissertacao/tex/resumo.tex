@@ -1,0 +1,44 @@
+
+% ---
+% RESUMOS
+% ---
+
+% resumo em português
+\setlength{\absparsep}{18pt} % ajusta o espaçamento dos parágrafos do resumo
+\begin{resumo}
+
+Neste trabalho, apresenta-se um estudo da aplicabilidade do Global Media Transmission Protocol (GMTP) através da sua implementação no sistema operacional Linux. 
+As aplicações para transmissão de mídias ao vivo na Internet atuais dependem de vários \textit{middlewares} incompatíveis entre si, projetados para prover serviços de rede específicos dessa classe de aplicações, cada um focado em um determinado requisito da aplicação. 
+Como consequência, não há a possibilidade de que dois ou mais nós cooperem entre si quando estão conectados através de aplicações distintas, mas interessados em obter o mesmo fluxo de dados a partir de um servidor, resultando no aumento do consumo de recursos de rede. 
+Por esse motivo foi proposto o GMTP, um protocolo de distribuição de mídias ao vivo pela Internet que desacopla a forma que o conteúdo é reproduzido pela aplicação da forma que tal conteúdo é transportado através da rede. 
+Isto ocorre com a utilização de algoritmos P2P a nível de \textit{socket} a fim de construir uma rede de favores entre roteadores. As parcerias entre os roteadores são determinadas pelos nós servidores, conforme medições das capacidades de transmissão dos canais já em uso para disseminar o conteúdo, obtidas por meio de um algoritmo de controle de congestionamento assistido pela rede. 
+Neste trabalho, avaliou-se a corretude da implementação do GMTP no núcleo do Linux por meio de experimentos executados em máquinas virtuais. Através dos experimentos, constatou-se que a abordagem do protocolo GMTP é viável e praticável para implantação em um sistema operacional e para uso em aplicações de rede. Na perspectiva de desempenho, avaliou-se o GMTP-Linux segundo métricas de qualidade de serviço e constatou-se que tal implementação tem um desempenho compatível com os resultados apresentados no trabalho que define a especificação do GMTP.
+  
+ \vspace{\onelineskip}
+ 
+ \noindent 
+ \textbf{Palavras-chaves}: GMTP, redes P2P, redes multimídia.
+\end{resumo}
+
+%TODO Lembrar de traduzir no final
+% resumo em inglês
+\begin{resumo}[Abstract]
+ \begin{otherlanguage*}{english}
+This work presents a study about the implementation of the Global Media Transmission Protocol (GMTP) in the Linux operating system.
+Currently, Internet live streaming applications require various middlewares incompatible among them, as they have different network services requirements.
+As a consequence, two end-systems using distinct applications can not cooperate to share a given data flow from a streaming server, increasing network resource consumption.
+For that reason, the GMTP was proposed as a network protocol that decouples the functions used for rendering the media flow to the user from the functions used for disseminating the data through the network. 
+The GMTP protocol uses P2P algorithms at the socket level in order to build a network of favors among cooperative routers. 
+The network of favors is managed by streaming servers, which orchestrate router partnerships based on the capacity of each router transmission channel. 
+The capacity of transmission channels are obtained through network assisted congestion control algorithms.
+We evaluated the correctness of GMTP-Linux based on experiments in virtual machines. 
+The experiments show that GMTP approach can be used to deploy it in a operating system and can be used in network applications for transmitting live streaming content over the network.
+In the performance perspective, GMTP-Linux was studied according to some quality of service metrics and it shown that GMTP achieved a performance similar to the results presented in the definition work of GMTP.
+
+   \vspace{\onelineskip}
+   
+   \noindent 
+   \textbf{Keywords}: multimedia networks. P2P. GMTP.
+ \end{otherlanguage*}
+\end{resumo}
+% ---

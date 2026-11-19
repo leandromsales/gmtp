@@ -25,6 +25,6 @@ These programs assume a Linux kernel with GMTP loaded (`SOCK_GMTP` 7, `IPPROTO_G
 - Keep socket constants in `python/gmtp.py` aligned with `net/gmtp` sockopts (`SOL_GMTP`, flow name, max TX rate, UCC rate, relay role).
 - Python scripts are Python 2 (`print` statements, `md5`). Do not convert them to Python 3 in a drive-by edit.
 - The GStreamer plugin must link the GStreamer built from `gmtp/tools/gstreamer`. Before `./autogen.sh` or `make`, follow `gmtp/tools/AGENTS.md`: if that checkout has new upstream commits, pull, compile, and point `PKG_CONFIG_PATH` at that prefix.
-- ns-3 DCE scenarios are compiled inside the DCE tree (`gmtp/ns-3-dce`, a symlink into `linux/ns3/linux-net-next-nuse-latest`). The stack those scenarios call is `net/gmtp` in that library tree. Pinned DCE revisions stay on the guide in `docs/setup-instructions/`.
+- ns-3 DCE scenarios are compiled inside `linux/ns3/linux-net-next-nuse-latest/tools/testing/libos/buildtop/source/ns-3-dce`. The stack those scenarios call is `net/gmtp` in that library tree. Pinned DCE revisions stay on the guide in `docs/setup-instructions/`.
 - `openwrt/luci/` mixes a saved LuCI page (`thiago-VirtualBox - GMTP - LuCI.xhtml`) with an ExtJS 4 tree and form helpers. Treat the xhtml capture as the GMTP admin UI. The ExtJS helpers are a bundled snapshot. Do not rewrite them unless the task is that UI.
 - `kernel_modules/dropper/` is a loss injector, not part of the GMTP protocol. Build it against the same kernel headers as the GMTP modules.

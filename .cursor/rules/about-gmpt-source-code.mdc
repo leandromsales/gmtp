@@ -1,0 +1,69 @@
+---
+description: GMTP source location, English text, and tool refresh before builds
+globs: gmtp/**,linux/**,app/**,docs/**
+alwaysApply: false
+---
+
+# GMTP source
+
+GMTP protocol changes belong in the tracked sources under `gmtp/`. Read
+`AGENTS.md` and `gmtp/AGENTS.md`, then the `AGENTS.md` of the directory
+you edit. Recreate the gitignored kernel clones with
+`linux/checkout-trees.sh` before building a tree.
+
+- Tracked protocol sources: `gmtp/common/net/gmtp` (shared files),
+  `gmtp/host/net/gmtp` (host kernel), and `gmtp/ns3/net/gmtp` (DCE/NUSE
+  library). Most files under `host/` and `ns3/` are symlinks to
+  `common/`. `gmtp.h`, `ipv4.c`, and `proto.c` are already regular
+  files in each tree.
+- `gmtp/gmtp.sh --apply` creates relative symlinks from each kernel
+  checkout's `net/gmtp` into those tracked paths. Never copy `net/gmtp`
+  back into a checkout as regular files, and never edit only the
+  symlink target in the checkout.
+- Host kernel checkout: `linux/host/linux-net-next-latest` (netdev
+  `net-next`, Linux 7.3.0-rc5, pinned at `45ad84d2800e`). Built
+  in-tree (`CONFIG_GMTP`). No `arch/lib`.
+- DCE and NUSE library checkout: `linux/ns3/linux-net-next-nuse-latest`
+  (https://github.com/ParthPratim/net-next-nuse-5.10.47, Linux 5.10.47,
+  pinned at `4c7510b860629f1840fe76d5333e7fd071fd5698`, `arch/lib`,
+  `liblinux.so`). This is the kernel ns-3 loads.
+- Keep the two protocol trees in step. Edit `gmtp/common` when both
+  kernels can build the change. If a change would break the other
+  kernel, fork first: replace that tree's symlink with a regular copy,
+  remove the symlink, and write the kernel-specific change only in that
+  copy. Both trees were ported from `linux/host/old/linux-5.4.21/net/gmtp`,
+  which is no longer the edit target.
+- Registration headers that patch shared kernel files live in each
+  checkout and are reproduced from `linux/patches/`. Do not invent a
+  third `SOL_GMTP` value; the canonical ABI is `SOCK_GMTP` 7,
+  `IPPROTO_GMTP` 254, `SOL_GMTP` 300.
+- Reference only: `linux/ns3/old/linux-net-nuse-tazaki-latest`. Archive:
+  `linux/host/old/linux-5.4.21`, `linux/host/old/linux-4.9.50`, and
+  `linux/ns3/old/linux-net-next-nuse-4.1.0-rc4` (former `net-next-sim`).
+- Do not clone Linus Torvalds's `linux.git`. Do not switch the ns-3
+  stack to LKL. DCE stayed on `arch/lib` because LKL does not preempt
+  across DCE's lightweight processes.
+- Applications and experiments: `app/`. They follow Wendell Silva
+  Soares's 2016 dissertation. The compiled PDF is gitignored; TeX
+  sources are in `docs/master-wendell/dissertacao/tex/` and the
+  historical path is `docs/master-wendell/dissertacao/dissertacao-wendell-final.pdf`.
+- Do not implement GMTP inside `tools/`. That directory is the upstream
+  GStreamer checkout. Before a build that uses `tools/gstreamer`, follow
+  `tools/AGENTS.md`: if the remote has new commits, pull, compile that
+  revision, and point the build at it.
+- ns-3 simulations of GMTP run through DCE at
+  `linux/ns3/linux-net-next-nuse-latest/tools/testing/libos/buildtop/source/ns-3-dce`.
+  There is no `ns-3-dce` symlink at the repository root. The experiment
+  ns-3 is the revision the DCE guide pins (DCE 1.12 uses ns-3.35).
+  There is no `tools/ns-3-dev-git`. `app/ns-3-dce/wscript` already
+  accepts `--with-ns3` and `--enable-kernel-stack`. Do not retarget it
+  at a newer ns-3 than the guide pins.
+- Historical patches in `patches/` are an archive. See
+  `patches/README.md`. Do not apply them to update a live tree.
+- New text, comments, and identifiers are English.
+
+```sh
+# tools checkout is behind origin: update, then build
+git -C tools/gstreamer fetch origin
+git -C tools/gstreamer pull --ff-only
+```
