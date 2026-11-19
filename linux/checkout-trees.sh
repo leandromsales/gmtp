@@ -215,7 +215,10 @@ apply_build_fixes() {
 		return 0
 	fi
 	log "applying $patch"
-	patch -d "$dest" -p1 --forward --batch < "$patch"
+	# --forward skips hunks already applied (exit 1 then); verify the end state.
+	patch -d "$dest" -p1 --forward --batch --reject-file=- < "$patch" || true
+	patch -d "$dest" -p1 -R --dry-run --batch --silent < "$patch" >/dev/null ||
+		{ err "build fixes did not apply cleanly to $dest"; return 1; }
 }
 
 apply_registration() {
