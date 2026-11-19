@@ -203,6 +203,21 @@ already_registered() {
 	grep -q 'SOCK_GMTP' "$dest/include/linux/net.h" 2>/dev/null
 }
 
+# Optional build fixes for a tree (toolchain or upstream bugs that are not
+# part of the GMTP registration). Applied once; skipped when already in.
+apply_build_fixes() {
+	local dest="$1" patchdir="$2"
+	local patch="$patchdir/build-fixes.diff"
+
+	[[ -f "$patch" ]] || return 0
+	if patch -d "$dest" -p1 -R --dry-run --batch --silent < "$patch" >/dev/null 2>&1; then
+		log "build fixes already present in $dest"
+		return 0
+	fi
+	log "applying $patch"
+	patch -d "$dest" -p1 --forward --batch < "$patch"
+}
+
 apply_registration() {
 	local dest="$1" patchdir="$2"
 	local patch="$patchdir/registration.diff"
@@ -223,6 +238,7 @@ apply_registration() {
 	cp -f "$patchdir/include/uapi/linux/gmtp.h" "$dest/include/uapi/linux/gmtp.h"
 	cp -f "$patchdir/include/net/netns/gmtp.h" "$dest/include/net/netns/gmtp.h"
 	log "installed GMTP headers into $dest/include"
+	apply_build_fixes "$dest" "$patchdir"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -254,15 +270,16 @@ if [[ "$WANT_NS3" -eq 1 ]]; then
 fi
 
 if [[ "$SKIP_LINK" -eq 0 ]]; then
-	# Only apply links for trees that exist (gmtp.sh requires both).
-	if [[ -d "$HOST_DIR" && -d "$NS3_DIR" ]]; then
+	# Link only the trees requested in this run.
+	if [[ "$WANT_HOST" -eq 1 && "$WANT_NS3" -eq 1 ]]; then
 		log "linking net/gmtp via gmtp/gmtp.sh --apply"
 		"$REPO_ROOT/gmtp/gmtp.sh" --apply
-	elif [[ "$WANT_HOST" -eq 1 && "$WANT_NS3" -eq 1 ]]; then
-		err "expected both kernel trees before gmtp.sh --apply"
-		exit 1
+	elif [[ "$WANT_HOST" -eq 1 ]]; then
+		log "linking host net/gmtp via gmtp/gmtp.sh --apply --host"
+		"$REPO_ROOT/gmtp/gmtp.sh" --apply --host
 	else
-		log "skipping gmtp.sh --apply (the other kernel tree is not present; rerun with --all or pass --skip-link)"
+		log "linking ns-3 net/gmtp via gmtp/gmtp.sh --apply --ns3"
+		"$REPO_ROOT/gmtp/gmtp.sh" --apply --ns3
 	fi
 fi
 

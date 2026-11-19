@@ -1,0 +1,43 @@
+diff --git a/include/linux/sched/signal.h b/include/linux/sched/signal.h
+index 97be1243f..be5ce4ec6 100644
+--- a/include/linux/sched/signal.h
++++ b/include/linux/sched/signal.h
+@@ -473,11 +473,11 @@ static inline void clear_tsk_restore_sigmask(struct task_struct *task)
+ }
+ static inline void clear_restore_sigmask(void)
+ {
+-	
++	current->restore_sigmask = false;
+ }
+ static inline bool test_restore_sigmask(void)
+ {
+-	
++	return current->restore_sigmask;
+ }
+ static inline bool test_tsk_restore_sigmask(struct task_struct *task)
+ {
+diff --git a/tools/lib/subcmd/subcmd-util.h b/tools/lib/subcmd/subcmd-util.h
+index 794a375da..438da6333 100644
+--- a/tools/lib/subcmd/subcmd-util.h
++++ b/tools/lib/subcmd/subcmd-util.h
+@@ -49,16 +49,10 @@ static NORETURN inline void die(const char *err, ...)
+ 
+ static inline void *xrealloc(void *ptr, size_t size)
+ {
+-	void *ret = realloc(ptr, size);
+-	if (!ret && !size)
+-		ret = realloc(ptr, 1);
+-	if (!ret) {
+-		ret = realloc(ptr, size);
+-		if (!ret && !size)
+-			ret = realloc(ptr, 1);
+-		if (!ret)
+-			die("Out of memory, realloc failed");
+-	}
++	void *ret = realloc(ptr, size ? size : 1);
++
++	if (!ret)
++		die("Out of memory, realloc failed");
+ 	return ret;
+ }
+ 

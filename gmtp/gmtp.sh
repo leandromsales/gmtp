@@ -12,7 +12,7 @@ NS3_SRC="$SCRIPT_DIR/ns3"
 NS3_KERN="$REPO_ROOT/linux/ns3/linux-net-next-nuse-latest"
 
 usage() {
-	echo "Usage: gmtp.sh --apply | --remove" >&2
+	echo "Usage: gmtp.sh --apply | --remove [--host | --ns3]" >&2
 	exit 2
 }
 
@@ -86,18 +86,35 @@ remove_tree() {
 	fi
 }
 
-if [[ $# -ne 1 ]]; then
+if [[ $# -lt 1 || $# -gt 2 ]]; then
 	usage
 fi
 
+WANT_HOST=1
+WANT_NS3=1
+case "${2:-}" in
+"") ;;
+--host) WANT_NS3=0 ;;
+--ns3) WANT_HOST=0 ;;
+*) usage ;;
+esac
+
 case "$1" in
 --apply)
-	apply_tree "$HOST_SRC" "$HOST_KERN"
-	apply_tree "$NS3_SRC" "$NS3_KERN"
+	if [[ "$WANT_HOST" -eq 1 ]]; then
+		apply_tree "$HOST_SRC" "$HOST_KERN"
+	fi
+	if [[ "$WANT_NS3" -eq 1 ]]; then
+		apply_tree "$NS3_SRC" "$NS3_KERN"
+	fi
 	;;
 --remove)
-	remove_tree "$HOST_SRC" "$HOST_KERN"
-	remove_tree "$NS3_SRC" "$NS3_KERN"
+	if [[ "$WANT_HOST" -eq 1 ]]; then
+		remove_tree "$HOST_SRC" "$HOST_KERN"
+	fi
+	if [[ "$WANT_NS3" -eq 1 ]]; then
+		remove_tree "$NS3_SRC" "$NS3_KERN"
+	fi
 	;;
 *)
 	usage
