@@ -1,0 +1,18 @@
+diff --git a/bakeconf.xml b/bakeconf.xml
+index d5a880e..972a268 100644
+--- a/bakeconf.xml
++++ b/bakeconf.xml
+@@ -2415,12 +2415,11 @@
+         <attribute name="revision" value="glibc-build"/>
+       </source>
+       <depends_on name="dce-meta-1.12" optional="False"/>
+-      <depends_on name="net-next-nuse-5.10.0" optional="False"/>
+       <depends_on name="iproute2-5.10.0" optional="False"/>
+       <depends_on name="lksctp-dev" optional="True"/>
+       <build type="waf" objdir="objdir" sourcedir="ns-3-dce">
+         <attribute name="supported_os" value="linux;linux2"/>
+-        <attribute name="configure_arguments" value="configure --prefix=$INSTALLDIR --with-ns3=$INSTALLDIR --with-elf-loader=$INSTALLDIR/lib --with-glibc=$INSTALLDIR/glibc --with-libaspect=$INSTALLDIR --enable-kernel-stack=$SRCDIR/../net-next-nuse-5.10.0/arch"/>
++        <attribute name="configure_arguments" value="configure --prefix=$INSTALLDIR --with-ns3=$INSTALLDIR --with-elf-loader=$INSTALLDIR/lib --with-glibc=$INSTALLDIR/glibc --with-libaspect=$INSTALLDIR --enable-kernel-stack=$SRCDIR/../../../../../../arch"/>
+       </build>
+     </module>
+ 
