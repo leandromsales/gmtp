@@ -71,6 +71,10 @@ export DCE_PATH="$BT/build/bin_dce:$BT/build/sbin"
 if [[ ! -f bakefile.xml ]]; then
 	./bake.py configure -e dce-linux-1.12 --sourcedir="$BT/source" -i "$BT/build"
 fi
+if [[ "${SKIP_BAKE:-0}" == 1 && -f "$BT/MANIFEST" && -d "$BT/build/lib" ]]; then
+	# Rebuild only liblinux/libsim and the GMTP scenarios.
+	step "SKIP_BAKE=1: reusing $BT/build"
+else
 ./bake.py check || true
 step "bake download"
 ./bake.py download
@@ -93,13 +97,14 @@ cat "$BT/MANIFEST"
 
 step "bake build"
 ./bake.py build -j"$JOBS" -vvv
+fi
 
 step "install liblinux.so into bin_dce"
 mkdir -p "$BT/build/bin_dce"
 lib="$NUSE/arch/lib/tools/libsim-linux-$(make -s -C "$NUSE" kernelversion).so"
 cp -f "$lib" "$BT/build/bin_dce/"
 ln -sf "$(basename "$lib")" "$BT/build/bin_dce/liblinux.so"
-sha256sum "$BT/build/bin_dce/$(basename "$lib")" | tee -a "$BT/MANIFEST"
+sha256sum "$BT/build/bin_dce/$(basename "$lib")" | tee "$BT/LIBSIM.sha256"
 step "GMTP scenarios (myscripts/gmtp)"
 "$REPO_ROOT/app/ns-3-dce/configure"
 cd "$BT/source/ns-3-dce"
@@ -107,5 +112,6 @@ cd "$BT/source/ns-3-dce"
 	--with-elf-loader="$BT/build/lib" --with-glibc="$BT/build/glibc" \
 	--with-libaspect="$BT/build" --enable-kernel-stack="$NUSE/arch"
 ./waf build -j"$JOBS"
+echo "gmtp-tree $(git -C "$REPO_ROOT" rev-parse HEAD)" | tee -a "$BT/LIBSIM.sha256"
 ls -l build/bin/dce-gmtp-* build/bin_dce/gmtp-* 2>/dev/null || true
 step "done"
