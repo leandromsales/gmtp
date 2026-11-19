@@ -1,0 +1,202 @@
+\chapter{Considerações Finais}
+\label{cap:final}
+
+Neste trabalho, apresentou-se um estudo da aplicabilidade do GMTP através da sua implementação no sistema operacional Linux. 
+Dessa forma, validou-se a especificação do GMTP no que diz respeito a sua implementação. Para isto, implementou-se o GMTP sem utilizar como base nenhuma outra implementação existente, visando validar a especificação do protocolo no que diz respeito a sua implementação.
+Avaliou-se a implementação do GMTP-Linux em termos de desempenho e, como resultado deste trabalho, identificaram-se limitações e propuseram-se melhorias no GMTP.
+
+Na perspectiva de implementação, efetuou-se um estudo da API de desenvolvimento de novos protocolos de transporte na pilha de rede do sistema operacional Linux.
+Estudou-se detalhadamente a especificação original do protocolo GMTP e suas funções, registrando-se quais funções poderiam ser implementadas tal como especificadas e quais deveriam ser adaptadas de acordo com as limitações do sistema operacional Linux ou das aplicações.
+Nesse contexto, definiram-se funções e mecanismos que foram apenas citados, sem definição detalhada, ou parcialmente definidos na especificação original do protocolo. 
+Além disso, definiram-se funções e mecanismos não previstos na especificação original do GMTP, quando necessário.
+
+Assim, implementou-se e configurou-se o GMTP no núcleo do Linux. 
+A implementação provê uma abstração para a camada de aplicação de modo que os processos em execução utilizem o GMTP através de uma API compatível com as especificações de \textit{socket} BSD e POSIX, facilitando o uso do GMTP nos atuais e futuros sistemas. 
+Neste sentido, este trabalho contribui diretamente com o avanço no desenvolvimento do GMTP em direção a chancelá-lo como um padrão definido IETF, em busca de melhorar o desempenho das aplicações multimídia na Internet e utilizar, de forma mais eficiente, os recursos de rede, especialmente quando se trata de fluxos multimídia ao vivo.
+
+Em seguida, realizaram-se testes básicos do acesso aos recursos do GMTP pela API de \textit{socket} BSD e POSIX, através de aplicações de rede, utilizando máquinas virtuais.
+Além dos testes básicos, realizaram-se testes de desempenho sobre a referida implementação através de simulações de rede, acoplando a implementação do GMTP no \textit{Kernel} do Linux em um simulador de rede. 
+Nesse sentido, este trabalho contribui com a avaliação o GMTP, a proposta de melhorias e uma comparação entre os resultados da versão do GMTP para simulador com o os resultados obtidos através da implementação do GMTP em um sistema operacional.
+
+Além disso, este trabalho traz como contribuição a primeira versão de uma implementação do GMTP em um sistema operacional equivalente à implementação feita para simulador.
+Ressalta-se que, conforme discute-se na Seção \ref{sec:problem}, a implementação do GMTP em um sistema operacional apresenta desafios específicos, que podem se agravar quando se trata da possibilidade de se ter o GMTP funcionando em múltiplos sistemas operacionais, ou mesmo em diferentes versões do mesmo sistema.
+Nesse sentido, este trabalho contribui ao apresentar propostas de soluções para diversos problemas, tais como:
+\begin{itemize}
+	\item Adaptação do protocolo à API de rede do Linux;
+	\item Soluções para utilização de temporizadores e \textit{threads} quando necessário;
+	\item Definição das estruturas de dados necessárias para representar entidades ou armazenar estados e informações previstos no protocolo;
+	\item Elaboração de soluções alternativas para contornar a ausência de operações de ponto flutuante no núcleo do Linux.
+\end{itemize}
+
+É importante salientar que o \textit{feedback} de implementações reais de protocolos é de fundamental importância para avaliar as soluções teóricas na Internet.
+Nesse contexto, este trabalho contribui com a implementação do GMTP e o conjunto de ferramentas associadas, a fim de demonstrar se a abordagem do protocolo GMTP é viável e praticável para uso das aplicações de rede.
+
+% 
+% 
+%      CONCLUSÕES
+% 
+%
+\section{Conclusões}
+\label{sec:conclusoes}
+
+A proposta de uma solução para transporte de dados multimídia através do GMTP é viável e aplicável, sob o ponto de vista da implementação de um protocolo de transporte na pilha de rede do sistema operacional Linux.
+Nesse contexto, implementou-se o GMTP no núcleo do Linux sem utilizar como base nenhuma outra implementação existente.
+Através de experimentos e simulações, demonstrou-se qual é o desempenho de uma implementação do GMTP em um sistema operacional real considerando algumas topologias de rede proeminentes e que simulam parte da Internet.
+
+As funções definidas originalmente no GMTP foram, em sua maioria, completamente compatíveis com a API do Linux. 
+Algumas funções precisaram de adaptações para funcionar corretamente no Linux.
+Nesse contexto, necessitou-se realizar adaptações e melhorias em relação à especificação original do GMTP a fim de aplicá-lo em um sistema operacional. Foi necessário definir, criar e implementar diversas mecanismos e estruturas para alcançar o pleno funcionamento do protocolo. Além disso, criou-se um novo mecanismo de formação de parcerias, além do já especificado originalmente, para aprimorar o desempenho do protocolo.
+
+No testes básicos, demonstrou-se que o acesso aos recursos do GMTP pela API de \textit{socket} BSD e POSIX, através de aplicações de rede, é viável e aplicável.
+Nos testes de desempenho, através de simulações em maior escala, acoplou-se a implementação do GMTP no \textit{Kernel} do Linux em um simulador de rede. 
+Em seguida, com base em simulações, observou-se que o os resultados relativos ao desempenho do GMTP implementado no Linux são semelhantes aos resultados disponíveis em \cite{sales2014gmtp}.
+Salienta-se que as funções definidas originalmente no GMTP poderiam não ser completamente compatíveis com o Linux, necessitando ser adaptadas de acordo com a API disponível. 
+Esta foi uma das principais motivações para investigar as possíveis limitações que poderiam restringir o pleno funcionamento do protocolo e avaliar a aplicabilidade do GMTP.
+
+Como resultado deste trabalho, é possível utilizar o GMTP a fim de transmitir ou receber dados multimídia na Internet, desde que os sistemas finais utilizem o Linux.
+Nesse contexto, é necessário integrar o GMTP-Inter em uma distribuição Linux direcionada a roteadores como, por exemplo, o OpenWrt, para que os roteadores participem da distribuição de mídia ativamente, através do GMTP.
+O conceito de \textit{socket} \textit{P2P} empregado no GMTP permite uma abstração de distribuição P2P com suporte transparente ao uso de \textit{multicast} por parte da aplicação, tornando o desenvolvimento de sistemas mais rápido e com menor chances de erros devido ao emprego de funções de \textit{software} relacionadas à distribuição de mídias ao vivo desacopladas da aplicação.
+
+Desta forma, implementou-se e configurou-se o GMTP no núcleo do Linux. Realizaram-se testes básicos do acesso aos recursos do GMTP, utilizando-se máquinas virtuais, e testes de desempenho em diferentes cenários de rede.
+Nesses testes, observou-se que o os resultados relativos ao desempenho do GMTP implementado no Linux são semelhantes aos resultados disponíveis em \cite{sales2014gmtp}.
+Deste modo, conclui-se que a abordagem do protocolo GMTP é viável e praticável para uso das aplicações em um sistema operacional.
+
+% 
+% 
+%      DISCUSSÕES
+% 
+%
+%\section{Discussões}
+
+% 
+% 
+%      LIMITAÇÕES E TRABALHOS FUTUROS
+% 
+%
+\section{Trabalhos Futuros}
+\label{sec:lim_fut}
+\label{sec:futuros}
+
+Nessa seção, apresentam-se as propostas de trabalhos futuros relacionados ao GMTP. Alguns recursos definidos na especificação original do GMTP não foram implementados, devendo ser desenvolvidos futuramente. Segue abaixo a lista dos recursos não implementados.
+
+\begin{enumerate}	
+\item \textit{Busca por mais parceiros}: 
+\label{item:busca}
+na especificação original do GMTP, preconiza-se que o nó repassador pode enviar periodicamente um pacote do tipo \pac{GMTP-RelayQuery} para o nó servidor a fim de descobrir melhores parceiros e aumentar o número de parcerias. O nó servidor deve então construir uma lista de possíveis nós parceiros e enviá-la de volta ao repassador. 
+No contexto deste trabalho, esse procedimento de requisição explícita de parcerias do repassador para o servidor não foi implementado.
+Em compensação, propôs-se um novo mecanismo através do qual o servidor ativamente indica uma nova parceria a um repassador, sem que tenha sido solicitado a fazê-lo.
+
+\item \textit{Chave de autorização entre servidores e repassadores}:
+na especificação original do GMTP, preconiza-se que a cada registro de participação que um repassador $r$ qualquer envia para um servidor, este deve gerar uma chave de autorização única para $r$ e transmiti-la como resposta no pacote do tipo \pac{GMTP-Register-Reply} (Seção \ref{sec:conexao-fase3}).
+No contexto deste trabalho, esse procedimento de criação da chave de autorização entre servidores e repassadores não foi implementado, pois o objetivo do referido procedimento é viabilizar o mecanismo de busca por mais parceiros através dos pacotes do tipo \pac{GMTP-RelayQuery}.
+
+\item \textit{Mapa de Buffer}: 
+na especificação original do GMTP, descrevem-se dois tipos de pacote denominados \pac{GMTP-DataPull-Request} e \pac{GMTP-DataPull-Response}. O pacote do tipo \pac{GMTP-DataPull-Request} tem como objetivo possibilitar que um repassador envie um pedido para obter o mapa de \textit{buffer} atual de um repassador parceiro, enquanto o pacote do tipo \pac{GMTP-DataPull-Response} deve carregar a resposta ao pedido de obtenção do mapa de \textit{buffer}. 
+Nesse contexto, quando um nó repassador $r_i$ transmite um mapa de \textit{buffer} para um outro nó
+qualquer $r_j$, caracteriza-se automaticamente o uso do método \textit{pull}, em vez do método \textit{push}, que é o modo padrão do GMTP. Salienta-se ainda que na proposta original do GMTP, orienta-se que o método \textit{pull} deve ser evitado devido à transitoriedade dos pacotes de dados. Assim, um nó $r_i$ apenas realiza tal procedimento após completar a fase de busca por mais parceiros (utilizando \pac{GMTP-RelayQuery}) do processo de estabelecimento de conexão~\cite{sales2014gmtp}.
+No contexto deste trabalho, as funções relacionadas ao mapa de \textit{buffer} não foram implementadas, pois dependem das funções relacionadas aos pacotes do tipo \pac{GMTP-RelayQuery}, que também não foram implementadas.
+
+\item \textit{Descrição da mídia}: na especificação original do GMTP, descreve-se um tipo de pacote denominado \pac{GMTP-MediaDesc}. A função desse tipo de pacote é descrever informações sobre a mídia sendo transmitida em um determinado fluxo de dados. Esse pacote é gerado pelo servidor e pode ser processo e/ou distribuído pelos repassadores.
+No contexto deste trabalho, as funções relacionadas à descrição da mídia este tipo de pacote não foram implementadas. 
+
+\item \textit{Verificação de autenticidade}: 
+não implementou-se a função de verificação de autenticidade do fluxo de dados do GMTP, cuja descrição encontra-se na Seção \ref{sec:autenticidade}. 
+Salienta-se que a função de verificação de autenticidade no GMTP é opcional e desabilitada por padrão, porque um sistema de transmissão, em execução na camada de aplicação, pode ou não desejar tal função.
+
+\item \textit{Uso do canal de controle para enviar o \pac{GMTP-Close} do cliente}:
+no contexto deste trabalho, não foi possível implementar o procedimento de desconexão através do canal de controle, porque as tentativas de implementação dessa funcionalidade não foram executadas com sucesso.
+Como clientes GMTP sempre se conectam ao servidor através do seu endereço IP (\textit{unicast}) e porta, criando-se um \textit{socket unicast}, no contexto deste trabalho, adotou-se provisoriamente o procedimento de desconexão onde o nó cliente envia um pacote do tipo \pac{GMTP-Close} através do \textit{socket unicast}, endereçado ao servidor. Em seguida, o repassador de origem do cliente intercepta o pacote e responde ao nó cliente com um pacote do tipo \pac{GMTP-Reset}, sinalizando que está ciente do fechamento da conexão.
+Na Seção \ref{sec:encerramento}, discutiu-se com mais detalhes sobre o procedimento para encerramento da transmissão por parte dos clientes.
+
+\item \textit{Eleição de novo relator}:
+No contexto deste trabalho, não implementou-se o procedimento de eleição de um novo relator quando se desconecta da rede. No entanto, implementou-se o mecanismo que possibilita que um cliente se autopromova a relator após determinado período, caso seu relator saia da rede. 
+\end{enumerate}
+
+A seguir, enumeram-se propostas de temas que podem ser objeto de estudo futuro com vistas a aprimorar o GMTP.
+
+\begin{enumerate}
+\item É necessário investigar o consumo de recursos computacionais que a interceptação de requisições e formação de parcerias pode ocasionar ao repassador. Assim, deve-se encontrar uma forma de calcular o número sub-ótimo de parceiros para cada repassador. 
+
+\item Investigar uma forma de encontrar a proporção sub-ótima de clientes por relator para uma transmissão multimídia, de acordo com o estado da rede. 
+Conforme discute-se na \ref{subsec:loss}, observou-se que o aumento do número de clientes por repassador ocasionou uma redução na taxa de perdas de pacotes. Isso ocorreu porque quanto mais clientes estiverem conectados aos repassadores, mais nós relatores estarão atuando na rede. Isso permitiu que o repassador tivesse mais precisão sobre as informações relacionadas ao estado da transmissão e respondesse apropriadamente aos eventos de congestionamento de rede.
+Logo, deve-se investigar uma forma de calcular o número sub-ótimo de relatores dado determinada quantidade de clientes.
+
+\item Estudar a viabilidade de um mecanismo que possibilite a um repassador continuar registrado no servidor, mesmo sem clientes ativos ou repassadores parceiros. Esse mecanismo amenizaria o possível impacto do \textit{churn}. Por exemplo, pode haver situações onde o repassador tem apenas um cliente conectado, que saiu da rede durante a transmissão. Pode-se considerar o caso onde executa-se a aplicação cliente em um dispositivo móvel, que saiu momentaneamente da zona de cobertura da rede sem fio local.
+Caso o repassador continue registrado, é possível que o cliente volte a receber a mídia assim que voltar à zona de cobertura, sem a necessidade de um novo registro do repassador no servidor.
+Mesmo que o primeiro cliente não retorne, é possível que outro cliente local receba o mesmo evento ao vivo sem que o repassador necessite se registrar novamente.  
+Além disso, com a manutenção do registro, é possível que o repassador inativo contribua em algum momento para a rede como parceiro de outro repassador.
+
+\item Pesquisar formas de otimizar o valor do \textit{timeout} para renovação do registro de participação. A renovação do registro de participação é importante para atualizar a tabela de caminhos no servidor. Caso o valor do \textit{timeout} da renovação seja superior ao valor ideal, o servidor manterá a tabela de caminhos desatualizada por mais tempo que o ideal, e ocasionalmente deixará de propor as melhores parcerias aos repassadores. Por outro lado, se o valor do \textit{timeout} da renovação for inferior ao valor ideal, poderá haver sobrecarga de pacotes de controle, além de sobrecarga de processamento no servidor, que consumirá seus recursos computacionais consultando a tabela de caminhos com frequência desnecessária.
+Esse aspecto do GMTP pode ser revisto e aprimorado, tanto no que se refere ao intervalo ideal para a renovação do registro de participação, quanto aos algoritmos de cálculo e rotas e parcerias.
+
+\item Adaptar uma aplicação de referência para utilização do protocolo GMTP. Nesse caso, sugere-se também avaliar o grau de complexidade de adaptar um sistema existente para utilizar o GMTP.
+
+\item Integrar o GMTP-Inter em uma distribuição Linux direcionada a roteadores como, por exemplo, o OpenWrt.
+
+\item Efetuar testes do GMTP em uma rede real, concorrendo com tráfego comum de uma rede local e de Internet. Nesse sentido, deve-se investigar o impacto do tráfego de dados gerados por outros protocolos sobre o GMTP.
+
+\item Estudar o desempenho do GMTP em diversas topologias de rede, incluindo redes com diferentes padrões de mobilidade, como redes de celular e redes veiculares.
+
+\end{enumerate}
+
+\section{Resumo das Contribuições}
+\begin{enumerate}
+	\item Estudo da aplicabilidade do GMTP, através da sua implementação no sistema operacional Linux. 
+		\begin{enumerate}
+		\item Validação da especificação do GMTP no que diz respeito a sua implementação. Para isto, implementou-se o GMTP sem utilizar como base nenhuma outra implementação existente.
+		\item Implementação e configuração do GMTP no núcleo do Linux. 
+		Essa implementação provê uma abstração para a camada de aplicação de modo que os processos em execução utilizem o GMTP através de uma API compatível com as especificações de \textit{socket} BSD e POSIX.
+		\item Exemplos de aplicações para utilização do GMTP na Internet.
+	\end{enumerate}
+	
+	\item Propostas de melhorias e adaptações ao protocolo GMTP.
+		\begin{enumerate}
+			\item Mudanças na organização do cabeçalho fixo;
+			\item Adição de novos tipos de pacote;
+			\item Alterações na estrutura da tabela de repasse;
+			\item Alteração no mecanismo de \textit{keep-alive} dos repassadores;
+			\item Simplificação no mecanismo do GMTP-UCC, para evitar sobrecarga de pacotes de controle;
+			\item Adição de um novo mecanismo de ampliação de parcerias entre os roteadores, baseado na iniciativa do servidor;
+			\item Alteração dos mecanismos de finalização de conexão.
+		\end{enumerate}
+	
+	\item Definição detalhada de funções e mecanismos parcialmente ou implicitamente definidos na especificação original do GMTP. 
+	\begin{enumerate}
+		\item Especificação da organização dos cabeçalhos variáveis;
+		\item Especificação de códigos para o pacote do tipo \pac{RequestNotify};
+		\item Definição do mecanismo de \textit{keep-alive} dos clientes através dos relatores.
+		\item Especificação das opções de \textit{socket} (\textit{sockopt}) do GMTP.
+		\item Definição dos estados do \textit{socket} GMTP.
+		\item Definição dos campos disponíveis na estrutura do \textit{socket} GMTP. 
+	\end{enumerate}
+	
+	\item Definição e mecanismos e estruturas internas do protocolo, algumas delas específicas para a API do Linux
+		\begin{enumerate}
+			\item Definição da estrutura das tabelas dos clientes;
+			\item Mecanismo de compartilhamento do \textit{socket} dos clientes GMTP no \textit{host} local.
+			\item Mecanismo de entrega dos pacotes \textit{multicast} de forma transparente às aplicações (que instanciam um \textit{socket unicast}).
+			\item Definição da estrutura das tabelas dos servidores;
+			\item Alterações na estrutura da tabela de repasse;
+		\end{enumerate}
+		
+	\item Criação de uma API geral para construção de tabelas \textit{hash} que, no contexto deste trabalho, foi utilizada para construir as tabelas do GMTP-Intra. 
+	Potencialmente, a API pode ser melhorada e utilizada para propósito geral, servindo como contribuição para desenvolvedores do Linux.
+	
+	\item Estudo e documentação da API de desenvolvimento de novos protocolos de transporte na pilha de rede do sistema operacional Linux.
+
+	\item Registro das funções do GMTP implementadas tal como especificadas e adaptadas de acordo com as limitações do sistema operacional Linux ou das aplicações.
+	
+	\item Identificação de limitações na implementação do GMTP.
+	
+	\item Avaliação da implementação do GMTP em termos de funcionalidade e desempenho.
+	\begin{enumerate}
+		\item Experimentos executados em máquinas virtuais, com o objetivo avaliar a correção da implementação e sua consonância com a especificação original.
+			
+		\item Simulações de desempenho com o objetivo de avaliar o desempenho da implementação do GMTP no núcleo do Linux, com suas respectivas adaptações, e o possível impacto que as mudanças propostas possam ter no desempenho do GMTP.
+		
+		\item Comparação dos resultados obtidos com os resultados disponíveis em \cite{sales2014gmtp}.
+		\end{enumerate}
+	
+\end{enumerate}
+
+

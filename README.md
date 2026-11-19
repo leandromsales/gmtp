@@ -37,9 +37,20 @@ ALl dependencies required by guest machines are defined in the Vagrantfile.
 
 ## Getting GMTP source ##
 
-Using git to get gmtp source:
+Clone this repository and recreate the gitignored live kernel trees:
 
-    $ git clone https://github.com/compelab/gmtp.git -b linux-5.4.21 --single-branch gmtp
+    $ git clone https://github.com/leandromsales/gmtp.git
+    $ cd gmtp
+    $ ./linux/checkout-trees.sh
+
+The script fetches the pinned host (`netdev/net-next`, `45ad84d2800e`) and
+ns-3 (`ParthPratim/net-next-nuse-5.10.47`, `4c7510b860629f`) commits with a
+blob-filtered clone, applies `linux/patches/`, and runs `gmtp/gmtp.sh --apply`
+so each tree's `net/gmtp` is a symlink into the tracked sources under `gmtp/`.
+See `linux/patches/README.md` if a SHA fetch from kernel.org is refused.
+
+The older `compelab/gmtp` branch `linux-5.4.21` is a historical snapshot.
+Protocol edits belong in `gmtp/` in this repository, not in that branch.
 
     
 ## Compile Kernel with GMTP code (host) ##

@@ -3,7 +3,7 @@
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 repo_root=$(CDPATH= cd -- "$script_dir/../.." && pwd)
 appdir="$script_dir"
-dce_dir="$repo_root/ns-3-dce"
+dce_dir="$repo_root/linux/ns3/linux-net-next-nuse-latest/tools/testing/libos/buildtop/source/ns-3-dce"
 
 #echo $#
 if [ $# -lt 4 ]; then

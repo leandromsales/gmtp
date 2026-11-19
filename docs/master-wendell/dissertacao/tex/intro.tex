@@ -1,0 +1,151 @@
+\chapter{Introdução}
+\label{cap:intro}
+ 
+A demanda dos usuários por conteúdo multimídia na Internet tem crescido a cada ano. 
+O crescimento das aplicações multimídia da Internet é resultado do aumento da penetração do acesso residencial à banda larga e do acesso sem fio de alta velocidade. Essa popularização resulta em um aumento da demanda para os sistemas de distribuição de mídias ao vivo, elevando-se os custos com largura de banda dos distribuidores de conteúdo.%~\cite{kurose2010redes}.
+No cenário atual, os desafios relacionados à escalabilidade, custos econômicos e do nível de satisfação do usuário ao consumir mídias ao vivo através da Internet ainda necessitam ser resolvidos.%~\cite{barbosa2014towards}. 
+Por isto, faz-se necessário pesquisar e propor novas soluções para utilizar eficientemente as redes de computadores a fim de distribuir mídias ao vivo através da Internet, em escala e com qualidade.
+
+Atualmente, os sistemas para transmissão de mídias ao vivo na Internet executam diversas funções que foram implementadas para suprir a ausência de serviços de rede para este fim. 
+A disseminação de diferentes sistemas e protocolos com este propósito tem levado à pulverização de soluções para transporte de dados multimídia, gerando uma falta de padronização na forma como tais sistemas transportam seus dados na Internet, principalmente porque tais soluções são implementadas na camada de aplicação~\cite{liu2008friendly}.
+Como consequência, não há a possibilidade de que dois ou mais nós, conectados em sistemas distintos, cooperem entre si, compartilhando o mesmo fluxo de dados transmitido por um servidor. Idealmente, os nós deveriam compartilhar o mesmo fluxo de dados e cada um apresentar o conteúdo da forma definida pela aplicação, desacoplando a forma de transportar os dados da forma como estes são apresentados pela aplicação aos seus respectivos usuários~\cite{sales2014gmtp}.
+%, evitando o consumo desnecessário de recursos de rede~\cite{sales2014gmtp}.
+
+Nesse contexto,~\citeonline{sales2014gmtp} propôs um protocolo de rede denominado \textit{Global Media Transmission Protocol} (GMTP), que considera uma arquitetura híbrida P2P/CDN para distribuição de mídias ao vivo com base na constituição de uma rede de favores entre roteadores, a fim de entregar o conteúdo multimídia de interesse comum aos seus usuários. 
+As parcerias entre os roteadores são formadas com base na capacidade dos canais de transmissão já em uso, dado um fluxo multimídia de interesse. Nesse contexto, os clientes não recebem os pacotes de dados diretamente dos servidores, mas sim dos roteadores já envolvidos na transmissão da mídia, evitando-se múltiplas conexões ao servidor sempre que possível.
+
+Essa solução difere da simples utilização do \textit{multicast}, pois no GMTP os roteadores são capazes de manter estado sobre quais mídias estão sendo repassadas. 
+Desta forma, os roteadores participam ativamente da distribuição do conteúdo multimídia e os repasses são configurados dinamicamente, seguindo diversas estratégias a serem discutidas mais adiante neste documento.
+
+A solução proposta no GMTP é inspirada nos recentes  avanços de novas arquiteturas de rede, das quais destacam-se as Redes Centradas na Informação (\textit{Information Centric Networks} -- ICN)~\cite{6563278}. %~\cite{Jacobson2009}. 
+O objetivo das ICNs é facilitar a distribuição de conteúdo através do desacoplamento entre a fonte e o conteúdo. 
+Nesse contexto, definem-se rotas, funções de transporte e decisões de repasse com base no nome do conteúdo a ser transmitido. Assim, um roteador pode fazer \textit{cache} de pacotes de dados muito requisitados para retorná-los quando necessário, sem a necessidade de consultar o servidor.
+Essa estratégia pode melhorar sobremaneira o desempenho de aplicações de mídias ao vivo na Internet.
+
+Na Figura \ref{fig:gmtp-posicao}, ilustram-se os principais representantes e marcos no contexto de distribuição de mídias ao vivo, bem como a evolução das arquiteturas e modelos de serviços adotados
+na Internet. O GMTP utiliza redes IP para transmissão de dados na Internet, embora inspire-se em algumas características das ICNs.
+No GMTP, nomeia-se o conteúdo multimídia a fim de entregá-lo aos seus usuários, através da participação ativa dos roteadores, de forma que a fonte do conteúdo multimídia torna-se transparente à aplicação. 
+Logo, no GMTP, considera-se um cenário onde os roteadores serão projetados com maior capacidade de processamento, oferecendo suporte a ICNs e visando a sua participação ativa na distribuição de conteúdo.
+
+\begin{figure}[ht]
+	\begin{center}
+		\includegraphics[scale=0.55]{imgs/gmtp-posicao.pdf}
+	\end{center}
+	\vspace{-0.5cm}
+	\caption[Representantes e marcos importantes no contexto de distribuição de mídias ao vivo]{Representantes e marcos importantes no contexto de distribuição de mídias ao vivo. Evolução das arquiteturas e modelos de serviços adotados na Internet.}
+	\fonte{\citeonline{sales2014gmtp}}
+	\label{fig:gmtp-posicao}
+\end{figure}
+
+
+% Leandro: Isso é diferente de multicast, pois neste caso os roteadores são capazes de manter estado sobre quais mídias estão sendo repassadas, qual sua origem etc. Como resultado, os roteadores participam mais ativamente da distribuição do conteúdo multimídia e os repasses são configurados dinamicamente, seguindo diversas estratégias a serem exploradas mais adiante neste documento.
+
+
+
+% 
+% 
+%      PROBLEMÁTICA
+% 
+% 
+% Leandro: Toda essa seção precisa ser reescrita. Em alguns pontos ficou bem repetitivo (especialmente parágrafos 1 e 3). Em todo caso, esse não é o seu problema. Esse foi o problema que eu tratei na tese. O seu problema é focar no que o título de seu trabalho fala: testar o GMTP, criar aplicações, avaliar, discutir melhorias etc. O que você tem que dizer aqui é que o GMTP foi proposto e avaliado, mas diversos problemas foram identificados, o que motivou a necessidade de mais avaliações, testes em diferentes cenários; consideração de implementação real etc. Ou seja, você tem que passar a ideia de que quando a coisa vai para um cenário real de implementação o bixo pega e por isso são necessárias várias coisas que foi o que efetivamente vc fez no seu mestrado, que vai desde implementar o básico do GMTP no núcleo do linux até identificar limitações do protocolo, propor melhoria etc. Isso engloba desde de mudanças simples que fizemos (adicionar mais tipos de pacotes); mudanças nos tamanhos dos cabeçalhos; até coisas mais complexas como adaptar um determinado algoritmo. Se você vender bem essa motivação vai encaixar direitinho com os resultados que você irá apresentar.
+
+% LEMBRE-SE de que o ideal dos seus resultados será apresentar resultados de desempenho de como era o GMTP básico, como eu propus, e o desempenho do GMTP como ficou depois das mudanças. Isso vai se dividir em duas partes: 1) mudanças técnicas apenas (mudou cabeçalho, tamanho de pacote, algoritmo etc) e 2) o impacto das mudanças no desempenho do GMTP comparando a sua versão com uma versão sem as suas modificações. 
+
+
+\section{Problemática}
+\label{sec:problem}
+
+O GMTP foi concebido a partir de evidências sólidas com base nos trabalhos anteriormente publicados e em simulações de rede, sendo uma solução discutida por meio de fundamentos matemáticos e testes com o uso de um simulador de rede.
+Pelos resultados das simulações, sugere-se que o protocolo é estável e eficiente para utilização em redes multimídia na Internet.
+
+Contudo, visando a aplicabilidade do GMTP em grande escala (ex. Internet), faz-se necessário estudá-lo em uma instância de implementação mais próxima da realidade, ou seja, em um sistema operacional e com possibilidade de execução em uma rede real. 
+Isto porque, quando se propõe um novo protocolo de rede, funções importantes são reveladas somente quando se realiza uma implementação possível de ser executada e implantada em um cenário de rede. 
+Além disto, é igualmente importante destacar que uma das políticas da IETF para aprovação de um novo protocolo de Internet é que exista pelo menos duas implementações interoperáveis de tal protocolo~\cite{RFC2026}.
+
+A implementação do GMTP em um sistema operacional apresenta desafios, como por exemplo, a definição de escolha dos tipos de dados (variáveis de implementação, cabeçalhos do protocolo), que pode afetar a precisão e a dinâmica do protocolo.
+Este problema pode se agravar quando se trata da possibilidade de se ter o GMTP funcionando em múltiplos sistemas operacionais, cada um com diferentes formas de lidar com questões relacionadas ao uso de temporizadores e \textit{threads}, bem como diferentes implementações da pilha TCP/IP.
+Nesse contexto, as funções definidas originalmente no GMTP podem não ser completamente compatíveis em determinados sistemas operacionais, necessitando ser adaptadas de acordo com a API disponível.
+Por exemplo, os algoritmos de controle de congestionamento do GMTP são compostos de alguns passos que dependem de operações em ponto-flutuante. Neste ponto, ainda não está claro como as soluções que visam contornar a ausência desse tipo de operação no núcleo do Linux afetariam a precisão e desempenho do GMTP nesse sistema.
+Além disso, os resultados das simulações apresentadas em \cite{sales2014gmtp} não revelam como o desempenho do GMTP pode ser afetado por fatores do ambiente computacional, incluindo configurações do TCP/IP, compartilhamento de \textit{link}, perdas devido a congestionamento e a presença de fluxos de outros protocolos, como TCP e UDP.
+É importante salientar que na Internet, o \textit{feedback} de implementações reais de protocolos é mais importante que qualquer princípio arquitetural~\cite{carpenter1996architectural}. 
+
+Nesse contexto, a implementação do protocolo de rede, assim como o conjunto de ferramentas desenvolvidas, são necessários a fim de demonstrar se a abordagem do protocolo GMTP é viável e praticável para uso das aplicações de rede.
+Assim, pelo exposto, entende-se que é necessário testar o GMTP através da criação de aplicações, com o intuito de identificar eventuais problemas e avaliar possíveis correções e melhorias. Deve-se também realizar testes em diferentes cenários típicos de rede, considerando-se variação de largura de banda, latência e perda de pacotes.
+
+% 
+% 
+%      OBJETIVO
+% 
+% 
+\section{Objetivos}
+\label{sec:objetivos}
+
+% O seu objetivo não é implementar o GMTP no núcleo do Linux, isso já é a solução.
+% Seu objetivo é estudar as funções do GMTP a fim de avaliar a complexidade de aplicação em um sistema operacional e em uma aplicação de rede.
+% O restante é objetivo específico: implementar no núcleo, abstrair em uma API socket etc, implementar uma aplicação que use GMTP etc.
+% Em uma das atividades, deve-se contemplar o levantamento das funções do GMTP e no final descrever se a(s) função(ões) foram implementadas como eu descrevi na tese ou se foi adaptada para a "realidade" de um SO e de uma app.
+%TODO Reflita sobre isso e avalie se realmente terminou sendo o seu objetivo. Acho que isso também foi objetivo, mas enfraqueceu e deu lugar mais fortemente ao fato de testar o gmtp na prática e melhorá-lo, comparando-o com a versão original. Concorda?
+
+O objetivo deste trabalho é apresentar um estudo da aplicabilidade do GMTP, através da sua implementação no sistema operacional Linux, identificando-se limitações e propondo-se melhorias, além de avaliar essa implementação em termos de desempenho em alguns cenários de rede. 
+
+\subsection{Objetivos específicos}
+\label{sec:obj-espec}
+
+Neste trabalho, tem-se os seguintes objetivos específicos:
+
+\begin{enumerate}
+\item Efetuar um estudo da API de desenvolvimento de novos protocolos de transporte na pilha de rede do sistema operacional Linux.
+\item Efetuar um estudo das funções do protocolo GMTP e registrar quais funções serão implementadas tal como especificadas e quais serão adaptadas de acordo com as limitações do sistema operacional Linux ou das aplicações.
+%E aí você faz um link disso lá nas conclusões
+\item Validar a especificação do GMTP no que diz respeito a sua implementação. Para isto, deve-se implementar o GMTP sem utilizar como base nenhuma outra implementação existente.
+\item Implementar e configurar o GMTP no núcleo do Linux. A implementação deve prover uma abstração para a camada de aplicação de modo que os processos em execução utilizem o referido protocolo, através de uma API compatível com as especificações de \textit{socket} BSD e POSIX, facilitando o uso do GMTP nos atuais e futuros sistemas. 
+\item Realizar testes básicos do acesso aos recursos do GMTP pela API de \textit{socket} BSD e POSIX, através de aplicações de rede, utilizando-se máquinas virtuais.
+\item Realizar testes de desempenho sobre a referida implementação em diferentes cenários de rede, considerando o acoplamento da implementação do GMTP no \textit{Kernel} do Linux em um simulador de rede. 
+\end{enumerate}
+
+
+% 
+% 
+%      RELEVANCIA
+% 
+% 
+\section{Relevância}
+\label{sec:relevancia}
+
+A distribuição de áudio/vídeo ao vivo para muitos receptores é um tema relevante no contexto de redes de computadores devido ao grande crescimento de interesse dos usuários por esse serviço, em particular, na Internet.  
+Nesse contexto, o projeto do GMTP suscita que um conjunto mínimo de serviços, quando organizado de forma mais apropriada, promove melhorias substanciais no projeto das aplicações para distribuição de áudio e vídeo ao vivo, otimizando o uso dos recursos de rede através da interoperabilidade entre os sistemas.
+
+Deste modo, faz-se necessário estudar a aplicabilidade do GMTP em um sistema operacional e com possibilidade de execução em uma rede real. 
+A implementação do protocolo de rede, assim como o conjunto de ferramentas desenvolvidas, tem como objetivo demonstrar se a abordagem do protocolo GMTP é viável e praticável para uso das aplicações.
+O compromisso com a utilização dos conceitos para construir soluções que possam ser aplicadas na indústria, torna o trabalho relevante em termos práticos, sobretudo em escala global na Internet.
+
+% 
+% 
+%      ESTRUTURA
+% 
+% 
+\section{Estrutura do Documento}
+\label{sec:estrutura}
+
+O restante deste documento está organizado da seguinte forma:
+
+\begin{itemize}
+  \item No Capítulo~\ref{cap:fundamentacao}, apresentam-se os principais conceitos relacionados aos sistemas de distribuição de mídias ao vivo na Internet, com ênfase no GMTP.
+
+%  \item No Capítulo~\ref{cap:relacionados}, apresentam-se os trabalhos relacionados a este trabalho, destacando-se os protocolos e sistemas de distribuição de mídias ao vivo.
+
+  \item No Capítulo~\ref{cap:aplicabilidade}, apresenta-se um estudo da aplicabilidade do GMTP, através da sua implementação no sistema operacional Linux, com a identificação das suas limitações e propostas de melhorias.
+
+  \item No Capítulo~\ref{cap:desempenho}, apresentam-se os resultados sobre o desempenho da implementação do protocolo GMTP.
+
+  \item No Capítulo~\ref{cap:final}, apresentam-se as considerações finais, discutindo-se os principais tópicos elencados neste trabalho, conclusões e trabalhos futuros.
+
+  \item No Apêndice~\ref{ap:aplicacoes}, apresentam-se alguns aplicações exemplo que utilizam o GMTP como protocolo de transporte.
+  
+  \item No Apêndice~\ref{ap:sockopt}, apresentam-se todas as opções de \textit{socket} disponíveis para utilização no GMTP.
+  
+  \item No Apêndice~\ref{ap:experimentos}, apresentam-se detalhes a respeitos dos experimentos realizados no contexto deste trabalho.
+  
+  \item No Anexo~\ref{anex:struct_sk}, apresentam-se detalhes das estruturas que representam \textit{sockets} no núcleo do Linux.
+
+\end{itemize}

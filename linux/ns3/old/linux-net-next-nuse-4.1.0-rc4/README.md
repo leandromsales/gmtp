@@ -28,12 +28,12 @@ _DCE_ provides network simulator integration with Linux kernel so that any Linux
 ```x-sh
     cd <gmtp_dir>/net-next-sim
     make defconfig ARCH=lib
-    # Add/remove modules (optional): 
-    make menuconfig ARCH=lib 
+    # Add/remove modules (optional):
+    make menuconfig ARCH=lib
     make library -j8 ARCH=lib
     make testbin -C tools/testing/libos
-    # Create a symlink to ns-3-dce source directories (optional):
-    ln -s net-next-sim/tools/testing/libos/buildtop/source/ns-3-dce/ ../ 
+    # Do not create an ns-3-dce symlink at the repository root.
+    # Live DCE sources: linux/ns3/linux-net-next-nuse-latest/tools/testing/libos/buildtop/source/ns-3-dce
 ```
 
 ## Aplying patches

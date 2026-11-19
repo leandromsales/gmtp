@@ -11,7 +11,7 @@ Load the GMTP kernel modules before running the socket or GStreamer programs. Se
 - Linux with `gmtp.ko` and `gmtp_ipv4.ko` installed. Relay nodes also load `gmtp-inter`.
 - Python 2 for `app/python`. The scripts use Python 2 `print` statements and the `md5` module.
 - GStreamer built from `tools/gstreamer` when building `gst-plugin-gmtp`. Follow `tools/AGENTS.md` before that build.
-- ns-3 Direct Code Execution for `app/ns-3-dce`. Follow `docs/setup-instructions/AGENTS.md` for the DCE revision. The helper scripts call `./waf` in the `ns-3-dce` tree linked at the repository root.
+- ns-3 Direct Code Execution for `app/ns-3-dce`. Follow `docs/setup-instructions/AGENTS.md` for the DCE revision. The helper scripts call `./waf` in `linux/ns3/linux-net-next-nuse-latest/tools/testing/libos/buildtop/source/ns-3-dce`.
 
 ## Python sockets
 
@@ -121,9 +121,9 @@ cd app/ns-3-dce
 ./run_simulation <times> <nrelays> <nclients> <dest>
 ```
 
-The script `cd`s to the repository `ns-3-dce` tree and runs `./waf`. `run_all` batches scenarios. `copy_results` and `cleangmtp` move and delete run files. `analysis/*.R` plots reception rate, loss, continuity, and control overhead (`graphics.R`, `graphics-en.R`, `sim-1.R` through `sim-6.R`, `sim-geant.R`, `master.R`).
+The script `cd`s to `linux/ns3/linux-net-next-nuse-latest/tools/testing/libos/buildtop/source/ns-3-dce` and runs `./waf`. `run_all` batches scenarios. `copy_results` and `cleangmtp` move and delete run files. `analysis/*.R` plots reception rate, loss, continuity, and control overhead (`graphics.R`, `graphics-en.R`, `sim-1.R` through `sim-6.R`, `sim-geant.R`, `master.R`).
 
-Set up DCE from `docs/setup-instructions/AGENTS.md`. The `ns-3-dce` symlink at the repository root points at DCE sources under `linux/ns3/linux-net-next-nuse-latest`. `--enable-kernel-stack` loads `liblinux.so` from that tree, whose `net/gmtp` serves `socket(SOCK_GMTP)`.
+Set up DCE from `docs/setup-instructions/AGENTS.md`. `--enable-kernel-stack` loads `liblinux.so` from `linux/ns3/linux-net-next-nuse-latest`, whose `net/gmtp` serves `socket(SOCK_GMTP)`.
 
 ## Packet-loss injector
 

@@ -1,0 +1,38 @@
+\chapter{Análise do Desempenho do Global Media Transmission Protocol (GMTP)}
+\label{cap:desempenho}
+
+Neste capítulo, apresenta-se a análise do desempenho do GMTP. 
+Os experimentos foram divididos em dois tipos, visando avaliar diferentes métricas.
+
+\begin{itemize}
+\item \textbf{Experimentos de correção}: executados em máquinas virtuais, com o objetivo avaliar a corretude da implementação e sua consonância com a especificação original.
+Nos casos onde foram propostas mudanças na especificação original, avaliar o correto funcionamento do protocolo. 
+
+\item \textbf{Simulações de desempenho}: tiveram como objetivo avaliar o desempenho da implementação do GMTP no núcleo do Linux, com suas respectivas adaptações, e o possível impacto que as mudanças propostas possam ter no desempenho do GMTP.
+Para isso, acoplou-se a implementação do GMTP/Linux ao simulador de redes NS-3~\cite{henderson2008network}. Além disso, comparou-se os resultados obtidos com os resultados disponíveis em \cite{sales2014gmtp}.
+
+\end{itemize} 
+
+
+% 
+% 
+%      METODOLOGIA
+% 
+% 
+%Gostaria que a gente também focasse em o quão do que foi especificado foi possível implementar. Se foi possível implementar tudo, ou parcialmente ou o que não foi possível devido à limitações. Por exemplo, na minha defesa, um dos avaliadores falou que podemos ter limitações em implementar o GMTP em hardware (muito considerado em um roteador) devido ao uso de cabeçalho de tamanho variável. Medir essas coisas são importantes..
+
+%Podemos pensar em outras, dependendo da evolução do trabalho, eg:
+
+% Outras métricas poderiam ser:
+% - viabilidade econômica
+% - curva número de usuários x recursos
+%- impacto nos demais protocolos (TCP, UDP, SCTP, DCCP...)
+%- restrições ao seu uso (do GMTP)
+%- requisitos mínimos necessários (memória, processador)
+%- Robustez
+%- Complexidade de implementação (ESSE DEVE SER O FOCO INICIAL, JÁ QUE VAMOS IMPLEMENTAR NO LINUX)
+%- etc
+
+\input{desempenho-vm}
+\input{desempenho-sim}
+

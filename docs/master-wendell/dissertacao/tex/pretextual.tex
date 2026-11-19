@@ -1,0 +1,223 @@
+
+% ---
+% Capa
+% ---
+\renewcommand{\imprimircapa}{%
+	\begin{capa}%
+		\center
+		{\ABNTEXchapterfont\Large\imprimirinstituicao}
+		\vspace*{3.5cm}
+		
+		{\ABNTEXchapterfont\large\imprimirautor}
+		
+		\vfill
+		\begin{center}
+			\ABNTEXchapterfont\bfseries\LARGE\imprimirtitulo
+		\end{center}
+		\vfill
+		
+		\Large\imprimirlocal \\
+		\Large\imprimirdata
+		
+		\vspace*{1cm}
+	\end{capa}
+}
+\imprimircapa
+% ---
+
+% ---
+% Folha de rosto
+% (o * indica que haverá a ficha bibliográfica)
+% ---
+\renewcommand{\folhaderostocontent}{
+	\begin{center}
+		
+		{\ABNTEXchapterfont\Large{Wendell Silva Soares}}
+		\vspace*{\fill}\vspace*{\fill}
+		
+		\begin{center}
+			\ABNTEXchapterfont\bfseries\LARGE\imprimirtitulo
+		\end{center}
+		\vspace*{\fill}
+		\hspace{.45\textwidth}
+		\begin{minipage}{.5\textwidth}
+			\SingleSpacing
+			\imprimirpreambulo
+			~\\
+			
+			Orientador: \imprimirorientador
+			Coorientador: \imprimircoorientador
+		\end{minipage}%
+		\vspace*{\fill}
+		
+		{\Large\imprimirlocal}
+		\par
+		{\Large\imprimirdata}
+		\vspace*{1cm}
+		
+	\end{center}
+}
+%\makeatother
+\imprimirfolhaderosto
+% ---
+
+% ---
+% Inserir a ficha bibliografica
+% ---
+
+% Isto é um exemplo de Ficha Catalográfica, ou ``Dados internacionais de
+% catalogação-na-publicação''. Você pode utilizar este modelo como referência. 
+% Porém, provavelmente a biblioteca da sua universidade lhe fornecerá um PDF
+% com a ficha catalográfica definitiva após a defesa do trabalho. Quando estiver
+% com o documento, salve-o como PDF no diretório do seu projeto e substitua todo
+% o conteúdo de implementação deste arquivo pelo comando abaixo:
+%
+% \begin{fichacatalografica}
+%     \includepdf{fig_ficha_catalografica.pdf}
+% \end{fichacatalografica}
+%\begin{fichacatalografica}
+%	\vspace*{\fill}					% Posição vertical
+%	\hrule							% Linha horizontal
+%	\begin{center}					% Minipage Centralizado
+%	\begin{minipage}[c]{12.5cm}		% Largura
+%	
+%	Soares, Wendell Silva.
+%	
+%	\hspace{0.5cm} \imprimirtitulo  / \imprimirautor. --
+%	\imprimirlocal, \imprimirdata.
+%	
+%	\hspace{0.5cm} \pageref{LastPage} p. : il. color.\\
+%	
+%	\hspace{0.5cm} \imprimirorientadorRotulo~\imprimirorientador\\
+%	\hspace{0.5cm} \imprimircoorientadorRotulo~\imprimircoorientador\\
+%	
+%	\hspace{0.5cm}
+%	\parbox[t]{\textwidth}{\imprimirtipotrabalho~--~Universidade Federal de Alagoas, Instituto de Computação, Programa de Pós-Graduação em Informática,
+%	\imprimirdata.}\\\\
+%	
+%	\hspace{0.5cm}
+%		1. GMTP.
+%		2. Redes P2P.
+%		3. Redes Multimídia.\\ 			
+%	
+%	\hspace{8.75cm} CDU 02:141:005.7\\
+%	
+%	\end{minipage}
+%	\end{center}
+%	\hrule
+%\end{fichacatalografica}
+% ---
+
+% ---
+% Inserir errata
+% ---
+%\begin{errata}
+%\end{errata}
+% ---
+
+% ---
+% Inserir folha de aprovação
+% ---
+
+% Isto é um exemplo de Folha de aprovação, elemento obrigatório da NBR
+% 14724/2011 (seção 4.2.1.3). Você pode utilizar este modelo até a aprovação
+% do trabalho. Após isso, substitua todo o conteúdo deste arquivo por uma
+% imagem da página assinada pela banca com o comando abaixo:
+%
+% \includepdf{folhadeaprovacao_final.pdf}
+
+\newcommand{\imprimiraprovpreambulo}{
+	Dissertação submetida ao corpo docente do Programa de Pós-Graduação em Informática da Universidade
+	Federal de Alagoas e aprovada em 15 de fevereiro de 2016.
+}
+
+\begin{folhadeaprovacao}
+
+  \begin{center}
+  	{\ABNTEXchapterfont\bfseries\large Folha de Aprovação}
+  	\vspace*{\fill}\vspace*{\fill}
+  	 
+    {\ABNTEXchapterfont \large{AUTOR:~\imprimirautor}}
+
+    \vspace*{\fill}\vspace*{\fill}
+%    \begin{center}
+%      \ABNTEXchapterfont\bfseries\Large\imprimirtitulo
+%    \end{center}
+	\imprimirtitulo
+    \vspace*{\fill}
+    
+    \hspace{.45\textwidth}
+    \begin{minipage}{.5\textwidth}
+        %\imprimirpreambulo
+        \imprimiraprovpreambulo
+    \end{minipage}%
+    \vspace*{\fill}
+   \end{center}
+        
+   \assinatura{\textbf{\imprimirorientador} \\ Orientador} 
+   \assinatura{\textbf{\imprimircoorientador} \\ Coorientador}
+   \vspace*{\fill}\vspace*{\fill} 
+    
+   \textbf{\large Banca Examinadora:}
+   \assinatura{\textbf{Prof. Dr. Marco Aurélio Spohn} \\ Universidade Federal da Fronteira Sul}
+   \assinatura{\textbf{Prof. Dr. Heitor Soares Ramos} \\ Universidade Federal de Alagoas}
+   %\assinatura{\textbf{Professor} \\ Convidado 3}
+      
+   \begin{center}
+    \vspace*{0.5cm}
+    {\Large\imprimirlocal}
+    \par
+    {\Large\imprimirdata}
+    \vspace*{1cm}
+  \end{center}
+  
+\end{folhadeaprovacao}
+% ---
+
+% ---
+% Dedicatória
+% ---
+%\begin{dedicatoria}
+%   \vspace*{\fill}
+%   \centering
+%   \noindent
+%   \textit{ Este trabalho é dedicado às crianças adultas que,\\
+%   quando pequenas, sonharam em se tornar cientistas.} \vspace*{\fill}
+%\end{dedicatoria}
+% ---
+
+% ---
+% Agradecimentos
+% ---
+\begin{agradecimentos}
+Agradeço primeiramente aos meus pais, Juvenil e Erinete, pelo amor e dedicação que me concederam. Sei que sem o sacrifício, dedicação e esforço de vocês eu não seria ninguém. Pai, agradeço especialmente pelas suas orações e pelo seu amor. Mãe, agradeço especialmente por sua dedicação e seu amor. Agradeço aos meus irmãos, Whanderson, Wevillyn, Wemilly e Wemerson, que amo tanto. Agradeço também à toda a minha família, tios, primos, e outros: amo todos vocês. 
+
+À minha esposa Gilmara, pelo seu apoio, pelo seu carinho, por sua paciência (ou mesmo a falta dela), mesmo quando eu passava as noites no computador ao invés de estar ao seu lado. Agradeço especialmente porque (mais uma vez) você não permitiu que eu me transformasse em um ser sem vida social. Não tenho palavras para descrever minha gratidão e meu amor por você.
+
+Agradeço aos meus colegas da Pró-Reitoria de Graduação da UFAL - PROGRAD, por me proporcionarem um ambiente de trabalho extremamente agradável e, acima de tudo, pela amizade cultivada durante esses anos.
+Em especial, agradeço a Alexandre Marques, Felipe Sarmento e Thiago Prudente, por me apoiarem durante todo a minha jornada profissional na UFAL e, especialmente, quando precisei me afastar das atividades profissionais para me dedicar ao mestrado.
+
+Agradeço também aos meus professores no mestrado, pela dedicação ao curso e aos seus alunos.
+Em especial, agradeço a meu orientador, Leandro Sales, pela compreensão, paciência, comprometimento e orientação, numa parceria que vem desde a graduação, sendo fundamental para meu crescimento acadêmico. Agradeço também ao meu coorientador, André Lage, pela inestimável colaboração para o meu trabalho e sua contribuição para meu desenvolvimento acadêmico.
+
+Agradeço aos meus colegas do curso, em especial àqueles que foram meus companheiros de grupo nas diversas avaliações pelas quais passei e me ajudaram a sobreviver a algumas matérias. 
+Agradeço também a todos os meus amigos e colegas do COMPE/UFAL.
+Por fim, agradeço especialmente aos meus colegas orientandos do PIBITI: Joilnen Leite e Mário André. A ajuda de vocês foi imprescindível para que este trabalho fosse concluído.
+Certamente este trabalho não teria sido concluído sem a ajuda de todas essas pessoas. 
+\end{agradecimentos}
+% ---
+
+% ---
+% Epígrafe
+% ---
+%\begin{epigrafe}
+%    \vspace*{\fill}
+%	\begin{flushright}
+%		\textit{``Não vos amoldeis às estruturas deste mundo, \\
+%		mas transformai-vos pela renovação da mente, \\
+%		a fim de distinguir qual é a vontade de Deus: \\
+%		o que é bom, o que Lhe é agradável, o que é perfeito.\\
+%		(Bíblia Sagrada, Romanos 12, 2)}
+%	\end{flushright}
+%\end{epigrafe}
+% ---

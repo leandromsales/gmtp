@@ -1,0 +1,210 @@
+\documentclass[
+	% -- opções da classe memoir --
+	12pt,				% tamanho da fonte
+	openright,			% capítulos começam em pág ímpar (insere página vazia caso preciso)
+	oneside,			% Oposto a twoside (para impressão em verso e anverso).
+	a4paper,			% tamanho do papel. 
+	% -- opções da classe abntex2 --
+	%chapter=TITLE,		% títulos de capítulos convertidos em letras maiúsculas
+	%section=TITLE,		% títulos de seções convertidos em letras maiúsculas
+	%subsection=TITLE,	% títulos de subseções convertidos em letras maiúsculas
+	%subsubsection=TITLE,% títulos de subsubseções convertidos em letras maiúsculas
+	% -- opções do pacote babel --
+	english,			% idioma adicional para hifenização
+	brazil				% o último idioma é o principal do documento
+	]{abntex2}
+
+\usepackage{lmodern}			% Usa a fonte Latin Modern	
+\usepackage{longtable}
+\usepackage[utf8]{inputenc}		% Codificacao do documento (conversão automática dos acentos)
+\usepackage[T1]{fontenc}
+\usepackage{indentfirst}		% Indenta o primeiro parágrafo de cada seção.
+\usepackage{graphicx}			% Inclusão de gráficos
+\usepackage{microtype} 			% para melhorias de justificação
+\usepackage{units}
+\usepackage{amsmath}
+\usepackage{multirow}
+
+%Para tratar de URLs grandes (que passem da margem), usar:
+%\sloppy\url{url grande}
+\usepackage{url}
+  
+\usepackage{hyperref} % Indice com links
+\usepackage{subfig}
+\usepackage{todonotes}
+
+\usepackage{listings}
+\renewcommand{\lstlistingname}{Listagem}
+\renewcommand{\lstlistlistingname}{Lista de códigos fonte}
+\begingroup\makeatletter
+\let\newcounter\@gobble\let\setcounter\@gobbletwo
+  \globaldefs\@ne \let\c@loldepth\@ne
+  \newlistof{listings}{lol}{\lstlistlistingname}
+  \newlistentry{lstlisting}{lol}{0}
+\endgroup
+
+\renewcommand{\cftlstlistingaftersnum}{\hfill--\hfill}
+
+\let\oldlstlistoflistings\lstlistoflistings
+\renewcommand{\lstlistoflistings}{%
+   \begingroup%
+   \let\oldnumberline\numberline%
+   \renewcommand{\numberline}{\lstlistingname\space\oldnumberline}%
+   \oldlstlistoflistings%
+   \endgroup}
+
+\usepackage{color}
+%\usepackage[usenames,dvipsnames]{xcolor}
+%\usepackage{xcolor}
+\usepackage{courier}
+\lstset{
+         basicstyle=\footnotesize\ttfamily, % Standardschrift
+         %numbers=left,               % Ort der Zeilennummern
+         numberstyle=\tiny,          % Stil der Zeilennummern
+         %stepnumber=2,               % Abstand zwischen den Zeilennummern
+         numbersep=5pt,              % Abstand der Nummern zum Text
+         tabsize=4,                  % Groesse von Tabs
+         extendedchars=true,         %
+         breaklines=true,            % Zeilen werden Umgebrochen
+ %        keywordstyle=\color{RedViolet}\textbf,
+    		frame=b,         
+ %        keywordstyle=[1]\textbf,    % Stil der Keywords
+ %        keywordstyle=[2]\textbf,    %
+ %        keywordstyle=[3]\textbf,    %
+ %        keywordstyle=[4]\textbf,   \sqrt{\sqrt{}} %
+         stringstyle=\color{blue}\ttfamily, % Farbe der String
+ %        commentstyle=\color{PineGreen},
+         showspaces=false,           % Leerzeichen anzeigen ?
+         showtabs=false,             % Tabs anzeigen ?
+         xleftmargin=17pt,
+         framexleftmargin=17pt,
+         framexrightmargin=5pt,
+         framexbottommargin=4pt,
+         %backgroundcolor=\color{lightgray},
+         showstringspaces=false      % Leerzeichen in Strings anzeigen ?        
+}
+ \lstloadlanguages{
+         C++,
+         Python,
+         Java,
+         %Javascript,
+         Pascal,
+         XML
+}
+\usepackage{caption}
+\DeclareCaptionFont{white}{\color{white}}
+\DeclareCaptionFormat{listing}{\colorbox[cmyk]{0.43, 0.35, 0.35,0.01}{\parbox{\textwidth}{\hspace{15pt}#1#2#3}}}
+\captionsetup[lstlisting]{format=listing, labelfont=white,textfont=white, singlelinecheck=false, margin=0pt, font={bf,footnotesize}}
+
+% ======== BIBLIOGRAFIA ABNT ========
+% ---
+% Pacotes de citações
+% ---
+%\usepackage[brazilian,hyperpageref]{backref}	 % Paginas com as citações na bibl
+\usepackage[alf]{abntex2cite}	% Citações padrão ABNT
+%\usepackage[num]{abntex2cite}
+
+
+% ===========COMANDOS ============
+\newcommand{\ut}[2]{\unit[#1]{\emph{#2}}}
+\newcommand{\pac}[1]{\textit{#1}}
+\newcommand{\campo}[1]{\textit{#1}}
+\newcommand{\aspas}[1]{``#1''}
+
+% ---
+% Informações de dados para CAPA e FOLHA DE ROSTO
+% ---
+\input{info}
+
+% ---
+% Configurações de aparência do PDF final
+
+% alterando o aspecto da cor azul
+\definecolor{blue}{RGB}{41,5,195}
+
+% informações do PDF
+\makeatletter
+\hypersetup{
+     	%pagebackref=true,
+		pdftitle={\@title}, 
+		pdfauthor={\@author},
+    	pdfsubject={\imprimirpreambulo},
+	    pdfcreator={LaTeX with abnTeX2},
+		pdfkeywords={abnt}{latex}{abntex}{abntex2}{trabalho acadêmico}, 
+		colorlinks=true,       		% false: boxed links; true: colored links
+    	linkcolor=blue,          	% color of internal links
+    	citecolor=blue,        		% color of links to bibliography
+    	filecolor=magenta,      		% color of file links
+		urlcolor=blue,
+		bookmarksdepth=4
+}
+\makeatother
+
+% --- 
+% Espaçamentos entre linhas e parágrafos 
+% --- 
+
+% O tamanho do parágrafo é dado por:
+\setlength{\parindent}{1.3cm}
+
+% Controle do espaçamento entre um parágrafo e outro:
+\setlength{\parskip}{0.2cm}  % tente também \onelineskip
+%\setlength{\parskip}{\onelineskip}
+
+% ---
+% compila o indice
+% ---
+\makeindex
+% ---
+
+% ----
+% Início do documento
+% ----
+\begin{document}
+
+% ----------------------------------------------------------
+% ELEMENTOS PRÉ-TEXTUAIS
+% ----------------------------------------------------------
+\input{pretextual}
+\input{resumo}
+%\input{listas} %Coloquei após o sumário.
+
+% ---
+% inserir o sumario
+% ---
+\pdfbookmark[0]{\contentsname}{toc}
+\tableofcontents*
+\cleardoublepage
+% ---
+
+\input{listas}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ----------------------------------------------------------
+% ELEMENTOS TEXTUAIS
+% ----------------------------------------------------------
+\textual
+
+% ======== SECTIONS =========
+\input{intro}
+\input{fundamentacao}
+%\input{relacionados}
+\input{implementacao}
+\input{desempenho}
+\input{conclusoes}
+
+% ----------------------------------------------------------
+% ELEMENTOS PÓS-TEXTUAIS
+% ----------------------------------------------------------
+\postextual
+% ----------------------------------------------------------
+
+% ----------------------------------------------------------
+% Referências bibliográficas
+% ----------------------------------------------------------
+\bibliography{references}
+
+\input{postextual}
+
+\label{LastPage}
+\end{document}

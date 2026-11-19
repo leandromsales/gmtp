@@ -1,0 +1,318 @@
+% ----------------------------------------------------------
+% Glossário
+% ----------------------------------------------------------
+%
+% Consulte o manual da classe abntex2 para orientações sobre o glossário.
+%
+%\glossary
+
+% ----------------------------------------------------------
+% Apêndices
+% ----------------------------------------------------------
+
+% ---
+% Inicia os apêndices
+% ---
+
+\begin{apendicesenv}
+
+% Imprime uma página indicando o início dos apêndices
+\partapendices
+
+% ======================================================================
+\chapter{Exemplos de aplicações GMTP}
+\label{ap:aplicacoes}
+
+Neste apêndice, apresentam-se alguns aplicações exemplo que utilizam o GMTP como protocolo de transporte.
+
+\section{Constantes para uso do GMTP}
+\label{ap:gmtp.h}
+
+No código fonte a seguir, está disponível um arquivo de cabeçalho escrito na linguagem C, denominado $gmtp.h$, onde definem-se as principais constantes necessárias para s instanciar um \textit{socket} GMTP.
+
+\begin{lstlisting}[language=C++, caption={Constantes e definições para uso das aplicações GMTP}, label={list:gmtp.h}]
+
+#ifndef GMTP_H_
+#define GMTP_H_
+
+#define SOCK_GMTP     7
+#define IPPROTO_GMTP  254
+#define SOL_GMTP      281
+
+enum gmtp_sockopt_codes {
+	GMTP_SOCKOPT_FLOWNAME = 1,
+	GMTP_SOCKOPT_MEDIA_RATE,
+	GMTP_SOCKOPT_MAX_TX_RATE,
+	GMTP_SOCKOPT_UCC_TX_RATE,
+	GMTP_SOCKOPT_GET_CUR_MSS,
+	GMTP_SOCKOPT_SERVER_RTT,
+	GMTP_SOCKOPT_SERVER_TIMEWAIT,
+	GMTP_SOCKOPT_PULL,
+	GMTP_SOCKOPT_ROLE_RELAY,
+	GMTP_SOCKOPT_RELAY_ENABLED,
+	GMTP_SOCKOPT_UCC_TYPE
+};
+
+#endif /* GMTP_H_ */
+\end{lstlisting}
+
+No código definem-se o valor correspondente ao tipo do \textit{socket} do GMTP como $7$, o número do protocolo GMTP como $254$ (a IANA definiu o valor 254 para testes e experimentos) e o código do GMTP para ler ou alterar as opções do \textit{socket} GMTP como $281$.
+Além disso, a enumeração \textit{gmtp\_sockopt\_codes} serve como identificador das opções de \textit{socket} do GMTP, na chamada das funções \textit{setsockopt} e \textit{getsockopt}.
+
+\section{Cliente GMTP}
+\label{ap:cliente-gmtp}
+
+No código fonte a seguir, está disponível o código de implementação de um cliente GMTP escrito na linguagem C. No código, faz-se uso do arquivo $gmtp.h$, definido no Apêndice \ref{ap:gmtp.h}.
+
+\begin{lstlisting}[language=C++, caption={Trecho de código de um cliente GMTP escrito na linguagem C.}, label={list:client-gmtp}]
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include "gmtp.h"
+
+#define SERVER_PORT 2000
+
+int main(int argc, char **argv) {
+	char *server_addr = argv[1];
+	struct sockaddr_in addr;
+	int sockfd = socket(AF_INET, SOCK_GMTP, IPPROTO_GMTP);
+	
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = inet_addr(server_addr);
+	addr.sin_port = htons (SERVER_PORT);
+	int ret = connect(sockfd, (struct sockaddr *)&addr,
+						sizeof(addr));
+						
+	/* A partir deste ponto, a aplicacao pode receber dados
+	 * atraves de funcoes como recv() ou recvmsg().
+	 */
+	
+	return 0;
+}
+\end{lstlisting}
+
+No exemplo, a porta do servidor é definida como $2000$ e o endereço IP do servidor deve ser passado como parâmetro de linha de comando da aplicação.
+
+\section{Servidor GMTP}
+\label{ap:servidor-gmtp}
+
+No código fonte a seguir, está disponível o código de implementação de um servidor GMTP escrito na linguagem C. No código, faz-se uso do arquivo $gmtp.h$, definido no Apêndice \ref{ap:gmtp.h}.
+
+\begin{lstlisting}[language=C++, caption={Trecho de código de um servidor GMTP escrito na linguagem C.}, label={list:servidor-gmtp}]
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include "gmtp.h"
+
+#define SERVER_PORT 2000
+
+int main(int argc, char *argv[])
+{
+	int sockfd, newSocket;
+	struct sockaddr_in addr;
+	struct sockaddr_storage addr_s;
+	int bitrate = 250000; /* 250000 B/s, ou 2Mbps */
+
+	sockfd = socket(PF_INET, SOCK_GMTP, IPPROTO_GMTP);
+	setsockopt(sockfd, SOL_GMTP, GMTP_SOCKOPT_MEDIA_RATE, &media_rate, sizeof(bitrate));
+
+	addr.sin_family = AF_INET;
+	addr.sin_port = htons(SERVER_PORT);
+	addr.sin_addr.s_addr = INADDR_ANY;
+	memset(addr.sin_zero, '\0', sizeof(addr.sin_zero));
+
+	bind(sockfd, (struct sockaddr *)&addr, sizeof(addr));
+
+	int ret = listen(sockfd, 5);
+
+	socklen_t addr_size = sizeof(addr_s);
+	newSocket = accept(sockfd, (struct sockaddr *)&addr_s, &addr_size);
+	
+	/* A partir deste ponto, a aplicacao pode enviar dados
+	 * atraves de funcoes como send() ou sendmsg().
+	 */
+	 
+	 return 0;
+}
+\end{lstlisting}
+
+No código exemplo a porta do servidor é $2000$ e utiliza-se o código de opção de \textit{socket} \textit{GMTP\_SOCKOPT\_MEDIA\_RATE} para informar ao GMTP que o \textit{bitrate} da mídia transmitida é \ut{2}{Mbps}.
+
+%====================================================
+\chapter{Opções de \textit{Socket} do GMTP}
+\label{ap:sockopt}
+
+Neste apêndice, apresentam-se todas as opções de \textit{socket} disponíveis para utilização no GMTP, através da chamada das funções \textit{getsockopt} e \textit{setsockopt}.
+Salienta-se que os protótipos das referidas funções são definidos conforme segue-se:
+
+\begin{lstlisting}[language=C++, caption={Protótipos das funções \textit{getsockopt} e \textit{getsockopt}}, label={list:set-get-sockopt}]
+int getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen);
+int setsockopt(int s, int level, int optname, const void *optval, socklen_t optlen);
+\end{lstlisting}
+
+Nas referidas funções, o parâmetro $s$ refere-se ao descritor do \textit{socket}, $level$ aponta se as configurações serão realizadas ao protocolo do próprio \textit{socket} ou ao seu protocolo subjacente, $optname$ refere-se ao nome da opção de \textit{socket} a ser configurada, $optval$ é um ponteiro para o valor da opção que deseja-se configurar/ler, e $optlen$ refere-se ao tamanho em \textit{bytes} de $optval$.
+
+Para configurar ou consultar as opções de \textit{socket} do GMTP, deve-se configurar o parâmetro $level$ como o valor $281$ ($SOL\_GMTP$), conforme ilustra-se no Apêndice \ref{ap:servidor-gmtp}.
+As opções de \textit{socket} disponíveis no GMTP, ordenadas pelo valor numérico de seus respectivos \textit{optnames} são:
+
+\begin{enumerate}
+	\item \textit{GMTP\_SOCKOPT\_FLOWNAME}: Configura ou consulta o nome do fluxo de mídia transmitido/recebido. Seu $optval$ é uma \textit{string} de 16 caracteres, correspondente a um código de \textit{hash} MD5 no formato UUID de 128 bits, conforme descrito na Seção \ref{sec:fluxo-basico}. Seu $optlen$ será sempre igual a 16.
+	
+	\item \textit{GMTP\_SOCKOPT\_MEDIA\_RATE}: Configura ou consulta o \textit{Bitrate} da mídia transmitida/recebida. Seu $optval$ é um valor inteiro não negativo de \ut{32}{bits}.
+	
+	\item \textit{GMTP\_SOCKOPT\_MAX\_TX\_RATE}: Configura ou consulta a taxa de transmissão máxima configurada manualmente no servidor. Seu $optval$ é um valor inteiro não negativo de \ut{32}{bits}.
+	
+	\item \textit{GMTP\_SOCKOPT\_UCC\_TX\_RATE}: Consulta a taxa de transmissão máxima recebida via GMTP-UCC. Essa opção está disponível apenas para leitura. Seu $optval$ é um valor inteiro não negativo de \ut{32}{bits}.
+	
+	\item \textit{GMTP\_SOCKOPT\_GET\_CUR\_MSS}: Retorna o MSS ou \textit{maximum segment size}. MSS é o tamanho máximo de dados que pode ser enviado, em bytes, em um único pacote. No MSS não são computados os bits pertencentes ao cabeçalho de dados. 
+	Essa opção está disponível apenas para leitura. Seu $optval$ é um valor inteiro não negativo de \ut{32}{bits}.
+	
+	\item \textit{GMTP\_SOCKOPT\_SERVER\_RTT}: RTT (round-trip time) medido no servidor, para determinado fluxo de dados. Essa opção está disponível apenas para leitura. Seu $optval$ é um valor inteiro não negativo de \ut{32}{bits}.
+	
+	\item \textit{GMTP\_SOCKOPT\_SERVER\_TIMEWAIT}: \textit{Timewait} no servidor. Atualmente não é utilizado. 
+	
+	\item \textit{GMTP\_SOCKOPT\_PULL}: Habilita o envio de pacotes do tipo \pac{Data-Pull-Request}. Atualmente não é utilizado.
+	
+	\item \textit{GMTP\_SOCKOPT\_ROLE\_RELAY}: Muda ou consulta o tipo de \textit{socket}, que pode ser \textit{comum} ou \textit{repassador}. Só pode ser configurado caso o \textit{socket} esteja inativo, ou seja, não esteja no estado \textit{listening}, enviando ou recebendo dados.
+	Seu $optval$ é um valor inteiro não negativo de \ut{32}{bits}, sendo igual a 1, caso o \textit{socket} seja configurado como \textit{Relay} (repassador), e 0, caso seja um \textit{socket} comum (cliente, servidor ou relator).
+	
+	\item \textit{GMTP\_SOCKOPT\_RELAY\_ENABLED}: Habilita ou desabilita o GMTP-Inter em determinado \textit{host}. Só é válido caso o \textit{socket} seja do tipo \textit{Relay} (repassador), ou seja, se a opção \textit{GMTP\_SOCKOPT\_ROLE\_RELAY} foi configurada com o valor 1.
+	Seu $optval$ é um valor inteiro não negativo de \ut{32}{bits}, sendo igual a 1 para habilitar o GMTP-Inter e igual a 0 para desabilitar o GMTP-Inter.
+	
+	\item \textit{GMTP\_SOCKOPT\_UCC\_TYPE}: Configura ou consulta o modo de controle de congestionamento do GMTP-UCC. Atualmente não é utilizado. 
+\end{enumerate}
+
+\chapter{Detalhes dos experimentos}
+\label{ap:experimentos}
+
+Neste apêndice, apresentam-se detalhes a respeitos dos experimentos realizados no contexto deste trabalho.
+
+\section{Quantidade de Ensaios}
+\label{ap:ensaios}
+
+%TODO Mudar para a equacao que foi utilizada de fato.
+No experimento realizado para analisar o desempenho do GMTP, apresentado no Capítulo \ref{cap:desempenho}, fez-se necessário determinar a quantidade de repetição de um tratamento para que fosse possível analisar, com 95\% de certeza, os valores obtidos para as variáveis dependentes nos experimentos estabelecidos.
+O valor de $n$ foi calculado através da Inequação~\ref{eq:n-puro}, onde $\rho^2$ e $E_0$ correspondem à variância da amostra e ao erro amostral máximo tolerado, respectivamente.
+
+\begin{equation}
+n \geq \frac{z_\gamma^2 \times \rho^2}{E_0^2}
+\label{eq:n-puro}
+\end{equation} 
+
+Ao considerar o grau de confiança como $0,95$, tem-se que $E_0$ é igual a 0,05 (obtido através da subtração $1 - 0,95$) e $z_\gamma$ é igual a $1,96$, obtendo-se a Inequação~\ref{eq:n-confianca}. 
+
+\begin{equation}
+n \geq \frac{1.96^2 \times \rho^2}{0.05^2}
+\label{eq:n-confianca}
+\end{equation} 
+
+
+
+\end{apendicesenv}
+% ---
+
+
+% ----------------------------------------------------------
+% Anexos
+% ----------------------------------------------------------
+
+% ---
+% Inicia os anexos
+% ---
+\begin{anexosenv}
+
+% Imprime uma página indicando o início dos anexos
+\partanexos
+
+% ======================================================================
+\chapter{Estruturas que representam \textit{sockets} no Linux}
+\label{anex:struct_sk}
+
+Neste anexo, apresentam-se detalhes das estruturas que representam \textit{sockets} no núcleo do Linux.
+
+\section{Interface para o espaço de usuário}
+\label{anex:socket}
+
+No trecho de código fonte a seguir, apresenta-se parcialmente a estrutura \lstinline|struct sock|, que é a representação de \textit{sockets} no espaço de usuário, na camada de aplicação.
+
+\begin{lstlisting}[language=C++, caption={Estrutura que representa um \textit{socket} no espaço de usuário do Linux}, label={list:socket}]
+struct socket {
+	socket_state			state;
+
+	kmemcheck_bitfield_begin(type);
+	short					type;
+	kmemcheck_bitfield_end(type);
+	...
+
+	struct file				*file;
+	struct sock				*sk;
+	const struct proto_ops	*ops;
+};
+ 
+/* (include/linux/net.h) */
+\end{lstlisting}
+
+A seguir, a descrição dos membros da estrutura:
+\begin{itemize}
+\item \textit{state}: Um \textit{socket} pode encontrar-se em vários estados, como  \lstinline|SS_UNCONNECTED| ou \lstinline|SS_CONNECTED|, conectado e desconectado, respectivamente.
+\item \textit{type}: O tipo do \textit{socket}, por exemplo, \lstinline|SOCK_STREAM| para TCP, \lstinline|SOCK_DGRAM| para UDP.
+\item \textit{file}: O arquivo associado ao \textit{socket}.
+\item \textit{sk}: O objeto \lstinline|sock| associado ao \textit{socket}. Representa a interface para a camada de rede.
+\item \textit{ops}: Um apontador para a estrutura \lstinline|struct proto_ops|. Consiste basicamente de \textit{callbacks} para o \textit{socket}, conforme discutido na Seção \ref{sec:sockets}.
+\end{itemize}
+
+\section{Interface para a camada de rede}
+\label{anex:sock}
+
+No trecho de código fonte a seguir, apresenta-se parcialmente a estrutura \lstinline|struct sock|, que é a representação de \textit{sockets} na camada de rede.
+
+\begin{lstlisting}[language=C++, caption={Estrutura que representa um \textit{socket} na camada de transporte do Linux}, label={list:sock}]
+struct sock {
+	...
+	
+	struct sk_buff_head	sk_receive_queue;
+	...
+	
+	int					sk_rcvbuf;
+	...
+
+	int					sk_sndbuf;
+	struct sk_buff_head	sk_write_queue;
+	...
+	unsigned int		sk_shutdown  : 2,
+						sk_no_check_tx : 1,
+						sk_no_check_rx : 1,
+						...
+						sk_protocol  : 8,
+						sk_type      : 16;
+	...
+	
+	void				(*sk_data_ready)(struct sock *sk);
+	void				(*sk_write_space)(struct sock *sk);
+	...
+	
+};
+ 
+/* (include/net/sock.h) */
+\end{lstlisting}
+
+A seguir, a descrição dos membros da estrutura:
+\begin{itemize}
+\item \textit{sk\_receive\_queue}: Uma fila para pacotes recebidos.
+\item \textit{sk\_rcvbuf}: O tamanho do \textit{buffer} de recepção em \textit{bytes}.
+\item \textit{sk\_sndbuf}: O tamanho do \textit{buffer} de envio em \textit{bytes}.
+\item \textit{sk\_write\_queue}: Uma fila de pacote para enviar.
+\item \textit{sk\_no\_check\_tx} e \textit{sk\_no\_check\_rx}: Um marcador para desabilitar o \textit{checksum} na transmissão e na recepção, respectivamente.
+\item \textit{sk\_protocol}: Um número de protocolo, conforme discutido na Seção \ref{sec:sockets}. 
+\item \textit{sk\_type}: O tipo do \textit{socket}, por exemplo, \lstinline|SOCK_STREAM| para TCP, \lstinline|SOCK_DGRAM| para UDP, conforme discutido na Seção \ref{sec:sockets}.
+\item \textit{sk\_data\_ready}: Um \textit{callback} para notificar o \textit{socket} sobre a chegada de dados.
+\item \textit{sk\_write\_space}: Um \textit{callback} para indicar que existe memória livre disponível para transmissão de dados.
+\end{itemize}
+
+
+\end{anexosenv}
+
+%---------------------------------------------------------------------
+% INDICE REMISSIVO
+%---------------------------------------------------------------------
+%\phantompart
+%\printindex
+%--------------------------------------------------------------------

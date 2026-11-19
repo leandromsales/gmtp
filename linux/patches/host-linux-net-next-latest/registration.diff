@@ -1,0 +1,119 @@
+diff --git a/include/linux/net.h b/include/linux/net.h
+index e2a866fbc..bc0b65212 100644
+--- a/include/linux/net.h
++++ b/include/linux/net.h
+@@ -143,6 +143,7 @@ enum sock_type {
+ 	SOCK_RDM	= 4,
+ 	SOCK_SEQPACKET	= 5,
+ 	SOCK_DCCP	= 6,
++	SOCK_GMTP	= 7,
+ 	SOCK_PACKET	= 10,
+ };
+ #endif /* ARCH_HAS_SOCKET_TYPES */
+diff --git a/include/linux/socket.h b/include/linux/socket.h
+index 5a5eb1250..5115d64c8 100644
+--- a/include/linux/socket.h
++++ b/include/linux/socket.h
+@@ -401,6 +401,8 @@ struct ucred {
+ #define SOL_SMC		286
+ #define SOL_VSOCK	287
+ 
++#define SOL_GMTP	300
++
+ /* IPX options */
+ #define IPX_TYPE	1
+ 
+diff --git a/include/net/net_namespace.h b/include/net/net_namespace.h
+index 46b4c67e2..30617d89f 100644
+--- a/include/net/net_namespace.h
++++ b/include/net/net_namespace.h
+@@ -22,6 +22,7 @@
+ #include <net/netns/nexthop.h>
+ #include <net/netns/ieee802154_6lowpan.h>
+ #include <net/netns/sctp.h>
++#include <net/netns/gmtp.h>
+ #include <net/netns/netfilter.h>
+ #if defined(CONFIG_NF_CONNTRACK) || defined(CONFIG_NF_CONNTRACK_MODULE)
+ #include <net/netns/conntrack.h>
+@@ -149,6 +150,9 @@ struct net {
+ #if defined(CONFIG_IP_SCTP) || defined(CONFIG_IP_SCTP_MODULE)
+ 	struct netns_sctp	sctp;
+ #endif
++#if defined(CONFIG_GMTP) || defined(CONFIG_GMTP_MODULE)
++	struct netns_gmtp	gmtp;
++#endif
+ #ifdef CONFIG_NETFILTER
+ 	struct netns_nf		nf;
+ #if defined(CONFIG_NF_CONNTRACK) || defined(CONFIG_NF_CONNTRACK_MODULE)
+diff --git a/include/net/secure_seq.h b/include/net/secure_seq.h
+index 6f9962291..0934dabbc 100644
+--- a/include/net/secure_seq.h
++++ b/include/net/secure_seq.h
+@@ -48,4 +48,7 @@ static inline u32 secure_tcpv6_seq(const __be32 *saddr, const __be32 *daddr,
+ 
+ 	return ts.seq;
+ }
++__u32 secure_gmtp_sequence_number(__be32 saddr, __be32 daddr,
++				   __be16 sport, __be16 dport);
++
+ #endif /* _NET_SECURE_SEQ */
+diff --git a/include/uapi/linux/in.h b/include/uapi/linux/in.h
+index ced0fc3c3..abfbcbe6f 100644
+--- a/include/uapi/linux/in.h
++++ b/include/uapi/linux/in.h
+@@ -81,6 +81,8 @@ enum {
+ #define IPPROTO_ETHERNET	IPPROTO_ETHERNET
+   IPPROTO_AGGFRAG = 144,	/* AGGFRAG in ESP (RFC 9347)		*/
+ #define IPPROTO_AGGFRAG		IPPROTO_AGGFRAG
++  IPPROTO_GMTP = 254,		/* Global Media Transmission Protocol */
++#define IPPROTO_GMTP		IPPROTO_GMTP
+   IPPROTO_RAW = 255,		/* Raw IP packets			*/
+ #define IPPROTO_RAW		IPPROTO_RAW
+   IPPROTO_SMC = 256,		/* Shared Memory Communications		*/
+diff --git a/net/Kconfig b/net/Kconfig
+index 76ab44aa4..c1fb5993f 100644
+--- a/net/Kconfig
++++ b/net/Kconfig
+@@ -251,6 +251,7 @@ source "net/bridge/netfilter/Kconfig"
+ endif # if NETFILTER
+ 
+ source "net/sctp/Kconfig"
++source "net/gmtp/Kconfig"
+ source "net/rds/Kconfig"
+ source "net/tipc/Kconfig"
+ source "net/atm/Kconfig"
+diff --git a/net/Makefile b/net/Makefile
+index 5b2dd7f07..49d9b54e6 100644
+--- a/net/Makefile
++++ b/net/Makefile
+@@ -40,6 +40,7 @@ ifneq ($(CONFIG_VLAN_8021Q),)
+ obj-y				+= 8021q/
+ endif
+ obj-$(CONFIG_IP_SCTP)		+= sctp/
++obj-$(CONFIG_GMTP)		+= gmtp/
+ obj-$(CONFIG_RDS)		+= rds/
+ obj-$(CONFIG_WIRELESS)		+= wireless/
+ obj-$(CONFIG_MAC80211)		+= mac80211/
+diff --git a/net/core/secure_seq.c b/net/core/secure_seq.c
+index 6a6f2cda5..301139fb0 100644
+--- a/net/core/secure_seq.c
++++ b/net/core/secure_seq.c
+@@ -134,3 +134,18 @@ u64 secure_ipv4_port_ephemeral(__be32 saddr, __be32 daddr, __be16 dport)
+ }
+ EXPORT_SYMBOL_GPL(secure_ipv4_port_ephemeral);
+ #endif
++
++__u32 secure_gmtp_sequence_number(__be32 saddr, __be32 daddr,
++				   __be16 sport, __be16 dport)
++{
++	u64 seq;
++
++	net_secret_init();
++	seq = siphash_3u32((__force u32)saddr, (__force u32)daddr,
++			   (__force u32)sport << 16 | (__force u32)dport,
++			   &net_secret);
++	seq += ktime_get_real_ns();
++	seq &= (1ull << 48) - 1;
++	return seq;
++}
++EXPORT_SYMBOL(secure_gmtp_sequence_number);
