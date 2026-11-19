@@ -7,6 +7,14 @@
 # stay), and builds GMTP and the GMTP relay in-tree.
 #
 # Usage: linux/build-host-kernel.sh [--install]
+#
+# --install boots the GMTP kernel once (grub-reboot) with panic=10 and
+# slub_debug=FZ. If it panics, the VM comes back on the distribution
+# kernel, which stays the saved GRUB default. Make it permanent with
+# "sudo grub-set-default '<entry>'" after a good boot.
+#
+# Ubuntu 22.04 packages: build-essential bc bison flex libelf-dev
+# libssl-dev libdw-dev dwarves debhelper rsync cpio kmod zstd fakeroot
 set -euo pipefail
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
@@ -37,4 +45,14 @@ make -j"$JOBS" bindeb-pkg
 
 if [[ "${1:-}" == "--install" ]]; then
 	sudo dpkg -i ../linux-image-*-gmtp*_*.deb
+	kver=$(make -s kernelrelease)
+	sudo sed -i 's/^GRUB_DEFAULT=.*/GRUB_DEFAULT=saved/' /etc/default/grub
+	echo 'GRUB_CMDLINE_LINUX="$GRUB_CMDLINE_LINUX panic=10 slub_debug=FZ"' |
+		sudo tee /etc/default/grub.d/90-gmtp.cfg >/dev/null
+	sudo update-grub
+	distro="Advanced options for Ubuntu>Ubuntu, with Linux $(uname -r)"
+	gmtp="Advanced options for Ubuntu>Ubuntu, with Linux $kver"
+	sudo grub-set-default "$distro"
+	sudo grub-reboot "$gmtp"
+	echo "next boot (once): $gmtp; fallback: $distro"
 fi
