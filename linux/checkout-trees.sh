@@ -210,14 +210,14 @@ apply_build_fixes() {
 	local patch="$patchdir/build-fixes.diff"
 
 	[[ -f "$patch" ]] || return 0
-	if patch -d "$dest" -p1 -R --dry-run --batch --silent < "$patch" >/dev/null 2>&1; then
+	if patch -d "$dest" -p1 -R -f --dry-run --silent < "$patch" >/dev/null 2>&1; then
 		log "build fixes already present in $dest"
 		return 0
 	fi
 	log "applying $patch"
 	# --forward skips hunks already applied (exit 1 then); verify the end state.
 	patch -d "$dest" -p1 --forward --batch --reject-file=- < "$patch" || true
-	patch -d "$dest" -p1 -R --dry-run --batch --silent < "$patch" >/dev/null ||
+	patch -d "$dest" -p1 -R -f --dry-run --silent < "$patch" >/dev/null ||
 		{ err "build fixes did not apply cleanly to $dest"; return 1; }
 }
 
