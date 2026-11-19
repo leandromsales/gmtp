@@ -101,12 +101,20 @@ esac
 
 case "$1" in
 --apply)
-	[[ "$WANT_HOST" -eq 1 ]] && apply_tree "$HOST_SRC" "$HOST_KERN"
-	[[ "$WANT_NS3" -eq 1 ]] && apply_tree "$NS3_SRC" "$NS3_KERN"
+	if [[ "$WANT_HOST" -eq 1 ]]; then
+		apply_tree "$HOST_SRC" "$HOST_KERN"
+	fi
+	if [[ "$WANT_NS3" -eq 1 ]]; then
+		apply_tree "$NS3_SRC" "$NS3_KERN"
+	fi
 	;;
 --remove)
-	[[ "$WANT_HOST" -eq 1 ]] && remove_tree "$HOST_SRC" "$HOST_KERN"
-	[[ "$WANT_NS3" -eq 1 ]] && remove_tree "$NS3_SRC" "$NS3_KERN"
+	if [[ "$WANT_HOST" -eq 1 ]]; then
+		remove_tree "$HOST_SRC" "$HOST_KERN"
+	fi
+	if [[ "$WANT_NS3" -eq 1 ]]; then
+		remove_tree "$NS3_SRC" "$NS3_KERN"
+	fi
 	;;
 *)
 	usage

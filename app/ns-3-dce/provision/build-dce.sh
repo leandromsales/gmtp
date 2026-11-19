@@ -43,7 +43,15 @@ step "liblinux.so (make library ARCH=lib)"
 cd "$NUSE"
 [[ -f .config ]] || make defconfig ARCH=lib
 # The Makefile defaults to git://, which GitHub no longer serves.
-make library ARCH=lib -j"$JOBS" LIBOS_GIT_REPO="$LIBOS_TOOLS_URL"
+# "make library" also builds the NUSE/rump userspace stack in
+# arch/lib/tools, whose submodules use dead git:// and code.google.com
+# URLs. DCE only needs libsim, so tolerate that step and build libsim
+# explicitly.
+make library ARCH=lib -j"$JOBS" LIBOS_GIT_REPO="$LIBOS_TOOLS_URL" || true
+KVER=$(make -s kernelversion)
+[[ -f "liblinux-$KVER.so" ]] || { echo "liblinux-$KVER.so was not built" >&2; exit 1; }
+make -C arch/lib/tools -j"$JOBS" "libsim-linux-$KVER.so"
+[[ -f "arch/lib/tools/libsim-linux-$KVER.so" ]] || { echo "libsim was not built" >&2; exit 1; }
 grep -E '^CONFIG_GMTP' .config
 
 step "Bake at $BAKE_SHA"
@@ -81,8 +89,7 @@ step "bake build"
 
 step "install liblinux.so into bin_dce"
 mkdir -p "$BT/build/bin_dce"
-lib=$(ls "$NUSE"/arch/lib/tools/libsim-linux-*.so 2>/dev/null | head -n1 || true)
-[[ -n "$lib" ]] || lib=$(readlink -f "$NUSE/liblinux.so")
+lib="$NUSE/arch/lib/tools/libsim-linux-$(make -s -C "$NUSE" kernelversion).so"
 cp -f "$lib" "$BT/build/bin_dce/"
 ln -sf "$(basename "$lib")" "$BT/build/bin_dce/liblinux.so"
 sha256sum "$BT/build/bin_dce/$(basename "$lib")" | tee -a "$BT/MANIFEST"
