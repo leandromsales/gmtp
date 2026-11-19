@@ -1,5 +1,5 @@
 diff --git a/bakeconf.xml b/bakeconf.xml
-index d5a880e..380dd6c 100644
+index d5a880e..a586959 100644
 --- a/bakeconf.xml
 +++ b/bakeconf.xml
 @@ -187,8 +187,8 @@
@@ -13,6 +13,15 @@ index d5a880e..380dd6c 100644
          <attribute name="module_directory" value="glibc" />
        </source>
        <depends_on name="gawk" optional="False"/>
+@@ -1394,7 +1394,7 @@
+ 
+     <module name="libc-2.31">
+       <source type="system_dependency">
+-        <attribute name="file_test" value="/usr/lib/debug/lib/x86_64-linux-gnu/ld-2.31.so"/>
++        <attribute name="file_test" value="/lib/x86_64-linux-gnu/libc-2.31.so"/>
+         <attribute name="more_information" value="Didn't find:   system libc 2.31; please install it."/>
+       </source>
+       <depends_on name="libc" optional="False"/>
 @@ -2415,12 +2415,11 @@
          <attribute name="revision" value="glibc-build"/>
        </source>
