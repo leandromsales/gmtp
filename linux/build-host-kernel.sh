@@ -27,7 +27,7 @@ if [[ ! -f .config ]]; then
 		--disable WERROR \
 		--set-str LOCALVERSION "-gmtp"
 	make olddefconfig
-	yes '' | make localmodconfig
+	make localmodconfig < <(yes '')
 	scripts/config --enable GMTP --enable GMTP_INTER
 	make olddefconfig
 fi
