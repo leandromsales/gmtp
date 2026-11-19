@@ -93,9 +93,8 @@ static void gmtp_retransmit_timer(struct sock *sk)
 
 static void gmtp_write_timer(struct timer_list *t)
 {
-	struct inet_connection_sock *icsk = from_timer(icsk, t,
-			icsk_retransmit_timer);
-	struct sock *sk = &icsk->icsk_inet.sk;
+	struct sock *sk = gmtp_sk_from_rtx_timer(t);
+	struct inet_connection_sock *icsk = inet_csk(sk);
 	int event = 0;
 
 	gmtp_pr_func();
@@ -107,15 +106,15 @@ static void gmtp_write_timer(struct timer_list *t)
 	if (sock_owned_by_user(sk)) {
 
 		/* Try again later */
-		sk_reset_timer(sk, &icsk->icsk_retransmit_timer, jiffies + (HZ / 20));
+		sk_reset_timer(sk, gmtp_rtx_timer(sk), jiffies + (HZ / 20));
 		goto out;
 	}
 
 	if (sk->sk_state == GMTP_CLOSED || !icsk->icsk_pending)
 		goto out;
 
-	if (time_after(icsk->icsk_timeout, jiffies)) {
-		sk_reset_timer(sk, &icsk->icsk_retransmit_timer, icsk->icsk_timeout);
+	if (time_after(gmtp_rtx_timeout(sk), jiffies)) {
+		sk_reset_timer(sk, gmtp_rtx_timer(sk), gmtp_rtx_timeout(sk));
 		goto out;
 	}
 
@@ -178,7 +177,7 @@ static void gmtp_reporter_ackrcv_timer(struct sock *sk)
 	}
 
 out:
-	inet_csk_reset_keepalive_timer(sk, GMTP_ACK_TIMEOUT);
+	gmtp_reset_keepalive_timer(sk, GMTP_ACK_TIMEOUT);
 }
 
 /** TODO implement method to disconnect dead relays */
@@ -186,7 +185,7 @@ static void gmtp_server_ackrcv_timer(struct sock *sk)
 {
 	gmtp_pr_func();
 
-	inet_csk_reset_keepalive_timer(sk, GMTP_ACK_TIMEOUT);
+	gmtp_reset_keepalive_timer(sk, GMTP_ACK_TIMEOUT);
 }
 
 
@@ -212,14 +211,13 @@ static void gmtp_client_sendack_timer(struct sock *sk)
 	}
 
 	gmtp_send_ack(sk);
-	inet_csk_reset_keepalive_timer(sk, next_ack_time);
+	gmtp_reset_keepalive_timer(sk, next_ack_time);
 }
 
 static void gmtp_keepalive_timer(struct timer_list *t)
 {
-	struct inet_connection_sock *icsk =
-				from_timer(icsk, t, icsk_delack_timer);
-	struct sock *sk = &icsk->icsk_inet.sk;
+	/* The keepalive handler runs from the keepalive timer, not delack. */
+	struct sock *sk = gmtp_sk_from_keepalive_timer(t);
 	struct gmtp_sock *gp =gmtp_sk(sk);
 
 	gmtp_pr_func();
@@ -229,7 +227,7 @@ static void gmtp_keepalive_timer(struct timer_list *t)
 	/* Only process if socket is not in use. */
 	if (sock_owned_by_user(sk)) {
 		/* Try again later. */
-		inet_csk_reset_keepalive_timer(sk, HZ / 20);
+		gmtp_reset_keepalive_timer(sk, HZ / 20);
 		goto out;
 	}
 
@@ -279,7 +277,7 @@ out:
 static void gmtp_delack_timer(struct timer_list *t)
 {
 	struct inet_connection_sock *icsk =
-				from_timer(icsk, t, icsk_delack_timer);
+				timer_container_of(icsk, t, icsk_delack_timer);
 	struct sock *sk = &icsk->icsk_inet.sk;
 	gmtp_pr_func();
 
@@ -298,9 +296,9 @@ static void gmtp_delack_timer(struct timer_list *t)
 	if (sk->sk_state == GMTP_CLOSED ||
 	    !(icsk->icsk_ack.pending & ICSK_ACK_TIMER))
 		goto out;
-	if (time_after(icsk->icsk_ack.timeout, jiffies)) {
+	if (time_after(gmtp_delack_timeout(sk), jiffies)) {
 		sk_reset_timer(sk, &icsk->icsk_delack_timer,
-			       icsk->icsk_ack.timeout);
+			       gmtp_delack_timeout(sk));
 		goto out;
 	}
 
@@ -328,7 +326,7 @@ out:
 
 void gmtp_write_xmit_timer(struct timer_list *t)
 {
-	struct gmtp_sock *gp = from_timer(gp, t, xmit_timer);
+	struct gmtp_sock *gp = timer_container_of(gp, t, xmit_timer);
 	struct sock *sk = (struct sock *)gp;
 
 	bh_lock_sock(sk);

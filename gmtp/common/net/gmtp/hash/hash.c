@@ -29,7 +29,7 @@ int gmtp_build_hashtable(struct gmtp_hashtable *htable,
 	htable->entry = kmalloc(sizeof(void*) * size, GFP_KERNEL);
 
 	if(htable->entry == NULL)
-		return NULL;
+		return -ENOMEM;
 
 	for(i = 0; i < size; ++i)
 		htable->entry[i] = NULL;

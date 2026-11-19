@@ -226,8 +226,8 @@ struct gmtp_inter_entry *gmtp_inter_del_entry(
 
 	gmtp_inter_del_clients(current_entry);
 	skb_queue_purge(current_entry->buffer);
-	del_timer_sync(&current_entry->mcc_timer);
-	del_timer_sync(&current_entry->ack_timer);
+	timer_delete_sync(&current_entry->mcc_timer);
+	timer_delete_sync(&current_entry->ack_timer);
 	kfree(current_entry);
 
 	gmtp_print_debug("Media entry removed successfully!");

@@ -6,7 +6,7 @@
  *  Wendell Silva Soares <wendell@ic.ufal.br>
  */
 #include <asm/ioctls.h>
-#include <asm-generic/unaligned.h>
+#include "gmtp_compat.h"
 
 #include <linux/init.h>
 #include <linux/module.h>
@@ -1259,13 +1259,14 @@ static int gmtp_create_inet_hashinfo(void)
 
     rc = -ENOBUFS;
 
-	inet_hashinfo_init(&gmtp_inet_hashinfo);
-
-	/* See https://patchwork.ozlabs.org/patch/1018304/ */
-	rc = inet_hashinfo2_init_mod(&gmtp_inet_hashinfo);
-	gmtp_pr_info("inet_hashinfo2_init_mod returned: %d", rc);
-	if (rc)
-		goto out_fail;
+	/*
+	 * Since Linux 6.16 the generic inet bind, listen and established
+	 * helpers always use the TCP hash tables (tcp_get_hashinfo()).
+	 * GMTP sockets therefore share TCP's port space on this kernel and
+	 * GMTP demultiplexes incoming packets through gmtp_sk_hash. This
+	 * private table only marks that GMTP initialised; lhash2 setup
+	 * (inet_hashinfo2_init_mod) no longer exists.
+	 */
 	rc = -ENOBUFS;
 
     gmtp_inet_hashinfo.bind_bucket_cachep =

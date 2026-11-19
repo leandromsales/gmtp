@@ -557,7 +557,7 @@ void gmtp_send_elect_request(struct sock *sk, unsigned long interval)
     gmtp_transmit_skb(sk, skb);
 
     if(interval > 0)
-        inet_csk_reset_keepalive_timer(sk, interval);
+        gmtp_reset_keepalive_timer(sk, interval);
 }
 EXPORT_SYMBOL_GPL(gmtp_send_elect_request);
 
@@ -586,7 +586,7 @@ void gmtp_send_elect_response(struct sock *sk, __u8 code)
         gp->myself->clients = kmalloc(sizeof(struct gmtp_client), GFP_ATOMIC);
         INIT_LIST_HEAD(&gp->myself->clients->list);
         mcc_rx_init(sk);
-        inet_csk_reset_keepalive_timer(sk, GMTP_ACK_TIMEOUT);
+        gmtp_reset_keepalive_timer(sk, GMTP_ACK_TIMEOUT);
     }
 
     gmtp_transmit_skb(sk, skb);

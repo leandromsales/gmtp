@@ -520,7 +520,7 @@ struct sk_buff *gmtp_inter_build_register(struct gmtp_inter_entry *entry)
 	gh->dport = entry->media_port;
 	gh->sport = entry->my_port;
 	gh->server_rtt = entry->server_rtt;
-	gh->transm_r = min(gmtp_inter.ucc_rx, entry->rcv_tx_rate);
+	gh->transm_r = min_t(u32, gmtp_inter.ucc_rx, entry->rcv_tx_rate);
 	memcpy(gh->flowname, entry->flowname, GMTP_FLOWNAME_LEN);
 
 	gr = (struct gmtp_hdr_register*) gh + sizeof(struct gmtp_hdr);
@@ -585,7 +585,7 @@ struct sk_buff *gmtp_inter_build_ack(struct gmtp_inter_entry *entry)
 	gh->dport = entry->media_port;
 	gh->sport = entry->my_port;
 	gh->server_rtt = entry->server_rtt;
-	gh->transm_r = min(gmtp_inter.ucc_rx, entry->rcv_tx_rate);
+	gh->transm_r = min_t(u32, gmtp_inter.ucc_rx, entry->rcv_tx_rate);
 	/*gh->transm_r = min(gmtp_inter.ucc_rx, entry->required_tx*3);*/
 	/*gh->transm_r = 100000;*/
 	memcpy(gh->flowname, entry->flowname, GMTP_FLOWNAME_LEN);

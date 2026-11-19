@@ -59,7 +59,7 @@ void mcc_timer_callback(struct timer_list *t)
 	struct gmtp_client *reporter, *temp;
 	unsigned int new_tx;
 
-	info = from_timer(info, t, mcc_timer);
+	info = timer_container_of(info, t, mcc_timer);
 
 	if(!info)
 		return;

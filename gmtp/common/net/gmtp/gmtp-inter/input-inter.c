@@ -1,5 +1,5 @@
 #include <net/ip.h>
-#include <asm-generic/unaligned.h>
+#include "../gmtp_compat.h"
 #include <linux/etherdevice.h>
 
 #include <uapi/linux/gmtp.h>
@@ -739,9 +739,9 @@ int gmtp_inter_close_rcv(struct sk_buff *skb, struct gmtp_inter_entry *entry,
 		entry->state = GMTP_INTER_CLOSE_RECEIVED;
 
 		pr_info("Deleting timers...\n");
-		del_timer_sync(&entry->mcc_timer);
-		del_timer_sync(&entry->ack_timer);
-		del_timer_sync(&entry->register_timer);
+		timer_delete_sync(&entry->mcc_timer);
+		timer_delete_sync(&entry->ack_timer);
+		timer_delete_sync(&entry->register_timer);
 
 		gh_reset = gmtp_inter_make_reset_hdr(skb, GMTP_RESET_CODE_CLOSED);
 

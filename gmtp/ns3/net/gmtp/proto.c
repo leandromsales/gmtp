@@ -6,7 +6,7 @@
  *  Wendell Silva Soares <wendell@ic.ufal.br>
  */
 #include <asm/ioctls.h>
-#include <asm-generic/unaligned.h>
+#include "gmtp_compat.h"
 
 #include <linux/init.h>
 #include <linux/module.h>
