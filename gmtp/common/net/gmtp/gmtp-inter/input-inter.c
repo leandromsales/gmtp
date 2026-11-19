@@ -77,7 +77,13 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 		entry->my_port = gh->sport;
 		code = GMTP_REQNOTIFY_CODE_WAIT;
 
-		gmtp_inter_make_register(skb);
+		if(gmtp_inter_make_register(skb) != NF_ACCEPT) {
+			ret = NF_DROP;
+			goto out;
+		}
+		/* make_register() may reallocate the skb head */
+		gh = gmtp_hdr(skb);
+		iph = ip_hdr(skb);
 	}
 
 	if(max_nclients > 0)
