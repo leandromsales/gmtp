@@ -227,13 +227,14 @@ out:
 }
 EXPORT_SYMBOL_GPL(gmtp_add_server_entry);
 
-/* FIXME This function crashes all... */
 void gmtp_del_relay_list(struct list_head *list_head)
 {
 	struct gmtp_relay_entry *relay, *temp;
+
 	gmtp_pr_func();
-	list_for_each_entry_safe(relay, temp, list_head, path_list)
-	{
+	if (!list_head)
+		return;
+	list_for_each_entry_safe(relay, temp, list_head, path_list) {
 		list_del(&relay->path_list);
 		kfree(relay);
 	}
@@ -242,40 +243,37 @@ void gmtp_del_relay_list(struct list_head *list_head)
 void gmtp_del_relay_hash_entry(struct gmtp_hashtable *table, const __u8 *key)
 {
 	struct gmtp_relay_entry *entry;
-	int hashval;
 
 	gmtp_print_function();
-
-	hashval = table->hashval(table, key);
-	if(hashval < 0)
+	entry = (struct gmtp_relay_entry *)gmtp_remove_entry(table, key);
+	if (entry == NULL)
 		return;
-
-	entry = (struct gmtp_relay_entry*) table->entry[hashval];
-	if(entry != NULL) {
-		gmtp_del_relay_list(&entry->path_list);
-		table->len--;
-		kfree(entry);
-	}
+	gmtp_del_relay_list(&entry->path_list);
+	kfree(entry);
 }
 
 void gmtp_del_server_hash_entry(struct gmtp_hashtable *table, const __u8 *key)
 {
 	struct gmtp_server_entry *entry;
-	int hashval;
 
 	gmtp_print_function();
-
-	hashval = table->hashval(table, key);
-	if(hashval < 0)
+	entry = (struct gmtp_server_entry *)gmtp_remove_entry(table, key);
+	if (entry == NULL)
 		return;
-
-	entry = (struct gmtp_server_entry*) table->entry[hashval];
-	if(entry != NULL) {
-		/*entry->relay_hashtable->destroy(entry->relay_hashtable);*/
-		table->len--;
-		kfree(entry);
-	}
+	/*
+	 * Do not walk relay_hashtable here: those relay entries can also
+	 * appear on path lists, and a nested destroy would free them twice.
+	 * Unlinking the server entry stops the connect/close leak of the
+	 * hash node itself.
+	 */
+	kfree(entry);
 }
+
+void gmtp_del_server_entry(struct gmtp_hashtable *table, const __u8 *key)
+{
+	table->del_entry(table, key);
+}
+EXPORT_SYMBOL_GPL(gmtp_del_server_entry);
 
 const struct gmtp_hash_ops gmtp_server_hash_ops = {
 		.hashval = gmtp_hashval,

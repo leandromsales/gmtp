@@ -71,15 +71,12 @@ static int do_gmtp_setsockopt(struct sock *sk, int level, int optname,
 		break;
 
 	case GMTP_SOCKOPT_SERVER_TIMEWAIT:
-		/** FIXME Gotos to fix strange error... */
-		goto role_relay;
 		gmtp_pr_debug("GMTP_SOCKOPT_SERVER_TIMEWAIT");
 		if(gp->role != GMTP_ROLE_SERVER)
 			err = -EOPNOTSUPP;
 		else
 			gp->server_timewait = (val != 0)? 1 : 0;
 		break;
-role_relay:
 	case GMTP_SOCKOPT_ROLE_RELAY:
 		gmtp_pr_debug("GMTP_SOCKOPT_ROLE_RELAY");
 		if(val != 0 && gp->role == GMTP_ROLE_UNDEFINED)
@@ -89,7 +86,6 @@ role_relay:
 		else
 			err = -EOPNOTSUPP;
 		break;
-relay_enabled:
 	case GMTP_SOCKOPT_RELAY_ENABLED:
 		gmtp_pr_debug("GMTP_SOCKOPT_RELAY_ENABLED");
 		if(gp->role != GMTP_ROLE_RELAY)
@@ -98,15 +94,13 @@ relay_enabled:
 			gmtp_info->relay_enabled = (val != 0) ? 1 : 0;
 		break;
 	default:
-		/** FIXME Gotos to fix strange error... */
-		goto relay_enabled;
 		err = -ENOPROTOOPT;
 		break;
 	}
 	release_sock(sk);
 
 	if(err != 0)
-		pr_warning("gmtp_setsockopt error: %d\n", err);
+		pr_warn("gmtp_setsockopt error: %d\n", err);
 
 	return err;
 }
@@ -129,15 +123,17 @@ int gmtp_setsockopt(struct sock *sk, int level, int optname,
 EXPORT_SYMBOL_GPL(gmtp_setsockopt);
 
 static int gmtp_getsockopt_flowname(struct gmtp_sock *gp, char __user *optval,
-		unsigned int *optlen)
+		int __user *optlen)
 {
 	int len;
-	__u8 *val;
 
-	val = gp->flowname;
-	len = GMTP_FLOWNAME_LEN * sizeof(*val);
-
-	if (put_user(len, optlen) || copy_to_user(optval, val, len))
+	if (get_user(len, optlen))
+		return -EFAULT;
+	if (len <= 0)
+		return -EINVAL;
+	if (len > GMTP_FLOWNAME_LEN)
+		len = GMTP_FLOWNAME_LEN;
+	if (put_user(len, optlen) || copy_to_user(optval, gp->flowname, len))
 		return -EFAULT;
 
 	return 0;
@@ -146,7 +142,6 @@ static int gmtp_getsockopt_flowname(struct gmtp_sock *gp, char __user *optval,
 static int do_gmtp_getsockopt(struct sock *sk, int level, int optname,
 		    char __user *optval, int __user *optlen)
 {
-	/* TODO Validate every getsockoptc using a C/C++ application */
 	struct gmtp_sock *gp;
 	int val, len;
 
@@ -159,7 +154,7 @@ static int do_gmtp_getsockopt(struct sock *sk, int level, int optname,
 		return -EINVAL;
 
 	gp = gmtp_sk(sk);
-	gmtp_print_debug("Get optname: %d | optlen: %u", optname, *optlen);
+	gmtp_print_debug("Get optname: %d | optlen: %d", optname, len);
 
 	switch (optname) {
 	case GMTP_SOCKOPT_FLOWNAME:

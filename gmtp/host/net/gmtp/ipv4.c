@@ -381,7 +381,8 @@ static int gmtp_v4_send_register_reply(const struct sock *sk,
 
         rcu_read_lock();
         err = ip_build_and_send_pkt(skb, sk, ireq->ir_loc_addr,
-                ireq->ir_rmt_addr, rcu_dereference(ireq->ireq_opt));
+                ireq->ir_rmt_addr, rcu_dereference(ireq->ireq_opt),
+                inet_sk(sk)->tos);
         rcu_read_unlock();
         err = net_xmit_eval(err);
     }
@@ -433,7 +434,7 @@ static void gmtp_v4_ctl_send_packet(struct sock *sk, struct sk_buff *rxskb,
 
     bh_lock_sock(ctl_sk);
     err = ip_build_and_send_pkt(skb, ctl_sk, rxiph->daddr, rxiph->saddr,
-            NULL);
+            NULL, inet_sk(ctl_sk)->tos);
     bh_unlock_sock(ctl_sk);
 
     if(net_xmit_eval(err) == 0) {
@@ -538,49 +539,6 @@ reset:
 }
 EXPORT_SYMBOL_GPL(gmtp_v4_do_rcv);
 
-/**
- *  gmtp_check_packet  -  check for malformed packets
- *  Packets that fail these checks are ignored and do not receive Resets.
- */
-static int gmtp_check_packet(struct sk_buff *skb)
-{
-    const struct gmtp_hdr *gh = gmtp_hdr(skb);
-
-    /** Accept multicast only for Data, Close and Reset packets */
-    if(skb->pkt_type != PACKET_HOST && gh->type != GMTP_PKT_DATA
-            && gh->type != GMTP_PKT_CLOSE
-            && gh->type != GMTP_PKT_RESET) {
-        gmtp_pr_warning("Invalid packet destiny\n");
-        return 1;
-    }
-
-    /* If the packet is shorter than sizeof(struct gmtp_hdr),
-     * drop packet and return */
-    if(!pskb_may_pull(skb, sizeof(struct gmtp_hdr))) {
-        gmtp_pr_warning("pskb_may_pull failed\n");
-        return 1;
-    }
-
-    /* If P.type is not understood, drop packet and return */
-    if(gh->type >= GMTP_PKT_INVALID) {
-        gmtp_pr_warning("invalid packet type\n");
-        return 1;
-    }
-
-    /*
-     * If P.hdrlen is too small for packet type, drop packet and return
-     */
-    if(gh->hdrlen < gmtp_hdr_len(skb) / sizeof(u32)) {
-        gmtp_pr_warning("P.hdrlen(%u) too small\n", gh->hdrlen);
-        return 1;
-    }
-
-    /* If header checksum is incorrect, drop packet and return.
-     * (This step is completed in the AF-dependent functions.) */
-    skb->csum = skb_checksum(skb, 0, skb->len, 0);
-
-    return 0;
-}
 
 /**
  * FIXME verify if client already is added.
@@ -787,7 +745,7 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
 
         if(gmtp_info->relay_enabled) {
             if(gh->type == GMTP_PKT_DATA)
-                goto ignore_it;
+                goto discard_it;
         }
 
         /* TODO Make a reset code for each error here! */
@@ -865,7 +823,6 @@ no_gmtp_socket:
 discard_it:
     kfree_skb(skb);
 
-ignore_it:
     return 0;
 }
 
@@ -1135,7 +1092,7 @@ EXPORT_SYMBOL_GPL(gmtp_v4_conn_request);
 bool static inline gmtp_ehash_nolisten(struct sock *sk, struct sock *osk)
 {
 	gmtp_sk_ehash_insert(&gmtp_sk_hash, sk, osk);
-	return inet_ehash_nolisten(sk, osk);
+	return inet_ehash_nolisten(sk, osk, NULL);
 }
 
 /*

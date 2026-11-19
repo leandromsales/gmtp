@@ -198,16 +198,17 @@ static inline void gmtp_inter_wait_ms(unsigned int delay)
 
 static inline unsigned long ktime_to_jiffies(ktime_t value)
 {
-	struct timespec ts = ktime_to_timespec(value);
+	struct timespec64 ts = ktime_to_timespec64(value);
 
-	return timespec_to_jiffies(&ts);
+	return timespec64_to_jiffies(&ts);
 }
 
 static inline void jiffies_to_ktime(const unsigned long jiffies, ktime_t *value)
 {
-	struct timespec ts;
-	jiffies_to_timespec(jiffies, &ts);
-	*value = timespec_to_ktime(ts);
+	struct timespec64 ts;
+
+	jiffies_to_timespec64(jiffies, &ts);
+	*value = timespec64_to_ktime(ts);
 }
 
 #endif /* GMTP_INTER_H_ */

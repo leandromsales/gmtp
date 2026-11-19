@@ -288,8 +288,7 @@ static void gmtp_delack_timer(struct timer_list *t)
 
 	bh_lock_sock(sk);
 	if (sock_owned_by_user(sk)) {
-		/* Try again later. */
-		icsk->icsk_ack.blocked = 1;
+		/* Try again later. icsk_ack.blocked was removed upstream. */
 		NET_INC_STATS(sock_net(sk), LINUX_MIB_DELAYEDACKLOCKED);
 		sk_reset_timer(sk, &icsk->icsk_delack_timer,
 			       jiffies + TCP_DELACK_MIN);
@@ -329,23 +328,25 @@ out:
 
 void gmtp_write_xmit_timer(struct timer_list *t)
 {
-	/*struct gmtp_packet_info *pkt_info;*/
+	struct gmtp_sock *gp = from_timer(gp, t, xmit_timer);
+	struct sock *sk = (struct sock *)gp;
 
-	gmtp_pr_func();
-
-	/*pkt_info = from_timer(pkt_info, t, xmit_timer);*/
-	/*if(!pkt_info)
-		return;*/
-
-	/*gmtp_write_xmit(pkt_info->sk, pkt_info->skb);
-	del_timer_sync(&gmtp_sk(pkt_info->sk)->xmit_timer);
-	kfree(pkt_info);*/
+	bh_lock_sock(sk);
+	if (sock_owned_by_user(sk)) {
+		sk_reset_timer(sk, &gp->xmit_timer, jiffies + 1);
+		goto out;
+	}
+	gmtp_flush_write_queue(sk);
+out:
+	bh_unlock_sock(sk);
+	sock_put(sk);
 }
 EXPORT_SYMBOL_GPL(gmtp_write_xmit_timer);
 
 void gmtp_init_xmit_timers(struct sock *sk)
 {
 	gmtp_pr_func();
+	timer_setup(&gmtp_sk(sk)->xmit_timer, gmtp_write_xmit_timer, 0);
 	inet_csk_init_xmit_timers(sk, &gmtp_write_timer, &gmtp_delack_timer,
 				&gmtp_keepalive_timer);
 }

@@ -34,7 +34,7 @@
 /* TODO Improve debug func names */
 #define gmtp_print_debug(fmt, args...) pr_info(GMTP_DEBUG fmt \
         "\n", __FUNCTION__, __LINE__, ##args)
-#define gmtp_print_warning(fmt, args...) pr_warning(GMTP_WARNING fmt \
+#define gmtp_print_warning(fmt, args...) pr_warn(GMTP_WARNING fmt \
         "\n", __FUNCTION__, __LINE__, ##args)
 #define gmtp_print_error(fmt, args...) pr_err(GMTP_ERROR fmt \
         "\n", __FUNCTION__, __LINE__, ##args)
@@ -45,7 +45,7 @@
 #define gmtp_pr_info(fmt, args...) pr_info(GMTP_DEBUG fmt \
         "\n", __FUNCTION__, __LINE__, ##args)
 #define gmtp_pr_debug(fmt, args...) gmtp_pr_info(fmt, ##args);
-#define gmtp_pr_warning(fmt, args...) pr_warning(GMTP_WARNING fmt \
+#define gmtp_pr_warning(fmt, args...) pr_warn(GMTP_WARNING fmt \
         "\n", __FUNCTION__, __LINE__, ##args)
 #define gmtp_pr_error(fmt, args...) pr_err(GMTP_ERROR fmt \
         "\n", __FUNCTION__, __LINE__, ##args)
@@ -126,9 +126,10 @@ void gmtp_init_xmit_timers(struct sock *sk);
 static inline void gmtp_clear_xmit_timers(struct sock *sk)
 {
     inet_csk_clear_xmit_timers(sk);
+    sk_stop_timer(sk, &gmtp_sk(sk)->xmit_timer);
     if(gmtp_sk(sk)->type == GMTP_SOCK_TYPE_REGULAR
             && gmtp_sk(sk)->role == GMTP_ROLE_CLIENT) {
-        if(gmtp_sk(sk)->myself->rsock != NULL)
+        if(gmtp_sk(sk)->myself != NULL && gmtp_sk(sk)->myself->rsock != NULL)
             inet_csk_clear_xmit_timers(gmtp_sk(sk)->myself->rsock);
     }
 }
@@ -198,6 +199,8 @@ void gmtp_send_feedback(struct sock *sk);
 void gmtp_send_close(struct sock *sk, const int active);
 int gmtp_send_reset(struct sock *sk, enum gmtp_reset_codes code);
 void gmtp_write_xmit(struct sock *sk, struct sk_buff *skb);
+void gmtp_flush_write_queue(struct sock *sk);
+int gmtp_check_packet(struct sk_buff *skb);
 unsigned int gmtp_sync_mss(struct sock *sk, u32 pmtu);
 int gmtp_transmit_built_skb(struct sock *sk, struct sk_buff *skb);
 struct sk_buff *gmtp_make_register_reply(struct sock *sk, struct dst_entry *dst,
@@ -247,8 +250,6 @@ static inline void kfree_gmtp_info(struct gmtp_info *gmtp_info)
         kfree(gmtp_info->control_sk);
     if(gmtp_info->ctrl_addr != NULL)
         kfree(gmtp_info->ctrl_addr);
-    if(gmtp_info->relay_id != NULL)
-    	kfree(gmtp_info->relay_id);
     kfree(gmtp_info);
 }
 
