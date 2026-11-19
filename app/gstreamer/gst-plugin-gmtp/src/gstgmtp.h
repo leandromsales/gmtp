@@ -24,19 +24,9 @@
 #include <gst/base/gstadapter.h>
 #include "gstgmtp_common.h"
 
-/* GMTP socket general options */
+/* GMTP socket general options. ABI numbers come from app/include/gmtp.h. */
 #define GMTP_BACKLOG	5
-#ifndef SOCK_GMTP
-	#define SOCK_GMTP		7
-#endif
-
-#ifndef IPPROTO_GMTP
-	#define IPPROTO_GMTP	254
-#endif
-
-#ifndef SOL_GMTP
-	#define SOL_GMTP		300
-#endif
+#include "../../../include/gmtp.h"
 
 /* gmtp socket specific options */
 //#define GMTP_SOCKOPT_PACKET_SIZE        1 /* XXX deprecated, without effect */
@@ -81,18 +71,6 @@
 	GMTP_SOCKOPT_NDP_SENT,
 	GMTP_SOCKOPT_UCC_TYPE
 };*/
-#define GMTP_SOCKOPT_FLOWNAME 1
-#define GMTP_SOCKOPT_MEDIA_RATE 2
-#define GMTP_SOCKOPT_MAX_TX_RATE 3
-#define GMTP_SOCKOPT_UCC_TX_RATE 4
-#define GMTP_SOCKOPT_GET_CUR_MSS 5
-#define GMTP_SOCKOPT_SERVER_RTT 6
-#define GMTP_SOCKOPT_SERVER_TIMEWAIT 7
-#define GMTP_SOCKOPT_ROLE_RELAY 8
-#define GMTP_SOCKOPT_RELAY_ENABLED 9
-#define GMTP_SOCKOPT_NDP_RCV
-#define GMTP_SOCKOPT_NDP_SENT
-#define GMTP_SOCKOPT_UCC_TYPE
 
 gchar *gst_gmtp_host_to_ip (GstElement * element, const gchar * host);
 

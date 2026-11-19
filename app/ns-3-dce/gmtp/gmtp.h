@@ -11,7 +11,7 @@
 
 #define SOCK_GMTP     7
 #define IPPROTO_GMTP  254
-#define SOL_GMTP      281
+#define SOL_GMTP      300  /* canonical ABI; see app/include/gmtp.h */
 
 #define SERVER_PORT 2000
 #define BUFF_SIZE (int) 744  /* 544 + 56 = 600 B/pkt */
