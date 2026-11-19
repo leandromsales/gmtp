@@ -1,7 +1,18 @@
 diff --git a/bakeconf.xml b/bakeconf.xml
-index d5a880e..972a268 100644
+index d5a880e..380dd6c 100644
 --- a/bakeconf.xml
 +++ b/bakeconf.xml
+@@ -187,8 +187,8 @@
+     
+     <module name="glibc-2.31">
+       <source type="git">
+-        <attribute name="url" value="https://sourceware.org/git/glibc.git" />
+-        <attribute name="revision" value="release/2.31/master" />
++        <attribute name="url" value="https://github.com/bminor/glibc.git" />
++        <attribute name="revision" value="f18446d7b4a423090ee5e328c36b3c2a0f26041c" />
+         <attribute name="module_directory" value="glibc" />
+       </source>
+       <depends_on name="gawk" optional="False"/>
 @@ -2415,12 +2415,11 @@
          <attribute name="revision" value="glibc-build"/>
        </source>
