@@ -36,7 +36,10 @@ do
 done
 
 cd "$appdir"
-./copy_results $dest
+if ! ./copy_results "$dest"; then
+    echo "copy_results failed; leaving traces in $dce_dir" >&2
+    exit 1
+fi
 
 cd "$dce_dir"
 rm -rf files-* *.pcap *.tr

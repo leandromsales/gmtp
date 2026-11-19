@@ -23,6 +23,10 @@
 
 #include "gstgmtp.h"
 
+#include <errno.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+
 #ifdef HAVE_FIONREAD_IN_SYS_FILIO
 #include <sys/filio.h>
 #else
@@ -90,52 +94,42 @@ gst_gmtp_host_to_ip (GstElement * element, const gchar * host)
 GstFlowReturn
 gst_gmtp_read_buffer (GstElement * this, int sockfd, GstBuffer ** buf)
 {
+  struct timeval timeout;
   fd_set testfds;
   int maxfdp1;
+  int sel;
   gssize bytes_read;
-#ifndef G_OS_WIN32
-  int readsize;
-#else
-  unsigned long readsize;
-#endif
+  unsigned int mss = 1444;
+  socklen_t msslen = sizeof (mss);
+  GstMapInfo map;
 
   *buf = NULL;
 
-  /* do a blocking select on the socket */
-  FD_ZERO (&testfds);
-  FD_SET (sockfd, &testfds);
-  maxfdp1 = sockfd + 1;
+  /* Poll with a timeout so a NULL select timeout cannot stall the pipeline
+   * forever, and so we do not treat a missing FIONREAD as end-of-stream.
+   * GMTP sockets may not implement FIONREAD. */
+  do {
+    FD_ZERO (&testfds);
+    FD_SET (sockfd, &testfds);
+    maxfdp1 = sockfd + 1;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 250000;
+    sel = select (maxfdp1, &testfds, NULL, NULL, &timeout);
+  } while (sel == 0 || (sel < 0 && errno == EINTR));
 
-  /* no action (0) is also an error in our case */
-  if (select (maxfdp1, &testfds, NULL, NULL, 0) <= 0) {
+  if (sel < 0) {
     GST_ELEMENT_ERROR (this, RESOURCE, READ, (NULL),
         ("select failed: %s", g_strerror (errno)));
     return GST_FLOW_ERROR;
   }
 
-  /* ask how much is available for reading on the socket */
-#ifndef G_OS_WIN32
-  if (ioctl (sockfd, FIONREAD, &readsize) < 0) {
-    GST_ELEMENT_ERROR (this, RESOURCE, READ, (NULL),
-        ("read FIONREAD value failed: %s", g_strerror (errno)));
-#else
-  if (ioctlsocket (sockfd, FIONREAD, &readsize) == SOCKET_ERROR) {
-    GST_ELEMENT_ERROR (this, RESOURCE, READ, (NULL),
-        ("read FIONREAD value failed: %s", g_strerror (WSAGetLastError ())));
-#endif
+  if (getsockopt (sockfd, SOL_GMTP, GMTP_SOCKOPT_GET_CUR_MSS, &mss, &msslen) < 0
+      || mss == 0 || mss > 65535)
+    mss = 1444;
+
+  *buf = gst_buffer_new_and_alloc (mss);
+  if (*buf == NULL)
     return GST_FLOW_ERROR;
-  }
-
-  if (readsize == 0) {
-    GST_DEBUG_OBJECT (this, "Got EOS on socket stream");
-    //return GST_FLOW_UNEXPECTED;
-    return GST_FLOW_EOS;
-  }
-
-  GstMapInfo map;
-  gsize map_size;
-
-  *buf = gst_buffer_new_and_alloc ((int) readsize);
   if (!gst_buffer_map (*buf, &map, GST_MAP_WRITE)) {
     GST_ELEMENT_ERROR (this, RESOURCE, READ, (NULL),
         ("failed to map buffer for writing"));
@@ -143,27 +137,29 @@ gst_gmtp_read_buffer (GstElement * this, int sockfd, GstBuffer ** buf)
     *buf = NULL;
     return GST_FLOW_ERROR;
   }
-#ifndef G_OS_WIN32
-  bytes_read = recv (sockfd, (char *) map.data, (int) map.size, 0);
-#else
-  bytes_read =
-      recvfrom (sockfd, (char *) map.data, (int) map.size, 0,
-      NULL, 0);
 
-#endif
-  map_size = map.size;
+  do {
+    bytes_read = recv (sockfd, (char *) map.data, (int) map.size, 0);
+  } while (bytes_read < 0 && errno == EINTR);
+
   gst_buffer_unmap (*buf, &map);
 
-  if (bytes_read != (gssize) map_size) {
-    GST_DEBUG_OBJECT (this, "Error while reading data");
+  if (bytes_read == 0) {
+    GST_DEBUG_OBJECT (this, "Got EOS on socket stream");
+    gst_buffer_unref (*buf);
+    *buf = NULL;
+    return GST_FLOW_EOS;
+  }
+  if (bytes_read < 0) {
+    GST_ELEMENT_ERROR (this, RESOURCE, READ, (NULL),
+        ("recv failed: %s", g_strerror (errno)));
     gst_buffer_unref (*buf);
     *buf = NULL;
     return GST_FLOW_ERROR;
   }
 
+  gst_buffer_set_size (*buf, bytes_read);
   GST_LOG_OBJECT (this, "bytes read %" G_GSSIZE_FORMAT, bytes_read);
-  GST_LOG_OBJECT (this, "returning buffer of size %" G_GSIZE_FORMAT, map_size);
-
   return GST_FLOW_OK;
 }
 
@@ -187,11 +183,21 @@ gst_gmtp_create_new_socket (GstElement * element)
     GST_ELEMENT_ERROR (element, RESOURCE, OPEN_READ, (NULL), GST_ERROR_SYSTEM);
   }
 
-  /* FIXME Temporary: setsockopt and getsockopt causes kernel panic */
- /* setsockopt(sock_fd, SOL_GMTP, GMTP_SOCKOPT_FLOWNAME, "1234567812345678", 16);
-  unsigned int tx = 33000;
-  socklen_t sizelen = (socklen_t) sizeof(unsigned int);
-  setsockopt(sock_fd, SOL_GMTP, GMTP_SOCKOPT_MAX_TX_RATE, &tx, sizelen);*/
+  {
+    unsigned int tx = 33000;
+    socklen_t sizelen = (socklen_t) sizeof (unsigned int);
+
+    if (setsockopt (sock_fd, SOL_GMTP, GMTP_SOCKOPT_FLOWNAME,
+            "1234567812345678", 16) < 0) {
+      GST_WARNING_OBJECT (element, "setsockopt FLOWNAME failed: %s",
+          g_strerror (errno));
+    }
+    if (setsockopt (sock_fd, SOL_GMTP, GMTP_SOCKOPT_MAX_TX_RATE, &tx,
+            sizelen) < 0) {
+      GST_WARNING_OBJECT (element, "setsockopt MAX_TX_RATE failed: %s",
+          g_strerror (errno));
+    }
+  }
   GST_INFO ("SOCKET GMTP CRIADO");
 
   return sock_fd;
@@ -556,20 +562,18 @@ gst_gmtp_get_ccid (GstElement * element, int sock_fd, int tx_or_rx)
  * @return the MTU if the operation was successful, -1 otherwise.
  */
 
-/* FIXME Temporary getsockopt and setsockopt in GMTP causes kernel panic */
 gint
 gst_gmtp_get_max_packet_size (GstElement * element, int sockfd)
 {
-  unsigned int mss = 1024;/*
-  socklen_t sizelen = (socklen_t) sizeof(unsigned int);
-#ifndef G_OS_WIN32
-  if (getsockopt (sockfd, SOL_GMTP, GMTP_SOCKOPT_GET_CUR_MSS, &mss, &sizelen) < 0) {
-#else
-  if (getsockopt (sockfd, SOL_GMTP, GMTP_SOCKOPT_GET_CUR_MSS, (char *) &mss, &sizelen) < 0) {
-#endif
-    GST_ELEMENT_ERROR (element, RESOURCE, SETTINGS, (NULL),
-        ("Could not get current MTU %d: %s. Returning default value %d", errno, g_strerror (errno), mss));
-  }*/
+  unsigned int mss = 1024;
+  socklen_t sizelen = (socklen_t) sizeof (unsigned int);
+
+  if (getsockopt (sockfd, SOL_GMTP, GMTP_SOCKOPT_GET_CUR_MSS, &mss,
+          &sizelen) < 0) {
+    GST_WARNING_OBJECT (element,
+        "Could not get current MSS (%s). Using default %u",
+        g_strerror (errno), mss);
+  }
   return mss;
 }
 
