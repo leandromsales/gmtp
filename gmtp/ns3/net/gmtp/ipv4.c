@@ -1044,7 +1044,9 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
     sk_rcv_saddr_set(req_to_sk(req), ip_hdr(skb)->daddr);
     sk_daddr_set(req_to_sk(req), ip_hdr(skb)->saddr);
 
-    inet_sk(req_to_sk(req))->inet_sport = gh->dport;
+    /* Local port lives in ir_num (sk_num), set by gmtp_reqsk_init().
+     * A request_sock is not an inet_sock: writing inet_sport here was
+     * an out-of-bounds write past the reqsk object. */
     ireq->ireq_family = AF_INET;
     ireq->ir_iif = sk->sk_bound_dev_if;
 
