@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
 	socklen_t addr_size;
 	int media_rate = 300000; // B/s
 
-	char filename[17];
+	char filename[64];
 	sprintf(filename, "server-%0.0f.log", MY_TIME(time_ms(tv)));
 	FILE *log;
 	log = fopen(filename, "w");

@@ -27,7 +27,7 @@ int main(int argc, char**argv)
 	char buffer[BUFF_SIZE];
 	srand(time(NULL));
 
-	char filename[17];
+	char filename[64];
 	sprintf(filename, "client-%0.0f.log", MY_TIME(time_ms(tv)));
 	FILE *log;
 	log = fopen (filename,"w");

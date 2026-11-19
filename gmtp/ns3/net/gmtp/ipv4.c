@@ -912,6 +912,16 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 		struct request_sock *req = inet_reqsk(sk);
 		struct sock *nsk;
 
+		/*
+		 * gmtp_lookup_established() takes no reference, but the
+		 * paths below follow tcp_v4_rcv(): the reqsk_put()s and the
+		 * accept queue (inet_csk_accept -> reqsk_put) consume the
+		 * lookup reference. Without it accept() underflowed
+		 * rsk_refcnt (refcount_t: underflow; use-after-free).
+		 */
+		if (!refcount_inc_not_zero(&req->rsk_refcnt))
+			goto lookup_listener;
+
 		sk = req->rsk_listener;
 
 		if (unlikely(sk->sk_state != GMTP_LISTEN)) {
