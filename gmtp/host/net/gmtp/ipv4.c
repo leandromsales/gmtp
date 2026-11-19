@@ -111,7 +111,7 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr_unsized *uaddr, int addr_le
     orig_dport = usin->sin_port;
     fl4 = &inet->cork.fl.u.ip4;
 
-    rt = ip_route_connect(fl4, nexthop, inet->inet_saddr, RT_CONN_FLAGS(sk),
+    rt = ip_route_connect(fl4, nexthop, inet->inet_saddr,
             sk->sk_bound_dev_if,
             IPPROTO_GMTP, orig_sport, orig_dport, sk);
     if(IS_ERR(rt))
@@ -141,7 +141,8 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr_unsized *uaddr, int addr_le
      * complete initialization after this.
      */
     gmtp_set_state(sk, GMTP_REQUESTING);
-    err = inet_hash_connect(&gmtp_death_row, sk);
+    /* Generic inet hashing uses the TCP tables on this kernel. */
+    err = inet_hash_connect(&sock_net(sk)->ipv4.tcp_death_row, sk);
     if(err != 0)
         goto failure;
 
@@ -162,7 +163,7 @@ int gmtp_v4_connect(struct sock *sk, struct sockaddr_unsized *uaddr, int addr_le
 
     gp->iss = secure_gmtp_sequence_number(inet->inet_saddr,
             inet->inet_daddr, inet->inet_sport, inet->inet_dport);
-    inet->inet_id = gp->iss ^ jiffies;
+    atomic_set(&inet->inet_id, gp->iss ^ jiffies);
 
     err = gmtp_connect(sk);
     rt = NULL;
@@ -237,10 +238,13 @@ static int gmtp_v4_err(struct sk_buff *skb, u32 info)
     }
 
     gmtp_pr_debug("Calling inet_lookup...");
-    sk = inet_lookup(net, &gmtp_inet_hashinfo,
-            skb, 0,
+    /* GMTP sockets are demultiplexed through gmtp_sk_hash, not the
+     * TCP-only inet lookup helpers. Take the reference sock_put() drops. */
+    sk = gmtp_lookup_established(&gmtp_sk_hash,
             iph->daddr, gh->dport,
-            iph->saddr, gh->sport, inet_iif(skb));
+            iph->saddr, gh->sport);
+    if(sk != NULL)
+        sock_hold(sk);
     if(sk == NULL) {
     	gmtp_pr_debug("sk is NULL");
         __ICMP_INC_STATS(net, ICMP_MIB_INERRORS);
@@ -323,7 +327,7 @@ static int gmtp_v4_err(struct sk_buff *skb, u32 info)
      * until we time out, or the user gives up.
      */
     inet = inet_sk(sk);
-    if(!sock_owned_by_user(sk) && inet->recverr) {
+    if(!sock_owned_by_user(sk) && inet_test_bit(RECVERR, sk)) {
         sk->sk_err = err;
         sk->sk_error_report(sk);
     } else /* Only an error on timeout */
@@ -334,7 +338,6 @@ out:
     sock_put(sk);
     return 0;
 }
-EXPORT_SYMBOL_GPL(gmtp_v4_err);
 
 static struct dst_entry* gmtp_v4_route_skb(struct net *net, struct sock *sk,
         struct sk_buff *skb)
@@ -345,12 +348,12 @@ static struct dst_entry* gmtp_v4_route_skb(struct net *net, struct sock *sk,
             .flowi4_oif = inet_iif(skb),
             .daddr = iph->saddr,
             .saddr = iph->daddr,
-            .flowi4_tos = RT_CONN_FLAGS(sk),
+            .flowi4_dscp = inet_sk_dscp(inet_sk(sk)),
             .flowi4_proto = sk->sk_protocol,
             .fl4_sport = gmtp_hdr(skb)->dport,
             .fl4_dport = gmtp_hdr(skb)->sport, };
 
-    security_skb_classify_flow(skb, flowi4_to_flowi(&fl4));
+    security_skb_classify_flow(skb, flowi4_to_flowi_common(&fl4));
     rt = ip_route_output_flow(net, &fl4, sk);
     if(IS_ERR(rt)) {
         __IP_INC_STATS(net, IPSTATS_MIB_OUTNOROUTES);
@@ -450,6 +453,13 @@ static void gmtp_v4_ctl_send_reset(const struct sock *sk, struct sk_buff *rxskb)
 {
 	gmtp_pr_func();
     gmtp_v4_ctl_send_packet(sk, rxskb, GMTP_PKT_RESET);
+}
+
+/* request_sock_ops::send_reset gained a reset reason; GMTP ignores it. */
+static void gmtp_v4_reqsk_send_reset(const struct sock *sk,
+		struct sk_buff *rxskb, enum sk_rst_reason reason)
+{
+	gmtp_v4_ctl_send_reset(sk, rxskb);
 }
 
 static struct sock *gmtp_v4_hnd_req(struct sock *sk, struct sk_buff *skb)
@@ -581,7 +591,6 @@ static int gmtp_v4_reporter_rcv_elect_request(struct sk_buff *skb)
     gmtp_v4_ctl_send_packet(0, skb, GMTP_PKT_ELECT_RESPONSE);
     return 0;
 }
-EXPORT_SYMBOL_GPL(gmtp_v4_reporter_rcv_elect_request);
 
 static int gmtp_v4_client_rcv_elect_response(struct sk_buff *skb)
 {
@@ -616,7 +625,6 @@ static int gmtp_v4_client_rcv_elect_response(struct sk_buff *skb)
 
     return 0;
 }
-EXPORT_SYMBOL_GPL(gmtp_v4_client_rcv_elect_response);
 
 static int gmtp_v4_client_rcv_reporter_ack(struct sk_buff *skb,
         struct gmtp_client *c)
@@ -872,12 +880,11 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
             if(!tmp)
                 goto discard_it;
 
-            sk = __inet_lookup(dev_net(skb_dst(skb)->dev),
-                    &gmtp_inet_hashinfo,
-                    skb, __gmtp_hdr_len(gh),
+            sk = gmtp_lookup_established(&gmtp_sk_hash,
                     iph->saddr, gh->sport,
-                    tmp->addr, tmp->port,
-                    inet_iif(skb), 0, &refcounted);
+                    tmp->addr, tmp->port);
+            if(sk == NULL)
+                continue;
 
             /** FIXME Check warnings at receive skb... */
             gmtp_v4_sk_receive_skb(skb_copy(skb, GFP_ATOMIC), sk);
@@ -911,6 +918,16 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 
 		struct request_sock *req = inet_reqsk(sk);
 		struct sock *nsk;
+
+		/*
+		 * gmtp_lookup_established() takes no reference, but the
+		 * paths below follow tcp_v4_rcv(): the reqsk_put()s and the
+		 * accept queue (inet_csk_accept -> reqsk_put) consume the
+		 * lookup reference. Without it accept() underflowed
+		 * rsk_refcnt (refcount_t: underflow; use-after-free).
+		 */
+		if (!refcount_inc_not_zero(&req->rsk_refcnt))
+			goto lookup_listener;
 
 		sk = req->rsk_listener;
 
@@ -968,7 +985,6 @@ discard_and_relse:
 		sock_put(sk);
 	goto discard_it;
 }
-EXPORT_SYMBOL_GPL(gmtp_v4_rcv);
 
 static void gmtp_v4_reqsk_destructor(struct request_sock *req)
 {
@@ -981,14 +997,26 @@ void gmtp_syn_ack_timeout(const struct request_sock *req)
 }
 EXPORT_SYMBOL(gmtp_syn_ack_timeout);
 
+/*
+ * Retransmit a Register-Reply. Replaces inet_rtx_syn_ack(), which left
+ * the kernel together with request_sock_ops::rtx_syn_ack.
+ */
+int gmtp_v4_rtx_register_reply(const struct sock *sk, struct request_sock *req)
+{
+    int err = gmtp_v4_send_register_reply(sk, req);
+
+    if(!err)
+        req->num_retrans++;
+    return err;
+}
+EXPORT_SYMBOL_GPL(gmtp_v4_rtx_register_reply);
+
 static struct request_sock_ops gmtp_request_sock_ops __read_mostly = {
         .family = PF_INET,
         .obj_size = sizeof(struct gmtp_request_sock),
-        .rtx_syn_ack = gmtp_v4_send_register_reply,
         .send_ack = gmtp_reqsk_send_ack,
         .destructor = gmtp_v4_reqsk_destructor,
-        .send_reset = gmtp_v4_ctl_send_reset,
-        .syn_ack_timeout = gmtp_syn_ack_timeout,
+        .send_reset = gmtp_v4_reqsk_send_reset,
 };
 
 /*
@@ -1044,7 +1072,9 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
     sk_rcv_saddr_set(req_to_sk(req), ip_hdr(skb)->daddr);
     sk_daddr_set(req_to_sk(req), ip_hdr(skb)->saddr);
 
-    inet_sk(req_to_sk(req))->inet_sport = gh->dport;
+    /* Local port lives in ir_num (sk_num), set by gmtp_reqsk_init().
+     * A request_sock is not an inet_sock: writing inet_sport here was
+     * an out-of-bounds write past the reqsk object. */
     ireq->ireq_family = AF_INET;
     ireq->ir_iif = sk->sk_bound_dev_if;
 
@@ -1130,7 +1160,7 @@ struct sock *gmtp_v4_request_recv_sock(const struct sock *sk,
     RCU_INIT_POINTER(newinet->inet_opt, rcu_dereference(ireq->ireq_opt));
     newinet->mc_index = inet_iif(skb);
     newinet->mc_ttl = ip_hdr(skb)->ttl;
-    newinet->inet_id = get_random_u32();
+    atomic_set(&newinet->inet_id, get_random_u32());
 
     if(dst == NULL  &&
             (dst = inet_csk_route_child_sock(sk, newsk, req)) == NULL)
@@ -1178,8 +1208,6 @@ static const struct inet_connection_sock_af_ops gmtp_ipv4_af_ops = {
         .net_header_len = sizeof(struct iphdr),
         .setsockopt = ip_setsockopt,
         .getsockopt = ip_getsockopt,
-        .addr2sockaddr = inet_csk_addr2sockaddr,
-        .sockaddr_len = sizeof(struct sockaddr_in),
     };
 
 static int gmtp_v4_init_sock(struct sock *sk)
@@ -1242,7 +1270,6 @@ static const struct net_protocol gmtp_protocol = {
         .handler = gmtp_v4_rcv,
         .err_handler = gmtp_v4_err,
         .no_policy = 1,
-        .netns_ok = 1, /* mandatory */
         .icmp_strict_tag_validation = 1,
 };
 
@@ -1356,7 +1383,6 @@ static int __init gmtp_v4_init(void)
 
     gmtp_pr_func();
 
-    inet_hashinfo_init(&gmtp_inet_hashinfo);
 
     err = proto_register(&gmtp_v4_prot, 1);
     if(err != 0)

@@ -41,3 +41,21 @@ index 794a375da..438da6333 100644
  	return ret;
  }
  
+diff --git a/mm/slib.c b/mm/slib.c
+--- a/mm/slib.c
++++ b/mm/slib.c
+@@ -104,6 +104,14 @@
+ 	psize--;
+ 	return *psize;
+ }
++/* GMTP: crypto_destroy_tfm() (crypto/api.c) calls kfree_sensitive(). */
++void kfree_sensitive(const void *p)
++{
++	if (p == 0)
++		return;
++	memzero_explicit((void *)p, ksize(p));
++	kfree(p);
++}
+ void *__kmalloc(size_t size, gfp_t flags)
+ {
+ 	void *p = lib_malloc(size + sizeof(size));	

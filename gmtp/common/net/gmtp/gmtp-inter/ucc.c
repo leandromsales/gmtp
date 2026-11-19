@@ -48,7 +48,7 @@ void gmtp_inter_ack_timer_callback(struct timer_list *t)
 	struct gmtp_inter_entry *entry;
 	struct sk_buff *skb;
 
-	entry = from_timer(entry, t, ack_timer);
+	entry = timer_container_of(entry, t, ack_timer);
 	if(!entry)
 		return;
 
@@ -68,7 +68,7 @@ void gmtp_inter_register_timer_callback(struct timer_list *t)
 
 	gmtp_pr_func();
 
-	entry = from_timer(entry, t, ack_timer);
+	entry = timer_container_of(entry, t, register_timer);
 
 	if(!entry)
 		return;
@@ -215,10 +215,10 @@ void gmtp_inter_xmit_timer(struct timer_list *t)
 {
 	struct gmtp_delay_cc_data *cc_data;
 
-	cc_data = from_timer(cc_data, t, delay_cc_timer);
+	cc_data = timer_container_of(cc_data, t, delay_cc_timer);
 
 	gmtp_inter_delay_cc(cc_data->skb, cc_data->entry, cc_data->relay);
-	del_timer(&cc_data->delay_cc_timer);
+	timer_delete(&cc_data->delay_cc_timer);
 }
 
 void gmtp_inter_delay_cc(struct sk_buff *skb, struct gmtp_inter_entry *entry,

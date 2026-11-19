@@ -6,7 +6,7 @@
  *  Wendell Silva Soares <wendell@ic.ufal.br>
  */
 #include <asm/ioctls.h>
-#include <asm-generic/unaligned.h>
+#include "gmtp_compat.h"
 
 #include <linux/init.h>
 #include <linux/module.h>
@@ -278,30 +278,27 @@ EXPORT_SYMBOL_GPL(print_gmtp_sock);
  * Build a MD5 uuid from data in buf
  * Requires CONFIG_CRYPTO_MD5 module
  */
-bool gmtp_build_md5(unsigned char *result, unsigned char* data, size_t len) {
+bool gmtp_build_md5(unsigned char *result, unsigned char *data, size_t len)
+{
+	struct crypto_shash *tfm;
+	int ret;
 
-	int ret = 0;
-    struct shash_desc *desc;
+	gmtp_pr_func();
 
-    gmtp_pr_func();
+	/*
+	 * The previous version allocated only sizeof(struct shash_desc),
+	 * without the per-algorithm context, so crypto_shash_init() wrote
+	 * the MD5 state past the allocation and corrupted the slab during
+	 * boot. crypto_shash_tfm_digest() keeps the descriptor on the stack.
+	 */
+	tfm = crypto_alloc_shash("md5", 0, 0);
+	if (IS_ERR(tfm))
+		return false;
 
-    desc = kmalloc(sizeof(*desc), GFP_KERNEL);
-    if(desc == NULL)
-    	return false;
+	ret = crypto_shash_tfm_digest(tfm, data, len, result);
+	crypto_free_shash(tfm);
 
-    desc->tfm = crypto_alloc_shash("md5", 0, CRYPTO_ALG_ASYNC);
-    if(desc->tfm == NULL)
-        return false;
-
-    crypto_shash_init(desc);
-    crypto_shash_update(desc, data, len);
-    ret = crypto_shash_final(desc, result);
-    crypto_free_shash(desc->tfm);
-
-    if (ret != 0)
-        return false;
-
-    return true;
+	return ret == 0;
 }
 EXPORT_SYMBOL_GPL(gmtp_build_md5);
 
@@ -385,6 +382,8 @@ unsigned char *gmtp_build_relay_id(void)
 
     net = sock_net(sock->sk);
 
+    memset(buffer, 0, buff_size);
+    rcu_read_lock();
 	for (i = 2, counter = 0;
 			(dev = dev_get_by_index_rcu(net, i)) != NULL && counter < 10;
 			++i, ++counter) {
@@ -392,6 +391,7 @@ unsigned char *gmtp_build_relay_id(void)
         gmtp_pr_info("MAC ADDR %d: %pM", counter, dev->dev_addr);
         memcpy(&buffer[counter*6], dev->dev_addr, 6);
     }
+    rcu_read_unlock();
 
     sock_release(sock);
 
@@ -401,8 +401,10 @@ unsigned char *gmtp_build_relay_id(void)
     	goto failure;
 
     success = gmtp_build_md5(relay_id, buffer, buff_size);
-    if(!success)
+    if(!success) {
+    	kfree(relay_id);
     	goto failure;
+    }
 
     return relay_id;
 
@@ -1259,13 +1261,14 @@ static int gmtp_create_inet_hashinfo(void)
 
     rc = -ENOBUFS;
 
-	inet_hashinfo_init(&gmtp_inet_hashinfo);
-
-	/* See https://patchwork.ozlabs.org/patch/1018304/ */
-	rc = inet_hashinfo2_init_mod(&gmtp_inet_hashinfo);
-	gmtp_pr_info("inet_hashinfo2_init_mod returned: %d", rc);
-	if (rc)
-		goto out_fail;
+	/*
+	 * Since Linux 6.16 the generic inet bind, listen and established
+	 * helpers always use the TCP hash tables (tcp_get_hashinfo()).
+	 * GMTP sockets therefore share TCP's port space on this kernel and
+	 * GMTP demultiplexes incoming packets through gmtp_sk_hash. This
+	 * private table only marks that GMTP initialised; lhash2 setup
+	 * (inet_hashinfo2_init_mod) no longer exists.
+	 */
 	rc = -ENOBUFS;
 
     gmtp_inet_hashinfo.bind_bucket_cachep =

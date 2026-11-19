@@ -912,6 +912,16 @@ static int gmtp_v4_rcv(struct sk_buff *skb)
 		struct request_sock *req = inet_reqsk(sk);
 		struct sock *nsk;
 
+		/*
+		 * gmtp_lookup_established() takes no reference, but the
+		 * paths below follow tcp_v4_rcv(): the reqsk_put()s and the
+		 * accept queue (inet_csk_accept -> reqsk_put) consume the
+		 * lookup reference. Without it accept() underflowed
+		 * rsk_refcnt (refcount_t: underflow; use-after-free).
+		 */
+		if (!refcount_inc_not_zero(&req->rsk_refcnt))
+			goto lookup_listener;
+
 		sk = req->rsk_listener;
 
 		if (unlikely(sk->sk_state != GMTP_LISTEN)) {
@@ -1044,7 +1054,9 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
     sk_rcv_saddr_set(req_to_sk(req), ip_hdr(skb)->daddr);
     sk_daddr_set(req_to_sk(req), ip_hdr(skb)->saddr);
 
-    inet_sk(req_to_sk(req))->inet_sport = gh->dport;
+    /* Local port lives in ir_num (sk_num), set by gmtp_reqsk_init().
+     * A request_sock is not an inet_sock: writing inet_sport here was
+     * an out-of-bounds write past the reqsk object. */
     ireq->ireq_family = AF_INET;
     ireq->ir_iif = sk->sk_bound_dev_if;
 

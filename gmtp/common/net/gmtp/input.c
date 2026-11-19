@@ -338,7 +338,7 @@ out_null_hash:
 	{
 		if(mcc_rx_init(sk))
 			goto err;
-		inet_csk_reset_keepalive_timer(sk, GMTP_ACK_TIMEOUT);
+		gmtp_reset_keepalive_timer(sk, GMTP_ACK_TIMEOUT);
 	}
 
 	return -1;

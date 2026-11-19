@@ -17,6 +17,26 @@
 
 #include "gmtp-inter.h"
 
+/*
+ * Make room for @len more bytes at the tail of a received skb before
+ * skb_put(). Received skbs often have no tailroom (skb_over_panic seen in
+ * ns-3-dce when a REQUEST was turned into a REQUESTNOTIFY in place).
+ * May reallocate the head: callers must reload gmtp_hdr()/ip_hdr().
+ */
+static int gmtp_inter_skb_grow_tail(struct sk_buff *skb, unsigned int len)
+{
+	int tailroom;
+
+	if (skb_linearize(skb))
+		return -ENOMEM;
+	tailroom = skb_tailroom(skb);
+	if (tailroom >= (int)len && !skb_cloned(skb))
+		return 0;
+	return pskb_expand_head(skb, 0,
+			tailroom >= (int)len ? 0 : (int)len - tailroom,
+			GFP_ATOMIC);
+}
+
 struct gmtp_hdr *gmtp_inter_make_route_hdr(struct sk_buff *skb)
 {
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
@@ -72,8 +92,9 @@ struct gmtp_hdr *gmtp_inter_make_request_notify_hdr(struct sk_buff *skb,
 
 	gmtp_pr_func();
 
-	transport_header = kmalloc(gmtp_hdr_len, gfp_any());
-	memset(transport_header, 0, gmtp_hdr_len);
+	transport_header = kzalloc(gmtp_hdr_len, gfp_any());
+	if(transport_header == NULL)
+		return NULL;
 
 	gh_cpy = (struct gmtp_hdr *)transport_header;
 	memcpy(gh_cpy, gh, sizeof(struct gmtp_hdr));
@@ -138,12 +159,21 @@ int gmtp_inter_make_request_notify(struct sk_buff *skb, __be32 new_saddr,
 	/* Delete REQUEST or REGISTER-REPLY specific header */
 	skb_trim(skb, (skb_len - gmtp_packet_hdr_variable_len(gh->type)));
 
-	new_gh = kmalloc(gmtp_hdr_len, GFP_ATOMIC);
 	new_gh = gmtp_inter_make_request_notify_hdr(skb, entry, new_sport,
 			new_dport, reporter, max_nclients, code);
+	if(new_gh == NULL)
+		goto fail;
+
+	if(gmtp_inter_skb_grow_tail(skb, sizeof(struct gmtp_hdr_reqnotify))) {
+		kfree(new_gh);
+		goto fail;
+	}
+	gh = gmtp_hdr(skb);
+	iph = ip_hdr(skb);
 
 	skb_put(skb, sizeof(struct gmtp_hdr_reqnotify));
 	memcpy(gh, new_gh, gmtp_hdr_len);
+	kfree(new_gh);
 
 	iph->saddr = new_saddr;
 	iph->daddr = new_daddr;
@@ -171,8 +201,9 @@ struct gmtp_hdr *gmtp_inter_make_register_reply_hdr(struct sk_buff *skb,
 
 	gmtp_pr_func();
 
-	transport_header = kmalloc(gmtp_hdr_len, gfp_any());
-	memset(transport_header, 0, gmtp_hdr_len);
+	transport_header = kzalloc(gmtp_hdr_len, gfp_any());
+	if(transport_header == NULL)
+		return NULL;
 
 	gh_cpy = (struct gmtp_hdr *)transport_header;
 	memcpy(gh_cpy, gh, sizeof(struct gmtp_hdr));
@@ -210,6 +241,12 @@ int gmtp_inter_make_delegate_reply(struct sk_buff *skb, struct gmtp_relay *relay
 	/* Delete ACK specific header */
 	skb_trim(skb, (skb_len - gmtp_packet_hdr_variable_len(gh->type)));
 
+	if(gmtp_inter_skb_grow_tail(skb, sizeof(struct gmtp_hdr_delegate)))
+		return NF_DROP;
+	gh = gmtp_hdr(skb);
+	iph = ip_hdr(skb);
+	eth = eth_hdr(skb);
+
 	gh->type = GMTP_PKT_DELEGATE_REPLY;
 	gh->hdrlen = gmtp_hdr_len;
 	gh->sport = entry->my_port;
@@ -242,8 +279,9 @@ struct gmtp_hdr *gmtp_inter_make_reset_hdr(struct sk_buff *skb, __u8 code)
 
 	gmtp_pr_func();
 
-	transport_header = kmalloc(gmtp_hdr_len, gfp_any());
-	memset(transport_header, 0, gmtp_hdr_len);
+	transport_header = kzalloc(gmtp_hdr_len, gfp_any());
+	if(transport_header == NULL)
+		return NULL;
 
 	gh_cpy = (struct gmtp_hdr *)transport_header;
 	memcpy(gh_cpy, gh, sizeof(struct gmtp_hdr));
@@ -279,6 +317,11 @@ int gmtp_inter_make_reset(struct sk_buff *skb, struct gmtp_hdr *gh_reset)
 
 	gmtp_pr_func();
 
+	if(gmtp_inter_skb_grow_tail(skb, sizeof(struct gmtp_hdr_reset)))
+		return NF_DROP;
+	gh = gmtp_hdr(skb);
+	iph = ip_hdr(skb);
+
 	skb_put(skb, sizeof(struct gmtp_hdr_reset));
 	memcpy(gh, gh_reset, gmtp_hdr_len);
 
@@ -301,8 +344,9 @@ struct gmtp_hdr *gmtp_inter_make_close_hdr(struct sk_buff *skb)
 
 	gmtp_pr_func();
 
-	transport_header = kmalloc(gmtp_hdr_len, gfp_any());
-	memset(transport_header, 0, gmtp_hdr_len);
+	transport_header = kzalloc(gmtp_hdr_len, gfp_any());
+	if(transport_header == NULL)
+		return NULL;
 
 	gh_cpy = (struct gmtp_hdr *)transport_header;
 	memcpy(gh_cpy, gh, gmtp_hdr_len);
@@ -476,6 +520,11 @@ int gmtp_inter_make_register(struct sk_buff *skb)
 	/* Delete ACK specific header */
 	skb_trim(skb, (skb_len - gmtp_packet_hdr_variable_len(gh->type)));
 
+	if(gmtp_inter_skb_grow_tail(skb, sizeof(struct gmtp_hdr_register)))
+		return NF_DROP;
+	gh = gmtp_hdr(skb);
+	iph = ip_hdr(skb);
+
 	gh->type = GMTP_PKT_REGISTER;
 	gh->hdrlen = gmtp_hdr_len;
 
@@ -520,7 +569,7 @@ struct sk_buff *gmtp_inter_build_register(struct gmtp_inter_entry *entry)
 	gh->dport = entry->media_port;
 	gh->sport = entry->my_port;
 	gh->server_rtt = entry->server_rtt;
-	gh->transm_r = min(gmtp_inter.ucc_rx, entry->rcv_tx_rate);
+	gh->transm_r = min_t(u32, gmtp_inter.ucc_rx, entry->rcv_tx_rate);
 	memcpy(gh->flowname, entry->flowname, GMTP_FLOWNAME_LEN);
 
 	gr = (struct gmtp_hdr_register*) gh + sizeof(struct gmtp_hdr);
@@ -585,7 +634,7 @@ struct sk_buff *gmtp_inter_build_ack(struct gmtp_inter_entry *entry)
 	gh->dport = entry->media_port;
 	gh->sport = entry->my_port;
 	gh->server_rtt = entry->server_rtt;
-	gh->transm_r = min(gmtp_inter.ucc_rx, entry->rcv_tx_rate);
+	gh->transm_r = min_t(u32, gmtp_inter.ucc_rx, entry->rcv_tx_rate);
 	/*gh->transm_r = min(gmtp_inter.ucc_rx, entry->required_tx*3);*/
 	/*gh->transm_r = 100000;*/
 	memcpy(gh->flowname, entry->flowname, GMTP_FLOWNAME_LEN);

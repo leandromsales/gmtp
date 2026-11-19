@@ -29,9 +29,8 @@ LIBOS_TOOLS_SHA="782531b009a129c4200df7e5882d939dcb61a404"
 step() { printf '\n=== %s (%s)\n' "$*" "$(date -u +%FT%TZ)"; }
 
 step "kernel tree"
-if [[ ! -d "$NUSE" ]]; then
-	"$REPO_ROOT/linux/checkout-trees.sh" --ns3
-fi
+# Idempotent: checks out if absent, (re)applies registration + build fixes, links net/gmtp.
+"$REPO_ROOT/linux/checkout-trees.sh" --ns3
 
 step "libos tools at $LIBOS_TOOLS_SHA"
 if [[ ! -d "$NUSE/arch/lib/tools/.git" ]]; then

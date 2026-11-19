@@ -462,7 +462,7 @@ static void __exit gmtp_inter_exit(void)
     kfree_gmtp_inter_hashtable(gmtp_inter.hashtable);
 
     unregister_hooks();
-    del_timer(&gmtp_inter.gmtp_ucc_timer);
+    timer_delete(&gmtp_inter.gmtp_ucc_timer);
 }
 
 module_init(gmtp_inter_init);

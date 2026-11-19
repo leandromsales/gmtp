@@ -132,7 +132,7 @@ struct gmtp_sk_hashitem * __gmtp_lookup_established(
 		 const __be32 daddr, const __be16 dport)
 {
 	struct gmtp_sk_hashitem *pos;
-	struct inet_sock *inet;
+	struct sock *sk;
 
 	if(sk_table->hbind == NULL)
 		return NULL;
@@ -144,17 +144,19 @@ struct gmtp_sk_hashitem * __gmtp_lookup_established(
 		if (pos->sk == NULL)
 			continue;
 
-		inet = inet_sk(pos->sk);
+		sk = pos->sk;
 
 		/**
+		 * Use sock_common fields only: entries may be request socks
+		 * (GMTP_NEW_SYN_RECV), which are not inet_socks.
 		 * Lookup for received packets...
 		 * - saddr is remote addr (sk->daddr)
 		 * - sport is remote port (sk->dport)
 		 * - daddr is local addr (sk->saddr)
 		 * - dport is local port (sk->sport)
 		 */
-		if (inet->inet_rcv_saddr == daddr && inet->inet_sport == dport &&
-				inet->inet_daddr == saddr && inet->inet_dport == sport)
+		if (sk->sk_rcv_saddr == daddr && htons(sk->sk_num) == dport &&
+				sk->sk_daddr == saddr && sk->sk_dport == sport)
 		{
 			return pos;
 		}
@@ -178,7 +180,6 @@ int __gmtp_add_established_item(struct gmtp_sk_hashtable *sk_table,
 int gmtp_sk_hash_connect(struct gmtp_sk_hashtable *sk_table, struct sock *sk)
 {
 	struct gmtp_sk_hashitem *new_item;
-	struct inet_sock *inet = inet_sk(sk);
 
 	new_item = kmalloc(sizeof(struct gmtp_sk_hashitem), GFP_ATOMIC);
 
@@ -187,8 +188,8 @@ int gmtp_sk_hash_connect(struct gmtp_sk_hashtable *sk_table, struct sock *sk)
 
 	new_item->sk = sk;
 	gmtp_pr_info("Adding to GMTP_EHASH: [%pI4@%-5d <=> %pI4@%-5d]",
-					&inet->inet_rcv_saddr, ntohs(inet->inet_sport),
-					&inet->inet_daddr, ntohs(inet->inet_dport));
+					&sk->sk_rcv_saddr, sk->sk_num,
+					&sk->sk_daddr, ntohs(sk->sk_dport));
 	return __gmtp_add_established_item(sk_table, new_item);
 }
 EXPORT_SYMBOL_GPL(gmtp_sk_hash_connect);

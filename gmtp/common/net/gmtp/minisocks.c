@@ -137,7 +137,7 @@ struct sock *gmtp_check_req(struct sock *sk, struct sk_buff *skb,
              * counter (backoff, monitored by gmtp_response_timer).
              */
 
-            inet_rtx_syn_ack(sk, req);
+            gmtp_rtx_syn_ack(sk, req);
          }
         /* Network Duplicate, discard packet */
         return NULL;
@@ -162,8 +162,7 @@ struct sock *gmtp_check_req(struct sock *sk, struct sk_buff *skb,
         goto drop;
     }
 
-	child = inet_csk(sk)->icsk_af_ops->syn_recv_sock(sk, skb, req, NULL, req,
-			&own_req);
+	child = gmtp_syn_recv_sock(sk, skb, req, NULL, req, &own_req);
 
 	if (child) {
 		child = inet_csk_complete_hashdance(sk, child, req, own_req);
@@ -173,7 +172,7 @@ struct sock *gmtp_check_req(struct sock *sk, struct sk_buff *skb,
     GMTP_SKB_CB(skb)->reset_code = GMTP_RESET_CODE_TOO_BUSY;
 drop:
 	if (gmtp_hdr(skb)->type != GMTP_PKT_RESET)
-			req->rsk_ops->send_reset(sk, skb);
+			gmtp_reqsk_send_reset(req, sk, skb);
 
     inet_csk_reqsk_queue_drop(sk, req);
 out:

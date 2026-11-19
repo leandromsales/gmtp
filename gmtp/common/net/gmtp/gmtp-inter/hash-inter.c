@@ -102,11 +102,11 @@ void __gmtp_inter_build_info(struct gmtp_inter_entry *info)
 	info->server_rtt = 64;
 	info->transm_r = UINT_MAX;
 
-	info->clients = kmalloc(sizeof(struct gmtp_client), GFP_KERNEL);
+	info->clients = kmalloc(sizeof(struct gmtp_client), GFP_ATOMIC);
 	INIT_LIST_HEAD(&info->clients->list);
 	info->nclients = 0;
 
-	info->buffer = kmalloc(sizeof(struct sk_buff_head), GFP_KERNEL);
+	info->buffer = kmalloc(sizeof(struct sk_buff_head), GFP_ATOMIC);
 	skb_queue_head_init(info->buffer);
 	info->buffer_len = 0;
 	/*gmtp_set_buffer_limits(info, 40);*/
@@ -140,20 +140,21 @@ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
 	if(hashval < 0)
 		return hashval;
 
-	new_entry = kmalloc(sizeof(struct gmtp_inter_entry), GFP_KERNEL);
-	if(new_entry == NULL)
-		return 1;
-
 	current_entry = gmtp_inter_lookup_media(hashtable, flowname);
 	if(current_entry != NULL)
 		return 2; /* TODO Media already being transmitted by other
 								server? */
+
+	/* Zeroed: every timer_list must be valid for timer_delete_sync() */
+	new_entry = kzalloc(sizeof(struct gmtp_inter_entry), GFP_ATOMIC);
+	if(new_entry == NULL)
+		return 1;
 	gmtp_inter_build_info(new_entry, 5);
 
 	memcpy(new_entry->flowname, flowname, GMTP_FLOWNAME_LEN);
 	new_entry->server_addr = server_addr;
 
-	new_entry->relays = kmalloc(sizeof(struct gmtp_relay), GFP_KERNEL);
+	new_entry->relays = kmalloc(sizeof(struct gmtp_relay), GFP_ATOMIC);
 	INIT_LIST_HEAD(&new_entry->relays->list);
 	new_entry->nrelays = 0;
 
@@ -170,8 +171,10 @@ int gmtp_inter_add_entry(struct gmtp_inter_hashtable *hashtable, __u8 *flowname,
 	timer_setup(&new_entry->ack_timer, gmtp_inter_ack_timer_callback, 0);
 	/*setup_timer(&new_entry->register_timer, gmtp_inter_register_timer_callback,
 			(unsigned long ) new_entry);*/
-	/*timer_setup(&new_entry->register_timer, gmtp_inter_register_timer_callback,
-				0);*/
+	/* Never armed today (mod_timer is commented out in input-inter.c), but
+	 * it is deleted on CLOSE: an uninitialised timer_list crashed DCE. */
+	timer_setup(&new_entry->register_timer,
+			gmtp_inter_register_timer_callback, 0);
 
 	return 0;
 }
@@ -226,8 +229,8 @@ struct gmtp_inter_entry *gmtp_inter_del_entry(
 
 	gmtp_inter_del_clients(current_entry);
 	skb_queue_purge(current_entry->buffer);
-	del_timer_sync(&current_entry->mcc_timer);
-	del_timer_sync(&current_entry->ack_timer);
+	timer_delete_sync(&current_entry->mcc_timer);
+	timer_delete_sync(&current_entry->ack_timer);
 	kfree(current_entry);
 
 	gmtp_print_debug("Media entry removed successfully!");
