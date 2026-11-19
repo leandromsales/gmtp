@@ -76,7 +76,11 @@ step "bake download"
 ./bake.py download
 {
 	echo "bake $(git -C "$BT/bake" rev-parse HEAD) + bake-dce-linux-gmtp.patch"
-	echo "nuse $(git -C "$NUSE" rev-parse HEAD 2>/dev/null || cat "$NUSE/.gmtp-tree-sha")"
+	if [[ -f "$NUSE/.gmtp-tree-sha" ]]; then
+		echo "nuse $(cat "$NUSE/.gmtp-tree-sha") (snapshot)"
+	else
+		echo "nuse $(git -C "$NUSE" rev-parse HEAD)"
+	fi
 	echo "libos-tools $(git -C "$NUSE/arch/lib/tools" rev-parse HEAD)"
 	echo "gmtp $(git -C "$REPO_ROOT" rev-parse HEAD)"
 	for d in "$BT"/source/*/; do
@@ -96,4 +100,12 @@ lib="$NUSE/arch/lib/tools/libsim-linux-$(make -s -C "$NUSE" kernelversion).so"
 cp -f "$lib" "$BT/build/bin_dce/"
 ln -sf "$(basename "$lib")" "$BT/build/bin_dce/liblinux.so"
 sha256sum "$BT/build/bin_dce/$(basename "$lib")" | tee -a "$BT/MANIFEST"
+step "GMTP scenarios (myscripts/gmtp)"
+"$REPO_ROOT/app/ns-3-dce/configure"
+cd "$BT/source/ns-3-dce"
+./waf configure --prefix="$BT/build" --with-ns3="$BT/build" \
+	--with-elf-loader="$BT/build/lib" --with-glibc="$BT/build/glibc" \
+	--with-libaspect="$BT/build" --enable-kernel-stack="$NUSE/arch"
+./waf build -j"$JOBS"
+ls -l build/bin/dce-gmtp-* build/bin_dce/gmtp-* 2>/dev/null || true
 step "done"
