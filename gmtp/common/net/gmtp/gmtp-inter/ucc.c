@@ -68,7 +68,7 @@ void gmtp_inter_register_timer_callback(struct timer_list *t)
 
 	gmtp_pr_func();
 
-	entry = timer_container_of(entry, t, ack_timer);
+	entry = timer_container_of(entry, t, register_timer);
 
 	if(!entry)
 		return;
