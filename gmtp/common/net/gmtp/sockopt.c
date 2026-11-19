@@ -21,8 +21,18 @@ static int gmtp_setsockopt_flowname(struct gmtp_sock *gp, sockptr_t optval,
 	if (optlen > GMTP_FLOWNAME_LEN)
 		return -ENOBUFS;
 
-	if (copy_from_sockptr(gp->flowname, optval, optlen))
-		return -EFAULT;
+	/*
+	 * Bounce through the stack: the GMTP slab cache has no usercopy
+	 * whitelist, so copying straight into gp->flowname trips
+	 * CONFIG_HARDENED_USERCOPY (BUG at mm/usercopy.c).
+	 */
+	{
+		__u8 buf[GMTP_FLOWNAME_LEN];
+
+		if (copy_from_sockptr(buf, optval, optlen))
+			return -EFAULT;
+		memcpy(gp->flowname, buf, optlen);
+	}
 	return 0;
 }
 
@@ -133,8 +143,14 @@ static int gmtp_getsockopt_flowname(struct gmtp_sock *gp, char __user *optval,
 		return -EINVAL;
 	if (len > GMTP_FLOWNAME_LEN)
 		len = GMTP_FLOWNAME_LEN;
-	if (put_user(len, optlen) || copy_to_user(optval, gp->flowname, len))
-		return -EFAULT;
+	{
+		__u8 buf[GMTP_FLOWNAME_LEN];
+
+		/* Stack bounce: see gmtp_setsockopt_flowname() */
+		memcpy(buf, gp->flowname, len);
+		if (put_user(len, optlen) || copy_to_user(optval, buf, len))
+			return -EFAULT;
+	}
 
 	return 0;
 }
