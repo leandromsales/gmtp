@@ -1,0 +1,36 @@
+## -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
+# DCE myscripts entry for the GMTP scenarios. app/ns-3-dce/configure links
+# this directory to ns-3-dce/myscripts/gmtp, so DCE's own wscript stays
+# untouched.
+
+import ns3waf
+
+# Userspace programs that run inside DCE nodes (bin_dce).
+DCE_APPS = ['gmtp-server', 'gmtp-client', 'gmtp-inter',
+            'udp-mcst-server', 'udp-mcst-client']
+
+# ns-3 scenarios (bin/).
+SCENARIOS = {
+    'dce-gmtp-simple': ['core', 'network', 'internet', 'dce', 'csma'],
+    'dce-gmtp-master': ['core', 'network', 'internet', 'dce', 'csma',
+                        'applications'],
+    'dce-gmtp-relay': ['core', 'network', 'internet', 'dce', 'csma',
+                       'point-to-point', 'applications'],
+}
+
+def configure(conf):
+    ns3waf.check_modules(conf, ['core', 'network', 'internet', 'csma',
+                                'point-to-point', 'applications'],
+                         mandatory=True)
+
+def build(bld):
+    # Same flags as dce_kw() in DCE's wscript.
+    dce_cxx = ['-fpie', '-mcmodel=large', '-U_FORTIFY_SOURCE',
+               '-Wno-deprecated-declarations']
+    dce_link = ['-pie', '-lrt', '-rdynamic']
+    for app in DCE_APPS:
+        bld.program(source=app + '.cc', target='../../bin_dce/' + app,
+                    cxxflags=dce_cxx, linkflags=dce_link)
+    for name, needed in SCENARIOS.items():
+        bld.build_a_script('dce', needed=needed, target='bin/' + name,
+                           source=[name + '.cc'])

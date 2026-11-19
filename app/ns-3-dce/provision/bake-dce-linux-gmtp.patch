@@ -1,8 +1,62 @@
 diff --git a/bakeconf.xml b/bakeconf.xml
-index d5a880e..972a268 100644
+index d5a880e..0426044 100644
 --- a/bakeconf.xml
 +++ b/bakeconf.xml
-@@ -2415,12 +2415,11 @@
+@@ -187,8 +187,8 @@
+     
+     <module name="glibc-2.31">
+       <source type="git">
+-        <attribute name="url" value="https://sourceware.org/git/glibc.git" />
+-        <attribute name="revision" value="release/2.31/master" />
++        <attribute name="url" value="https://github.com/bminor/glibc.git" />
++        <attribute name="revision" value="f18446d7b4a423090ee5e328c36b3c2a0f26041c" />
+         <attribute name="module_directory" value="glibc" />
+       </source>
+       <depends_on name="gawk" optional="False"/>
+@@ -214,15 +214,26 @@
+      </module>
+     
+     <module name="linux-dev">
+-      <source type="git">
+-        <attribute name="url" value="git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git" />
+-        <attribute name="revision" value="master" />
+-        <attribute name="module_directory" value="linux" />
++      <!-- GMTP: install the private glibc's kernel headers from the pinned
++           NUSE 5.10.47 tree that owns this buildtop instead of cloning
++           torvalds/linux.git master (unpinned, and not allowed here). -->
++      <source type="none">
+       </source>
+       <depends_on name="glibc-2.31" optional="False" />
+-      <build type="make" objdir="yes">
+-        <attribute name="build_arguments" value="headers_install INSTALL_HDR_PATH=$INSTALLDIR/glibc/usr" />
+-        <attribute name="no_installation" value="True"/>
++      <build type="inline" classname="GmtpLinuxHeaders">
++        <code>class GmtpLinuxHeaders(InlineModuleBuild):
++    def __init__(self):
++        InlineModuleBuild.__init__(self)
++    def build(self, env, jobs):
++        import os
++        nuse = os.path.abspath(os.path.join(env.installdir, '..', '..', '..', '..', '..'))
++        env.run(['make', '-C', nuse, 'ARCH=x86', 'headers_install',
++                 'INSTALL_HDR_PATH=' + env.installdir + '/glibc/usr'],
++                directory=nuse)
++    def clean(self, env):
++        pass
++    def check_version(self, env):
++        return True</code>
+       </build>
+      </module>
+     
+@@ -1394,7 +1405,7 @@
+ 
+     <module name="libc-2.31">
+       <source type="system_dependency">
+-        <attribute name="file_test" value="/usr/lib/debug/lib/x86_64-linux-gnu/ld-2.31.so"/>
++        <attribute name="file_test" value="/lib/x86_64-linux-gnu/libc-2.31.so"/>
+         <attribute name="more_information" value="Didn't find:   system libc 2.31; please install it."/>
+       </source>
+       <depends_on name="libc" optional="False"/>
+@@ -2415,12 +2426,11 @@
          <attribute name="revision" value="glibc-build"/>
        </source>
        <depends_on name="dce-meta-1.12" optional="False"/>
