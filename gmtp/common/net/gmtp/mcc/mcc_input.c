@@ -149,7 +149,13 @@ static u32 mcc_first_li(struct sock *sk)
 	}
 
 	delta  = ktime_to_us(net_timedelta(hc->rx_tstamp_last_feedback));
-	x_recv = scaled_div32(hc->rx_bytes_recv, delta);
+	/*
+	 * delta can be 0 us when the first loss arrives in the same
+	 * microsecond as the last feedback (routinely in ns-3/DCE).
+	 * scaled_div() would hit BUG_ON(b == 0), which is an endless loop
+	 * without CONFIG_BUG (A2 livelock). Fall back to the stored X_recv.
+	 */
+	x_recv = delta ? scaled_div32(hc->rx_bytes_recv, delta) : 0;
 	if (x_recv == 0) {		/* would also trigger divide-by-zero */
 		gmtp_pr_warning("X_recv==0\n");
 		if (hc->rx_x_recv == 0) {
