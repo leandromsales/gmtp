@@ -77,13 +77,22 @@ def main():
         row['server_conns'] = int(s.get('conns', 0)) + row.get('server_conns', 0)
         row['server_sends'] = int(s.get('pkt_sends', 0)) + row.get('server_sends', 0)
         row['server_skipped'] = int(s.get('sends_skipped', 0)) + row.get('server_skipped', 0)
-    row['pkts_generated'] = gen
-
     # clients
     cl = []
     for nid in roles.get('client', []):
         c = node_file(rd, nid, 'media-client.txt')
         cl.append(c or {})
+    # media-server.txt is rewritten every 500 packets; if the run died
+    # before the final rewrite, the highest sequence seen by any receiver
+    # is a tighter lower bound of what the source generated.
+    mx = max([int(c.get('maxseq', 0)) for c in cl] or [0])
+    fin = 0
+    for nid in roles.get('server', []):
+        fin += int((node_file(rd, nid, 'media-server.txt') or {}).get('done', 0))
+    row['server_summary_final'] = fin
+    if mx > gen:
+        gen = mx
+    row['pkts_generated'] = gen
     n = len(cl)
     ok = [c for c in cl if int(c.get('uniq', 0)) > 0]
     row['clients'] = n
