@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 #include <sys/resource.h>
+#include <unistd.h>
 #include <sys/time.h>
 
 #include "ns3/core-module.h"
@@ -209,7 +210,15 @@ static inline void Finish(const Cfg &c, double wall0, double stop)
 		  << " wall_setup_s=" << (w1 - wall0) << " wall_run_s="
 		  << (w2 - w1) << " maxrss_kb=" << ru.ru_maxrss
 		  << " seed_run=" << RngSeedManager::GetRun() << std::endl;
-	Simulator::Destroy();
+	/*
+	 * All results are on disk at this point. Simulator::Destroy() tears
+	 * down DCE with GMTP sockets still referenced by kernel tasks and can
+	 * switch to a fiber whose stack was already freed (SIGSEGV in munmap
+	 * after EXP_DONE, seen in B1). Skip the teardown: flush and leave.
+	 */
+	std::cout.flush();
+	fflush(NULL);
+	_exit(0);
 }
 
 } // namespace gmtpexp

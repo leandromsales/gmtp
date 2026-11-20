@@ -10,6 +10,7 @@
  * as a skipped packet (live-media semantics). Summary in media-server.txt.
  */
 #include <errno.h>
+#include <fcntl.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -23,17 +24,25 @@
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 static std::vector<int> conns;
 static int lsock = -1;
+static volatile int stop_accept;
 
 static void *acceptor(void *)
 {
-	for (;;) {
+	/*
+	 * Non-blocking accept polled every 20 ms, so main() can stop and join
+	 * this thread before the process exits. Exiting with this thread still
+	 * blocked in accept() made DCE free a fiber stack it was still running
+	 * on (SIGSEGV in munmap at the end of GMTP trials).
+	 */
+	while (!stop_accept) {
 		struct sockaddr_storage ss;
 		socklen_t sl = sizeof(ss);
 		int s = accept(lsock, (struct sockaddr *)&ss, &sl);
 		if (s < 0) {
 			if (errno == EINTR)
 				continue;
-			sleep_us(100000);
+			sleep_us(errno == EAGAIN || errno == EWOULDBLOCK ?
+				 20000 : 100000);
 			continue;
 		}
 		pthread_mutex_lock(&lock);
@@ -102,6 +111,7 @@ int main(int argc, char *argv[])
 	printf("media-server proto=%s rate=%d B/s dur=%.1f s listening\n",
 	       proto, rate, dur);
 	fflush(stdout);
+	fcntl(lsock, F_SETFL, fcntl(lsock, F_GETFL, 0) | O_NONBLOCK);
 	pthread_t th;
 	pthread_create(&th, NULL, acceptor, NULL);
 
@@ -166,7 +176,12 @@ int main(int argc, char *argv[])
 	printf("media-server done: generated=%lu sends=%lu skipped=%lu conns=%zu\n",
 	       seq, sends, skipped, cs.size());
 	fflush(stdout);
+	stop_accept = 1;
+	pthread_join(th, NULL);
 	sleep(3);
+	pthread_mutex_lock(&lock);
+	cs = conns;
+	pthread_mutex_unlock(&lock);
 	for (size_t i = 0; i < cs.size(); ++i)
 		close(cs[i]);
 	close(lsock);
