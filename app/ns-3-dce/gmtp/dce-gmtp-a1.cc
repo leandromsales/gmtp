@@ -23,7 +23,12 @@ int main(int argc, char *argv[])
 	Cfg c;
 	uint32_t nclients = 10, ncross = 1;
 	std::string bw = "100Mbps", bdelay = "5ms", lan = "100Mbps",
-		    ldelay = "1ms";
+		    ldelay = "10us";
+	/* LAN propagation delay. ns-3 CSMA keeps the shared channel busy
+	 * for transmission time plus propagation delay, so the thesis' 1 ms
+	 * (an NS-2 duplex link) on a csma LAN caps the whole LAN at about
+	 * 1000 frames/s (~6 Mbit/s of TCP with ACKs). 10 us is a switched
+	 * LAN; the 1 ms per hop of the thesis is kept on the p2p links. */
 	CommandLine cmd;
 	c.AddTo(cmd);
 	cmd.AddValue("nclients", "receivers behind the bottleneck", nclients);

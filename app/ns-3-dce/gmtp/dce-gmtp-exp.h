@@ -35,6 +35,8 @@ namespace gmtpexp {
 
 using namespace ns3;
 
+static std::string g_sysctl; /* --sysctl=.path=value,... */
+
 struct Cfg {
 	std::string proto = "gmtp";
 	std::string cc = "cubic";
@@ -51,6 +53,8 @@ struct Cfg {
 		cmd.AddValue("duration", "media duration (simulated s)", duration);
 		cmd.AddValue("qsize", "device queue size in packets", qsize);
 		cmd.AddValue("tail", "extra simulated s after the media", tail);
+		cmd.AddValue("sysctl", "extra sysctls: .net.x.y=v,.net.z=w",
+			     g_sysctl);
 	}
 	bool Gmtp() const { return proto != "tcp"; }
 	bool Coop() const { return proto == "gmtp"; }
@@ -94,6 +98,27 @@ static inline void InstallStack(NodeContainer all)
 	LinuxStackHelper stack;
 	stack.Install(all);
 	dce.Install(all);
+	/* libos defaults leave TCP window-limited (~8 KiB, a few Mbit/s at
+	 * 10 ms RTT); use the usual Linux host autotuning limits. */
+	stack.SysctlSet(all, ".net.ipv4.tcp_rmem",
+				    "4096 131072 6291456");
+	stack.SysctlSet(all, ".net.ipv4.tcp_wmem",
+				    "4096 16384 4194304");
+	stack.SysctlSet(all, ".net.core.rmem_max", "6291456");
+	stack.SysctlSet(all, ".net.core.wmem_max", "4194304");
+	stack.SysctlSet(all, ".net.ipv4.tcp_window_scaling", "1");
+	/* SACK compression arms an hrtimer (tcp_compressed_ack_kick) that
+	 * libos runs outside any DCE task: get_current() is NULL and the
+	 * simulator segfaults as soon as there is loss (Task::GetExtraContext
+	 * this=0). Disable it. */
+	stack.SysctlSet(all, ".net.ipv4.tcp_comp_sack_nr", "0");
+	std::stringstream ss(g_sysctl);
+	std::string kv;
+	while (std::getline(ss, kv, ',')) {
+		size_t eq = kv.find('=');
+		if (eq != std::string::npos)
+			stack.SysctlSet(all, kv.substr(0, eq), kv.substr(eq + 1));
+	}
 }
 
 /* gmtp-inter on/off per node, following the protocol cell. */

@@ -60,7 +60,13 @@ int main(int argc, char *argv[])
 	c.qsize = 100;    /* thesis router buffer */
 	uint32_t nclients = 50, nservers = 1;
 	double arrival = 20.0;
-	std::string access = "2Mbps", lan = "100Mbps", ldelay = "1ms";
+	std::string access = "2Mbps", lan = "100Mbps", ldelay = "10us",
+		    adelay = "1ms";
+	/* LAN propagation delay. ns-3 CSMA keeps the shared channel busy
+	 * for transmission time plus propagation delay, so the thesis' 1 ms
+	 * (an NS-2 duplex link) on a csma LAN caps the whole LAN at about
+	 * 1000 frames/s (~6 Mbit/s of TCP with ACKs). 10 us is a switched
+	 * LAN; the 1 ms per hop of the thesis is kept on the p2p links. */
 	CommandLine cmd;
 	c.AddTo(cmd);
 	cmd.AddValue("nclients", "receivers N", nclients);
@@ -68,7 +74,8 @@ int main(int argc, char *argv[])
 	cmd.AddValue("arrival", "flash-crowd window (simulated s)", arrival);
 	cmd.AddValue("access", "LAN router <-> PoP rate", access);
 	cmd.AddValue("lan", "LAN rate", lan);
-	cmd.AddValue("ldelay", "LAN and access delay", ldelay);
+	cmd.AddValue("ldelay", "LAN (csma) delay", ldelay);
+	cmd.AddValue("adelay", "access link delay", adelay);
 	cmd.Parse(argc, argv);
 	c.Apply();
 	nservers = std::max(1u, std::min(nservers, 5u));
@@ -103,6 +110,17 @@ int main(int argc, char *argv[])
 		++net;
 		return ip.Assign(d);
 	};
+	/* Global routing asserts on equal-cost multipath from a root
+	 * ("at most one exit from the root"). Give every backbone interface
+	 * a metric proportional to the link delay plus a per-link tie
+	 * breaker, so shortest-delay paths are unique. */
+	auto metric = [](Ptr<NetDevice> d, uint16_t m) {
+		Ptr<Ipv4> ip4 = d->GetNode()->GetObject<Ipv4>();
+		int32_t i = ip4->GetInterfaceForDevice(d);
+		if (i >= 0)
+			ip4->SetMetric(i, m);
+	};
+	uint16_t li = 0;
 	PointToPointHelper p2p;
 	for (const GLink &l : kLinks) {
 		p2p.SetDeviceAttribute("DataRate", StringValue(l.rate));
@@ -110,11 +128,14 @@ int main(int argc, char *argv[])
 		NetDeviceContainer d = p2p.Install(pops.Get(idx[l.a]),
 						   pops.Get(idx[l.b]));
 		assign(d);
+		uint16_t m = (uint16_t)(atof(l.delay) * 100) * 64 + (li++ % 64);
+		metric(d.Get(0), m);
+		metric(d.Get(1), m);
 		Watch(std::string("geant_") + l.a + "_" + l.b, d.Get(0));
 		Watch(std::string("geant_") + l.b + "_" + l.a, d.Get(1));
 	}
 	p2p.SetDeviceAttribute("DataRate", StringValue(access));
-	p2p.SetChannelAttribute("Delay", StringValue(ldelay));
+	p2p.SetChannelAttribute("Delay", StringValue(adelay));
 	CsmaHelper csma;
 	csma.SetChannelAttribute("DataRate", StringValue(lan));
 	csma.SetChannelAttribute("Delay", StringValue(ldelay));
@@ -144,7 +165,7 @@ int main(int argc, char *argv[])
 		  << nclients << " nservers=" << nservers << " pops=" << npop
 		  << " links=" << sizeof(kLinks) / sizeof(kLinks[0])
 		  << " lans=" << nlan << " access=" << access << " lan=" << lan
-		  << " ldelay=" << ldelay << " qsize=" << c.qsize << " rate="
+		  << " ldelay=" << ldelay << " adelay=" << adelay << " qsize=" << c.qsize << " rate="
 		  << c.rate << " duration=" << c.duration << " arrival="
 		  << arrival << std::endl;
 	PrintNodes("server", srv);
