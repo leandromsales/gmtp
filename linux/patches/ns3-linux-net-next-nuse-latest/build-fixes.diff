@@ -62,58 +62,266 @@ diff --git a/mm/slib.c b/mm/slib.c
 diff --git a/arch/lib/timer.c b/arch/lib/timer.c
 --- a/arch/lib/timer.c
 +++ b/arch/lib/timer.c
-@@ -92,8 +92,14 @@
- 		struct lib_timer *l_timer = lib_timer_find(timer);		
- 		if(timer->function)
- 		fn = timer->function;			
+@@ -15,12 +15,36 @@
+ #include "sim.h"
+ 
+ static DEFINE_HASHTABLE(lib_timers_hashtable, 9);
++/*
++ * GMTP/DCE: bookkeeping of a timer_list armed in the simulator.
++ *
++ * The original glue linked timer->entry into a pending list and then into
++ * g_expired_events, and kept the scheduled event here only when the entry
++ * was first created. Kernel code that re-initialises or re-arms a timer
++ * between the event firing and TIMER_SOFTIRQ (e.g. TCP with several flows)
++ * left timer->entry linked in two places or a stale event behind: the
++ * softirq then saw the same timer at the head of the list forever (it ran
++ * ->function in a loop, scheduling events until memory ran out) or found
++ * no bookkeeping entry (NULL dereference, the earlier SIGSEGV).
++ *
++ * Now the expired queue is built from these private nodes; timer->entry is
++ * never linked anywhere, only marked (pprev) so timer_pending() works.
++ */
+ struct lib_timer {
+ 	struct timer_list *timer;
+ 	struct hlist_node t_hash;
+-	void *event;
++	void *event;			/* scheduled simulator event or NULL */
++	struct list_head exp;		/* on lib_expired when fired */
++	int on_exp;
+ };
+ 
++/* timer->entry.pprev value of an armed timer (never dereferenced) */
++static struct hlist_node *lib_timer_armed_mark;
++#define LIB_TIMER_ARMED (&lib_timer_armed_mark)
++
++static LIST_HEAD(lib_expired);
++static unsigned long lib_timer_rearm_warn;
++
+ static int hash(struct timer_list *timer)
+ {
+ 	return hash_32(hash32_ptr(timer), HASH_BITS(lib_timers_hashtable));
+@@ -46,6 +70,35 @@
+ 	return __lib_timers_find(head, timer);
+ }
+ 
++static void lib_timer_mark(struct timer_list *timer, int armed)
++{
++	timer->entry.next = NULL;
++	timer->entry.pprev = armed ? LIB_TIMER_ARMED : NULL;
++}
++
++/* forget a timer: cancel its event, drop it from the expired queue */
++static int lib_timer_forget(struct timer_list *timer)
++{
++	struct lib_timer *l_timer = lib_timer_find(timer);
++	int was_armed = 0;
++
++	if (!l_timer)
++		return 0;
++	if (l_timer->event) {
++		lib_event_cancel(l_timer->event);
++		l_timer->event = NULL;
++		was_armed = 1;
++	}
++	if (l_timer->on_exp) {
++		list_del(&l_timer->exp);
++		l_timer->on_exp = 0;
++		was_armed = 1;
++	}
++	hlist_del(&l_timer->t_hash);
++	lib_free(l_timer);
++	return was_armed;
++}
++
+ /**
+  * init_timer_key - initialize a timer
+  * @timer: the timer to be initialized
+@@ -67,41 +120,41 @@
+ 	 * don't care.
+ 	 * and, finally, we never care about the base field either.
+ 	 *
+-	 * So, for now, we have a timer which is marked as "not started"
+-	 * thanks to its entry.pprev field set to NULL (timer_pending
+-	 * will return 0)
++	 * The timer is marked as "not started" (timer_pending() == 0).
++	 * GMTP/DCE: re-initialising an armed timer must not leave its old
++	 * event behind; the struct may also be recycled memory whose stale
++	 * bookkeeping we drop here.
+ 	 */
++	if (timer->entry.pprev == LIB_TIMER_ARMED)
++		lib_timer_forget(timer);
+ 	timer->function = func;
+-	timer->entry.pprev = NULL;
++	lib_timer_mark(timer, 0);
+ 	if (WARN_ON_ONCE(flags & ~TIMER_INIT_FLAGS))
+ 		flags &= TIMER_INIT_FLAGS;
+ 	timer->flags = flags;
+ }
+ 
+-struct hlist_head g_expired_events;
+-struct hlist_head g_pending_events;
+-
+ void run_timer_softirq(struct softirq_action *h)
+-{	
+-	while (!hlist_empty(&g_expired_events)) {		
+-		struct timer_list *timer =
+-			hlist_entry((&g_expired_events)->first,
+-				    struct timer_list, entry);
+-		void (*fn)(struct timer_list *) = NULL;
+-		unsigned long data;
+-		struct lib_timer *l_timer = lib_timer_find(timer);		
+-		if(timer->function)
+-		fn = timer->function;			
 -		lib_assert(l_timer->event == 0);		
 -		if (l_timer->t_hash.next != LIST_POISON1) {			
-+		/*
-+		 * GMTP/DCE: the bookkeeping entry can be gone (or re-armed)
-+		 * when the timer was modified between the trampoline and this
-+		 * softirq; the old code dereferenced NULL here (SIGSEGV with
-+		 * several TCP flows or many GMTP nodes).
-+		 */
-+		if (l_timer && l_timer->event == 0 &&
-+		    l_timer->t_hash.next != LIST_POISON1) {
++{
++	while (!list_empty(&lib_expired)) {
++		struct lib_timer *l_timer =
++			list_first_entry(&lib_expired, struct lib_timer, exp);
++		struct timer_list *timer = l_timer->timer;
++		void (*fn)(struct timer_list *) = timer->function;
++
++		list_del(&l_timer->exp);
++		l_timer->on_exp = 0;
++		/* fired and not re-armed since: the bookkeeping is done */
++		if (!l_timer->event) {
  			hlist_del(&l_timer->t_hash);
  			lib_free(l_timer);
- 		}		
-@@ -101,7 +107,8 @@
- 			hlist_del(&timer->entry);			
- 		}		
- 		timer->entry.pprev = NULL;		
+-		}		
+-		if (timer->entry.next != LIST_POISON1){			
+-			hlist_del(&timer->entry);			
+-		}		
+-		timer->entry.pprev = NULL;		
 -		fn(timer);		
++		} else {
++			/* re-armed after it fired: keep it pending, skip */
++			continue;
++		}
++		lib_timer_mark(timer, 0);
 +		if (fn)
 +			fn(timer);
  	}
  }
  
-@@ -171,14 +178,21 @@
+@@ -122,17 +175,15 @@
+ 	ensure_softirq_opened();
+ 	timer = context;
+ 
+-	if (timer->entry.next != LIST_POISON1)
+-		hlist_del(&timer->entry);
+-
+ 	l_timer = lib_timer_find(timer);
+ 	/* canceled */
+ 	if (!l_timer)
+ 		return;
+ 	l_timer->event = NULL;
+-
+-	timer->entry.pprev = NULL;
+-	hlist_add_head(&timer->entry, &g_expired_events);
++	if (!l_timer->on_exp) {
++		list_add_tail(&l_timer->exp, &lib_expired);
++		l_timer->on_exp = 1;
++	}
+ 	raise_softirq(TIMER_SOFTIRQ);
+ }
+ /**
+@@ -157,6 +208,8 @@
+ {
+ 	__u64 delay_ns = 0;
+ 	struct hlist_head *head;
++	struct lib_timer *l_timer;
++	void *event;
+ 
+ 	lib_assert(!timer_pending(timer));
+ 	if (timer->expires <= jiffies)
+@@ -165,24 +218,36 @@
+ 		delay_ns =
+ 			((__u64)timer->expires *
+ 			 (1000000000 / HZ)) - lib_current_ns();
+-		
+-	void *event = lib_event_schedule_ns(delay_ns, &timer_trampoline, timer);
++
++	event = lib_event_schedule_ns(delay_ns, &timer_trampoline, timer);
+ 
  	/* store the external event in the hash table */
  	/* to be able to retrieve it from del_timer */
  	head = &lib_timers_hashtable[hash(timer)];
 -	if (!__lib_timers_find(head, timer)) {
 -		struct lib_timer *l_timer;
-+	{
-+		struct lib_timer *l_timer = __lib_timers_find(head, timer);
- 
--		l_timer = lib_malloc(sizeof(struct lib_timer));
--		memset(l_timer, 0, sizeof(struct lib_timer));
--		l_timer->timer = timer;
-+		if (!l_timer) {
-+			l_timer = lib_malloc(sizeof(struct lib_timer));
-+			memset(l_timer, 0, sizeof(struct lib_timer));
-+			l_timer->timer = timer;
-+			hlist_add_head(&l_timer->t_hash, head);
-+		} else if (l_timer->event) {
-+			/* GMTP/DCE: a stale event would fire later and
-+			 * del_timer() would cancel the wrong one. */
+-
++	l_timer = __lib_timers_find(head, timer);
++	if (!l_timer) {
+ 		l_timer = lib_malloc(sizeof(struct lib_timer));
+ 		memset(l_timer, 0, sizeof(struct lib_timer));
+ 		l_timer->timer = timer;
+-		l_timer->event = event;
++		INIT_LIST_HEAD(&l_timer->exp);
+ 		hlist_add_head(&l_timer->t_hash, head);
++	} else {
++		/* not pending but still known: stale event or queued expiry */
++		if ((l_timer->event || l_timer->on_exp) &&
++		    lib_timer_rearm_warn++ < 5)
++			printk(KERN_WARNING "libos timer %p (fn %p) re-armed "
++			       "with event=%p on_exp=%d\n", timer,
++			       timer->function, l_timer->event,
++			       l_timer->on_exp);
++		if (l_timer->event)
 +			lib_event_cancel(l_timer->event);
++		if (l_timer->on_exp) {
++			list_del(&l_timer->exp);
++			l_timer->on_exp = 0;
 +		}
-+		/* GMTP/DCE: always track the event just scheduled. */
- 		l_timer->event = event;
--		hlist_add_head(&l_timer->t_hash, head);
  	}
+-
+-	/* finally, store timer in list of pending events. */
+-	hlist_add_head(&timer->entry, &g_pending_events);
++	l_timer->event = event;
++	lib_timer_mark(timer, 1);
+ }
+ /**
+  * del_timer - deactive a timer.
+@@ -198,27 +263,11 @@
+ int del_timer(struct timer_list *timer)
+ {
+ 	int retval;
+-	struct lib_timer *l_timer;
  
- 	/* finally, store timer in list of pending events. */
+ 	if (timer->entry.pprev == NULL)
+ 		return 0;
+-
+-	l_timer = lib_timer_find(timer);
+-	if (l_timer != NULL && l_timer->event != NULL) {
+-		lib_event_cancel(l_timer->event);
+-
+-		if (l_timer->t_hash.next != LIST_POISON1) {
+-			hlist_del(&l_timer->t_hash);
+-			lib_free(l_timer);
+-		}
+-		retval = 1;
+-	} else {
+-		retval = 0;
+-	}
+-
+-	if (timer->entry.next != LIST_POISON1)
+-		hlist_del(&timer->entry);
+-	timer->entry.pprev = NULL;
++	retval = lib_timer_forget(timer);
++	lib_timer_mark(timer, 0);
+ 	return retval;
+ }
+ 
+@@ -303,9 +352,8 @@
+ 
+ int timer_reduce(struct timer_list *timer, unsigned long expires)
+ {
+-	printk("HAmlo red rimer");
+-	unsigned long diff = timer->expires-expires;
+-	if(!diff || diff <= 0) return 1;
+-
++	/* GMTP/DCE: only ever moves an armed timer earlier (kernel semantics) */
++	if (timer_pending(timer) && time_before_eq(timer->expires, expires))
++		return 1;
+ 	return mod_timer(timer, expires);
+-}
+\ No newline at end of file
++}
