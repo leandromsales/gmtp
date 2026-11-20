@@ -66,6 +66,8 @@ def main():
             row['cpu_pct'] = int(m.group(1))
         m = re.search(r'Exit status: (\d+)', t)
         row['exit'] = int(m.group(1)) if m else None
+    hb = os.path.join(rd, 'hang-bt.txt')
+    row['watchdog_fired'] = int(os.path.exists(hb) and os.path.getsize(hb) > 0)
     row['wall_run_s'] = num(done.get('wall_run_s'))
     row['sim_stop_s'] = num(done.get('sim_stop_s'))
 
