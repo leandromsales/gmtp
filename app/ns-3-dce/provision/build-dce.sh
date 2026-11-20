@@ -60,7 +60,13 @@ write_manifest() {
 		done
 		local lib
 		lib=$(ls "$BT"/build/bin_dce/libsim-linux-*.so 2>/dev/null | head -1)
-		[[ -n "$lib" ]] && echo "libsim-sha256 $(sha256sum "$lib" | cut -d" " -f1) $(basename "$lib")"
+		# "if", not "&&": before the first build there is no libsim yet, and a
+		# false "[[ ]] && ..." as the group's last command would trip set -e.
+		if [[ -n "$lib" ]]; then
+			echo "libsim-sha256 $(sha256sum "$lib" | cut -d" " -f1) $(basename "$lib")"
+		else
+			echo "libsim (not built yet)"
+		fi
 		echo "written $(date -u +%FT%TZ)"
 	} > "$BT/MANIFEST"
 	cat "$BT/MANIFEST"
