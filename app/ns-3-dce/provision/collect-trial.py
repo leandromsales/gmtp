@@ -31,6 +31,24 @@ def node_file(rd, nid, name):
     return None
 
 
+def server_file(rd, nid):
+    """media-server.txt of a server node. DCE sometimes resolves the
+    server's last fopen() against another node's files-<id> (seen in B1);
+    if the node's own copy is not final, take the final summary with the
+    same t_start_s from any node and count it as misplaced."""
+    s = node_file(rd, nid, 'media-server.txt') or {}
+    if s.get('done') == '1':
+        return s, 0
+    import glob
+    for p in glob.glob(os.path.join(rd, 'files-*', 'media-server.txt')):
+        with open(p, errors='replace') as f:
+            t = f.read().strip()
+        o = kv(t.splitlines()[-1]) if t else {}
+        if o.get('done') == '1' and s and o.get('t_start_s') == s.get('t_start_s'):
+            return o, 1
+    return s, 0
+
+
 def main():
     rd, tid = sys.argv[1], sys.argv[2]
     row = {'trial': tid}
@@ -73,8 +91,10 @@ def main():
 
     # server
     gen = 0
+    srv = {nid: server_file(rd, nid) for nid in roles.get('server', [])}
+    row['server_summary_misplaced'] = sum(m for _, m in srv.values())
     for nid in roles.get('server', []):
-        s = node_file(rd, nid, 'media-server.txt') or {}
+        s = srv[nid][0]
         gen += int(s.get('pkts_generated', 0))
         row['server_conns'] = int(s.get('conns', 0)) + row.get('server_conns', 0)
         row['server_sends'] = int(s.get('pkt_sends', 0)) + row.get('server_sends', 0)
@@ -90,7 +110,7 @@ def main():
     mx = max([int(c.get('maxseq', 0)) for c in cl] or [0])
     fin = 0
     for nid in roles.get('server', []):
-        fin += int((node_file(rd, nid, 'media-server.txt') or {}).get('done', 0))
+        fin += int(srv[nid][0].get('done', 0))
     row['server_summary_final'] = fin
     if mx > gen:
         gen = mx
