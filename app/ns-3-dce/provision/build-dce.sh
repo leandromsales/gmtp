@@ -26,6 +26,46 @@ BAKE_SHA="29af6127b36f54b2fb144b844b43c26ed98c8d08"
 LIBOS_TOOLS_URL="https://github.com/ParthPratim/linux-libos-tools"
 LIBOS_TOOLS_SHA="782531b009a129c4200df7e5882d939dcb61a404"
 
+# MANIFEST: pins and resolved SHAs of everything that goes into a run.
+# Rewritten at the end of every build (also with SKIP_BAKE=1), so it never
+# lags behind the tree that produced bin_dce/liblinux.so. The NUSE tree is
+# a nested clone (or a snapshot with .gmtp-tree-sha); "git -C $NUSE" on a
+# snapshot would silently report the enclosing gmtp repo instead.
+tree_sha() {
+	local d="$1"
+	if [[ -d "$d/.git" ]]; then
+		git -C "$d" rev-parse HEAD
+	elif [[ -f "$d/.gmtp-tree-sha" ]]; then
+		echo "$(cat "$d/.gmtp-tree-sha") (snapshot)"
+	elif [[ -n "${2:-}" ]]; then
+		echo "$2 (pinned; tree has no .git)"
+	else
+		echo "unknown"
+	fi
+}
+write_manifest() {
+	{
+		echo "bake $(git -C "$BT/bake" rev-parse HEAD) + bake-dce-linux-gmtp.patch"
+		local pin
+		pin=$(sed -n 's/^NS3_SHA="\([0-9a-f]*\)"/\1/p' "$REPO_ROOT/linux/checkout-trees.sh")
+		echo "nuse $(tree_sha "$NUSE" "$pin")"
+		echo "libos-tools $(tree_sha "$NUSE/arch/lib/tools" "$LIBOS_TOOLS_SHA")"
+		local dirty=""
+		git -C "$REPO_ROOT" diff --quiet HEAD -- gmtp app linux 2>/dev/null || dirty=" (dirty)"
+		echo "gmtp $(git -C "$REPO_ROOT" rev-parse HEAD)$dirty"
+		for d in "$BT"/source/*/; do
+			if [[ -d "$d/.git" ]]; then
+				echo "$(basename "$d") $(git -C "$d" rev-parse HEAD)"
+			fi
+		done
+		local lib
+		lib=$(ls "$BT"/build/bin_dce/libsim-linux-*.so 2>/dev/null | head -1)
+		[[ -n "$lib" ]] && echo "libsim-sha256 $(sha256sum "$lib" | cut -d" " -f1) $(basename "$lib")"
+		echo "written $(date -u +%FT%TZ)"
+	} > "$BT/MANIFEST"
+	cat "$BT/MANIFEST"
+}
+
 step() { printf '\n=== %s (%s)\n' "$*" "$(date -u +%FT%TZ)"; }
 
 step "kernel tree"
@@ -77,22 +117,7 @@ else
 ./bake.py check || true
 step "bake download"
 ./bake.py download
-{
-	echo "bake $(git -C "$BT/bake" rev-parse HEAD) + bake-dce-linux-gmtp.patch"
-	if [[ -f "$NUSE/.gmtp-tree-sha" ]]; then
-		echo "nuse $(cat "$NUSE/.gmtp-tree-sha") (snapshot)"
-	else
-		echo "nuse $(git -C "$NUSE" rev-parse HEAD)"
-	fi
-	echo "libos-tools $(git -C "$NUSE/arch/lib/tools" rev-parse HEAD)"
-	echo "gmtp $(git -C "$REPO_ROOT" rev-parse HEAD)"
-	for d in "$BT"/source/*/; do
-		if [[ -d "$d/.git" ]]; then
-			echo "$(basename "$d") $(git -C "$d" rev-parse HEAD)"
-		fi
-	done
-} > "$BT/MANIFEST"
-cat "$BT/MANIFEST"
+write_manifest
 
 step "bake build"
 ./bake.py build -j"$JOBS" -vvv
@@ -113,4 +138,6 @@ cd "$BT/source/ns-3-dce"
 ./waf build -j"$JOBS"
 echo "gmtp-tree $(git -C "$REPO_ROOT" rev-parse HEAD)" | tee -a "$BT/LIBSIM.sha256"
 ls -l build/bin/dce-gmtp-* build/bin_dce/gmtp-* 2>/dev/null || true
+step "MANIFEST"
+write_manifest
 step "done"
