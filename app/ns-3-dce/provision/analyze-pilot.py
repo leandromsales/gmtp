@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pilot analysis for article 1 (docs/artigo1/desenho-experimental.md, 7, 9.2).
+"""Pilot analysis for article 1 (docs/paper1/experimental-design.md, 7, 9.2).
 
 Input: pilot.jsonl (one collect-trial.py row per trial).
 Output: pilot.csv, and on stdout a Markdown report with, for every A1

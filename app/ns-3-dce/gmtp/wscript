@@ -17,7 +17,7 @@ SCENARIOS = {
                         'applications'],
     'dce-gmtp-relay': ['core', 'network', 'internet', 'dce', 'csma',
                        'point-to-point', 'applications'],
-    # Article 1 campaigns (docs/artigo1/desenho-experimental.md).
+    # Article 1 campaigns (docs/paper1/experimental-design.md).
     'dce-gmtp-a1': ['core', 'network', 'internet', 'dce', 'csma',
                     'point-to-point'],
     'dce-gmtp-a2': ['core', 'network', 'internet', 'dce', 'csma',
