@@ -110,9 +110,21 @@ int main(int argc, char *argv[])
 	int one = 1;
 	setsockopt(lsock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
 	if (gmtp) {
+		/*
+		 * The application sends one MEDIA_PKT every
+		 * (MEDIA_PKT + MEDIA_HDR_OVH) / rate seconds, the same for TCP
+		 * and GMTP. GMTP paces at the media rate counted in its own
+		 * wire bytes (MEDIA_GMTP_WIRE_OVH per packet), so convert:
+		 * with 744 B packets, 300000 B/s becomes 306750 B/s. Handing
+		 * over the raw rate left the socket ~2% short of the source
+		 * and the full send buffer added ~150 ms of delay.
+		 */
+		int mrate = (int)(((long long)rate * (MEDIA_PKT + MEDIA_GMTP_WIRE_OVH) +
+				   MEDIA_PKT + MEDIA_HDR_OVH - 1) /
+				  (MEDIA_PKT + MEDIA_HDR_OVH));
 		setsockopt(lsock, SOL_GMTP, MEDIA_GMTP_SOCKOPT_FLOWNAME, flow, 16);
 		setsockopt(lsock, SOL_GMTP, MEDIA_GMTP_SOCKOPT_MEDIA_RATE,
-			   &rate, sizeof(rate));
+			   &mrate, sizeof(mrate));
 	}
 	struct sockaddr_in a;
 	memset(&a, 0, sizeof(a));
