@@ -299,6 +299,18 @@ int gmtp_inter_close_out(struct sk_buff *skb, struct gmtp_inter_entry *entry)
 	gmtp_pr_info("State: %u", entry->state);
 
 	switch(entry->state) {
+	case GMTP_INTER_WAITING_REGISTER_REPLY:
+	case GMTP_INTER_REGISTER_REPLY_RECEIVED:
+		/*
+		 * Before the first data packet the only RESET/CLOSE that can
+		 * cross the relay concerns one client: a client giving up, or
+		 * the server resetting a client that sent it a stray ACK.
+		 * Handle it per client, as in TRANSMITTING. Falling through
+		 * to the teardown below marked the whole flow CLOSED; the next
+		 * REQUEST then got an error, its RESET deleted the entry and
+		 * the relay registered the flow a second time, stranding the
+		 * receivers attached to the first channel (B1, N=200).
+		 */
 	case GMTP_INTER_TRANSMITTING:
 		return gmtp_inter_close_from_client(skb, entry);
 	case GMTP_INTER_CLOSED:
