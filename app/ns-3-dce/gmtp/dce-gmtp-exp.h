@@ -167,16 +167,14 @@ static inline void Watch(const std::string &name, Ptr<NetDevice> d)
 {
 	g_links[name];
 	d->TraceConnect("PhyTxBegin", name, MakeCallback(&OnTx));
-	Ptr<PointToPointNetDevice> p2p = DynamicCast<PointToPointNetDevice>(d);
-	if (p2p) {
-		p2p->GetQueue()->TraceConnect("Drop", name, MakeCallback(&OnDrop));
-		p2p->TraceConnect("MacTxDrop", name, MakeCallback(&OnDrop));
-	}
-	Ptr<CsmaNetDevice> cs = DynamicCast<CsmaNetDevice>(d);
-	if (cs) {
-		cs->GetQueue()->TraceConnect("Drop", name, MakeCallback(&OnDrop));
-		cs->TraceConnect("MacTxDrop", name, MakeCallback(&OnDrop));
-	}
+	/*
+	 * Count each drop once. A full DropTail queue fires its own "Drop"
+	 * trace and then the device fires "MacTxDrop" for the same packet
+	 * (PointToPointNetDevice::Send, CsmaNetDevice::Send), so tracing both
+	 * doubled every queue drop. MacTxDrop alone covers queue overflow and
+	 * a link that is down.
+	 */
+	d->TraceConnect("MacTxDrop", name, MakeCallback(&OnDrop));
 }
 
 static inline void PrintLinks()
