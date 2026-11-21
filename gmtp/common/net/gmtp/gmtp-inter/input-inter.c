@@ -99,9 +99,11 @@ out:
 			gh->dport, gh->sport, entry->cur_reporter,
 			max_nclients, code);
 
-	if(gh_reqnotify != NULL)
+	if(gh_reqnotify != NULL) {
 		gmtp_inter_build_and_send_pkt(skb, iph->daddr,
 				iph->saddr, gh_reqnotify, GMTP_INTER_BACKWARD);
+		kfree(gh_reqnotify);
+	}
 
 	return ret;
 }
@@ -315,10 +317,14 @@ static void gmtp_inter_send_reqnotify_to_client(struct sk_buff *skb,
 		gh_req_n = gmtp_inter_make_request_notify_hdr(copy, entry,
 				gh->sport, client->port, cur_reporter,
 				client->max_nclients, code);
-		if(gh_req_n != NULL)
+		if(gh_req_n != NULL) {
 			gmtp_inter_build_and_send_pkt(skb, iph->saddr,
 					client->addr, gh_req_n,
 					GMTP_INTER_FORWARD);
+			/* build_pkt() copies the header into a new skb */
+			kfree(gh_req_n);
+		}
+		kfree_skb(copy);
 	}
 }
 
@@ -347,7 +353,7 @@ static int gmtp_inter_send_reqnotify_to_clients(struct sk_buff *skb,
 			first_client->addr, first_client->port, cur_reporter,
 			first_client->max_nclients, code);
 
-	/* Clean list of clients and keep only reporters */
+	/* Notify the clients queued while the Register-Reply was pending */
 	list_for_each_entry_safe(client, tempc, &entry->clients->list, list)
 	{
 		/* Send to other clients (not first) */
@@ -360,11 +366,15 @@ static int gmtp_inter_send_reqnotify_to_clients(struct sk_buff *skb,
 		gmtp_inter_send_reqnotify_to_client(skb, entry, client,
 				cur_reporter, code);
 
-		/** Deleting non-reporters */
-		if(client->max_nclients <= 0) {
-			list_del(&client->list);
-			kfree(client);
-		}
+		/*
+		 * Keep non-reporters in the list, as gmtp_inter_request_rcv()
+		 * does for clients that arrive after the Register-Reply.
+		 * Deleting them here made gmtp_inter_ack_rcv() forward the
+		 * ACK that each client sends after its RequestNotify (OK) to
+		 * the server; the server has no socket for that client and
+		 * answered with a RESET that closed the client before the
+		 * first data packet (B1, N=200: one receiver without data).
+		 */
 	}
 
 	return ret;
