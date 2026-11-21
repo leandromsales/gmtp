@@ -7,7 +7,8 @@ import ns3waf
 
 # Userspace programs that run inside DCE nodes (bin_dce).
 DCE_APPS = ['gmtp-server', 'gmtp-client', 'gmtp-inter',
-            'udp-mcst-server', 'udp-mcst-client']
+            'udp-mcst-server', 'udp-mcst-client',
+            'media-server', 'media-client', 'tcp-bulk']
 
 # ns-3 scenarios (bin/).
 SCENARIOS = {
@@ -16,6 +17,13 @@ SCENARIOS = {
                         'applications'],
     'dce-gmtp-relay': ['core', 'network', 'internet', 'dce', 'csma',
                        'point-to-point', 'applications'],
+    # Article 1 campaigns (docs/artigo1/desenho-experimental.md).
+    'dce-gmtp-a1': ['core', 'network', 'internet', 'dce', 'csma',
+                    'point-to-point'],
+    'dce-gmtp-a2': ['core', 'network', 'internet', 'dce', 'csma',
+                    'point-to-point'],
+    'dce-gmtp-b1': ['core', 'network', 'internet', 'dce', 'csma',
+                    'point-to-point'],
 }
 
 def configure(conf):
@@ -30,7 +38,7 @@ def build(bld):
     dce_link = ['-pie', '-lrt', '-rdynamic']
     for app in DCE_APPS:
         bld.program(source=app + '.cc', target='../../bin_dce/' + app,
-                    cxxflags=dce_cxx, linkflags=dce_link)
+                    cxxflags=dce_cxx, linkflags=dce_link + ['-lpthread', '-lm'])
     for name, needed in SCENARIOS.items():
         bld.build_a_script('dce', needed=needed, target='bin/' + name,
                            source=[name + '.cc'])
