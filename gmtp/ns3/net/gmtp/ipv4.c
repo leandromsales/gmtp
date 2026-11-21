@@ -1367,7 +1367,14 @@ static int __init gmtp_v4_init(void)
 
     gmtp_pr_func();
 
-    inet_hashinfo_init(&gmtp_inet_hashinfo);
+    /*
+     * gmtp_inet_hashinfo is fully set up by gmtp_create_inet_hashinfo()
+     * (proto.c, gmtp_init runs first). Calling inet_hashinfo_init() here
+     * again sets lhash2 = NULL (Linux >= 5.x), so every __inet_lookup()
+     * that misses the established hash then dereferences a NULL lhash2
+     * in inet_lhash2_lookup(). This is the "inet_lookup causes kernel
+     * panic" noted in gmtp_v4_rcv().
+     */
 
     err = proto_register(&gmtp_v4_prot, 1);
     if(err != 0)
