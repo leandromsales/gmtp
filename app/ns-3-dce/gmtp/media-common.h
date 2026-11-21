@@ -22,6 +22,14 @@
 #define MEDIA_END_SEQ  0xffffffffu
 #define MEDIA_PORT     2000
 #define MEDIA_HDR_OVH  56           /* GMTP/TCP + IP header estimate, as gmtp.h */
+/*
+ * Bytes per data packet that the GMTP sender's pacing counts
+ * (packet_len() in net/gmtp/output.c): payload + GMTP data header (40)
+ * + IP (20) + Ethernet (14). The media rate handed to the socket must be
+ * in these units, or the socket paces slower than the application
+ * generates packets and the send buffer fills up.
+ */
+#define MEDIA_GMTP_WIRE_OVH 74
 
 #ifndef SOCK_GMTP
 #define SOCK_GMTP      7

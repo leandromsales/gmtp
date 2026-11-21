@@ -31,14 +31,32 @@ def node_file(rd, nid, name):
     return None
 
 
+def server_stdout(rd, nid):
+    """EXP_SERVER_SUMMARY line that media-server prints on its own stdout
+    (files-<id>/var/log/<pid>/stdout, opened when the process starts, so
+    it never lands under another node)."""
+    import glob
+    for p in glob.glob(os.path.join(rd, 'files-%s' % nid, 'var', 'log', '*', 'stdout')):
+        with open(p, errors='replace') as f:
+            for line in f:
+                if line.startswith('EXP_SERVER_SUMMARY'):
+                    return kv(line)
+    return None
+
+
 def server_file(rd, nid):
-    """media-server.txt of a server node. DCE sometimes resolves the
-    server's last fopen() against another node's files-<id> (seen in B1);
-    if the node's own copy is not final, take the final summary with the
-    same t_start_s from any node and count it as misplaced."""
+    """media-server.txt of a server node. DCE resolves a relative fopen()
+    against files-<Simulator::GetContext()>, and in B1 the server's last
+    fopen() sometimes ran under another node's context. If the node's own
+    copy is not final, count it as misplaced and take the final summary
+    from the server's stdout or, for runs older than that line, from any
+    node's media-server.txt with the same t_start_s."""
     s = node_file(rd, nid, 'media-server.txt') or {}
     if s.get('done') == '1':
         return s, 0
+    o = server_stdout(rd, nid)
+    if o and o.get('done') == '1':
+        return o, 1
     import glob
     for p in glob.glob(os.path.join(rd, 'files-*', 'media-server.txt')):
         with open(p, errors='replace') as f:

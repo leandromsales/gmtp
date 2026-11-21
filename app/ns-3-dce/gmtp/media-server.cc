@@ -45,10 +45,15 @@ static void *acceptor(void *)
 				 20000 : 100000);
 			continue;
 		}
+		char peer[INET6_ADDRSTRLEN] = "?";
+		if (ss.ss_family == AF_INET)
+			inet_ntop(AF_INET,
+				  &((struct sockaddr_in *)&ss)->sin_addr, peer,
+				  sizeof(peer));
 		pthread_mutex_lock(&lock);
 		conns.push_back(s);
-		printf("accepted conn %zu at %.3f s\n", conns.size(),
-		       now_us() / 1e6);
+		printf("accepted conn %zu from %s at %.3f s\n", conns.size(),
+		       peer, now_us() / 1e6);
 		fflush(stdout);
 		pthread_mutex_unlock(&lock);
 	}
@@ -60,13 +65,27 @@ static void write_summary(const char *proto, int rate, double dur,
 			  unsigned long skipped, size_t nconn, uint64_t t0,
 			  uint64_t t1, int done)
 {
+	char line[320];
+	snprintf(line, sizeof(line), "proto=%s rate_Bps=%d duration_s=%.1f "
+		 "pkts_generated=%lu pkt_sends=%lu sends_skipped=%lu conns=%zu "
+		 "t_start_s=%.6f t_end_s=%.6f done=%d", proto, rate, dur, sent,
+		 sends, skipped, nconn, t0 / 1e6, t1 / 1e6, done);
+	/*
+	 * The final summary also goes to stdout. DCE resolves a relative
+	 * fopen() path against files-<Simulator::GetContext()>, and in B1 the
+	 * server sometimes runs while the simulator context is another node,
+	 * so media-server.txt can land in that node's directory. The stdout
+	 * file was opened when the process started and is always this
+	 * node's files-<id>/var/log/<pid>/stdout.
+	 */
+	if (done) {
+		printf("EXP_SERVER_SUMMARY %s\n", line);
+		fflush(stdout);
+	}
 	FILE *f = fopen("media-server.txt", "w");
 	if (!f)
 		return;
-	fprintf(f, "proto=%s rate_Bps=%d duration_s=%.1f pkts_generated=%lu "
-		"pkt_sends=%lu sends_skipped=%lu conns=%zu t_start_s=%.6f "
-		"t_end_s=%.6f done=%d\n", proto, rate, dur, sent, sends,
-		skipped, nconn, t0 / 1e6, t1 / 1e6, done);
+	fprintf(f, "%s\n", line);
 	fclose(f);
 }
 
@@ -91,9 +110,21 @@ int main(int argc, char *argv[])
 	int one = 1;
 	setsockopt(lsock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
 	if (gmtp) {
+		/*
+		 * The application sends one MEDIA_PKT every
+		 * (MEDIA_PKT + MEDIA_HDR_OVH) / rate seconds, the same for TCP
+		 * and GMTP. GMTP paces at the media rate counted in its own
+		 * wire bytes (MEDIA_GMTP_WIRE_OVH per packet), so convert:
+		 * with 744 B packets, 300000 B/s becomes 306750 B/s. Handing
+		 * over the raw rate left the socket ~2% short of the source
+		 * and the full send buffer added ~150 ms of delay.
+		 */
+		int mrate = (int)(((long long)rate * (MEDIA_PKT + MEDIA_GMTP_WIRE_OVH) +
+				   MEDIA_PKT + MEDIA_HDR_OVH - 1) /
+				  (MEDIA_PKT + MEDIA_HDR_OVH));
 		setsockopt(lsock, SOL_GMTP, MEDIA_GMTP_SOCKOPT_FLOWNAME, flow, 16);
 		setsockopt(lsock, SOL_GMTP, MEDIA_GMTP_SOCKOPT_MEDIA_RATE,
-			   &rate, sizeof(rate));
+			   &mrate, sizeof(mrate));
 	}
 	struct sockaddr_in a;
 	memset(&a, 0, sizeof(a));

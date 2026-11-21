@@ -219,6 +219,8 @@ void gmtp_inter_xmit_timer(struct timer_list *t)
 
 	gmtp_inter_delay_cc(cc_data->skb, cc_data->entry, cc_data->relay);
 	timer_delete(&cc_data->delay_cc_timer);
+	/* Allocated in gmtp_inter_delay_cc() for this one deferral. */
+	kfree(cc_data);
 }
 
 void gmtp_inter_delay_cc(struct sk_buff *skb, struct gmtp_inter_entry *entry,
@@ -267,7 +269,9 @@ wait:
 	/* Subcaminhos GMTP-UCC... */
 	 if(delay2 > 0) {
 		struct gmtp_delay_cc_data *cc_data;
-		cc_data = kmalloc(sizeof(struct gmtp_delay_cc_data), GFP_KERNEL);
+		cc_data = kmalloc(sizeof(struct gmtp_delay_cc_data), GFP_ATOMIC);
+		if(!cc_data)
+			goto send;
 		cc_data->skb = skb;
 		cc_data->entry = entry;
 		cc_data->relay = relay;

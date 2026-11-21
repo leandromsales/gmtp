@@ -787,9 +787,6 @@ static inline void packet_sent(struct sock *sk, struct sk_buff *skb)
         gp->tx_byte_sample = gp->tx_bytes_sent;
     }
 
-    if(gp->tx_byte_budget != INT_MIN)
-        gp->tx_byte_budget -= (int) skb->len;
-
     elapsed = jiffies - gp->tx_first_stamp;
     if(gp->tx_first_stamp != 0 && elapsed != 0)
         gp->tx_total_rate = mult_frac(HZ, gp->tx_bytes_sent, elapsed);
@@ -838,81 +835,58 @@ static void gmtp_xmit_packet(struct sock *sk, struct sk_buff *skb) {
     }
 }
 
-/**
- * Return difference between actual tx_rate and max tx_rate
- * If return > 0, actual tx_rate is greater than max tx_rate
+/*
+ * Pace the write queue at tx_rate = min(tx_max_rate, tx_ucc_rate) bytes/s
+ * with a token bucket in jiffies.
+ *
+ * tx_byte_budget holds the bytes left over right after the last packet
+ * (packet_sent() stamps tx_last_stamp); the bytes
+ * available now are that carry plus tx_rate * (jiffies - tx_last_stamp) / HZ,
+ * capped at two ticks or two packets so an idle flow cannot burst.
+ *
+ * The previous scheme overwrote the budget with tx_rate/HZ on every tick
+ * instead of adding to it, so whatever was left of a tick was lost. With
+ * HZ=250 (libos, DCE) and 300 kB/s that is 1200 B per tick for ~818 B
+ * packets: one packet per tick most of the time, and the sender ran at
+ * about 78% of tx_rate. The application, paced at the media rate, then
+ * blocked in sendmsg() and generated only ~78% of its packets, and the
+ * full send buffer added ~230 ms of delay (article-1 pilot, A1).
  */
-static long get_rate_gap(struct gmtp_sock *gp, int acum)
-{
-    long rate = (long) gp->tx_sample_rate;
-    long tx = (long) min(gp->tx_max_rate, gp->tx_ucc_rate);
-
-    long coef_adj = 0;
-
-    if(gp->tx_dpkts_sent < GMTP_MIN_SAMPLE_LEN)
-        return 0;
-
-    if(rate <= gp->tx_total_rate/2) /* Eliminate discrepancies */
-        rate = (long)gp->tx_total_rate;
-
-    coef_adj = mult_frac((rate - tx), 100, tx);
-
-    if(acum) {
-        coef_adj += gp->tx_adj_budget;
-        if(coef_adj > 110 || coef_adj < -90)
-            gp->tx_adj_budget = 0;
-        else
-            gp->tx_adj_budget += coef_adj;
-    }
-
-    return coef_adj;
-}
-
 void gmtp_flush_write_queue(struct sock *sk)
 {
     struct gmtp_sock *gp = gmtp_sk(sk);
-    unsigned long elapsed = 0;
-    long delay = 0, delay2 = 0, delay_budget = 0;
     unsigned long tx_rate = min(gp->tx_max_rate, gp->tx_ucc_rate);
-    static const int scale = 1;
     struct sk_buff *skb;
-    int len;
 
     while ((skb = skb_peek(&sk->sk_write_queue)) != NULL) {
-        if (tx_rate == UINT_MAX || gp->tx_ucc_type != GMTP_DELAY_UCC)
+        long avail, cap, len;
+
+        if (tx_rate == UINT_MAX || tx_rate == 0 ||
+            gp->tx_ucc_type != GMTP_DELAY_UCC)
             goto send;
 
-        elapsed = jiffies - gp->tx_last_stamp;
-        len = packet_len(skb);
-        delay = 0;
-        delay2 = 0;
-        delay_budget = 0;
+        len = (long) packet_len(skb);
+        cap = max_t(long, 2 * len, (long) mult_frac(2UL, tx_rate, HZ));
+        if (gp->tx_byte_budget == INT_MIN || gp->tx_last_stamp == 0) {
+            avail = cap; /* first packet of the flow */
+        } else {
+            unsigned long elapsed = jiffies - gp->tx_last_stamp;
 
-        if (gp->tx_byte_budget >= mult_frac(len, 3, 4)) {
-            goto send;
-        } else if (gp->tx_byte_budget != INT_MIN) {
-            delay_budget = scale;
-            goto wait;
+            avail = gp->tx_byte_budget;
+            if (elapsed >= (unsigned long) HZ)
+                avail = cap;
+            else
+                avail += (long) mult_frac(elapsed, tx_rate, HZ);
+            avail = min(avail, cap);
         }
 
-        delay = DIV_ROUND_CLOSEST((HZ * len), tx_rate);
-        delay2 = delay - elapsed;
-        if (delay2 > 0)
-            delay2 += mult_frac(delay2, get_rate_gap(gp, 1), 100);
+        if (avail < len) {
+            unsigned long wait = DIV_ROUND_UP((len - avail) * HZ, tx_rate);
 
-wait:
-        delay2 += delay_budget;
-
-        if (delay <= 0)
-            gp->tx_byte_budget = mult_frac(scale, tx_rate, HZ) -
-                mult_frac(gp->tx_byte_budget, (int)get_rate_gap(gp, 0), 100);
-        else
-            gp->tx_byte_budget = INT_MIN;
-
-        if (delay2 > 0) {
-            sk_reset_timer(sk, &gp->xmit_timer, jiffies + delay2);
+            sk_reset_timer(sk, &gp->xmit_timer, jiffies + max(wait, 1UL));
             return;
         }
+        gp->tx_byte_budget = (int) (avail - len);
 send:
         skb_unlink(skb, &sk->sk_write_queue);
         gmtp_xmit_packet(sk, skb);
