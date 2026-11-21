@@ -7,7 +7,11 @@
  * their rates and delays (p2p). LAN routers hang off 12 PoPs through
  * access links (--access, 2 Mbps in the thesis); each LAN router has a
  * csma LAN (100 Mbps / --ldelay) with receivers. The --nservers sources
- * sit on their own LAN routers (DE, UK, FR, ...). Receivers are spread
+ * sit on their own LAN routers (DE, UK, FR, ...), attached to the PoP by
+ * a --saccess link (100 Mbps by default: the thesis connects the server
+ * nodes to backbone routers, so the 2 Mbps LAN access rate does not
+ * apply to them; with 2 Mbps the source link carried one stream per
+ * client-LAN relay and dropped about 80% of the packets). Receivers are spread
  * round-robin over the 12 client LANs and join uniformly at random in
  * the first --arrival seconds (flash crowd; the thesis used 200 s of a
  * 900 s run). Queues default to 100 packets (thesis router buffer).
@@ -61,7 +65,7 @@ int main(int argc, char *argv[])
 	uint32_t nclients = 50, nservers = 1;
 	double arrival = 20.0;
 	std::string access = "2Mbps", lan = "100Mbps", ldelay = "10us",
-		    adelay = "1ms";
+		    adelay = "1ms", saccess = "100Mbps";
 	/* LAN propagation delay. ns-3 CSMA keeps the shared channel busy
 	 * for transmission time plus propagation delay, so the thesis' 1 ms
 	 * (an NS-2 duplex link) on a csma LAN caps the whole LAN at about
@@ -76,6 +80,7 @@ int main(int argc, char *argv[])
 	cmd.AddValue("lan", "LAN rate", lan);
 	cmd.AddValue("ldelay", "LAN (csma) delay", ldelay);
 	cmd.AddValue("adelay", "access link delay", adelay);
+	cmd.AddValue("saccess", "server LAN router <-> PoP rate", saccess);
 	cmd.Parse(argc, argv);
 	c.Apply();
 	nservers = std::max(1u, std::min(nservers, 5u));
@@ -147,6 +152,7 @@ int main(int argc, char *argv[])
 		assign(csma.Install(NodeContainer(lrs.Get(i), lanc[i])));
 	}
 	std::vector<std::string> sips;
+	p2p.SetDeviceAttribute("DataRate", StringValue(saccess));
 	for (uint32_t s = 0; s < nservers; ++s) {
 		NetDeviceContainer d = p2p.Install(srs.Get(s),
 						   pops.Get(idx[kSrvPops[s]]));
@@ -164,7 +170,8 @@ int main(int argc, char *argv[])
 	std::cout << "EXP_TOPO scenario=b1 proto=" << c.proto << " nclients="
 		  << nclients << " nservers=" << nservers << " pops=" << npop
 		  << " links=" << sizeof(kLinks) / sizeof(kLinks[0])
-		  << " lans=" << nlan << " access=" << access << " lan=" << lan
+		  << " lans=" << nlan << " access=" << access
+		  << " saccess=" << saccess << " lan=" << lan
 		  << " ldelay=" << ldelay << " adelay=" << adelay << " qsize=" << c.qsize << " rate="
 		  << c.rate << " duration=" << c.duration << " arrival="
 		  << arrival << std::endl;
