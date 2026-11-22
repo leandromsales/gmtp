@@ -10,6 +10,7 @@
 #include <linux/if.h>
 #include <linux/ioctl.h>
 #include <linux/rtnetlink.h>
+#include <linux/spinlock.h>
 
 #include <net/sock.h>
 #include <net/sch_generic.h>
@@ -32,54 +33,53 @@ static struct nf_hook_ops nfho_post_routing;
 
 struct gmtp_inter gmtp_inter;
 
-__be32 get_mcst_v4_addr(void)
+/*
+ * Multicast channels are taken from the IPv4 Organization Local Scope,
+ * 239.192.0.0/14 (RFC 2365, section 6.2). This range is administratively
+ * scoped, so GMTP channels do not leak into globally routed multicast
+ * space. The previous code started at 224.192.0.0, which is not an
+ * administratively scoped range.
+ *
+ * Allocation is deterministic: the n-th call returns 239.192.0.0 + n,
+ * for n in [0, 2^18). Channels are not reused, so when the range is
+ * exhausted the allocator fails with -EADDRNOTAVAIL instead of handing
+ * out an address that may still be in use.
+ */
+#define GMTP_MCST_V4_BASE	0xEFC00000U	/* 239.192.0.0 */
+#define GMTP_MCST_V4_PREFIXLEN	14
+#define GMTP_MCST_V4_SIZE	(1U << (32 - GMTP_MCST_V4_PREFIXLEN))
+
+static DEFINE_SPINLOCK(gmtp_mcst_lock);
+
+/**
+ * get_mcst_v4_addr - allocate the next GMTP multicast channel address
+ * @addr: where to store the address (network byte order)
+ *
+ * Safe to call from softirq context (netfilter hooks).
+ *
+ * Return: 0 on success, or -EADDRNOTAVAIL when 239.192.0.0/14 has no
+ * address left. @addr is not written on failure.
+ */
+int get_mcst_v4_addr(__be32 *addr)
 {
-    __be32 mcst_addr;
-    unsigned char *base_channel = "\xe0\xc0\x00\x00"; /* 224.192.0.0 */
-    unsigned char *channel = kmalloc(4 * sizeof(unsigned char), GFP_KERNEL);
+	u32 index;
 
-    gmtp_print_function();
+	gmtp_print_function();
 
-    if(channel == NULL) {
-        gmtp_pr_error("NULL channel: Cannot assign requested address");
-        return -EADDRNOTAVAIL;
-    }
-    memcpy(channel, base_channel, 4 * sizeof(unsigned char));
+	spin_lock_bh(&gmtp_mcst_lock);
+	if(gmtp_inter.mcst_next >= GMTP_MCST_V4_SIZE) {
+		spin_unlock_bh(&gmtp_mcst_lock);
+		gmtp_pr_error("Cannot assign multicast address: "
+				"239.192.0.0/%d exhausted (%u channels)",
+				GMTP_MCST_V4_PREFIXLEN, GMTP_MCST_V4_SIZE);
+		return -EADDRNOTAVAIL;
+	}
+	index = gmtp_inter.mcst_next++;
+	spin_unlock_bh(&gmtp_mcst_lock);
 
-    channel[3] += gmtp_inter.mcst[3]++;
-
-    /**
-     * From: base_channel (224.192. 0 . 0 )
-     * to:   max_channel  (239.255.255.255)
-     *                     L0  L1  L2  L3
-     */
-    if(gmtp_inter.mcst[3] > 255) {  /* L3 starts with 1 */
-        gmtp_inter.mcst[3] = 0;
-        gmtp_inter.mcst[2]++;
-    }
-    if(gmtp_inter.mcst[2] > 255) {
-        gmtp_inter.mcst[2] = 0;
-        gmtp_inter.mcst[1]++;
-    }
-    if(gmtp_inter.mcst[1] > 63) { /* 255 - 192 */
-        gmtp_inter.mcst[1] = 0;
-        gmtp_inter.mcst[0]++;
-    }
-    if(gmtp_inter.mcst[0] > 15) {  /* 239 - 224 */
-        int i;
-        for(i = 0; i < 4; ++i)
-            pr_info("gmtp_inter.mcst[%d] = %u\n", i,
-                    gmtp_inter.mcst[i]);
-        gmtp_pr_error("Cannot assign requested multicast address");
-        return -EADDRNOTAVAIL;
-    }
-    channel[2] += gmtp_inter.mcst[2];
-    channel[1] += gmtp_inter.mcst[1];
-    channel[0] += gmtp_inter.mcst[0];
-
-    mcst_addr = *(unsigned int *)channel;
-    gmtp_print_debug("Channel addr: %pI4", &mcst_addr);
-    return mcst_addr;
+	*addr = htonl(GMTP_MCST_V4_BASE + index);
+	gmtp_print_debug("Channel addr: %pI4", addr);
+	return 0;
 }
 EXPORT_SYMBOL_GPL(get_mcst_v4_addr);
 
@@ -422,7 +422,7 @@ static int __init gmtp_inter_init(void)
     gmtp_inter.ucc_bytes = 0;
     gmtp_inter.ucc_rx_tstamp = 0;
     gmtp_inter.rx_rate_wnd = 100;
-    memset(&gmtp_inter.mcst, 0, 4 * sizeof(unsigned char));
+    gmtp_inter.mcst_next = 0;
 
     gmtp_inter.hashtable = gmtp_inter_create_hashtable(64);
     if(gmtp_inter.hashtable == NULL) {
