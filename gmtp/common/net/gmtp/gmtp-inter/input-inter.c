@@ -70,9 +70,9 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 				mcst_addr, gh->dport); /* Mcst port <- server port */
 
 		if(err) {
+			/* entry is NULL here: do not build a RequestNotify */
 			gmtp_pr_error("Failed to insert flow in table (%d)", err);
-			ret = NF_DROP;
-			goto out;
+			return NF_DROP;
 		}
 
 		entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
