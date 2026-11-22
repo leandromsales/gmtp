@@ -59,6 +59,26 @@ diff --git a/mm/slib.c b/mm/slib.c
  void *__kmalloc(size_t size, gfp_t flags)
  {
  	void *p = lib_malloc(size + sizeof(size));	
+@@ -224,10 +232,17 @@
+ 	lib_free(page);
+ }
+ 
++/*
++ * GMTP/DCE: put_page() (include/linux/mm.h) calls __put_page() only after
++ * put_page_testzero() has already dropped the last reference. Decrementing
++ * the count again here took it to -1, so no page was ever freed: every
++ * page fragment used for skb data (e.g. tcp_sendmsg() via
++ * skb_page_frag_refill()) leaked 8 KiB of simulator memory, which made RSS
++ * grow with the delivered traffic (about 1 MB per receiver-second).
++ */
+ void __put_page(struct page *page)
+ {
+-	if (atomic_dec_and_test(&page->_refcount))
+-		lib_free(page);
++	lib_free(page);
+ }
+ unsigned long get_zeroed_page(gfp_t gfp_mask)
+ {
 diff --git a/arch/lib/timer.c b/arch/lib/timer.c
 --- a/arch/lib/timer.c
 +++ b/arch/lib/timer.c
