@@ -118,7 +118,8 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	const char *proto = argv[1];
-	int gmtp = strcmp(proto, "tcp") != 0;
+	int udp = strcmp(proto, "udp") == 0;
+	int gmtp = strcmp(proto, "tcp") != 0 && !udp;
 	const char *flow = argc > 3 ? argv[3] : "1234567812345678";
 	struct st s;
 	memset(&s, 0, sizeof(s));
@@ -131,6 +132,82 @@ int main(int argc, char *argv[])
 	a.sin_port = htons(MEDIA_PORT);
 	inet_pton(AF_INET, argv[2], &a.sin_addr);
 	int fd = -1;
+	if (udp) {
+		/* real-kernel W-VM runs: announce to the server every 0.5 s
+		 * until data flows; stop 10 s after the last datagram. */
+		fd = socket(AF_INET, SOCK_DGRAM, 0);
+		struct timeval tv = {0, 500000};
+		setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+		s.tconn = now_us();
+		char b[MEDIA_PKT];
+		int idle = 0;
+		for (;;) {
+			if (!s.tfirst)
+				sendto(fd, "HELLO", 5, 0, (struct sockaddr *)&a,
+				       sizeof(a));
+			ssize_t r = recv(fd, b, sizeof(b), 0);
+			if (r < 0) {
+				if (s.tfirst && ++idle > 20)
+					break;
+				if (!s.tfirst && now_us() - s.tapp > 120000000ull)
+					break;
+				continue;
+			}
+			idle = 0;
+			if (r < (ssize_t)sizeof(struct media_hdr))
+				continue;
+			struct media_hdr *h = (struct media_hdr *)b;
+			if (h->magic != MEDIA_MAGIC)
+				continue;
+			if (h->seq == MEDIA_END_SEQ) {
+				s.ended = 1;
+				break;
+			}
+			uint64_t t = now_us();
+			if (!s.tfirst) {
+				s.tfirst = t;
+				s.minseq = h->seq;
+			}
+			if (h->seq < s.minseq)
+				s.minseq = h->seq;
+			s.tlast = t;
+			s.pkts++;
+			if (h->seq >= seen.size())
+				seen.resize(h->seq * 2 + 1, 0);
+			double d = t > h->t_us ? (t - h->t_us) / 1000.0 : 0.0;
+			if (seen[h->seq])
+				s.dup++;
+			else {
+				int on = t <= h->t_us + PLAY_DEADLINE_US;
+				seen[h->seq] = on ? 2 : 1;
+				s.uniq++;
+				s.ontime += on;
+				if (!s.ts_lo || h->seq < s.seq_lo) {
+					s.seq_lo = h->seq;
+					s.ts_lo = h->t_us;
+				}
+				if (h->seq > s.seq_hi) {
+					s.seq_hi = h->seq;
+					s.ts_hi = h->t_us;
+				}
+			}
+			if (h->seq + 1 > s.maxseq)
+				s.maxseq = h->seq + 1;
+			s.sum += d;
+			s.sumsq += d * d;
+			if (d > s.maxd)
+				s.maxd = d;
+			int bn = (int)(d / 0.5);
+			hist[bn > HBINS ? HBINS : bn]++;
+			if (s.pkts % 200 == 0)
+				dump(proto, &s);
+		}
+		dump(proto, &s);
+		printf("media-client done: pkts=%lu uniq=%lu ended=%d\n",
+		       s.pkts, s.uniq, s.ended);
+		close(fd);
+		return 0;
+	}
 	for (int t = 0; t < 30; ++t) {
 		fd = gmtp ? socket(AF_INET, SOCK_GMTP, IPPROTO_GMTP)
 			  : socket(AF_INET, SOCK_STREAM, 0);

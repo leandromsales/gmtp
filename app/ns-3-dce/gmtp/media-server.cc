@@ -1,5 +1,9 @@
 /*
- * media-server <gmtp|tcp> <rate B/s> <duration s> [flowname]
+ * media-server <gmtp|tcp|udp> <rate B/s> <duration s> [flowname]
+ *
+ * udp (real-kernel W-VM runs only): receivers announce themselves with a
+ * datagram to MEDIA_PORT; the acceptor gives each one a connected UDP
+ * socket, so the send loop is the same as for the other protocols.
  *
  * Live CBR media source for the article-1 scenarios (A1, A2, B1).
  * A thread accepts receivers (TCP: one per receiver; GMTP: the relay or
@@ -25,6 +29,31 @@ static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 static std::vector<int> conns;
 static int lsock = -1;
 static volatile int stop_accept;
+static int udp_mode;
+static std::vector<struct sockaddr_in> udp_peers;
+
+static void udp_accept_one(void)
+{
+	struct sockaddr_in from;
+	socklen_t fl = sizeof(from);
+	char b[64];
+	if (recvfrom(lsock, b, sizeof(b), 0, (struct sockaddr *)&from, &fl) < 0)
+		return;
+	for (size_t i = 0; i < udp_peers.size(); ++i)
+		if (udp_peers[i].sin_addr.s_addr == from.sin_addr.s_addr &&
+		    udp_peers[i].sin_port == from.sin_port)
+			return;
+	int s = socket(PF_INET, SOCK_DGRAM, 0);
+	if (s < 0 || connect(s, (struct sockaddr *)&from, sizeof(from)) < 0)
+		return;
+	udp_peers.push_back(from);
+	pthread_mutex_lock(&lock);
+	conns.push_back(s);
+	printf("accepted udp peer %zu from %s:%u at %.3f s\n", conns.size(),
+	       inet_ntoa(from.sin_addr), ntohs(from.sin_port), now_us() / 1e6);
+	fflush(stdout);
+	pthread_mutex_unlock(&lock);
+}
 
 static void *acceptor(void *)
 {
@@ -35,6 +64,11 @@ static void *acceptor(void *)
 	 * on (SIGSEGV in munmap at the end of GMTP trials).
 	 */
 	while (!stop_accept) {
+		if (udp_mode) {
+			udp_accept_one();
+			sleep_us(20000);
+			continue;
+		}
 		struct sockaddr_storage ss;
 		socklen_t sl = sizeof(ss);
 		int s = accept(lsock, (struct sockaddr *)&ss, &sl);
@@ -99,9 +133,11 @@ int main(int argc, char *argv[])
 	int rate = atoi(argv[2]);
 	double dur = atof(argv[3]);
 	const char *flow = argc > 4 ? argv[4] : "1234567812345678";
-	int gmtp = strcmp(proto, "tcp") != 0;
+	udp_mode = strcmp(proto, "udp") == 0;
+	int gmtp = strcmp(proto, "tcp") != 0 && !udp_mode;
 
-	lsock = gmtp ? socket(PF_INET, SOCK_GMTP, IPPROTO_GMTP)
+	lsock = udp_mode ? socket(PF_INET, SOCK_DGRAM, 0)
+	      : gmtp ? socket(PF_INET, SOCK_GMTP, IPPROTO_GMTP)
 		     : socket(PF_INET, SOCK_STREAM, 0);
 	if (lsock < 0) {
 		perror("socket");
@@ -135,7 +171,7 @@ int main(int argc, char *argv[])
 		perror("bind");
 		return 1;
 	}
-	if (listen(lsock, 512) < 0) {
+	if (!udp_mode && listen(lsock, 512) < 0) {
 		perror("listen");
 		return 1;
 	}

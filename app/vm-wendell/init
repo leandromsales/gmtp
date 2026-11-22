@@ -1,0 +1,31 @@
+#!/bin/sh
+# PID 1 of the W-VM guests (busybox initramfs). Role and address come from
+# the kernel command line: wvm.role=server|router|c1|c2. The guest then runs
+# commands that the host drops into the 9p share (/shared/cmd/<role>.<n>.sh)
+# and marks each one done in /shared/out/<role>.<n>.done.
+/bin/busybox --install -s /bin
+mount -t proc proc /proc; mount -t sysfs sys /sys; mount -t devtmpfs dev /dev 2>/dev/null
+mkdir -p /shared /tmp; mount -t tmpfs tmp /tmp
+mount -t 9p -o trans=virtio,version=9p2000.L shared /shared
+ROLE=$(sed -n 's/.*wvm.role=\([a-z0-9]*\).*/\1/p' /proc/cmdline)
+ip link set lo up
+case $ROLE in
+server) ip addr add 10.10.1.2/24 dev eth0; ip link set eth0 up; ip route add default via 10.10.1.1;;
+router) ip addr add 10.10.1.1/24 dev eth0; ip addr add 10.10.2.1/24 dev eth1
+        ip link set eth0 up; ip link set eth1 up; echo 1 > /proc/sys/net/ipv4/ip_forward;;
+c1) ip addr add 10.10.2.11/24 dev eth0; ip link set eth0 up; ip route add default via 10.10.2.1;;
+c2) ip addr add 10.10.2.12/24 dev eth0; ip link set eth0 up; ip route add default via 10.10.2.1;;
+esac
+# GMTP-Inter off everywhere at boot; the router turns it on per trial.
+/shared/bin/gmtp-inter off >/dev/null 2>&1
+echo "$ROLE up $(uname -r) $(date +%s)" > /shared/out/$ROLE.boot
+n=0
+while true; do
+  if [ -f /shared/cmd/$ROLE.$n.sh ]; then
+    sh /shared/cmd/$ROLE.$n.sh > /shared/out/$ROLE.$n.log 2>&1
+    echo $? > /shared/out/$ROLE.$n.done
+    n=$((n+1))
+  else
+    sleep 0.2
+  fi
+done
