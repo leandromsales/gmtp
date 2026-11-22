@@ -989,6 +989,16 @@ discard_and_relse:
 static void gmtp_v4_reqsk_destructor(struct request_sock *req)
 {
     gmtp_print_function();
+    /*
+     * gmtp_v4_conn_request() puts the request sock in gmtp_sk_hash, but
+     * only gmtp_ehash_nolisten() (handshake completed) took it out. A
+     * request that was dropped instead (Register-Reply send failure,
+     * reqsk timer expiry, gmtp_check_req() drop) stayed in the table after
+     * being freed, and gmtp_v4_rcv() later dereferenced it through
+     * gmtp_lookup_established() (SIGSEGV in DCE, B1 N=50). Removing a sock
+     * that is no longer in the table is a no-op.
+     */
+    gmtp_del_sk_ehash(&gmtp_sk_hash, req_to_sk(req));
     kfree(inet_rsk(req)->ireq_opt);
 }
 
@@ -1050,11 +1060,15 @@ int gmtp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
     if(inet_csk_reqsk_queue_is_full(sk))
         goto drop;
 
-    /**
-     * FIXME Update sk->sk_ack_backlog correctly
+    /*
+     * sk_ack_backlog is kept by the generic code (inet_csk_reqsk_queue_add
+     * on handshake completion, reqsk_queue_remove on accept). It used to
+     * be forced to 0 here on every REGISTER: a REGISTER that arrived while
+     * a child waited in the accept queue zeroed the count, the following
+     * accept() made it wrap to UINT_MAX, and from then on
+     * gmtp_v4_request_recv_sock() saw a full accept queue and reset every
+     * new relay (B1 N=50: one relay LAN without data).
      */
-    sk->sk_ack_backlog = 0;
-
     if(sk_acceptq_is_full(sk))
         goto drop;
 
