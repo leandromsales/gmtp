@@ -24,6 +24,8 @@ SCENARIOS = {
                     'point-to-point'],
     'dce-gmtp-b1': ['core', 'network', 'internet', 'dce', 'csma',
                     'point-to-point'],
+    'dce-gmtp-wa': ['core', 'network', 'internet', 'dce', 'csma',
+                    'point-to-point'],
 }
 
 def configure(conf):
