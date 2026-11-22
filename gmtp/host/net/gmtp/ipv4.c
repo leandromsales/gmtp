@@ -1364,6 +1364,46 @@ static struct pernet_operations gmtp_v4_ops = {
 };
 
 
+/*
+ * A client that got no answer to three TTL=1 Requests (no GMTP relay on
+ * its first hop) promotes itself to a relay and registers directly with
+ * the server. The Request used to be relabelled as a Register in place,
+ * without the Register header (relay id): the server's gmtp_check_packet()
+ * dropped it (hdrlen 36 < 52) and a receiver without a relay on its path
+ * never connected (every gmtp-nocoop trial, and Wendell's Inter-off
+ * experiments). Rebuild it as gmtp_inter_make_register() does. The skb
+ * may be a clone of the socket's send head, so unshare it first.
+ */
+static unsigned int gmtp_v4_promote_request(struct sk_buff *skb)
+{
+    struct iphdr *iph;
+    struct gmtp_hdr *gh;
+    struct gmtp_hdr_register *gr;
+    unsigned int len = sizeof(struct gmtp_hdr) +
+            sizeof(struct gmtp_hdr_register);
+
+    if((skb_cloned(skb) || skb_tailroom(skb) < sizeof(*gr)) &&
+            pskb_expand_head(skb, 0, sizeof(*gr), GFP_ATOMIC))
+        return NF_DROP;
+
+    iph = ip_hdr(skb);
+    gh = gmtp_hdr(skb);
+    /* drop whatever followed the basic header of the Request */
+    skb_trim(skb, skb_transport_offset(skb) + sizeof(struct gmtp_hdr));
+    gr = (struct gmtp_hdr_register *)skb_put(skb, sizeof(*gr));
+    memset(gr, 0, sizeof(*gr));
+    /* the promoted client's relay id: its address and port */
+    memcpy(gr->relay_id, &iph->saddr, sizeof(iph->saddr));
+    memcpy(gr->relay_id + sizeof(iph->saddr), &gh->sport, sizeof(gh->sport));
+
+    gh->type = GMTP_PKT_REGISTER;
+    gh->hdrlen = len;
+    iph->ttl = 64;
+    iph->tot_len = htons(skb->len);
+    ip_send_check(iph);
+    return NF_ACCEPT;
+}
+
 static unsigned int hook_func_gmtp_out(void *priv,
 		struct sk_buff *skb, const struct nf_hook_state *state)
 {
@@ -1382,7 +1422,7 @@ static unsigned int hook_func_gmtp_out(void *priv,
                 ip_send_check(iph);
             } else {
                 pr_debug("Auto promoting the GMTP-Client to a GMTP-Relay\n");
-                gh->type = GMTP_PKT_REGISTER;
+                return gmtp_v4_promote_request(skb);
             }
         }
     }
