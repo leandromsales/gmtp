@@ -90,6 +90,11 @@ while read -r name proto inter ncl rate dur seed; do
   unset CN
   cmd router "cat /proc/net/dev > $R/router-netdev1.txt; /shared/bin/gmtp-inter off"
   waitdone router $CMDN 30 || ok=0
+  # kernel logs of every guest for this trial (cleared for the next one)
+  declare -A DM=()
+  for g in server router c1 c2; do cmd $g "dmesg -c > $R/$g-dmesg.txt"; DM[$g]=$CMDN; done
+  for g in "${!DM[@]}"; do waitdone $g ${DM[$g]} 20; done
+  unset DM
   if [ $ok = 1 ]; then touch $SH/res/$name/DONE; log "$name done"
   else log "$name TIMEOUT -> reboot guests"; boot || exit 1; fi
   sleep 3
