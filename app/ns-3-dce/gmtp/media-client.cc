@@ -19,15 +19,17 @@
 
 #define HBINS 20000 /* 0.5 ms bins up to 10 s */
 /*
- * Playback model for the QoE-proxy metrics (transport level, not PSNR):
- * a packet is on time if its one-way delay is at most PLAY_DEADLINE_US
- * (the 5 s maximum acceptable playback delay of the 2014 thesis).
- * on_time_frac = packets on time / packets expected in the session
- * (minseq..maxseq, from the first to the highest sequence number the
- * receiver got). continuity_index = fraction of 1 s media slots of
- * the session in which at least 95% of the expected packets were on time;
- * a sequence number is mapped to its slot by its send time (interpolated
- * between the first and last packets received for missing ones).
+ * Playback model for the QoE-proxy metrics (transport level, not PSNR).
+ * The source is live: packet k is due at t0 + k * gap (nominal schedule
+ * carried in every header), whether the sender managed to send it on time,
+ * late (blocking GMTP send) or not at all (TCP skip). A packet is on time if
+ * it arrives at most PLAY_DEADLINE_US after its due time (the 5 s maximum
+ * acceptable playback delay of the 2014 thesis).
+ *   on_time_frac     = packets on time / packets due in the session, the
+ *                      session running from the first packet the receiver
+ *                      got to the end of the stream (n_nom);
+ *   continuity_index = fraction of the 1 s media slots of the session in
+ *                      which at least 95% of the due packets were on time.
  */
 #define PLAY_DEADLINE_US 5000000ull
 #define IC_SLOT_US 1000000ull
@@ -51,8 +53,8 @@ struct st {
 	unsigned long pkts, uniq, dup, maxseq, minseq;
 	double sum, sumsq, maxd;
 	uint64_t tapp, tconn, tfirst, tlast;
-	unsigned long ontime, seq_lo, seq_hi; /* seq_lo/hi: send-time anchors */
-	uint64_t ts_lo, ts_hi;
+	unsigned long ontime, nnom;
+	uint64_t gap;
 	int ended, connect_tries;
 };
 
@@ -65,34 +67,31 @@ static void dump(const char *proto, struct st *s)
 	double sd = s->pkts > 1 ? sqrt((s->sumsq - s->pkts * mean * mean) /
 					  (s->pkts - 1)) : NAN;
 	double span = s->tlast > s->tfirst ? (s->tlast - s->tfirst) / 1e6 : NAN;
-	/* continuity index over the session minseq .. maxseq-1 */
+	/* QoE proxies over the session minseq .. n_nom-1 (media time) */
 	double ic = NAN, otf = NAN;
-	unsigned long nexp = s->maxseq > s->minseq ? s->maxseq - s->minseq : 0;
-	if (nexp > 0 && s->seq_hi > s->seq_lo && s->ts_hi > s->ts_lo) {
-		double us_per_seq = (double)(s->ts_hi - s->ts_lo) /
-				    (double)(s->seq_hi - s->seq_lo);
-		unsigned long nslots = (unsigned long)(nexp * us_per_seq /
-						       IC_SLOT_US) + 1;
-		std::vector<unsigned> ok(nslots, 0), all(nslots, 0);
-		for (unsigned long q = s->minseq; q < s->maxseq; ++q) {
-			unsigned long k = (unsigned long)((q - s->minseq) *
-						us_per_seq / IC_SLOT_US);
-			if (k >= nslots)
-				k = nslots - 1;
-			all[k]++;
-			if (q < seen.size() && seen[q] == 2)
-				ok[k]++;
-		}
-		unsigned long good = 0, used = 0;
-		for (unsigned long k = 0; k < nslots; ++k)
-			if (all[k]) {
+	unsigned long end = s->nnom > s->maxseq ? s->nnom : s->maxseq;
+	unsigned long nexp = s->uniq && end > s->minseq ? end - s->minseq : 0;
+	if (nexp > 0 && s->gap > 0) {
+		unsigned long per = (unsigned long)(IC_SLOT_US / s->gap);
+		if (per == 0)
+			per = 1;
+		unsigned long good = 0, used = 0, ok = 0, all = 0;
+		unsigned long k0 = s->minseq / per;
+		for (unsigned long q = s->minseq; q < end; ++q) {
+			if (q / per != k0) {
 				used++;
-				if (ok[k] >= IC_OK * all[k])
-					good++;
+				good += ok >= IC_OK * all;
+				ok = all = 0;
+				k0 = q / per;
 			}
+			all++;
+			ok += q < seen.size() && seen[q] == 2;
+		}
+		if (all) {
+			used++;
+			good += ok >= IC_OK * all;
+		}
 		ic = used ? (double)good / used : NAN;
-		otf = (double)s->ontime / nexp;
-	} else if (nexp > 0) {
 		otf = (double)s->ontime / nexp;
 	}
 	fprintf(f, "proto=%s pkts=%lu uniq=%lu dup=%lu minseq=%lu maxseq=%lu "
@@ -109,6 +108,44 @@ static void dump(const char *proto, struct st *s)
 		span > 0 ? s->uniq * (double)MEDIA_PKT / span : NAN,
 		s->ended, s->connect_tries, otf, ic);
 	fclose(f);
+}
+
+/* account one media packet received at time t */
+static void account(struct st *s, const struct media_hdr *h, uint64_t t)
+{
+	if (!s->tfirst) {
+		s->tfirst = t;
+		s->minseq = h->seq;
+	}
+	if (h->seq < s->minseq)
+		s->minseq = h->seq;
+	s->tlast = t;
+	s->pkts++;
+	if (h->seq >= seen.size())
+		seen.resize(h->seq * 2 + 1, 0);
+	if (h->n_nom) {
+		s->nnom = h->n_nom;
+		s->gap = h->gap_us;
+	}
+	if (seen[h->seq])
+		s->dup++;
+	else {
+		uint64_t due = h->gap_us ? h->t0_us + (uint64_t)h->seq * h->gap_us
+					 : h->t_us;
+		int on = t <= due + PLAY_DEADLINE_US;
+		seen[h->seq] = on ? 2 : 1;
+		s->uniq++;
+		s->ontime += on;
+	}
+	if (h->seq + 1 > s->maxseq)
+		s->maxseq = h->seq + 1;
+	double d = t > h->t_us ? (t - h->t_us) / 1000.0 : 0.0;
+	s->sum += d;
+	s->sumsq += d * d;
+	if (d > s->maxd)
+		s->maxd = d;
+	int b = (int)(d / 0.5);
+	hist[b > HBINS ? HBINS : b]++;
 }
 
 int main(int argc, char *argv[])
@@ -163,42 +200,7 @@ int main(int argc, char *argv[])
 				s.ended = 1;
 				break;
 			}
-			uint64_t t = now_us();
-			if (!s.tfirst) {
-				s.tfirst = t;
-				s.minseq = h->seq;
-			}
-			if (h->seq < s.minseq)
-				s.minseq = h->seq;
-			s.tlast = t;
-			s.pkts++;
-			if (h->seq >= seen.size())
-				seen.resize(h->seq * 2 + 1, 0);
-			double d = t > h->t_us ? (t - h->t_us) / 1000.0 : 0.0;
-			if (seen[h->seq])
-				s.dup++;
-			else {
-				int on = t <= h->t_us + PLAY_DEADLINE_US;
-				seen[h->seq] = on ? 2 : 1;
-				s.uniq++;
-				s.ontime += on;
-				if (!s.ts_lo || h->seq < s.seq_lo) {
-					s.seq_lo = h->seq;
-					s.ts_lo = h->t_us;
-				}
-				if (h->seq > s.seq_hi) {
-					s.seq_hi = h->seq;
-					s.ts_hi = h->t_us;
-				}
-			}
-			if (h->seq + 1 > s.maxseq)
-				s.maxseq = h->seq + 1;
-			s.sum += d;
-			s.sumsq += d * d;
-			if (d > s.maxd)
-				s.maxd = d;
-			int bn = (int)(d / 0.5);
-			hist[bn > HBINS ? HBINS : bn]++;
+			account(&s, h, now_us());
 			if (s.pkts % 200 == 0)
 				dump(proto, &s);
 		}
@@ -242,42 +244,7 @@ int main(int argc, char *argv[])
 			s.ended = 1;
 			break;
 		}
-		uint64_t t = now_us();
-		if (!s.tfirst) {
-			s.tfirst = t;
-			s.minseq = h->seq;
-		}
-		if (h->seq < s.minseq)
-			s.minseq = h->seq;
-		s.tlast = t;
-		s.pkts++;
-		if (h->seq >= seen.size())
-			seen.resize(h->seq * 2 + 1, 0);
-		double d = t > h->t_us ? (t - h->t_us) / 1000.0 : 0.0;
-		if (seen[h->seq])
-			s.dup++;
-		else {
-			int on = t <= h->t_us + PLAY_DEADLINE_US;
-			seen[h->seq] = on ? 2 : 1;
-			s.uniq++;
-			s.ontime += on;
-			if (!s.ts_lo || h->seq < s.seq_lo) {
-				s.seq_lo = h->seq;
-				s.ts_lo = h->t_us;
-			}
-			if (h->seq > s.seq_hi) {
-				s.seq_hi = h->seq;
-				s.ts_hi = h->t_us;
-			}
-		}
-		if (h->seq + 1 > s.maxseq)
-			s.maxseq = h->seq + 1;
-		s.sum += d;
-		s.sumsq += d * d;
-		if (d > s.maxd)
-			s.maxd = d;
-		int b = (int)(d / 0.5);
-		hist[b > HBINS ? HBINS : b]++;
+		account(&s, h, now_us());
 		if (s.pkts % 200 == 0)
 			dump(proto, &s);
 	}

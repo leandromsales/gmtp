@@ -198,6 +198,9 @@ int main(int argc, char *argv[])
 	h->magic = MEDIA_MAGIC;
 	uint64_t gap = (uint64_t)((double)(MEDIA_PKT + MEDIA_HDR_OVH) * 1e6 / rate);
 	uint64_t t0 = now_us(), tend = t0 + (uint64_t)(dur * 1e6);
+	h->t0_us = t0;
+	h->gap_us = (uint32_t)gap;
+	h->n_nom = (uint32_t)((tend - t0 + gap - 1) / gap);
 	uint64_t next = t0;
 	unsigned long seq = 0, sends = 0, skipped = 0;
 	size_t nconn = 0;
