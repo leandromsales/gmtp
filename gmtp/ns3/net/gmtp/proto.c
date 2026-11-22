@@ -434,30 +434,28 @@ EXPORT_SYMBOL_GPL(gmtp_dev_ip);
 
 bool gmtp_local_ip(__be32 ip)
 {
-    struct socket *sock = NULL;
-    struct net_device *dev = NULL;
-    struct net *net;
-
-    int i, length = 0;
-    char mac_address[6];
-
-    char buffer[50];
-    u8 *str[30];
-
+    /*
+     * The relay hooks call this for most GMTP packets. It used to create
+     * and release a TCP socket on every call just to find the network
+     * namespace; in the NS-3 DCE libos those sockets were never freed
+     * (about 600 MB of the simulator heap in a 10 s A2 L=2 run, the main
+     * part of the RAM growth with delivered traffic). The relay runs in
+     * the initial namespace, so use init_net directly.
+     */
+    struct net *net = &init_net;
+    struct net_device *dev;
     bool ret = false;
 
-    sock_create(AF_INET, SOCK_STREAM, 0, &sock);
-    net = sock_net(sock->sk);
-
-    for(i = 2; (dev = dev_get_by_index_rcu(net, i)) != NULL; ++i) {
-        __be32 dev_ip = gmtp_dev_ip(dev);
-        if(ip == dev_ip) {
+    rcu_read_lock();
+    for_each_netdev_rcu(net, dev) {
+        if((dev->flags & IFF_LOOPBACK) || dev->ip_ptr == NULL)
+            continue;
+        if(ip == gmtp_dev_ip(dev)) {
             ret = true;
             break;
         }
     }
-
-    sock_release(sock);
+    rcu_read_unlock();
     return ret;
 }
 EXPORT_SYMBOL_GPL(gmtp_local_ip);
