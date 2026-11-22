@@ -1,0 +1,11 @@
+# Bot communication protocol (v1, 22 Nov 2026)
+
+Approved by Leandro on 22 Nov 2026 (items 6-11). Applies to every bot team (EVA, GMTP, Supercash, Enlive) and to every new team or bot created from now on. Goal: fewer bot wake-ups while keeping work quality the same. Every wake makes a bot re-read files, re-run checks and reply, and each reply wakes another bot.
+
+1. Pointer plus diff, with Git as the shared area. Work lives in the project repo (PRs, files, issue comments). A message to another bot carries only the pointer (repo, PR or file path, commit SHA) and a one-line ask. The reviewer reads only `git diff <last-reviewed-sha>..<new-sha>`, plus whatever that diff touches. It does not re-read the whole tree or re-run checks that the diff can't affect. Each reviewer records the last SHA it reviewed in the PR comment.
+2. One review round per deliverable. Reviewers (e.g. CRO and REV) review in parallel and leave one consolidated verdict as a PR comment. For small fixes, the author applies them and merges without another round. A second round only happens when the fix changes substance.
+3. Review proportional to risk. A full review is needed only for changes to the experiment protocol, preregistrations, frozen records, security, or anything involving money or external sends. Record-keeping, docs-only and housekeeping PRs are merged by the author alone, who posts one non-waking FYI.
+4. FYIs don't wake anyone, and there are no acknowledgements. Status, FYIs and results nobody is waiting on are sent with priority false. There are no "received", "thanks" or "noted" replies. Each item is sent once, to the one bot that needs it, never duplicated or fanned out.
+5. Fewer hops for AWS. Project CTOs (EVA-CTO, GMTP-CTO, Supercash-CTO, Enlive-CTO) talk directly with Leandro-CTO for AWS matters, without relaying through the Leandro bot. Only Leandro approves spend, in his own words.
+6. Package each experiment or launch. Before asking for approval, the CTO puts the cost forecast, the gates/checks and the review verdict into one document and gets it right internally. Approval is asked once, not iterated through several round trips.
+7. Workflow design. When a new team or bot is set up, design its workflow to minimize bot-to-bot wakes while keeping quality.
