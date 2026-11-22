@@ -48,7 +48,12 @@
 struct media_hdr {
 	uint32_t magic;
 	uint32_t seq;
-	uint64_t t_us;
+	uint64_t t_us;   /* actual send time (one-way delay) */
+	/* nominal live schedule: packet seq is due at t0_us + seq * gap_us;
+	 * n_nom packets in the whole stream (QoE proxies in media-client) */
+	uint64_t t0_us;
+	uint32_t gap_us;
+	uint32_t n_nom;
 } __attribute__((packed));
 
 static inline uint64_t now_us(void)

@@ -18,6 +18,22 @@
 #include "media-common.h"
 
 #define HBINS 20000 /* 0.5 ms bins up to 10 s */
+/*
+ * Playback model for the QoE-proxy metrics (transport level, not PSNR).
+ * The source is live: packet k is due at t0 + k * gap (nominal schedule
+ * carried in every header), whether the sender managed to send it on time,
+ * late (blocking GMTP send) or not at all (TCP skip). A packet is on time if
+ * it arrives at most PLAY_DEADLINE_US after its due time (the 5 s maximum
+ * acceptable playback delay of the 2014 thesis).
+ *   on_time_frac     = packets on time / packets due in the session, the
+ *                      session running from the first packet the receiver
+ *                      got to the end of the stream (n_nom);
+ *   continuity_index = fraction of the 1 s media slots of the session in
+ *                      which at least 95% of the due packets were on time.
+ */
+#define PLAY_DEADLINE_US 5000000ull
+#define IC_SLOT_US 1000000ull
+#define IC_OK 0.95
 
 static unsigned long hist[HBINS + 1];
 static std::vector<unsigned char> seen;
@@ -37,6 +53,8 @@ struct st {
 	unsigned long pkts, uniq, dup, maxseq, minseq;
 	double sum, sumsq, maxd;
 	uint64_t tapp, tconn, tfirst, tlast;
+	unsigned long ontime, nnom;
+	uint64_t gap;
 	int ended, connect_tries;
 };
 
@@ -49,19 +67,85 @@ static void dump(const char *proto, struct st *s)
 	double sd = s->pkts > 1 ? sqrt((s->sumsq - s->pkts * mean * mean) /
 					  (s->pkts - 1)) : NAN;
 	double span = s->tlast > s->tfirst ? (s->tlast - s->tfirst) / 1e6 : NAN;
+	/* QoE proxies over the session minseq .. n_nom-1 (media time) */
+	double ic = NAN, otf = NAN;
+	unsigned long end = s->nnom > s->maxseq ? s->nnom : s->maxseq;
+	unsigned long nexp = s->uniq && end > s->minseq ? end - s->minseq : 0;
+	if (nexp > 0 && s->gap > 0) {
+		unsigned long per = (unsigned long)(IC_SLOT_US / s->gap);
+		if (per == 0)
+			per = 1;
+		unsigned long good = 0, used = 0, ok = 0, all = 0;
+		unsigned long k0 = s->minseq / per;
+		for (unsigned long q = s->minseq; q < end; ++q) {
+			if (q / per != k0) {
+				used++;
+				good += ok >= IC_OK * all;
+				ok = all = 0;
+				k0 = q / per;
+			}
+			all++;
+			ok += q < seen.size() && seen[q] == 2;
+		}
+		if (all) {
+			used++;
+			good += ok >= IC_OK * all;
+		}
+		ic = used ? (double)good / used : NAN;
+		otf = (double)s->ontime / nexp;
+	}
 	fprintf(f, "proto=%s pkts=%lu uniq=%lu dup=%lu minseq=%lu maxseq=%lu "
 		"delay_mean_ms=%.3f delay_sd_ms=%.3f delay_p50_ms=%.3f "
 		"delay_p95_ms=%.3f delay_p99_ms=%.3f delay_max_ms=%.3f "
 		"startup_s=%.6f connect_s=%.6f t_first_s=%.6f t_last_s=%.6f "
-		"goodput_Bps=%.1f ended=%d connect_tries=%d\n", proto, s->pkts,
+		"goodput_Bps=%.1f ended=%d connect_tries=%d on_time_frac=%.6f "
+		"continuity_index=%.6f\n", proto, s->pkts,
 		s->uniq, s->dup, s->minseq, s->maxseq, mean, sd, pct(s->pkts, 0.5),
 		pct(s->pkts, 0.95), pct(s->pkts, 0.99), s->maxd,
 		s->tfirst ? (s->tfirst - s->tapp) / 1e6 : NAN,
 		s->tconn ? (s->tconn - s->tapp) / 1e6 : NAN,
 		s->tfirst / 1e6, s->tlast / 1e6,
 		span > 0 ? s->uniq * (double)MEDIA_PKT / span : NAN,
-		s->ended, s->connect_tries);
+		s->ended, s->connect_tries, otf, ic);
 	fclose(f);
+}
+
+/* account one media packet received at time t */
+static void account(struct st *s, const struct media_hdr *h, uint64_t t)
+{
+	if (!s->tfirst) {
+		s->tfirst = t;
+		s->minseq = h->seq;
+	}
+	if (h->seq < s->minseq)
+		s->minseq = h->seq;
+	s->tlast = t;
+	s->pkts++;
+	if (h->seq >= seen.size())
+		seen.resize(h->seq * 2 + 1, 0);
+	if (h->n_nom) {
+		s->nnom = h->n_nom;
+		s->gap = h->gap_us;
+	}
+	if (seen[h->seq])
+		s->dup++;
+	else {
+		uint64_t due = h->gap_us ? h->t0_us + (uint64_t)h->seq * h->gap_us
+					 : h->t_us;
+		int on = t <= due + PLAY_DEADLINE_US;
+		seen[h->seq] = on ? 2 : 1;
+		s->uniq++;
+		s->ontime += on;
+	}
+	if (h->seq + 1 > s->maxseq)
+		s->maxseq = h->seq + 1;
+	double d = t > h->t_us ? (t - h->t_us) / 1000.0 : 0.0;
+	s->sum += d;
+	s->sumsq += d * d;
+	if (d > s->maxd)
+		s->maxd = d;
+	int b = (int)(d / 0.5);
+	hist[b > HBINS ? HBINS : b]++;
 }
 
 int main(int argc, char *argv[])
@@ -71,7 +155,8 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	const char *proto = argv[1];
-	int gmtp = strcmp(proto, "tcp") != 0;
+	int udp = strcmp(proto, "udp") == 0;
+	int gmtp = strcmp(proto, "tcp") != 0 && !udp;
 	const char *flow = argc > 3 ? argv[3] : "1234567812345678";
 	struct st s;
 	memset(&s, 0, sizeof(s));
@@ -84,6 +169,47 @@ int main(int argc, char *argv[])
 	a.sin_port = htons(MEDIA_PORT);
 	inet_pton(AF_INET, argv[2], &a.sin_addr);
 	int fd = -1;
+	if (udp) {
+		/* real-kernel W-VM runs: announce to the server every 0.5 s
+		 * until data flows; stop 10 s after the last datagram. */
+		fd = socket(AF_INET, SOCK_DGRAM, 0);
+		struct timeval tv = {0, 500000};
+		setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+		s.tconn = now_us();
+		char b[MEDIA_PKT];
+		int idle = 0;
+		for (;;) {
+			if (!s.tfirst)
+				sendto(fd, "HELLO", 5, 0, (struct sockaddr *)&a,
+				       sizeof(a));
+			ssize_t r = recv(fd, b, sizeof(b), 0);
+			if (r < 0) {
+				if (s.tfirst && ++idle > 20)
+					break;
+				if (!s.tfirst && now_us() - s.tapp > 120000000ull)
+					break;
+				continue;
+			}
+			idle = 0;
+			if (r < (ssize_t)sizeof(struct media_hdr))
+				continue;
+			struct media_hdr *h = (struct media_hdr *)b;
+			if (h->magic != MEDIA_MAGIC)
+				continue;
+			if (h->seq == MEDIA_END_SEQ) {
+				s.ended = 1;
+				break;
+			}
+			account(&s, h, now_us());
+			if (s.pkts % 200 == 0)
+				dump(proto, &s);
+		}
+		dump(proto, &s);
+		printf("media-client done: pkts=%lu uniq=%lu ended=%d\n",
+		       s.pkts, s.uniq, s.ended);
+		close(fd);
+		return 0;
+	}
 	for (int t = 0; t < 30; ++t) {
 		fd = gmtp ? socket(AF_INET, SOCK_GMTP, IPPROTO_GMTP)
 			  : socket(AF_INET, SOCK_STREAM, 0);
@@ -118,32 +244,7 @@ int main(int argc, char *argv[])
 			s.ended = 1;
 			break;
 		}
-		uint64_t t = now_us();
-		if (!s.tfirst) {
-			s.tfirst = t;
-			s.minseq = h->seq;
-		}
-		if (h->seq < s.minseq)
-			s.minseq = h->seq;
-		s.tlast = t;
-		s.pkts++;
-		if (h->seq >= seen.size())
-			seen.resize(h->seq * 2 + 1, 0);
-		if (seen[h->seq])
-			s.dup++;
-		else {
-			seen[h->seq] = 1;
-			s.uniq++;
-		}
-		if (h->seq + 1 > s.maxseq)
-			s.maxseq = h->seq + 1;
-		double d = t > h->t_us ? (t - h->t_us) / 1000.0 : 0.0;
-		s.sum += d;
-		s.sumsq += d * d;
-		if (d > s.maxd)
-			s.maxd = d;
-		int b = (int)(d / 0.5);
-		hist[b > HBINS ? HBINS : b]++;
+		account(&s, h, now_us());
 		if (s.pkts % 200 == 0)
 			dump(proto, &s);
 	}

@@ -146,6 +146,151 @@ static inline void Media(const Cfg &c, Ptr<Node> server,
 		    c.MediaProto() + " " + server_ip, 1 << 20);
 }
 
+/*
+ * Control-overhead accounting (experimental design, metrics 4 and 7; thesis
+ * overhead analysis). Every frame seen by a traced device is classified
+ * from its IPv4 header, outside the simulated kernels (the protocol stack
+ * is not touched):
+ *   GMTP (IP protocol 254): by packet type (DATA vs each control type);
+ *   media TCP (port 2000):   syn, fin/rst, pure ACK, data, retransmission
+ *                            (data whose end does not pass the highest end
+ *                            seen for that direction at that observer);
+ *   other TCP (cross flows) and other IP are counted apart.
+ * Bytes are IP bytes (tot_len), independent of the link-layer framing.
+ * Observers are links (EXP_LINK names, transmit side) and node roles
+ * (server, router = relays when gmtp-inter is on, client), where the frames
+ * transmitted and received by every device of every node of the role are
+ * counted.
+ */
+static const char *const kGmtpType[] = {
+	"REQUEST", "REQUESTNOTIFY", "RESPONSE", "REGISTER", "REGISTER_REPLY",
+	"ROUTE_NOTIFY", "RELAYQUERY", "RELAYQUERY_REPLY", "DATA", "ACK",
+	"DATAACK", "MEDIADESC", "DATAPULL_REQUEST", "DATAPULL_RESPONSE",
+	"ELECT_REQUEST", "ELECT_RESPONSE", "CLOSE", "RESET", "FEEDBACK",
+	"DELEGATE", "DELEGATE_REPLY"};
+enum { OV_GMTP_TYPES = 21, OV_TCP_SYN = 32, OV_TCP_FINRST, OV_TCP_PUREACK,
+       OV_TCP_DATA, OV_TCP_RETX, OV_TCP_CROSS, OV_GMTP_OTHER, OV_OTHER,
+       OV_NCAT };
+static const char *OvName(int c)
+{
+	if (c < OV_GMTP_TYPES)
+		return kGmtpType[c];
+	switch (c) {
+	case OV_TCP_SYN: return "TCP_SYN";
+	case OV_TCP_FINRST: return "TCP_FIN_RST";
+	case OV_TCP_PUREACK: return "TCP_PURE_ACK";
+	case OV_TCP_DATA: return "TCP_DATA";
+	case OV_TCP_RETX: return "TCP_RETX";
+	case OV_TCP_CROSS: return "TCP_CROSS";
+	case OV_GMTP_OTHER: return "GMTP_OTHER";
+	case OV_OTHER: return "OTHER";
+	}
+	return 0;
+}
+struct OvStat {
+	uint64_t p[OV_NCAT] = {0}, b[OV_NCAT] = {0};
+};
+typedef std::map<std::pair<uint64_t, uint32_t>, uint32_t> OvSeq;
+static std::map<std::string, OvStat> g_ovh;
+/* highest TCP end seen per flow direction, per single vantage point
+ * (one device direction), so a packet forwarded A -> B is not taken as a
+ * retransmission when both A and B belong to the same role */
+static std::map<std::string, OvSeq> g_ovseq;
+
+static inline uint32_t Be32(const uint8_t *q)
+{
+	return (uint32_t)q[0] << 24 | (uint32_t)q[1] << 16 | (uint32_t)q[2] << 8 | q[3];
+}
+static inline void OvCount(OvStat &o, OvSeq &hi, Ptr<const Packet> pkt)
+{
+	uint8_t f[128];
+	uint32_t n = pkt->CopyData(f, sizeof(f));
+	uint32_t ip;
+	if (n >= 16 && f[12] == 0x08 && f[13] == 0x00)
+		ip = 14;			/* Ethernet (CSMA) */
+	else if (n >= 4 && f[0] == 0x00 && f[1] == 0x21)
+		ip = 2;				/* PPP (point-to-point) */
+	else
+		return;				/* ARP and the like */
+	if (n < ip + 20 || (f[ip] >> 4) != 4)
+		return;
+	const uint8_t *h = f + ip;
+	uint32_t ihl = (h[0] & 0x0f) * 4, tot = (uint32_t)h[2] << 8 | h[3];
+	int c = OV_OTHER;
+	const uint8_t *l4 = h + ihl;
+	if (h[9] == 254 && n >= ip + ihl + 1) {
+		uint32_t t = (l4[0] >> 2) & 0x1f;
+		c = t < OV_GMTP_TYPES ? (int)t : OV_GMTP_OTHER;
+	} else if (h[9] == 6 && n >= ip + ihl + 14) {
+		uint32_t sp = (uint32_t)l4[0] << 8 | l4[1];
+		uint32_t dp = (uint32_t)l4[2] << 8 | l4[3];
+		uint32_t doff = (l4[12] >> 4) * 4, fl = l4[13];
+		uint32_t pay = tot > ihl + doff ? tot - ihl - doff : 0;
+		if (sp != 2000 && dp != 2000)
+			c = OV_TCP_CROSS;
+		else if (fl & 0x02)
+			c = OV_TCP_SYN;
+		else if (fl & 0x05)
+			c = OV_TCP_FINRST;
+		else if (pay == 0)
+			c = OV_TCP_PUREACK;
+		else {
+			std::pair<uint64_t, uint32_t> k(
+				(uint64_t)Be32(h + 12) << 32 | Be32(h + 16),
+				sp << 16 | dp);
+			uint32_t end = Be32(l4 + 4) + pay;
+			auto it = hi.find(k);
+			if (it == hi.end()) {
+				hi[k] = end;
+				c = OV_TCP_DATA;
+			} else if ((int32_t)(end - it->second) > 0) {
+				it->second = end;
+				c = OV_TCP_DATA;
+			} else
+				c = OV_TCP_RETX;
+		}
+	}
+	o.p[c]++;
+	o.b[c] += tot;
+}
+/* context "role_<role>|<node>|tx" or "...|rx": counts go to the role */
+static inline void OnOvh(std::string ctx, Ptr<const Packet> p)
+{
+	OvCount(g_ovh[ctx.substr(0, ctx.find('|'))], g_ovseq[ctx], p);
+	/* network-wide transmissions (every hop counted once, sender side) */
+	if (ctx.size() > 3 && ctx.compare(ctx.size() - 3, 3, "|tx") == 0)
+		OvCount(g_ovh["net_tx"], g_ovseq["net|" + ctx], p);
+}
+/* count every frame sent and received by the devices of these nodes */
+static inline void WatchRole(const std::string &role, NodeContainer n)
+{
+	std::string k = "role_" + role;
+	g_ovh[k];
+	for (uint32_t i = 0; i < n.GetN(); ++i)
+		for (uint32_t d = 0; d < n.Get(i)->GetNDevices(); ++d) {
+			Ptr<NetDevice> dev = n.Get(i)->GetDevice(d);
+			if (!dev->IsPointToPoint() &&
+			    !DynamicCast<CsmaNetDevice>(dev))
+				continue;
+			std::ostringstream c;
+			c << k << "|" << n.Get(i)->GetId() << "." << d;
+			dev->TraceConnect("PhyTxBegin", c.str() + "|tx",
+					  MakeCallback(&OnOvh));
+			dev->TraceConnect("MacRx", c.str() + "|rx",
+					  MakeCallback(&OnOvh));
+		}
+}
+static inline void PrintOvh()
+{
+	for (auto &kv : g_ovh)
+		for (int c = 0; c < OV_NCAT; ++c)
+			if (kv.second.p[c] && OvName(c))
+				std::cout << "EXP_OVH obs=" << kv.first
+					  << " cat=" << OvName(c) << " pkts="
+					  << kv.second.p[c] << " bytes="
+					  << kv.second.b[c] << std::endl;
+}
+
 /* Link counters: transmitted packets/bytes and queue drops per device. */
 struct LinkStat {
 	uint64_t txp = 0, txb = 0, drops = 0;
@@ -157,6 +302,7 @@ static inline void OnTx(std::string name, Ptr<const Packet> p)
 	LinkStat &s = g_links[name];
 	s.txp++;
 	s.txb += p->GetSize();
+	OvCount(g_ovh["link_" + name], g_ovseq["link_" + name], p);
 }
 static inline void OnDrop(std::string name, Ptr<const Packet>)
 {
@@ -187,6 +333,7 @@ static inline void PrintLinks()
 
 static inline void PrintNodes(const std::string &role, NodeContainer n)
 {
+	WatchRole(role, n);
 	std::cout << "EXP_NODES role=" << role << " ids=";
 	for (uint32_t i = 0; i < n.GetN(); ++i)
 		std::cout << (i ? "," : "") << n.Get(i)->GetId();
@@ -202,6 +349,7 @@ static inline void Finish(const Cfg &c, double wall0, double stop)
 	Simulator::Run();
 	double w2 = WallS();
 	PrintLinks();
+	PrintOvh();
 	struct rusage ru;
 	getrusage(RUSAGE_SELF, &ru);
 	std::cout << "EXP_DONE proto=" << c.proto << " sim_stop_s=" << stop

@@ -67,13 +67,68 @@ def server_file(rd, nid):
     return s, 0
 
 
+# control overhead (EXP_OVH): categories that carry media payload; every
+# other GMTP type and the TCP handshake/teardown/pure ACK/retransmission
+# categories are control (TCP retransmissions are reported apart as well)
+DATA_CATS = ('DATA', 'DATAACK', 'TCP_DATA')
+CTRL_EXCL = DATA_CATS + ('TCP_CROSS', 'OTHER')
+
+
+def overhead(row, ovh, nrx):
+    groups = {
+        'server': ['role_server'],
+        'relay': ['role_router'],
+        'client': ['role_client'],
+        # every transmission by every traced node (each hop once)
+        'net': ['net_tx'],
+        # bottleneck: A1 dumbbell link, A2 links leaving the root router,
+        # B1 server access links (transmit side of each traced device)
+        'bottleneck': [o for o in ovh if o in ('link_bottleneck_fwd', 'link_bottleneck_rev')
+                       or o.startswith(('link_tree_0_', 'link_tree_r0_', 'link_srvaccess_'))],
+    }
+    if not ovh:
+        return
+    for g, obs in groups.items():
+        cats = {}
+        for o in obs:
+            for c, (p, b) in ovh.get(o, {}).items():
+                q = cats.setdefault(c, [0, 0])
+                q[0] += p
+                q[1] += b
+        if not cats:
+            continue
+        cp = sum(v[0] for c, v in cats.items() if c not in CTRL_EXCL)
+        cb = sum(v[1] for c, v in cats.items() if c not in CTRL_EXCL)
+        dp = sum(cats.get(c, [0, 0])[0] for c in DATA_CATS)
+        db = sum(cats.get(c, [0, 0])[1] for c in DATA_CATS)
+        pre = 'ovh_%s_' % g
+        row[pre + 'ctrl_pkts'] = cp
+        row[pre + 'ctrl_bytes'] = cb
+        row[pre + 'data_pkts'] = dp
+        row[pre + 'data_bytes'] = db
+        row[pre + 'ctrl_byte_ratio'] = round(cb / db, 6) if db else None
+        row[pre + 'ctrl_pkt_ratio'] = round(cp / dp, 6) if dp else None
+        # thesis definition: piggybacked control (DATAACK) counts 0.5
+        row[pre + 'ctrl_pkts_thesis'] = cp + 0.5 * cats.get('DATAACK', [0, 0])[0]
+        if nrx:
+            row[pre + 'ctrl_pkts_per_rx'] = round(cp / nrx, 2)
+            row[pre + 'ctrl_bytes_per_rx'] = round(cb / nrx, 1)
+        if 'TCP_RETX' in cats:
+            row[pre + 'tcp_retx_pkts'] = cats['TCP_RETX'][0]
+        # per-type packets for server and relays (thesis overhead tables)
+        if g in ('server', 'relay', 'bottleneck'):
+            for c, (p, b) in sorted(cats.items()):
+                if c not in ('OTHER', 'TCP_CROSS'):
+                    row['%s%s_pkts' % (pre, c.lower())] = p
+
+
 def main():
     rd, tid = sys.argv[1], sys.argv[2]
     row = {'trial': tid}
     for a in sys.argv[3:]:
         k, v = a.split('=', 1)
         row[k] = v
-    roles, links, topo, done = {}, {}, {}, {}
+    roles, links, topo, done, ovh = {}, {}, {}, {}, {}
     out = os.path.join(rd, 'stdout.txt')
     for line in open(out, errors='replace') if os.path.exists(out) else []:
         if line.startswith('EXP_TOPO'):
@@ -84,6 +139,9 @@ def main():
         elif line.startswith('EXP_LINK'):
             d = kv(line)
             links[d['name']] = d
+        elif line.startswith('EXP_OVH'):
+            d = kv(line)
+            ovh.setdefault(d['obs'], {})[d['cat']] = (int(d['pkts']), int(d['bytes']))
         elif line.startswith('EXP_DONE'):
             done = kv(line)
     row.update({k: v for k, v in topo.items()})
@@ -153,6 +211,13 @@ def main():
     row['startup_s_mean'] = round(statistics.mean(st), 4) if st else None
     gp = [num(c.get('goodput_Bps')) for c in ok if num(c.get('goodput_Bps')) is not None]
     row['goodput_kbps_mean'] = round(statistics.mean(gp) * 8 / 1000, 2) if gp else None
+    # QoE proxies (media-client playback model, 5 s deadline, 1 s slots,
+    # 95% rule). *_mean: over receivers that got data; *_all: receivers
+    # that got nothing count as 0.
+    for key, col in (('on_time_frac', 'on_time_frac'), ('continuity_index', 'continuity_index')):
+        v = [num(c.get(key)) for c in ok if num(c.get(key)) is not None]
+        row[col + '_mean'] = round(statistics.mean(v), 6) if v else None
+        row[col + '_all'] = round(sum(v) / n, 6) if v and n else None
 
     # cross traffic
     thr = []
@@ -181,6 +246,7 @@ def main():
     srvl = [int(d['tx_bytes']) for k, d in links.items() if k.startswith('server_lan')]
     if srvl:
         row['server_tx_bytes'] = sum(srvl)
+    overhead(row, ovh, n)
     print(json.dumps(row, sort_keys=True))
 
 
