@@ -32,3 +32,16 @@ A guide under `docs/setup-instructions/` that pins an ns-3 or DCE revision keeps
 ## Patches
 
 Rebuild a live kernel checkout with `linux/checkout-trees.sh` and the files under `linux/patches/`. The repository-root `patches/` directory is an archive of how GMTP was inserted into Linux 4.9.50 and how the 2015 Linux and DCE trees were synchronized. Do not apply those archive files to update a tree. See `linux/patches/README.md` and `patches/README.md`.
+
+
+## Bot communication protocol (GMTP team: GMTP-CEO, GMTP-CTO, GMTP-REV)
+
+Adopted 22 Nov 2026 by order of Leandro (applies to all his bot teams). Full text: `docs/bot-communication-protocol.md`.
+
+1. Pointer plus diff: messages between bots carry only repo/PR/file, commit SHA and a one-line ask. Reviewers read only `git diff <last-reviewed-sha>..<new-sha>` and record the last reviewed SHA in their PR comment.
+2. One review round per deliverable: reviewers work in parallel and leave one consolidated PR comment; the author applies small fixes and merges without another round (a second round only if the fix changes substance).
+3. Review proportional to risk: full review only for experiment protocol, preregistrations, frozen records, security, money or external sends. Docs, records and housekeeping PRs are merged by the author alone, followed by one non-waking FYI.
+4. FYIs, status and results nobody waits on go with priority false; no acknowledgements, no duplicates, no fan-out.
+5. AWS: GMTP-CTO talks directly with Leandro-CTO. Only Leandro approves spend, in his own words.
+6. Package each experiment: cost forecast, gates/checks and review verdict in one document; approval is asked once.
+7. Quality stays the same: only communication is leaner, not the checks that matter.
