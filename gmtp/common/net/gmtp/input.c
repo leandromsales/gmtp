@@ -137,10 +137,18 @@ struct sock* gmtp_sock_connect(struct sock *sk, enum gmtp_sock_type type,
 
 	gmtp_pr_func();
 
-	/* Runs from the receive path too (REQUESTNOTIFY): must not sleep */
+	/*
+	 * Runs from the receive path (REQUESTNOTIFY), in softirq or in the
+	 * socket backlog with BHs enabled: must not sleep, and BHs must be
+	 * off while the clone's spinlock is held (lockdep: inconsistent
+	 * slock-AF_INET usage).
+	 */
+	local_bh_disable();
 	newsk = sk_clone_lock(sk, GFP_ATOMIC);
-	if(newsk == NULL)
+	if(newsk == NULL) {
+		local_bh_enable();
 		return NULL;
+	}
 
 	newsk->sk_protocol = sk->sk_protocol;
 	newsk->sk_daddr = addr;
@@ -154,6 +162,7 @@ struct sock* gmtp_sock_connect(struct sock *sk, enum gmtp_sock_type type,
 	pr_info("myself: %p == %p\n", gmtp_sk(newsk), gmtp_sk(sk));
 
 	bh_unlock_sock(newsk);
+	local_bh_enable();
 	gmtp_init_xmit_timers(newsk);
 
 	return newsk;
@@ -242,9 +251,13 @@ struct sock* gmtp_multicast_connect(struct sock *sk, enum gmtp_sock_type type,
 
 	gmtp_pr_func();
 
+	/* Also called from connect() with BHs on: see gmtp_sock_connect() */
+	local_bh_disable();
 	newsk = sk_clone_lock(sk, GFP_ATOMIC);
-	if(newsk == NULL)
+	if(newsk == NULL) {
+		local_bh_enable();
 		return NULL;
+	}
 
 	/* FIXME Validate received multicast channel */
 	newsk->sk_protocol = sk->sk_protocol;
@@ -272,6 +285,7 @@ struct sock* gmtp_multicast_connect(struct sock *sk, enum gmtp_sock_type type,
 	gmtp_sk(newsk)->type = type;
 
 	bh_unlock_sock(newsk);
+	local_bh_enable();
 	gmtp_set_state(newsk, GMTP_OPEN);
 
 	/* Join with the clone's spinlock released */

@@ -40,7 +40,7 @@ static struct gmtp_relay_entry *gmtp_build_relay_entry(
 {
 	struct gmtp_relay_entry *relay_entry;
 
-	relay_entry = kmalloc(sizeof(struct gmtp_relay_entry), GFP_KERNEL);
+	relay_entry = kmalloc(sizeof(struct gmtp_relay_entry), GFP_ATOMIC);
 	if(relay_entry == NULL)
 		return NULL;
 
@@ -199,7 +199,8 @@ int gmtp_add_server_entry(struct gmtp_hashtable *table, struct sock *sk,
 
 	if(entry == NULL) {
 		pr_info("New server entry\n");
-		entry = kmalloc(sizeof(struct gmtp_server_entry), GFP_KERNEL);
+		/* Called from the receive path (softirq): must not sleep */
+		entry = kmalloc(sizeof(struct gmtp_server_entry), GFP_ATOMIC);
 		if(entry == NULL)
 			return -ENOBUFS;
 
@@ -208,7 +209,7 @@ int gmtp_add_server_entry(struct gmtp_hashtable *table, struct sock *sk,
 		INIT_LIST_HEAD(&entry->relays.relay_list);
 		memcpy(entry->entry.key, gp->flowname, GMTP_HASH_KEY_LEN);
 		entry->relay_hashtable = kmalloc(sizeof(struct gmtp_hashtable),
-				GFP_KERNEL);
+				GFP_ATOMIC);
 		rc = gmtp_build_hashtable(entry->relay_hashtable, U8_MAX,
 				gmtp_relay_hash_ops);
 		if(rc)
