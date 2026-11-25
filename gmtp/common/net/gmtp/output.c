@@ -756,18 +756,23 @@ static inline unsigned int payload_len(struct sk_buff *skb)
     return skb->len - (gmtp_data_hdr_len() + 20 + ETH_HLEN);
 }
 
-static inline void packet_sent(struct sock *sk, struct sk_buff *skb)
+/*
+ * Takes the lengths, not the skb: gmtp_transmit_skb() consumes the skb, and
+ * the driver may free it (virtio-net TX completion, KASAN slab-use-after-free)
+ * before we get here.
+ */
+static inline void packet_sent(struct sock *sk, int data_len,
+                               unsigned int skb_len)
 {
     struct gmtp_sock *gp = gmtp_sk(sk);
     unsigned long elapsed = 0;
-    int data_len = payload_len(skb);
 
     if(unlikely(gp->tx_dpkts_sent == 0))
         gmtp_pr_info("Start sending data packets...\n\n");
 
     ++gp->tx_dpkts_sent;
     gp->tx_data_sent += data_len;
-    gp->tx_bytes_sent += skb->len;
+    gp->tx_bytes_sent += skb_len;
 
     gp->tx_last_stamp = jiffies;
     if(unlikely(gp->tx_first_stamp == 0)) { /* This is the first sent */
@@ -795,28 +800,23 @@ static inline void packet_sent(struct sock *sk, struct sk_buff *skb)
 static void gmtp_xmit_packet(struct sock *sk, struct sk_buff *skb) {
 
     int err;
+    /* Read before transmit: gmtp_transmit_skb() consumes the skb. */
+    int data_len = payload_len(skb);
+    unsigned int skb_len = skb->len;
 
     GMTP_SKB_CB(skb)->type = GMTP_PKT_DATA;
     err = gmtp_transmit_skb(sk, skb);
-
-    /*
-    char label[30];
-    sprintf(label, "To %pI4 (%d pkts sent, err=%d)", &sk->sk_daddr,
-            gmtp_sk(sk)->tx_dpkts_sent, err);
-    print_gmtp_data(skb, label);
-    */
 
     /*
      * Register this one as sent (even if an error occurred).
      * To the remote end a local packet drop is indistinguishable from
      * network loss.
      */
-    packet_sent(sk, skb);
+    packet_sent(sk, data_len, skb_len);
 
     if (unlikely(err)) {
+        /* skb is gone here; do not dump its headers. */
         gmtp_pr_error("transmit_skb() returned err=%d\n", err);
-
-        print_gmtp_packet(ip_hdr(skb), gmtp_hdr(skb));
 
         pr_info("ISS: %u, GSS: %u, N: %u\n", gmtp_sk(sk)->iss,
                 gmtp_sk(sk)->gss,
