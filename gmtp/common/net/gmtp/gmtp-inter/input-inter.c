@@ -57,15 +57,22 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 		max_nclients = new_reporter(entry);
 
 	} else {
-		__be32 mcst_addr = get_mcst_v4_addr();
-		int err = gmtp_inter_add_entry(gmtp_inter.hashtable,
+		__be32 mcst_addr;
+		int err = get_mcst_v4_addr(&mcst_addr);
+
+		if(err) {
+			gmtp_pr_error("No multicast channel for new flow (%d)",
+					err);
+			return NF_DROP;
+		}
+		err = gmtp_inter_add_entry(gmtp_inter.hashtable,
 				gh->flowname, iph->daddr, NULL, gh->dport, /* Server port */
 				mcst_addr, gh->dport); /* Mcst port <- server port */
 
 		if(err) {
+			/* entry is NULL here: do not build a RequestNotify */
 			gmtp_pr_error("Failed to insert flow in table (%d)", err);
-			ret = NF_DROP;
-			goto out;
+			return NF_DROP;
 		}
 
 		entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
@@ -159,8 +166,15 @@ int gmtp_inter_register_rcv(struct sk_buff *skb)
 		}
 	} else { /* I am not the server */
 
-		__be32 mcst_addr = get_mcst_v4_addr();
-		int err = gmtp_inter_add_entry(gmtp_inter.hashtable,
+		__be32 mcst_addr;
+		int err = get_mcst_v4_addr(&mcst_addr);
+
+		if(err) {
+			gmtp_pr_error("No multicast channel for new flow (%d)",
+					err);
+			return NF_DROP;
+		}
+		err = gmtp_inter_add_entry(gmtp_inter.hashtable,
 				gh->flowname, iph->daddr,
 				NULL, gh->dport, /* Media port */
 				mcst_addr, gh->dport); /* Mcst port <- server port */

@@ -52,7 +52,7 @@ extern struct gmtp_hashtable server_hashtable;
  * @h: Current H_0 in RCP equation
  * @last_rtt: Last RTT received in all flows
  *
- * @mcst: control of granted multicast addresses
+ * @mcst_next: index of the next multicast channel in 239.192.0.0/14
  * @kreporter: number of clients per reporter.
  *
  * @hashtable: GMTP-inter relay table
@@ -71,7 +71,7 @@ struct gmtp_inter {
 	int			h_user;
 	unsigned int		worst_rtt;
 
-	unsigned char		mcst[4];
+	u32			mcst_next;
 
 	unsigned char		kreporter;
 
@@ -91,7 +91,7 @@ enum gmtp_inter_direction {
 };
 
 /** gmtp-inter.c */
-__be32 get_mcst_v4_addr(void);
+int get_mcst_v4_addr(__be32 *addr);
 void gmtp_buffer_add(struct gmtp_inter_entry *info, struct sk_buff *newsk);
 struct sk_buff *gmtp_buffer_dequeue(struct gmtp_inter_entry *info);
 void gmtp_ucc_buffer_add(struct sk_buff *newskb);
