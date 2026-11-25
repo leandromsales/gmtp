@@ -760,6 +760,18 @@ static inline unsigned int payload_len(struct sk_buff *skb)
  * Takes the lengths, not the skb: gmtp_transmit_skb() consumes the skb, and
  * the driver may free it (virtio-net TX completion, KASAN slab-use-after-free)
  * before we get here.
+ *
+ * Meaning of the counters: the lengths are now taken BEFORE
+ * gmtp_transmit_skb() adds the GMTP, IP and Ethernet headers. So data_len
+ * (tx_data_sent) is payload_len() of the header-less skb and under-counts the
+ * payload by gmtp_data_hdr_len() + 20 + ETH_HLEN bytes per packet, and
+ * skb_len (tx_bytes_sent, hence tx_total_rate and tx_sample_rate) is the
+ * payload, not the frame. Before 063bdec22d they were read after the
+ * transmit (from a possibly freed skb) and meant payload and frame size.
+ * Readers today: tx_data_sent has none; tx_total_rate is used only by
+ * gmtp_media_adapt_cc() under GMTP_MEDIA_ADAPT_UCC, which no application in
+ * this repository selects (the default is GMTP_DELAY_UCC). Use
+ * skb->len / packet_len(skb) here if the frame-based meaning is needed again.
  */
 static inline void packet_sent(struct sock *sk, int data_len,
                                unsigned int skb_len)
@@ -800,7 +812,11 @@ static inline void packet_sent(struct sock *sk, int data_len,
 static void gmtp_xmit_packet(struct sock *sk, struct sk_buff *skb) {
 
     int err;
-    /* Read before transmit: gmtp_transmit_skb() consumes the skb. */
+    /*
+     * Read before transmit: gmtp_transmit_skb() consumes the skb. The
+     * headers are not in skb->len yet; see packet_sent() for what the
+     * counters mean now.
+     */
     int data_len = payload_len(skb);
     unsigned int skb_len = skb->len;
 
