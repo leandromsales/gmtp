@@ -54,6 +54,19 @@ static void gmtp_fin(struct sock *sk, struct sk_buff *skb)
  * free it. Other sockets of the host on the same flow keep their records.
  * A reporter socket cloned from sk shares the record, so the record is
  * left to it when one exists.
+ *
+ * Only the socket that owns the record (self->mysock == sk) may release
+ * it. Clones made with sk_clone_lock() after gp->myself was set - the data
+ * channel socket (gmtp_multicast_connect()) and the reporter socket
+ * (gmtp_sock_connect()) - carry the same pointer; the server's CLOSE is
+ * forwarded to the channel address, so the channel clone runs the CLOSE
+ * path too. A clone only drops its copy of the pointer: freeing the record
+ * there was a use-after-free for a reporter parent (rsock == NULL), and
+ * unlinking it leaked the record for a client parent.
+ *
+ * Clones are recognised by their socket type first, without dereferencing
+ * the record: the owner may already have freed it when the CLOSE reaches
+ * the channel clone.
  */
 static void gmtp_client_release_self(struct sock *sk)
 {
@@ -62,6 +75,10 @@ static void gmtp_client_release_self(struct sock *sk)
 
 	if (self == NULL)
 		return;
+	if (gp->type != GMTP_SOCK_TYPE_REGULAR || self->mysock != sk) {
+		gp->myself = NULL;
+		return;
+	}
 	if (gmtp_client_table_del_self(&client_hashtable, gp->flowname, self) &&
 	    self->rsock == NULL)
 		gmtp_client_free(self);
@@ -109,8 +126,10 @@ static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
 			 * Drop only this socket's record. Deleting the whole
 			 * flow entry freed the records of every other socket
 			 * of this host on the flow while they still used them.
-			 * A reporter socket (rsock) only borrows the record of
-			 * the socket it was cloned from.
+			 * The reporter (rsock) and data channel clones only
+			 * borrow the record of the socket they were cloned from;
+			 * gmtp_client_release_self() releases it only from the
+			 * owner.
 			 */
 			gmtp_client_release_self(sk);
 		else if(gmtp_sk(sk)->role == GMTP_ROLE_SERVER)
