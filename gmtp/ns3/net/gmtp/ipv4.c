@@ -792,6 +792,16 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
         goto no_gmtp_socket;
     }
 
+    /*
+     * gmtp_lookup_established() takes no reference. Hold one across
+     * __sk_receive_skb(): a Reset or Close on an orphaned socket ends in
+     * gmtp_done() -> inet_csk_destroy_sock(), which dropped the last
+     * reference and freed the socket while __sk_receive_skb() still held
+     * its bh lock (lockdep "held lock freed!", W-VM C KASAN run).
+     * __sk_receive_skb(..., refcounted = true) drops it after unlocking.
+     */
+    sock_hold(sk);
+
     if(!xfrm4_policy_check(sk, XFRM_POLICY_IN, skb)) {
         sock_put(sk);
         goto discard_it;
@@ -800,10 +810,7 @@ static int gmtp_v4_sk_receive_skb(struct sk_buff *skb, struct sock *sk)
     nf_reset_ct(skb);
 
 
-    /* When refcounted is true, __sk_receive_skb call sock_put, wich
-     * deletes sk and causes kernel panic
-     */
-    return __sk_receive_skb(sk, skb, 1, gh->hdrlen, false);
+    return __sk_receive_skb(sk, skb, 1, gh->hdrlen, true);
 
 
 no_gmtp_socket:
