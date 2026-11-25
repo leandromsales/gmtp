@@ -611,7 +611,9 @@ static int gmtp_v4_client_rcv_elect_response(struct sk_buff *skb)
         return 1;
     }
 
-    gmtp_set_state(client->rsock, GMTP_OPEN);
+    /* A retransmitted ELECT_REQUEST can get a second response */
+    if(client->rsock->sk_state != GMTP_OPEN)
+        gmtp_set_state(client->rsock, GMTP_OPEN);
     gmtp_send_ack(client->rsock);
 
     return 0;
