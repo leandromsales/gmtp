@@ -15,6 +15,9 @@
 #include <linux/skbuff.h>
 #include <linux/slab.h>
 #include <linux/types.h>
+#include <linux/workqueue.h>
+#include <linux/rtnetlink.h>
+#include <linux/preempt.h>
 
 #include <net/inet_common.h>
 #include <net/inet_sock.h>
@@ -107,7 +110,8 @@ struct sock* gmtp_sock_connect(struct sock *sk, enum gmtp_sock_type type,
 
 	gmtp_pr_func();
 
-	newsk = sk_clone_lock(sk, GFP_KERNEL);
+	/* Runs from the receive path too (REQUESTNOTIFY): must not sleep */
+	newsk = sk_clone_lock(sk, GFP_ATOMIC);
 	if(newsk == NULL)
 		return NULL;
 
@@ -130,16 +134,75 @@ struct sock* gmtp_sock_connect(struct sock *sk, enum gmtp_sock_type type,
 }
 EXPORT_SYMBOL_GPL(gmtp_sock_connect);
 
+struct gmtp_mc_join_work {
+	struct work_struct work;
+	struct sock *sk;
+	struct ip_mreqn mreq;
+};
+
+static void gmtp_mc_join_now(struct sock *sk, struct ip_mreqn *mreq)
+{
+	int ret;
+
+	rtnl_lock();
+	ret = ip_mc_join_group(sk, mreq);
+	rtnl_unlock();
+
+	if (ret != 0)
+		gmtp_pr_error("Error: ip_mc_join_group returned %d\n", ret);
+}
+
+static void gmtp_mc_join_worker(struct work_struct *work)
+{
+	struct gmtp_mc_join_work *jw = container_of(work,
+			struct gmtp_mc_join_work, work);
+
+	if (!sock_flag(jw->sk, SOCK_DEAD))
+		gmtp_mc_join_now(jw->sk, &jw->mreq);
+	sock_put(jw->sk);
+	kfree(jw);
+}
+
+/*
+ * ip_mc_join_group() needs the RTNL mutex. gmtp_multicast_connect() also
+ * runs from the receive path (REQUESTNOTIFY, softirq or backlog with the
+ * socket spinlock held). Taking the mutex there slept in atomic context
+ * whenever two clients of one host joined at the same time ("BUG:
+ * scheduling while atomic", then an RCU stall and a dead guest in the
+ * W-VM runs). Join directly when we may sleep, else from a work item.
+ */
+static void gmtp_mc_join(struct sock *sk, const struct ip_mreqn *mreq)
+{
+	struct gmtp_mc_join_work *jw;
+
+	if (preemptible()) {
+		struct ip_mreqn m = *mreq;
+
+		gmtp_mc_join_now(sk, &m);
+		return;
+	}
+
+	jw = kmalloc(sizeof(*jw), GFP_ATOMIC);
+	if (jw == NULL) {
+		gmtp_pr_error("Cannot defer the multicast join (no memory)");
+		return;
+	}
+	INIT_WORK(&jw->work, gmtp_mc_join_worker);
+	jw->mreq = *mreq;
+	sock_hold(sk);
+	jw->sk = sk;
+	schedule_work(&jw->work);
+}
+
 struct sock* gmtp_multicast_connect(struct sock *sk, enum gmtp_sock_type type,
 		__be32 addr, __be16 port)
 {
 	struct sock *newsk;
 	struct ip_mreqn mreq;
-	int ret;
 
 	gmtp_pr_func();
 
-	newsk = sk_clone_lock(sk, GFP_KERNEL);
+	newsk = sk_clone_lock(sk, GFP_ATOMIC);
 	if(newsk == NULL)
 		return NULL;
 
@@ -164,21 +227,17 @@ struct sock* gmtp_multicast_connect(struct sock *sk, enum gmtp_sock_type type,
 			dev_put(dev);
 	}
 
-	gmtp_pr_debug("Joining the multicast group in %pI4@%-5d",
-			&addr, ntohs(port));
-	rtnl_lock();
-	ret = ip_mc_join_group(newsk, &mreq);
-	rtnl_unlock();
-
-	if (ret != 0)
-		gmtp_pr_error("Error: ip_mc_join_group returned %d\n", ret);
-
 	inet_ehash_nolisten(newsk, NULL, NULL);
 
 	gmtp_sk(newsk)->type = type;
 
 	bh_unlock_sock(newsk);
 	gmtp_set_state(newsk, GMTP_OPEN);
+
+	/* Join with the clone's spinlock released */
+	gmtp_pr_debug("Joining the multicast group in %pI4@%-5d",
+			&addr, ntohs(port));
+	gmtp_mc_join(newsk, &mreq);
 
 	return newsk;
 }
