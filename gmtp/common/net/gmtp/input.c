@@ -171,11 +171,26 @@ static void gmtp_mc_join_worker(struct work_struct *work)
  * scheduling while atomic", then an RCU stall and a dead guest in the
  * W-VM runs). Join directly when we may sleep, else from a work item.
  */
+static bool gmtp_mc_join_can_sleep(void)
+{
+#ifdef CONFIG_LIB
+	/*
+	 * libos (ns-3/DCE): there is no preemption or real softirq, kernel
+	 * code runs in simulator tasks and RTNL may block there. The libos
+	 * workqueue also never runs work queued from this path, so a deferred
+	 * join would never happen. Join directly, as before.
+	 */
+	return true;
+#else
+	return preemptible();
+#endif
+}
+
 static void gmtp_mc_join(struct sock *sk, const struct ip_mreqn *mreq)
 {
 	struct gmtp_mc_join_work *jw;
 
-	if (preemptible()) {
+	if (gmtp_mc_join_can_sleep()) {
 		struct ip_mreqn m = *mreq;
 
 		gmtp_mc_join_now(sk, &m);
