@@ -189,6 +189,7 @@ struct gmtp_client {
 };
 
 struct gmtp_client *gmtp_create_client(__be32 addr, __be16 port, __u8 max_nclients);
+void gmtp_client_free(struct gmtp_client *c);
 struct gmtp_client *gmtp_list_add_client(u32 id, __be32 addr, __be16 port,
 		__u8 max_nclients, struct list_head *head);
 
@@ -208,7 +209,8 @@ void print_gmtp_client(struct gmtp_client *c);
 extern spinlock_t gmtp_client_table_lock;
 
 struct gmtp_client *gmtp_client_table_add_self(struct gmtp_hashtable *table,
-		const __u8 *flowname, __be32 addr, __be16 port);
+		const __u8 *flowname, __be32 addr, __be16 port,
+		struct sock *sk, __u32 ack_rx_tstamp);
 bool gmtp_client_table_del_self(struct gmtp_hashtable *table,
 		const __u8 *flowname, struct gmtp_client *self);
 

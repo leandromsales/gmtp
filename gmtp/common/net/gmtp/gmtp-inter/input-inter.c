@@ -30,6 +30,11 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 		 * clients that never said goodbye. Drop it and register the
 		 * flow again instead of answering every new client with an
 		 * error RequestNotify.
+		 *
+		 * Known limit: with several relays in a chain, the CLOSE may
+		 * not have reached the downstream relays (entry->relays) yet;
+		 * dropping the entry here strands them. W-VM and DCE use one
+		 * relay per path or a fresh process per trial.
 		 */
 		gmtp_pr_info("Dropping stale entry of a closed flow");
 		server_hashtable.hash_ops.del_entry(&server_hashtable,
@@ -649,8 +654,13 @@ int gmtp_inter_elect_resp_rcv(struct sk_buff *skb,
 		/* Known from its REQUEST: do not count it twice */
 		cl->max_nclients = gmtp_inter.kreporter;
 	else
-		gmtp_list_add_client(++entry->nclients, iph->saddr, gh->sport,
-				gmtp_inter.kreporter, &entry->clients->list);
+		cl = gmtp_list_add_client(++entry->nclients, iph->saddr,
+				gh->sport, gmtp_inter.kreporter,
+				&entry->clients->list);
+
+	/* Offer the self-promoted reporter to the next clients */
+	if(cl != NULL && entry->cur_reporter == NULL)
+		entry->cur_reporter = cl;
 
 	return NF_DROP;
 }

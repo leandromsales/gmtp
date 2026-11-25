@@ -49,6 +49,25 @@ static void gmtp_fin(struct sock *sk, struct sk_buff *skb)
 	gmtp_enqueue_skb(sk, skb);
 }
 
+/*
+ * Unlink this socket's own record (gp->myself) from the client table and
+ * free it. Other sockets of the host on the same flow keep their records.
+ * A reporter socket cloned from sk shares the record, so the record is
+ * left to it when one exists.
+ */
+static void gmtp_client_release_self(struct sock *sk)
+{
+	struct gmtp_sock *gp = gmtp_sk(sk);
+	struct gmtp_client *self = gp->myself;
+
+	if (self == NULL)
+		return;
+	if (gmtp_client_table_del_self(&client_hashtable, gp->flowname, self) &&
+	    self->rsock == NULL)
+		gmtp_client_free(self);
+	gp->myself = NULL;
+}
+
 static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
 {
 	int queued = 0;
@@ -84,8 +103,16 @@ static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
 	case GMTP_OPEN:
 		/* FIXME Close only if gh->flowname == gp->flowname */
 		/* Clear hash table */
-		if(gmtp_role_client(sk))
-			gmtp_del_client_entry(&client_hashtable, gmtp_sk(sk)->flowname);
+		if(gmtp_role_client(sk) &&
+				gmtp_sk(sk)->type != GMTP_SOCK_TYPE_REPORTER)
+			/*
+			 * Drop only this socket's record. Deleting the whole
+			 * flow entry freed the records of every other socket
+			 * of this host on the flow while they still used them.
+			 * A reporter socket (rsock) only borrows the record of
+			 * the socket it was cloned from.
+			 */
+			gmtp_client_release_self(sk);
 		else if(gmtp_sk(sk)->role == GMTP_ROLE_SERVER)
 			gmtp_del_server_entry(&server_hashtable, gmtp_sk(sk)->flowname);
 
@@ -142,10 +169,12 @@ struct gmtp_mc_join_work {
 
 static void gmtp_mc_join_now(struct sock *sk, struct ip_mreqn *mreq)
 {
-	int ret;
+	int ret = 0;
 
 	rtnl_lock();
-	ret = ip_mc_join_group(sk, mreq);
+	/* ip_mc_drop_socket() on close also runs under RTNL */
+	if (!sock_flag(sk, SOCK_DEAD))
+		ret = ip_mc_join_group(sk, mreq);
 	rtnl_unlock();
 
 	if (ret != 0)
@@ -157,8 +186,7 @@ static void gmtp_mc_join_worker(struct work_struct *work)
 	struct gmtp_mc_join_work *jw = container_of(work,
 			struct gmtp_mc_join_work, work);
 
-	if (!sock_flag(jw->sk, SOCK_DEAD))
-		gmtp_mc_join_now(jw->sk, &jw->mreq);
+	gmtp_mc_join_now(jw->sk, &jw->mreq);
 	sock_put(jw->sk);
 	kfree(jw);
 }
@@ -169,21 +197,18 @@ static void gmtp_mc_join_worker(struct work_struct *work)
  * socket spinlock held). Taking the mutex there slept in atomic context
  * whenever two clients of one host joined at the same time ("BUG:
  * scheduling while atomic", then an RCU stall and a dead guest in the
- * W-VM runs). Join directly when we may sleep, else from a work item.
+ * W-VM runs). The join therefore always runs from a work item, without
+ * probing the calling context.
  */
 static bool gmtp_mc_join_can_sleep(void)
 {
-#ifdef CONFIG_LIB
 	/*
 	 * libos (ns-3/DCE): there is no preemption or real softirq, kernel
 	 * code runs in simulator tasks and RTNL may block there. The libos
 	 * workqueue also never runs work queued from this path, so a deferred
 	 * join would never happen. Join directly, as before.
 	 */
-	return true;
-#else
-	return preemptible();
-#endif
+	return IS_ENABLED(CONFIG_LIB);
 }
 
 static void gmtp_mc_join(struct sock *sk, const struct ip_mreqn *mreq)
@@ -434,13 +459,7 @@ err:
  	 * freed the records (gp->myself) of every other socket of this host
  	 * on the same flow while they were still in use.
  	 */
-	if(gmtp_client_table_del_self(&client_hashtable, gp->flowname,
-			gp->myself)) {
-		/* A reporter socket cloned from sk still points at the record */
-		if(gp->myself->rsock == NULL)
-			kfree(gp->myself);
-	}
-	gp->myself = NULL;
+	gmtp_client_release_self(sk);
  	gmtp_set_state(sk, GMTP_CLOSED);
  	sk->sk_err = ECOMM;
  	return 1;

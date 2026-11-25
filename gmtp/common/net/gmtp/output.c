@@ -477,21 +477,18 @@ int gmtp_connect(struct sock *sk)
     skb_reserve(skb, sk->sk_prot->max_header);
     GMTP_SKB_CB(skb)->type = GMTP_PKT_REQUEST;
 
-    /* Look up or create the flow entry and add our record atomically */
-    gp->myself = gmtp_client_table_add_self(&client_hashtable, gp->flowname,
-            inet->inet_saddr, inet->inet_sport);
-    if(gp->myself == NULL) {
-        kfree_skb(skb);
-        return -ENOBUFS;
-    }
-
     /** First transmission: gss <- iss */
     gp->gss = gp->iss;
     gp->req_stamp = jiffies_to_msecs(jiffies);
     gp->ack_rx_tstamp = jiffies_to_msecs(jiffies);
 
-    gp->myself->ack_rx_tstamp = gp->ack_rx_tstamp;
-    gp->myself->mysock = sk;
+    /* Look up or create the flow entry and add our record atomically */
+    gp->myself = gmtp_client_table_add_self(&client_hashtable, gp->flowname,
+            inet->inet_saddr, inet->inet_sport, sk, gp->ack_rx_tstamp);
+    if(gp->myself == NULL) {
+        kfree_skb(skb);
+        return -ENOBUFS;
+    }
 
     err = gmtp_transmit_skb(sk, gmtp_skb_entail(sk, skb));
 

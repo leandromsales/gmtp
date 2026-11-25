@@ -33,6 +33,31 @@ struct gmtp_client *gmtp_create_client(__be32 addr, __be16 port,
 EXPORT_SYMBOL_GPL(gmtp_create_client);
 
 /**
+ * gmtp_client_free - free a client record that is in no list
+ * @c: the record
+ *
+ * Also frees the records it owns: its reporter and, for a reporter, the
+ * list of its clients.
+ */
+void gmtp_client_free(struct gmtp_client *c)
+{
+	struct gmtp_client *cl, *tmp;
+
+	if(c == NULL)
+		return;
+	if(c->clients != NULL) {
+		list_for_each_entry_safe(cl, tmp, &c->clients->list, list) {
+			list_del(&cl->list);
+			kfree(cl);
+		}
+		kfree(c->clients);
+	}
+	kfree(c->reporter);
+	kfree(c);
+}
+EXPORT_SYMBOL_GPL(gmtp_client_free);
+
+/**
  * Create and add a client in the list of clients
  */
 struct gmtp_client *gmtp_list_add_client(u32 id, __be32 addr, __be16 port,

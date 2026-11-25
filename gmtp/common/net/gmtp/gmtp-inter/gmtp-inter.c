@@ -215,6 +215,9 @@ unsigned int hook_func_pre_routing(void *priv,
              * has no socket for the client and answers with a RESET.
              */
             if(iph->daddr == entry->server_addr
+                    && skb_headlen(skb) >= skb_transport_offset(skb)
+                            + sizeof(struct gmtp_hdr)
+                            + sizeof(struct gmtp_hdr_elect_response)
                     && gmtp_hdr_elect_response(skb)->elect_code
                             == GMTP_ELECT_AUTO) {
                 ret = gmtp_inter_elect_resp_rcv(skb, entry);
