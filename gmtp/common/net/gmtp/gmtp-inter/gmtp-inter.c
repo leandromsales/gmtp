@@ -207,6 +207,20 @@ unsigned int hook_func_pre_routing(void *priv,
         case GMTP_PKT_DELEGATE:
             ret = gmtp_inter_delegate_rcv(skb, entry);
             break;
+        case GMTP_PKT_ELECT_RESPONSE:
+            /*
+             * A client whose reporter never answered promotes itself
+             * (GMTP_ELECT_AUTO) and announces it on its socket to the
+             * server. That announcement is for this relay: the server
+             * has no socket for the client and answers with a RESET.
+             */
+            if(iph->daddr == entry->server_addr
+                    && gmtp_hdr_elect_response(skb)->elect_code
+                            == GMTP_ELECT_AUTO) {
+                ret = gmtp_inter_elect_resp_rcv(skb, entry);
+                goto out;
+            }
+            fallthrough;
         default:
             relay = gmtp_get_relay(&entry->relays->list, iph->daddr, gh->dport);
             if(!gmtp_local_ip(iph->daddr) && (relay == NULL))

@@ -460,7 +460,6 @@ int gmtp_connect(struct sock *sk)
     struct inet_connection_sock *icsk = inet_csk(sk);
     struct gmtp_sock *gp = gmtp_sk(sk);
     struct inet_sock *inet = inet_sk(sk);
-    struct gmtp_client_entry *client_entry;
     int err = 0;
 
     gmtp_pr_func();
@@ -478,20 +477,13 @@ int gmtp_connect(struct sock *sk)
     skb_reserve(skb, sk->sk_prot->max_header);
     GMTP_SKB_CB(skb)->type = GMTP_PKT_REQUEST;
 
-    gmtp_pr_info("Calling gmtp_lookup_client");
-    client_entry = gmtp_lookup_client(&client_hashtable, gp->flowname);
-    if(client_entry == NULL)
-        client_entry = gmtp_add_client_entry(&client_hashtable, gp->flowname,
-                inet->inet_saddr, inet->inet_sport, 0, 0);
-
-    if(client_entry == NULL)
+    /* Look up or create the flow entry and add our record atomically */
+    gp->myself = gmtp_client_table_add_self(&client_hashtable, gp->flowname,
+            inet->inet_saddr, inet->inet_sport);
+    if(gp->myself == NULL) {
+        kfree_skb(skb);
         return -ENOBUFS;
-
-    gp->myself = gmtp_list_add_client(0, inet->inet_saddr, inet->inet_sport,
-            0, &client_entry->clients->list);
-
-    if(gp->myself == NULL)
-        return -ENOBUFS;
+    }
 
     /** First transmission: gss <- iss */
     gp->gss = gp->iss;

@@ -8,6 +8,8 @@
  *  Copyright (c) 2015 Wendell Silva Soares <wendell@ic.ufal.br>
  */
 
+#include <linux/spinlock.h>
+
 #define GMTP_HASH_KEY_LEN  16
 
 struct gmtp_hashtable;
@@ -196,6 +198,19 @@ struct gmtp_client* gmtp_get_client_by_id(struct list_head *head, u32 id);
 
 int gmtp_delete_clients(struct list_head *list, __be32 addr, __be16 port);
 void print_gmtp_client(struct gmtp_client *c);
+
+/*
+ * Serializes inserts into and removals from the client hash table and
+ * the per-flow client lists it holds. Sockets of one host that join the
+ * same flow share one entry, and their connect() calls and receive paths
+ * run on different CPUs at the same time.
+ */
+extern spinlock_t gmtp_client_table_lock;
+
+struct gmtp_client *gmtp_client_table_add_self(struct gmtp_hashtable *table,
+		const __u8 *flowname, __be32 addr, __be16 port);
+bool gmtp_client_table_del_self(struct gmtp_hashtable *table,
+		const __u8 *flowname, struct gmtp_client *self);
 
 
 #endif /* HASH_H_ */

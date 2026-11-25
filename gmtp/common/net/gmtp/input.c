@@ -280,7 +280,9 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 
 			if(gp->myself->rsock == NULL || gp->myself->reporter == NULL)
 				goto err;
-			gmtp_set_state(gp->myself->rsock, GMTP_REQUESTING);
+			/* The clone inherits REQUESTING from sk */
+			if(gp->myself->rsock->sk_state != GMTP_REQUESTING)
+				gmtp_set_state(gp->myself->rsock, GMTP_REQUESTING);
 			gmtp_send_elect_request(gp->myself->rsock, GMTP_REQ_INTERVAL);
 		}
 
@@ -353,8 +355,18 @@ err:
  	/*
  	 * We mark this socket as no longer usable, so that the loop in
  	 * gmtp_sendmsg() terminates and the application gets notified.
+ 	 *
+ 	 * Remove only this socket's record. Deleting the whole flow entry
+ 	 * freed the records (gp->myself) of every other socket of this host
+ 	 * on the same flow while they were still in use.
  	 */
-	gmtp_del_client_entry(&client_hashtable, gp->flowname);
+	if(gmtp_client_table_del_self(&client_hashtable, gp->flowname,
+			gp->myself)) {
+		/* A reporter socket cloned from sk still points at the record */
+		if(gp->myself->rsock == NULL)
+			kfree(gp->myself);
+	}
+	gp->myself = NULL;
  	gmtp_set_state(sk, GMTP_CLOSED);
  	sk->sk_err = ECOMM;
  	return 1;

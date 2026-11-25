@@ -8,6 +8,8 @@
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/string.h>
+#include <linux/list.h>
+#include <linux/spinlock.h>
 
 #include "../gmtp.h"
 #include "hash.h"
@@ -57,9 +59,93 @@ EXPORT_SYMBOL_GPL(gmtp_lookup_client);
 void gmtp_del_client_entry(struct gmtp_hashtable *table, const __u8 *key)
 {
 	gmtp_pr_func();
+	spin_lock_bh(&gmtp_client_table_lock);
 	table->del_entry(table, key);
+	spin_unlock_bh(&gmtp_client_table_lock);
 }
 EXPORT_SYMBOL_GPL(gmtp_del_client_entry);
+
+DEFINE_SPINLOCK(gmtp_client_table_lock);
+EXPORT_SYMBOL_GPL(gmtp_client_table_lock);
+
+/**
+ * gmtp_client_table_add_self - add the record of a connecting socket
+ * @table: client hash table
+ * @flowname: flow the socket joins
+ * @addr: local address of the socket
+ * @port: local port of the socket
+ *
+ * Looks up the flow entry, creates it when missing, and appends the
+ * socket's own record, all under gmtp_client_table_lock. Without the
+ * lock two sockets that connect at the same time on two CPUs both miss
+ * the lookup and both insert an entry for the flow. The first record then
+ * sits in an entry that later lookups never return, and the reporter's
+ * ELECT_RESPONSE for that socket is answered with a RESET.
+ *
+ * Return: the new record, or NULL when memory is short.
+ */
+struct gmtp_client *gmtp_client_table_add_self(struct gmtp_hashtable *table,
+		const __u8 *flowname, __be32 addr, __be16 port)
+{
+	struct gmtp_client_entry *entry;
+	struct gmtp_client *self = NULL;
+
+	spin_lock_bh(&gmtp_client_table_lock);
+	entry = gmtp_lookup_client(table, flowname);
+	if(entry == NULL)
+		entry = gmtp_add_client_entry(table, flowname, addr, port, 0, 0);
+	if(entry != NULL)
+		self = gmtp_list_add_client(0, addr, port, 0,
+				&entry->clients->list);
+	spin_unlock_bh(&gmtp_client_table_lock);
+
+	return self;
+}
+EXPORT_SYMBOL_GPL(gmtp_client_table_add_self);
+
+/**
+ * gmtp_client_table_del_self - unlink the record of one socket
+ * @table: client hash table
+ * @flowname: flow of the socket
+ * @self: the socket's own record (gp->myself)
+ *
+ * Unlinks only @self from the flow entry and removes the entry when no
+ * record is left. Other sockets of the same host keep their records.
+ * The caller owns @self afterwards.
+ *
+ * Return: true if @self was linked in the entry. False means the entry
+ * was already removed, and @self was freed with it.
+ */
+bool gmtp_client_table_del_self(struct gmtp_hashtable *table,
+		const __u8 *flowname, struct gmtp_client *self)
+{
+	struct gmtp_client_entry *entry;
+	struct gmtp_client *client;
+	bool found = false;
+
+	if(self == NULL)
+		return false;
+
+	spin_lock_bh(&gmtp_client_table_lock);
+	entry = gmtp_lookup_client(table, flowname);
+	if(entry != NULL) {
+		list_for_each_entry(client, &entry->clients->list, list) {
+			if(client == self) {
+				found = true;
+				break;
+			}
+		}
+		if(found) {
+			list_del_init(&self->list);
+			if(list_empty(&entry->clients->list))
+				table->del_entry(table, flowname);
+		}
+	}
+	spin_unlock_bh(&gmtp_client_table_lock);
+
+	return found;
+}
+EXPORT_SYMBOL_GPL(gmtp_client_table_del_self);
 
 void gmtp_del_client_list(struct gmtp_client_entry *entry)
 {
