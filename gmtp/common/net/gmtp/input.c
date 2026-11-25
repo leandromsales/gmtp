@@ -15,6 +15,9 @@
 #include <linux/skbuff.h>
 #include <linux/slab.h>
 #include <linux/types.h>
+#include <linux/workqueue.h>
+#include <linux/rtnetlink.h>
+#include <linux/preempt.h>
 
 #include <net/inet_common.h>
 #include <net/inet_sock.h>
@@ -44,6 +47,42 @@ static void gmtp_fin(struct sock *sk, struct sk_buff *skb)
 	sk->sk_shutdown = SHUTDOWN_MASK;
 	sock_set_flag(sk, SOCK_DONE);
 	gmtp_enqueue_skb(sk, skb);
+}
+
+/*
+ * Unlink this socket's own record (gp->myself) from the client table and
+ * free it. Other sockets of the host on the same flow keep their records.
+ * A reporter socket cloned from sk shares the record, so the record is
+ * left to it when one exists.
+ *
+ * Only the socket that owns the record (self->mysock == sk) may release
+ * it. Clones made with sk_clone_lock() after gp->myself was set - the data
+ * channel socket (gmtp_multicast_connect()) and the reporter socket
+ * (gmtp_sock_connect()) - carry the same pointer; the server's CLOSE is
+ * forwarded to the channel address, so the channel clone runs the CLOSE
+ * path too. A clone only drops its copy of the pointer: freeing the record
+ * there was a use-after-free for a reporter parent (rsock == NULL), and
+ * unlinking it leaked the record for a client parent.
+ *
+ * Clones are recognised by their socket type first, without dereferencing
+ * the record: the owner may already have freed it when the CLOSE reaches
+ * the channel clone.
+ */
+static void gmtp_client_release_self(struct sock *sk)
+{
+	struct gmtp_sock *gp = gmtp_sk(sk);
+	struct gmtp_client *self = gp->myself;
+
+	if (self == NULL)
+		return;
+	if (gp->type != GMTP_SOCK_TYPE_REGULAR || self->mysock != sk) {
+		gp->myself = NULL;
+		return;
+	}
+	if (gmtp_client_table_del_self(&client_hashtable, gp->flowname, self) &&
+	    self->rsock == NULL)
+		gmtp_client_free(self);
+	gp->myself = NULL;
 }
 
 static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
@@ -81,8 +120,18 @@ static int gmtp_rcv_close(struct sock *sk, struct sk_buff *skb)
 	case GMTP_OPEN:
 		/* FIXME Close only if gh->flowname == gp->flowname */
 		/* Clear hash table */
-		if(gmtp_role_client(sk))
-			gmtp_del_client_entry(&client_hashtable, gmtp_sk(sk)->flowname);
+		if(gmtp_role_client(sk) &&
+				gmtp_sk(sk)->type != GMTP_SOCK_TYPE_REPORTER)
+			/*
+			 * Drop only this socket's record. Deleting the whole
+			 * flow entry freed the records of every other socket
+			 * of this host on the flow while they still used them.
+			 * The reporter (rsock) and data channel clones only
+			 * borrow the record of the socket they were cloned from;
+			 * gmtp_client_release_self() releases it only from the
+			 * owner.
+			 */
+			gmtp_client_release_self(sk);
 		else if(gmtp_sk(sk)->role == GMTP_ROLE_SERVER)
 			gmtp_del_server_entry(&server_hashtable, gmtp_sk(sk)->flowname);
 
@@ -107,9 +156,18 @@ struct sock* gmtp_sock_connect(struct sock *sk, enum gmtp_sock_type type,
 
 	gmtp_pr_func();
 
-	newsk = sk_clone_lock(sk, GFP_KERNEL);
-	if(newsk == NULL)
+	/*
+	 * Runs from the receive path (REQUESTNOTIFY), in softirq or in the
+	 * socket backlog with BHs enabled: must not sleep, and BHs must be
+	 * off while the clone's spinlock is held (lockdep: inconsistent
+	 * slock-AF_INET usage).
+	 */
+	local_bh_disable();
+	newsk = sk_clone_lock(sk, GFP_ATOMIC);
+	if(newsk == NULL) {
+		local_bh_enable();
 		return NULL;
+	}
 
 	newsk->sk_protocol = sk->sk_protocol;
 	newsk->sk_daddr = addr;
@@ -123,6 +181,7 @@ struct sock* gmtp_sock_connect(struct sock *sk, enum gmtp_sock_type type,
 	pr_info("myself: %p == %p\n", gmtp_sk(newsk), gmtp_sk(sk));
 
 	bh_unlock_sock(newsk);
+	local_bh_enable();
 	gmtp_init_xmit_timers(newsk);
 
 	return newsk;
@@ -130,18 +189,94 @@ struct sock* gmtp_sock_connect(struct sock *sk, enum gmtp_sock_type type,
 }
 EXPORT_SYMBOL_GPL(gmtp_sock_connect);
 
+struct gmtp_mc_join_work {
+	struct work_struct work;
+	struct sock *sk;
+	struct ip_mreqn mreq;
+};
+
+static void gmtp_mc_join_now(struct sock *sk, struct ip_mreqn *mreq)
+{
+	int ret = 0;
+
+	rtnl_lock();
+	/* ip_mc_drop_socket() on close also runs under RTNL */
+	if (!sock_flag(sk, SOCK_DEAD))
+		ret = ip_mc_join_group(sk, mreq);
+	rtnl_unlock();
+
+	if (ret != 0)
+		gmtp_pr_error("Error: ip_mc_join_group returned %d\n", ret);
+}
+
+static void gmtp_mc_join_worker(struct work_struct *work)
+{
+	struct gmtp_mc_join_work *jw = container_of(work,
+			struct gmtp_mc_join_work, work);
+
+	gmtp_mc_join_now(jw->sk, &jw->mreq);
+	sock_put(jw->sk);
+	kfree(jw);
+}
+
+/*
+ * ip_mc_join_group() needs the RTNL mutex. gmtp_multicast_connect() also
+ * runs from the receive path (REQUESTNOTIFY, softirq or backlog with the
+ * socket spinlock held). Taking the mutex there slept in atomic context
+ * whenever two clients of one host joined at the same time ("BUG:
+ * scheduling while atomic", then an RCU stall and a dead guest in the
+ * W-VM runs). The join therefore always runs from a work item, without
+ * probing the calling context.
+ */
+static bool gmtp_mc_join_can_sleep(void)
+{
+	/*
+	 * libos (ns-3/DCE): there is no preemption or real softirq, kernel
+	 * code runs in simulator tasks and RTNL may block there. The libos
+	 * workqueue also never runs work queued from this path, so a deferred
+	 * join would never happen. Join directly, as before.
+	 */
+	return IS_ENABLED(CONFIG_LIB);
+}
+
+static void gmtp_mc_join(struct sock *sk, const struct ip_mreqn *mreq)
+{
+	struct gmtp_mc_join_work *jw;
+
+	if (gmtp_mc_join_can_sleep()) {
+		struct ip_mreqn m = *mreq;
+
+		gmtp_mc_join_now(sk, &m);
+		return;
+	}
+
+	jw = kmalloc(sizeof(*jw), GFP_ATOMIC);
+	if (jw == NULL) {
+		gmtp_pr_error("Cannot defer the multicast join (no memory)");
+		return;
+	}
+	INIT_WORK(&jw->work, gmtp_mc_join_worker);
+	jw->mreq = *mreq;
+	sock_hold(sk);
+	jw->sk = sk;
+	schedule_work(&jw->work);
+}
+
 struct sock* gmtp_multicast_connect(struct sock *sk, enum gmtp_sock_type type,
 		__be32 addr, __be16 port)
 {
 	struct sock *newsk;
 	struct ip_mreqn mreq;
-	int ret;
 
 	gmtp_pr_func();
 
-	newsk = sk_clone_lock(sk, GFP_KERNEL);
-	if(newsk == NULL)
+	/* Also called from connect() with BHs on: see gmtp_sock_connect() */
+	local_bh_disable();
+	newsk = sk_clone_lock(sk, GFP_ATOMIC);
+	if(newsk == NULL) {
+		local_bh_enable();
 		return NULL;
+	}
 
 	/* FIXME Validate received multicast channel */
 	newsk->sk_protocol = sk->sk_protocol;
@@ -164,21 +299,18 @@ struct sock* gmtp_multicast_connect(struct sock *sk, enum gmtp_sock_type type,
 			dev_put(dev);
 	}
 
-	gmtp_pr_debug("Joining the multicast group in %pI4@%-5d",
-			&addr, ntohs(port));
-	rtnl_lock();
-	ret = ip_mc_join_group(newsk, &mreq);
-	rtnl_unlock();
-
-	if (ret != 0)
-		gmtp_pr_error("Error: ip_mc_join_group returned %d\n", ret);
-
 	inet_ehash_nolisten(newsk, NULL, NULL);
 
 	gmtp_sk(newsk)->type = type;
 
 	bh_unlock_sock(newsk);
+	local_bh_enable();
 	gmtp_set_state(newsk, GMTP_OPEN);
+
+	/* Join with the clone's spinlock released */
+	gmtp_pr_debug("Joining the multicast group in %pI4@%-5d",
+			&addr, ntohs(port));
+	gmtp_mc_join(newsk, &mreq);
 
 	return newsk;
 }
@@ -280,7 +412,9 @@ static int gmtp_rcv_request_sent_state_process(struct sock *sk,
 
 			if(gp->myself->rsock == NULL || gp->myself->reporter == NULL)
 				goto err;
-			gmtp_set_state(gp->myself->rsock, GMTP_REQUESTING);
+			/* The clone inherits REQUESTING from sk */
+			if(gp->myself->rsock->sk_state != GMTP_REQUESTING)
+				gmtp_set_state(gp->myself->rsock, GMTP_REQUESTING);
 			gmtp_send_elect_request(gp->myself->rsock, GMTP_REQ_INTERVAL);
 		}
 
@@ -353,8 +487,12 @@ err:
  	/*
  	 * We mark this socket as no longer usable, so that the loop in
  	 * gmtp_sendmsg() terminates and the application gets notified.
+ 	 *
+ 	 * Remove only this socket's record. Deleting the whole flow entry
+ 	 * freed the records (gp->myself) of every other socket of this host
+ 	 * on the same flow while they were still in use.
  	 */
-	gmtp_del_client_entry(&client_hashtable, gp->flowname);
+	gmtp_client_release_self(sk);
  	gmtp_set_state(sk, GMTP_CLOSED);
  	sk->sk_err = ECOMM;
  	return 1;

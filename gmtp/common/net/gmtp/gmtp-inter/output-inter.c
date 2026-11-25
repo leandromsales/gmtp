@@ -207,6 +207,27 @@ send:
 	return NF_ACCEPT;
 }
 
+/*
+ * Delete the records of one client from a flow entry. Clears the current
+ * reporter when it is that client, so later RequestNotify packets do not
+ * read the freed record (the 0.0.0.0@2816 reporter in W-VM C-r2M-s9).
+ * Returns how many records were deleted.
+ */
+static int gmtp_inter_forget_client(struct gmtp_inter_entry *entry,
+		__be32 addr, __be16 port)
+{
+	int del;
+
+	if(entry->cur_reporter != NULL && entry->cur_reporter->addr == addr
+			&& entry->cur_reporter->port == port)
+		entry->cur_reporter = NULL;
+
+	del = gmtp_delete_clients(&entry->clients->list, addr, port);
+	entry->nclients -= min_t(unsigned int, del, entry->nclients);
+
+	return del;
+}
+
 static int gmtp_inter_close_from_client(struct sk_buff *skb,
 		struct gmtp_inter_entry *entry)
 {
@@ -220,11 +241,27 @@ static int gmtp_inter_close_from_client(struct sk_buff *skb,
 	gmtp_pr_func();
 
 	pr_info("entry->nclients: %u\n", entry->nclients);
-	del = gmtp_delete_clients(&entry->clients->list, iph->saddr, gh->sport);
+
+	/*
+	 * A RESET sent by the server to one client (for example the answer
+	 * to a stray ELECT_RESPONSE or ACK) carries the client in the
+	 * destination. Looking it up by the source never found it, so the
+	 * client stayed in the table, nclients never reached zero, and the
+	 * flow entry outlived the session in GMTP_INTER_CLOSED. The next
+	 * REQUEST for the flow then got an error RequestNotify (W-VM C).
+	 */
+	if(gmtp_get_client(&entry->clients->list, iph->saddr, gh->sport) == NULL
+			&& gmtp_get_client(&entry->clients->list, iph->daddr,
+					gh->dport) != NULL) {
+		gmtp_inter_forget_client(entry, iph->daddr, gh->dport);
+		/* Let the RESET reach that client; the flow stays up */
+		return NF_ACCEPT;
+	}
+
+	del = gmtp_inter_forget_client(entry, iph->saddr, gh->sport);
 	if(del == 0)
 		return NF_ACCEPT;
 	pr_info("del: %d\n", del);
-	entry->nclients -= del;
 	pr_info("entry->nclients - del: %u\n", entry->nclients);
 
 	gh_reset = gmtp_inter_make_reset_hdr(skb, GMTP_RESET_CODE_CLOSED);

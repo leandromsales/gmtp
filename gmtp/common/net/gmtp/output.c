@@ -460,7 +460,6 @@ int gmtp_connect(struct sock *sk)
     struct inet_connection_sock *icsk = inet_csk(sk);
     struct gmtp_sock *gp = gmtp_sk(sk);
     struct inet_sock *inet = inet_sk(sk);
-    struct gmtp_client_entry *client_entry;
     int err = 0;
 
     gmtp_pr_func();
@@ -478,28 +477,18 @@ int gmtp_connect(struct sock *sk)
     skb_reserve(skb, sk->sk_prot->max_header);
     GMTP_SKB_CB(skb)->type = GMTP_PKT_REQUEST;
 
-    gmtp_pr_info("Calling gmtp_lookup_client");
-    client_entry = gmtp_lookup_client(&client_hashtable, gp->flowname);
-    if(client_entry == NULL)
-        client_entry = gmtp_add_client_entry(&client_hashtable, gp->flowname,
-                inet->inet_saddr, inet->inet_sport, 0, 0);
-
-    if(client_entry == NULL)
-        return -ENOBUFS;
-
-    gp->myself = gmtp_list_add_client(0, inet->inet_saddr, inet->inet_sport,
-            0, &client_entry->clients->list);
-
-    if(gp->myself == NULL)
-        return -ENOBUFS;
-
     /** First transmission: gss <- iss */
     gp->gss = gp->iss;
     gp->req_stamp = jiffies_to_msecs(jiffies);
     gp->ack_rx_tstamp = jiffies_to_msecs(jiffies);
 
-    gp->myself->ack_rx_tstamp = gp->ack_rx_tstamp;
-    gp->myself->mysock = sk;
+    /* Look up or create the flow entry and add our record atomically */
+    gp->myself = gmtp_client_table_add_self(&client_hashtable, gp->flowname,
+            inet->inet_saddr, inet->inet_sport, sk, gp->ack_rx_tstamp);
+    if(gp->myself == NULL) {
+        kfree_skb(skb);
+        return -ENOBUFS;
+    }
 
     err = gmtp_transmit_skb(sk, gmtp_skb_entail(sk, skb));
 
@@ -767,18 +756,35 @@ static inline unsigned int payload_len(struct sk_buff *skb)
     return skb->len - (gmtp_data_hdr_len() + 20 + ETH_HLEN);
 }
 
-static inline void packet_sent(struct sock *sk, struct sk_buff *skb)
+/*
+ * Takes the lengths, not the skb: gmtp_transmit_skb() consumes the skb, and
+ * the driver may free it (virtio-net TX completion, KASAN slab-use-after-free)
+ * before we get here.
+ *
+ * Meaning of the counters: the lengths are now taken BEFORE
+ * gmtp_transmit_skb() adds the GMTP, IP and Ethernet headers. So data_len
+ * (tx_data_sent) is payload_len() of the header-less skb and under-counts the
+ * payload by gmtp_data_hdr_len() + 20 + ETH_HLEN bytes per packet, and
+ * skb_len (tx_bytes_sent, hence tx_total_rate and tx_sample_rate) is the
+ * payload, not the frame. Before 063bdec22d they were read after the
+ * transmit (from a possibly freed skb) and meant payload and frame size.
+ * Readers today: tx_data_sent has none; tx_total_rate is used only by
+ * gmtp_media_adapt_cc() under GMTP_MEDIA_ADAPT_UCC, which no application in
+ * this repository selects (the default is GMTP_DELAY_UCC). Use
+ * skb->len / packet_len(skb) here if the frame-based meaning is needed again.
+ */
+static inline void packet_sent(struct sock *sk, int data_len,
+                               unsigned int skb_len)
 {
     struct gmtp_sock *gp = gmtp_sk(sk);
     unsigned long elapsed = 0;
-    int data_len = payload_len(skb);
 
     if(unlikely(gp->tx_dpkts_sent == 0))
         gmtp_pr_info("Start sending data packets...\n\n");
 
     ++gp->tx_dpkts_sent;
     gp->tx_data_sent += data_len;
-    gp->tx_bytes_sent += skb->len;
+    gp->tx_bytes_sent += skb_len;
 
     gp->tx_last_stamp = jiffies;
     if(unlikely(gp->tx_first_stamp == 0)) { /* This is the first sent */
@@ -806,28 +812,27 @@ static inline void packet_sent(struct sock *sk, struct sk_buff *skb)
 static void gmtp_xmit_packet(struct sock *sk, struct sk_buff *skb) {
 
     int err;
+    /*
+     * Read before transmit: gmtp_transmit_skb() consumes the skb. The
+     * headers are not in skb->len yet; see packet_sent() for what the
+     * counters mean now.
+     */
+    int data_len = payload_len(skb);
+    unsigned int skb_len = skb->len;
 
     GMTP_SKB_CB(skb)->type = GMTP_PKT_DATA;
     err = gmtp_transmit_skb(sk, skb);
-
-    /*
-    char label[30];
-    sprintf(label, "To %pI4 (%d pkts sent, err=%d)", &sk->sk_daddr,
-            gmtp_sk(sk)->tx_dpkts_sent, err);
-    print_gmtp_data(skb, label);
-    */
 
     /*
      * Register this one as sent (even if an error occurred).
      * To the remote end a local packet drop is indistinguishable from
      * network loss.
      */
-    packet_sent(sk, skb);
+    packet_sent(sk, data_len, skb_len);
 
     if (unlikely(err)) {
+        /* skb is gone here; do not dump its headers. */
         gmtp_pr_error("transmit_skb() returned err=%d\n", err);
-
-        print_gmtp_packet(ip_hdr(skb), gmtp_hdr(skb));
 
         pr_info("ISS: %u, GSS: %u, N: %u\n", gmtp_sk(sk)->iss,
                 gmtp_sk(sk)->gss,

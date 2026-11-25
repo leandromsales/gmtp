@@ -24,6 +24,24 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 	gmtp_pr_func();
 
 	entry = gmtp_inter_lookup_media(gmtp_inter.hashtable, gh->flowname);
+	if(entry != NULL && entry->state == GMTP_INTER_CLOSED) {
+		/*
+		 * The server closed this flow and the entry was kept only for
+		 * clients that never said goodbye. Drop it and register the
+		 * flow again instead of answering every new client with an
+		 * error RequestNotify.
+		 *
+		 * Known limit: with several relays in a chain, the CLOSE may
+		 * not have reached the downstream relays (entry->relays) yet;
+		 * dropping the entry here strands them. W-VM and DCE use one
+		 * relay per path or a fresh process per trial.
+		 */
+		gmtp_pr_info("Dropping stale entry of a closed flow");
+		server_hashtable.hash_ops.del_entry(&server_hashtable,
+				gh->flowname);
+		gmtp_inter_del_entry(gmtp_inter.hashtable, gh->flowname);
+		entry = NULL;
+	}
 	if(entry != NULL) {
 		struct gmtp_client *cl;
 		gmtp_pr_info("Media found. Sending RequestNotify.");
@@ -55,6 +73,9 @@ int gmtp_inter_request_rcv(struct sk_buff *skb)
 			goto out;
 		}
 		max_nclients = new_reporter(entry);
+		/* The current reporter left: the new client takes its place */
+		if(max_nclients == 0 && entry->cur_reporter == NULL)
+			max_nclients = gmtp_inter.kreporter;
 
 	} else {
 		__be32 mcst_addr;
@@ -621,14 +642,25 @@ int gmtp_inter_elect_resp_rcv(struct sk_buff *skb,
 {
 	struct iphdr *iph = ip_hdr(skb);
 	struct gmtp_hdr *gh = gmtp_hdr(skb);
+	struct gmtp_client *cl;
 
 	gmtp_pr_func();
 
 	print_ipv4_packet(skb, true);
 	print_gmtp_packet(iph, gh);
 
-	gmtp_list_add_client(++entry->nclients, iph->saddr, gh->sport,
-			gmtp_inter.kreporter, &entry->clients->list);
+	cl = gmtp_get_client(&entry->clients->list, iph->saddr, gh->sport);
+	if(cl != NULL)
+		/* Known from its REQUEST: do not count it twice */
+		cl->max_nclients = gmtp_inter.kreporter;
+	else
+		cl = gmtp_list_add_client(++entry->nclients, iph->saddr,
+				gh->sport, gmtp_inter.kreporter,
+				&entry->clients->list);
+
+	/* Offer the self-promoted reporter to the next clients */
+	if(cl != NULL && entry->cur_reporter == NULL)
+		entry->cur_reporter = cl;
 
 	return NF_DROP;
 }

@@ -231,7 +231,11 @@ int __gmtp_del_sk_hash(struct gmtp_sk_hashtable *sk_table,
 		if (pos->sk == NULL)
 			continue;
 
-		print_gmtp_sock(pos->sk);
+		/*
+		 * No print_gmtp_sock(pos->sk) here: the list also holds request
+		 * sockets, which are smaller than a gmtp_sock (KASAN:
+		 * slab-out-of-bounds read of gmtp_sk(sk)->type).
+		 */
 
 		if (pos->sk == sk)
 		{

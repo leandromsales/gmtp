@@ -26,7 +26,8 @@ int gmtp_build_hashtable(struct gmtp_hashtable *htable,
 	if(htable == NULL)
 		return -ENOBUFS;
 
-	htable->entry = kmalloc(sizeof(void*) * size, GFP_KERNEL);
+	/* Also built from the receive path (new server entry): no sleeping */
+	htable->entry = kmalloc(sizeof(void*) * size, GFP_ATOMIC);
 
 	if(htable->entry == NULL)
 		return -ENOMEM;
